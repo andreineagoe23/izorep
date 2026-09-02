@@ -71,6 +71,26 @@ export interface OptiuniModel {
   concurenta?: number;
 }
 
+/** Numar din mediu, cu implicit. Valorile aiurea sunt ignorate, nu explodeaza. */
+function nrDinMediu(cheie: string, implicit: number): number {
+  const v = Number(process.env[cheie]);
+  return Number.isFinite(v) && v > 0 ? Math.floor(v) : implicit;
+}
+
+/**
+ * Limita de rata a contului OpenAI, atinsa dupa reincercari.
+ *
+ * Merita tip propriu: nu e o eroare de extragere, e o problema de debit. Se
+ * rezolva cu IZOREP_CONCURENTA=1, cu un lot mai mic, sau asteptand — nu
+ * schimband nimic la prompt sau la fisier.
+ */
+export class LimitaDeRata extends Error {
+  constructor(readonly cauza: string) {
+    super(`limita de rata OpenAI atinsa: ${cauza}. Incearca IZOREP_CONCURENTA=1, un IZOREP_LOT mai mic, sau ruleaza cu --fara-model.`);
+    this.name = "LimitaDeRata";
+  }
+}
+
 export async function extrageCuModel(
   linii: { index: number; text: string; um?: string }[],
   optiuni: OptiuniModel = {},
@@ -81,20 +101,37 @@ export async function extrageCuModel(
   if (!apiKey) throw new Error("OPENAI_API_KEY lipseste. Copiaza .env.example in .env.");
 
   // 90s per apel: un lot blocat nu are voie sa tina importul la nesfarsit.
-  const client = new OpenAI({ apiKey, timeout: 90_000 });
+  //
+  // maxRetries e EXPLICIT, nu lasat pe implicitul SDK-ului: la 429 clientul
+  // reincearca cu backoff in loc sa piarda lotul. Pe un cont cu limite mici,
+  // patru loturi in paralel ating limita usor, iar fara reincercare fiecare
+  // lot cazut inseamna linii ramase netarifate degeaba.
+  const client = new OpenAI({ apiKey, timeout: 90_000, maxRetries: 4 });
   const model = optiuni.model ?? process.env["OPENAI_MODEL"] ?? "gpt-4o-2024-08-06";
-  const lot = optiuni.dimensiuneLot ?? 12;
-  const concurenta = Math.max(1, optiuni.concurenta ?? 4);
+  const lot = optiuni.dimensiuneLot ?? nrDinMediu("IZOREP_LOT", 12);
+  // Prima manevra cand dai de rate limit: IZOREP_CONCURENTA=1.
+  const concurenta = Math.max(1, optiuni.concurenta ?? nrDinMediu("IZOREP_CONCURENTA", 4));
 
   const loturi: (typeof linii)[] = [];
   for (let i = 0; i < linii.length; i += lot) loturi.push(linii.slice(i, i + lot));
+
+  /** Traduce 429-ul in ceva ce spune ce ai de facut. */
+  async function cerere<T>(f: () => Promise<T>): Promise<T> {
+    try {
+      return await f();
+    } catch (e) {
+      const m = e instanceof Error ? e.message : String(e);
+      if (/429|rate limit|quota/i.test(m)) throw new LimitaDeRata(m.slice(0, 200));
+      throw e;
+    }
+  }
 
   async function proceseaza(bucata: typeof linii): Promise<LinieExtrasa[]> {
     const payload = bucata
       .map((l) => `[${l.index}]${l.um ? ` (UM: ${l.um})` : ""} ${l.text.replace(/\s+/g, " ").slice(0, 900)}`)
       .join("\n");
 
-    const raspuns = await client.chat.completions.create({
+    const raspuns = await cerere(() => client.chat.completions.create({
       model,
       temperature: 0,
       messages: [
@@ -102,7 +139,7 @@ export async function extrageCuModel(
         { role: "user", content: `Extrage parametrii pentru fiecare linie. Returneaza cate un obiect per linie, cu acelasi index.\n\n${payload}` },
       ],
       response_format: { type: "json_schema", json_schema: JSON_SCHEMA as never },
-    });
+    }));
 
     const continut = raspuns.choices[0]?.message.content;
     if (!continut) throw new Error("model fara continut in raspuns");

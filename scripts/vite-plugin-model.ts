@@ -59,6 +59,13 @@ export function pluginModel(): Plugin {
       const cheie = process.env["OPENAI_API_KEY"];
       const model = process.env["OPENAI_MODEL"] ?? "gpt-4o-2024-08-06";
       const prag = Number(process.env["IZOREP_CONFIDENCE_THRESHOLD"] ?? 0.85);
+      // Prima manevra cand contul OpenAI da 429: IZOREP_CONCURENTA=1.
+      const nr = (c: string, i: number) => {
+        const v = Number(process.env[c]);
+        return Number.isFinite(v) && v > 0 ? Math.floor(v) : i;
+      };
+      const lot = nr("IZOREP_LOT", 12);
+      const concurenta = nr("IZOREP_CONCURENTA", 4);
 
       server.config.logger.info(
         cheie
@@ -71,7 +78,7 @@ export function pluginModel(): Plugin {
         if (!esteLocal(req)) return raspunde(res, 403, { eroare: "doar de pe localhost" });
 
         if (req.method === "GET") {
-          return raspunde(res, 200, { disponibil: Boolean(cheie), model, prag });
+          return raspunde(res, 200, { disponibil: Boolean(cheie), model, prag, lot, concurenta });
         }
         if (req.method !== "POST") return raspunde(res, 405, { eroare: "metoda nepermisa" });
         if (!cheie) return raspunde(res, 503, { eroare: "OPENAI_API_KEY lipseste din .env" });
@@ -83,7 +90,9 @@ export function pluginModel(): Plugin {
             if (linii.length === 0) return raspunde(res, 200, { linii: [], trunchiat: 0 });
 
             server.config.logger.info(`  ➜  model: extrag ${linii.length} linii reziduale`);
-            const extrase = await extrageCuModel(linii, { apiKey: cheie, model });
+            const extrase = await extrageCuModel(linii, {
+              apiKey: cheie, model, dimensiuneLot: lot, concurenta,
+            });
 
             // Ce iese din model trece prin aceeasi schema ca in CLI, inca o data
             // inainte sa plece spre pagina. Validarea nu e optionala.

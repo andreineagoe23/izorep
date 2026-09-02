@@ -93,6 +93,27 @@ loopback și plafonează la 400 de linii per import.
 - **nu vede și nu calculează prețuri**
 - scor de încredere pe linie; sub prag → validare umană obligatorie
 
+## Când OpenAI dă „rate limit reached"
+
+Nu e o problemă de extragere, e una de debit. În ordinea în care se încearcă:
+
+```bash
+IZOREP_CONCURENTA=1 npm run dev        # prima manevră
+IZOREP_LOT=6 IZOREP_CONCURENTA=1 ...   # loturi mai mici
+npm run import -- <fisier> --fara-model
+```
+
+Clientul are `maxRetries: 4` explicit, deci un 429 se reia cu backoff în loc să
+piardă lotul. Ce trece de reîncercări devine `LimitaDeRata`, cu mesaj care
+spune ce ai de făcut — nu o eroare generică pe care ai fi tentat s-o cauți în
+prompt sau în fișier.
+
+Valorile se citesc din mediu în CLI și în plugin; ecranul le ia din răspunsul
+rutei, ca să nu existe două surse de adevăr.
+
+Un lot căzut nu invalidează importul: restul liniilor rămân, iar raportul spune
+câte loturi au eșuat.
+
 ## Capcane găsite în fișierele reale
 
 - **`Book15.xlsx`** — rânduri de continuare `"Same - Ø125 mm"` care moștenesc

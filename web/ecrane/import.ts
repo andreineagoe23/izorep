@@ -12,7 +12,7 @@ import { esc, eur, indicator, nota, progres, stare, tabel, type Ecran } from "./
  */
 const RUTA_MODEL = location.pathname.replace(/[^/]*$/, "") + "api/extrage";
 
-interface StareModel { disponibil: boolean; model: string; prag: number }
+interface StareModel { disponibil: boolean; model: string; prag: number; lot?: number; concurenta?: number }
 
 /**
  * Loturi mici, trimise in paralel din pagina.
@@ -21,8 +21,13 @@ interface StareModel { disponibil: boolean; model: string; prag: number }
  * ~80s de ecran gol. Impartite in loturi de 12 si trimise cate 4 deodata, ies in
  * ~20s — si, mai important, fiecare lot care se intoarce misca bara de progres.
  */
-const LOT = 12;
-const CONCURENTA = 4;
+/**
+ * Valori implicite. Serverul de dezvoltare le poate suprascrie prin
+ * IZOREP_LOT / IZOREP_CONCURENTA, iar ecranul le ia din raspunsul rutei —
+ * prima manevra cand contul OpenAI da 429 e concurenta 1.
+ */
+const LOT_IMPLICIT = 12;
+const CONCURENTA_IMPLICITA = 4;
 /** Plafon per import, acelasi cu cel din plugin. */
 const MAX_LINII = 400;
 
@@ -160,7 +165,9 @@ export const ecran: Ecran = {
         if (info && reziduale.length > 0) {
           const deTrimis = reziduale.slice(0, MAX_LINII);
           const loturi: (typeof deTrimis)[] = [];
-          for (let i = 0; i < deTrimis.length; i += LOT) loturi.push(deTrimis.slice(i, i + LOT));
+          const lot = info.lot ?? LOT_IMPLICIT;
+          const concurenta = info.concurenta ?? CONCURENTA_IMPLICITA;
+          for (let i = 0; i < deTrimis.length; i += lot) loturi.push(deTrimis.slice(i, i + lot));
 
           // Numarul de linii rezolvate determinist se fixeaza acum: `rezolvate`
           // creste pe masura ce se intorc loturile, iar eticheta ar minti.
@@ -200,7 +207,7 @@ export const ecran: Ecran = {
               }
             }
           };
-          await Promise.all(Array.from({ length: Math.min(CONCURENTA, loturi.length) }, lucrator));
+          await Promise.all(Array.from({ length: Math.min(concurenta, loturi.length) }, lucrator));
 
           if (esuate > 0) {
             avertisment = `<div class="alerta"><strong>${esuate} din ${loturi.length} loturi au eșuat</strong>
