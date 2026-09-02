@@ -24,6 +24,7 @@ clientului.
 
 ```
 L0  parse-workbook.ts   parsare fizică. Zero interpretare.
+L0b sectiuni.ts         contextul de secțiune (antetul de deasupra rândului)
 L1  (nescris)           mapare de coloane, o dată per client, apoi din cache
 L2a extract-regex.ts    determinist. ~55% din linii.
 L2b extract-llm.ts      model, DOAR pe reziduu. Structured outputs, temp 0.
@@ -34,6 +35,23 @@ L4  (nescris)           ecran de validare + salvarea corecțiilor ca mapping
 **L4 e piesa care rezolvă de fapt „nu există template comun".** Nu ai nevoie de
 format comun, ai nevoie de memorie per client. Primul proiect de la un client
 nou: ~60% automat. Al doilea, cu șabloanele deja mapate: 90–95%.
+
+## Contextul de secțiune
+
+Multe poziții nu spun singure ce sunt. În oferta 118.1 linia e doar
+`Teava OL/OLZN DN15 | 130/130`; faptul că e o închidere de gol la foc stă în
+rândul de deasupra, `Teceri prin pereți rezistenți la foc EI30`. Fără legătura
+asta ieșeau 0 poziții din 53.
+
+Antetul se recunoaște **fizic, nu semantic**: e o celulă îmbinată peste mai
+multe coloane, deci parserul o vede repetată identic pe rând, și nu are nici
+unitate de măsură, nici cantitate. Regula nu depinde de ce scrie în ea.
+
+Secțiunea dă **doar sistemul**, niciodată diametrul, grosimea sau dimensiunea
+golului — altfel o poziție ar moșteni valorile alteia.
+
+E o soluție îngustă, pentru un singur nivel de secțiune. L1 o înlocuiește cu
+ceva care știe și ierarhii, și rânduri de continuare (`"Same - Ø125 mm"`).
 
 ## Stratul determinist nu există din motive de cost
 
@@ -85,6 +103,12 @@ loopback și plafonează la 400 de linii per import.
 - **`Flower City`** — `cantitate/unitate × nr. unități = total`, plus `#REF!`.
 - **`Radoia.xlsx`** — descrieri multi-linie cu specificații complete într-o
   singură celulă; zona lipită de observații cu `/`.
+- **`Radoia.xlsx` / închideri la foc** — „Protecție la foc EI 60 pentru
+  tubulaturile din tablă zincată" e protecția *tubulaturii*, altă lucrare, fără
+  listă de prețuri. Cu „rezistent la foc" sau „EI 60" ca semnal de sistem, 28 de
+  rânduri de acolo intrau ca închideri de gol, iar dimensiunea tubulaturii
+  rectangulare (`1000/500`) era citită drept dimensiune de gol. Semnalul cere
+  noțiunea de **gol** sau de **trecere prin perete**.
 - **Oferta 118** — ligaturi stricate (`sinte␣c`): textul e copiat dintr-un PDF.
 - **Cantitatea** — primul număr de pe rând e aproape întotdeauna *numărul curent*
   al poziției, nu cantitatea. Euristica actuală o caută lângă unitatea de măsură;

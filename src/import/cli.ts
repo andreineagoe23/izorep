@@ -33,8 +33,12 @@ console.log(`  valoare                  ${raport.valoareTotala.toFixed(2)} EUR\n
 
 for (const l of raport.linii.filter((x) => x.pret).slice(0, 12)) {
   const e = l.extras;
-  const straturi = l.pret!.straturi.map((s) => `${s.sistem}${s.grosime_mm ?? ""}@${s.rand_lista}`).join(" + ");
-  console.log(`  ${l.pret!.pret_unitar.toFixed(2).padStart(8)} x ${String(l.bruta.cantitate ?? 1).padStart(6)} = ${l.pret!.total.toFixed(2).padStart(10)}  [${l.sursa}] ${straturi}`);
+  // Inchiderile la foc au componente (gol + banda + colier), nu straturi.
+  const p = l.pret!;
+  const detaliu = "straturi" in p
+    ? p.straturi.map((s) => `${s.sistem}${s.grosime_mm ?? ""}@${s.rand_lista}`).join(" + ")
+    : p.componente.map((c) => c.descriere).join(" + ");
+  console.log(`  ${l.pret!.pret_unitar.toFixed(2).padStart(8)} x ${String(l.bruta.cantitate ?? 1).padStart(6)} = ${l.pret!.total.toFixed(2).padStart(10)}  [${l.sursa}] ${detaliu}`);
   console.log(`           ${e.diametru_tip}${e.diametru_valoare} · ${l.bruta.text.replace(/\s+/g, " ").slice(0, 78)}`);
 }
 

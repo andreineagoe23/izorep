@@ -19,16 +19,19 @@ Materialul sursă (17 fișiere Excel primite de la firmă) stă în `../attachme
 ## Ce e construit
 
 **Motorul de prețuri** (`src/pricing/`) — determinist, fără AI, izomorf
-(rulează identic în Node și în browser). 49 de teste care reproduc poziții
+(rulează identic în Node și în browser). 130 de teste care reproduc poziții
 reale facturate din Oferta 118 / 27.04.2026, inclusiv poziții compuse din trei
-straturi și totalurile pe linie.
+straturi și totalurile pe linie, plus toate cele 53 de poziții din oferta 118.1
+de închideri goluri la foc (12.692,04 €, exact totalul semnat).
 
 **Pipeline-ul de import** (`src/import/`) — L0 parsare fizică, L2a extragere
 deterministă (~55% din linii), L2b completare cu OpenAI prin structured outputs
 pe reziduu, L3 tarifare. Rulat pe lista reală a unui spital: 191 poziții
 detectate, 63% tarifate automat. Rulează identic din CLI și din aplicație, când
 aceasta e pornită local (`npm run dev`): pe `Izolatii Transavia.xlsx` ambele dau
-72 poziții, 39 tarifate, 6.039,90 €.
+72 poziții, 39 tarifate, 6.039,90 €. Pe `Oferta 27.04.2026 Matari.xlsx`
+(închideri goluri la foc): 53 de poziții, 100% tarifate determinist, fără niciun
+apel la model.
 
 **Aplicația** (`web/`) — 7 ecrane: tablou de bord, lucrări, cereri și oferte,
 calcul deviz, import Excel, clienți, liste de prețuri. Datele sunt reale,
@@ -91,6 +94,17 @@ care ieșeau greșit.
 diametrul real, și crește cu 2 × grosime. La egalitate între două rânduri se
 alege rândul superior. Asta reproduce ambele poziții compuse din oferta 118.
 
+**Închiderile goluri la foc au preț aditiv**, nu matrice: golul după suprafață,
+plus banda WRAP, plus colierul. Pragurile sunt scrise „Goluri până la 0,05 mp",
+deci limita superioară e inclusivă — se vede la golurile de 0,60 și 0,90 mp
+exact. Clasa EI e etichetă de grupare, nu variabilă de preț: aceeași conductă
+DN15 costă 23,05 € și la EI30, și la EI120.
+
+**Banda WRAP are două liste, după materialul conductei.** La ø140 sunt 12,19 €
+pe oțel și 65,67 € pe plastic, pentru că numărul de înfășurări diferă. Extragerea
+le citea ca pe una singură și tăia tabelul de oțel după primul rând — deci ø140
+oțel ar fi fost tarifat de cinci ori prețul real. Reparat în ETL, cu test.
+
 **Trei abateri reale rămân**, documentate în blocul „abateri cunoscute" din
 `tests/pricing.test.ts`: ø90 PEHD (0,55 €/ml diferență), ø160 tarifat diferit
 ca țeavă PEHD față de tubulatură SPIRO în aceeași ofertă, și rotunjirea la
@@ -111,6 +125,11 @@ Astea blochează arhitectura, nu doar implementarea:
 4. Există listă de prețuri pentru elastomer peste ø219?
 5. Lista de manoperă e scrisă undeva sau se negociază de fiecare dată?
 6. Cum se împart cele două firme (RADOIA ISOLIRUNG / R&F ISORAD SYSTEM)?
+7. Care e regula de curs folosită azi la facturare — BNR din ziua anterioară,
+   din ziua facturii, sau cursul din contract? (De verificat cu contabila.
+   Până atunci `CURS_BNR` rămâne constantă: cursul contează abia la facturare.)
+8. „Protecție la foc pentru tubulatură" (28 de rânduri în `Radoia.xlsx`) e o
+   lucrare pe care o ofertați? Nu are listă de prețuri printre cele primite.
 
 ## Ce urmează
 
@@ -118,6 +137,10 @@ Astea blochează arhitectura, nu doar implementarea:
 euristica de cantitate (azi ghicește coloana lângă unitatea de măsură) și
 `Book15.xlsx`, unde din 412 rânduri ies doar 5 poziții, pentru că rândurile de
 continuare `"Same - Ø125 mm"` își pierd descrierea părinte.
+
+Contextul de secțiune (`sectiuni.ts`) rezolvă deja un nivel din problema asta:
+antetul îmbinat de deasupra dă sistemul liniilor care tac despre ele însele.
+L1 îl înlocuiește cu ceva care știe și ierarhii, și rânduri de continuare.
 
 **L4 — ecranul de validare cu învățare.** Piesa care duce al doilea proiect de
 la același client de la ~63% la 90%+: fiecare corecție umană se salvează ca
@@ -130,7 +153,7 @@ de contract, stoc și facturare.
 ## Comenzi
 
 ```bash
-npm test                                       # 49 teste motor
+npm test                                       # 130 teste motor
 npm run typecheck
 npm run dev                                    # UI local
 npm run import -- ../attachments/Radoia.xlsx   # pipeline complet

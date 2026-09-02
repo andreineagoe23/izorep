@@ -20,6 +20,14 @@ export const LinieExtrasa = z.object({
   diametru_tip: z.enum(["DN", "exterior", "interior"]).nullable(),
   grosime_mm: z.number().nullable(),
   forma: z.enum(FORME).nullable(),
+  /**
+   * Dimensiunile golului, in mm, la inchiderile goluri la foc. Scrise
+   * "130/130" in coloana "dimensiune gol". Pretul acolo NU vine din
+   * diametru si grosime, ci din suprafata golului — fara ele linia nu se
+   * poate tarifa, oricat de sigur ar fi restul.
+   */
+  gol_latime_mm: z.number().nullable(),
+  gol_inaltime_mm: z.number().nullable(),
   /** Straturi suplimentare peste primul, pentru pozitii compuse. */
   straturi_extra: z.array(z.object({
     sistem: z.enum(SISTEME),
@@ -53,7 +61,8 @@ export const JSON_SCHEMA = {
           additionalProperties: false,
           required: [
             "index", "sistem", "diametru_valoare", "diametru_tip",
-            "grosime_mm", "forma", "straturi_extra", "incredere", "motiv",
+            "grosime_mm", "forma", "gol_latime_mm", "gol_inaltime_mm",
+            "straturi_extra", "incredere", "motiv",
           ],
           properties: {
             index: { type: "integer" },
@@ -62,6 +71,8 @@ export const JSON_SCHEMA = {
             diametru_tip: { type: ["string", "null"], enum: ["DN", "exterior", "interior", null] },
             grosime_mm: { type: ["number", "null"] },
             forma: { type: ["string", "null"], enum: [...FORME, null] },
+            gol_latime_mm: { type: ["number", "null"] },
+            gol_inaltime_mm: { type: ["number", "null"] },
             straturi_extra: {
               type: "array",
               items: {

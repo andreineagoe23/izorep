@@ -51,68 +51,127 @@
     }
   ],
   "peste_1mp_pret_pe_mp": 134.43,
-  "banda_wrap": [
-    {
-      "diametru": 32,
-      "pret": 6.44,
-      "obs": "2 infasurari/conducta"
-    },
-    {
-      "diametru": 40,
-      "pret": 10.58,
-      "obs": "3 infasurari/conducta"
-    },
-    {
-      "diametru": 50,
-      "pret": 13.225,
-      "obs": "3 infasurari/conducta"
-    },
-    {
-      "diametru": 56,
-      "pret": 13.915,
-      "obs": "3 infasurari/conducta"
-    },
-    {
-      "diametru": 63,
-      "pret": 15.295,
-      "obs": "3 infasurari/conducta"
-    },
-    {
-      "diametru": 75,
-      "pret": 24.495,
-      "obs": "4 infasurari/conducta"
-    },
-    {
-      "diametru": 90,
-      "pret": 28.52,
-      "obs": "4 infasurari/conducta"
-    },
-    {
-      "diametru": 110,
-      "pret": 42.32,
-      "obs": "5 infasurari/conducta"
-    },
-    {
-      "diametru": 125,
-      "pret": 48.99,
-      "obs": "5 infasurari/conducta"
-    },
-    {
-      "diametru": 140,
-      "pret": 65.665,
-      "obs": "6 infasurari/conducta"
-    },
-    {
-      "diametru": 160,
-      "pret": 72.565,
-      "obs": "6 infasurari/conducta"
-    },
-    {
-      "diametru": 22,
-      "pret": 4.255,
-      "obs": "1 infasurare/conducta"
-    }
-  ],
+  "banda_wrap": {
+    "plastic": [
+      {
+        "diametru": 32,
+        "pret": 6.44,
+        "obs": "2 infasurari/conducta"
+      },
+      {
+        "diametru": 40,
+        "pret": 10.58,
+        "obs": "3 infasurari/conducta"
+      },
+      {
+        "diametru": 50,
+        "pret": 13.225,
+        "obs": "3 infasurari/conducta"
+      },
+      {
+        "diametru": 56,
+        "pret": 13.915,
+        "obs": "3 infasurari/conducta"
+      },
+      {
+        "diametru": 63,
+        "pret": 15.295,
+        "obs": "3 infasurari/conducta"
+      },
+      {
+        "diametru": 75,
+        "pret": 24.495,
+        "obs": "4 infasurari/conducta"
+      },
+      {
+        "diametru": 90,
+        "pret": 28.52,
+        "obs": "4 infasurari/conducta"
+      },
+      {
+        "diametru": 110,
+        "pret": 42.32,
+        "obs": "5 infasurari/conducta"
+      },
+      {
+        "diametru": 125,
+        "pret": 48.99,
+        "obs": "5 infasurari/conducta"
+      },
+      {
+        "diametru": 140,
+        "pret": 65.665,
+        "obs": "6 infasurari/conducta"
+      },
+      {
+        "diametru": 160,
+        "pret": 72.565,
+        "obs": "6 infasurari/conducta"
+      }
+    ],
+    "otel": [
+      {
+        "diametru": 22,
+        "pret": 4.255,
+        "obs": "1 infasurare/conducta"
+      },
+      {
+        "diametru": 28,
+        "pret": 4.715,
+        "obs": "1 infasurare/conducta"
+      },
+      {
+        "diametru": 35,
+        "pret": 5.175,
+        "obs": "1 infasurare/conducta"
+      },
+      {
+        "diametru": 42,
+        "pret": 6.44,
+        "obs": "1 infasurare/conducta"
+      },
+      {
+        "diametru": 48,
+        "pret": 6.67,
+        "obs": "1 infasurare/conducta"
+      },
+      {
+        "diametru": 60,
+        "pret": 7.475,
+        "obs": "1 infasurare/conducta"
+      },
+      {
+        "diametru": 64,
+        "pret": 7.935,
+        "obs": "1 infasurare/conducta"
+      },
+      {
+        "diametru": 76,
+        "pret": 8.51,
+        "obs": "1 infasurare/conducta"
+      },
+      {
+        "diametru": 89,
+        "pret": 8.97,
+        "obs": "1 infasurare/conducta"
+      },
+      {
+        "diametru": 114,
+        "pret": 10.58,
+        "obs": "1 infasurare/conducta"
+      },
+      {
+        "diametru": 140,
+        "pret": 12.19,
+        "obs": "1 infasurare/conducta"
+      },
+      {
+        "diametru": 168,
+        "pret": 13.915,
+        "obs": "1 infasurare/conducta"
+      }
+    ]
+  },
   "colier_promastop": [
     {
       "diametru": 43,

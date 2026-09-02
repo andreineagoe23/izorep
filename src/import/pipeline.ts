@@ -1,9 +1,14 @@
 import { parseWorkbook, type LinieBruta } from "./parse-workbook.js";
+import { adaugaSectiuni } from "./sectiuni.js";
 import { extrageDeterminist } from "./extract-regex.js";
 import { extrageCuModel, type OptiuniModel } from "./extract-llm.js";
 import type { LinieExtrasa } from "./schema.js";
 import { tarifeaza } from "../pricing/engine.js";
-import { PozitieNetarifata, type RezultatTarifare } from "../pricing/types.js";
+import { tarifeazaGolFoc } from "../pricing/goluri-foc.js";
+import {
+  PozitieNetarifata,
+  type RezultatGolFoc, type RezultatTarifare,
+} from "../pricing/types.js";
 
 export type Sursa = "regex" | "model";
 
@@ -11,7 +16,12 @@ export interface LinieProcesata {
   bruta: LinieBruta;
   extras: LinieExtrasa;
   sursa: Sursa;
-  pret?: RezultatTarifare;
+  /**
+   * Cele doua forme de rezultat au altceva inauntru — straturi la matrice,
+   * componente la inchiderile la foc — dar impart pret_unitar, cantitate si
+   * total, singurele campuri de care are nevoie raportul.
+   */
+  pret?: RezultatTarifare | RezultatGolFoc;
   /** Motivul pentru care linia nu s-a putut tarifa. */
   eroare?: string;
   /** true daca linia trebuie sa treaca prin ecranul de validare umana. */
@@ -44,13 +54,13 @@ export async function importaFisier(
   const prag = optiuni.pragIncredere
     ?? Number(process.env["IZOREP_CONFIDENCE_THRESHOLD"] ?? 0.85);
 
-  const brute = await parseWorkbook(cale);
+  const brute = adaugaSectiuni(await parseWorkbook(cale));
 
   // L2a - determinist
   const rezolvate = new Map<number, { extras: LinieExtrasa; sursa: Sursa }>();
   const reziduale: { index: number; text: string; um?: string }[] = [];
   for (const b of brute) {
-    const r = extrageDeterminist(b.index, b.text, b.um);
+    const r = extrageDeterminist(b.index, b.text, b.um, b.sectiune);
     if (r.complet) rezolvate.set(b.index, { extras: r.linie, sursa: "regex" });
     else reziduale.push({ index: b.index, text: b.text, ...(b.um ? { um: b.um } : {}) });
   }
@@ -74,7 +84,23 @@ export async function importaFisier(
       necesitaValidare: extras.sistem !== null && extras.incredere < prag,
     };
 
-    if (extras.sistem && extras.diametru_valoare !== null && extras.diametru_tip) {
+    if (extras.sistem === "goluri_foc") {
+      try {
+        if (extras.gol_latime_mm === null || extras.gol_inaltime_mm === null) {
+          throw new PozitieNetarifata(
+            "inchidere gol la foc fara dimensiunea golului; pretul vine din suprafata lui",
+            { index: b.index },
+          );
+        }
+        proc.pret = tarifeazaGolFoc({
+          gol: { latime_mm: extras.gol_latime_mm, inaltime_mm: extras.gol_inaltime_mm },
+          cantitate: b.cantitate ?? 1,
+        });
+      } catch (e) {
+        proc.eroare = e instanceof PozitieNetarifata ? e.message : String(e);
+        proc.necesitaValidare = true;
+      }
+    } else if (extras.sistem && extras.diametru_valoare !== null && extras.diametru_tip) {
       try {
         proc.pret = tarifeaza({
           diametru: { valoare: extras.diametru_valoare, tip: extras.diametru_tip },

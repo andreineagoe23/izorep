@@ -1,9 +1,9 @@
 import { tarifeaza } from "../../src/pricing/engine.js";
-import { PozitieNetarifata, type Forma, type Sistem, type Strat } from "../../src/pricing/types.js";
+import { PozitieNetarifata, type Forma, type SistemMatrice, type Strat } from "../../src/pricing/types.js";
 import { lista } from "../../src/pricing/lists.js";
 import { esc, eur, nota, tabel, type Ecran } from "./tip.js";
 
-const SISTEME: [Sistem, string][] = [
+const SISTEME: [SistemMatrice, string][] = [
   ["elastomer", "elastomer (Armaflex)"],
   ["vata_minerala", "vată minerală"],
   ["tabla", "protecție tablă"],
@@ -11,7 +11,7 @@ const SISTEME: [Sistem, string][] = [
 ];
 
 /** Poziții reale din Oferta 118 / 27.04.2026, ca demonstrație. */
-const EXEMPLE: Record<string, { diam: number; tip: string; forma: string; cant: number; straturi: [Sistem, number | ""][] }> = {
+const EXEMPLE: Record<string, { diam: number; tip: string; forma: string; cant: number; straturi: [SistemMatrice, number | ""][] }> = {
   dn80: { diam: 80, tip: "DN", forma: "ml", cant: 345, straturi: [["elastomer", 13], ["vata_minerala", 40], ["tabla", ""]] },
   dn100: { diam: 100, tip: "DN", forma: "ml", cant: 60, straturi: [["elastomer", 13], ["vata_minerala", 40], ["tabla", ""]] },
   tub: { diam: 100, tip: "DN", forma: "mp", cant: 460, straturi: [["vata_minerala", 50], ["tabla", ""]] },
@@ -68,11 +68,11 @@ export const ecran: Ecran = {
 
     const $ = <T extends HTMLElement>(s: string) => root.querySelector(s) as T;
 
-    function randStrat(sistem: Sistem = "elastomer", grosime: number | "" = 13): HTMLDivElement {
+    function randStrat(sistem: SistemMatrice = "elastomer", grosime: number | "" = 13): HTMLDivElement {
       const div = document.createElement("div");
       div.className = "strat";
       div.innerHTML = `
-        <label style="flex:1;margin:0">Sistem
+        <label style="flex:1;margin:0">SistemMatrice
           <select class="s">${SISTEME.map(([v, t]) => `<option value="${v}"${v === sistem ? " selected" : ""}>${t}</option>`).join("")}</select>
         </label>
         <label style="flex:0 0 112px;margin:0">Grosime <select class="g"></select></label>
@@ -81,7 +81,7 @@ export const ecran: Ecran = {
       const sel = div.querySelector<HTMLSelectElement>(".s")!;
       const gro = div.querySelector<HTMLSelectElement>(".g")!;
       const umple = (pastreaza?: number | "") => {
-        const g = lista(sel.value as Sistem).grosimi_mm;
+        const g = lista(sel.value as SistemMatrice).grosimi_mm;
         // Tabla și PVC nu au grosime aleasă de utilizator: e implicită.
         gro.innerHTML = g.length
           ? g.map((x) => `<option value="${x}"${x === pastreaza ? " selected" : ""}>${x} mm</option>`).join("")
@@ -99,7 +99,7 @@ export const ecran: Ecran = {
 
     function citeste(): Strat[] {
       return [...$("#straturi").children].map((el) => {
-        const sistem = el.querySelector<HTMLSelectElement>(".s")!.value as Sistem;
+        const sistem = el.querySelector<HTMLSelectElement>(".s")!.value as SistemMatrice;
         const g = el.querySelector<HTMLSelectElement>(".g")!.value;
         return g === "" ? { sistem } : { sistem, grosime_mm: Number(g) };
       });

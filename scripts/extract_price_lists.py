@@ -158,19 +158,44 @@ for i in range(12, 24):
         mp = num(label)
         praguri.append({"pana_la_mp": mp, "pret_buc": price})
 peste = num(r[23][4])
-wrap, colier = [], []
-for i in range(32, 72):
-    row = r[i]
-    d = num(row[1]) if row[1] else None
-    if d is None:
+# Banda WRAP are DOUA tabele in lista firmei, cu preturi complet diferite
+# la acelasi diametru: "conducte plastic" (2-6 infasurari, ø32-ø160) si
+# "conducte otel" (1 infasurare, ø22-ø168). La ø140 sunt 65,665 fata de
+# 12,19 EUR. Varianta anterioara le citea ca pe un singur tabel si taia
+# arbitrar la randul 60, pastrand din otel doar primul rand — deci ø140 otel
+# ar fi fost tarifat cu pretul de plastic. Sectiunile se recunosc dupa
+# antetul lor, nu dupa indici ficsi.
+H_PLASTIC = re.compile(r"banda\s+WRAP.*conducte\s+plastic|conducte\s+plastic.*banda\s+WRAP", re.I)
+H_OTEL = re.compile(r"banda\s+WRAP.*conducte\s+otel|conducte\s+otel.*banda\s+WRAP", re.I)
+H_COLIER = re.compile(r"colier\s+de\s+protectie\s+antifoc", re.I)
+
+wrap_plastic, wrap_otel, colier = [], [], []
+sectiune = None
+for row in r:
+    antet = " ".join(str(c) for c in row if c)
+    if H_PLASTIC.search(antet):
+        sectiune = wrap_plastic
         continue
-    if i < 60 and num(row[2]) is not None:
-        wrap.append({"diametru": int(d), "pret": num(row[2]), "obs": str(row[4] or "")})
-for i in range(79, 94):
-    row = r[i]
-    d = num(row[1]) if len(row) > 1 and row[1] else None
-    if d is not None and num(row[2]) is not None:
-        colier.append({"diametru": int(d), "pret_urcare_1colier": num(row[2]), "pret_orizontal_2coliere": num(row[4])})
+    if H_OTEL.search(antet):
+        sectiune = wrap_otel
+        continue
+    if H_COLIER.search(antet):
+        sectiune = colier
+        continue
+    if sectiune is None or len(row) < 3 or not row[1]:
+        continue
+    # Coloana "Dimensiune conducta" e scrisa "ø32". Fara marcajul asta,
+    # randul e antet de tabel sau nota, nu o intrare de pret.
+    if not re.match(r"\s*[øØ]\s*\d", str(row[1])):
+        continue
+    d, pret = num(row[1]), num(row[2])
+    if d is None or pret is None:
+        continue
+    if sectiune is colier:
+        colier.append({"diametru": int(d), "pret_urcare_1colier": pret,
+                       "pret_orizontal_2coliere": num(row[4])})
+    else:
+        sectiune.append({"diametru": int(d), "pret": pret, "obs": str(row[4] or "")})
 out["goluri_foc"] = {
     "sistem": "goluri_foc",
     "denumire": "Inchideri goluri la foc EI60 / EI90 / EI120",
@@ -179,7 +204,7 @@ out["goluri_foc"] = {
     "regula": "pret final = gol (dupa suprafata) + banda WRAP (optional) + colier PROMASTOP (optional)",
     "praguri_suprafata": praguri[:-1],
     "peste_1mp_pret_pe_mp": peste,
-    "banda_wrap": wrap,
+    "banda_wrap": {"plastic": wrap_plastic, "otel": wrap_otel},
     "colier_promastop": colier,
 }
 

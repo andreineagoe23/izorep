@@ -3,7 +3,7 @@ import { lista, diametre, grosimiLa, type BandaMultiplicator } from "./lists.js"
 import {
   PozitieNetarifata,
   type CerereTarifare, type Forma, type RezultatTarifare,
-  type Sistem, type Strat, type StratTarifat,
+  type SistemMatrice, type Strat, type StratMatrice, type StratTarifat,
 } from "./types.js";
 
 /** Rotunjire comerciala la 2 zecimale. Se aplica PE FIECARE STRAT, nu la final. */
@@ -59,7 +59,7 @@ export function randPentruTeava(valoare: number, randuri: number[], tip: TipDiam
   return randuri.find((r) => r >= valoare) ?? max;
 }
 
-function grosimeEfectiva(sistem: Sistem, rand: number, ceruta: number | undefined): number | null {
+function grosimeEfectiva(sistem: SistemMatrice, rand: number, ceruta: number | undefined): number | null {
   if (sistem === "pvc") return null;               // PVC nu are coloana de grosime
   if (ceruta !== undefined) return ceruta;
   const disp = grosimiLa(sistem, rand);
@@ -68,7 +68,7 @@ function grosimeEfectiva(sistem: Sistem, rand: number, ceruta: number | undefine
   throw new PozitieNetarifata("grosime nespecificata si ambigua", { sistem, rand, disponibile: disp });
 }
 
-function cauta(sistem: Sistem, rand: number, grosime: number | null): number {
+function cauta(sistem: SistemMatrice, rand: number, grosime: number | null): number {
   const cheie = `${rand}|${grosime === null ? "-" : grosime}`;
   const p = lista(sistem).cells[cheie];
   if (p === undefined) {
@@ -103,7 +103,7 @@ const CAMP_MULTIPLICATOR: Record<Forma, (keyof BandaMultiplicator)[]> = {
  * abateri negociate. Apelantul poate suprascrie, dar abaterea trebuie
  * marcata vizibil pe linie.
  */
-export function multiplicator(sistem: Sistem, rand: number, forma: Forma): number {
+export function multiplicator(sistem: SistemMatrice, rand: number, forma: Forma): number {
   if (forma === "ml" || forma === "mp") return 1;
   const banda = lista(sistem).multiplicatori.find(
     (b) => rand >= b.band[0] && rand <= b.band[1],
@@ -121,6 +121,32 @@ export function multiplicator(sistem: Sistem, rand: number, forma: Forma): numbe
 }
 
 /**
+ * Ingusteaza straturile la sistemele tarifate din matrice.
+ *
+ * Inchiderile de goluri la foc au pret ADITIV — gol dupa suprafata, plus
+ * banda WRAP, plus colier — nu matrice ø × grosime, deci nu au ce cauta in
+ * `tarifeaza`. Se tarifeaza cu `tarifeazaGolFoc` din ./goluri-foc.ts, care
+ * cere alti parametri: dimensiunile golului, nu diametru si grosime.
+ *
+ * Verificarea e explicita ca sa dea pozitia marcata cu motiv, nu un
+ * TypeError opac pe o lista cu alta structura.
+ */
+function straturiMatrice(straturi: Strat[]): StratMatrice[] {
+  const out: StratMatrice[] = [];
+  for (const s of straturi) {
+    const sistem = s.sistem;
+    if (sistem === "goluri_foc") {
+      throw new PozitieNetarifata(
+        "inchiderile de goluri la foc au pret aditiv; se tarifeaza cu tarifeazaGolFoc, pe dimensiunile golului",
+        { sistem },
+      );
+    }
+    out.push(s.grosime_mm === undefined ? { sistem } : { sistem, grosime_mm: s.grosime_mm });
+  }
+  return out;
+}
+
+/**
  * Tarifeaza o pozitie, inclusiv compusa din mai multe straturi.
  *
  * Regula, reprodusa din ofertele reale (vezi teste):
@@ -135,23 +161,12 @@ export function tarifeaza(cerere: CerereTarifare): RezultatTarifare {
   const { diametru, straturi, forma, cantitate } = cerere;
   if (straturi.length === 0) throw new PozitieNetarifata("pozitie fara straturi", { cerere });
 
-  // Inchiderile de goluri la foc au pret ADITIV (gol dupa suprafata + banda
-  // WRAP + colier PROMASTOP), nu matrice ø × grosime. Datele exista in
-  // data/price-lists/goluri_foc.json, dar regula nu e scrisa inca. Fara
-  // verificarea asta, lista cu alta structura pica intr-un TypeError opac in
-  // loc de pozitia marcata pentru tarifare manuala.
-  if (straturi.some((s) => s.sistem === "goluri_foc")) {
-    throw new PozitieNetarifata(
-      "inchiderile de goluri la foc se tarifeaza aditiv, nemodelat inca in motor",
-      { sistem: "goluri_foc" },
-    );
-  }
-
+  const matrice = straturiMatrice(straturi);
   const od = toOuterDiameter(diametru.valoare, diametru.tip);
   const tarifate: StratTarifat[] = [];
   let geometric = od;
 
-  for (const [i, strat] of straturi.entries()) {
+  for (const [i, strat] of matrice.entries()) {
     const randuri = diametre(strat.sistem);
     // Primul strat sta pe teava si respecta regula de potrivire a tevii.
     // Straturile urmatoare stau peste izolatie: acolo se cauta cel mai
@@ -182,7 +197,7 @@ export function tarifeaza(cerere: CerereTarifare): RezultatTarifare {
     geometric = baza + 2 * (grosime ?? 0);
   }
 
-  const mult = multiplicator(straturi[0]!.sistem, tarifate[0]!.rand_lista, forma);
+  const mult = multiplicator(matrice[0]!.sistem, tarifate[0]!.rand_lista, forma);
   const unitar = bani(tarifate.reduce((s, t) => s + t.pret_unitar, 0) * mult);
 
   return {
@@ -197,7 +212,7 @@ export function tarifeaza(cerere: CerereTarifare): RezultatTarifare {
 
 /** Helper pentru pozitii simple, cu un singur strat. */
 export function tarifeazaSimplu(
-  sistem: Sistem, dn: number, grosime_mm: number | undefined, forma: Forma, cantitate = 1,
+  sistem: SistemMatrice, dn: number, grosime_mm: number | undefined, forma: Forma, cantitate = 1,
 ): RezultatTarifare {
   const strat: Strat = grosime_mm === undefined ? { sistem } : { sistem, grosime_mm };
   return tarifeaza({ diametru: { valoare: dn, tip: "DN" }, straturi: [strat], forma, cantitate });

@@ -1,0 +1,691 @@
+[
+  {
+    "nr": 1,
+    "clasa": "EI30",
+    "denumire": "Teava OL/OLZN DN15",
+    "um": "buc",
+    "cant": 6,
+    "gol": {
+      "latime_mm": 130,
+      "inaltime_mm": 130
+    },
+    "suprafata_afisata": 0.02,
+    "pu": 23.05
+  },
+  {
+    "nr": 2,
+    "clasa": "EI30",
+    "denumire": "Teava OL /OLZNDN20",
+    "um": "buc",
+    "cant": 64,
+    "gol": {
+      "latime_mm": 130,
+      "inaltime_mm": 130
+    },
+    "suprafata_afisata": 0.02,
+    "pu": 23.05
+  },
+  {
+    "nr": 3,
+    "clasa": "EI30",
+    "denumire": "Teava OL/OLZN DN25",
+    "um": "buc",
+    "cant": 28,
+    "gol": {
+      "latime_mm": 140,
+      "inaltime_mm": 140
+    },
+    "suprafata_afisata": 0.02,
+    "pu": 23.05
+  },
+  {
+    "nr": 4,
+    "clasa": "EI30",
+    "denumire": "Teava OL/OLZN DN32",
+    "um": "buc",
+    "cant": 22,
+    "gol": {
+      "latime_mm": 150,
+      "inaltime_mm": 150
+    },
+    "suprafata_afisata": 0.03,
+    "pu": 23.05
+  },
+  {
+    "nr": 5,
+    "clasa": "EI30",
+    "denumire": "Teava OL/OLZN DN40",
+    "um": "buc",
+    "cant": 2,
+    "gol": {
+      "latime_mm": 260,
+      "inaltime_mm": 260
+    },
+    "suprafata_afisata": 0.07,
+    "pu": 26.89
+  },
+  {
+    "nr": 6,
+    "clasa": "EI30",
+    "denumire": "Teava OL/OLZN DN50",
+    "um": "buc",
+    "cant": 1,
+    "gol": {
+      "latime_mm": 260,
+      "inaltime_mm": 260
+    },
+    "suprafata_afisata": 0.07,
+    "pu": 26.89
+  },
+  {
+    "nr": 7,
+    "clasa": "EI30",
+    "denumire": "Teava OL/OLZN DN65",
+    "um": "buc",
+    "cant": 1,
+    "gol": {
+      "latime_mm": 280,
+      "inaltime_mm": 280
+    },
+    "suprafata_afisata": 0.08,
+    "pu": 26.89
+  },
+  {
+    "nr": 8,
+    "clasa": "EI30",
+    "denumire": "Teava OL/OLZN DN80",
+    "um": "buc",
+    "cant": 3,
+    "gol": {
+      "latime_mm": 290,
+      "inaltime_mm": 290
+    },
+    "suprafata_afisata": 0.09,
+    "pu": 26.89
+  },
+  {
+    "nr": 9,
+    "clasa": "EI30",
+    "denumire": "Teava OL/OLZN DN100",
+    "um": "buc",
+    "cant": 1,
+    "gol": {
+      "latime_mm": 320,
+      "inaltime_mm": 320
+    },
+    "suprafata_afisata": 0.11,
+    "pu": 30.36
+  },
+  {
+    "nr": 10,
+    "clasa": "EI30",
+    "denumire": "Teava PPR 50",
+    "um": "buc",
+    "cant": 7,
+    "gol": {
+      "latime_mm": 260,
+      "inaltime_mm": 260
+    },
+    "suprafata_afisata": 0.07,
+    "pu": 26.89
+  },
+  {
+    "nr": 11,
+    "clasa": "EI30",
+    "denumire": "Teava PP 50",
+    "um": "buc",
+    "cant": 31,
+    "gol": {
+      "latime_mm": 260,
+      "inaltime_mm": 260
+    },
+    "suprafata_afisata": 0.07,
+    "pu": 26.89
+  },
+  {
+    "nr": 12,
+    "clasa": "EI30",
+    "denumire": "Teava PP 110",
+    "um": "buc",
+    "cant": 33,
+    "gol": {
+      "latime_mm": 320,
+      "inaltime_mm": 320
+    },
+    "suprafata_afisata": 0.11,
+    "pu": 30.36
+  },
+  {
+    "nr": 13,
+    "clasa": "EI30",
+    "denumire": "Teava PP 125",
+    "um": "buc",
+    "cant": 2,
+    "gol": {
+      "latime_mm": 330,
+      "inaltime_mm": 330
+    },
+    "suprafata_afisata": 0.11,
+    "pu": 30.36
+  },
+  {
+    "nr": 14,
+    "clasa": "EI30",
+    "denumire": "Teava PP 160",
+    "um": "buc",
+    "cant": 4,
+    "gol": {
+      "latime_mm": 360,
+      "inaltime_mm": 360
+    },
+    "suprafata_afisata": 0.13,
+    "pu": 30.36
+  },
+  {
+    "nr": 15,
+    "clasa": "EI30",
+    "denumire": "Teava PEHD 110",
+    "um": "buc",
+    "cant": 2,
+    "gol": {
+      "latime_mm": 320,
+      "inaltime_mm": 320
+    },
+    "suprafata_afisata": 0.11,
+    "pu": 30.36
+  },
+  {
+    "nr": 16,
+    "clasa": "EI30",
+    "denumire": "Teava PEHD 160",
+    "um": "buc",
+    "cant": 4,
+    "gol": {
+      "latime_mm": 360,
+      "inaltime_mm": 360
+    },
+    "suprafata_afisata": 0.13,
+    "pu": 30.36
+  },
+  {
+    "nr": 17,
+    "clasa": "EI60",
+    "denumire": "Teava OL /OLZNDN20",
+    "um": "buc",
+    "cant": 4,
+    "gol": {
+      "latime_mm": 130,
+      "inaltime_mm": 130
+    },
+    "suprafata_afisata": 0.02,
+    "pu": 23.05
+  },
+  {
+    "nr": 18,
+    "clasa": "EI60",
+    "denumire": "Teava OL/OLZN DN25",
+    "um": "buc",
+    "cant": 8,
+    "gol": {
+      "latime_mm": 140,
+      "inaltime_mm": 140
+    },
+    "suprafata_afisata": 0.02,
+    "pu": 23.05
+  },
+  {
+    "nr": 19,
+    "clasa": "EI60",
+    "denumire": "Teava OL/OLZN DN32",
+    "um": "buc",
+    "cant": 9,
+    "gol": {
+      "latime_mm": 150,
+      "inaltime_mm": 150
+    },
+    "suprafata_afisata": 0.03,
+    "pu": 23.05
+  },
+  {
+    "nr": 20,
+    "clasa": "EI60",
+    "denumire": "Teava OL/OLZN DN40",
+    "um": "buc",
+    "cant": 5,
+    "gol": {
+      "latime_mm": 260,
+      "inaltime_mm": 260
+    },
+    "suprafata_afisata": 0.07,
+    "pu": 26.89
+  },
+  {
+    "nr": 21,
+    "clasa": "EI60",
+    "denumire": "Teava OL/OLZN DN50",
+    "um": "buc",
+    "cant": 1,
+    "gol": {
+      "latime_mm": 260,
+      "inaltime_mm": 260
+    },
+    "suprafata_afisata": 0.07,
+    "pu": 26.89
+  },
+  {
+    "nr": 22,
+    "clasa": "EI60",
+    "denumire": "Teava OL/OLZN DN65",
+    "um": "buc",
+    "cant": 10,
+    "gol": {
+      "latime_mm": 280,
+      "inaltime_mm": 280
+    },
+    "suprafata_afisata": 0.08,
+    "pu": 26.89
+  },
+  {
+    "nr": 23,
+    "clasa": "EI60",
+    "denumire": "Teava OL/OLZN DN80",
+    "um": "buc",
+    "cant": 3,
+    "gol": {
+      "latime_mm": 290,
+      "inaltime_mm": 290
+    },
+    "suprafata_afisata": 0.09,
+    "pu": 26.89
+  },
+  {
+    "nr": 24,
+    "clasa": "EI60",
+    "denumire": "Teava OL/OLZN DN100",
+    "um": "buc",
+    "cant": 3,
+    "gol": {
+      "latime_mm": 320,
+      "inaltime_mm": 320
+    },
+    "suprafata_afisata": 0.11,
+    "pu": 30.36
+  },
+  {
+    "nr": 25,
+    "clasa": "EI60",
+    "denumire": "Teava OL/OLZN DN150",
+    "um": "buc",
+    "cant": 2,
+    "gol": {
+      "latime_mm": 370,
+      "inaltime_mm": 370
+    },
+    "suprafata_afisata": 0.14,
+    "pu": 30.36
+  },
+  {
+    "nr": 26,
+    "clasa": "EI60",
+    "denumire": "Teava PPR 50",
+    "um": "buc",
+    "cant": 9,
+    "gol": {
+      "latime_mm": 260,
+      "inaltime_mm": 260
+    },
+    "suprafata_afisata": 0.07,
+    "pu": 26.89
+  },
+  {
+    "nr": 27,
+    "clasa": "EI60",
+    "denumire": "Teava PP 50",
+    "um": "buc",
+    "cant": 3,
+    "gol": {
+      "latime_mm": 260,
+      "inaltime_mm": 260
+    },
+    "suprafata_afisata": 0.07,
+    "pu": 26.89
+  },
+  {
+    "nr": 28,
+    "clasa": "EI60",
+    "denumire": "Teava PEHD 110",
+    "um": "buc",
+    "cant": 2,
+    "gol": {
+      "latime_mm": 320,
+      "inaltime_mm": 320
+    },
+    "suprafata_afisata": 0.11,
+    "pu": 30.36
+  },
+  {
+    "nr": 29,
+    "clasa": "EI120",
+    "denumire": "Teava OL/OLZN DN15",
+    "um": "buc",
+    "cant": 3,
+    "gol": {
+      "latime_mm": 130,
+      "inaltime_mm": 130
+    },
+    "suprafata_afisata": 0.02,
+    "pu": 23.05
+  },
+  {
+    "nr": 30,
+    "clasa": "EI120",
+    "denumire": "Teava OL /OLZNDN20",
+    "um": "buc",
+    "cant": 6,
+    "gol": {
+      "latime_mm": 130,
+      "inaltime_mm": 130
+    },
+    "suprafata_afisata": 0.02,
+    "pu": 23.05
+  },
+  {
+    "nr": 31,
+    "clasa": "EI120",
+    "denumire": "Teava OL/OLZN DN32",
+    "um": "buc",
+    "cant": 2,
+    "gol": {
+      "latime_mm": 150,
+      "inaltime_mm": 150
+    },
+    "suprafata_afisata": 0.03,
+    "pu": 23.05
+  },
+  {
+    "nr": 32,
+    "clasa": "EI120",
+    "denumire": "Teava OL/OLZN DN40",
+    "um": "buc",
+    "cant": 3,
+    "gol": {
+      "latime_mm": 260,
+      "inaltime_mm": 260
+    },
+    "suprafata_afisata": 0.07,
+    "pu": 26.89
+  },
+  {
+    "nr": 33,
+    "clasa": "EI120",
+    "denumire": "Teava OL/OLZN DN50",
+    "um": "buc",
+    "cant": 22,
+    "gol": {
+      "latime_mm": 260,
+      "inaltime_mm": 260
+    },
+    "suprafata_afisata": 0.07,
+    "pu": 26.89
+  },
+  {
+    "nr": 34,
+    "clasa": "EI120",
+    "denumire": "Teava OL/OLZN DN65",
+    "um": "buc",
+    "cant": 21,
+    "gol": {
+      "latime_mm": 280,
+      "inaltime_mm": 280
+    },
+    "suprafata_afisata": 0.08,
+    "pu": 26.89
+  },
+  {
+    "nr": 35,
+    "clasa": "EI120",
+    "denumire": "Teava OL/OLZN DN80",
+    "um": "buc",
+    "cant": 13,
+    "gol": {
+      "latime_mm": 290,
+      "inaltime_mm": 290
+    },
+    "suprafata_afisata": 0.09,
+    "pu": 26.89
+  },
+  {
+    "nr": 36,
+    "clasa": "EI120",
+    "denumire": "Teava OL/OLZN DN100",
+    "um": "buc",
+    "cant": 13,
+    "gol": {
+      "latime_mm": 320,
+      "inaltime_mm": 320
+    },
+    "suprafata_afisata": 0.11,
+    "pu": 30.36
+  },
+  {
+    "nr": 37,
+    "clasa": "EI120",
+    "denumire": "Teava OL/OLZN DN150",
+    "um": "buc",
+    "cant": 10,
+    "gol": {
+      "latime_mm": 370,
+      "inaltime_mm": 370
+    },
+    "suprafata_afisata": 0.14,
+    "pu": 30.36
+  },
+  {
+    "nr": 38,
+    "clasa": "EI120",
+    "denumire": "Teava PPR 50",
+    "um": "buc",
+    "cant": 4,
+    "gol": {
+      "latime_mm": 260,
+      "inaltime_mm": 260
+    },
+    "suprafata_afisata": 0.07,
+    "pu": 26.89
+  },
+  {
+    "nr": 39,
+    "clasa": "EI120",
+    "denumire": "Teava PP 75",
+    "um": "buc",
+    "cant": 8,
+    "gol": {
+      "latime_mm": 280,
+      "inaltime_mm": 280
+    },
+    "suprafata_afisata": 0.08,
+    "pu": 26.89
+  },
+  {
+    "nr": 40,
+    "clasa": "EI120",
+    "denumire": "Teava PP 110",
+    "um": "buc",
+    "cant": 15,
+    "gol": {
+      "latime_mm": 320,
+      "inaltime_mm": 320
+    },
+    "suprafata_afisata": 0.11,
+    "pu": 30.36
+  },
+  {
+    "nr": 41,
+    "clasa": "EI120",
+    "denumire": "Teava PEHD 110",
+    "um": "buc",
+    "cant": 12,
+    "gol": {
+      "latime_mm": 320,
+      "inaltime_mm": 320
+    },
+    "suprafata_afisata": 0.11,
+    "pu": 30.36
+  },
+  {
+    "nr": 42,
+    "clasa": "EI120",
+    "denumire": "Teava PEHD 160",
+    "um": "buc",
+    "cant": 12,
+    "gol": {
+      "latime_mm": 360,
+      "inaltime_mm": 360
+    },
+    "suprafata_afisata": 0.13,
+    "pu": 30.36
+  },
+  {
+    "nr": 43,
+    "clasa": "EI120",
+    "denumire": "Tubultura circulara Ø100",
+    "um": "buc",
+    "cant": 4,
+    "gol": {
+      "latime_mm": 300,
+      "inaltime_mm": 300
+    },
+    "suprafata_afisata": 0.09,
+    "pu": 26.89
+  },
+  {
+    "nr": 44,
+    "clasa": "EI120",
+    "denumire": "Tubultura circulara Ø125",
+    "um": "buc",
+    "cant": 1,
+    "gol": {
+      "latime_mm": 330,
+      "inaltime_mm": 330
+    },
+    "suprafata_afisata": 0.11,
+    "pu": 30.36
+  },
+  {
+    "nr": 45,
+    "clasa": "EI120",
+    "denumire": "Tubultura circulara Ø160",
+    "um": "buc",
+    "cant": 4,
+    "gol": {
+      "latime_mm": 360,
+      "inaltime_mm": 360
+    },
+    "suprafata_afisata": 0.13,
+    "pu": 30.36
+  },
+  {
+    "nr": 46,
+    "clasa": "EI120",
+    "denumire": "Tubultura circulara Ø200",
+    "um": "buc",
+    "cant": 10,
+    "gol": {
+      "latime_mm": 400,
+      "inaltime_mm": 400
+    },
+    "suprafata_afisata": 0.16,
+    "pu": 30.36
+  },
+  {
+    "nr": 47,
+    "clasa": "EI120",
+    "denumire": "Tubultura circulara Ø315",
+    "um": "buc",
+    "cant": 1,
+    "gol": {
+      "latime_mm": 520,
+      "inaltime_mm": 520
+    },
+    "suprafata_afisata": 0.27,
+    "pu": 34.59
+  },
+  {
+    "nr": 48,
+    "clasa": "EI120",
+    "denumire": "Tubulatura rectangulara 1200x350",
+    "um": "buc",
+    "cant": 1,
+    "gol": {
+      "latime_mm": 1400,
+      "inaltime_mm": 600
+    },
+    "suprafata_afisata": 0.84,
+    "pu": 84.51
+  },
+  {
+    "nr": 49,
+    "clasa": "EI120",
+    "denumire": "Tubulatura rectangulara 1200x400",
+    "um": "buc",
+    "cant": 3,
+    "gol": {
+      "latime_mm": 1400,
+      "inaltime_mm": 600
+    },
+    "suprafata_afisata": 0.84,
+    "pu": 84.51
+  },
+  {
+    "nr": 50,
+    "clasa": "EI120",
+    "denumire": "Tubulatura rectangulara 1250x350",
+    "um": "buc",
+    "cant": 2,
+    "gol": {
+      "latime_mm": 1500,
+      "inaltime_mm": 600
+    },
+    "suprafata_afisata": 0.9,
+    "pu": 84.51
+  },
+  {
+    "nr": 51,
+    "clasa": "EI120",
+    "denumire": "Tubulatura rectangulara 600x350",
+    "um": "buc",
+    "cant": 1,
+    "gol": {
+      "latime_mm": 800,
+      "inaltime_mm": 600
+    },
+    "suprafata_afisata": 0.48,
+    "pu": 48.02
+  },
+  {
+    "nr": 52,
+    "clasa": "EI120",
+    "denumire": "Tubulatura rectangulara 700x350",
+    "um": "buc",
+    "cant": 10,
+    "gol": {
+      "latime_mm": 900,
+      "inaltime_mm": 600
+    },
+    "suprafata_afisata": 0.54,
+    "pu": 53.78
+  },
+  {
+    "nr": 53,
+    "clasa": "EI120",
+    "denumire": "Tubulatura rectangulara 750x350",
+    "um": "buc",
+    "cant": 1,
+    "gol": {
+      "latime_mm": 1000,
+      "inaltime_mm": 600
+    },
+    "suprafata_afisata": 0.6,
+    "pu": 53.78
+  }
+]

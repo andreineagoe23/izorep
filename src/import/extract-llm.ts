@@ -42,6 +42,11 @@ FORMA: "ml" pentru metru liniar, "mp" pentru metru patrat (tubulatura), sau tipu
 elementului special: cot, teu, manseta, flansa, robinet, contor, filtru, pompa.
 Foloseste unitatea de masura din coloana UM daca exista.
 
+GOL_LATIME_MM / GOL_INALTIME_MM: doar la sistem="goluri_foc". Dimensiunile golului
+taiat in perete, scrise "130/130", "1400/600" intr-o coloana "dimensiune gol".
+Acolo pretul vine din SUPRAFATA golului, nu din diametrul conductei, deci fara
+ele linia nu se poate tarifa. La orice alt sistem, null.
+
 STRATURI_EXTRA: pentru pozitii compuse, straturile de PESTE primul, in ordine.
 Ex: "DN80 elastomer 13mm + vata 40mm + tabla" -> sistem=elastomer, grosime=13,
 straturi_extra=[{vata_minerala,40},{tabla,null}].

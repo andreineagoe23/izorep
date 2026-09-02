@@ -1,4 +1,5 @@
 import { tarifeaza } from "../../src/pricing/engine.js";
+import { tarifeazaGolFoc } from "../../src/pricing/goluri-foc.js";
 import { extrageDeterminist } from "../../src/import/extract-regex.js";
 import type { LinieExtrasa } from "../../src/import/schema.js";
 import { esc, eur, indicator, nota, progres, stare, tabel, type Ecran } from "./tip.js";
@@ -52,6 +53,25 @@ interface LinieRaport {
 
 /** Tarifare determinista, inclusiv pozitiile compuse extrase de model. */
 function tarifeazaLinie(extras: LinieExtrasa, cantitate: number): Pick<LinieRaport, "pret" | "total" | "eroare"> {
+  // Inchiderile goluri la foc au pret aditiv, calculat pe suprafata golului:
+  // diametrul si grosimea nu spun nimic acolo.
+  if (extras.sistem === "goluri_foc") {
+    if (extras.gol_latime_mm === null || extras.gol_inaltime_mm === null) {
+      return {
+        pret: null, total: null,
+        eroare: "închidere de gol la foc fără dimensiunea golului; prețul vine din suprafața lui",
+      };
+    }
+    try {
+      const r = tarifeazaGolFoc({
+        gol: { latime_mm: extras.gol_latime_mm, inaltime_mm: extras.gol_inaltime_mm },
+        cantitate,
+      });
+      return { pret: r.pret_unitar, total: r.total, eroare: null };
+    } catch (e) {
+      return { pret: null, total: null, eroare: e instanceof Error ? e.message : String(e) };
+    }
+  }
   if (!extras.sistem || extras.diametru_valoare === null || !extras.diametru_tip) {
     return { pret: null, total: null, eroare: null };
   }
@@ -122,13 +142,14 @@ export const ecran: Ecran = {
       try {
         // ExcelJS e ~940 kB: se încarcă la prima folosire, nu la deschiderea paginii.
         const { parseWorkbookBuffer } = await import("../../src/import/parse-workbook.js");
-        const brute = await parseWorkbookBuffer(await fisier.arrayBuffer());
+        const { adaugaSectiuni } = await import("../../src/import/sectiuni.js");
+        const brute = adaugaSectiuni(await parseWorkbookBuffer(await fisier.arrayBuffer()));
 
         // L2a — determinist. Ce iese complet de aici nu ajunge niciodată la model.
         const rezolvate = new Map<number, { extras: LinieExtrasa; sursa: Sursa }>();
         const reziduale: { index: number; text: string; um?: string }[] = [];
         for (const b of brute) {
-          const r = extrageDeterminist(b.index, b.text, b.um);
+          const r = extrageDeterminist(b.index, b.text, b.um, b.sectiune);
           if (r.complet) rezolvate.set(b.index, { extras: r.linie, sursa: "regex" });
           else reziduale.push({ index: b.index, text: b.text, ...(b.um ? { um: b.um } : {}) });
         }
@@ -221,9 +242,10 @@ export const ecran: Ecran = {
           </div>
           ${trunchiat > 0 ? nota(`Plafonul per import e de 400 de linii trimise la model; ${trunchiat} au rămas netrimise.`) : ""}
           ${izo.some((l) => l.extras.sistem === "goluri_foc")
-            ? nota("Fișierul conține <strong>închideri de goluri la foc</strong>. Ele au preț aditiv — gol după " +
-                "suprafață, plus bandă WRAP, plus colier — nu matrice ø × grosime, iar motorul nu le tarifează " +
-                "încă: pozițiile sunt extrase și marcate, nu ghicite.")
+            ? nota("Fișierul conține <strong>închideri goluri la foc</strong>, tarifate pe altă regulă: prețul " +
+                "vine din <strong>suprafața golului</strong> — nu din diametru și grosime — iar banda WRAP și " +
+                "colierul se adună peste el. O linie fără dimensiunea golului (<code>130/130</code>) rămâne " +
+                "netarifată și marcată, nu ghicită.")
             : ""}
           ${nota(info
             ? "Prețurile se calculează întotdeauna determinist, în browser. Modelul extrage doar parametri — sistem, " +

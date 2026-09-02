@@ -1,9 +1,9 @@
 import type { Ecran } from "./tip.js";
 import { eur, nr, esc, card, indicator, tabel, nota } from "./tip.js";
 import { lista, diametre, type BandaMultiplicator } from "../../src/pricing/lists.js";
-import type { Sistem } from "../../src/pricing/types.js";
+import type { SistemMatrice } from "../../src/pricing/types.js";
 
-const SISTEME: { id: Sistem; eticheta: string }[] = [
+const SISTEME: { id: SistemMatrice; eticheta: string }[] = [
   { id: "elastomer", eticheta: "Elastomer" },
   { id: "vata_minerala", eticheta: "Vată minerală" },
   { id: "tabla", eticheta: "Tablă" },
@@ -29,7 +29,7 @@ const formatFactor = (v: number | null | undefined): string =>
   v == null ? "—" : `× ${nr(v, Number.isInteger(v) ? 0 : 2)}`;
 
 /** Matricea diametru x grosime pentru sistemul dat, cu randul "per mp" adaugat la final daca exista. */
-function deseneazaMatrice(sistem: Sistem): string {
+function deseneazaMatrice(sistem: SistemMatrice): string {
   const l = lista(sistem);
   const diam = diametre(sistem);
   const areGrosimi = l.grosimi_mm.length > 0;
@@ -67,7 +67,7 @@ function deseneazaMatrice(sistem: Sistem): string {
   return `<div class="matrice">${tabel(capete, [...randuriDiam, ...randMp], clase)}</div>`;
 }
 
-function deseneazaMultiplicatori(sistem: Sistem): string {
+function deseneazaMultiplicatori(sistem: SistemMatrice): string {
   const l = lista(sistem);
   const campuriActive = CAMPURI_MULT.filter((c) => l.multiplicatori.some((m) => c.cheie in m));
   const capete = ["Bandă Ø mm", ...campuriActive.map((c) => c.eticheta)];
@@ -83,7 +83,7 @@ function deseneazaMultiplicatori(sistem: Sistem): string {
   return tabel(capete, randuri, clase);
 }
 
-function deseneazaIndicatori(sistem: Sistem): string {
+function deseneazaIndicatori(sistem: SistemMatrice): string {
   const l = lista(sistem);
   const diam = diametre(sistem);
   const areGrosimi = l.grosimi_mm.length > 0;
@@ -101,7 +101,7 @@ function deseneazaIndicatori(sistem: Sistem): string {
   </div>`;
 }
 
-function construiesteContinut(sistem: Sistem): string {
+function construiesteContinut(sistem: SistemMatrice): string {
   const l = lista(sistem);
   return `
     <h2>${esc(l.denumire)}</h2>
@@ -134,7 +134,7 @@ export const ecran: Ecran = {
   render(root) {
     root.innerHTML =
       card(
-        "Sistem",
+        "SistemMatrice",
         `<label for="sistemSel">Alege sistemul de izolație</label>
          <select id="sistemSel" class="ingust">
            ${SISTEME.map((s) => `<option value="${s.id}">${esc(s.eticheta)}</option>`).join("")}
@@ -145,11 +145,11 @@ export const ecran: Ecran = {
     const corp = root.querySelector<HTMLDivElement>("#corpPreturi");
     if (!select || !corp) return;
 
-    const deseneaza = (sistem: Sistem): void => {
+    const deseneaza = (sistem: SistemMatrice): void => {
       corp.innerHTML = construiesteContinut(sistem);
     };
 
-    select.addEventListener("change", () => deseneaza(select.value as Sistem));
+    select.addEventListener("change", () => deseneaza(select.value as SistemMatrice));
     deseneaza(SISTEME[0]!.id);
   },
 };
