@@ -1,4 +1,4 @@
-import { card, esc, eur, indicator, nota, nr, progres, stare, tabel, type Ecran } from "./tip.js";
+import { atentionare, card, esc, eur, indicator, nota, nr, progres, stare, tabel, type Ecran } from "./tip.js";
 import { CURS_BNR, DOCUMENTE, LUCRARI, client, santier, type StareLucrare } from "../date/seed.js";
 import { vedeCosturi } from "../nav.js";
 
@@ -46,7 +46,7 @@ function randIndicatori(): string {
 
   const notaRol = vedeCosturi() ? "" : nota("Valorile ofertate, facturate și marja se văd doar de rolul Patron.");
 
-  return `<div class="grid">${indicatori.join("")}</div>${notaRol}`;
+  return `<div class="stats">${indicatori.join("")}</div>${notaRol}`;
 }
 
 function sectiuneAtentie(): string {
@@ -66,7 +66,7 @@ function sectiuneAtentie(): string {
   if (cerereMaiMare) {
     const c = client(cerereMaiMare.clientId);
     itemi.push({
-      href: "#/cereri",
+      href: "#/documente",
       html: `Cererea <b>${esc(c?.denumire ?? "client necunoscut")}</b> are <b>${nr(
         cerereMaiMare.linii
       )}</b> poziții neofertate.`,
@@ -77,10 +77,10 @@ function sectiuneAtentie(): string {
   if (oferteTrimise.length > 0) {
     const numere = oferteTrimise.map((d) => esc(d.numar.split(" / ")[0] ?? d.numar)).join(" și ");
     itemi.push({
-      href: "#/oferte",
+      href: "#/documente",
       html: `Oferta${oferteTrimise.length > 1 ? "le" : ""} <b>${numere}</b> ${
-        oferteTrimise.length > 1 ? "sunt" : "e"
-      } trimisă și așteaptă răspuns de la client.`,
+        oferteTrimise.length > 1 ? "sunt trimise" : "e trimisă"
+      } și așteaptă răspuns de la client.`,
     });
   }
 
@@ -88,7 +88,7 @@ function sectiuneAtentie(): string {
 
   return card(
     "Necesită atenția ta",
-    itemi.map((i) => `<a class="alerta" href="${i.href}">${i.html}</a>`).join("")
+    itemi.map((i) => atentionare(i.href, i.html)).join("")
   );
 }
 

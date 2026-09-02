@@ -28,9 +28,10 @@ deterministă (~55% din linii), L2b completare cu OpenAI prin structured outputs
 pe reziduu, L3 tarifare. Rulat pe lista reală a unui spital: 191 poziții
 detectate, 63% tarifate automat.
 
-**Aplicația** (`web/`) — 8 ecrane: tablou de bord, lucrări, clienți, cereri,
-calcul deviz, oferte și contracte, liste de prețuri, import Excel. Datele sunt
-reale, extrase din fișierele firmei.
+**Aplicația** (`web/`) — 7 ecrane: tablou de bord, lucrări, cereri și oferte,
+calcul deviz, import Excel, clienți, liste de prețuri. Datele sunt reale,
+extrase din fișierele firmei. Paleta și tipografia respectă WCAG AA; detaliile
+în `ui.md`.
 
 **Infrastructură** — CI (typecheck + teste + semnalarea modificărilor de
 prețuri), verificare care respinge trailerele de atribuire AI, deploy automat
@@ -55,7 +56,23 @@ cere o cheie API, iar o cheie într-o pagină statică e publică.
 `web/date/seed.ts` sunt `null` și se afișează „—". Un CUI plauzibil dar greșit
 costă mai mult într-un demo decât o casetă goală.
 
-**Meniul arată tot sistemul**, cu modulele nelivrate marcate „urmează".
+**Meniul conține doar ecrane care există.** Modulele nelivrate stau într-un
+`<details>` pliat sub meniu. Harta sistemului rămâne vizibilă pentru client, dar
+nu mai ocupă jumătate din navigația zilnică.
+
+**Cererile și ofertele sunt un singur ecran.** Sunt același obiect în stadii
+diferite ale aceluiași flux; două ecrane separate ascundeau exact lanțul
+cerere → ofertă → contract → situație.
+
+**Culoarea de acțiune e separată de culorile de stare.** Accentul e albastru,
+starea rămâne verde/chihlimbar/roșu, iar roșul înseamnă doar eroare. Accentul
+maro anterior era, pentru un daltonist, aceeași culoare cu avertizarea. Neutrele
+sunt reci în ambele teme: sub accent albastru, un fundal cald arăta maro în
+tema închisă și se bătea cu albastrul.
+
+**Tema se alege din aplicație**, cu un comutator Sistem / Deschis / Închis
+salvat în `localStorage`. Înainte, tema urma orbește sistemul și nu se putea
+schimba din interfață.
 
 ## Ce am descoperit din datele reale
 

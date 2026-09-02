@@ -9,20 +9,21 @@ export const ecran: Ecran = {
 
   render(root) {
     root.innerHTML = `
-      <div id="drop" class="drop">
+      <label id="drop" class="drop" for="fisier">
         <strong>Trage un fișier .xlsx aici</strong>
         <span>sau click pentru a alege</span>
-        <input id="fisier" type="file" accept=".xlsx" hidden />
+        <input id="fisier" type="file" accept=".xlsx" />
         <p class="hint">Rulează stratul determinist: parsare, extragere prin reguli, tarifare.
         Stratul cu model rulează local (<code>npm run import</code>) — o cheie API într-o pagină statică ar fi publică.</p>
-      </div>
+      </label>
       <div id="raport"></div>`;
 
     const $ = <T extends HTMLElement>(s: string) => root.querySelector(s) as T;
     const drop = $("#drop");
     const input = $<HTMLInputElement>("#fisier");
 
-    drop.onclick = () => input.click();
+    // Deschiderea selectorului vine din <label for>, nu din JS: asa functioneaza
+    // si de la tastatura, iar inputul ramane focusabil (ascuns vizual, nu `hidden`).
     input.onchange = () => { if (input.files?.[0]) void proceseaza(input.files[0]); };
     drop.addEventListener("dragover", (e) => { e.preventDefault(); drop.classList.add("peste"); });
     drop.addEventListener("dragleave", () => drop.classList.remove("peste"));
@@ -74,7 +75,7 @@ export const ecran: Ecran = {
           ${tabel(
             ["Descriere", "Sistem", "ø", "gros.", "cant.", "P.U.", "Total"],
             izo.slice(0, 150).map((l) => `<tr>
-              <td class="desc" title="${esc(l.b.text)}">${esc(l.b.text.replace(/\s+/g, " ").slice(0, 70))}</td>
+              <td><span class="desc" title="${esc(l.b.text)}">${esc(l.b.text.replace(/\s+/g, " ").slice(0, 70))}</span></td>
               <td><span class="eticheta ton-neutru">${esc(l.linie.sistem!.replace("_", " "))}</span></td>
               <td class="n">${l.linie.diametru_valoare ?? "–"}</td>
               <td class="n">${l.linie.grosime_mm ?? "–"}</td>

@@ -51,18 +51,19 @@ export const ecran: Ecran = {
 
           <h2>Straturi <span class="hint">dinspre țeavă spre exterior</span></h2>
           <div id="straturi"></div>
-          <button id="adauga" class="secundar">+ adaugă strat</button>
+          <button id="adauga" class="secundar" type="button">+ adaugă strat</button>
 
           <div class="exemple">
             <span class="hint">poziții reale din oferta 118:</span>
-            <button class="chip" data-ex="dn80">DN80 compus</button>
-            <button class="chip" data-ex="dn100">DN100 compus</button>
-            <button class="chip" data-ex="tub">tubulatură /mp</button>
-            <button class="chip" data-ex="fail">netarifabilă</button>
+            <button class="chip" type="button" data-ex="dn80">DN80 compus</button>
+            <button class="chip" type="button" data-ex="dn100">DN100 compus</button>
+            <button class="chip" type="button" data-ex="tub">tubulatură /mp</button>
+            <button class="chip" type="button" data-ex="fail">netarifabilă</button>
           </div>
         </section>
 
-        <section class="card"><h2>Rezultat</h2><div id="iesire"></div></section>
+        <section class="card"><h2>Rezultat</h2>
+          <div id="iesire" aria-live="polite"></div></section>
       </div>`;
 
     const $ = <T extends HTMLElement>(s: string) => root.querySelector(s) as T;
@@ -74,8 +75,8 @@ export const ecran: Ecran = {
         <label style="flex:1;margin:0">Sistem
           <select class="s">${SISTEME.map(([v, t]) => `<option value="${v}"${v === sistem ? " selected" : ""}>${t}</option>`).join("")}</select>
         </label>
-        <label style="flex:0 0 92px;margin:0">Grosime <select class="g"></select></label>
-        <button class="sterge" title="șterge stratul">×</button>`;
+        <label style="flex:0 0 112px;margin:0">Grosime <select class="g"></select></label>
+        <button class="sterge" type="button" aria-label="Șterge stratul">×</button>`;
 
       const sel = div.querySelector<HTMLSelectElement>(".s")!;
       const gro = div.querySelector<HTMLSelectElement>(".g")!;

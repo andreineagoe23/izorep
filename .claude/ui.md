@@ -10,7 +10,7 @@ Aplicație pe ecrane, fără framework. Vite + TypeScript, rutare pe hash
 ```
 web/index.html        shell: bară laterală + zonă de conținut
 web/main.ts           router, meniu, comutator de rol
-web/nav.ts            definiția meniului și rolurile
+web/nav.ts            definiția meniului, modulele viitoare și rolurile
 web/style.css         tot CSS-ul. Ecranele NU adaugă clase noi.
 web/date/seed.ts      datele demo-ului
 web/ecrane/tip.ts     contractul de ecran + helperele de randare
@@ -34,25 +34,84 @@ Router-ul îl încarcă leneș (`import()`), desenează titlul, apoi apelează
 `render` cu un container gol. Ecranele nu ating nimic din afara containerului
 lor și nu manipulează meniul.
 
-Ecran nou: creezi fișierul în `web/ecrane/`, îl adaugi în `ECRANE` din
-`main.ts` și pui `construit: true` pe itemul din `nav.ts`.
+Ecran nou: creezi fișierul în `web/ecrane/`, îl adaugi în `ECRANE` din `main.ts`
+și pui itemul în `MENIU` din `nav.ts`.
 
 ## Randare
 
-Folosește helperele din `tip.ts` — `eur`, `nr`, `data`, `esc`, `card`,
-`indicator`, `progres`, `stare`, `tabel`, `nota`. Ele produc exact marcajul pe
-care îl stilează `style.css`. Un ecran care își inventează clase proprii arată
-diferit de restul aplicației și rupe temele light/dark.
+Folosește helperele din `tip.ts` — `eur`, `nr`, `data`, `dataScurta`, `esc`,
+`card`, `indicator`, `progres`, `stare`, `tabel`, `nota`, `atentionare`. Ele
+produc exact marcajul pe care îl stilează `style.css`. Un ecran care își
+inventează clase proprii arată diferit de restul aplicației și rupe temele
+light/dark.
 
 **Orice text care vine din date trece prin `esc()`** înainte să ajungă în
 `innerHTML`. Descrierile din fișierele clienților conțin ghilimele, `<` și
 caractere stricate din PDF-uri.
 
-## Meniul arată tot sistemul, nu doar ce e construit
+## Culoarea: brandul separat de stare
 
-`nav.ts` conține toate modulele, cu `construit: false` pe cele nelivrate. Ele
-apar în meniu, gri, cu eticheta „urmează". Clientul vede unde se ajunge, dar nu
-dă click pe un ecran gol crezând că e stricat.
+Paleta are un singur albastru pentru **acțiune** (link, buton activ, item de
+meniu curent, bară de progres) și trei culori de **stare** — verde, chihlimbar,
+roșu. Nu se amestecă: dacă albastrul ar fi și culoare de stare, utilizatorul nu
+mai poate citi dintr-o privire ce e clicabil și ce e o avertizare. Accentul
+vechi era maro, la o nuanță de chihlimbarul „atenție" și de roșul de eroare —
+pentru un daltonist erau aceeași culoare.
+
+**Neutrele sunt reci în ambele teme.** Prima variantă a păstrat neutrele calde
+(maro) de dinainte sub accentul albastru: în temă deschisă abia se observa, dar
+în temă închisă fundalul devenea maro, se bătea cu albastrul, iar chihlimbarul
+de „atenție" arăta ca a treia culoare de brand. Un singur neutru rece ține cele
+două teme împreună și lasă albastrul singura culoare de acțiune.
+
+Chihlimbarul rămâne doar pe eticheta de stare. Bordura din stânga la
+`atentionare()` e neutră: dacă și ea e colorată, tabloul de bord are trei dungi
+portocalii care nu spun nimic în plus.
+
+Roșul e rezervat **erorii reale** (o poziție care nu se poate tarifa). O ofertă
+care așteaptă răspuns nu e o eroare: merge prin `atentionare()`, nu prin
+`.alerta`.
+
+Regulile pe care le respectă `style.css`:
+
+- text normal ≥ 4,5:1 față de fundal, contururi de control ≥ 3:1 (WCAG AA)
+- starea se citește din **text**, culoarea doar o întărește
+- corp de literă 16px, minimul din tabele 13px — nimic sub atât
+- `:focus-visible` vizibil pe orice fundal, inclusiv pe bara închisă la culoare
+- tokenii sunt numiți după rol (`--accent`, `--linie-tare`), nu după culoare
+- ambele teme sunt definite pe tokeni; un ecran nu scrie niciodată o culoare
+
+## Tema
+
+Comutator cu trei stări în bara laterală: **Sistem** (implicit), **Deschis**,
+**Închis**. Alegerea se ține în `localStorage` sub `izorep-tema`.
+
+„Sistem" înseamnă absența atributului `data-tema`, nu o a treia paletă — așa
+pagina răspunde la schimbarea temei din sistem cât timp e deschisă, fără cod.
+
+Tema se aplică dintr-un script inline în `<head>`, înainte de primul paint. Pusă
+în `main.ts`, pagina ar clipi o dată pe tema sistemului la fiecare încărcare.
+
+Tema închisă e scrisă de două ori în CSS, cu aceleași valori: o dată sub
+`@media (prefers-color-scheme: dark)` pentru cine n-a ales nimic, o dată sub
+`:root[data-tema="dark"]` pentru alegerea explicită. CSS nu poate combina un
+`@media` cu un selector de atribut într-o singură regulă — dacă modifici una,
+modific-o și pe cealaltă.
+
+## Meniul: șapte destinații, restul pliat
+
+`MENIU` din `nav.ts` conține doar ecrane care există. Modulele nelivrate stau în
+`VIITOR`, într-un `<details>` sub meniu.
+
+Varianta anterioară amesteca cele două în cinci grupuri, cu jumătate din itemi
+gri și inactivi. Harta sistemului e utilă clientului — dar în navigația zilnică
+ea costă atenție la fiecare privire. Pliată, spune același lucru o dată.
+
+Cererile și ofertele sunt un singur ecran (`documente.ts`), cu filtru pe tip:
+sunt **același obiect** în stadii diferite ale aceluiași flux — cerere → ofertă
+→ contract (cu oferta ca anexă) → situație de lucrări. Două ecrane ascundeau
+exact lanțul care trebuie văzut. Rutele vechi `#/cereri` și `#/oferte` sunt
+redirectate în `ALIAS` din `main.ts`.
 
 ## Rolul activ
 
@@ -69,5 +128,10 @@ Motorul de prețuri și extragerea deterministă rulează integral în browser:
 listele de prețuri sunt importate static, iar parsarea Excel are o variantă
 care pornește de la conținutul fișierului. Același cod rulează în teste.
 
-Stratul cu model **nu** e în browser: ar cere o cheie API, iar o cheie într-o
-pagină statică e publică. Pipeline-ul complet rulează local, `npm run import`.
+Stratul cu model **nu** rulează în browser, dar ecranul de import îl folosește
+când e disponibil: `scripts/vite-plugin-model.ts` expune `POST /api/extrage`
+doar pe serverul de dezvoltare, iar ecranul întreabă ruta cu un GET înainte să
+o folosească. Local, cu `npm run dev` și cheia în `.env`, importul rulează
+pipeline-ul complet; pe Pages ruta lipsește și ecranul cade curat pe stratul
+determinist. Cheia stă în procesul Node — nu ajunge în pagină și, pentru că
+plugin-ul e `apply: "serve"`, nu poate ajunge nici într-un build.

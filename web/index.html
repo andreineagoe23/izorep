@@ -5,15 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>IzoERP</title>
   <link rel="stylesheet" href="./style.css" />
+  <script>
+    // Tema aleasa se aplica inainte de primul paint: pusa in main.ts, pagina ar
+    // clipi o data pe tema sistemului la fiecare incarcare.
+    try {
+      const t = localStorage.getItem("izorep-tema");
+      if (t === "dark" || t === "light") document.documentElement.dataset.tema = t;
+    } catch { /* localStorage blocat: ramane tema sistemului */ }
+  </script>
 </head>
 <body>
+  <button class="sari" id="sari">Sari la conținut</button>
+
   <div class="aplicatie">
     <aside>
       <div class="marca">
         <strong>IzoERP</strong>
         <span>RADOIA ISOLIRUNG SRL</span>
       </div>
-      <nav id="meniu"></nav>
+      <nav id="meniu" aria-label="Meniu principal"></nav>
+      <div class="tema">
+        <span class="tema-titlu" id="tema-titlu">Temă</span>
+        <div class="tema-grup" id="tema" role="group" aria-labelledby="tema-titlu"></div>
+      </div>
       <div class="rol">
         <label for="rol">Rol activ</label>
         <select id="rol"></select>
@@ -25,7 +39,7 @@
         <span class="demo">DEMO · date reale din fișierele firmei</span>
         <span id="curs" class="curs"></span>
       </header>
-      <main id="ecran"></main>
+      <main id="ecran" tabindex="-1"></main>
     </div>
   </div>
   <script type="module" src="./main.ts"></script>

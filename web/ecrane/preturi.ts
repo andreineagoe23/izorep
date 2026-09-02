@@ -46,16 +46,16 @@ function deseneazaMatrice(sistem: Sistem): string {
         const v = l.cells[cheieCell(d, g)];
         const detaliu = g == null ? `Ø${nr(d)}` : `Ø${nr(d)}, ${formatGrosime(g)} mm`;
         const titlu = v == null ? `${detaliu} — nu se ofertează, poziție netarifată (tarifare manuală)` : detaliu;
-        return `<td class="n" title="${esc(titlu)}">${v == null ? "" : eur(v)}</td>`;
+        return `<td class="n${v == null ? " gol" : ""}" title="${esc(titlu)}">${v == null ? "—" : eur(v)}</td>`;
       })
       .join("");
-    return `<tr><td>${nr(d)}</td>${celule}</tr>`;
+    return `<tr><th scope="row">${nr(d)}</th>${celule}</tr>`;
   });
 
   const mpChei = Object.keys(l.per_mp);
   const randMp = mpChei.length
     ? [
-        `<tr><td><em>€ / mp</em></td>${coloane
+        `<tr><th scope="row">€ / mp</th>${coloane
           .map((g) => {
             const v = g == null ? undefined : l.per_mp[String(g)];
             return `<td class="n">${v != null ? eur(v) : "—"}</td>`;
@@ -77,7 +77,7 @@ function deseneazaMultiplicatori(sistem: Sistem): string {
     const [de, pana] = m.band;
     const eticBanda = `Ø ${nr(de)}–${pana >= 9999 ? "∞" : nr(pana)}`;
     const valori = campuriActive.map((c) => `<td class="n">${formatFactor(m[c.cheie])}</td>`).join("");
-    return `<tr><td>${eticBanda}</td>${valori}</tr>`;
+    return `<tr><th scope="row">${eticBanda}</th>${valori}</tr>`;
   });
 
   return tabel(capete, randuri, clase);
@@ -91,7 +91,7 @@ function deseneazaIndicatori(sistem: Sistem): string {
   const completate = Object.keys(l.cells).length;
   const posibile = diam.length * coloane;
 
-  return `<div class="rand">
+  return `<div class="stats">
     ${indicator(nr(completate), "celule completate", `din ${nr(posibile)} posibile (Ø × grosime)`)}
     ${indicator(
       nr(l.grosimi_mm.length),
@@ -136,7 +136,7 @@ export const ecran: Ecran = {
       card(
         "Sistem",
         `<label for="sistemSel">Alege sistemul de izolație</label>
-         <select id="sistemSel">
+         <select id="sistemSel" class="ingust">
            ${SISTEME.map((s) => `<option value="${s.id}">${esc(s.eticheta)}</option>`).join("")}
          </select>`,
       ) + `<div id="corpPreturi"></div>`;

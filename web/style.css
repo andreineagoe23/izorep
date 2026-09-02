@@ -1,176 +1,307 @@
+/* ============================================================== jetoane
+ * Numele spun rolul, nu culoarea: daca se schimba paleta, numele raman
+ * valabile. Culorile de stare (ok / atentie / rosu) sunt separate de culoarea
+ * de brand, ca actiunea sa nu se confunde niciodata cu starea.
+ *
+ * Neutrele sunt racite in ambele teme. Varianta anterioara avea neutre calde
+ * (maro) sub un accent albastru: in light abia se observa, in dark fundalul
+ * devenea maro si se batea cu albastrul, iar chihlimbarul de "atentie" parea a
+ * treia culoare de brand. Un singur neutru rece tine cele doua teme impreuna.
+ */
 :root {
-  --bg: #f7f5f2; --panou: #fff; --bara: #211f1c;
-  --text: #1c1b19; --slab: #6b6862; --linie: #e6e2db;
-  --accent: #8b5a2b; --ok: #2f6f4e; --atentie: #9a6b18; --rosu: #a33a2a;
-  --chip: #efebe4; --umbra: 0 1px 2px rgba(0,0,0,.05);
-  color-scheme: light dark;
+  --bg: #f5f6f7;
+  --panou: #ffffff;
+  --panou-2: #eceef1;      /* umplere discreta: chip, bara de progres */
+  --bara: #1b1f24;         /* bara laterala, intotdeauna inchisa la culoare */
+
+  --text: #171a1d;
+  --slab: #5a626b;         /* 5,7:1 pe fundal — trece AA la text mic */
+  --linie: #dde1e6;        /* delimitare decorativa */
+  --linie-tare: #848d97;   /* contur de control: 3,4:1, minimul WCAG pentru UI */
+
+  --accent: #0f5aa8;       /* actiune si navigare — singura culoare "clicabil" */
+  --accent-fill: #0f5aa8;
+  --pe-accent: #ffffff;
+  --accent-slab: #e8f0f9;
+
+  --ok: #1f6b46;
+  --atentie: #7d5307;
+  --rosu: #a1322a;
+
+  --focus: #0f5aa8;
+  --umbra: 0 1px 2px rgba(16, 22, 30, .06);
+  color-scheme: light;
 }
+
+/*
+ * Tema inchisa e definita de doua ori, cu aceleasi valori: o data pentru cine
+ * n-a ales nimic si are sistemul pe dark, o data pentru alegerea explicita din
+ * comutator. CSS nu poate combina un `@media` cu un selector de atribut intr-o
+ * singura regula; daca modifici una, modific-o si pe cealalta.
+ */
 @media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #141311; --panou: #1e1d1a; --bara: #100f0e;
-    --text: #ece9e4; --slab: #9d9890; --linie: #302e2a;
-    --accent: #d29b64; --ok: #7fc0a0; --atentie: #d8ad5c; --rosu: #e08b7c;
-    --chip: #2a2825; --umbra: none;
+  :root:not([data-tema="light"]) {
+    --bg: #0f1216; --panou: #161a20; --panou-2: #1f242c; --bara: #0b0e12;
+    --text: #e6e9ee; --slab: #9aa4b1; --linie: #2a3038; --linie-tare: #6b7684;
+    --accent: #79b8ff; --accent-fill: #1f6feb; --pe-accent: #ffffff; --accent-slab: #172231;
+    --ok: #4cb782; --atentie: #e3b341; --rosu: #f2857a;
+    --focus: #79b8ff; --umbra: none;
+    color-scheme: dark;
   }
 }
+:root[data-tema="dark"] {
+  --bg: #0f1216; --panou: #161a20; --panou-2: #1f242c; --bara: #0b0e12;
+  --text: #e6e9ee; --slab: #9aa4b1; --linie: #2a3038; --linie-tare: #6b7684;
+  --accent: #79b8ff; --accent-fill: #1f6feb; --pe-accent: #ffffff; --accent-slab: #172231;
+  --ok: #4cb782; --atentie: #e3b341; --rosu: #f2857a;
+  --focus: #79b8ff; --umbra: none;
+  color-scheme: dark;
+}
+
+/* Ecrane cu contrast ridicat: ingrosam delimitarile, nu schimbam paleta. */
+@media (prefers-contrast: more) {
+  :root { --linie: var(--linie-tare); }
+}
+
 * { box-sizing: border-box; }
 body {
   margin: 0; background: var(--bg); color: var(--text);
-  font: 14.5px/1.55 ui-sans-serif, -apple-system, "Segoe UI", system-ui, sans-serif;
+  font: 16px/1.55 ui-sans-serif, -apple-system, "Segoe UI", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
-/* ------------------------------------------------------------- structura */
-.aplicatie { display: grid; grid-template-columns: 232px minmax(0, 1fr); min-height: 100vh; }
-aside {
-  background: var(--bara); color: #cfcac2; padding: 20px 0 16px;
-  display: flex; flex-direction: column; gap: 4px; position: sticky; top: 0; height: 100vh;
+/* Un singur inel de focus, vizibil pe orice fundal, inclusiv pe bara inchisa. */
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
-.marca { padding: 0 20px 18px; border-bottom: 1px solid rgba(255,255,255,.08); }
-.marca strong { display: block; font-size: 16px; color: #fff; letter-spacing: -0.01em; }
-.marca span { font-size: 11.5px; color: #8d877e; }
-#meniu { flex: 1; overflow-y: auto; padding: 14px 12px; }
-.grup { margin-bottom: 16px; }
+aside :focus-visible { outline-color: #9ecbf5; }
+
+.sari {
+  position: absolute; left: 8px; top: -60px; z-index: 10; font: inherit; cursor: pointer;
+  background: var(--panou); color: var(--accent); padding: 10px 16px;
+  border: 1px solid var(--linie-tare); border-radius: 8px;
+}
+.sari:focus { top: 8px; }
+
+/* ------------------------------------------------------------- structura */
+.aplicatie { display: grid; grid-template-columns: 250px minmax(0, 1fr); min-height: 100vh; }
+aside {
+  background: var(--bara); color: #d5dae0; padding: 20px 0 18px;
+  display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh;
+}
+.marca { padding: 0 20px 18px; border-bottom: 1px solid rgba(255,255,255,.12); }
+.marca strong { display: block; font-size: 17px; color: #fff; letter-spacing: -0.01em; }
+.marca span { font-size: 13px; color: #96a0ab; }
+
+#meniu { flex: 1; overflow-y: auto; padding: 16px 12px; }
+.grup { margin-bottom: 20px; }
 .grup h3 {
-  margin: 0 0 5px 8px; font-size: 10.5px; text-transform: uppercase;
-  letter-spacing: 0.09em; color: #77716a; font-weight: 600;
+  margin: 0 0 6px 10px; font-size: 12px; letter-spacing: 0.04em;
+  color: #96a0ab; font-weight: 600;
 }
 .item {
-  display: flex; align-items: center; justify-content: space-between; gap: 8px;
-  padding: 6px 10px; border-radius: 6px; color: #cfcac2;
-  text-decoration: none; font-size: 13.5px;
+  display: flex; align-items: center; gap: 10px; min-height: 40px;
+  padding: 8px 12px; border-radius: 7px; color: #d5dae0;
+  text-decoration: none; font-size: 14.5px; border-left: 3px solid transparent;
 }
-a.item:hover { background: rgba(255,255,255,.06); color: #fff; }
-a.item.activ { background: var(--accent); color: #fff; }
-.item.viitor { color: #6a655e; cursor: default; }
-.item.viitor i {
-  font-style: normal; font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.06em;
-  border: 1px solid #3a3733; border-radius: 4px; padding: 1px 5px; color: #6a655e;
+a.item:hover { background: rgba(255,255,255,.09); color: #fff; }
+a.item[aria-current="page"] {
+  background: var(--accent-fill); color: #fff; border-left-color: #9ecbf5; font-weight: 600;
 }
-.rol { padding: 14px 20px 0; border-top: 1px solid rgba(255,255,255,.08); }
-.rol label { display: block; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em; color: #77716a; margin-bottom: 5px; }
-.rol select { width: 100%; background: #2b2926; color: #ece9e4; border: 1px solid #3a3733; }
+
+/* Modulele nelivrate: o singura lista pliata, nu jumatate din meniu. */
+.viitor { margin: 4px 10px 0; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.12); }
+.viitor summary {
+  cursor: pointer; font-size: 13px; color: #96a0ab; padding: 6px 2px; list-style: none;
+}
+.viitor summary::-webkit-details-marker { display: none; }
+.viitor summary::before { content: "▸ "; }
+.viitor[open] summary::before { content: "▾ "; }
+.viitor ul { margin: 4px 0 0; padding: 0 0 0 18px; list-style: none; }
+.viitor li { font-size: 13.5px; color: #7d8794; padding: 4px 0; }
+
+.tema { padding: 14px 20px 0; border-top: 1px solid rgba(255,255,255,.12); }
+.tema-titlu { display: block; font-size: 13px; color: #96a0ab; margin-bottom: 6px; }
+.tema-grup { display: flex; gap: 4px; background: #262b33; border: 1px solid #4a525c; border-radius: 8px; padding: 3px; }
+.tema-grup button {
+  flex: 1; min-height: 32px; border: 0; border-radius: 6px; background: transparent;
+  color: #d5dae0; font: inherit; font-size: 12.5px; cursor: pointer; padding: 4px 2px;
+}
+.tema-grup button:hover { background: rgba(255,255,255,.08); }
+.tema-grup button[aria-pressed="true"] { background: var(--accent-fill); color: #fff; font-weight: 600; }
+
+.rol { padding: 14px 20px 0; }
+.rol label { display: block; font-size: 13px; color: #96a0ab; margin-bottom: 6px; }
+.rol select { width: 100%; background: #262b33; color: #e6e9ee; border: 1px solid #4a525c; }
 
 .continut { display: flex; flex-direction: column; min-width: 0; }
 .continut > header {
   display: flex; justify-content: space-between; align-items: center; gap: 16px;
-  padding: 11px 28px; border-bottom: 1px solid var(--linie); background: var(--panou);
+  padding: 12px 28px; border-bottom: 1px solid var(--linie); background: var(--panou);
 }
 .demo {
-  font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em;
-  background: var(--chip); color: var(--slab); padding: 3px 9px; border-radius: 5px;
+  font-size: 12.5px; background: var(--panou-2); color: var(--slab);
+  padding: 4px 10px; border-radius: 6px;
 }
-.curs { font-size: 12.5px; color: var(--slab); font-variant-numeric: tabular-nums; }
-main { padding: 26px 28px 48px; }
-.titlu-ecran { margin-bottom: 20px; }
-.titlu-ecran h1 { margin: 0; font-size: 23px; letter-spacing: -0.02em; }
-.titlu-ecran p { margin: 5px 0 0; color: var(--slab); max-width: 74ch; }
+.curs { font-size: 13.5px; color: var(--slab); font-variant-numeric: tabular-nums; }
+main { padding: 26px 28px 56px; max-width: 1400px; }
+.titlu-ecran { margin-bottom: 22px; }
+.titlu-ecran h1 { margin: 0; font-size: 26px; letter-spacing: -0.02em; }
+.titlu-ecran p { margin: 6px 0 0; color: var(--slab); max-width: 74ch; }
 
-@media (max-width: 780px) {
-  .aplicatie { grid-template-columns: 1fr; }
-  aside { position: static; height: auto; }
-  #meniu { display: flex; flex-wrap: wrap; gap: 10px; }
-  .grup { margin: 0; }
+@media (max-width: 860px) {
+  /* `1fr` singur ia latimea minima a continutului: un tabel lat ar impinge
+     toata pagina in afara ecranului, in loc sa deruleze in `.tabelwrap`. */
+  .aplicatie { grid-template-columns: minmax(0, 1fr); }
+  aside { position: static; height: auto; padding-bottom: 12px; }
+  #meniu { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px; }
+  .grup { margin: 0; display: contents; }
+  .grup h3 { display: none; }
+  .item { border-left: 0; border-radius: 20px; padding: 8px 14px; }
+  a.item[aria-current="page"] { border-left: 0; }
+  .viitor { flex-basis: 100%; margin: 4px 0 0; }
   main, .continut > header { padding-left: 16px; padding-right: 16px; }
 }
 
 /* ---------------------------------------------------------- componente */
 .card {
-  background: var(--panou); border: 1px solid var(--linie); border-radius: 11px;
-  padding: 18px 20px; box-shadow: var(--umbra); margin-bottom: 16px;
+  background: var(--panou); border: 1px solid var(--linie); border-radius: 12px;
+  padding: 18px 20px; box-shadow: var(--umbra); margin-bottom: 18px;
 }
 .card h2, main h2 {
-  margin: 20px 0 10px; font-size: 11.5px; text-transform: uppercase;
-  letter-spacing: 0.08em; color: var(--slab); font-weight: 600;
+  margin: 22px 0 10px; font-size: 15px; color: var(--text); font-weight: 600;
 }
 .card h2:first-child { margin-top: 0; }
 .grid { display: grid; gap: 16px; }
 .grid-2 { grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); }
 
-.stats { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; }
+.stats { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
 .stat {
-  background: var(--panou); border: 1px solid var(--linie); border-radius: 10px;
-  padding: 13px 17px; min-width: 140px; flex: 1 1 auto; box-shadow: var(--umbra);
+  background: var(--panou); border: 1px solid var(--linie); border-radius: 11px;
+  padding: 14px 18px; flex: 1 1 170px; max-width: 340px; box-shadow: var(--umbra);
 }
-.stat b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
-.stat span { display: block; color: var(--slab); font-size: 12px; margin-top: 2px; }
-.stat em { display: block; font-style: normal; color: var(--slab); font-size: 11.5px; opacity: .8; }
+.stat b { display: block; font-size: 26px; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.stat span { display: block; color: var(--slab); font-size: 13.5px; margin-top: 3px; }
+.stat em { display: block; font-style: normal; color: var(--slab); font-size: 13px; }
 
 .tabelwrap {
-  background: var(--panou); border: 1px solid var(--linie); border-radius: 11px;
-  padding: 2px 18px 10px; overflow-x: auto; box-shadow: var(--umbra); margin-bottom: 14px;
+  background: var(--panou); border: 1px solid var(--linie); border-radius: 12px;
+  padding: 2px 18px 12px; overflow-x: auto; box-shadow: var(--umbra); margin-bottom: 16px;
 }
-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
 th {
-  text-align: left; font-weight: 600; color: var(--slab); font-size: 10.5px;
-  text-transform: uppercase; letter-spacing: 0.06em; padding: 11px 10px 8px 0; white-space: nowrap;
+  text-align: left; font-weight: 600; color: var(--slab); font-size: 13px;
+  padding: 12px 12px 9px 0; white-space: nowrap; border-bottom: 2px solid var(--linie);
 }
-td { padding: 9px 10px 9px 0; border-top: 1px solid var(--linie); vertical-align: top; }
+td { padding: 10px 12px 10px 0; border-top: 1px solid var(--linie); vertical-align: top; }
+tbody th {
+  color: var(--text); font-size: 14px; border-bottom: 0;
+  border-top: 1px solid var(--linie); padding: 10px 12px 10px 0;
+}
 td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-tbody tr:hover { background: rgba(139,90,43,.04); }
+td.fix, th.fix { white-space: nowrap; }
+tbody tr:hover { background: var(--accent-slab); }
 
-.matrice { font-size: 12px; }
-.matrice td, .matrice th { padding: 5px 9px 5px 0; }
-.matrice td.gol { color: var(--linie); }
+.matrice { font-size: 13.5px; }
+.matrice td, .matrice th { padding: 6px 10px 6px 0; }
+.matrice td.gol { color: var(--slab); }
 
-.eticheta { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 5px; white-space: nowrap; }
-.ton-neutru { background: var(--chip); color: var(--slab); }
-.ton-ok { background: color-mix(in srgb, var(--ok) 15%, transparent); color: var(--ok); }
-.ton-atentie { background: color-mix(in srgb, var(--atentie) 18%, transparent); color: var(--atentie); }
+/* Starea se citeste din text; culoarea doar o intareste. */
+.eticheta {
+  display: inline-block; font-size: 12.5px; padding: 3px 9px; border-radius: 6px;
+  white-space: nowrap; border: 1px solid transparent; font-weight: 500;
+}
+.ton-neutru { background: var(--panou-2); color: var(--slab); border-color: var(--linie); }
+.ton-ok { background: color-mix(in srgb, var(--ok) 12%, var(--panou)); color: var(--ok); border-color: color-mix(in srgb, var(--ok) 40%, transparent); }
+.ton-atentie { background: color-mix(in srgb, var(--atentie) 14%, var(--panou)); color: var(--atentie); border-color: color-mix(in srgb, var(--atentie) 42%, transparent); }
 
-.progres { background: var(--chip); border-radius: 20px; height: 6px; min-width: 70px; overflow: hidden; }
-.progres i { display: block; height: 100%; background: var(--accent); border-radius: 20px; }
+.progres-rand { display: flex; align-items: center; gap: 9px; }
+.progres { background: var(--panou-2); border: 1px solid var(--linie); border-radius: 20px; height: 10px; width: 90px; overflow: hidden; }
+.progres i { display: block; height: 100%; background: var(--accent-fill); border-radius: 20px; }
+.progres-val { font-size: 13px; color: var(--slab); font-variant-numeric: tabular-nums; }
 
 .nota {
-  margin: 12px 0; padding: 11px 14px; background: var(--chip);
-  border-radius: 8px; font-size: 12.5px; color: var(--slab); line-height: 1.6;
+  margin: 14px 0; padding: 13px 16px; background: var(--panou-2);
+  border-left: 3px solid var(--linie-tare); border-radius: 0 8px 8px 0;
+  font-size: 14px; color: var(--slab); line-height: 1.6; max-width: 92ch;
 }
+
+/*
+ * Lista "necesita atentia ta": informativa, nu alarmanta. Rosul e rezervat
+ * erorii, iar bordura e neutra — chihlimbarul ramane doar pe eticheta de stare
+ * din interior, unde chiar inseamna ceva.
+ */
+.atentionare {
+  display: block; padding: 12px 15px; margin-bottom: 8px; text-decoration: none;
+  color: var(--text); background: var(--panou-2);
+  border-left: 3px solid var(--linie-tare); border-radius: 0 8px 8px 0; font-size: 14.5px;
+}
+.atentionare:hover { background: var(--accent-slab); }
+.atentionare:last-child { margin-bottom: 0; }
+
+/* Eroare reala: pozitie care nu se poate tarifa. */
 .alerta {
-  margin: 12px 0; padding: 12px 15px; border-radius: 9px; font-size: 13px;
-  background: color-mix(in srgb, var(--rosu) 9%, transparent);
-  border: 1px solid color-mix(in srgb, var(--rosu) 28%, transparent); color: var(--rosu);
+  margin: 12px 0; padding: 13px 16px; border-radius: 9px; font-size: 14.5px;
+  background: color-mix(in srgb, var(--rosu) 9%, var(--panou));
+  border: 1px solid color-mix(in srgb, var(--rosu) 40%, transparent); color: var(--rosu);
 }
 .alerta strong { display: block; margin-bottom: 3px; }
 .rosu { color: var(--rosu); }
-.hint { color: var(--slab); font-size: 12px; font-weight: 400; text-transform: none; letter-spacing: 0; }
-.desc { color: var(--slab); max-width: 42ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.9em; background: var(--chip); padding: 1px 5px; border-radius: 4px; }
+.hint { color: var(--slab); font-size: 13px; font-weight: 400; }
+/* `display:inline-block` doar pe span: pe un <td> ar scoate celula din tabel. */
+.desc { max-width: 44ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+span.desc { display: inline-block; vertical-align: bottom; }
+td.desc { color: var(--slab); }
+.desc.scurt { max-width: 22ch; }
+.ingust { max-width: 380px; }
+code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.92em; background: var(--panou-2); padding: 1px 5px; border-radius: 4px; }
 a { color: var(--accent); }
 
 /* --------------------------------------------------------- formulare */
-label { display: block; margin-bottom: 11px; font-size: 12.5px; color: var(--slab); }
+label { display: block; margin-bottom: 13px; font-size: 14px; color: var(--text); }
 input, select {
-  width: 100%; margin-top: 4px; padding: 7px 10px; font: inherit; font-size: 13.5px;
-  border: 1px solid var(--linie); border-radius: 7px; background: var(--bg); color: var(--text);
+  width: 100%; margin-top: 5px; min-height: 40px; padding: 8px 11px; font: inherit; font-size: 15px;
+  border: 1px solid var(--linie-tare); border-radius: 8px; background: var(--panou); color: var(--text);
 }
 .rand { display: flex; gap: 8px; }
-.rand input { flex: 0 0 108px; }
-.strat { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 8px; }
+.rand input { flex: 0 0 120px; }
+.strat { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 10px; }
 .strat select { flex: 1; }
 .strat .sterge {
-  flex: 0 0 auto; border: 1px solid var(--linie); background: transparent; color: var(--slab);
-  border-radius: 7px; cursor: pointer; padding: 7px 11px; font: inherit; line-height: 1.3;
+  flex: 0 0 auto; min-height: 40px; border: 1px solid var(--linie-tare); background: var(--panou);
+  color: var(--text); border-radius: 8px; cursor: pointer; padding: 8px 13px; font: inherit;
 }
 .secundar {
-  border: 1px dashed var(--linie); background: transparent; color: var(--slab);
-  padding: 6px 13px; border-radius: 7px; cursor: pointer; font: inherit; font-size: 12.5px;
+  border: 1px solid var(--linie-tare); background: var(--panou); color: var(--accent);
+  min-height: 40px; padding: 8px 16px; border-radius: 8px; cursor: pointer; font: inherit; font-size: 14px;
 }
-.exemple { margin-top: 18px; padding-top: 15px; border-top: 1px solid var(--linie); display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.secundar:hover, .strat .sterge:hover { background: var(--accent-slab); }
+.exemple { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--linie); display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .chip, button.filtru {
-  border: 0; background: var(--chip); color: var(--text); padding: 5px 11px;
-  border-radius: 20px; cursor: pointer; font: inherit; font-size: 12px;
+  border: 1px solid var(--linie-tare); background: var(--panou); color: var(--text);
+  min-height: 36px; padding: 6px 14px; border-radius: 20px; cursor: pointer; font: inherit; font-size: 14px;
 }
-button.filtru.activ { background: var(--accent); color: #fff; }
+.chip:hover, button.filtru:hover { background: var(--accent-slab); }
+button.filtru[aria-pressed="true"], button.filtru.activ {
+  background: var(--accent-fill); color: var(--pe-accent); border-color: var(--accent-fill); font-weight: 600;
+}
+.filtre { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
 
-.pret { font-size: 32px; font-weight: 600; letter-spacing: -0.025em; font-variant-numeric: tabular-nums; }
-.pret small { font-size: 13px; font-weight: 400; color: var(--slab); margin-left: 6px; }
-.total { margin-top: 2px; color: var(--slab); font-size: 13.5px; }
+.pret { font-size: 36px; font-weight: 600; letter-spacing: -0.025em; font-variant-numeric: tabular-nums; }
+.pret small { font-size: 15px; font-weight: 400; color: var(--slab); margin-left: 6px; }
+.total { margin-top: 3px; color: var(--slab); font-size: 15px; }
 
 .drop {
-  border: 2px dashed var(--linie); border-radius: 12px; padding: 40px 24px; text-align: center;
-  cursor: pointer; background: var(--panou); display: flex; flex-direction: column; gap: 4px; align-items: center;
+  position: relative; border: 2px dashed var(--linie-tare); border-radius: 12px;
+  padding: 40px 24px; text-align: center; cursor: pointer; background: var(--panou);
+  display: flex; flex-direction: column; gap: 5px; align-items: center;
 }
-.drop.peste { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 5%, var(--panou)); }
-.drop strong { font-size: 15.5px; }
-.drop span { color: var(--slab); font-size: 13.5px; }
-.drop .hint { max-width: 56ch; margin: 12px 0 0; }
+/* Ascuns vizual, nu `hidden`: altfel inputul nu mai poate primi focus. */
+.drop input[type="file"] { position: absolute; width: 1px; height: 1px; opacity: 0; margin: 0; }
+.drop:focus-within { outline: 3px solid var(--focus); outline-offset: 2px; border-color: var(--accent); }
+.drop:hover, .drop.peste { border-color: var(--accent); background: var(--accent-slab); }
+.drop strong { font-size: 17px; }
+.drop span { color: var(--slab); font-size: 14.5px; }
+.drop .hint { max-width: 60ch; margin: 14px 0 0; }

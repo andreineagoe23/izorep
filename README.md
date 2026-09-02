@@ -50,10 +50,10 @@ documentate în `tests/pricing.test.ts`, blocul „abateri cunoscute".
 Rulează **integral în browser** — niciun fișier nu pleacă de pe calculatorul tău
 și nu există backend.
 
-Ecrane livrate: tablou de bord, lucrări, clienți, cereri, calcul deviz, oferte
-și contracte, liste de prețuri, import Excel. Restul modulelor apar în meniu
-marcate „urmează", ca să se vadă harta întregului sistem fără să promită ce nu
-e livrat.
+Ecrane livrate: tablou de bord, lucrări, cereri și oferte, calcul deviz, import
+Excel, clienți, liste de prețuri. Modulele nelivrate stau într-o listă pliată
+sub meniu — harta întregului sistem rămâne vizibilă, fără să umple navigația
+zilnică cu destinații goale.
 
 **Datele sunt reale**, extrase din fișierele primite de la firmă: clienți
 (NISAL, Spital Regina Maria, Transavia, Flower City), obiective, persoane de

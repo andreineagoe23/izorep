@@ -1,9 +1,6 @@
 export interface ItemMeniu {
   id: string;
   eticheta: string;
-  /** false = apare in meniu, dar ca destinatie viitoare. */
-  construit: boolean;
-  contor?: () => number;
 }
 
 export interface GrupMeniu {
@@ -12,37 +9,35 @@ export interface GrupMeniu {
 }
 
 /**
- * Meniul e harta intregului sistem, nu doar a ce e construit.
+ * Meniul contine doar destinatii care exista. Sapte intrari, doua grupuri:
+ * fluxul zilnic sus, nomenclatoarele care se ating rar dedesubt.
  *
- * Arata clientului unde se ajunge, dar marcheaza explicit ce e livrat si ce
- * urmeaza: un demo in care jumatate din ecrane sunt goale fara avertisment
- * isi pierde credibilitatea exact acolo unde era mai puternic.
+ * Varianta anterioara amesteca ecrane livrate cu module viitoare in cinci
+ * grupuri. Harta sistemului e utila clientului, dar nu are ce cauta in
+ * navigatia zilnica: modulele nelivrate stau in `VIITOR`, intr-o lista
+ * pliata, sub meniu.
  */
 export const MENIU: GrupMeniu[] = [
-  { titlu: "Activitate", itemi: [
-    { id: "tablou", eticheta: "Tablou de bord", construit: true },
-    { id: "lucrari", eticheta: "Lucrări", construit: true },
+  { titlu: "Zi de zi", itemi: [
+    { id: "tablou", eticheta: "Tablou de bord" },
+    { id: "lucrari", eticheta: "Lucrări" },
+    { id: "documente", eticheta: "Cereri și oferte" },
+    { id: "deviz", eticheta: "Calcul deviz" },
+    { id: "import", eticheta: "Import Excel" },
   ]},
-  { titlu: "Comercial", itemi: [
-    { id: "clienti", eticheta: "Clienți", construit: true },
-    { id: "cereri", eticheta: "Cereri", construit: true },
-    { id: "deviz", eticheta: "Calcul deviz", construit: true },
-    { id: "oferte", eticheta: "Oferte", construit: true },
-    { id: "contracte", eticheta: "Contracte", construit: false },
+  { titlu: "Nomenclatoare", itemi: [
+    { id: "clienti", eticheta: "Clienți" },
+    { id: "preturi", eticheta: "Liste de prețuri" },
   ]},
-  { titlu: "Execuție", itemi: [
-    { id: "stoc", eticheta: "Depozit și stoc", construit: false },
-    { id: "teren", eticheta: "Aplicația de teren", construit: false },
-    { id: "situatii", eticheta: "Situații de lucrări", construit: false },
-  ]},
-  { titlu: "Financiar", itemi: [
-    { id: "facturi", eticheta: "Facturi", construit: false },
-  ]},
-  { titlu: "Configurare", itemi: [
-    { id: "preturi", eticheta: "Liste de prețuri", construit: true },
-    { id: "import", eticheta: "Import Excel", construit: true },
-    { id: "portal", eticheta: "Portal client", construit: false },
-  ]},
+];
+
+/** Module care fac parte din sistem, dar nu sunt livrate in aceasta etapa. */
+export const VIITOR: string[] = [
+  "Depozit și stoc",
+  "Aplicația de teren",
+  "Situații de lucrări",
+  "Facturi",
+  "Portal client",
 ];
 
 export type Rol = "patron" | "tehnic" | "sef_echipa" | "gestionar" | "contabilitate";
