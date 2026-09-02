@@ -1,0 +1,25 @@
+{
+  "name": "izorep",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ERP izolatii termice - motor de preturi si import oferte clienti",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "import": "tsx src/import/cli.ts",
+    "price": "tsx src/pricing/cli.ts"
+  },
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "openai": "^4.77.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.8"
+  }
+}

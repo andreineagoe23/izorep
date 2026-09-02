@@ -1,0 +1,188 @@
+{
+  "sistem": "goluri_foc",
+  "denumire": "Inchideri goluri la foc EI60 / EI90 / EI120",
+  "contine": "material + manopera",
+  "moneda": "EUR",
+  "regula": "pret final = gol (dupa suprafata) + banda WRAP (optional) + colier PROMASTOP (optional)",
+  "praguri_suprafata": [
+    {
+      "pana_la_mp": 0.05,
+      "pret_buc": 23.05
+    },
+    {
+      "pana_la_mp": 0.1,
+      "pret_buc": 26.89
+    },
+    {
+      "pana_la_mp": 0.2,
+      "pret_buc": 30.36
+    },
+    {
+      "pana_la_mp": 0.3,
+      "pret_buc": 34.59
+    },
+    {
+      "pana_la_mp": 0.4,
+      "pret_buc": 44.18
+    },
+    {
+      "pana_la_mp": 0.5,
+      "pret_buc": 48.02
+    },
+    {
+      "pana_la_mp": 0.6,
+      "pret_buc": 53.78
+    },
+    {
+      "pana_la_mp": 0.7,
+      "pret_buc": 63.38
+    },
+    {
+      "pana_la_mp": 0.8,
+      "pret_buc": 72.98
+    },
+    {
+      "pana_la_mp": 0.9,
+      "pret_buc": 84.51
+    },
+    {
+      "pana_la_mp": 1.0,
+      "pret_buc": 105.62
+    }
+  ],
+  "peste_1mp_pret_pe_mp": 134.43,
+  "banda_wrap": [
+    {
+      "diametru": 32,
+      "pret": 6.44,
+      "obs": "2 infasurari/conducta"
+    },
+    {
+      "diametru": 40,
+      "pret": 10.58,
+      "obs": "3 infasurari/conducta"
+    },
+    {
+      "diametru": 50,
+      "pret": 13.225,
+      "obs": "3 infasurari/conducta"
+    },
+    {
+      "diametru": 56,
+      "pret": 13.915,
+      "obs": "3 infasurari/conducta"
+    },
+    {
+      "diametru": 63,
+      "pret": 15.295,
+      "obs": "3 infasurari/conducta"
+    },
+    {
+      "diametru": 75,
+      "pret": 24.495,
+      "obs": "4 infasurari/conducta"
+    },
+    {
+      "diametru": 90,
+      "pret": 28.52,
+      "obs": "4 infasurari/conducta"
+    },
+    {
+      "diametru": 110,
+      "pret": 42.32,
+      "obs": "5 infasurari/conducta"
+    },
+    {
+      "diametru": 125,
+      "pret": 48.99,
+      "obs": "5 infasurari/conducta"
+    },
+    {
+      "diametru": 140,
+      "pret": 65.665,
+      "obs": "6 infasurari/conducta"
+    },
+    {
+      "diametru": 160,
+      "pret": 72.565,
+      "obs": "6 infasurari/conducta"
+    },
+    {
+      "diametru": 22,
+      "pret": 4.255,
+      "obs": "1 infasurare/conducta"
+    }
+  ],
+  "colier_promastop": [
+    {
+      "diametru": 43,
+      "pret_urcare_1colier": 21.0,
+      "pret_orizontal_2coliere": 42.0
+    },
+    {
+      "diametru": 50,
+      "pret_urcare_1colier": 25.0,
+      "pret_orizontal_2coliere": 50.0
+    },
+    {
+      "diametru": 55,
+      "pret_urcare_1colier": 26.0,
+      "pret_orizontal_2coliere": 52.0
+    },
+    {
+      "diametru": 63,
+      "pret_urcare_1colier": 27.0,
+      "pret_orizontal_2coliere": 54.0
+    },
+    {
+      "diametru": 69,
+      "pret_urcare_1colier": 30.0,
+      "pret_orizontal_2coliere": 60.0
+    },
+    {
+      "diametru": 75,
+      "pret_urcare_1colier": 33.0,
+      "pret_orizontal_2coliere": 66.0
+    },
+    {
+      "diametru": 83,
+      "pret_urcare_1colier": 34.0,
+      "pret_orizontal_2coliere": 68.0
+    },
+    {
+      "diametru": 90,
+      "pret_urcare_1colier": 35.0,
+      "pret_orizontal_2coliere": 70.0
+    },
+    {
+      "diametru": 110,
+      "pret_urcare_1colier": 41.0,
+      "pret_orizontal_2coliere": 82.0
+    },
+    {
+      "diametru": 114,
+      "pret_urcare_1colier": 43.0,
+      "pret_orizontal_2coliere": 86.0
+    },
+    {
+      "diametru": 125,
+      "pret_urcare_1colier": 48.0,
+      "pret_orizontal_2coliere": 96.0
+    },
+    {
+      "diametru": 140,
+      "pret_urcare_1colier": 51.0,
+      "pret_orizontal_2coliere": 102.0
+    },
+    {
+      "diametru": 160,
+      "pret_urcare_1colier": 58.0,
+      "pret_orizontal_2coliere": 116.0
+    },
+    {
+      "diametru": 200,
+      "pret_urcare_1colier": 67.0,
+      "pret_orizontal_2coliere": 134.0
+    }
+  ]
+}

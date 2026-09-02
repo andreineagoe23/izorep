@@ -1,0 +1,490 @@
+[
+  {
+    "cod": "01.82.02.01A",
+    "scurt": "Kälteisolierung DN15 Elastomer 13mm",
+    "cant": 187,
+    "um": "m",
+    "pu": 5.99,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "01.82.02.01B",
+    "scurt": "Kälteisolierung DN20 Elastomer 13mm",
+    "cant": 360,
+    "um": "m",
+    "pu": 6.2,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "01.82.02.01C",
+    "scurt": "Kälteisolierung DN25 Elastomer 13mm",
+    "cant": 1550,
+    "um": "m",
+    "pu": 6.35,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "01.82.02.01D",
+    "scurt": "Kälteisolierung DN32 Elastomer 13mm",
+    "cant": 1650,
+    "um": "m",
+    "pu": 8.66,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "01.82.02.01E",
+    "scurt": "Kälteisolierung DN40 Elastomer 25mm",
+    "cant": 502,
+    "um": "m",
+    "pu": 14.07,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "01.82.02.01F",
+    "scurt": "Kälteisolierung DN50 Elastomer 25mm",
+    "cant": 293,
+    "um": "m",
+    "pu": 16.42,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "01.82.02.01G",
+    "scurt": "Kälteisolierung DN65 Elastomer 25mm",
+    "cant": 457,
+    "um": "m",
+    "pu": 17.69,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "01.82.02.01H",
+    "scurt": "Kälteisolierung DN80 Elastomer 25mm",
+    "cant": 719,
+    "um": "m",
+    "pu": 17.91,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "01.82.02.01I",
+    "scurt": "Kälteisolierung DN100 Elastomer 32mm",
+    "cant": 448,
+    "um": "m",
+    "pu": 28.96,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "01.82.02.01J",
+    "scurt": "Kälteisolierung DN125 Elastomer 32mm",
+    "cant": 160,
+    "um": "m",
+    "pu": 29.99,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "01.82.02.01K",
+    "scurt": "Kälteisolierung DN150 Elastomer 32mm",
+    "cant": 14,
+    "um": "m",
+    "pu": 32.74,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "01.82.02.02D",
+    "scurt": "DN 32 - Mineralwolle g= 30mm",
+    "cant": 702,
+    "um": "m",
+    "pu": 7.13,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "01.82.02.02E",
+    "scurt": "DN 40 - Mineralwolle g= 30mm",
+    "cant": 288,
+    "um": "m",
+    "pu": 7.21,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "01.82.02.02F",
+    "scurt": "DN 50 - Mineralwolle g= 30mm",
+    "cant": 112,
+    "um": "m",
+    "pu": 7.38,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "01.82.02.02G",
+    "scurt": "DN 65 - Mineralwolle g= 30mm",
+    "cant": 44,
+    "um": "m",
+    "pu": 9.8,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "01.82.02.02H",
+    "scurt": "DN 80 - Mineralwolle g= 30mm",
+    "cant": 49,
+    "um": "m",
+    "pu": 9.97,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "01.82.03.01C",
+    "scurt": "Wärmeisolierung DN80 Elastomer 13mm + MW 40mm + Heizkabel",
+    "cant": 345,
+    "um": "m",
+    "pu": 44.35,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "01.82.03.01D",
+    "scurt": "Wärmeisolierung DN100 Elastomer 13mm + MW 40mm + Heizkabel",
+    "cant": 60,
+    "um": "m",
+    "pu": 57.82,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "02.82.43.11D",
+    "scurt": "W D Luftleitg. eckig M W Matte Blech 50",
+    "cant": 460,
+    "um": "m²",
+    "pu": 79.73,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "03.70.01.02A",
+    "scurt": "Wärmeiso. aus expand. synthet. Kautschuk, d=9mm, Ø1/2\"",
+    "cant": 112,
+    "um": "m",
+    "pu": 5.79,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "03.70.01.02B",
+    "scurt": "Wärmeiso. aus expand. synthet. Kautschuk, d=9mm, Ø3/4\"",
+    "cant": 5,
+    "um": "m",
+    "pu": 5.99,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "03.70.01.02C",
+    "scurt": "Wärmeiso. aus expand. synthet. Kautschuk, d=9mm, Ø1\"",
+    "cant": 27,
+    "um": "m",
+    "pu": 6.15,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "03.70.01.02D",
+    "scurt": "Wärmeiso. aus expand. synthet. Kautschuk, d=9mm, Ø1 1/4\"",
+    "cant": 48,
+    "um": "m",
+    "pu": 8.29,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "03.70.01.02E",
+    "scurt": "Wärmeiso. aus expand. synthet. Kautschuk, d=9mm, Ø1 1/2\"",
+    "cant": 60,
+    "um": "m",
+    "pu": 8.45,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "03.70.01.02F",
+    "scurt": "Wärmeiso. aus expand. synthet. Kautschuk, d=9mm, Ø2\"",
+    "cant": 213,
+    "um": "m",
+    "pu": 8.88,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "03.71.05.02A",
+    "scurt": "Wärmeisolierung aus expand. synthet. Kautschuk, d=9mm, DN20",
+    "cant": 174,
+    "um": "m",
+    "pu": 5.79,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "03.71.05.02B",
+    "scurt": "Wärmeisolierung aus expand. synthet. Kautschuk, d=9mm, DN25",
+    "cant": 45,
+    "um": "m",
+    "pu": 5.99,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "03.71.05.02C",
+    "scurt": "Wärmeisolierung aus expand. synthet. Kautschuk, d=9mm, DN32",
+    "cant": 35,
+    "um": "m",
+    "pu": 6.15,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "03.71.05.02D",
+    "scurt": "Wärmeisolierung aus expand. synthet. Kautschuk, d=9mm, DN40",
+    "cant": 51,
+    "um": "m",
+    "pu": 8.29,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "03.90.02.12A",
+    "scurt": "Isolierung Armaflex PEHD D40x3.0 - Vakuumentwässerung",
+    "cant": 5,
+    "um": "m",
+    "pu": 8.29,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "03.90.02.13A",
+    "scurt": "Isolierung Armaflex PEHD D50x3.0 - Vakuumentwässerung",
+    "cant": 15,
+    "um": "m",
+    "pu": 8.64,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "03.90.02.14A",
+    "scurt": "Isolierung Armaflex PEHD D56x3.0 - Vakuumentwässerung",
+    "cant": 35,
+    "um": "m",
+    "pu": 8.88,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "03.90.02.15A",
+    "scurt": "Isolierung Armaflex PEHD D63x3.0 - Vakuumentwässerung",
+    "cant": 63,
+    "um": "m",
+    "pu": 9.1,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "03.90.02.16A",
+    "scurt": "Isolierung Armaflex PEHD D75x3.0 - Vakuumentwässerung",
+    "cant": 20,
+    "um": "m",
+    "pu": 9.26,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "03.90.02.17A",
+    "scurt": "Isolierung Armaflex PEHD D90x3.5 - Vakuumentwässerung",
+    "cant": 50,
+    "um": "m",
+    "pu": 10.57,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "03.90.02.18A",
+    "scurt": "Isolierung Armaflex PEHD D110x4.3 - Vakuumentwässerung",
+    "cant": 115,
+    "um": "m",
+    "pu": 11.12,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "03.90.02.19A",
+    "scurt": "Isolierung Armaflex PEHD D125x4.9 - Vakuumentwässerung",
+    "cant": 155,
+    "um": "m",
+    "pu": 11.36,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "03.90.02.20A",
+    "scurt": "Isolierung Armaflex PEHD D160x6.2 - Vakuumentwässerung",
+    "cant": 350,
+    "um": "m",
+    "pu": 14.37,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "03.90.02.21A",
+    "scurt": "Isolierung Armaflex PEHD D200x6.2 - Vakuumentwässerung",
+    "cant": 20,
+    "um": "m",
+    "pu": 15.46,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "03.90.02.22A",
+    "scurt": "Isolierung Armaflex PEHD D250x7.8 - Vakuumentwässerung",
+    "cant": 10,
+    "um": "m",
+    "pu": 16.36,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "03.90.02.27A",
+    "scurt": "Wärmeisolierung aus expand. synthet. Kautschuk, d=9mm, Ø110",
+    "cant": 15,
+    "um": "m",
+    "pu": 11.12,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "03.90.02.27B",
+    "scurt": "Wärmeisolierung aus expand. synthet. Kautschuk, d=9mm, Ø160",
+    "cant": 20,
+    "um": "m",
+    "pu": 14.37,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "03.90.02.28A",
+    "scurt": "Rohr aus PEHD - Putzöffnung Ø110mm - Schwerkraftentwässerung",
+    "cant": 4,
+    "um": "Stk",
+    "pu": 11.12,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "03.90.02.29A",
+    "scurt": "Rohr aus PEHD - Putzöffnung Ø160mm - Schwerkraftentwässerung",
+    "cant": 4,
+    "um": "Stk",
+    "pu": 28.74,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "03.67.10.03A",
+    "scurt": "Wärmeiso. aus expand. synthet. Kautschuk, d=9mm, Ø32mm",
+    "cant": 40,
+    "um": "m",
+    "pu": 6.15,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "03.67.10.03B",
+    "scurt": "Wärmeiso. aus expand. synthet. Kautschuk, d=9mm, Ø50mm",
+    "cant": 205,
+    "um": "m",
+    "pu": 8.64,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "03.90.02.31A",
+    "scurt": "Enteisungssystem Regenwasserrohre, DTIP8 - Schwerkraftentw.",
+    "cant": 6,
+    "um": "m",
+    "pu": 35.32,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "28.02.07A",
+    "scurt": "Wärmeisolierung aus expand. synth. Kautschuk, S=20mm, DN100",
+    "cant": 6,
+    "um": "m",
+    "pu": 15.71,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "28.02.08A",
+    "scurt": "Wärmeisolierung aus expand. synth. Kautschuk, S=20mm, DN150",
+    "cant": 34,
+    "um": "m",
+    "pu": 17.66,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "28.02.09A",
+    "scurt": "Wärmeisolierung aus expand. synth. Kautschuk, S=20mm, DN200",
+    "cant": 3,
+    "um": "m",
+    "pu": 19.44,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "28.02.10A",
+    "scurt": "Wärmeisolierung aus expand. synth. Kautschuk, S=20mm, DN250",
+    "cant": 6,
+    "um": "m",
+    "pu": 23.13,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "28.02.12A",
+    "scurt": "Edelstahlrohr für Abgas von Dieselpumpen Ø125x3.0 mm",
+    "cant": 8,
+    "um": "m",
+    "pu": 20.09,
+    "sheet": "Termice+Sanitare"
+  },
+  {
+    "cod": "02.54.04.01A",
+    "scurt": "Zuluft Wickelfalzrohr starr SPIRO DN 125, Armaflex 9mm",
+    "cant": 7,
+    "um": "m",
+    "pu": 11.36,
+    "sheet": "Ventilatie"
+  },
+  {
+    "cod": "02.54.04.01B",
+    "scurt": "Zuluft Wickelfalzrohr starr SPIRO DN 160, Armaflex 9mm",
+    "cant": 52,
+    "um": "m",
+    "pu": 14.16,
+    "sheet": "Ventilatie"
+  },
+  {
+    "cod": "02.54.04.01C",
+    "scurt": "Zuluft Wickelfalzrohr starr SPIRO DN 200, Armaflex 9mm",
+    "cant": 53,
+    "um": "m",
+    "pu": 15.46,
+    "sheet": "Ventilatie"
+  },
+  {
+    "cod": "02.54.04.01D",
+    "scurt": "Zuluft Wickelfalzrohr starr SPIRO DN 250, Armaflex 9mm",
+    "cant": 173,
+    "um": "m",
+    "pu": 16.36,
+    "sheet": "Ventilatie"
+  },
+  {
+    "cod": "02.54.04.01E",
+    "scurt": "Zuluft Wickelfalzrohr starr SPIRO DN 315, Armaflex 9mm",
+    "cant": 78,
+    "um": "m",
+    "pu": 20.3,
+    "sheet": "Ventilatie"
+  },
+  {
+    "cod": "02.54.04.02B",
+    "scurt": "Wickelfalzrohr starr SPIRO DN 160, Armaflex 9mm",
+    "cant": 24,
+    "um": "m",
+    "pu": 14.16,
+    "sheet": "Ventilatie"
+  },
+  {
+    "cod": "02.54.04.02D",
+    "scurt": "Wickelfalzrohr starr SPIRO DN 250, Armaflex 9mm",
+    "cant": 16,
+    "um": "m",
+    "pu": 16.36,
+    "sheet": "Ventilatie"
+  },
+  {
+    "cod": "02.54.04.02E",
+    "scurt": "Wickelfalzrohr starr SPIRO DN 315, Armaflex 9mm",
+    "cant": 23,
+    "um": "m",
+    "pu": 20.3,
+    "sheet": "Ventilatie"
+  },
+  {
+    "cod": "07.58.01.02A",
+    "scurt": "Entrauchungskanal Druckbelüftung/Nachströmung + Wärmedämm.",
+    "cant": 17,
+    "um": "m²",
+    "pu": 48.0,
+    "sheet": "Ventilatie"
+  }
+]
