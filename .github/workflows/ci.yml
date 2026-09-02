@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Anuleaza rulari vechi pe acelasi branch cand se face push rapid.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verifica:
+    name: typecheck + teste
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      # Suita reproduce oferte reale trimise clientilor. Daca pica, motorul
+      # nu mai da aceleasi preturi ca ofertele istorice si nu se poate emite.
+      - name: Teste motor de preturi
+        run: npm test
+
+  preturi-neschimbate:
+    name: listele de preturi nu s-au schimbat accidental
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # data/price-lists/ e sursa de adevar pentru tarifare. Modificarea ei
+      # schimba preturile din toate ofertele viitoare, deci trebuie sa fie o
+      # decizie constienta, nu un efect secundar al altui commit.
+      - name: Semnaleaza modificarile de preturi
+        if: github.event_name == 'pull_request'
+        run: |
+          modificate=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- data/price-lists/)
+          if [ -n "$modificate" ]; then
+            echo "::warning::Acest PR modifica listele de preturi:"
+            echo "$modificate" | sed 's/^/  /'
+            echo "Confirma ca e intentionat si ca npm test inca trece pe ofertele istorice."
+          else
+            echo "Listele de preturi nu sunt atinse."
+          fi

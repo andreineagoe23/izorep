@@ -77,6 +77,19 @@ python scripts/extract_price_lists.py ../attachments
 Detaliile de arhitectură și regulile de domeniu sunt în fișierele `CLAUDE.md`
 din rădăcină și din fiecare modul.
 
+## Lucrul în echipă
+
+Echipa: **Andrei Neagoe**, **Adrian Popescu**.
+
+- Branch per task, PR către `main`. `main` rămâne mereu verde.
+- CI rulează la fiecare PR: typecheck + suita de teste a motorului de prețuri.
+- Modificările în `data/price-lists/` sunt semnalate explicit în PR — schimbă
+  prețurile din toate ofertele viitoare, deci vrem să fie o decizie conștientă.
+- Fără trailere de atribuire în commit-uri (verificat în CI).
+
+Împărțirea naturală a modulelor, ca să nu vă călcați pe cod:
+`src/pricing/` (motor + liste) vs `src/import/` (parsare + extragere).
+
 ## Stadiu
 
 Făcut: motor de prețuri, extragere parametri, pipeline de import, teste.
