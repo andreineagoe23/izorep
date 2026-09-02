@@ -112,7 +112,20 @@ export async function extrageCuModel(
   // patru loturi in paralel ating limita usor, iar fara reincercare fiecare
   // lot cazut inseamna linii ramase netarifate degeaba.
   const client = new OpenAI({ apiKey, timeout: 90_000, maxRetries: 4 });
-  const model = optiuni.model ?? process.env["OPENAI_MODEL"] ?? "gpt-4o-2024-08-06";
+  // gpt-4.1, nu gpt-4o. Pe contul firmei gpt-4o are 90.000 de tokeni pe zi,
+  // adica doua fisiere ca Radoia.xlsx; gpt-4.1 are 900.000, la aceeasi limita
+  // pe minut. Masurat pe doua fisiere reale, nicio diferenta de calitate.
+  //
+  // Familia gpt-5 are plafoane si mai mari, dar RESPINGE temperature 0 —
+  // accepta doar 1 — iar regula "temperature 0, altfel acelasi import da
+  // rezultate diferite" nu e negociabila aici. In plus arde tokeni de
+  // rationament: pentru un raspuns de 6 tokeni, gpt-5-nano a consumat 338.
+  //
+  // gpt-4.1-mini are 2.000.000 pe zi si a dat 91% acord pe un fisier, dar pe
+  // altul a citit "Di60" ca 76 — diametru gresit inseamna rand gresit in
+  // matrice, deci pret gresit. Se poate trece pe el, dar dupa ce
+  // `npm run compara` da zero diferente cu impact pe mai multe fisiere.
+  const model = optiuni.model ?? process.env["OPENAI_MODEL"] ?? "gpt-4.1";
   // Lotul implicit e 25, nu 12, si motivul e bugetul de tokeni pe ZI.
   //
   // Fiecare apel cara ~1.177 tokeni ficsi — system prompt (~735) plus schema

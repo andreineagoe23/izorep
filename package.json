@@ -20,7 +20,8 @@
     "db:generate": "drizzle-kit generate",
     "db:psql": "docker compose exec db psql -U izorep -d izorep",
     "import": "tsx src/import/cli.ts",
-    "price": "tsx src/pricing/cli.ts"
+    "price": "tsx src/pricing/cli.ts",
+    "compara": "tsx scripts/compara-modele.ts"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2",

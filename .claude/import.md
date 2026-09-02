@@ -74,7 +74,8 @@ progres la fiecare lot întors. Un lot care cade nu invalidează importul: restu
 liniilor rămân, iar raportul spune câte loturi au eșuat.
 
 Latența e dominată de generarea răspunsului, nu de rețea. Măsurat pe
-`Oferta 27.04.2026 Matari.xlsx` (84 de linii reziduale) cu gpt-4o: un lot de 25
+`Oferta 27.04.2026 Matari.xlsx` (84 de linii reziduale, înainte de contextul de
+secțiune) cu gpt-4o: un lot de 25
 de linii ia ~19s, deci varianta secvențială inițială ținea ecranul gol ~80s. În
 loturi de 12, câte 4 deodată: **19–39s**, cu progres vizibil de la prima
 secundă.
@@ -116,8 +117,36 @@ De aceea lotul implicit e **25**, nu 12.
 Un lot mai mic ajută la prima și strică a doua. Mesajul din `LimitaDeRata` le
 distinge, ca să nu tragi în direcția greșită.
 
-Pe `gpt-4o`, tier-ul de start dă 90.000 tokeni pe zi. Un fișier ca `Radoia.xlsx`
-consumă ~50.000 — deci două fișiere pe zi și bugetul e terminat.
+### Alegerea modelului
+
+Implicit: **`gpt-4.1`**. Nu `gpt-4o` — pe contul firmei acela are 90.000 tokeni
+pe zi, iar `Radoia.xlsx` consumă ~50.000, deci două fișiere și ziua s-a
+terminat. `gpt-4.1` are 900.000 la aceeași limită pe minut.
+
+**Familia `gpt-5` nu se poate folosi aici.** Respinge `temperature: 0` — acceptă
+doar 1 — iar regula „temperature 0, altfel același import dă rezultate
+diferite" nu e negociabilă. În plus arde tokeni de raționament: pentru un
+răspuns de 6 tokeni, `gpt-5-nano` a consumat 338, `gpt-5-mini` 82,
+`gpt-4.1-mini` 6.
+
+`gpt-4.1-mini` are 2.000.000 pe zi și e tentant, dar măsurat:
+
+| Fișier | Acord | Diferențe cu impact pe preț |
+|---|---|---|
+| `Izolatii Transavia` (18 reziduale) | 88,9% | **1** — a citit `Di60` ca 76 |
+| `Oferta 27.04.2026` (35 reziduale) | 91,4% | 0 |
+
+Un diametru greșit înseamnă rând greșit în matrice, deci preț greșit — și nu
+se semnalează, fiindcă modelul e sigur pe el. Se poate trece pe mini, dar după
+ce `npm run compara` dă zero diferențe cu impact, pe mai multe fișiere.
+
+```bash
+npm run compara -- <fisier.xlsx> gpt-4.1 gpt-4.1-mini
+```
+
+Compară doar câmpurile care intră în tarifare — `incredere` și `motiv` sunt
+pentru omul care validează, nu pentru preț. Nu poate spune care model are
+dreptate, doar unde diferă; de-aia tipărește linia sursă.
 
 ### Ce reduce consumul, în ordinea efectului
 
