@@ -19,7 +19,7 @@ Materialul sursă (17 fișiere Excel primite de la firmă) stă în `../attachme
 ## Ce e construit
 
 **Motorul de prețuri** (`src/pricing/`) — determinist, fără AI, izomorf
-(rulează identic în Node și în browser). 48 de teste care reproduc poziții
+(rulează identic în Node și în browser). 49 de teste care reproduc poziții
 reale facturate din Oferta 118 / 27.04.2026, inclusiv poziții compuse din trei
 straturi și totalurile pe linie.
 
@@ -130,7 +130,7 @@ de contract, stoc și facturare.
 ## Comenzi
 
 ```bash
-npm test                                       # 48 teste motor
+npm test                                       # 49 teste motor
 npm run typecheck
 npm run dev                                    # UI local
 npm run import -- ../attachments/Radoia.xlsx   # pipeline complet

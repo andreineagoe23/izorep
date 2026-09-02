@@ -171,6 +171,18 @@ describe("pozitii care NU se pot tarifa - se semnaleaza, nu se ghicesc", () => {
   it("DN inexistent in tabelul de conversie", () => {
     expect(() => tarifeazaSimplu("elastomer", 37, 13, "ml")).toThrow();
   });
+
+  it("inchiderile de goluri la foc au alta structura de pret", () => {
+    // Pret aditiv (gol dupa suprafata + banda WRAP + colier), nu matrice
+    // ø × grosime. Fara verificarea explicita din `tarifeaza`, lista cu alta
+    // forma pica intr-un TypeError opac, iar in ecranul de import pozitia
+    // aparea fara pret si fara motiv.
+    expect(() => tarifeaza({
+      diametru: { valoare: 100, tip: "exterior" },
+      straturi: [{ sistem: "goluri_foc" }],
+      forma: "ml", cantitate: 1,
+    })).toThrow(PozitieNetarifata);
+  });
 });
 
 describe("abateri cunoscute fata de ofertele istorice", () => {

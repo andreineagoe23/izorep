@@ -39,6 +39,9 @@ Când firma confirmă regula corectă, cazul se mută în suita principală.
 - Lista de manoperă separată (structură diferită: tarif plat, nu matrice).
 - Închiderile de goluri la foc: preț **aditiv** (gol după suprafață + bandă WRAP
   + colier PROMASTOP). Datele sunt în `data/price-lists/goluri_foc.json`, dar
-  motorul nu le folosește încă.
+  motorul nu le folosește încă. `tarifeaza` respinge explicit `goluri_foc` cu
+  `PozitieNetarifata`: lista are altă structură, iar fără verificare pica într-un
+  `TypeError` opac, care în ecranul de import arăta ca o poziție fără preț și
+  fără motiv.
 - Coeficienți (înălțime, urgență, weekend) peste prețul de bază.
 - Versionarea listelor de prețuri și snapshot-ul pe linia de deviz.

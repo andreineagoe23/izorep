@@ -220,6 +220,11 @@ export const ecran: Ecran = {
             ${indicator(eur(valoare), "valoare tarifată")}
           </div>
           ${trunchiat > 0 ? nota(`Plafonul per import e de 400 de linii trimise la model; ${trunchiat} au rămas netrimise.`) : ""}
+          ${izo.some((l) => l.extras.sistem === "goluri_foc")
+            ? nota("Fișierul conține <strong>închideri de goluri la foc</strong>. Ele au preț aditiv — gol după " +
+                "suprafață, plus bandă WRAP, plus colier — nu matrice ø × grosime, iar motorul nu le tarifează " +
+                "încă: pozițiile sunt extrase și marcate, nu ghicite.")
+            : ""}
           ${nota(info
             ? "Prețurile se calculează întotdeauna determinist, în browser. Modelul extrage doar parametri — sistem, " +
               "diametru, grosime, formă — și nu vede și nu produce niciun preț. Liniile cu încredere sub prag merg " +

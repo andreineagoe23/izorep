@@ -135,6 +135,18 @@ export function tarifeaza(cerere: CerereTarifare): RezultatTarifare {
   const { diametru, straturi, forma, cantitate } = cerere;
   if (straturi.length === 0) throw new PozitieNetarifata("pozitie fara straturi", { cerere });
 
+  // Inchiderile de goluri la foc au pret ADITIV (gol dupa suprafata + banda
+  // WRAP + colier PROMASTOP), nu matrice ø × grosime. Datele exista in
+  // data/price-lists/goluri_foc.json, dar regula nu e scrisa inca. Fara
+  // verificarea asta, lista cu alta structura pica intr-un TypeError opac in
+  // loc de pozitia marcata pentru tarifare manuala.
+  if (straturi.some((s) => s.sistem === "goluri_foc")) {
+    throw new PozitieNetarifata(
+      "inchiderile de goluri la foc se tarifeaza aditiv, nemodelat inca in motor",
+      { sistem: "goluri_foc" },
+    );
+  }
+
   const od = toOuterDiameter(diametru.valoare, diametru.tip);
   const tarifate: StratTarifat[] = [];
   let geometric = od;

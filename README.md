@@ -31,7 +31,7 @@ Pe lista de cantități reală a unui spital (258 rânduri):
 ## Motorul de prețuri
 
 Reprodus din listele de prețuri ale firmei și verificat pe oferte reale trimise
-clienților. **48 de teste, toate pe poziții facturate efectiv** — inclusiv
+clienților. **49 de teste, toate pe poziții facturate efectiv** — inclusiv
 poziții compuse din trei straturi:
 
 ```
