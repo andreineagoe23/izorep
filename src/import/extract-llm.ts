@@ -86,7 +86,12 @@ function nrDinMediu(cheie: string, implicit: number): number {
  */
 export class LimitaDeRata extends Error {
   constructor(readonly cauza: string) {
-    super(`limita de rata OpenAI atinsa: ${cauza}. Incearca IZOREP_CONCURENTA=1, un IZOREP_LOT mai mic, sau ruleaza cu --fara-model.`);
+    super(
+      `limita de rata OpenAI atinsa: ${cauza}. ` +
+      `Daca e limita pe MINUT (TPM/RPM): IZOREP_CONCURENTA=1. ` +
+      `Daca e cea pe ZI (TPD): IZOREP_LOT mai MARE, un model cu plafon mai mare, ` +
+      `sau --fara-model.`,
+    );
     this.name = "LimitaDeRata";
   }
 }
@@ -108,7 +113,17 @@ export async function extrageCuModel(
   // lot cazut inseamna linii ramase netarifate degeaba.
   const client = new OpenAI({ apiKey, timeout: 90_000, maxRetries: 4 });
   const model = optiuni.model ?? process.env["OPENAI_MODEL"] ?? "gpt-4o-2024-08-06";
-  const lot = optiuni.dimensiuneLot ?? nrDinMediu("IZOREP_LOT", 12);
+  // Lotul implicit e 25, nu 12, si motivul e bugetul de tokeni pe ZI.
+  //
+  // Fiecare apel cara ~1.177 tokeni ficsi — system prompt (~735) plus schema
+  // (~442) — retrimisi integral. Pe Radoia.xlsx pleaca 153 de linii la model:
+  // in loturi de 12 sunt 13 apeluri, deci 15.300 de tokeni doar overhead; in
+  // loturi de 25 sunt 7 apeluri si 8.200. La un plafon de 90.000 tokeni pe zi,
+  // diferenta e intre doua fisiere pe zi si trei.
+  //
+  // Un lot mai MIC ajuta la limita pe minut, dar inrautateste pe cea pe zi.
+  // Sunt doua limite diferite si se rezolva in directii opuse.
+  const lot = optiuni.dimensiuneLot ?? nrDinMediu("IZOREP_LOT", 25);
   // Prima manevra cand dai de rate limit: IZOREP_CONCURENTA=1.
   const concurenta = Math.max(1, optiuni.concurenta ?? nrDinMediu("IZOREP_CONCURENTA", 4));
 

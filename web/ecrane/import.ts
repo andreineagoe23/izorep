@@ -26,7 +26,7 @@ interface StareModel { disponibil: boolean; model: string; prag: number; lot?: n
  * IZOREP_LOT / IZOREP_CONCURENTA, iar ecranul le ia din raspunsul rutei —
  * prima manevra cand contul OpenAI da 429 e concurenta 1.
  */
-const LOT_IMPLICIT = 12;
+const LOT_IMPLICIT = 25;
 const CONCURENTA_IMPLICITA = 4;
 /** Plafon per import, acelasi cu cel din plugin. */
 const MAX_LINII = 400;

@@ -93,26 +93,51 @@ loopback și plafonează la 400 de linii per import.
 - **nu vede și nu calculează prețuri**
 - scor de încredere pe linie; sub prag → validare umană obligatorie
 
-## Când OpenAI dă „rate limit reached"
+## Bugetul de tokeni
 
-Nu e o problemă de extragere, e una de debit. În ordinea în care se încearcă:
+Fiecare apel cară **~1.177 tokeni ficși** — system prompt (~735) plus schema
+JSON (~442) — retrimiși integral la fiecare lot. Pe `Radoia.xlsx` pleacă 153 de
+linii la model:
 
-```bash
-IZOREP_CONCURENTA=1 npm run dev        # prima manevră
-IZOREP_LOT=6 IZOREP_CONCURENTA=1 ...   # loturi mai mici
-npm run import -- <fisier> --fara-model
-```
+| Lot | Apeluri | Doar overhead |
+|---|---|---|
+| 12 | 13 | 15.300 tok |
+| 25 | 7 | 8.200 tok |
+| 40 | 4 | 4.700 tok |
 
-Clientul are `maxRetries: 4` explicit, deci un 429 se reia cu backoff în loc să
-piardă lotul. Ce trece de reîncercări devine `LimitaDeRata`, cu mesaj care
-spune ce ai de făcut — nu o eroare generică pe care ai fi tentat s-o cauți în
-prompt sau în fișier.
+De aceea lotul implicit e **25**, nu 12.
 
-Valorile se citesc din mediu în CLI și în plugin; ecranul le ia din răspunsul
-rutei, ca să nu existe două surse de adevăr.
+### Două limite, direcții opuse
+
+- **Pe minut** (TPM/RPM) — vârf de moment → `IZOREP_CONCURENTA=1`
+- **Pe zi** (TPD) — buget total → `IZOREP_LOT` mai **mare**, model cu plafon
+  mai mare, sau `--fara-model`
+
+Un lot mai mic ajută la prima și strică a doua. Mesajul din `LimitaDeRata` le
+distinge, ca să nu tragi în direcția greșită.
+
+Pe `gpt-4o`, tier-ul de start dă 90.000 tokeni pe zi. Un fișier ca `Radoia.xlsx`
+consumă ~50.000 — deci două fișiere pe zi și bugetul e terminat.
+
+### Ce reduce consumul, în ordinea efectului
+
+1. **Stratul determinist.** Fiecare linie rezolvată de L2a costă zero tokeni.
+   `Oferta Matari` a trecut de la 0 la 53 de poziții deterministe și acum nu
+   mai consumă nimic. L1 și L4 sunt răspunsul structural, nu o setare.
+2. **Loturi mai mari** — mai puține retrimiteri ale promptului. Peste ~30 de
+   linii pe lot acuratețea începe să scadă; 25 e verificat.
+3. **Un model cu plafon mai mare.** Sarcina e extragere cu schemă închisă, cinci
+   câmpuri cu domenii enumerate — nu raționament. Merită măsurat dacă un model
+   mai mic o face la fel de bine: `OPENAI_MODEL` e deja configurabil, iar
+   verificarea e ieftină — rulezi pe același fișier și compari cu ce dă stratul
+   determinist pe liniile pe care le rezolvă amândouă.
+4. **Text mai scurt per linie.** Se trimit până la 900 de caractere; util e
+   rareori peste 200.
+5. **`motiv` mai scurt.** E o propoziție per linie, în tokenii de ieșire.
 
 Un lot căzut nu invalidează importul: restul liniilor rămân, iar raportul spune
-câte loturi au eșuat.
+câte loturi au eșuat. Clientul are `maxRetries: 4`, deci un 429 se reia cu
+backoff înainte să devină `LimitaDeRata`.
 
 ## Capcane găsite în fișierele reale
 

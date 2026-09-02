@@ -64,7 +64,7 @@ export function pluginModel(): Plugin {
         const v = Number(process.env[c]);
         return Number.isFinite(v) && v > 0 ? Math.floor(v) : i;
       };
-      const lot = nr("IZOREP_LOT", 12);
+      const lot = nr("IZOREP_LOT", 25);
       const concurenta = nr("IZOREP_CONCURENTA", 4);
 
       server.config.logger.info(
