@@ -58,6 +58,12 @@ export interface OptiuniModel {
   model?: string;
   /** Cate linii pe apel. Batch-uri prea mari degradeaza acuratetea. */
   dimensiuneLot?: number;
+  /**
+   * Cate loturi in acelasi timp. Latenta e dominata de generarea raspunsului,
+   * nu de reteaua: masurat pe Oferta Matari, un lot de 25 de linii ia ~19s, iar
+   * patru loturi secventiale ~80s. In paralel, aceleasi linii ies in ~20s.
+   */
+  concurenta?: number;
 }
 
 export async function extrageCuModel(
@@ -69,13 +75,16 @@ export async function extrageCuModel(
   const apiKey = optiuni.apiKey ?? process.env["OPENAI_API_KEY"];
   if (!apiKey) throw new Error("OPENAI_API_KEY lipseste. Copiaza .env.example in .env.");
 
-  const client = new OpenAI({ apiKey });
+  // 90s per apel: un lot blocat nu are voie sa tina importul la nesfarsit.
+  const client = new OpenAI({ apiKey, timeout: 90_000 });
   const model = optiuni.model ?? process.env["OPENAI_MODEL"] ?? "gpt-4o-2024-08-06";
-  const lot = optiuni.dimensiuneLot ?? 25;
+  const lot = optiuni.dimensiuneLot ?? 12;
+  const concurenta = Math.max(1, optiuni.concurenta ?? 4);
 
-  const rezultate: LinieExtrasa[] = [];
-  for (let i = 0; i < linii.length; i += lot) {
-    const bucata = linii.slice(i, i + lot);
+  const loturi: (typeof linii)[] = [];
+  for (let i = 0; i < linii.length; i += lot) loturi.push(linii.slice(i, i + lot));
+
+  async function proceseaza(bucata: typeof linii): Promise<LinieExtrasa[]> {
     const payload = bucata
       .map((l) => `[${l.index}]${l.um ? ` (UM: ${l.um})` : ""} ${l.text.replace(/\s+/g, " ").slice(0, 900)}`)
       .join("\n");
@@ -93,7 +102,18 @@ export async function extrageCuModel(
     const continut = raspuns.choices[0]?.message.content;
     if (!continut) throw new Error("model fara continut in raspuns");
     // Validarea nu e optionala: ce nu trece de schema nu ajunge in aplicatie.
-    rezultate.push(...RaspunsModel.parse(JSON.parse(continut)).linii);
+    return RaspunsModel.parse(JSON.parse(continut)).linii;
   }
-  return rezultate;
+
+  // Rezultatele se aseaza pe pozitia lotului, nu in ordinea in care se intorc:
+  // paralelismul nu are voie sa schimbe iesirea pentru aceeasi intrare.
+  const rezultate: LinieExtrasa[][] = new Array(loturi.length);
+  let urmator = 0;
+  const lucrator = async (): Promise<void> => {
+    for (let i = urmator++; i < loturi.length; i = urmator++) {
+      rezultate[i] = await proceseaza(loturi[i]!);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(concurenta, loturi.length) }, lucrator));
+  return rezultate.flat();
 }

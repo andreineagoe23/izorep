@@ -42,11 +42,36 @@ prin model ar costa câțiva euro pe lună. Regex-ul există pentru **determinis
 testabilitate**: ce se poate rezolva determinist trebuie să aibă teste care pică
 atunci când cineva strică regula.
 
+## Unde rulează stratul cu model
+
+CLI: `npm run import -- <fisier.xlsx>`.
+
+În aplicație: `scripts/vite-plugin-model.ts` expune `POST /api/extrage` **doar pe
+serverul de dezvoltare** (`apply: "serve"`). Ecranul de import întreabă întâi
+ruta cu un GET; dacă răspunde, trimite acolo liniile reziduale și primește
+înapoi parametrii extrași, apoi tarifează determinist în browser.
+
+Ecranul împarte reziduul în loturi și le trimite în paralel, actualizând bara de
+progres la fiecare lot întors. Un lot care cade nu invalidează importul: restul
+liniilor rămân, iar raportul spune câte loturi au eșuat.
+
+Latența e dominată de generarea răspunsului, nu de rețea. Măsurat pe
+`Oferta 27.04.2026 Matari.xlsx` (84 de linii reziduale) cu gpt-4o: un lot de 25
+de linii ia ~19s, deci varianta secvențială inițială ținea ecranul gol ~80s. În
+loturi de 12, câte 4 deodată: **19–39s**, cu progres vizibil de la prima
+secundă.
+
+Cheia stă în procesul Node al lui `vite dev` și nu ajunge niciodată în pagină.
+`apply: "serve"` e mecanismul, nu o precauție: în `vite build` ruta nu există,
+deci varianta de pe Pages rămâne pur deterministă — ecranul vede doar că ruta
+lipsește și își schimbă mesajul. Middleware-ul răspunde doar cererilor de pe
+loopback și plafonează la 400 de linii per import.
+
 ## Reguli pentru stratul cu model
 
 - structured outputs cu schemă strictă; ieșirea trece prin Zod înainte de orice
 - `temperature: 0` — altfel același import dă rezultate diferite
-- primește doar liniile reziduale, în loturi de ~25
+- primește doar liniile reziduale, în loturi de 12, câte 4 loturi în paralel
 - **nu vede și nu calculează prețuri**
 - scor de încredere pe linie; sub prag → validare umană obligatorie
 

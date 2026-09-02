@@ -26,7 +26,9 @@ straturi și totalurile pe linie.
 **Pipeline-ul de import** (`src/import/`) — L0 parsare fizică, L2a extragere
 deterministă (~55% din linii), L2b completare cu OpenAI prin structured outputs
 pe reziduu, L3 tarifare. Rulat pe lista reală a unui spital: 191 poziții
-detectate, 63% tarifate automat.
+detectate, 63% tarifate automat. Rulează identic din CLI și din aplicație, când
+aceasta e pornită local (`npm run dev`): pe `Izolatii Transavia.xlsx` ambele dau
+72 poziții, 39 tarifate, 6.039,90 €.
 
 **Aplicația** (`web/`) — 7 ecrane: tablou de bord, lucrări, cereri și oferte,
 calcul deviz, import Excel, clienți, liste de prețuri. Datele sunt reale,
@@ -49,8 +51,11 @@ de antet, iar embeddings-urile confundă DN80 cu DN100. Soluția e extragere cu
 schemă închisă (5 câmpuri, domenii enumerate) plus memorie per client.
 Detalii în `import.md`.
 
-**Demo-ul de pe Pages rulează doar stratul determinist.** Stratul cu model ar
-cere o cheie API, iar o cheie într-o pagină statică e publică.
+**Stratul cu model rulează local, nu pe Pages.** Cu `npm run dev` și cheia în
+`.env`, ecranul de import face pipeline-ul complet: ruta `/api/extrage` din
+`scripts/vite-plugin-model.ts` există doar pe serverul de dezvoltare, deci cheia
+nu ajunge în pagină și nu poate ajunge într-un build. Pe Pages ruta lipsește și
+ecranul cade curat pe stratul determinist.
 
 **Nu inventăm identificatori pentru firme reale.** CUI-urile și telefoanele din
 `web/date/seed.ts` sunt `null` și se afișează „—". Un CUI plauzibil dar greșit
