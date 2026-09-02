@@ -35,7 +35,13 @@ jobs:
       - name: Build
         run: npm run build:web
 
+      # enablement: true activeaza Pages pe sursa "GitHub Actions" direct din
+      # workflow. Fara el, primul deploy pica pana cand cineva schimba manual
+      # sursa din Settings -> Pages.
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist-web
