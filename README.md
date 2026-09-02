@@ -47,12 +47,23 @@ documentate în `tests/pricing.test.ts`, blocul „abateri cunoscute".
 
 <https://andreineagoe23.github.io/izorep/>
 
-Rulează **integral în browser** — parsare Excel, extragere prin reguli și
-tarifare. Niciun fișier nu pleacă de pe calculatorul tău și nu există backend.
-Poți trage o listă de cantități `.xlsx` direct în pagină.
+Rulează **integral în browser** — niciun fișier nu pleacă de pe calculatorul tău
+și nu există backend.
 
-Stratul cu model nu e acolo: ar cere o cheie API, iar o cheie pusă într-o pagină
-statică e publică. Pentru pipeline-ul complet, rulează local `npm run import`.
+Ecrane livrate: tablou de bord, lucrări, clienți, cereri, calcul deviz, oferte
+și contracte, liste de prețuri, import Excel. Restul modulelor apar în meniu
+marcate „urmează", ca să se vadă harta întregului sistem fără să promită ce nu
+e livrat.
+
+**Datele sunt reale**, extrase din fișierele primite de la firmă: clienți
+(NISAL, Spital Regina Maria, Transavia, Flower City), obiective, persoane de
+contact, numere de ofertă și valorile însumate din ofertele efective. Codurile
+fiscale și telefoanele sunt lăsate goale — nu inventăm identificatori pentru
+firme reale.
+
+Stratul cu model nu e în browser: ar cere o cheie API, iar o cheie pusă într-o
+pagină statică e publică. Pentru pipeline-ul complet, rulează local
+`npm run import`.
 
 ## Instalare
 
