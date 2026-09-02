@@ -1,0 +1,34 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1788378967924,
+      "tag": "0000_fundatie",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788378985198,
+      "tag": "0001_rls_fortat_si_imutabilitate",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788379257227,
+      "tag": "0002_rol_aplicatie",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1788379345627,
+      "tag": "0003_context_tenant_gol",
+      "breakpoints": true
+    }
+  ]
+}

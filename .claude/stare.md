@@ -38,6 +38,14 @@ calcul deviz, import Excel, clienți, liste de prețuri. Datele sunt reale,
 extrase din fișierele firmei. Paleta și tipografia respectă WCAG AA; detaliile
 în `ui.md`.
 
+**Baza de date** (`src/db/`) — Postgres 18 local în Docker, Drizzle, migrări
+commit-uite. Izolarea între tenanți e impusă de bază prin row-level security,
+nu de `where`-uri în cod; listele de prețuri sunt documente versionate,
+imutabile după activare, cu trigger care refuză editarea. Catalogul din bază e
+verificat că e identic cu cel din fișiere — cât timp testul ăla trece, cele
+130 de teste ale motorului se aplică și prețurilor din bază. Detaliile în
+`backend.md`.
+
 **Infrastructură** — CI (typecheck + teste + semnalarea modificărilor de
 prețuri), verificare care respinge trailerele de atribuire AI, deploy automat
 pe GitHub Pages: <https://andreineagoe23.github.io/izorep/>
@@ -153,10 +161,11 @@ de contract, stoc și facturare.
 ## Comenzi
 
 ```bash
-npm test                                       # 130 teste motor
+npm test                                       # 140 teste (motor + baza)
 npm run typecheck
-npm run dev                                    # UI local
+npm run dev                                    # UI local, /izorep/
 npm run import -- ../attachments/Radoia.xlsx   # pipeline complet
 npm run import -- <fisier> --fara-model        # doar determinist
 python scripts/extract_price_lists.py ../attachments   # regenerează prețurile
+npm run db:up && npm run db:migrate && npm run db:seed  # baza locală
 ```

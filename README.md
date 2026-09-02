@@ -70,29 +70,71 @@ Stratul cu model nu e în browser: ar cere o cheie API, iar o cheie pusă într-
 pagină statică e publică. Pentru pipeline-ul complet, rulează local
 `npm run import`.
 
-## Instalare
+## Pornire locală
+
+Node 22+ și Docker.
 
 ```bash
 npm install
-cp .env.example .env     # completează OPENAI_API_KEY
+cp .env.example .env      # OPENAI_API_KEY, opțional
+npm run db:up             # Postgres în Docker, port 5433
+npm run db:migrate
+npm run db:seed           # o singură dată
 ```
 
-## Utilizare
+Apoi, zilnic:
 
 ```bash
-npm test                                       # suita de referință
-npm run import -- ../attachments/Radoia.xlsx   # import complet
-npm run import -- <fisier> --fara-model        # doar stratul determinist
-
-npm run dev                                    # UI local, http://localhost:5173
-npm run build:web                              # build static in dist-web/
+npm start                 # bază + migrări + interfață
+npm run dev               # doar interfața, fără Docker
 ```
 
-Regenerarea listelor de prețuri din Excel (necesită Python cu `openpyxl` și `xlrd`):
+→ <http://localhost:5173/izorep/>
+
+**Interfața nu depinde de bază.** Motorul și parsarea Excel rulează în browser,
+cu listele importate static — poți lucra pe UI fără Docker. Cu cheia în `.env`,
+`npm run dev` pornește în plus ruta `/api/extrage` pentru liniile pe care
+regulile nu le rezolvă; fără ea, importul cade curat pe stratul determinist.
+
+**Server HTTP nu există încă.** E construit stratul de bază — schemă, migrări,
+izolare între tenanți, repository de prețuri. Interfața și baza nu comunică
+deocamdată. Când apare serverul, intră în `docker-compose.yml` și `npm start`
+îl ridică odată cu restul.
+
+### Comenzi
+
+| Comandă | Ce face |
+|---|---|
+| `npm start` | bază + migrări + interfață |
+| `npm run dev` | doar interfața |
+| `npm test` | 142 de teste (cele de bază se sar fără Docker) |
+| `npm run typecheck` | |
+| `npm run build:web` | build static în `dist-web/` |
+| `npm run db:up` / `db:down` | pornește / oprește Postgres |
+| `npm run db:migrate` | aplică migrările |
+| `npm run db:seed` | repopulează baza locală |
+| `npm run db:reset` | șterge tot și reface |
+| `npm run db:generate` | migrare nouă din `schema.ts` |
+| `npm run db:psql` | consolă SQL |
+| `npm run import -- <fisier.xlsx>` | import complet |
+| `npm run import -- <fisier> --fara-model` | doar stratul determinist |
+
+Regenerarea listelor de prețuri din Excel (Python cu `openpyxl` și `xlrd`):
 
 ```bash
 python scripts/extract_price_lists.py ../attachments
 ```
+
+### De știut
+
+- Portul bazei e **5433**, nu 5432.
+- Aplicația se conectează cu `izorep_app`, nu cu proprietarul schemei:
+  superuserii ocolesc row-level security, deci cu rolul greșit izolarea între
+  tenanți n-ar funcționa **și testele ar trece fals**.
+- Nu există `/backend` și `/frontend` separate fiindcă `src/pricing/` și
+  `src/import/` sunt izomorfe — același cod în Node și în browser. Într-un
+  split n-ar avea unde să stea fără duplicare, iar regulile de bani nu au voie
+  să existe în două locuri. `tests/structura.test.ts` ține granița.
 
 ## Structură
 
@@ -101,10 +143,12 @@ python scripts/extract_price_lists.py ../attachments
 | `data/price-lists/` | listele de prețuri, extrase din Excel-urile firmei |
 | `src/pricing/` | motorul de prețuri — determinist, testat |
 | `src/import/` | pipeline de import Excel de la clienți |
+| `src/db/` | schemă, migrări, repository — **doar Node** |
 | `scripts/` | ETL one-off Excel → JSON |
-| `web/` | UI-ul de demo (Vite, fără framework) |
+| `web/` | UI-ul (Vite, fără framework) |
 | `tests/` | suita de referință pe oferte reale |
 | `.claude/` | context de domeniu pe module |
+| `docs/` | operare: infrastructură, backup, producție |
 
 Detaliile de arhitectură și regulile de domeniu sunt în fișierele `CLAUDE.md`
 din rădăcină și din fiecare modul.

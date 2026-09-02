@@ -102,3 +102,30 @@ export function grosimiLa(sistem: SistemMatrice, diametru: number): number[] {
   }
   return out.sort((a, b) => a - b);
 }
+
+/**
+ * Toate listele unui tarifator, la un moment dat.
+ *
+ * Exista doua surse care produc EXACT aceeasi forma:
+ *   - `catalogDinFisiere()`, de aici — pentru teste, CLI si demo-ul static
+ *   - `catalogDinBaza()`, din src/db/repo-preturi.ts — pentru server
+ *
+ * Echivalenta lor e verificata in tests/db.test.ts. Atat timp cat trece,
+ * motorul nu are nevoie sa stie de unde vin preturile.
+ */
+export interface Catalog {
+  matrice: Record<SistemMatrice, ListaPreturi>;
+  goluriFoc: ListaGoluriFoc;
+}
+
+/**
+ * Catalogul din fisierele commit-uite in data/price-lists/.
+ *
+ * Sursa asta ramane pentru teste, pentru CLI si pentru demo-ul care ruleaza
+ * fara server. Un server multi-tenant NU o foloseste: acolo listele vin din
+ * baza, per tenant.
+ */
+export const catalogDinFisiere = (): Catalog => ({
+  matrice: { elastomer, vata_minerala, tabla, pvc } as unknown as Record<SistemMatrice, ListaPreturi>,
+  goluriFoc: goluri_foc as unknown as ListaGoluriFoc,
+});

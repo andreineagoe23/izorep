@@ -1,0 +1,35 @@
+# Postgres local pentru dezvoltare.
+#
+# Versiunea majora e fixata si trebuie sa fie ACEEASI ca in productie. E
+# singura constrangere care conteaza aici: altfel descoperi diferente de
+# comportament la migrare, cand e cel mai scump.
+#
+#   docker compose up -d      porneste
+#   docker compose down       opreste, pastreaza datele
+#   docker compose down -v    sterge si datele (reseteaza tot)
+services:
+  db:
+    image: postgres:18
+    container_name: izorep-db
+    environment:
+      POSTGRES_USER: izorep
+      POSTGRES_PASSWORD: izorep
+      POSTGRES_DB: izorep
+      # Colatie determinista: ordonarea textelor nu depinde de locale-ul
+      # masinii. Fara asta, aceeasi interogare da alta ordine pe alt laptop.
+      POSTGRES_INITDB_ARGS: "--locale-provider=icu --icu-locale=ro-RO"
+    ports:
+      - "5433:5432"        # 5433 ca sa nu se bata cu un Postgres local
+    volumes:
+      # Postgres 18+ cere mount-ul la /var/lib/postgresql, nu la .../data:
+      # asa poate face pg_upgrade --link fara sa treaca peste o granita de
+      # mount. Pe 17 si mai vechi era invers.
+      - izorep-date:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U izorep -d izorep"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  izorep-date:
