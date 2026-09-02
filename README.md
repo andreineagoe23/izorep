@@ -43,6 +43,17 @@ Ce am găsit rulând motorul pe ofertele istorice: trei poziții tarifate
 inconsecvent manual (ø90, ø160, și rotunjirea la stratul de jachetă). Sunt
 documentate în `tests/pricing.test.ts`, blocul „abateri cunoscute".
 
+## Demo în browser
+
+<https://andreineagoe23.github.io/izorep/>
+
+Rulează **integral în browser** — parsare Excel, extragere prin reguli și
+tarifare. Niciun fișier nu pleacă de pe calculatorul tău și nu există backend.
+Poți trage o listă de cantități `.xlsx` direct în pagină.
+
+Stratul cu model nu e acolo: ar cere o cheie API, iar o cheie pusă într-o pagină
+statică e publică. Pentru pipeline-ul complet, rulează local `npm run import`.
+
 ## Instalare
 
 ```bash
@@ -56,6 +67,9 @@ cp .env.example .env     # completează OPENAI_API_KEY
 npm test                                       # suita de referință
 npm run import -- ../attachments/Radoia.xlsx   # import complet
 npm run import -- <fisier> --fara-model        # doar stratul determinist
+
+npm run dev                                    # UI local, http://localhost:5173
+npm run build:web                              # build static in dist-web/
 ```
 
 Regenerarea listelor de prețuri din Excel (necesită Python cu `openpyxl` și `xlrd`):
@@ -72,7 +86,9 @@ python scripts/extract_price_lists.py ../attachments
 | `src/pricing/` | motorul de prețuri — determinist, testat |
 | `src/import/` | pipeline de import Excel de la clienți |
 | `scripts/` | ETL one-off Excel → JSON |
+| `web/` | UI-ul de demo (Vite, fără framework) |
 | `tests/` | suita de referință pe oferte reale |
+| `.claude/` | context de domeniu pe module |
 
 Detaliile de arhitectură și regulile de domeniu sunt în fișierele `CLAUDE.md`
 din rădăcină și din fiecare modul.

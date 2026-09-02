@@ -1,9 +1,9 @@
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
+import elastomer from "../../data/price-lists/elastomer.json" with { type: "json" };
+import vata_minerala from "../../data/price-lists/vata_minerala.json" with { type: "json" };
+import tabla from "../../data/price-lists/tabla.json" with { type: "json" };
+import pvc from "../../data/price-lists/pvc.json" with { type: "json" };
+import goluri_foc from "../../data/price-lists/goluri_foc.json" with { type: "json" };
 import type { Sistem } from "./types.js";
-
-const DATA = join(dirname(fileURLToPath(import.meta.url)), "../../data/price-lists");
 
 export interface BandaMultiplicator {
   band: [number, number];
@@ -28,14 +28,16 @@ export interface ListaPreturi {
   multiplicatori: BandaMultiplicator[];
 }
 
-const cache = new Map<Sistem, ListaPreturi>();
+/**
+ * Listele sunt importate static, nu citite de pe disc: modulul de tarifare
+ * trebuie sa ruleze identic in Node si in browser. Demo-ul de pe GitHub Pages
+ * ruleaza exact acest cod, fara backend.
+ */
+const LISTE = { elastomer, vata_minerala, tabla, pvc, goluri_foc } as unknown as Record<Sistem, ListaPreturi>;
 
 export function lista(sistem: Sistem): ListaPreturi {
-  let l = cache.get(sistem);
-  if (!l) {
-    l = JSON.parse(readFileSync(join(DATA, `${sistem}.json`), "utf8")) as ListaPreturi;
-    cache.set(sistem, l);
-  }
+  const l = LISTE[sistem];
+  if (!l) throw new Error(`lista de preturi lipseste: ${sistem}`);
   return l;
 }
 

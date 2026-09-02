@@ -1,5 +1,7 @@
 # Motorul de prețuri
 
+> Context pentru `src/pricing/`.
+
 Cod determinist, fără AI, fără I/O în afară de citirea JSON-urilor din
 `data/price-lists/`. Dacă ceva de aici devine nedeterminist, e un bug.
 

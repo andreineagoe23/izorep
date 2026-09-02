@@ -9,7 +9,10 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "import": "tsx src/import/cli.ts",
-    "price": "tsx src/pricing/cli.ts"
+    "price": "tsx src/pricing/cli.ts",
+    "dev": "vite",
+    "build:web": "vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
     "exceljs": "^4.4.0",
@@ -20,6 +23,7 @@
     "@types/node": "^22.10.5",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3",
+    "vite": "^6.4.3",
     "vitest": "^2.1.8"
   }
 }

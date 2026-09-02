@@ -54,10 +54,22 @@ function cantitate(celule: (string | number | null)[], iUm: number): number | un
  * unitatea de masura si cantitatea daca sunt recognoscibile pe rand.
  */
 export async function parseWorkbook(cale: string): Promise<LinieBruta[]> {
+  if (!cale.toLowerCase().endsWith(".xlsx")) {
+    throw new Error(".xls vechi (BIFF8) nu e suportat de ExcelJS; converteste in .xlsx");
+  }
   const wb = new ExcelJS.Workbook();
-  if (cale.toLowerCase().endsWith(".xlsx")) await wb.xlsx.readFile(cale);
-  else throw new Error(".xls vechi (BIFF8) nu e suportat de ExcelJS; converteste in .xlsx");
+  await wb.xlsx.readFile(cale);
+  return extrageRanduri(wb);
+}
 
+/** Aceeasi parsare, pornind de la continutul fisierului. Varianta din browser. */
+export async function parseWorkbookBuffer(buf: ArrayBuffer): Promise<LinieBruta[]> {
+  const wb = new ExcelJS.Workbook();
+  await wb.xlsx.load(buf);
+  return extrageRanduri(wb);
+}
+
+function extrageRanduri(wb: ExcelJS.Workbook): LinieBruta[] {
   const out: LinieBruta[] = [];
   let index = 0;
   for (const ws of wb.worksheets) {

@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Izorep — motor de prețuri izolații</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>Izorep</h1>
+      <p class="sub">Motor de prețuri pentru izolații termice. Totul rulează în browser — niciun fișier nu pleacă de pe calculatorul tău.</p>
+    </div>
+  </header>
+
+  <nav class="wrap tabs">
+    <button class="tab activ" data-panou="calculator">Calculator preț</button>
+    <button class="tab" data-panou="import">Import listă de cantități</button>
+  </nav>
+
+  <main class="wrap">
+    <section id="calculator" class="panou activ">
+      <div class="grid">
+        <div class="card">
+          <h2>Poziție</h2>
+          <label>Diametru
+            <div class="rand">
+              <input id="diam" type="number" value="80" min="1" step="1" />
+              <select id="tipDiam">
+                <option value="DN">DN (țeavă oțel)</option>
+                <option value="exterior">exterior (plastic, SPIRO)</option>
+              </select>
+            </div>
+          </label>
+          <label>Formă
+            <select id="forma">
+              <option value="ml">metru liniar</option>
+              <option value="mp">metru pătrat</option>
+              <option value="cot">cot</option>
+              <option value="teu">teu</option>
+              <option value="manseta">manșetă</option>
+              <option value="flansa">flanșă</option>
+              <option value="robinet">robinet / vană</option>
+              <option value="contor">contor</option>
+              <option value="filtru">filtru Y</option>
+              <option value="pompa">pompă</option>
+            </select>
+          </label>
+          <label>Cantitate <input id="cant" type="number" value="345" min="0" step="1" /></label>
+
+          <h2>Straturi <span class="hint">dinspre țeavă spre exterior</span></h2>
+          <div id="straturi"></div>
+          <button id="adauga" class="secundar">+ adaugă strat</button>
+
+          <div class="exemple">
+            <span class="hint">exemple din oferte reale:</span>
+            <button class="chip" data-ex="dn80">DN80 compus</button>
+            <button class="chip" data-ex="dn100">DN100 compus</button>
+            <button class="chip" data-ex="tub">tubulatură /mp</button>
+            <button class="chip" data-ex="fail">poziție netarifabilă</button>
+          </div>
+        </div>
+
+        <div class="card rezultat">
+          <h2>Rezultat</h2>
+          <div id="iesire"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="import" class="panou">
+      <div id="drop" class="drop">
+        <strong>Trage un fișier .xlsx aici</strong>
+        <span>sau click pentru a alege</span>
+        <input id="fisier" type="file" accept=".xlsx" hidden />
+        <p class="hint">
+          Rulează doar stratul determinist: parsare + extragere prin reguli + tarifare.
+          Stratul cu model necesită o cheie API și rulează local, prin <code>npm run import</code>.
+        </p>
+      </div>
+      <div id="raport"></div>
+    </section>
+  </main>
+
+  <footer class="wrap">
+    <span>Prețurile sunt în EUR, fără TVA. Plata se face în lei la cursul BNR din ziua facturării.</span>
+  </footer>
+
+  <script type="module" src="./main.ts"></script>
+</body>
+</html>

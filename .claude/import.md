@@ -1,5 +1,7 @@
 # Import Excel de la clienți
 
+> Context pentru `src/import/`.
+
 Problema: fiecare client trimite alt format și nu există template comun.
 Măsurat pe cele 7 fișiere din `attachments/`: 5.659 celule, 958 descrieri
 distincte, 349 linii ofertabile — dar doar **134 șabloane distincte**.
