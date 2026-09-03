@@ -59,6 +59,12 @@ export interface RaportImport {
   prinSablon: number;
   /** Linii rezolvate din memoria de sabloane, fara apel la model. */
   prinMemorie: number;
+  /**
+   * Randuri cu text dar fara unitate de masura si fara cantitate — note,
+   * titluri, semnaturi. Nu sunt pozitii. Se numara ca sa se vada daca intr-un
+   * fisier nou incepe sa cada ceva real in categoria asta.
+   */
+  faraMasura: number;
   /** Cate linii au plecat efectiv la model, din cate reziduale erau. */
   trimiseLaModel: number;
   reziduale: number;
@@ -163,7 +169,7 @@ export async function importaFisier(
   const rezolvate = new Map<number, { extras: LinieExtrasa; sursa: Sursa }>();
   const reziduale: { index: number; text: string; um?: string }[] = [];
   for (const b of brute) {
-    const r = extrageDeterminist(b.index, b.text, b.um, b.sectiune);
+    const r = extrageDeterminist(b.index, b.text, b.um, b.sectiune, b.cantitate);
     if (r.complet) rezolvate.set(b.index, { extras: r.linie, sursa: "regex" });
     else reziduale.push({ index: b.index, text: b.text, ...(b.um ? { um: b.um } : {}) });
   }
@@ -243,6 +249,7 @@ export async function importaFisier(
   }
 
   const izolatie = linii.filter((l) => l.extras.sistem !== null);
+  const faraMasura = brute.filter((b) => b.um === undefined && b.cantitate === undefined).length;
   return {
     fisier: cale,
     foi: foi.length,
@@ -253,6 +260,7 @@ export async function importaFisier(
     prinModel: izolatie.filter((l) => l.sursa === "model").length,
     prinSablon: izolatie.filter((l) => l.sursa === "sablon").length,
     prinMemorie: izolatie.filter((l) => l.sursa === "memorie").length,
+    faraMasura,
     trimiseLaModel: trimise,
     reziduale: reziduale.length,
     tarifate: izolatie.filter((l) => l.pret).length,

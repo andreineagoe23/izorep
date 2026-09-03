@@ -56,8 +56,33 @@ export interface RezultatRegex {
   complet: boolean;
 }
 
+/**
+ * Un rand fara unitate de masura SI fara cantitate nu e o pozitie.
+ *
+ * Ofertele se termina cu note, semnaturi si titluri, iar textul lor contine
+ * exact cuvintele dupa care se recunoaste sistemul:
+ *
+ *   "Preturile se refera la inchideri goluri la foc EI60 si EI90 …"
+ *   "In pretul inchiderilor golurilor la foc nu sunt incluse colierele si banda wrap"
+ *   "1. Izolatii conducte PPR cu Armaflex gr. 9 mm - manopera :"
+ *
+ * Toate trei ies `goluri_foc` sau `elastomer` si intra in raport ca pozitii
+ * netarifate, pe langa ca pleaca la model degeaba. Masurat pe cele 9 fisiere de
+ * client: regula scoate 35 de randuri si NICIUNUL nu era tarifat.
+ *
+ * Semnalul e fizic, nu semantic — nu se uita la ce scrie in rand, ci la faptul
+ * ca o pozitie ofertabila are intotdeauna o cantitate sau o unitate. Cuvintele
+ * dintr-o nota sunt aceleasi cu ale unei pozitii; masura nu e.
+ *
+ * Randurile astea NU dispar din fisier: raman in grila si raman antete de
+ * sectiune. Se opresc doar din a fi pozitii — si se numara, `faraMasura` din
+ * raport, ca sa se vada daca vreodata cade ceva real in ele.
+ */
+const faraMasura = (um?: string, cantitate?: number): boolean =>
+  um === undefined && cantitate === undefined;
+
 export function extrageDeterminist(
-  index: number, text: string, um?: string, sectiune?: string,
+  index: number, text: string, um?: string, sectiune?: string, cantitate?: number,
 ): RezultatRegex {
   const gol: LinieExtrasa = {
     index, sistem: null, diametru_valoare: null, diametru_tip: null,
@@ -67,6 +92,13 @@ export function extrageDeterminist(
 
   if (ALTE_MESERII.test(text)) {
     return { linie: { ...gol, incredere: 0.95, motiv: "alta meserie, nu se oferteaza" }, complet: true };
+  }
+
+  if (faraMasura(um, cantitate)) {
+    return {
+      linie: { ...gol, incredere: 0.9, motiv: "rand fara unitate de masura si fara cantitate: nota, titlu sau total" },
+      complet: true,
+    };
   }
 
   // Sistemul se cauta intai in linie. Daca linia tace, se intreaba sectiunea:

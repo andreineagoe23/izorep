@@ -360,6 +360,39 @@ Un lot căzut nu invalidează importul: restul liniilor rămân, iar raportul sp
 câte loturi au eșuat. Clientul are `maxRetries: 4`, deci un 429 se reia cu
 backoff înainte să devină `LimitaDeRata`.
 
+## Notele de la finalul ofertei
+
+Fiecare ofertă se termină cu note, semnături și titluri. Textul lor conține
+exact cuvintele după care se recunoaște sistemul:
+
+```
+"Preturile se refera la inchideri goluri la foc EI60 si EI90 pentru conducte metalice"
+"In pretul inchiderilor golurilor la foc nu sunt incluse colierele si banda wrap"
+"1. Izolatii conducte PPR cu Armaflex gr. 9 mm - manopera :"
+```
+
+Toate trei ieșeau `goluri_foc` sau `elastomer`, intrau în raport ca poziții
+netarifate și plecau la model degeaba.
+
+Regula: **un rând fără unitate de măsură ȘI fără cantitate nu e poziție.**
+Semnalul e fizic, nu semantic — cuvintele dintr-o notă sunt aceleași cu ale unei
+poziții, măsura nu e. Măsurat pe cele 9 fișiere de client: scoate **35 de
+rânduri, dintre care 0 erau tarifate**.
+
+| Fișier | Poziții înainte | După | Tarifate |
+|---|---|---|---|
+| `Oferta pret inchideri goluri la foc` | 55 | 0 | 0 → 0 |
+| `Anexa 1 la contract` | 5 | 0 | 0 → 0 |
+| `Oferta Matari` | 73 | 65 | 53 → 53 |
+| `Oferta 27.04.2026` | 59 | 58 | 30 → 30 |
+| `Book15` | 9 | 7 | 1 → 1 |
+| **total** | **513** | **441** | **261 → 261** |
+
+Rândurile nu dispar din fișier: rămân în grilă și rămân antete de secțiune. Se
+opresc doar din a fi poziții, și se numără (`faraMasura` în raport, „note și
+titluri" pe ecran) — ca să se vadă dacă într-un fișier nou începe să cadă ceva
+real acolo.
+
 ## Capcane găsite în fișierele reale
 
 - **`Book15.xlsx`** — rânduri de continuare `"Same - Ø125 mm"` care moștenesc

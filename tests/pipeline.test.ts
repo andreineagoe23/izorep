@@ -123,3 +123,56 @@ describe("memoria intra in pipeline inaintea modelului", () => {
     expect(l?.extras.sistem).toBe("elastomer");
   });
 });
+
+describe("notele de la finalul ofertei nu sunt pozitii", () => {
+  // Randurile de mai jos sunt copiate dintr-o oferta reala (Matari,
+  // 27.04.2026). Contin exact cuvintele dupa care se recunoaste sistemul —
+  // "inchideri goluri la foc", "banda wrap", "Armaflex" — dar sunt note, nu
+  // pozitii. Fara regula "trebuie UM sau cantitate" intrau toate in raport.
+  const NOTE: (string | number | null)[][] = [
+    [null, "Nota:", null, null],
+    [null, "Preturile sunt exprimate in Euro si nu contin TVA. Plata se face in Lei la cursul BNR din ziua facturarii.", null, null],
+    [null, "Preturile se refera la inchideri goluri la foc EI60 si EI90 pentru conducte metalice", null, null],
+    [null, "In pretul inchiderilor golurilor la foc nu sunt incluse colierele si banda wrap", null, null],
+    [null, "Daca inchiderile golurilor la foc necesita banda wrap, pretul acestora va fi constituit din pretul", null, null],
+    [null, "1. Izolatii conducte PPR cu Armaflex gr. 9 mm - manopera :", null, null],
+    [null, "R&F ISORAD SYSTEM SRL", null, null],
+  ];
+
+  it("nicio nota nu devine pozitie", async () => {
+    const raport = await importaFisier(await registru([RANDURI[0]!, ...NOTE]), {
+      faraModel: true, stoc: stocInMemorie(),
+    });
+    expect(raport.liniiIzolatie).toBe(0);
+    expect(raport.faraMasura).toBe(NOTE.length);
+  });
+
+  it("notele nu pleaca nici la model", async () => {
+    // Nu e doar zgomot in raport: fiecare nota ar fi o linie reziduala, deci
+    // tokeni cheltuiti ca modelul sa spuna ca nu e nimic acolo.
+    const raport = await importaFisier(await registru([RANDURI[0]!, ...NOTE]), {
+      faraModel: true, stoc: stocInMemorie(),
+    });
+    expect(raport.linii.every((l) => l.sursa === "regex")).toBe(true);
+    expect(raport.trimiseLaModel).toBe(0);
+  });
+
+  it("pozitiile reale din acelasi fisier raman", async () => {
+    const raport = await importaFisier(await registru([RANDURI[0]!, RANDURI[1]!, ...NOTE]), {
+      faraModel: true, stoc: stocInMemorie(),
+    });
+    expect(raport.liniiIzolatie).toBe(1);
+    expect(raport.tarifate).toBe(1);
+  });
+
+  it("o pozitie cu cantitate dar fara UM ramane pozitie", async () => {
+    // Regula cere UNA din cele doua, nu amandoua: sunt fisiere fara coloana de
+    // unitate, in care cantitatea e singurul semn ca randul e ofertabil.
+    const raport = await importaFisier(await registru([
+      RANDURI[0]!,
+      [1, "Izolatie elastomer 13 mm pe teava DN25 apa rece", null, 100],
+    ]), { faraModel: true, stoc: stocInMemorie() });
+    expect(raport.liniiIzolatie).toBe(1);
+    expect(raport.tarifate).toBe(1);
+  });
+});

@@ -277,7 +277,7 @@ export const ecran: Ecran = {
         const rezolvate = new Map<number, { extras: LinieExtrasa; sursa: Sursa }>();
         const reziduale: { index: number; text: string; um?: string }[] = [];
         for (const b of brute) {
-          const r = extrageDeterminist(b.index, b.text, b.um, b.sectiune);
+          const r = extrageDeterminist(b.index, b.text, b.um, b.sectiune, b.cantitate);
           if (r.complet) rezolvate.set(b.index, { extras: r.linie, sursa: "regex" });
           else reziduale.push({ index: b.index, text: b.text, ...(b.um ? { um: b.um } : {}) });
         }
@@ -433,6 +433,9 @@ export const ecran: Ecran = {
           // Aceeasi definitie ca in `pipeline.ts`: sub prag SAU pozitie care nu
           // s-a putut tarifa. Ambele cazuri se opresc la validarea omului.
           const deValidat = izo.filter((l) => l.extras.incredere < prag || l.eroare !== null);
+          // Randurile fara unitate si fara cantitate: note, titluri, semnaturi.
+          // Se arata ca sa se vada daca intr-un fisier nou cade ceva real acolo.
+          const note = brute.filter((b) => b.um === undefined && b.cantitate === undefined).length;
           const proc = izo.length ? `${((tarifate.length / izo.length) * 100).toFixed(0)}%` : "–";
           return `
             ${foi.length > 1 ? indicator(String(foi.length), "foi în registru") : ""}
@@ -446,7 +449,8 @@ export const ecran: Ecran = {
             ${prinMemorie.length
               ? indicator(String(prinMemorie.length), "din corecții anterioare", "șabloane învățate la importurile trecute")
               : ""}
-            ${indicator(String(deValidat.length), "de validat de om", `încredere sub ${prag} sau fără preț`)}`;
+            ${indicator(String(deValidat.length), "de validat de om", `încredere sub ${prag} sau fără preț`)}
+            ${note ? indicator(String(note), "note și titluri", "fără UM și fără cantitate: nu sunt poziții") : ""}`;
         }
 
         /**

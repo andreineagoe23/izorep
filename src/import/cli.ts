@@ -34,7 +34,7 @@ const raport = await importaFisier(cale, { faraModel });
 const proc = (n: number) => raport.liniiIzolatie ? `${(n / raport.liniiIzolatie * 100).toFixed(1)}%` : "-";
 console.log(`\n${raport.fisier}`);
 console.log(`  foi                      ${raport.foi}  (${raport.foiMapate} cu mapare de coloane)`);
-console.log(`  randuri cu text          ${raport.total}`);
+console.log(`  randuri cu text          ${raport.total}  (${raport.faraMasura} fara UM/cantitate: note, titluri)`);
 console.log(`  pozitii de izolatie      ${raport.liniiIzolatie}`);
 console.log(`    rezolvate determinist  ${raport.prinRegex}  (${proc(raport.prinRegex)})`);
 console.log(`    rezolvate cu modelul   ${raport.prinModel}  (${proc(raport.prinModel)})`);
