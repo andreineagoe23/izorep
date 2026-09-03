@@ -1,7 +1,7 @@
 # Stare curentă
 
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
-> Ultima actualizare: 3 septembrie 2026.
+> Ultima actualizare: 4 septembrie 2026.
 
 ## Contextul proiectului
 
@@ -54,6 +54,12 @@ formă care contrazice unitatea de măsură. Un avertisment anulează încredere
 raportată de model și trimite poziția la validare umană. Modelul e pinuit pe
 **snapshot datat**, iar `tests/golden/` ține ieșirea lui reală pe fișiere de
 client, ca deriva să se vadă. Detaliile în `import.md`.
+
+**Istoricul importurilor** (`web/istoric.ts`) — ultimele 10 importuri în
+IndexedDB: fișierul, extragerile și corecțiile omului, nu grila (aceeași parsare
+pe aceiași bytes o reface). Reîncărcarea paginii nu mai pierde munca, iar
+redeschiderea unui import vechi **nu cheamă modelul din nou**. Detaliile în
+`ui.md`.
 
 **Aplicația** (`web/`) — 7 ecrane: tablou de bord, lucrări, cereri și oferte,
 calcul deviz, import Excel, clienți, liste de prețuri. Datele sunt reale,
@@ -163,6 +169,12 @@ Coloana ISO coincide valoare cu valoare cu `DN_TO_OD` pe tot intervalul
 DN10–DN400 — dedus din listele de cantități, validat independent de sursă.
 Restul notițelor (cupru/inox pe altă serie, tubulaturi rectangulare, formula
 pentru diametre peste ultimul rând) stau în `tevi.md`, cu întrebările deschise.
+
+**Notele de la finalul ofertei erau citite ca poziții.** „Preturile se refera la
+inchideri goluri la foc EI60", „nu sunt incluse colierele si banda wrap" conțin
+exact cuvintele după care se recunoaște sistemul. Regula care le scoate e
+fizică, nu semantică: un rând fără unitate de măsură **și** fără cantitate nu e
+poziție. Pe cele 9 fișiere, 513 poziții devin 441, iar cele tarifate rămân 261.
 
 **Lista de manoperă are altă structură** decât matricea completă: tarif plat pe
 sistem și grosime (2,20 / 2,30 / 3,00 €/ml), nu matrice ø × grosime. Nu e o
