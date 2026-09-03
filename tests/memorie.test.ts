@@ -7,7 +7,7 @@
  * se invata doar de la om, si se memoreaza rolul, nu valorile.
  */
 import { describe, it, expect } from "vitest";
-import { aplicaMemorie, invata, stocInMemorie } from "../src/import/memorie.js";
+import { aplicaMemorie, invata, invataDinCorectie, stocInMemorie } from "../src/import/memorie.js";
 import type { LinieExtrasa } from "../src/import/schema.js";
 
 const linie = (p: Partial<LinieExtrasa> = {}): LinieExtrasa => ({
@@ -74,5 +74,44 @@ describe("aplicarea", () => {
     const { rezolvate, ramase } = aplicaMemorie(linii, stocInMemorie());
     expect(rezolvate).toEqual([]);
     expect(ramase).toEqual(linii);
+  });
+});
+
+describe("invatarea dintr-o corectie umana", () => {
+  it("pune in depozit sablonul unei pozitii complete", () => {
+    const stoc = stocInMemorie();
+    const s = invataDinCorectie({ text: TEXT_A, extras: corectat }, stoc);
+    expect(s).not.toBeNull();
+    expect(stoc.toate()).toHaveLength(1);
+  });
+
+  it("nu invata dintr-o pozitie fara sistem", () => {
+    // Omul a atins linia, dar n-a terminat-o. Un sablon fara sistem ar arata ca
+    // stie si ar da jumatate de rol tuturor liniilor cu acelasi tipar.
+    const stoc = stocInMemorie();
+    expect(invataDinCorectie({ text: TEXT_A, extras: { ...corectat, sistem: null } }, stoc)).toBeNull();
+    expect(stoc.toate()).toEqual([]);
+  });
+
+  it("nu invata dintr-o pozitie fara diametru", () => {
+    const stoc = stocInMemorie();
+    expect(invataDinCorectie({ text: TEXT_A, extras: { ...corectat, diametru_valoare: null } }, stoc)).toBeNull();
+    expect(stoc.toate()).toEqual([]);
+  });
+
+  it("nu invata cand valorile nu se leaga de sloturi", () => {
+    const stoc = stocInMemorie();
+    const dinToli = { ...corectat, diametru_valoare: 50 };
+    expect(invataDinCorectie({ text: 'Izolatie elastomer 13 mm pe teava 2"', extras: dinToli }, stoc)).toBeNull();
+    expect(stoc.toate()).toEqual([]);
+  });
+
+  it("ce s-a invatat rezolva linia urmatoare cu acelasi tipar", () => {
+    // Ciclul complet al lui L4, fara ecran: corectie -> depozit -> import nou.
+    const stoc = stocInMemorie();
+    invataDinCorectie({ text: TEXT_A, extras: corectat }, stoc);
+    const { rezolvate } = aplicaMemorie([{ index: 9, text: TEXT_B }], stoc);
+    expect(rezolvate[0]!.diametru_valoare).toBe(80);
+    expect(rezolvate[0]!.sistem).toBe("elastomer");
   });
 });

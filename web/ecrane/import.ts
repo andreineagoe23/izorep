@@ -2,7 +2,7 @@ import { tarifeaza } from "../../src/pricing/engine.js";
 import { tarifeazaGolFoc } from "../../src/pricing/goluri-foc.js";
 import { extrageDeterminist } from "../../src/import/extract-regex.js";
 import { grupeazaPeSablon, extindePeSablon } from "../../src/import/sabloane.js";
-import { aplicaMemorie, invata } from "../../src/import/memorie.js";
+import { aplicaMemorie, invataDinCorectie } from "../../src/import/memorie.js";
 import { stocLocal } from "../stoc-local.js";
 import { SISTEME, type LinieExtrasa, type Sursa } from "../../src/import/schema.js";
 // Doar tipurile: `import type` se sterge la compilare, deci ExcelJS (~940 kB)
@@ -480,14 +480,9 @@ export const ecran: Ecran = {
           // L4: corectia omului intra in memorie, ca linia asta sa nu mai fie
           // intrebata niciodata. Se invata DOAR de la om — daca ar intra si ce
           // zice modelul, o extragere gresita s-ar propaga tacut peste toate
-          // proiectele urmatoare.
-          //
-          // Se invata doar pozitiile complete: un sablon cu jumatate de rol e o
-          // capcana, fiindca ar arata ca stie si ar da valori pe jumatate.
-          if (l.extras.sistem !== null && l.extras.diametru_valoare !== null) {
-            const sablon = invata(l.text, l.extras);
-            if (sablon) stoc.pune(sablon);
-          }
+          // proiectele urmatoare. Conditiile sunt in `invataDinCorectie`, ca sa
+          // fie testate; aici ramane apelul.
+          invataDinCorectie(l, stoc);
           const marca = tr?.querySelector("[data-marca]");
           if (marca) marca.innerHTML = l.extras.incredere < prag || l.eroare !== null ? stare("de validat", "atentie") : "";
           statsEl.innerHTML = randStats();

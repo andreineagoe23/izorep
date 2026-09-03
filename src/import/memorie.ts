@@ -66,6 +66,31 @@ export function invata(
 }
 
 /**
+ * Ce se invata dintr-o linie pe care omul tocmai a corectat-o.
+ *
+ * Sta aici, si nu in ecran, ca sa poata fi testata: in ecran ar fi cateva linii
+ * intr-un handler de `change`, adica exact codul pe care nu-l acopera nimic.
+ * Ecranul ramane cu un singur apel.
+ *
+ * Doua conditii, amandoua din acelasi motiv — un sablon pe jumatate arata ca
+ * stie si da valori pe jumatate:
+ *  - pozitia trebuie sa fie completa (are sistem si diametru);
+ *  - valorile trebuie sa se lege de sloturi, altfel n-au de unde fi recitite
+ *    pe alta linie (vezi `proiectii`).
+ *
+ * Intoarce sablonul pus in depozit, sau `null` daca n-a invatat nimic.
+ */
+export function invataDinCorectie(
+  linie: { text: string; extras: LinieExtrasa }, stoc: StocSabloane,
+): SablonInvatat | null {
+  if (linie.extras.sistem === null || linie.extras.diametru_valoare === null) return null;
+  const s = invata(linie.text, linie.extras);
+  if (!s) return null;
+  stoc.pune(s);
+  return s;
+}
+
+/**
  * Rezolva din memorie ce se poate, inainte de orice apel la model.
  *
  * Liniile ramase merg mai departe pe drumul obisnuit — deduplicare, apoi model.

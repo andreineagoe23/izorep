@@ -229,7 +229,7 @@ de contract, stoc și facturare.
 ## Comenzi
 
 ```bash
-npm test                                       # 198 teste (motor, import, baza)
+npm test                                       # 220 teste (motor, import, baza)
 npm run typecheck
 npm run dev                                    # UI local, /izorep/
 npm run import -- ../attachments/Radoia.xlsx   # pipeline complet

@@ -94,6 +94,14 @@ Depozitul e o interfață (`StocSabloane`) cu două implementări — fișier
 a treia e o tabelă per tenant: o corecție a unui coleg trebuie să ajute pe toată
 lumea.
 
+Ce decide dacă se învață stă în `invataDinCorectie`, nu în ecran: în ecran ar fi
+fost câteva linii într-un handler de `change`, adică exact codul pe care nu-l
+acoperă nimic. Ecranul rămâne cu un singur apel.
+
+**Netestat automat:** interacțiunea din browser — încărcarea fișierului,
+editarea celulei, reimportul. Nu există driver de browser în proiect. Verificat
+manual că modulele se încarcă în `vite dev` și că build-ul static trece.
+
 ## Contextul de secțiune
 
 Multe poziții nu spun singure ce sunt. În oferta 118.1 linia e doar
