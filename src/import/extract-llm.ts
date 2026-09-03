@@ -110,22 +110,44 @@ export class LimitaDeRata extends Error {
   }
 }
 
+/**
+ * Clientul si modelul, dintr-un singur loc.
+ *
+ * Exista ca sa nu se configureze de doua ori: maparea de coloane (L1) foloseste
+ * acelasi cont, acelasi snapshot si aceleasi reincercari ca extragerea. Doua
+ * configurari separate ar insemna ca o schimbare de model se aplica pe jumatate.
+ */
+export function clientSiModel(optiuni: OptiuniModel = {}): { client: OpenAI; model: string } {
+  const apiKey = optiuni.apiKey ?? process.env["OPENAI_API_KEY"];
+  if (!apiKey) throw new Error("OPENAI_API_KEY lipseste. Copiaza .env.example in .env.");
+  return {
+    // 90s per apel: un lot blocat nu are voie sa tina importul la nesfarsit.
+    //
+    // maxRetries e EXPLICIT, nu lasat pe implicitul SDK-ului: la 429 clientul
+    // reincearca cu backoff in loc sa piarda lotul.
+    client: new OpenAI({ apiKey, timeout: 90_000, maxRetries: 4 }),
+    model: optiuni.model ?? process.env["OPENAI_MODEL"] ?? MODEL_IMPLICIT,
+  };
+}
+
+/** Traduce 429-ul in ceva ce spune ce ai de facut. */
+export async function cuLimitaDeRata<T>(f: () => Promise<T>): Promise<T> {
+  try {
+    return await f();
+  } catch (e) {
+    const m = e instanceof Error ? e.message : String(e);
+    if (/429|rate limit|quota/i.test(m)) throw new LimitaDeRata(m.slice(0, 200));
+    throw e;
+  }
+}
+
 export async function extrageCuModel(
   linii: { index: number; text: string; um?: string }[],
   optiuni: OptiuniModel = {},
 ): Promise<LinieExtrasa[]> {
   if (linii.length === 0) return [];
 
-  const apiKey = optiuni.apiKey ?? process.env["OPENAI_API_KEY"];
-  if (!apiKey) throw new Error("OPENAI_API_KEY lipseste. Copiaza .env.example in .env.");
-
-  // 90s per apel: un lot blocat nu are voie sa tina importul la nesfarsit.
-  //
-  // maxRetries e EXPLICIT, nu lasat pe implicitul SDK-ului: la 429 clientul
-  // reincearca cu backoff in loc sa piarda lotul. Pe un cont cu limite mici,
-  // patru loturi in paralel ating limita usor, iar fara reincercare fiecare
-  // lot cazut inseamna linii ramase netarifate degeaba.
-  const client = new OpenAI({ apiKey, timeout: 90_000, maxRetries: 4 });
+  const { client, model } = clientSiModel(optiuni);
   // gpt-4.1, nu gpt-4o. Pe contul firmei gpt-4o are 90.000 de tokeni pe zi,
   // adica doua fisiere ca Radoia.xlsx; gpt-4.1 are 900.000, la aceeasi limita
   // pe minut. Masurat pe doua fisiere reale, nicio diferenta de calitate.
@@ -139,7 +161,7 @@ export async function extrageCuModel(
   // altul a citit "Di60" ca 76 — diametru gresit inseamna rand gresit in
   // matrice, deci pret gresit. Se poate trece pe el, dar dupa ce
   // `npm run compara` da zero diferente cu impact pe mai multe fisiere.
-  const model = optiuni.model ?? process.env["OPENAI_MODEL"] ?? MODEL_IMPLICIT;
+  //
   // Lotul implicit e 25, nu 12, si motivul e bugetul de tokeni pe ZI.
   //
   // Fiecare apel cara ~1.177 tokeni ficsi — system prompt (~735) plus schema
@@ -157,23 +179,12 @@ export async function extrageCuModel(
   const loturi: (typeof linii)[] = [];
   for (let i = 0; i < linii.length; i += lot) loturi.push(linii.slice(i, i + lot));
 
-  /** Traduce 429-ul in ceva ce spune ce ai de facut. */
-  async function cerere<T>(f: () => Promise<T>): Promise<T> {
-    try {
-      return await f();
-    } catch (e) {
-      const m = e instanceof Error ? e.message : String(e);
-      if (/429|rate limit|quota/i.test(m)) throw new LimitaDeRata(m.slice(0, 200));
-      throw e;
-    }
-  }
-
   async function proceseaza(bucata: typeof linii): Promise<LinieExtrasa[]> {
     const payload = bucata
       .map((l) => `[${l.index}]${l.um ? ` (UM: ${l.um})` : ""} ${l.text.replace(/\s+/g, " ").slice(0, 900)}`)
       .join("\n");
 
-    const raspuns = await cerere(() => client.chat.completions.create({
+    const raspuns = await cuLimitaDeRata(() => client.chat.completions.create({
       model,
       temperature: 0,
       messages: [

@@ -1,0 +1,22 @@
+{
+  "amprenta": "8::nr.||denumire material, date tehnice, operatiuni incluse in articol (u_center 3 - pth)|cant. quantity|u.m.|p.u. euro/elem|pret total euro",
+  "fisier": "Oferta 27.04.2026.xlsx",
+  "foaie": "Termice+Sanitare",
+  "model": "gpt-4.1-2025-04-14",
+  "generat": "2026-09-03T16:50:32.914Z",
+  "mapare": {
+    "rand_antet": 5,
+    "rand_start": 7,
+    "roluri": [
+      "nr",
+      "ignora",
+      "denumire",
+      "observatii",
+      "cantitate",
+      "um",
+      "pret_unitar",
+      "pret_total"
+    ],
+    "motiv": "Randul 5 contine capetele de coloana, iar datele incep de la randul 7. Coloanele corespund cu rolurile standard, cu o coloana suplimentara de observatii/descriere suplimentara."
+  }
+}

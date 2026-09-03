@@ -8,10 +8,11 @@ import { z } from "zod";
  * trage dupa el clientul OpenAI intr-un bundle de browser.
  *
  * `sablon` inseamna ca linia n-a fost citita de model: are acelasi tipar cu o
- * linie geamana, iar rolul ei a fost dus mai departe de acolo, cu numerele
- * recitite din propriul text.
+ * linie geamana din acelasi fisier, iar rolul ei a fost dus mai departe de
+ * acolo, cu numerele recitite din propriul text. `memorie` e acelasi lucru,
+ * dar tiparul vine dintr-o corectie umana de la un import anterior.
  */
-export type Sursa = "regex" | "model" | "sablon";
+export type Sursa = "regex" | "model" | "sablon" | "memorie";
 
 export const SISTEME = ["elastomer", "vata_minerala", "tabla", "pvc", "goluri_foc"] as const;
 export const FORME = [

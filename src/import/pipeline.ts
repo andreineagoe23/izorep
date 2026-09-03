@@ -1,9 +1,13 @@
-import { parseWorkbook, type LinieBruta } from "./parse-workbook.js";
+import { parseFoi, liniile, type LinieBruta } from "./parse-workbook.js";
+import { amprentaFoaie, aplicaMapare } from "./mapare.js";
+import { citesteMapari } from "./cache-mapari.js";
 import { adaugaSectiuni } from "./sectiuni.js";
 import { extrageDeterminist } from "./extract-regex.js";
 import { extrageCuModel, type OptiuniModel } from "./extract-llm.js";
 import { valideazaExtragere, type Avertisment } from "./valideaza.js";
 import { grupeazaPeSablon, extindePeSablon } from "./sabloane.js";
+import { aplicaMemorie, type StocSabloane } from "./memorie.js";
+import { stocPeDisc } from "./stoc-sabloane.js";
 import type { LinieExtrasa, Sursa } from "./schema.js";
 import { tarifeaza } from "../pricing/engine.js";
 import { tarifeazaGolFoc } from "../pricing/goluri-foc.js";
@@ -40,6 +44,9 @@ export interface LinieProcesata {
 
 export interface RaportImport {
   fisier: string;
+  /** Cate foi are registrul si pentru cate exista mapare de coloane (L1). */
+  foi: number;
+  foiMapate: number;
   total: number;
   liniiIzolatie: number;
   prinRegex: number;
@@ -48,8 +55,10 @@ export interface RaportImport {
   deValidat: number;
   /** Linii pe care modelul a produs ceva ce nu se verifica in textul sursa. */
   cuAvertisment: number;
-  /** Linii deduse dintr-o linie geamana, fara apel la model. */
+  /** Linii deduse dintr-o linie geamana din acelasi fisier. */
   prinSablon: number;
+  /** Linii rezolvate din memoria de sabloane, fara apel la model. */
+  prinMemorie: number;
   /** Cate linii au plecat efectiv la model, din cate reziduale erau. */
   trimiseLaModel: number;
   reziduale: number;
@@ -117,12 +126,38 @@ export function tarifeazaExtras(
  */
 export async function importaFisier(
   cale: string,
-  optiuni: OptiuniModel & { pragIncredere?: number; faraModel?: boolean } = {},
+  optiuni: OptiuniModel & {
+    pragIncredere?: number;
+    faraModel?: boolean;
+    faraMapare?: boolean;
+    /** Memoria de sabloane. Implicit cea de pe disc; teste dau alta. */
+    stoc?: StocSabloane;
+  } = {},
 ): Promise<RaportImport> {
   const prag = optiuni.pragIncredere
     ?? Number(process.env["IZOREP_CONFIDENCE_THRESHOLD"] ?? 0.85);
 
-  const brute = adaugaSectiuni(await parseWorkbook(cale));
+  // L1 - maparea de coloane, daca layoutul foii e deja cunoscut.
+  //
+  // Se aplica INAINTE de contextul de sectiune si de extragere: schimba textul
+  // liniei (doar coloana de denumire, nu concatenarea tuturor celulelor),
+  // unitatea de masura si cantitatea, deci tot ce urmeaza lucreaza pe date
+  // mapate, nu ghicite. Fara mapare in cache, nu se schimba nimic — se merge
+  // pe euristica de azi. Se inregistreaza cu `npm run mapare`.
+  const foi = await parseFoi(cale);
+  // Comutatorul exista ca sa se poata masura A/B ce aduce maparea pe un fisier
+  // real, nu ca sa fie folosit in mod normal.
+  const faraMapare = optiuni.faraMapare ?? process.env["IZOREP_FARA_MAPARE"] === "1";
+  const mapari = faraMapare ? new Map() : citesteMapari();
+  let foiMapate = 0;
+  for (const foaie of foi) {
+    const m = mapari.get(amprentaFoaie(foaie));
+    if (!m) continue;
+    aplicaMapare(foaie, m.mapare);
+    foiMapate++;
+  }
+
+  const brute = adaugaSectiuni(liniile(foi));
 
   // L2a - determinist
   const rezolvate = new Map<number, { extras: LinieExtrasa; sursa: Sursa }>();
@@ -133,6 +168,16 @@ export async function importaFisier(
     else reziduale.push({ index: b.index, text: b.text, ...(b.um ? { um: b.um } : {}) });
   }
 
+  // L4 - memoria de sabloane: ce a corectat omul deja nu se mai intreaba.
+  //
+  // Sta INAINTE de model si inainte de deduplicare, fiindca e mai ieftina decat
+  // amandoua: zero apeluri, rezultat determinist. Ce nu stie merge mai departe
+  // pe drumul obisnuit, deci acoperirea nu scade niciodata din cauza ei.
+  const stoc = optiuni.stoc ?? stocPeDisc();
+  const dinMemorie = aplicaMemorie(reziduale, stoc);
+  for (const e of dinMemorie.rezolvate) rezolvate.set(e.index, { extras: e, sursa: "memorie" });
+  const deLucrat = dinMemorie.ramase;
+
   // L2b - model, doar pe rest, si doar cate un reprezentant per sablon
   //
   // Liniile reziduale se repeta masiv in acelasi fisier: masurat pe cele 9
@@ -142,8 +187,8 @@ export async function importaFisier(
   // linii proiectate, 27 identice cu ce raspunsese modelul pentru ele.
   let faraRaspuns = 0;
   let trimise = 0;
-  if (!optiuni.faraModel && reziduale.length > 0) {
-    const grupuri = grupeazaPeSablon(reziduale);
+  if (!optiuni.faraModel && deLucrat.length > 0) {
+    const grupuri = grupeazaPeSablon(deLucrat);
     const reprezentanti = grupuri.map((g) => g.reprezentant);
     trimise = reprezentanti.length;
 
@@ -166,7 +211,7 @@ export async function importaFisier(
     // trimise, 35 intoarse. Liniile lipsa nu apar nicaieri in raport — nici ca
     // pozitii, nici ca erori — deci disparitia lor arata exact ca un fisier cu
     // mai putine pozitii. Se numara, ca sa se vada.
-    faraRaspuns = reziduale.filter((r) => !rezolvate.has(r.index)).length;
+    faraRaspuns = deLucrat.filter((r) => !rezolvate.has(r.index)).length;
   }
 
   // L3 - tarifare determinista
@@ -200,11 +245,14 @@ export async function importaFisier(
   const izolatie = linii.filter((l) => l.extras.sistem !== null);
   return {
     fisier: cale,
+    foi: foi.length,
+    foiMapate,
     total: brute.length,
     liniiIzolatie: izolatie.length,
     prinRegex: izolatie.filter((l) => l.sursa === "regex").length,
     prinModel: izolatie.filter((l) => l.sursa === "model").length,
     prinSablon: izolatie.filter((l) => l.sursa === "sablon").length,
+    prinMemorie: izolatie.filter((l) => l.sursa === "memorie").length,
     trimiseLaModel: trimise,
     reziduale: reziduale.length,
     tarifate: izolatie.filter((l) => l.pret).length,

@@ -11,7 +11,9 @@ import type { LinieExtrasa } from "./schema.js";
  */
 const SISTEM: [LinieExtrasa["sistem"], RegExp][] = [
   ["elastomer", /elastomer|armaflex|cauciuc\s+sinte|a?uciuc\s+sinte|k[aä]lteiso|k-?flex|kaiflex|kautschuk/i],
-  ["vata_minerala", /vat[aă]\s+mineral|mineralwolle|rockwool|isolshell|fiberglass|saltele\s+de\s+vat/i],
+  // "mineral wool" lipsea, desi `Book15.xlsx` e integral in engleza: acolo
+  // pozitiile se recunosteau doar din coloana romana de descriere.
+  ["vata_minerala", /vat[aă]\s+mineral|mineral\s+wool|rock\s?wool|mineralwolle|rockwool|isolshell|fiberglass|saltele\s+de\s+vat/i],
   ["pvc", /\bpvc\b/i],
   // Cere notiunea de GOL sau de TRECERE prin perete, nu doar mentiunea focului.
   // "Protectie la foc EI 60 pentru tubulaturile din tabla zincata" din

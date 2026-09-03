@@ -1,0 +1,19 @@
+{
+  "amprenta": "5::numar curent|denumire articol|um|cantitate|observatii",
+  "fisier": "Radoia.xlsx",
+  "foaie": "izolatie",
+  "model": "gpt-4.1-2025-04-14",
+  "generat": "2026-09-03T16:50:28.802Z",
+  "mapare": {
+    "rand_antet": 4,
+    "rand_start": 6,
+    "roluri": [
+      "nr",
+      "denumire",
+      "um",
+      "cantitate",
+      "observatii"
+    ],
+    "motiv": "Randul 4 contine capetele de coloana, iar datele incep de la randul 6, dupa un rand de titlu la 5."
+  }
+}

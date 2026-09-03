@@ -2,6 +2,8 @@ import { tarifeaza } from "../../src/pricing/engine.js";
 import { tarifeazaGolFoc } from "../../src/pricing/goluri-foc.js";
 import { extrageDeterminist } from "../../src/import/extract-regex.js";
 import { grupeazaPeSablon, extindePeSablon } from "../../src/import/sabloane.js";
+import { aplicaMemorie, invata } from "../../src/import/memorie.js";
+import { stocLocal } from "../stoc-local.js";
 import { SISTEME, type LinieExtrasa, type Sursa } from "../../src/import/schema.js";
 // Doar tipurile: `import type` se sterge la compilare, deci ExcelJS (~940 kB)
 // ramane incarcat lenes, prin `import()`-ul din `proceseaza`.
@@ -166,6 +168,14 @@ export const ecran: Ecran = {
           else reziduale.push({ index: b.index, text: b.text, ...(b.um ? { um: b.um } : {}) });
         }
 
+        // L4 — memoria de sabloane: ce a corectat omul intr-un import anterior
+        // se aplica acum fara sa mai intrebe modelul. Sta inaintea lui fiindca
+        // e mai ieftina si determinista; ce nu stie merge mai departe.
+        const stoc = stocLocal();
+        const dinMemorie = aplicaMemorie(reziduale, stoc);
+        for (const e of dinMemorie.rezolvate) rezolvate.set(e.index, { extras: e, sursa: "memorie" });
+        const deLucrat = dinMemorie.ramase;
+
         // L2b — model, doar pe reziduu, si doar cate un reprezentant per sablon.
         //
         // Liniile reziduale se repeta in acelasi fisier: 697 de linii pe cele 9
@@ -174,10 +184,10 @@ export const ecran: Ecran = {
         // fiecare linie. Ce nu se poate proiecta pleaca la model in a doua
         // trecere, deci acoperirea nu scade.
         let avertisment = "";
-        const grupuri = grupeazaPeSablon(reziduale);
+        const grupuri = grupeazaPeSablon(deLucrat);
         const reprezentanti = grupuri.map((g) => g.reprezentant);
         const trunchiat = info ? Math.max(0, reprezentanti.length - MAX_LINII) : 0;
-        if (info && reziduale.length > 0) {
+        if (info && deLucrat.length > 0) {
           const lot = info.lot ?? LOT_IMPLICIT;
           const concurenta = info.concurenta ?? CONCURENTA_IMPLICITA;
 
@@ -237,7 +247,7 @@ export const ecran: Ecran = {
 
           const extrase = await trimite(
             reprezentanti.slice(0, MAX_LINII),
-            `Modelul lucrează pe ${reprezentanti.length} șabloane (din ${reziduale.length} linii)`,
+            `Modelul lucrează pe ${reprezentanti.length} șabloane (din ${deLucrat.length} linii)`,
           );
 
           const { proiectate, ramase } = extindePeSablon(grupuri, extrase);
@@ -278,6 +288,7 @@ export const ecran: Ecran = {
           const tarifate = izo.filter((l) => l.pret !== null);
           const prinModel = izo.filter((l) => l.sursa === "model");
           const prinSablon = izo.filter((l) => l.sursa === "sablon");
+          const prinMemorie = izo.filter((l) => l.sursa === "memorie");
           // Aceeasi definitie ca in `pipeline.ts`: sub prag SAU pozitie care nu
           // s-a putut tarifa. Ambele cazuri se opresc la validarea omului.
           const deValidat = izo.filter((l) => l.extras.incredere < prag || l.eroare !== null);
@@ -290,6 +301,9 @@ export const ecran: Ecran = {
             ${info ? indicator(String(prinModel.length), "rezolvate cu modelul") : ""}
             ${info && prinSablon.length
               ? indicator(String(prinSablon.length), "deduse din șablon", "linii geamăne, fără apel la model")
+              : ""}
+            ${prinMemorie.length
+              ? indicator(String(prinMemorie.length), "din corecții anterioare", "șabloane învățate la importurile trecute")
               : ""}
             ${indicator(String(deValidat.length), "de validat de om", `încredere sub ${prag} sau fără preț`)}`;
         }
@@ -463,6 +477,17 @@ export const ecran: Ecran = {
           else if (nume === "diametru") l.extras.diametru_valoare = camp.value === "" ? null : Number(camp.value);
           else if (nume === "grosime") l.extras.grosime_mm = camp.value === "" ? null : Number(camp.value);
           recalculeaza(l);
+          // L4: corectia omului intra in memorie, ca linia asta sa nu mai fie
+          // intrebata niciodata. Se invata DOAR de la om — daca ar intra si ce
+          // zice modelul, o extragere gresita s-ar propaga tacut peste toate
+          // proiectele urmatoare.
+          //
+          // Se invata doar pozitiile complete: un sablon cu jumatate de rol e o
+          // capcana, fiindca ar arata ca stie si ar da valori pe jumatate.
+          if (l.extras.sistem !== null && l.extras.diametru_valoare !== null) {
+            const sablon = invata(l.text, l.extras);
+            if (sablon) stoc.pune(sablon);
+          }
           const marca = tr?.querySelector("[data-marca]");
           if (marca) marca.innerHTML = l.extras.incredere < prag || l.eroare !== null ? stare("de validat", "atentie") : "";
           statsEl.innerHTML = randStats();

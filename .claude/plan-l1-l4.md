@@ -136,12 +136,28 @@ stabile), dar neverificată. **De cerut firmei: două liste de cantități de la
 același client, din proiecte diferite.** Fără ele, câștigul lui L4 între
 proiecte nu se poate nici măsura, nici promite.
 
-## Ordinea propusă
+## Ce s-a construit din planul ăsta
 
-1. ~~**Deduplicarea reziduului pe șablon**~~ — **făcută**. `src/import/sabloane.ts`,
-   −54% linii trimise la model (697 → 321), verificată pe golden files: 27 de
-   linii proiectate, 27 identice cu răspunsul modelului. Detalii în `import.md`.
-2. **L1**, cu validator determinist și cache pe amprentă de antet.
-3. **L4**, ecranul de validare care salvează corecțiile ca `șablon → rol`.
-4. Abia după ce catalogul are volum: few-shot din catalogul propriu, ales prin
-   căutare peste el. Singurul loc unde căutarea semantică își are rostul.
+1. ~~**Deduplicarea reziduului pe șablon**~~ — `src/import/sabloane.ts`. −54%
+   linii trimise la model (697 → 321), verificată pe golden files: 27 de linii
+   proiectate, 27 identice cu răspunsul modelului.
+2. ~~**L1, maparea de coloane**~~ — `mapare.ts`, `mapare-llm.ts`,
+   `cache-mapari.ts`, `npm run mapare`. Un apel per layout, validator
+   determinist peste propunerea modelului, cache pe amprentă de antet.
+   **8 mapări acceptate, 2 respinse** pe fișierele reale. Cantitățile față de
+   oferta semnată: **0/56 înainte, 56/56 după**.
+3. ~~**L4, memoria de șabloane**~~ — `memorie.ts` plus depozit pe disc
+   (`stoc-sabloane.ts`) și în `localStorage` (`web/stoc-local.ts`). Se învață
+   doar din corecția omului, în ecranul de import.
+
+Detaliile de proiectare și capcanele găsite pe drum stau în `import.md`.
+
+## Ce urmează
+
+- **Ecranul de validare, partea de flux.** Azi corecția se salvează, dar nu
+  există o listă „de validat" separată, nici un buton de confirmare în masă.
+- **Cache-ul de mapări în browser.** Azi maparea vine din `data/mapari/`, citit
+  cu `node:fs`, deci demo-ul de pe Pages nu o folosește.
+- Few-shot din catalogul propriu, abia după ce memoria are volum. Singurul loc
+  unde căutarea semantică își are rostul.
+- Măsurarea reutilizării între proiecte — blocată de întrebarea 9 către firmă.

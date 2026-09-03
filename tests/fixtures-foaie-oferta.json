@@ -1,0 +1,3810 @@
+{
+ "foaie": {
+  "nume": "Termice+Sanitare",
+  "randuri": [
+   {
+    "rand": 4,
+    "celule": [
+     {
+      "v": "OFERTA LUCRARI IZOLATII TERMICE",
+      "span": 6
+     }
+    ],
+    "linie": {
+     "index": 0,
+     "foaie": "Termice+Sanitare",
+     "rand": 4,
+     "text": "OFERTA LUCRARI IZOLATII TERMICE | OFERTA LUCRARI IZOLATII TERMICE | OFERTA LUCRARI IZOLATII TERMICE | OFERTA LUCRARI IZOLATII TERMICE | OFERTA LUCRARI IZOLATII TERMICE | OFERTA LUCRARI IZOLATII TERMICE",
+     "celule": [
+      "OFERTA LUCRARI IZOLATII TERMICE",
+      "OFERTA LUCRARI IZOLATII TERMICE",
+      "OFERTA LUCRARI IZOLATII TERMICE",
+      "OFERTA LUCRARI IZOLATII TERMICE",
+      "OFERTA LUCRARI IZOLATII TERMICE",
+      "OFERTA LUCRARI IZOLATII TERMICE"
+     ]
+    }
+   },
+   {
+    "rand": 6,
+    "celule": [
+     {
+      "v": null,
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     },
+     {
+      "v": "Nr. 118 / 27.04.2026",
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 1,
+     "foaie": "Termice+Sanitare",
+     "rand": 6,
+     "text": "Nr. 118 / 27.04.2026",
+     "celule": [
+      null,
+      null,
+      null,
+      "Nr. 118 / 27.04.2026"
+     ]
+    }
+   },
+   {
+    "rand": 9,
+    "celule": [
+     {
+      "v": "In atentia d-nei Alina Maties",
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 2,
+     "foaie": "Termice+Sanitare",
+     "rand": 9,
+     "text": "In atentia d-nei Alina Maties",
+     "celule": [
+      "In atentia d-nei Alina Maties"
+     ]
+    }
+   },
+   {
+    "rand": 10,
+    "celule": [
+     {
+      "v": "Beneficiar : NISAL SRL",
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 3,
+     "foaie": "Termice+Sanitare",
+     "rand": 10,
+     "text": "Beneficiar : NISAL SRL",
+     "celule": [
+      "Beneficiar : NISAL SRL",
+      null,
+      null,
+      null
+     ]
+    }
+   },
+   {
+    "rand": 11,
+    "celule": [
+     {
+      "v": "Obiectiv : XXXLutz+Momax Balotesti",
+      "span": 4
+     }
+    ],
+    "linie": {
+     "index": 4,
+     "foaie": "Termice+Sanitare",
+     "rand": 11,
+     "text": "Obiectiv : XXXLutz+Momax Balotesti | Obiectiv : XXXLutz+Momax Balotesti | Obiectiv : XXXLutz+Momax Balotesti | Obiectiv : XXXLutz+Momax Balotesti",
+     "celule": [
+      "Obiectiv : XXXLutz+Momax Balotesti",
+      "Obiectiv : XXXLutz+Momax Balotesti",
+      "Obiectiv : XXXLutz+Momax Balotesti",
+      "Obiectiv : XXXLutz+Momax Balotesti"
+     ]
+    }
+   },
+   {
+    "rand": 14,
+    "celule": [
+     {
+      "v": "Nr.",
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     },
+     {
+      "v": "DENUMIRE MATERIAL, DATE TEHNICE, OPERATIUNI INCLUSE IN ARTICOL\n(U_Center 3 - PTh)      ",
+      "span": 2
+     },
+     {
+      "v": "Cant.\nQuantity",
+      "span": 1
+     },
+     {
+      "v": "U.M.",
+      "span": 1
+     },
+     {
+      "v": "P.U. euro/elem",
+      "span": 1
+     },
+     {
+      "v": "Pret Total euro",
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 5,
+     "foaie": "Termice+Sanitare",
+     "rand": 14,
+     "text": "DENUMIRE MATERIAL, DATE TEHNICE, OPERATIUNI INCLUSE IN ARTICOL\n(U_Center 3 - PTh)       | DENUMIRE MATERIAL, DATE TEHNICE, OPERATIUNI INCLUSE IN ARTICOL\n(U_Center 3 - PTh)       | Cant.\nQuantity | U.M. | P.U. euro/elem | Pret Total euro",
+     "celule": [
+      "Nr.",
+      null,
+      "DENUMIRE MATERIAL, DATE TEHNICE, OPERATIUNI INCLUSE IN ARTICOL\n(U_Center 3 - PTh)      ",
+      "DENUMIRE MATERIAL, DATE TEHNICE, OPERATIUNI INCLUSE IN ARTICOL\n(U_Center 3 - PTh)      ",
+      "Cant.\nQuantity",
+      "U.M.",
+      "P.U. euro/elem",
+      "Pret Total euro"
+     ]
+    }
+   },
+   {
+    "rand": 15,
+    "celule": [
+     {
+      "v": null,
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 6,
+     "foaie": "Termice+Sanitare",
+     "rand": 15,
+     "text": "DENUMIRE MATERIAL, DATE TEHNICE, OPERATIUNI INCLUSE IN ARTICOL\n(U_Center 3 - PTh)       | DENUMIRE MATERIAL, DATE TEHNICE, OPERATIUNI INCLUSE IN ARTICOL\n(U_Center 3 - PTh)       | Cant.\nQuantity | U.M. | P.U. euro/elem | Pret Total euro",
+     "celule": [
+      "Nr.",
+      null,
+      "DENUMIRE MATERIAL, DATE TEHNICE, OPERATIUNI INCLUSE IN ARTICOL\n(U_Center 3 - PTh)      ",
+      "DENUMIRE MATERIAL, DATE TEHNICE, OPERATIUNI INCLUSE IN ARTICOL\n(U_Center 3 - PTh)      ",
+      "Cant.\nQuantity",
+      "U.M.",
+      "P.U. euro/elem",
+      "Pret Total euro"
+     ]
+    }
+   },
+   {
+    "rand": 16,
+    "celule": [
+     {
+      "v": "01.82.02.01A",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Kälteisolierung DN15 Elastomer 13mm",
+      "span": 1
+     },
+     {
+      "v": "Izolarea termica a conductelor cu cauciuc sinte􀆟c cu celule inchise (elastomer) cu bariera de vapori ridicata, cu\nconduc􀆟vitatea termica < 0.04W/mK, clasa B1 de performanta la foc, pentru conducte de apa racita; complet cu\nadeziv, substanta de curatat, clipsuri montate conform indica􀆟ilor producatorului cu urmatoarele grosimi: Dn15 elastomer 13mm",
+      "span": 1
+     },
+     {
+      "v": 187,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 5.99,
+      "span": 1
+     },
+     {
+      "v": 1120.13,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 7,
+     "foaie": "Termice+Sanitare",
+     "rand": 16,
+     "text": "01.82.02.01A | Kälteisolierung DN15 Elastomer 13mm | Izolarea termica a conductelor cu cauciuc sinte􀆟c cu celule inchise (elastomer) cu bariera de vapori ridicata, cu\nconduc􀆟vitatea termica < 0.04W/mK, clasa B1 de performanta la foc, pentru conducte de apa racita; complet cu\nadeziv, substanta de curatat, clipsuri montate conform indica􀆟ilor producatorului cu urmatoarele grosimi: Dn15 elastomer 13mm",
+     "celule": [
+      "01.82.02.01A",
+      "Z",
+      "Kälteisolierung DN15 Elastomer 13mm",
+      "Izolarea termica a conductelor cu cauciuc sinte􀆟c cu celule inchise (elastomer) cu bariera de vapori ridicata, cu\nconduc􀆟vitatea termica < 0.04W/mK, clasa B1 de performanta la foc, pentru conducte de apa racita; complet cu\nadeziv, substanta de curatat, clipsuri montate conform indica􀆟ilor producatorului cu urmatoarele grosimi: Dn15 elastomer 13mm",
+      187,
+      "m",
+      5.99,
+      1120.13
+     ],
+     "um": "m",
+     "cantitate": 5.99
+    }
+   },
+   {
+    "rand": 17,
+    "celule": [
+     {
+      "v": "01.82.02.01B",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Kälteisolierung DN20 Elastomer 13mm",
+      "span": 1
+     },
+     {
+      "v": "Izolarea termica a conductelor cu cauciuc sinte􀆟c cu celule inchise (elastomer) cu bariera de vapori ridicata, cu\nconduc􀆟vitatea termica < 0.04W/mK, clasa B1 de performanta la foc, pentru conducte de apa racita; complet cu\nadeziv, substanta de curatat, clipsuri montate conform indica􀆟ilor producatorului cu urmatoarele grosimi: Dn20 elastomer 13mm",
+      "span": 1
+     },
+     {
+      "v": 360,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 6.2,
+      "span": 1
+     },
+     {
+      "v": 2232,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 8,
+     "foaie": "Termice+Sanitare",
+     "rand": 17,
+     "text": "01.82.02.01B | Kälteisolierung DN20 Elastomer 13mm | Izolarea termica a conductelor cu cauciuc sinte􀆟c cu celule inchise (elastomer) cu bariera de vapori ridicata, cu\nconduc􀆟vitatea termica < 0.04W/mK, clasa B1 de performanta la foc, pentru conducte de apa racita; complet cu\nadeziv, substanta de curatat, clipsuri montate conform indica􀆟ilor producatorului cu urmatoarele grosimi: Dn20 elastomer 13mm",
+     "celule": [
+      "01.82.02.01B",
+      "Z",
+      "Kälteisolierung DN20 Elastomer 13mm",
+      "Izolarea termica a conductelor cu cauciuc sinte􀆟c cu celule inchise (elastomer) cu bariera de vapori ridicata, cu\nconduc􀆟vitatea termica < 0.04W/mK, clasa B1 de performanta la foc, pentru conducte de apa racita; complet cu\nadeziv, substanta de curatat, clipsuri montate conform indica􀆟ilor producatorului cu urmatoarele grosimi: Dn20 elastomer 13mm",
+      360,
+      "m",
+      6.2,
+      2232
+     ],
+     "um": "m",
+     "cantitate": 6.2
+    }
+   },
+   {
+    "rand": 18,
+    "celule": [
+     {
+      "v": "01.82.02.01C",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Kälteisolierung DN25 Elastomer 13mm",
+      "span": 1
+     },
+     {
+      "v": "Izolarea termica a conductelor cu cauciuc sinte􀆟c cu celule inchise (elastomer) cu bariera de vapori ridicata, cu\nconduc􀆟vitatea termica < 0.04W/mK, clasa B1 de performanta la foc, pentru conducte de apa racita; complet cu\nadeziv, substanta de curatat, clipsuri montate conform indica􀆟ilor producatorului cu urmatoarele grosimi: Dn25 elastomer 13mm",
+      "span": 1
+     },
+     {
+      "v": 1550,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 6.35,
+      "span": 1
+     },
+     {
+      "v": 9842.5,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 9,
+     "foaie": "Termice+Sanitare",
+     "rand": 18,
+     "text": "01.82.02.01C | Kälteisolierung DN25 Elastomer 13mm | Izolarea termica a conductelor cu cauciuc sinte􀆟c cu celule inchise (elastomer) cu bariera de vapori ridicata, cu\nconduc􀆟vitatea termica < 0.04W/mK, clasa B1 de performanta la foc, pentru conducte de apa racita; complet cu\nadeziv, substanta de curatat, clipsuri montate conform indica􀆟ilor producatorului cu urmatoarele grosimi: Dn25 elastomer 13mm",
+     "celule": [
+      "01.82.02.01C",
+      "Z",
+      "Kälteisolierung DN25 Elastomer 13mm",
+      "Izolarea termica a conductelor cu cauciuc sinte􀆟c cu celule inchise (elastomer) cu bariera de vapori ridicata, cu\nconduc􀆟vitatea termica < 0.04W/mK, clasa B1 de performanta la foc, pentru conducte de apa racita; complet cu\nadeziv, substanta de curatat, clipsuri montate conform indica􀆟ilor producatorului cu urmatoarele grosimi: Dn25 elastomer 13mm",
+      1550,
+      "m",
+      6.35,
+      9842.5
+     ],
+     "um": "m",
+     "cantitate": 6.35
+    }
+   },
+   {
+    "rand": 19,
+    "celule": [
+     {
+      "v": "01.82.02.01D",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Kälteisolierung DN32 Elastomer 13mm",
+      "span": 1
+     },
+     {
+      "v": "Izolarea termica a conductelor cu cauciuc sinte􀆟c cu celule inchise (elastomer) cu bariera de vapori ridicata, cu\nconduc􀆟vitatea termica < 0.04W/mK, clasa B1 de performanta la foc, pentru conducte de apa racita; complet cu\nadeziv, substanta de curatat, clipsuri montate conform indica􀆟ilor producatorului cu urmatoarele grosimi: Dn32 elastomer 13mm",
+      "span": 1
+     },
+     {
+      "v": 1650,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 8.66,
+      "span": 1
+     },
+     {
+      "v": 14289,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 10,
+     "foaie": "Termice+Sanitare",
+     "rand": 19,
+     "text": "01.82.02.01D | Kälteisolierung DN32 Elastomer 13mm | Izolarea termica a conductelor cu cauciuc sinte􀆟c cu celule inchise (elastomer) cu bariera de vapori ridicata, cu\nconduc􀆟vitatea termica < 0.04W/mK, clasa B1 de performanta la foc, pentru conducte de apa racita; complet cu\nadeziv, substanta de curatat, clipsuri montate conform indica􀆟ilor producatorului cu urmatoarele grosimi: Dn32 elastomer 13mm",
+     "celule": [
+      "01.82.02.01D",
+      "Z",
+      "Kälteisolierung DN32 Elastomer 13mm",
+      "Izolarea termica a conductelor cu cauciuc sinte􀆟c cu celule inchise (elastomer) cu bariera de vapori ridicata, cu\nconduc􀆟vitatea termica < 0.04W/mK, clasa B1 de performanta la foc, pentru conducte de apa racita; complet cu\nadeziv, substanta de curatat, clipsuri montate conform indica􀆟ilor producatorului cu urmatoarele grosimi: Dn32 elastomer 13mm",
+      1650,
+      "m",
+      8.66,
+      14289
+     ],
+     "um": "m",
+     "cantitate": 8.66
+    }
+   },
+   {
+    "rand": 20,
+    "celule": [
+     {
+      "v": "01.82.02.01E",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Kälteisolierung DN40 Elastomer 25mm",
+      "span": 1
+     },
+     {
+      "v": "Izolarea termica a conductelor cu cauciuc sinte􀆟c cu celule inchise (elastomer) cu bariera de vapori ridicata, cu\nconduc􀆟vitatea termica < 0.04W/mK, clasa B1 de performanta la foc, pentru conducte de apa racita; complet cu\nadeziv, substanta de curatat, clipsuri montate conform indica􀆟ilor producatorului cu urmatoarele grosimi: Dn40 elastomer 25mm",
+      "span": 1
+     },
+     {
+      "v": 502,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 14.07,
+      "span": 1
+     },
+     {
+      "v": 7063.14,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 11,
+     "foaie": "Termice+Sanitare",
+     "rand": 20,
+     "text": "01.82.02.01E | Kälteisolierung DN40 Elastomer 25mm | Izolarea termica a conductelor cu cauciuc sinte􀆟c cu celule inchise (elastomer) cu bariera de vapori ridicata, cu\nconduc􀆟vitatea termica < 0.04W/mK, clasa B1 de performanta la foc, pentru conducte de apa racita; complet cu\nadeziv, substanta de curatat, clipsuri montate conform indica􀆟ilor producatorului cu urmatoarele grosimi: Dn40 elastomer 25mm",
+     "celule": [
+      "01.82.02.01E",
+      "Z",
+      "Kälteisolierung DN40 Elastomer 25mm",
+      "Izolarea termica a conductelor cu cauciuc sinte􀆟c cu celule inchise (elastomer) cu bariera de vapori ridicata, cu\nconduc􀆟vitatea termica < 0.04W/mK, clasa B1 de performanta la foc, pentru conducte de apa racita; complet cu\nadeziv, substanta de curatat, clipsuri montate conform indica􀆟ilor producatorului cu urmatoarele grosimi: Dn40 elastomer 25mm",
+      502,
+      "m",
+      14.07,
+      7063.14
+     ],
+     "um": "m",
+     "cantitate": 14.07
+    }
+   },
+   {
+    "rand": 21,
+    "celule": [
+     {
+      "v": "01.82.02.01F",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Kälteisolierung DN50 Elastomer 25mm",
+      "span": 1
+     },
+     {
+      "v": "Izolarea termica a conductelor cu cauciuc sinte􀆟c cu celule inchise (elastomer) cu bariera de vapori ridicata, cu\nconduc􀆟vitatea termica < 0.04W/mK, clasa B1 de performanta la foc, pentru conducte de apa racita; complet cu\nadeziv, substanta de curatat, clipsuri montate conform indica􀆟ilor producatorului cu urmatoarele grosimi: Dn50 elastomer 25mm",
+      "span": 1
+     },
+     {
+      "v": 293,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 16.42,
+      "span": 1
+     },
+     {
+      "v": 4811.06,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 12,
+     "foaie": "Termice+Sanitare",
+     "rand": 21,
+     "text": "01.82.02.01F | Kälteisolierung DN50 Elastomer 25mm | Izolarea termica a conductelor cu cauciuc sinte􀆟c cu celule inchise (elastomer) cu bariera de vapori ridicata, cu\nconduc􀆟vitatea termica < 0.04W/mK, clasa B1 de performanta la foc, pentru conducte de apa racita; complet cu\nadeziv, substanta de curatat, clipsuri montate conform indica􀆟ilor producatorului cu urmatoarele grosimi: Dn50 elastomer 25mm",
+     "celule": [
+      "01.82.02.01F",
+      "Z",
+      "Kälteisolierung DN50 Elastomer 25mm",
+      "Izolarea termica a conductelor cu cauciuc sinte􀆟c cu celule inchise (elastomer) cu bariera de vapori ridicata, cu\nconduc􀆟vitatea termica < 0.04W/mK, clasa B1 de performanta la foc, pentru conducte de apa racita; complet cu\nadeziv, substanta de curatat, clipsuri montate conform indica􀆟ilor producatorului cu urmatoarele grosimi: Dn50 elastomer 25mm",
+      293,
+      "m",
+      16.42,
+      4811.06
+     ],
+     "um": "m",
+     "cantitate": 16.42
+    }
+   },
+   {
+    "rand": 22,
+    "celule": [
+     {
+      "v": "01.82.02.01G",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Kälteisolierung DN65 Elastomer 25mm",
+      "span": 1
+     },
+     {
+      "v": "Izolarea termica a conductelor cu cauciuc sinte􀆟c cu celule inchise (elastomer) cu bariera de vapori ridicata, cu\nconduc􀆟vitatea termica < 0.04W/mK, clasa B1 de performanta la foc, pentru conducte de apa racita; complet cu\nadeziv, substanta de curatat, clipsuri montate conform indica􀆟ilor producatorului cu urmatoarele grosimi: Dn65 elastomer 25mm",
+      "span": 1
+     },
+     {
+      "v": 457,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 17.69,
+      "span": 1
+     },
+     {
+      "v": 8084.330000000001,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 13,
+     "foaie": "Termice+Sanitare",
+     "rand": 22,
+     "text": "01.82.02.01G | Kälteisolierung DN65 Elastomer 25mm | Izolarea termica a conductelor cu cauciuc sinte􀆟c cu celule inchise (elastomer) cu bariera de vapori ridicata, cu\nconduc􀆟vitatea termica < 0.04W/mK, clasa B1 de performanta la foc, pentru conducte de apa racita; complet cu\nadeziv, substanta de curatat, clipsuri montate conform indica􀆟ilor producatorului cu urmatoarele grosimi: Dn65 elastomer 25mm",
+     "celule": [
+      "01.82.02.01G",
+      "Z",
+      "Kälteisolierung DN65 Elastomer 25mm",
+      "Izolarea termica a conductelor cu cauciuc sinte􀆟c cu celule inchise (elastomer) cu bariera de vapori ridicata, cu\nconduc􀆟vitatea termica < 0.04W/mK, clasa B1 de performanta la foc, pentru conducte de apa racita; complet cu\nadeziv, substanta de curatat, clipsuri montate conform indica􀆟ilor producatorului cu urmatoarele grosimi: Dn65 elastomer 25mm",
+      457,
+      "m",
+      17.69,
+      8084.330000000001
+     ],
+     "um": "m",
+     "cantitate": 17.69
+    }
+   },
+   {
+    "rand": 23,
+    "celule": [
+     {
+      "v": "01.82.02.01H",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Kälteisolierung DN80 Elastomer 25mm",
+      "span": 1
+     },
+     {
+      "v": "Izolarea termica a conductelor cu cauciuc sinte􀆟c cu celule inchise (elastomer) cu bariera de vapori ridicata, cu\nconduc􀆟vitatea termica < 0.04W/mK, clasa B1 de performanta la foc, pentru conducte de apa racita; complet cu\nadeziv, substanta de curatat, clipsuri montate conform indica􀆟ilor producatorului cu urmatoarele grosimi: Dn80 elastomer 25mm",
+      "span": 1
+     },
+     {
+      "v": 719,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 17.91,
+      "span": 1
+     },
+     {
+      "v": 12877.29,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 14,
+     "foaie": "Termice+Sanitare",
+     "rand": 23,
+     "text": "01.82.02.01H | Kälteisolierung DN80 Elastomer 25mm | Izolarea termica a conductelor cu cauciuc sinte􀆟c cu celule inchise (elastomer) cu bariera de vapori ridicata, cu\nconduc􀆟vitatea termica < 0.04W/mK, clasa B1 de performanta la foc, pentru conducte de apa racita; complet cu\nadeziv, substanta de curatat, clipsuri montate conform indica􀆟ilor producatorului cu urmatoarele grosimi: Dn80 elastomer 25mm",
+     "celule": [
+      "01.82.02.01H",
+      "Z",
+      "Kälteisolierung DN80 Elastomer 25mm",
+      "Izolarea termica a conductelor cu cauciuc sinte􀆟c cu celule inchise (elastomer) cu bariera de vapori ridicata, cu\nconduc􀆟vitatea termica < 0.04W/mK, clasa B1 de performanta la foc, pentru conducte de apa racita; complet cu\nadeziv, substanta de curatat, clipsuri montate conform indica􀆟ilor producatorului cu urmatoarele grosimi: Dn80 elastomer 25mm",
+      719,
+      "m",
+      17.91,
+      12877.29
+     ],
+     "um": "m",
+     "cantitate": 17.91
+    }
+   },
+   {
+    "rand": 24,
+    "celule": [
+     {
+      "v": "01.82.02.01I",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Kälteisolierung DN100 Elastomer 32mm",
+      "span": 1
+     },
+     {
+      "v": "Izolarea termica a conductelor cu cauciuc sinte􀆟c cu celule inchise (elastomer) cu bariera de vapori ridicata, cu\nconduc􀆟vitatea termica < 0.04W/mK, clasa B1 de performanta la foc, pentru conducte de apa racita; complet cu\nadeziv, substanta de curatat, clipsuri montate conform indica􀆟ilor producatorului cu urmatoarele grosimi: Dn100 elastomer 32mm",
+      "span": 1
+     },
+     {
+      "v": 448,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 28.96,
+      "span": 1
+     },
+     {
+      "v": 12974.08,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 15,
+     "foaie": "Termice+Sanitare",
+     "rand": 24,
+     "text": "01.82.02.01I | Kälteisolierung DN100 Elastomer 32mm | Izolarea termica a conductelor cu cauciuc sinte􀆟c cu celule inchise (elastomer) cu bariera de vapori ridicata, cu\nconduc􀆟vitatea termica < 0.04W/mK, clasa B1 de performanta la foc, pentru conducte de apa racita; complet cu\nadeziv, substanta de curatat, clipsuri montate conform indica􀆟ilor producatorului cu urmatoarele grosimi: Dn100 elastomer 32mm",
+     "celule": [
+      "01.82.02.01I",
+      "Z",
+      "Kälteisolierung DN100 Elastomer 32mm",
+      "Izolarea termica a conductelor cu cauciuc sinte􀆟c cu celule inchise (elastomer) cu bariera de vapori ridicata, cu\nconduc􀆟vitatea termica < 0.04W/mK, clasa B1 de performanta la foc, pentru conducte de apa racita; complet cu\nadeziv, substanta de curatat, clipsuri montate conform indica􀆟ilor producatorului cu urmatoarele grosimi: Dn100 elastomer 32mm",
+      448,
+      "m",
+      28.96,
+      12974.08
+     ],
+     "um": "m",
+     "cantitate": 28.96
+    }
+   },
+   {
+    "rand": 25,
+    "celule": [
+     {
+      "v": "01.82.02.01J",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Kälteisolierung DN125 Elastomer 32mm",
+      "span": 1
+     },
+     {
+      "v": "Izolarea termica a conductelor cu cauciuc sinte􀆟c cu celule inchise (elastomer) cu bariera de vapori ridicata, cu\nconduc􀆟vitatea termica < 0.04W/mK, clasa B1 de performanta la foc, pentru conducte de apa racita; complet cu\nadeziv, substanta de curatat, clipsuri montate conform indica􀆟ilor producatorului cu urmatoarele grosimi: Dn125 elastomer 32mm",
+      "span": 1
+     },
+     {
+      "v": 160,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 29.99,
+      "span": 1
+     },
+     {
+      "v": 4798.4,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 16,
+     "foaie": "Termice+Sanitare",
+     "rand": 25,
+     "text": "01.82.02.01J | Kälteisolierung DN125 Elastomer 32mm | Izolarea termica a conductelor cu cauciuc sinte􀆟c cu celule inchise (elastomer) cu bariera de vapori ridicata, cu\nconduc􀆟vitatea termica < 0.04W/mK, clasa B1 de performanta la foc, pentru conducte de apa racita; complet cu\nadeziv, substanta de curatat, clipsuri montate conform indica􀆟ilor producatorului cu urmatoarele grosimi: Dn125 elastomer 32mm",
+     "celule": [
+      "01.82.02.01J",
+      "Z",
+      "Kälteisolierung DN125 Elastomer 32mm",
+      "Izolarea termica a conductelor cu cauciuc sinte􀆟c cu celule inchise (elastomer) cu bariera de vapori ridicata, cu\nconduc􀆟vitatea termica < 0.04W/mK, clasa B1 de performanta la foc, pentru conducte de apa racita; complet cu\nadeziv, substanta de curatat, clipsuri montate conform indica􀆟ilor producatorului cu urmatoarele grosimi: Dn125 elastomer 32mm",
+      160,
+      "m",
+      29.99,
+      4798.4
+     ],
+     "um": "m",
+     "cantitate": 29.99
+    }
+   },
+   {
+    "rand": 26,
+    "celule": [
+     {
+      "v": "01.82.02.01K",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Kälteisolierung DN150 Elastomer 32mm",
+      "span": 1
+     },
+     {
+      "v": "Izolarea termica a conductelor cu cauciuc sinte􀆟c cu celule inchise (elastomer) cu bariera de vapori ridicata, cu\nconduc􀆟vitatea termica < 0.04W/mK, clasa B1 de performanta la foc, pentru conducte de apa racita; complet cu\nadeziv, substanta de curatat, clipsuri montate conform indica􀆟ilor producatorului cu urmatoarele grosimi: Dn150 elastomer 32mm",
+      "span": 1
+     },
+     {
+      "v": 14,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 32.74,
+      "span": 1
+     },
+     {
+      "v": 458.36,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 17,
+     "foaie": "Termice+Sanitare",
+     "rand": 26,
+     "text": "01.82.02.01K | Kälteisolierung DN150 Elastomer 32mm | Izolarea termica a conductelor cu cauciuc sinte􀆟c cu celule inchise (elastomer) cu bariera de vapori ridicata, cu\nconduc􀆟vitatea termica < 0.04W/mK, clasa B1 de performanta la foc, pentru conducte de apa racita; complet cu\nadeziv, substanta de curatat, clipsuri montate conform indica􀆟ilor producatorului cu urmatoarele grosimi: Dn150 elastomer 32mm",
+     "celule": [
+      "01.82.02.01K",
+      "Z",
+      "Kälteisolierung DN150 Elastomer 32mm",
+      "Izolarea termica a conductelor cu cauciuc sinte􀆟c cu celule inchise (elastomer) cu bariera de vapori ridicata, cu\nconduc􀆟vitatea termica < 0.04W/mK, clasa B1 de performanta la foc, pentru conducte de apa racita; complet cu\nadeziv, substanta de curatat, clipsuri montate conform indica􀆟ilor producatorului cu urmatoarele grosimi: Dn150 elastomer 32mm",
+      14,
+      "m",
+      32.74,
+      458.36
+     ],
+     "um": "m",
+     "cantitate": 32.74
+    }
+   },
+   {
+    "rand": 27,
+    "celule": [
+     {
+      "v": "01.82.02.02D",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "DN 32 - Mineralwolle g= 30mm",
+      "span": 1
+     },
+     {
+      "v": "Izolarea termica a conductelor cu vata minerala caserata cu folie de aluminiu, pentru conducte de agent termic apa\ncalda pentru aeroterme, montaj interior, pentru conducte de agent termic apa calda; complet cu clipsuri montate\nconfrom indica􀆟ilor producatorului cu urmatoarele grosimi:Dn32, vata minerala 30mm",
+      "span": 1
+     },
+     {
+      "v": 702,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 7.13,
+      "span": 1
+     },
+     {
+      "v": 5005.26,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 18,
+     "foaie": "Termice+Sanitare",
+     "rand": 27,
+     "text": "01.82.02.02D | DN 32 - Mineralwolle g= 30mm | Izolarea termica a conductelor cu vata minerala caserata cu folie de aluminiu, pentru conducte de agent termic apa\ncalda pentru aeroterme, montaj interior, pentru conducte de agent termic apa calda; complet cu clipsuri montate\nconfrom indica􀆟ilor producatorului cu urmatoarele grosimi:Dn32, vata minerala 30mm",
+     "celule": [
+      "01.82.02.02D",
+      "Z",
+      "DN 32 - Mineralwolle g= 30mm",
+      "Izolarea termica a conductelor cu vata minerala caserata cu folie de aluminiu, pentru conducte de agent termic apa\ncalda pentru aeroterme, montaj interior, pentru conducte de agent termic apa calda; complet cu clipsuri montate\nconfrom indica􀆟ilor producatorului cu urmatoarele grosimi:Dn32, vata minerala 30mm",
+      702,
+      "m",
+      7.13,
+      5005.26
+     ],
+     "um": "m",
+     "cantitate": 7.13
+    }
+   },
+   {
+    "rand": 28,
+    "celule": [
+     {
+      "v": "01.82.02.02E",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "DN 40 - Mineralwolle g= 30mm",
+      "span": 1
+     },
+     {
+      "v": "Izolarea termica a conductelor cu vata minerala caserata cu folie de aluminiu, pentru conducte de agent termic apa\ncalda pentru aeroterme, montaj interior, pentru conducte de agent termic apa calda; complet cu clipsuri montate\nconfrom indica􀆟ilor producatorului cu urmatoarele grosimi:Dn40, vata minerala 30mm",
+      "span": 1
+     },
+     {
+      "v": 288,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 7.21,
+      "span": 1
+     },
+     {
+      "v": 2076.48,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 19,
+     "foaie": "Termice+Sanitare",
+     "rand": 28,
+     "text": "01.82.02.02E | DN 40 - Mineralwolle g= 30mm | Izolarea termica a conductelor cu vata minerala caserata cu folie de aluminiu, pentru conducte de agent termic apa\ncalda pentru aeroterme, montaj interior, pentru conducte de agent termic apa calda; complet cu clipsuri montate\nconfrom indica􀆟ilor producatorului cu urmatoarele grosimi:Dn40, vata minerala 30mm",
+     "celule": [
+      "01.82.02.02E",
+      "Z",
+      "DN 40 - Mineralwolle g= 30mm",
+      "Izolarea termica a conductelor cu vata minerala caserata cu folie de aluminiu, pentru conducte de agent termic apa\ncalda pentru aeroterme, montaj interior, pentru conducte de agent termic apa calda; complet cu clipsuri montate\nconfrom indica􀆟ilor producatorului cu urmatoarele grosimi:Dn40, vata minerala 30mm",
+      288,
+      "m",
+      7.21,
+      2076.48
+     ],
+     "um": "m",
+     "cantitate": 7.21
+    }
+   },
+   {
+    "rand": 29,
+    "celule": [
+     {
+      "v": "01.82.02.02F",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "DN 50 - Mineralwolle g= 30mm",
+      "span": 1
+     },
+     {
+      "v": "Izolarea termica a conductelor cu vata minerala caserata cu folie de aluminiu, pentru conducte de agent termic apa\ncalda pentru aeroterme, montaj interior, pentru conducte de agent termic apa calda; complet cu clipsuri montate\nconfrom indica􀆟ilor producatorului cu urmatoarele grosimi:Dn50, vata minerala 30mm",
+      "span": 1
+     },
+     {
+      "v": 112,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 7.38,
+      "span": 1
+     },
+     {
+      "v": 826.56,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 20,
+     "foaie": "Termice+Sanitare",
+     "rand": 29,
+     "text": "01.82.02.02F | DN 50 - Mineralwolle g= 30mm | Izolarea termica a conductelor cu vata minerala caserata cu folie de aluminiu, pentru conducte de agent termic apa\ncalda pentru aeroterme, montaj interior, pentru conducte de agent termic apa calda; complet cu clipsuri montate\nconfrom indica􀆟ilor producatorului cu urmatoarele grosimi:Dn50, vata minerala 30mm",
+     "celule": [
+      "01.82.02.02F",
+      "Z",
+      "DN 50 - Mineralwolle g= 30mm",
+      "Izolarea termica a conductelor cu vata minerala caserata cu folie de aluminiu, pentru conducte de agent termic apa\ncalda pentru aeroterme, montaj interior, pentru conducte de agent termic apa calda; complet cu clipsuri montate\nconfrom indica􀆟ilor producatorului cu urmatoarele grosimi:Dn50, vata minerala 30mm",
+      112,
+      "m",
+      7.38,
+      826.56
+     ],
+     "um": "m",
+     "cantitate": 7.38
+    }
+   },
+   {
+    "rand": 30,
+    "celule": [
+     {
+      "v": "01.82.02.02G",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "DN 65 - Mineralwolle g= 30mm",
+      "span": 1
+     },
+     {
+      "v": "Izolarea termica a conductelor cu vata minerala caserata cu folie de aluminiu, pentru conducte de agent termic apa\ncalda pentru aeroterme, montaj interior, pentru conducte de agent termic apa calda; complet cu clipsuri montate\nconfrom indica􀆟ilor producatorului cu urmatoarele grosimi:Dn65, vata minerala 30mm",
+      "span": 1
+     },
+     {
+      "v": 44,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 9.8,
+      "span": 1
+     },
+     {
+      "v": 431.20000000000005,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 21,
+     "foaie": "Termice+Sanitare",
+     "rand": 30,
+     "text": "01.82.02.02G | DN 65 - Mineralwolle g= 30mm | Izolarea termica a conductelor cu vata minerala caserata cu folie de aluminiu, pentru conducte de agent termic apa\ncalda pentru aeroterme, montaj interior, pentru conducte de agent termic apa calda; complet cu clipsuri montate\nconfrom indica􀆟ilor producatorului cu urmatoarele grosimi:Dn65, vata minerala 30mm",
+     "celule": [
+      "01.82.02.02G",
+      "Z",
+      "DN 65 - Mineralwolle g= 30mm",
+      "Izolarea termica a conductelor cu vata minerala caserata cu folie de aluminiu, pentru conducte de agent termic apa\ncalda pentru aeroterme, montaj interior, pentru conducte de agent termic apa calda; complet cu clipsuri montate\nconfrom indica􀆟ilor producatorului cu urmatoarele grosimi:Dn65, vata minerala 30mm",
+      44,
+      "m",
+      9.8,
+      431.20000000000005
+     ],
+     "um": "m",
+     "cantitate": 9.8
+    }
+   },
+   {
+    "rand": 31,
+    "celule": [
+     {
+      "v": "01.82.02.02H",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "DN 80 - Mineralwolle g= 30mm",
+      "span": 1
+     },
+     {
+      "v": "Izolarea termica a conductelor cu vata minerala caserata cu folie de aluminiu, pentru conducte de agent termic apa\ncalda pentru aeroterme, montaj interior, pentru conducte de agent termic apa calda; complet cu clipsuri montate\nconfrom indica􀆟ilor producatorului cu urmatoarele grosimi:Dn80, vata minerala 30mm",
+      "span": 1
+     },
+     {
+      "v": 49,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 9.97,
+      "span": 1
+     },
+     {
+      "v": 488.53000000000003,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 22,
+     "foaie": "Termice+Sanitare",
+     "rand": 31,
+     "text": "01.82.02.02H | DN 80 - Mineralwolle g= 30mm | Izolarea termica a conductelor cu vata minerala caserata cu folie de aluminiu, pentru conducte de agent termic apa\ncalda pentru aeroterme, montaj interior, pentru conducte de agent termic apa calda; complet cu clipsuri montate\nconfrom indica􀆟ilor producatorului cu urmatoarele grosimi:Dn80, vata minerala 30mm",
+     "celule": [
+      "01.82.02.02H",
+      "Z",
+      "DN 80 - Mineralwolle g= 30mm",
+      "Izolarea termica a conductelor cu vata minerala caserata cu folie de aluminiu, pentru conducte de agent termic apa\ncalda pentru aeroterme, montaj interior, pentru conducte de agent termic apa calda; complet cu clipsuri montate\nconfrom indica􀆟ilor producatorului cu urmatoarele grosimi:Dn80, vata minerala 30mm",
+      49,
+      "m",
+      9.97,
+      488.53000000000003
+     ],
+     "um": "m",
+     "cantitate": 9.97
+    }
+   },
+   {
+    "rand": 35,
+    "celule": [
+     {
+      "v": "01.82.03.01C",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Wärmeisolierung DN80 Elastomer 13mm + MW 40mm + Heizkabel",
+      "span": 1
+     },
+     {
+      "v": "Izolarea termica a conductelor cu cauciuc sinte􀆟c cu celule inchise (elastomer) cu bariera de vapori ridicata, cu\nconduc􀆟vitatea termica < 0.04W/mK + vata minerala prevazuta cu folie de aluminiu, protejata la exterior cu tabla\nzincata; complet cu adeziv, substanta de curatat, clipsuri montate confrom indica􀆟ilor producatorului cu urmatoarele\ngrosimi:DN80 elastomer 13mm+40mm vata minerala + Fir incalzitor",
+      "span": 1
+     },
+     {
+      "v": 345,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 44.35,
+      "span": 1
+     },
+     {
+      "v": 15300.75,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 23,
+     "foaie": "Termice+Sanitare",
+     "rand": 35,
+     "text": "01.82.03.01C | Wärmeisolierung DN80 Elastomer 13mm + MW 40mm + Heizkabel | Izolarea termica a conductelor cu cauciuc sinte􀆟c cu celule inchise (elastomer) cu bariera de vapori ridicata, cu\nconduc􀆟vitatea termica < 0.04W/mK + vata minerala prevazuta cu folie de aluminiu, protejata la exterior cu tabla\nzincata; complet cu adeziv, substanta de curatat, clipsuri montate confrom indica􀆟ilor producatorului cu urmatoarele\ngrosimi:DN80 elastomer 13mm+40mm vata minerala + Fir incalzitor",
+     "celule": [
+      "01.82.03.01C",
+      "Z",
+      "Wärmeisolierung DN80 Elastomer 13mm + MW 40mm + Heizkabel",
+      "Izolarea termica a conductelor cu cauciuc sinte􀆟c cu celule inchise (elastomer) cu bariera de vapori ridicata, cu\nconduc􀆟vitatea termica < 0.04W/mK + vata minerala prevazuta cu folie de aluminiu, protejata la exterior cu tabla\nzincata; complet cu adeziv, substanta de curatat, clipsuri montate confrom indica􀆟ilor producatorului cu urmatoarele\ngrosimi:DN80 elastomer 13mm+40mm vata minerala + Fir incalzitor",
+      345,
+      "m",
+      44.35,
+      15300.75
+     ],
+     "um": "m",
+     "cantitate": 44.35
+    }
+   },
+   {
+    "rand": 36,
+    "celule": [
+     {
+      "v": "01.82.03.01D",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Wärmeisolierung DN100 Elastomer 13mm + MW 40mm + Heizkabel",
+      "span": 1
+     },
+     {
+      "v": "Izolarea termica a conductelor cu cauciuc sinte􀆟c cu celule inchise (elastomer) cu bariera de vapori ridicata, cu\nconduc􀆟vitatea termica < 0.04W/mK + vata minerala prevazuta cu folie de aluminiu, protejata la exterior cu tabla\nzincata; complet cu adeziv, substanta de curatat, clipsuri montate confrom indica􀆟ilor producatorului cu urmatoarele\ngrosimi:DN100 elastomer 13mm+40mm vata minerala + Fir incalzitor",
+      "span": 1
+     },
+     {
+      "v": 60,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 57.82,
+      "span": 1
+     },
+     {
+      "v": 3469.2,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 24,
+     "foaie": "Termice+Sanitare",
+     "rand": 36,
+     "text": "01.82.03.01D | Wärmeisolierung DN100 Elastomer 13mm + MW 40mm + Heizkabel | Izolarea termica a conductelor cu cauciuc sinte􀆟c cu celule inchise (elastomer) cu bariera de vapori ridicata, cu\nconduc􀆟vitatea termica < 0.04W/mK + vata minerala prevazuta cu folie de aluminiu, protejata la exterior cu tabla\nzincata; complet cu adeziv, substanta de curatat, clipsuri montate confrom indica􀆟ilor producatorului cu urmatoarele\ngrosimi:DN100 elastomer 13mm+40mm vata minerala + Fir incalzitor",
+     "celule": [
+      "01.82.03.01D",
+      "Z",
+      "Wärmeisolierung DN100 Elastomer 13mm + MW 40mm + Heizkabel",
+      "Izolarea termica a conductelor cu cauciuc sinte􀆟c cu celule inchise (elastomer) cu bariera de vapori ridicata, cu\nconduc􀆟vitatea termica < 0.04W/mK + vata minerala prevazuta cu folie de aluminiu, protejata la exterior cu tabla\nzincata; complet cu adeziv, substanta de curatat, clipsuri montate confrom indica􀆟ilor producatorului cu urmatoarele\ngrosimi:DN100 elastomer 13mm+40mm vata minerala + Fir incalzitor",
+      60,
+      "m",
+      57.82,
+      3469.2
+     ],
+     "um": "m",
+     "cantitate": 57.82
+    }
+   },
+   {
+    "rand": 37,
+    "celule": [
+     {
+      "v": "02.82.43.11D",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "W D Luftleitg. eckig M W Matte Blech 50",
+      "span": 1
+     },
+     {
+      "v": "Izolarea termica a tubulaturilor cu saltele de vata minerala caserate pe folie de aluminiu cu grosimea de 50mm +\njacke􀆟ng de tabla; complet cu clipsuri montate conform indica􀆟ilor producatorului\nNota: in pretul final vor fi incluse accesoriile de racordare, sus􀆟nere si montare.",
+      "span": 1
+     },
+     {
+      "v": 460,
+      "span": 1
+     },
+     {
+      "v": "m²",
+      "span": 1
+     },
+     {
+      "v": 79.73,
+      "span": 1
+     },
+     {
+      "v": 36675.8,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 25,
+     "foaie": "Termice+Sanitare",
+     "rand": 37,
+     "text": "02.82.43.11D | W D Luftleitg. eckig M W Matte Blech 50 | Izolarea termica a tubulaturilor cu saltele de vata minerala caserate pe folie de aluminiu cu grosimea de 50mm +\njacke􀆟ng de tabla; complet cu clipsuri montate conform indica􀆟ilor producatorului\nNota: in pretul final vor fi incluse accesoriile de racordare, sus􀆟nere si montare.",
+     "celule": [
+      "02.82.43.11D",
+      "Z",
+      "W D Luftleitg. eckig M W Matte Blech 50",
+      "Izolarea termica a tubulaturilor cu saltele de vata minerala caserate pe folie de aluminiu cu grosimea de 50mm +\njacke􀆟ng de tabla; complet cu clipsuri montate conform indica􀆟ilor producatorului\nNota: in pretul final vor fi incluse accesoriile de racordare, sus􀆟nere si montare.",
+      460,
+      "m²",
+      79.73,
+      36675.8
+     ],
+     "um": "m²",
+     "cantitate": 79.73
+    }
+   },
+   {
+    "rand": 38,
+    "celule": [
+     {
+      "v": "03.70.01.02A",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Wärmeiso. aus expand. synthet. Kautschuk, d=9mm, Ø1/2\"",
+      "span": 1
+     },
+     {
+      "v": "Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=9 mm, pentru conducta din Ol Zn\nmaterial marunt, de etansare, de fixare; Dimensiuni: Ø1/2\" (Dn 15mm)",
+      "span": 1
+     },
+     {
+      "v": 112,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 5.79,
+      "span": 1
+     },
+     {
+      "v": 648.48,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 26,
+     "foaie": "Termice+Sanitare",
+     "rand": 38,
+     "text": "03.70.01.02A | Wärmeiso. aus expand. synthet. Kautschuk, d=9mm, Ø1/2\" | Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=9 mm, pentru conducta din Ol Zn\nmaterial marunt, de etansare, de fixare; Dimensiuni: Ø1/2\" (Dn 15mm)",
+     "celule": [
+      "03.70.01.02A",
+      "Z",
+      "Wärmeiso. aus expand. synthet. Kautschuk, d=9mm, Ø1/2\"",
+      "Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=9 mm, pentru conducta din Ol Zn\nmaterial marunt, de etansare, de fixare; Dimensiuni: Ø1/2\" (Dn 15mm)",
+      112,
+      "m",
+      5.79,
+      648.48
+     ],
+     "um": "m",
+     "cantitate": 5.79
+    }
+   },
+   {
+    "rand": 39,
+    "celule": [
+     {
+      "v": "03.70.01.02B",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Wärmeiso. aus expand. synthet. Kautschuk, d=9mm, Ø3/4\"",
+      "span": 1
+     },
+     {
+      "v": "Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=9 mm, pentru conducta din Ol Zn\nmaterial marunt, de etansare, de fixare; Dimensiuni: Ø3/4\" (Dn 20mm)",
+      "span": 1
+     },
+     {
+      "v": 5,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 5.99,
+      "span": 1
+     },
+     {
+      "v": 29.950000000000003,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 27,
+     "foaie": "Termice+Sanitare",
+     "rand": 39,
+     "text": "03.70.01.02B | Wärmeiso. aus expand. synthet. Kautschuk, d=9mm, Ø3/4\" | Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=9 mm, pentru conducta din Ol Zn\nmaterial marunt, de etansare, de fixare; Dimensiuni: Ø3/4\" (Dn 20mm)",
+     "celule": [
+      "03.70.01.02B",
+      "Z",
+      "Wärmeiso. aus expand. synthet. Kautschuk, d=9mm, Ø3/4\"",
+      "Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=9 mm, pentru conducta din Ol Zn\nmaterial marunt, de etansare, de fixare; Dimensiuni: Ø3/4\" (Dn 20mm)",
+      5,
+      "m",
+      5.99,
+      29.950000000000003
+     ],
+     "um": "m",
+     "cantitate": 5.99
+    }
+   },
+   {
+    "rand": 40,
+    "celule": [
+     {
+      "v": "03.70.01.02C",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Wärmeiso. aus expand. synthet. Kautschuk, d=9mm, Ø1\"",
+      "span": 1
+     },
+     {
+      "v": "Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=9 mm, pentru conducta din Ol Zn\nmaterial marunt, de etansare, de fixare; Dimensiuni: Ø1\" (Dn 25mm)",
+      "span": 1
+     },
+     {
+      "v": 27,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 6.15,
+      "span": 1
+     },
+     {
+      "v": 166.05,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 28,
+     "foaie": "Termice+Sanitare",
+     "rand": 40,
+     "text": "03.70.01.02C | Wärmeiso. aus expand. synthet. Kautschuk, d=9mm, Ø1\" | Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=9 mm, pentru conducta din Ol Zn\nmaterial marunt, de etansare, de fixare; Dimensiuni: Ø1\" (Dn 25mm)",
+     "celule": [
+      "03.70.01.02C",
+      "Z",
+      "Wärmeiso. aus expand. synthet. Kautschuk, d=9mm, Ø1\"",
+      "Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=9 mm, pentru conducta din Ol Zn\nmaterial marunt, de etansare, de fixare; Dimensiuni: Ø1\" (Dn 25mm)",
+      27,
+      "m",
+      6.15,
+      166.05
+     ],
+     "um": "m",
+     "cantitate": 6.15
+    }
+   },
+   {
+    "rand": 41,
+    "celule": [
+     {
+      "v": "03.70.01.02D",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Wärmeiso. aus expand. synthet. Kautschuk, d=9mm, Ø1 1/4\"",
+      "span": 1
+     },
+     {
+      "v": "Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=9 mm, pentru conducta din Ol Zn\nmaterial marunt, de etansare, de fixare; Dimensiuni: Ø1 1/4\" (Dn 32mm)",
+      "span": 1
+     },
+     {
+      "v": 48,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 8.29,
+      "span": 1
+     },
+     {
+      "v": 397.91999999999996,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 29,
+     "foaie": "Termice+Sanitare",
+     "rand": 41,
+     "text": "03.70.01.02D | Wärmeiso. aus expand. synthet. Kautschuk, d=9mm, Ø1 1/4\" | Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=9 mm, pentru conducta din Ol Zn\nmaterial marunt, de etansare, de fixare; Dimensiuni: Ø1 1/4\" (Dn 32mm)",
+     "celule": [
+      "03.70.01.02D",
+      "Z",
+      "Wärmeiso. aus expand. synthet. Kautschuk, d=9mm, Ø1 1/4\"",
+      "Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=9 mm, pentru conducta din Ol Zn\nmaterial marunt, de etansare, de fixare; Dimensiuni: Ø1 1/4\" (Dn 32mm)",
+      48,
+      "m",
+      8.29,
+      397.91999999999996
+     ],
+     "um": "m",
+     "cantitate": 8.29
+    }
+   },
+   {
+    "rand": 42,
+    "celule": [
+     {
+      "v": "03.70.01.02E",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Wärmeiso. aus expand. synthet. Kautschuk, d=9mm, Ø1 1/2\"",
+      "span": 1
+     },
+     {
+      "v": "Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=9 mm, pentru conducta din Ol Zn\nmaterial marunt, de etansare, de fixare; Dimensiuni: Ø1 1/2\" (Dn 40mm)",
+      "span": 1
+     },
+     {
+      "v": 60,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 8.45,
+      "span": 1
+     },
+     {
+      "v": 506.99999999999994,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 30,
+     "foaie": "Termice+Sanitare",
+     "rand": 42,
+     "text": "03.70.01.02E | Wärmeiso. aus expand. synthet. Kautschuk, d=9mm, Ø1 1/2\" | Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=9 mm, pentru conducta din Ol Zn\nmaterial marunt, de etansare, de fixare; Dimensiuni: Ø1 1/2\" (Dn 40mm)",
+     "celule": [
+      "03.70.01.02E",
+      "Z",
+      "Wärmeiso. aus expand. synthet. Kautschuk, d=9mm, Ø1 1/2\"",
+      "Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=9 mm, pentru conducta din Ol Zn\nmaterial marunt, de etansare, de fixare; Dimensiuni: Ø1 1/2\" (Dn 40mm)",
+      60,
+      "m",
+      8.45,
+      506.99999999999994
+     ],
+     "um": "m",
+     "cantitate": 8.45
+    }
+   },
+   {
+    "rand": 43,
+    "celule": [
+     {
+      "v": "03.70.01.02F",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Wärmeiso. aus expand. synthet. Kautschuk, d=9mm, Ø2\"",
+      "span": 1
+     },
+     {
+      "v": "Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=9 mm, pentru conducta din Ol Zn\nmaterial marunt, de etansare, de fixare; Dimensiuni: Ø2\" (Dn 50mm)",
+      "span": 1
+     },
+     {
+      "v": 213,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 8.88,
+      "span": 1
+     },
+     {
+      "v": 1891.44,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 31,
+     "foaie": "Termice+Sanitare",
+     "rand": 43,
+     "text": "03.70.01.02F | Wärmeiso. aus expand. synthet. Kautschuk, d=9mm, Ø2\" | Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=9 mm, pentru conducta din Ol Zn\nmaterial marunt, de etansare, de fixare; Dimensiuni: Ø2\" (Dn 50mm)",
+     "celule": [
+      "03.70.01.02F",
+      "Z",
+      "Wärmeiso. aus expand. synthet. Kautschuk, d=9mm, Ø2\"",
+      "Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=9 mm, pentru conducta din Ol Zn\nmaterial marunt, de etansare, de fixare; Dimensiuni: Ø2\" (Dn 50mm)",
+      213,
+      "m",
+      8.88,
+      1891.44
+     ],
+     "um": "m",
+     "cantitate": 8.88
+    }
+   },
+   {
+    "rand": 44,
+    "celule": [
+     {
+      "v": "03.71.05.02A",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Wärmeisolierung aus expand. synthet. Kautschuk, d=9mm, DN20",
+      "span": 1
+     },
+     {
+      "v": "Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=9 mm,\nmaterial marunt, de etansare, de fixare; Dimensiuni: Ø20mm",
+      "span": 1
+     },
+     {
+      "v": 174,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 5.79,
+      "span": 1
+     },
+     {
+      "v": 1007.46,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 32,
+     "foaie": "Termice+Sanitare",
+     "rand": 44,
+     "text": "03.71.05.02A | Wärmeisolierung aus expand. synthet. Kautschuk, d=9mm, DN20 | Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=9 mm,\nmaterial marunt, de etansare, de fixare; Dimensiuni: Ø20mm",
+     "celule": [
+      "03.71.05.02A",
+      "Z",
+      "Wärmeisolierung aus expand. synthet. Kautschuk, d=9mm, DN20",
+      "Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=9 mm,\nmaterial marunt, de etansare, de fixare; Dimensiuni: Ø20mm",
+      174,
+      "m",
+      5.79,
+      1007.46
+     ],
+     "um": "m",
+     "cantitate": 5.79
+    }
+   },
+   {
+    "rand": 45,
+    "celule": [
+     {
+      "v": "03.71.05.02B",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Wärmeisolierung aus expand. synthet. Kautschuk, d=9mm, DN25",
+      "span": 1
+     },
+     {
+      "v": "Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=9 mm,\nmaterial marunt, de etansare, de fixare; Dimensiuni: Ø25mm",
+      "span": 1
+     },
+     {
+      "v": 45,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 5.99,
+      "span": 1
+     },
+     {
+      "v": 269.55,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 33,
+     "foaie": "Termice+Sanitare",
+     "rand": 45,
+     "text": "03.71.05.02B | Wärmeisolierung aus expand. synthet. Kautschuk, d=9mm, DN25 | Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=9 mm,\nmaterial marunt, de etansare, de fixare; Dimensiuni: Ø25mm",
+     "celule": [
+      "03.71.05.02B",
+      "Z",
+      "Wärmeisolierung aus expand. synthet. Kautschuk, d=9mm, DN25",
+      "Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=9 mm,\nmaterial marunt, de etansare, de fixare; Dimensiuni: Ø25mm",
+      45,
+      "m",
+      5.99,
+      269.55
+     ],
+     "um": "m",
+     "cantitate": 5.99
+    }
+   },
+   {
+    "rand": 46,
+    "celule": [
+     {
+      "v": "03.71.05.02C",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Wärmeisolierung aus expand. synthet. Kautschuk, d=9mm, DN32",
+      "span": 1
+     },
+     {
+      "v": "Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=9 mm,\nmaterial marunt, de etansare, de fixare; Dimensiuni: Ø32mm",
+      "span": 1
+     },
+     {
+      "v": 35,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 6.15,
+      "span": 1
+     },
+     {
+      "v": 215.25,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 34,
+     "foaie": "Termice+Sanitare",
+     "rand": 46,
+     "text": "03.71.05.02C | Wärmeisolierung aus expand. synthet. Kautschuk, d=9mm, DN32 | Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=9 mm,\nmaterial marunt, de etansare, de fixare; Dimensiuni: Ø32mm",
+     "celule": [
+      "03.71.05.02C",
+      "Z",
+      "Wärmeisolierung aus expand. synthet. Kautschuk, d=9mm, DN32",
+      "Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=9 mm,\nmaterial marunt, de etansare, de fixare; Dimensiuni: Ø32mm",
+      35,
+      "m",
+      6.15,
+      215.25
+     ],
+     "um": "m",
+     "cantitate": 6.15
+    }
+   },
+   {
+    "rand": 47,
+    "celule": [
+     {
+      "v": "03.71.05.02D",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Wärmeisolierung aus expand. synthet. Kautschuk, d=9mm, DN40",
+      "span": 1
+     },
+     {
+      "v": "Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=9 mm,\nmaterial marunt, de etansare, de fixare; Dimensiuni: Ø40mm",
+      "span": 1
+     },
+     {
+      "v": 51,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 8.29,
+      "span": 1
+     },
+     {
+      "v": 422.78999999999996,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 35,
+     "foaie": "Termice+Sanitare",
+     "rand": 47,
+     "text": "03.71.05.02D | Wärmeisolierung aus expand. synthet. Kautschuk, d=9mm, DN40 | Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=9 mm,\nmaterial marunt, de etansare, de fixare; Dimensiuni: Ø40mm",
+     "celule": [
+      "03.71.05.02D",
+      "Z",
+      "Wärmeisolierung aus expand. synthet. Kautschuk, d=9mm, DN40",
+      "Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=9 mm,\nmaterial marunt, de etansare, de fixare; Dimensiuni: Ø40mm",
+      51,
+      "m",
+      8.29,
+      422.78999999999996
+     ],
+     "um": "m",
+     "cantitate": 8.29
+    }
+   },
+   {
+    "rand": 48,
+    "celule": [
+     {
+      "v": "03.90.02.12A",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Isolierung Armaflex PEHD D40x3.0 - Vakuumentwässerung",
+      "span": 1
+     },
+     {
+      "v": "Izola􀆟e Armaflex 9mm pentru tub PEHD D40x3,0",
+      "span": 1
+     },
+     {
+      "v": 5,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 8.29,
+      "span": 1
+     },
+     {
+      "v": 41.449999999999996,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 36,
+     "foaie": "Termice+Sanitare",
+     "rand": 48,
+     "text": "03.90.02.12A | Isolierung Armaflex PEHD D40x3.0 - Vakuumentwässerung | Izola􀆟e Armaflex 9mm pentru tub PEHD D40x3,0",
+     "celule": [
+      "03.90.02.12A",
+      "Z",
+      "Isolierung Armaflex PEHD D40x3.0 - Vakuumentwässerung",
+      "Izola􀆟e Armaflex 9mm pentru tub PEHD D40x3,0",
+      5,
+      "m",
+      8.29,
+      41.449999999999996
+     ],
+     "um": "m",
+     "cantitate": 8.29
+    }
+   },
+   {
+    "rand": 55,
+    "celule": [
+     {
+      "v": "03.90.02.13A",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Isolierung Armaflex PEHD D50x3.0 - Vakuumentwässerung",
+      "span": 1
+     },
+     {
+      "v": "Izola􀆟e Armaflex 9mm pentru tub PEHD D50x3.0",
+      "span": 1
+     },
+     {
+      "v": 15,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 8.64,
+      "span": 1
+     },
+     {
+      "v": 129.60000000000002,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 37,
+     "foaie": "Termice+Sanitare",
+     "rand": 55,
+     "text": "03.90.02.13A | Isolierung Armaflex PEHD D50x3.0 - Vakuumentwässerung | Izola􀆟e Armaflex 9mm pentru tub PEHD D50x3.0",
+     "celule": [
+      "03.90.02.13A",
+      "Z",
+      "Isolierung Armaflex PEHD D50x3.0 - Vakuumentwässerung",
+      "Izola􀆟e Armaflex 9mm pentru tub PEHD D50x3.0",
+      15,
+      "m",
+      8.64,
+      129.60000000000002
+     ],
+     "um": "m",
+     "cantitate": 8.64
+    }
+   },
+   {
+    "rand": 56,
+    "celule": [
+     {
+      "v": "03.90.02.14A",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Isolierung Armaflex PEHD D56x3.0 - Vakuumentwässerung",
+      "span": 1
+     },
+     {
+      "v": "Izola􀆟e Armaflex 9mm pentru tub PEHD D56x3,0",
+      "span": 1
+     },
+     {
+      "v": 35,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 8.88,
+      "span": 1
+     },
+     {
+      "v": 310.8,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 38,
+     "foaie": "Termice+Sanitare",
+     "rand": 56,
+     "text": "03.90.02.14A | Isolierung Armaflex PEHD D56x3.0 - Vakuumentwässerung | Izola􀆟e Armaflex 9mm pentru tub PEHD D56x3,0",
+     "celule": [
+      "03.90.02.14A",
+      "Z",
+      "Isolierung Armaflex PEHD D56x3.0 - Vakuumentwässerung",
+      "Izola􀆟e Armaflex 9mm pentru tub PEHD D56x3,0",
+      35,
+      "m",
+      8.88,
+      310.8
+     ],
+     "um": "m",
+     "cantitate": 8.88
+    }
+   },
+   {
+    "rand": 57,
+    "celule": [
+     {
+      "v": "03.90.02.15A",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Isolierung Armaflex PEHD D63x3.0 - Vakuumentwässerung",
+      "span": 1
+     },
+     {
+      "v": "Izola􀆟e Armaflex 9mm pentru tub PEHD D63x3,0",
+      "span": 1
+     },
+     {
+      "v": 63,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 9.1,
+      "span": 1
+     },
+     {
+      "v": 573.3,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 39,
+     "foaie": "Termice+Sanitare",
+     "rand": 57,
+     "text": "03.90.02.15A | Isolierung Armaflex PEHD D63x3.0 - Vakuumentwässerung | Izola􀆟e Armaflex 9mm pentru tub PEHD D63x3,0",
+     "celule": [
+      "03.90.02.15A",
+      "Z",
+      "Isolierung Armaflex PEHD D63x3.0 - Vakuumentwässerung",
+      "Izola􀆟e Armaflex 9mm pentru tub PEHD D63x3,0",
+      63,
+      "m",
+      9.1,
+      573.3
+     ],
+     "um": "m",
+     "cantitate": 9.1
+    }
+   },
+   {
+    "rand": 58,
+    "celule": [
+     {
+      "v": "03.90.02.16A",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Isolierung Armaflex PEHD D75x3.0 - Vakuumentwässerung",
+      "span": 1
+     },
+     {
+      "v": "Izola􀆟e Armaflex 9mm pentru tub PEHD D75x3,0",
+      "span": 1
+     },
+     {
+      "v": 20,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 9.26,
+      "span": 1
+     },
+     {
+      "v": 185.2,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 40,
+     "foaie": "Termice+Sanitare",
+     "rand": 58,
+     "text": "03.90.02.16A | Isolierung Armaflex PEHD D75x3.0 - Vakuumentwässerung | Izola􀆟e Armaflex 9mm pentru tub PEHD D75x3,0",
+     "celule": [
+      "03.90.02.16A",
+      "Z",
+      "Isolierung Armaflex PEHD D75x3.0 - Vakuumentwässerung",
+      "Izola􀆟e Armaflex 9mm pentru tub PEHD D75x3,0",
+      20,
+      "m",
+      9.26,
+      185.2
+     ],
+     "um": "m",
+     "cantitate": 9.26
+    }
+   },
+   {
+    "rand": 59,
+    "celule": [
+     {
+      "v": "03.90.02.17A",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Isolierung Armaflex PEHD D90x3.5 - Vakuumentwässerung",
+      "span": 1
+     },
+     {
+      "v": "Izola􀆟e Armaflex 9mm pentru tub PEHD D90x3,5",
+      "span": 1
+     },
+     {
+      "v": 50,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 10.57,
+      "span": 1
+     },
+     {
+      "v": 528.5,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 41,
+     "foaie": "Termice+Sanitare",
+     "rand": 59,
+     "text": "03.90.02.17A | Isolierung Armaflex PEHD D90x3.5 - Vakuumentwässerung | Izola􀆟e Armaflex 9mm pentru tub PEHD D90x3,5",
+     "celule": [
+      "03.90.02.17A",
+      "Z",
+      "Isolierung Armaflex PEHD D90x3.5 - Vakuumentwässerung",
+      "Izola􀆟e Armaflex 9mm pentru tub PEHD D90x3,5",
+      50,
+      "m",
+      10.57,
+      528.5
+     ],
+     "um": "m",
+     "cantitate": 10.57
+    }
+   },
+   {
+    "rand": 60,
+    "celule": [
+     {
+      "v": "03.90.02.18A",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Isolierung Armaflex PEHD D110x4.3 - Vakuumentwässerung",
+      "span": 1
+     },
+     {
+      "v": "Izola􀆟e Armaflex 9mm pentru tub PEHD D110x4,3",
+      "span": 1
+     },
+     {
+      "v": 115,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 11.12,
+      "span": 1
+     },
+     {
+      "v": 1278.8,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 42,
+     "foaie": "Termice+Sanitare",
+     "rand": 60,
+     "text": "03.90.02.18A | Isolierung Armaflex PEHD D110x4.3 - Vakuumentwässerung | Izola􀆟e Armaflex 9mm pentru tub PEHD D110x4,3",
+     "celule": [
+      "03.90.02.18A",
+      "Z",
+      "Isolierung Armaflex PEHD D110x4.3 - Vakuumentwässerung",
+      "Izola􀆟e Armaflex 9mm pentru tub PEHD D110x4,3",
+      115,
+      "m",
+      11.12,
+      1278.8
+     ],
+     "um": "m",
+     "cantitate": 11.12
+    }
+   },
+   {
+    "rand": 61,
+    "celule": [
+     {
+      "v": "03.90.02.19A",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Isolierung Armaflex PEHD D125x4.9 - Vakuumentwässerung",
+      "span": 1
+     },
+     {
+      "v": "Izola􀆟e Armaflex 9mm pentru tub PEHD D125x4,9",
+      "span": 1
+     },
+     {
+      "v": 155,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 11.36,
+      "span": 1
+     },
+     {
+      "v": 1760.8,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 43,
+     "foaie": "Termice+Sanitare",
+     "rand": 61,
+     "text": "03.90.02.19A | Isolierung Armaflex PEHD D125x4.9 - Vakuumentwässerung | Izola􀆟e Armaflex 9mm pentru tub PEHD D125x4,9",
+     "celule": [
+      "03.90.02.19A",
+      "Z",
+      "Isolierung Armaflex PEHD D125x4.9 - Vakuumentwässerung",
+      "Izola􀆟e Armaflex 9mm pentru tub PEHD D125x4,9",
+      155,
+      "m",
+      11.36,
+      1760.8
+     ],
+     "um": "m",
+     "cantitate": 11.36
+    }
+   },
+   {
+    "rand": 62,
+    "celule": [
+     {
+      "v": "03.90.02.20A",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Isolierung Armaflex PEHD D160x6.2 - Vakuumentwässerung",
+      "span": 1
+     },
+     {
+      "v": "Izola􀆟e Armaflex 9mm pentru tub PEHD D160x6,2",
+      "span": 1
+     },
+     {
+      "v": 350,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 14.37,
+      "span": 1
+     },
+     {
+      "v": 5029.5,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 44,
+     "foaie": "Termice+Sanitare",
+     "rand": 62,
+     "text": "03.90.02.20A | Isolierung Armaflex PEHD D160x6.2 - Vakuumentwässerung | Izola􀆟e Armaflex 9mm pentru tub PEHD D160x6,2",
+     "celule": [
+      "03.90.02.20A",
+      "Z",
+      "Isolierung Armaflex PEHD D160x6.2 - Vakuumentwässerung",
+      "Izola􀆟e Armaflex 9mm pentru tub PEHD D160x6,2",
+      350,
+      "m",
+      14.37,
+      5029.5
+     ],
+     "um": "m",
+     "cantitate": 14.37
+    }
+   },
+   {
+    "rand": 63,
+    "celule": [
+     {
+      "v": "03.90.02.21A",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Isolierung Armaflex PEHD D200x6.2 - Vakuumentwässerung",
+      "span": 1
+     },
+     {
+      "v": "Izola􀆟e Armaflex 9mm pentru tub PEHD D200x6,2",
+      "span": 1
+     },
+     {
+      "v": 20,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 15.46,
+      "span": 1
+     },
+     {
+      "v": 309.20000000000005,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 45,
+     "foaie": "Termice+Sanitare",
+     "rand": 63,
+     "text": "03.90.02.21A | Isolierung Armaflex PEHD D200x6.2 - Vakuumentwässerung | Izola􀆟e Armaflex 9mm pentru tub PEHD D200x6,2",
+     "celule": [
+      "03.90.02.21A",
+      "Z",
+      "Isolierung Armaflex PEHD D200x6.2 - Vakuumentwässerung",
+      "Izola􀆟e Armaflex 9mm pentru tub PEHD D200x6,2",
+      20,
+      "m",
+      15.46,
+      309.20000000000005
+     ],
+     "um": "m",
+     "cantitate": 15.46
+    }
+   },
+   {
+    "rand": 64,
+    "celule": [
+     {
+      "v": "03.90.02.22A",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Isolierung Armaflex PEHD D250x7.8 - Vakuumentwässerung",
+      "span": 1
+     },
+     {
+      "v": "Izola􀆟e Armaflex 9mm pentru tub PEHD D250x7,8",
+      "span": 1
+     },
+     {
+      "v": 10,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 16.36,
+      "span": 1
+     },
+     {
+      "v": 163.6,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 46,
+     "foaie": "Termice+Sanitare",
+     "rand": 64,
+     "text": "03.90.02.22A | Isolierung Armaflex PEHD D250x7.8 - Vakuumentwässerung | Izola􀆟e Armaflex 9mm pentru tub PEHD D250x7,8",
+     "celule": [
+      "03.90.02.22A",
+      "Z",
+      "Isolierung Armaflex PEHD D250x7.8 - Vakuumentwässerung",
+      "Izola􀆟e Armaflex 9mm pentru tub PEHD D250x7,8",
+      10,
+      "m",
+      16.36,
+      163.6
+     ],
+     "um": "m",
+     "cantitate": 16.36
+    }
+   },
+   {
+    "rand": 65,
+    "celule": [
+     {
+      "v": "03.90.02.27A",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Wärmeisolierung aus expand. synthet. Kautschuk, d=9mm, Ø110",
+      "span": 1
+     },
+     {
+      "v": "Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=9 mm,\nmaterial marunt, de etansare, de fixare; Dimensiuni: Ø110mm",
+      "span": 1
+     },
+     {
+      "v": 15,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 11.12,
+      "span": 1
+     },
+     {
+      "v": 166.79999999999998,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 47,
+     "foaie": "Termice+Sanitare",
+     "rand": 65,
+     "text": "03.90.02.27A | Wärmeisolierung aus expand. synthet. Kautschuk, d=9mm, Ø110 | Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=9 mm,\nmaterial marunt, de etansare, de fixare; Dimensiuni: Ø110mm",
+     "celule": [
+      "03.90.02.27A",
+      "Z",
+      "Wärmeisolierung aus expand. synthet. Kautschuk, d=9mm, Ø110",
+      "Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=9 mm,\nmaterial marunt, de etansare, de fixare; Dimensiuni: Ø110mm",
+      15,
+      "m",
+      11.12,
+      166.79999999999998
+     ],
+     "um": "m",
+     "cantitate": 11.12
+    }
+   },
+   {
+    "rand": 66,
+    "celule": [
+     {
+      "v": "03.90.02.27B",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Wärmeisolierung aus expand. synthet. Kautschuk, d=9mm, Ø160",
+      "span": 1
+     },
+     {
+      "v": "Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=9 mm,\nmaterial marunt, de etansare, de fixare; Dimensiuni: Ø160mm",
+      "span": 1
+     },
+     {
+      "v": 20,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 14.37,
+      "span": 1
+     },
+     {
+      "v": 287.4,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 48,
+     "foaie": "Termice+Sanitare",
+     "rand": 66,
+     "text": "03.90.02.27B | Wärmeisolierung aus expand. synthet. Kautschuk, d=9mm, Ø160 | Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=9 mm,\nmaterial marunt, de etansare, de fixare; Dimensiuni: Ø160mm",
+     "celule": [
+      "03.90.02.27B",
+      "Z",
+      "Wärmeisolierung aus expand. synthet. Kautschuk, d=9mm, Ø160",
+      "Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=9 mm,\nmaterial marunt, de etansare, de fixare; Dimensiuni: Ø160mm",
+      20,
+      "m",
+      14.37,
+      287.4
+     ],
+     "um": "m",
+     "cantitate": 14.37
+    }
+   },
+   {
+    "rand": 67,
+    "celule": [
+     {
+      "v": "03.90.02.28A",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Rohr aus PEHD - Putzöffnung Ø110mm - Schwerkraftentwässerung",
+      "span": 1
+     },
+     {
+      "v": "Tub cu gura de cura􀆟re din PEHD, cu capac filetat pentru canalizare pluviala;\n- material marunt, de etansare, de fixare;  Dimensiuni: Ø110mm",
+      "span": 1
+     },
+     {
+      "v": 4,
+      "span": 1
+     },
+     {
+      "v": "Stk",
+      "span": 1
+     },
+     {
+      "v": 11.12,
+      "span": 1
+     },
+     {
+      "v": 44.48,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 49,
+     "foaie": "Termice+Sanitare",
+     "rand": 67,
+     "text": "03.90.02.28A | Rohr aus PEHD - Putzöffnung Ø110mm - Schwerkraftentwässerung | Tub cu gura de cura􀆟re din PEHD, cu capac filetat pentru canalizare pluviala;\n- material marunt, de etansare, de fixare;  Dimensiuni: Ø110mm",
+     "celule": [
+      "03.90.02.28A",
+      "Z",
+      "Rohr aus PEHD - Putzöffnung Ø110mm - Schwerkraftentwässerung",
+      "Tub cu gura de cura􀆟re din PEHD, cu capac filetat pentru canalizare pluviala;\n- material marunt, de etansare, de fixare;  Dimensiuni: Ø110mm",
+      4,
+      "Stk",
+      11.12,
+      44.48
+     ],
+     "um": "Stk",
+     "cantitate": 11.12
+    }
+   },
+   {
+    "rand": 75,
+    "celule": [
+     {
+      "v": "03.90.02.29A",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Rohr aus PEHD - Putzöffnung Ø160mm - Schwerkraftentwässerung",
+      "span": 1
+     },
+     {
+      "v": "Tub cu gura de cura􀆟re din PEHD, cu capac filetat pentru canalizare pluviala;\n- material marunt, de etansare, de fixare;  Dimensiuni: Ø160mm",
+      "span": 1
+     },
+     {
+      "v": 4,
+      "span": 1
+     },
+     {
+      "v": "Stk",
+      "span": 1
+     },
+     {
+      "v": 28.74,
+      "span": 1
+     },
+     {
+      "v": 114.96,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 50,
+     "foaie": "Termice+Sanitare",
+     "rand": 75,
+     "text": "03.90.02.29A | Rohr aus PEHD - Putzöffnung Ø160mm - Schwerkraftentwässerung | Tub cu gura de cura􀆟re din PEHD, cu capac filetat pentru canalizare pluviala;\n- material marunt, de etansare, de fixare;  Dimensiuni: Ø160mm",
+     "celule": [
+      "03.90.02.29A",
+      "Z",
+      "Rohr aus PEHD - Putzöffnung Ø160mm - Schwerkraftentwässerung",
+      "Tub cu gura de cura􀆟re din PEHD, cu capac filetat pentru canalizare pluviala;\n- material marunt, de etansare, de fixare;  Dimensiuni: Ø160mm",
+      4,
+      "Stk",
+      28.74,
+      114.96
+     ],
+     "um": "Stk",
+     "cantitate": 28.74
+    }
+   },
+   {
+    "rand": 76,
+    "celule": [
+     {
+      "v": "03.67.10.03A",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Wärmeiso. aus expand. synthet. Kautschuk, d=9mm, Ø32mm",
+      "span": 1
+     },
+     {
+      "v": "Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=9 mm\nmaterial marunt, de etansare, de fixare;\nPentru conducte: Dimensiuni: Ø32mm",
+      "span": 1
+     },
+     {
+      "v": 40,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 6.15,
+      "span": 1
+     },
+     {
+      "v": 246,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 51,
+     "foaie": "Termice+Sanitare",
+     "rand": 76,
+     "text": "03.67.10.03A | Wärmeiso. aus expand. synthet. Kautschuk, d=9mm, Ø32mm | Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=9 mm\nmaterial marunt, de etansare, de fixare;\nPentru conducte: Dimensiuni: Ø32mm",
+     "celule": [
+      "03.67.10.03A",
+      "Z",
+      "Wärmeiso. aus expand. synthet. Kautschuk, d=9mm, Ø32mm",
+      "Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=9 mm\nmaterial marunt, de etansare, de fixare;\nPentru conducte: Dimensiuni: Ø32mm",
+      40,
+      "m",
+      6.15,
+      246
+     ],
+     "um": "m",
+     "cantitate": 6.15
+    }
+   },
+   {
+    "rand": 77,
+    "celule": [
+     {
+      "v": "03.67.10.03B",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Wärmeiso. aus expand. synthet. Kautschuk, d=9mm, Ø50mm",
+      "span": 1
+     },
+     {
+      "v": "Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=9 mm\nmaterial marunt, de etansare, de fixare;\nPentru conducte: Dimensiuni: Ø50mm",
+      "span": 1
+     },
+     {
+      "v": 205,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 8.64,
+      "span": 1
+     },
+     {
+      "v": 1771.2,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 52,
+     "foaie": "Termice+Sanitare",
+     "rand": 77,
+     "text": "03.67.10.03B | Wärmeiso. aus expand. synthet. Kautschuk, d=9mm, Ø50mm | Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=9 mm\nmaterial marunt, de etansare, de fixare;\nPentru conducte: Dimensiuni: Ø50mm",
+     "celule": [
+      "03.67.10.03B",
+      "Z",
+      "Wärmeiso. aus expand. synthet. Kautschuk, d=9mm, Ø50mm",
+      "Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=9 mm\nmaterial marunt, de etansare, de fixare;\nPentru conducte: Dimensiuni: Ø50mm",
+      205,
+      "m",
+      8.64,
+      1771.2
+     ],
+     "um": "m",
+     "cantitate": 8.64
+    }
+   },
+   {
+    "rand": 78,
+    "celule": [
+     {
+      "v": "03.90.02.31A",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Enteisungssystem Regenwasserrohre, DTIP8 - Schwerkraftentw.",
+      "span": 1
+     },
+     {
+      "v": "Sistem de degivrare pentru conducte de canalizare pluviala - gravita􀆟onala\nsubsol compus din fir incalzitor DTIP8, 10wml, izola􀆟e termica tehnica de 􀆟p Kflex su similar 9mm , jacke􀆟ng cu\ntabla de aluminiu 0,6mm, inclusiv termostat si tablou de automa􀆟zare pentru teava Ø160 mm",
+      "span": 1
+     },
+     {
+      "v": 6,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 35.32,
+      "span": 1
+     },
+     {
+      "v": 211.92000000000002,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 53,
+     "foaie": "Termice+Sanitare",
+     "rand": 78,
+     "text": "03.90.02.31A | Enteisungssystem Regenwasserrohre, DTIP8 - Schwerkraftentw. | Sistem de degivrare pentru conducte de canalizare pluviala - gravita􀆟onala\nsubsol compus din fir incalzitor DTIP8, 10wml, izola􀆟e termica tehnica de 􀆟p Kflex su similar 9mm , jacke􀆟ng cu\ntabla de aluminiu 0,6mm, inclusiv termostat si tablou de automa􀆟zare pentru teava Ø160 mm",
+     "celule": [
+      "03.90.02.31A",
+      "Z",
+      "Enteisungssystem Regenwasserrohre, DTIP8 - Schwerkraftentw.",
+      "Sistem de degivrare pentru conducte de canalizare pluviala - gravita􀆟onala\nsubsol compus din fir incalzitor DTIP8, 10wml, izola􀆟e termica tehnica de 􀆟p Kflex su similar 9mm , jacke􀆟ng cu\ntabla de aluminiu 0,6mm, inclusiv termostat si tablou de automa􀆟zare pentru teava Ø160 mm",
+      6,
+      "m",
+      35.32,
+      211.92000000000002
+     ],
+     "um": "m",
+     "cantitate": 35.32
+    }
+   },
+   {
+    "rand": 79,
+    "celule": [
+     {
+      "v": "28.02.07A",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Wärmeisolierung aus expand. synth. Kautschuk, S=20mm, DN100",
+      "span": 1
+     },
+     {
+      "v": "Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=19 mm,\nmaterial marunt, de etansare, de fixare; Dimensiuni: DN100",
+      "span": 1
+     },
+     {
+      "v": 6,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 15.71,
+      "span": 1
+     },
+     {
+      "v": 94.26,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 54,
+     "foaie": "Termice+Sanitare",
+     "rand": 79,
+     "text": "28.02.07A | Wärmeisolierung aus expand. synth. Kautschuk, S=20mm, DN100 | Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=19 mm,\nmaterial marunt, de etansare, de fixare; Dimensiuni: DN100",
+     "celule": [
+      "28.02.07A",
+      "Z",
+      "Wärmeisolierung aus expand. synth. Kautschuk, S=20mm, DN100",
+      "Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=19 mm,\nmaterial marunt, de etansare, de fixare; Dimensiuni: DN100",
+      6,
+      "m",
+      15.71,
+      94.26
+     ],
+     "um": "m",
+     "cantitate": 15.71
+    }
+   },
+   {
+    "rand": 80,
+    "celule": [
+     {
+      "v": "28.02.08A",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Wärmeisolierung aus expand. synth. Kautschuk, S=20mm, DN150",
+      "span": 1
+     },
+     {
+      "v": "Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=19 mm,\nmaterial marunt, de etansare, de fixare; Dimensiuni: DN150",
+      "span": 1
+     },
+     {
+      "v": 34,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 17.66,
+      "span": 1
+     },
+     {
+      "v": 600.44,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 55,
+     "foaie": "Termice+Sanitare",
+     "rand": 80,
+     "text": "28.02.08A | Wärmeisolierung aus expand. synth. Kautschuk, S=20mm, DN150 | Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=19 mm,\nmaterial marunt, de etansare, de fixare; Dimensiuni: DN150",
+     "celule": [
+      "28.02.08A",
+      "Z",
+      "Wärmeisolierung aus expand. synth. Kautschuk, S=20mm, DN150",
+      "Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=19 mm,\nmaterial marunt, de etansare, de fixare; Dimensiuni: DN150",
+      34,
+      "m",
+      17.66,
+      600.44
+     ],
+     "um": "m",
+     "cantitate": 17.66
+    }
+   },
+   {
+    "rand": 81,
+    "celule": [
+     {
+      "v": "28.02.09A",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Wärmeisolierung aus expand. synth. Kautschuk, S=20mm, DN200",
+      "span": 1
+     },
+     {
+      "v": "Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=19 mm,\nmaterial marunt, de etansare, de fixare; Dimensiuni: DN200",
+      "span": 1
+     },
+     {
+      "v": 3,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 19.44,
+      "span": 1
+     },
+     {
+      "v": 58.32000000000001,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 56,
+     "foaie": "Termice+Sanitare",
+     "rand": 81,
+     "text": "28.02.09A | Wärmeisolierung aus expand. synth. Kautschuk, S=20mm, DN200 | Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=19 mm,\nmaterial marunt, de etansare, de fixare; Dimensiuni: DN200",
+     "celule": [
+      "28.02.09A",
+      "Z",
+      "Wärmeisolierung aus expand. synth. Kautschuk, S=20mm, DN200",
+      "Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=19 mm,\nmaterial marunt, de etansare, de fixare; Dimensiuni: DN200",
+      3,
+      "m",
+      19.44,
+      58.32000000000001
+     ],
+     "um": "m",
+     "cantitate": 19.44
+    }
+   },
+   {
+    "rand": 82,
+    "celule": [
+     {
+      "v": "28.02.10A",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Wärmeisolierung aus expand. synth. Kautschuk, S=20mm, DN250",
+      "span": 1
+     },
+     {
+      "v": "Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=19 mm,\nmaterial marunt, de etansare, de fixare; Dimensiuni: DN250",
+      "span": 1
+     },
+     {
+      "v": 6,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 23.13,
+      "span": 1
+     },
+     {
+      "v": 138.78,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 57,
+     "foaie": "Termice+Sanitare",
+     "rand": 82,
+     "text": "28.02.10A | Wärmeisolierung aus expand. synth. Kautschuk, S=20mm, DN250 | Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=19 mm,\nmaterial marunt, de etansare, de fixare; Dimensiuni: DN250",
+     "celule": [
+      "28.02.10A",
+      "Z",
+      "Wärmeisolierung aus expand. synth. Kautschuk, S=20mm, DN250",
+      "Izola􀆟e termica din cauciuc sinte􀆟c expandat, cu grosime S=19 mm,\nmaterial marunt, de etansare, de fixare; Dimensiuni: DN250",
+      6,
+      "m",
+      23.13,
+      138.78
+     ],
+     "um": "m",
+     "cantitate": 23.13
+    }
+   },
+   {
+    "rand": 83,
+    "celule": [
+     {
+      "v": "28.02.12A",
+      "span": 1
+     },
+     {
+      "v": "Z",
+      "span": 1
+     },
+     {
+      "v": "Edelstahlrohr für Abgas von Dieselpumpen Ø125x3.0 mm",
+      "span": 1
+     },
+     {
+      "v": "Teava de inox pentru evacuarea gazelor arse de la pompa diesel; inclusiv izola􀆟e termica avand grosimea de vata\nminerala 50 mm rezistenta la temperatura de peste 600°C; inclusiv confec􀆟onare pipa de ven􀆟lare din teava de otel ,\ninclusiv vopsire.\n-material marunt de etansare;\nDimensiuni: Ø125x 3.0 mm",
+      "span": 1
+     },
+     {
+      "v": 8,
+      "span": 1
+     },
+     {
+      "v": "m",
+      "span": 1
+     },
+     {
+      "v": 20.09,
+      "span": 1
+     },
+     {
+      "v": 160.72,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 58,
+     "foaie": "Termice+Sanitare",
+     "rand": 83,
+     "text": "28.02.12A | Edelstahlrohr für Abgas von Dieselpumpen Ø125x3.0 mm | Teava de inox pentru evacuarea gazelor arse de la pompa diesel; inclusiv izola􀆟e termica avand grosimea de vata\nminerala 50 mm rezistenta la temperatura de peste 600°C; inclusiv confec􀆟onare pipa de ven􀆟lare din teava de otel ,\ninclusiv vopsire.\n-material marunt de etansare;\nDimensiuni: Ø125x 3.0 mm",
+     "celule": [
+      "28.02.12A",
+      "Z",
+      "Edelstahlrohr für Abgas von Dieselpumpen Ø125x3.0 mm",
+      "Teava de inox pentru evacuarea gazelor arse de la pompa diesel; inclusiv izola􀆟e termica avand grosimea de vata\nminerala 50 mm rezistenta la temperatura de peste 600°C; inclusiv confec􀆟onare pipa de ven􀆟lare din teava de otel ,\ninclusiv vopsire.\n-material marunt de etansare;\nDimensiuni: Ø125x 3.0 mm",
+      8,
+      "m",
+      20.09,
+      160.72
+     ],
+     "um": "m",
+     "cantitate": 20.09
+    }
+   },
+   {
+    "rand": 84,
+    "celule": [
+     {
+      "v": "TOTAL LUCRARI IZOLATII TERMICE (fara TVA)",
+      "span": 7
+     },
+     {
+      "v": 162585.99000000002,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 59,
+     "foaie": "Termice+Sanitare",
+     "rand": 84,
+     "text": "TOTAL LUCRARI IZOLATII TERMICE (fara TVA) | TOTAL LUCRARI IZOLATII TERMICE (fara TVA) | TOTAL LUCRARI IZOLATII TERMICE (fara TVA) | TOTAL LUCRARI IZOLATII TERMICE (fara TVA) | TOTAL LUCRARI IZOLATII TERMICE (fara TVA) | TOTAL LUCRARI IZOLATII TERMICE (fara TVA) | TOTAL LUCRARI IZOLATII TERMICE (fara TVA)",
+     "celule": [
+      "TOTAL LUCRARI IZOLATII TERMICE (fara TVA)",
+      "TOTAL LUCRARI IZOLATII TERMICE (fara TVA)",
+      "TOTAL LUCRARI IZOLATII TERMICE (fara TVA)",
+      "TOTAL LUCRARI IZOLATII TERMICE (fara TVA)",
+      "TOTAL LUCRARI IZOLATII TERMICE (fara TVA)",
+      "TOTAL LUCRARI IZOLATII TERMICE (fara TVA)",
+      "TOTAL LUCRARI IZOLATII TERMICE (fara TVA)",
+      162585.99000000002
+     ],
+     "cantitate": 162585.99000000002
+    }
+   },
+   {
+    "rand": 85,
+    "celule": [
+     {
+      "v": "Nota:",
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     }
+    ]
+   },
+   {
+    "rand": 86,
+    "celule": [
+     {
+      "v": "Preturile sunt exprimate in Euro si nu contin TVA . Plata se face in Lei la cursul BNR din ziua facturarii.",
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 60,
+     "foaie": "Termice+Sanitare",
+     "rand": 86,
+     "text": "Preturile sunt exprimate in Euro si nu contin TVA . Plata se face in Lei la cursul BNR din ziua facturarii.",
+     "celule": [
+      "Preturile sunt exprimate in Euro si nu contin TVA . Plata se face in Lei la cursul BNR din ziua facturarii.",
+      null,
+      null,
+      null,
+      null,
+      null
+     ]
+    }
+   },
+   {
+    "rand": 87,
+    "celule": [
+     {
+      "v": "Plata lucrarilor se face pe baza cantitatilor real executate si aprobate in situatii de lucrari.",
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 61,
+     "foaie": "Termice+Sanitare",
+     "rand": 87,
+     "text": "Plata lucrarilor se face pe baza cantitatilor real executate si aprobate in situatii de lucrari.",
+     "celule": [
+      "Plata lucrarilor se face pe baza cantitatilor real executate si aprobate in situatii de lucrari.",
+      null,
+      null,
+      null,
+      null,
+      null
+     ]
+    }
+   },
+   {
+    "rand": 88,
+    "celule": [
+     {
+      "v": "Pretul elementelor speciale pentru izolatiile cu elastomer si vata minerala este urmatorul :",
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 62,
+     "foaie": "Termice+Sanitare",
+     "rand": 88,
+     "text": "Pretul elementelor speciale pentru izolatiile cu elastomer si vata minerala este urmatorul :",
+     "celule": [
+      "Pretul elementelor speciale pentru izolatiile cu elastomer si vata minerala este urmatorul :",
+      null,
+      null,
+      null,
+      null,
+      null
+     ]
+    }
+   },
+   {
+    "rand": 89,
+    "celule": [
+     {
+      "v": "Diametru Ø",
+      "span": 1
+     },
+     {
+      "v": "Pret / ml",
+      "span": 1
+     },
+     {
+      "v": "Pret / manseta",
+      "span": 1
+     },
+     {
+      "v": "Pret / cot, teu, reductie",
+      "span": 1
+     },
+     {
+      "v": "Pret / robinet, vana, contor, flansa, compensator",
+      "span": 2
+     },
+     {
+      "v": "Pret / pompa, filtru Y, distribuitor/colector, schimbator de caldura, vas amestec, vana 2-3 cai",
+      "span": 2
+     }
+    ],
+    "linie": {
+     "index": 63,
+     "foaie": "Termice+Sanitare",
+     "rand": 89,
+     "text": "Diametru Ø | Pret / ml | Pret / manseta | Pret / cot, teu, reductie | Pret / robinet, vana, contor, flansa, compensator | Pret / robinet, vana, contor, flansa, compensator | Pret / pompa, filtru Y, distribuitor/colector, schimbator de caldura, vas amestec, vana 2-3 cai | Pret / pompa, filtru Y, distribuitor/colector, schimbator de caldura, vas amestec, vana 2-3 cai",
+     "celule": [
+      "Diametru Ø",
+      "Pret / ml",
+      "Pret / manseta",
+      "Pret / cot, teu, reductie",
+      "Pret / robinet, vana, contor, flansa, compensator",
+      "Pret / robinet, vana, contor, flansa, compensator",
+      "Pret / pompa, filtru Y, distribuitor/colector, schimbator de caldura, vas amestec, vana 2-3 cai",
+      "Pret / pompa, filtru Y, distribuitor/colector, schimbator de caldura, vas amestec, vana 2-3 cai"
+     ]
+    }
+   },
+   {
+    "rand": 90,
+    "celule": [
+     {
+      "v": "18 - 60",
+      "span": 1
+     },
+     {
+      "v": "X",
+      "span": 1
+     },
+     {
+      "v": "X*0,25",
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     },
+     {
+      "v": "X*1.5",
+      "span": 2
+     },
+     {
+      "v": "X*2 ",
+      "span": 2
+     }
+    ],
+    "linie": {
+     "index": 64,
+     "foaie": "Termice+Sanitare",
+     "rand": 90,
+     "text": "18 - 60 | X*0,25 | X*1.5 | X*1.5",
+     "celule": [
+      "18 - 60",
+      "X",
+      "X*0,25",
+      null,
+      "X*1.5",
+      "X*1.5",
+      "X*2 ",
+      "X*2 "
+     ]
+    }
+   },
+   {
+    "rand": 91,
+    "celule": [
+     {
+      "v": "76 - 114",
+      "span": 1
+     },
+     {
+      "v": "X",
+      "span": 1
+     },
+     {
+      "v": "X*0,5",
+      "span": 1
+     },
+     {
+      "v": "X ",
+      "span": 1
+     },
+     {
+      "v": "X *2",
+      "span": 2
+     },
+     {
+      "v": "X*2,5",
+      "span": 2
+     }
+    ],
+    "linie": {
+     "index": 65,
+     "foaie": "Termice+Sanitare",
+     "rand": 91,
+     "text": "76 - 114 | X*0,5 | X *2 | X *2 | X*2,5 | X*2,5",
+     "celule": [
+      "76 - 114",
+      "X",
+      "X*0,5",
+      "X ",
+      "X *2",
+      "X *2",
+      "X*2,5",
+      "X*2,5"
+     ]
+    }
+   },
+   {
+    "rand": 92,
+    "celule": [
+     {
+      "v": "140 – 273 ",
+      "span": 1
+     },
+     {
+      "v": "X ",
+      "span": 1
+     },
+     {
+      "v": "X*0,5",
+      "span": 1
+     },
+     {
+      "v": "X *2",
+      "span": 1
+     },
+     {
+      "v": "X*2,5",
+      "span": 2
+     },
+     {
+      "v": "X*3,5",
+      "span": 2
+     }
+    ],
+    "linie": {
+     "index": 66,
+     "foaie": "Termice+Sanitare",
+     "rand": 92,
+     "text": "140 – 273  | X*0,5 | X *2 | X*2,5 | X*2,5 | X*3,5 | X*3,5",
+     "celule": [
+      "140 – 273 ",
+      "X ",
+      "X*0,5",
+      "X *2",
+      "X*2,5",
+      "X*2,5",
+      "X*3,5",
+      "X*3,5"
+     ]
+    }
+   },
+   {
+    "rand": 93,
+    "celule": [
+     {
+      "v": "˃  324",
+      "span": 1
+     },
+     {
+      "v": "X",
+      "span": 1
+     },
+     {
+      "v": "X*0,5",
+      "span": 1
+     },
+     {
+      "v": "X*3",
+      "span": 1
+     },
+     {
+      "v": "X*3",
+      "span": 2
+     },
+     {
+      "v": "X*4,5",
+      "span": 2
+     }
+    ],
+    "linie": {
+     "index": 67,
+     "foaie": "Termice+Sanitare",
+     "rand": 93,
+     "text": "˃  324 | X*0,5 | X*4,5 | X*4,5",
+     "celule": [
+      "˃  324",
+      "X",
+      "X*0,5",
+      "X*3",
+      "X*3",
+      "X*3",
+      "X*4,5",
+      "X*4,5"
+     ]
+    }
+   },
+   {
+    "rand": 95,
+    "celule": [
+     {
+      "v": "Pretul elementelor speciale pentru protectiile cu tabla de aluminiu este urmatorul :",
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 68,
+     "foaie": "Termice+Sanitare",
+     "rand": 95,
+     "text": "Pretul elementelor speciale pentru protectiile cu tabla de aluminiu este urmatorul :",
+     "celule": [
+      "Pretul elementelor speciale pentru protectiile cu tabla de aluminiu este urmatorul :",
+      null,
+      null,
+      null,
+      null,
+      null
+     ]
+    }
+   },
+   {
+    "rand": 96,
+    "celule": [
+     {
+      "v": "Diametru Ø",
+      "span": 1
+     },
+     {
+      "v": "Pret / ml",
+      "span": 1
+     },
+     {
+      "v": "Pret / cot, teu, reductie",
+      "span": 1
+     },
+     {
+      "v": "Pret / flansa, compensator, robinet, vana, contor, distribuitor, schimbator de caldura, vas amestec",
+      "span": 2
+     },
+     {
+      "v": "Pret / pompa, filtru Y, vana 2-3 cai ",
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 69,
+     "foaie": "Termice+Sanitare",
+     "rand": 96,
+     "text": "Diametru Ø | Pret / ml | Pret / cot, teu, reductie | Pret / flansa, compensator, robinet, vana, contor, distribuitor, schimbator de caldura, vas amestec | Pret / flansa, compensator, robinet, vana, contor, distribuitor, schimbator de caldura, vas amestec | Pret / pompa, filtru Y, vana 2-3 cai",
+     "celule": [
+      "Diametru Ø",
+      "Pret / ml",
+      "Pret / cot, teu, reductie",
+      "Pret / flansa, compensator, robinet, vana, contor, distribuitor, schimbator de caldura, vas amestec",
+      "Pret / flansa, compensator, robinet, vana, contor, distribuitor, schimbator de caldura, vas amestec",
+      "Pret / pompa, filtru Y, vana 2-3 cai "
+     ]
+    }
+   },
+   {
+    "rand": 97,
+    "celule": [
+     {
+      "v": "80 – 200 ",
+      "span": 1
+     },
+     {
+      "v": "X ",
+      "span": 1
+     },
+     {
+      "v": "X ",
+      "span": 1
+     },
+     {
+      "v": "X*2",
+      "span": 2
+     },
+     {
+      "v": "X*2,5",
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 70,
+     "foaie": "Termice+Sanitare",
+     "rand": 97,
+     "text": "80 – 200  | X*2,5",
+     "celule": [
+      "80 – 200 ",
+      "X ",
+      "X ",
+      "X*2",
+      "X*2",
+      "X*2,5"
+     ]
+    }
+   },
+   {
+    "rand": 98,
+    "celule": [
+     {
+      "v": "210 - 400 ",
+      "span": 1
+     },
+     {
+      "v": "X",
+      "span": 1
+     },
+     {
+      "v": "X*2",
+      "span": 1
+     },
+     {
+      "v": "X*3",
+      "span": 2
+     },
+     {
+      "v": "X*3",
+      "span": 1
+     }
+    ]
+   },
+   {
+    "rand": 99,
+    "celule": [
+     {
+      "v": "˃ 400",
+      "span": 1
+     },
+     {
+      "v": "X",
+      "span": 1
+     },
+     {
+      "v": "X*2",
+      "span": 1
+     },
+     {
+      "v": "X*3",
+      "span": 2
+     },
+     {
+      "v": "X*4",
+      "span": 1
+     }
+    ]
+   },
+   {
+    "rand": 102,
+    "celule": [
+     {
+      "v": "Paltinis,",
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     },
+     {
+      "v": "R&F ISORAD SYSTEM SRL",
+      "span": 1
+     }
+    ],
+    "linie": {
+     "index": 71,
+     "foaie": "Termice+Sanitare",
+     "rand": 102,
+     "text": "Paltinis, | R&F ISORAD SYSTEM SRL",
+     "celule": [
+      "Paltinis,",
+      null,
+      null,
+      null,
+      null,
+      "R&F ISORAD SYSTEM SRL"
+     ]
+    }
+   },
+   {
+    "rand": 103,
+    "celule": [
+     {
+      "v": "27.04.2026",
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     },
+     {
+      "v": null,
+      "span": 1
+     }
+    ]
+   }
+  ],
+  "coloane": 8,
+  "antet": {
+   "rand": 14,
+   "celule": [
+    {
+     "v": "Nr.",
+     "span": 1
+    },
+    {
+     "v": null,
+     "span": 1
+    },
+    {
+     "v": "DENUMIRE MATERIAL, DATE TEHNICE, OPERATIUNI INCLUSE IN ARTICOL\n(U_Center 3 - PTh)      ",
+     "span": 2
+    },
+    {
+     "v": "Cant.\nQuantity",
+     "span": 1
+    },
+    {
+     "v": "U.M.",
+     "span": 1
+    },
+    {
+     "v": "P.U. euro/elem",
+     "span": 1
+    },
+    {
+     "v": "Pret Total euro",
+     "span": 1
+    }
+   ],
+   "linie": {
+    "index": 5,
+    "foaie": "Termice+Sanitare",
+    "rand": 14,
+    "text": "DENUMIRE MATERIAL, DATE TEHNICE, OPERATIUNI INCLUSE IN ARTICOL\n(U_Center 3 - PTh)       | DENUMIRE MATERIAL, DATE TEHNICE, OPERATIUNI INCLUSE IN ARTICOL\n(U_Center 3 - PTh)       | Cant.\nQuantity | U.M. | P.U. euro/elem | Pret Total euro",
+    "celule": [
+     "Nr.",
+     null,
+     "DENUMIRE MATERIAL, DATE TEHNICE, OPERATIUNI INCLUSE IN ARTICOL\n(U_Center 3 - PTh)      ",
+     "DENUMIRE MATERIAL, DATE TEHNICE, OPERATIUNI INCLUSE IN ARTICOL\n(U_Center 3 - PTh)      ",
+     "Cant.\nQuantity",
+     "U.M.",
+     "P.U. euro/elem",
+     "Pret Total euro"
+    ]
+   }
+  }
+ },
+ "mapare": {
+  "rand_antet": 5,
+  "rand_start": 7,
+  "roluri": [
+   "nr",
+   "ignora",
+   "denumire",
+   "observatii",
+   "cantitate",
+   "um",
+   "pret_unitar",
+   "pret_total"
+  ],
+  "motiv": "Randul 5 contine capetele de coloana, iar datele incep de la randul 7. Coloanele corespund cu rolurile standard, cu o coloana suplimentara de observatii/descriere suplimentara."
+ }
+}

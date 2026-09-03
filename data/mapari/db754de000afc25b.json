@@ -1,0 +1,22 @@
+{
+  "amprenta": "8::02.54.04|z|wickelfalzrohre aus verz. stahlblech||||p.u. euro/elem|pret total euro",
+  "fisier": "Oferta 27.04.2026.xlsx",
+  "foaie": "Ventilatie",
+  "model": "gpt-4.1-2025-04-14",
+  "generat": "2026-09-03T16:50:34.582Z",
+  "mapare": {
+    "rand_antet": null,
+    "rand_start": 1,
+    "roluri": [
+      "nr",
+      "ignora",
+      "denumire",
+      "ignora",
+      "cantitate",
+      "um",
+      "pret_unitar",
+      "pret_total"
+    ],
+    "motiv": "Nu exista un rand de antet explicit, datele incep direct cu pozitiile de lucrari. Coloanele sunt identificate dupa continutul lor."
+  }
+}

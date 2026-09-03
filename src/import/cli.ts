@@ -33,11 +33,13 @@ const raport = await importaFisier(cale, { faraModel });
 
 const proc = (n: number) => raport.liniiIzolatie ? `${(n / raport.liniiIzolatie * 100).toFixed(1)}%` : "-";
 console.log(`\n${raport.fisier}`);
+console.log(`  foi                      ${raport.foi}  (${raport.foiMapate} cu mapare de coloane)`);
 console.log(`  randuri cu text          ${raport.total}`);
 console.log(`  pozitii de izolatie      ${raport.liniiIzolatie}`);
 console.log(`    rezolvate determinist  ${raport.prinRegex}  (${proc(raport.prinRegex)})`);
 console.log(`    rezolvate cu modelul   ${raport.prinModel}  (${proc(raport.prinModel)})`);
 console.log(`    deduse din sablon      ${raport.prinSablon}  (${proc(raport.prinSablon)})`);
+console.log(`    din memorie            ${raport.prinMemorie}  (${proc(raport.prinMemorie)})`);
 console.log(`  TARIFATE automat         ${raport.tarifate}  (${proc(raport.tarifate)})`);
 console.log(`  de validat de om         ${raport.deValidat}`);
 console.log(`    din care neverificate  ${raport.cuAvertisment}  (model, contrazis de textul sursa)`);

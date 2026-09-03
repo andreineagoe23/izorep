@@ -1,0 +1,26 @@
+{
+  "amprenta": "12::no.|item description||unit|quantity|supply|install|rate|total (euro)|recommended producer/material|producer/material offered|comments / document ref.",
+  "fisier": "Book15.xlsx",
+  "foaie": "E3 Mechanical",
+  "model": "gpt-4.1-2025-04-14",
+  "generat": "2026-09-03T16:56:03.092Z",
+  "mapare": {
+    "rand_antet": 0,
+    "rand_start": 4,
+    "roluri": [
+      "nr",
+      "denumire",
+      "denumire_alt",
+      "um",
+      "cantitate",
+      "ignora",
+      "ignora",
+      "ignora",
+      "ignora",
+      "observatii",
+      "observatii",
+      "observatii"
+    ],
+    "motiv": "Randul 0 contine capetele de coloana, iar datele incep de la randul 4, unde apar primele pozitii cu cantitati si unitati de masura. Coloana 2 este a doua descriere (romana), iar ultimele trei coloane sunt pentru observatii si referinte."
+  }
+}

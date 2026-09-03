@@ -22,7 +22,8 @@
     "import": "tsx src/import/cli.ts",
     "price": "tsx src/pricing/cli.ts",
     "compara": "tsx scripts/compara-modele.ts",
-    "golden": "tsx scripts/golden.ts"
+    "golden": "tsx scripts/golden.ts",
+    "mapare": "tsx scripts/mapare.ts"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2",

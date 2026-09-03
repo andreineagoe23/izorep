@@ -25,23 +25,74 @@ clientului.
 ```
 L0  parse-workbook.ts   parsare fizică. Zero interpretare.
 L0b sectiuni.ts         contextul de secțiune (antetul de deasupra rândului)
-L1  (nescris)           mapare de coloane, o dată per client, apoi din cache
+L1  mapare.ts           roluri de coloană, un apel per layout, apoi din cache
+L4  memorie.ts          șabloane învățate din corecțiile omului. Zero apeluri.
 L2a extract-regex.ts    determinist. ~55% din linii.
 L2a' sabloane.ts        deduplicare pe șablon: −54% linii trimise la model
 L2b extract-llm.ts      model, DOAR pe reziduu. Structured outputs, temp 0.
 L3  ../pricing/         tarifare deterministă
-L4  (nescris)           ecran de validare + salvarea corecțiilor ca mapping
 ```
 
-**L4 e piesa care rezolvă de fapt „nu există template comun".** Nu ai nevoie de
-format comun, ai nevoie de memorie per client. Primul proiect de la un client
-nou: ~60% automat. Al doilea, cu șabloanele deja mapate: 90–95% — cifră
-**neverificată**, vezi `plan-l1-l4.md`.
+Ordinea de rulare nu e ordinea numerelor: memoria (L4) stă **înaintea**
+modelului, fiindcă e mai ieftină și deterministă. Fiecare strat lasă mai
+departe ce nu rezolvă, deci niciunul nu poate scădea acoperirea — doar costul.
 
-Măsurătorile și planul pentru L1 și L4 stau în `.claude/plan-l1-l4.md`:
-rândurile de antet reale, vocabularul de roluri, stabilitatea șabloanelor
-(100% pe 64 de șabloane repetate) și cele −54% tokeni care se pot lua imediat
-prin deduplicarea reziduului.
+**L4 e piesa care rezolvă de fapt „nu există template comun".** Nu ai nevoie de
+format comun, ai nevoie de memorie per client. Cifra „90–95% la al doilea
+proiect" rămâne **neverificată** — fișierele primite vin de la clienți diferiți.
+Vezi `plan-l1-l4.md`.
+
+## L1 — rolurile coloanelor
+
+Rândul de antet nu era citit deloc. Cantitatea se ghicea: *„primul număr lipit
+de unitatea de măsură"*. Măsurat pe oferta semnată, euristica aia dădea
+**0 din 56 de cantități corecte** — citea prețul unitar (5,99) în loc de
+cantitate (187 ml). Cu maparea: **56 din 56**. Testul stă în `tests/mapare.test.ts`,
+pe o foaie reală salvată ca fixtură.
+
+```bash
+npm run mapare -- ../attachments/Radoia.xlsx   # înregistrează
+npm run mapare -- --lista                      # ce e în cache
+```
+
+- **Un apel per LAYOUT**, nu per foaie: amprenta e antetul normalizat plus
+  lățimea. `Radoia.xlsx` are 7 foi cu același antet — un apel. Al doilea fișier
+  cu același layout — zero.
+- **Modelul propune, `valideazaMapare` decide.** Verificarea nu se uită la
+  etichete, ci la conținutul coloanelor pe rândurile de date: `cantitate` să fie
+  majoritar numerică, `um` majoritar tokeni de unitate, `denumire` majoritar
+  text, rolurile unice să fie unice. Pe cele 8 fișiere: **8 mapări acceptate,
+  2 respinse** — `Izolatii Transavia` (pivot pe zone, modelul a dat `cantitate`
+  pe 3 coloane) și `Anexa 1` (sub-antete repetate în date). Amândouă corect
+  respinse; acolo rămâne euristica de azi.
+- Textul liniei devine **denumire + denumire_alt + dimensiune + observații**,
+  nu concatenarea tuturor celulelor. Nu doar denumirea: prima variantă lăsa
+  `Oferta Matari` cu 0 poziții din 53 (dimensiunea golului e coloană separată)
+  și `Book15` cu 2 din 5 (fișierul are descrierea de două ori, engleză și
+  română, iar „vată minerală" apare doar în coloana română — de aceea există
+  rolul `denumire_alt`).
+- Fără mapare în cache nu se schimbă nimic. `IZOREP_FARA_MAPARE=1` o dezactivează,
+  pentru măsurători A/B.
+
+Verificat pe toate fișierele, cu și fără mapare: **aceleași poziții, aceleași
+prețuri unitare**, cantități corecte. Singura diferență de valoare totală vine
+din cantitățile reparate.
+
+## L4 — memoria de șabloane
+
+Ce a corectat omul o dată nu se mai întreabă. Același mecanism ca deduplicarea,
+dar peste importuri: se memorează **rolul și harta sloturilor**, iar numerele se
+recitesc din fiecare linie nouă.
+
+Se învață **doar de la om**, la corecția din ecranul de import. Dacă ar intra și
+ce zice modelul, o extragere greșită s-ar propaga tăcut peste toate proiectele
+următoare. Se învață doar pozițiile complete: un șablon cu jumătate de rol arată
+că știe și dă valori pe jumătate.
+
+Depozitul e o interfață (`StocSabloane`) cu două implementări — fișier
+(`data/sabloane.json`, pentru CLI) și `localStorage` (demo). Când apare serverul,
+a treia e o tabelă per tenant: o corecție a unui coleg trebuie să ajute pe toată
+lumea.
 
 ## Contextul de secțiune
 

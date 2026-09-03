@@ -33,6 +33,20 @@ aceasta e pornită local (`npm run dev`): pe `Izolatii Transavia.xlsx` ambele da
 (închideri goluri la foc): 53 de poziții, 100% tarifate determinist, fără niciun
 apel la model.
 
+**L1 — rolurile coloanelor** (`src/import/mapare.ts`) — modelul propune maparea
+pe blocul de antet, un apel per layout, iar un validator determinist o acceptă
+sau o respinge după conținutul coloanelor. Pe fișierele reale: 8 mapări
+acceptate, 2 respinse. Cantitățile față de oferta semnată au trecut de la
+**0/56 corecte la 56/56** — euristica veche citea prețul unitar drept cantitate.
+
+**L4 — memoria de șabloane** (`src/import/memorie.ts`) — ce a corectat omul o
+dată nu se mai întreabă. Se memorează rolul și harta sloturilor, nu valorile;
+se învață doar din corecția umană, niciodată din ce a zis modelul.
+
+**Deduplicarea reziduului** (`src/import/sabloane.ts`) — un reprezentant per
+șablon pleacă la model, restul se deduc: −54% linii trimise (697 → 321), cu
+rezultate identice pe golden files.
+
 **Guardrails pe stratul cu model** (`src/import/valideaza.ts`) — verificare
 deterministă a ceea ce iese din model, față de textul sursă: numere care nu
 apar în linie, DN inexistent, grosime pe care sistemul ăla nu o ofertează,
@@ -215,13 +229,15 @@ de contract, stoc și facturare.
 ## Comenzi
 
 ```bash
-npm test                                       # 169 teste (motor, guardrails, baza)
+npm test                                       # 198 teste (motor, import, baza)
 npm run typecheck
 npm run dev                                    # UI local, /izorep/
 npm run import -- ../attachments/Radoia.xlsx   # pipeline complet
 npm run import -- <fisier> --fara-model        # doar determinist
 npm run golden -- <fisier.xlsx>                # inregistreaza iesirea modelului
 npm run golden -- --verifica                   # cauta deriva modelului
+npm run mapare -- <fisier.xlsx>                # inregistreaza maparea de coloane
+IZOREP_FARA_MAPARE=1 npm run import -- <fisier>  # masoara A/B fara L1
 python scripts/extract_price_lists.py ../attachments   # regenerează prețurile
 npm run db:up && npm run db:migrate && npm run db:seed  # baza locală
 ```
