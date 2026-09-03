@@ -7,6 +7,7 @@
  */
 import { existsSync } from "node:fs";
 import { importaFisier } from "./pipeline.js";
+import { MODEL_IMPLICIT } from "./extract-llm.js";
 
 // .env e gitignorat si contine cheia OpenAI. Node 21+ il incarca nativ.
 if (existsSync(".env")) process.loadEnvFile(".env");
@@ -26,7 +27,7 @@ const faraModel = args.includes("--fara-model");
 // decat crede — si plafoanele difera de zece ori intre ele.
 console.log(faraModel
   ? "\n  model: dezactivat (--fara-model), doar stratul determinist"
-  : `\n  model: ${process.env["OPENAI_MODEL"] ?? "gpt-4.1 (implicit)"}`);
+  : `\n  model: ${process.env["OPENAI_MODEL"] ?? `${MODEL_IMPLICIT} (implicit)`}`);
 
 const raport = await importaFisier(cale, { faraModel });
 
@@ -38,6 +39,10 @@ console.log(`    rezolvate determinist  ${raport.prinRegex}  (${proc(raport.prin
 console.log(`    rezolvate cu modelul   ${raport.prinModel}  (${proc(raport.prinModel)})`);
 console.log(`  TARIFATE automat         ${raport.tarifate}  (${proc(raport.tarifate)})`);
 console.log(`  de validat de om         ${raport.deValidat}`);
+console.log(`    din care neverificate  ${raport.cuAvertisment}  (model, contrazis de textul sursa)`);
+if (raport.modelFaraRaspuns > 0) {
+  console.log(`  fara raspuns de la model ${raport.modelFaraRaspuns}  (trimise, dar neintoarse)`);
+}
 console.log(`  netarifate               ${raport.netarifate}`);
 console.log(`  valoare                  ${raport.valoareTotala.toFixed(2)} EUR\n`);
 
@@ -50,6 +55,18 @@ for (const l of raport.linii.filter((x) => x.pret).slice(0, 12)) {
     : p.componente.map((c) => c.descriere).join(" + ");
   console.log(`  ${l.pret!.pret_unitar.toFixed(2).padStart(8)} x ${String(l.bruta.cantitate ?? 1).padStart(6)} = ${l.pret!.total.toFixed(2).padStart(10)}  [${l.sursa}] ${detaliu}`);
   console.log(`           ${e.diametru_tip}${e.diametru_valoare} · ${l.bruta.text.replace(/\s+/g, " ").slice(0, 78)}`);
+}
+
+// Avertismentele se tiparesc separat de pozitiile netarifate: alea n-au pret
+// deloc, astea AU un pret care arata rezonabil si tocmai de-aia sunt periculoase.
+const suspecte = raport.linii.filter((x) => x.avertismente?.length);
+if (suspecte.length) {
+  console.log(`\n  --- ${suspecte.length} linii pe care modelul nu se verifica in text ---`);
+  for (const l of suspecte.slice(0, 10)) {
+    console.log(`  ? ${l.avertismente!.map((a) => a.mesaj).join("; ")}`);
+    console.log(`      ${l.bruta.text.replace(/\s+/g, " ").slice(0, 90)}`);
+  }
+  if (suspecte.length > 10) console.log(`  … si inca ${suspecte.length - 10}.`);
 }
 
 const problema = raport.linii.filter((x) => x.extras.sistem && !x.pret);

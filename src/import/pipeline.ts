@@ -2,6 +2,7 @@ import { parseWorkbook, type LinieBruta } from "./parse-workbook.js";
 import { adaugaSectiuni } from "./sectiuni.js";
 import { extrageDeterminist } from "./extract-regex.js";
 import { extrageCuModel, type OptiuniModel } from "./extract-llm.js";
+import { valideazaExtragere, type Avertisment } from "./valideaza.js";
 import type { LinieExtrasa } from "./schema.js";
 import { tarifeaza } from "../pricing/engine.js";
 import { tarifeazaGolFoc } from "../pricing/goluri-foc.js";
@@ -24,6 +25,14 @@ export interface LinieProcesata {
   pret?: RezultatTarifare | RezultatGolFoc;
   /** Motivul pentru care linia nu s-a putut tarifa. */
   eroare?: string;
+  /**
+   * Ce n-a trecut de validarea de plauzibilitate. Se recalculeaza aici, desi
+   * `extrageCuModel` a aplicat deja aceleasi reguli: acolo efectul e coborarea
+   * increderii, ca sa nu poata fi sarita de niciun apelant; aici e nevoie de
+   * lista in forma structurata, pentru raport si pentru ecranul de validare.
+   * Functia e pura, deci a doua trecere nu costa nimic.
+   */
+  avertismente?: Avertisment[];
   /** true daca linia trebuie sa treaca prin ecranul de validare umana. */
   necesitaValidare: boolean;
 }
@@ -36,9 +45,62 @@ export interface RaportImport {
   prinModel: number;
   tarifate: number;
   deValidat: number;
+  /** Linii pe care modelul a produs ceva ce nu se verifica in textul sursa. */
+  cuAvertisment: number;
+  /** Linii trimise la model pentru care nu a intors niciun obiect. */
+  modelFaraRaspuns: number;
   netarifate: number;
   valoareTotala: number;
   linii: LinieProcesata[];
+}
+
+/**
+ * L3 pe o singura linie extrasa.
+ *
+ * Sta separat de bucla pentru ca acelasi drum e parcurs si de testul de golden
+ * files, pe iesirea inregistrata a modelului. Daca ar fi ramas inline, testul
+ * ala ar fi verificat o COPIE a regulii, nu regula.
+ *
+ * Pozitia fara pret se MARCHEAZA, nu se ghiceste.
+ */
+export function tarifeazaExtras(
+  extras: LinieExtrasa,
+  cantitate: number,
+): { pret?: RezultatTarifare | RezultatGolFoc; eroare?: string } {
+  try {
+    if (extras.sistem === "goluri_foc") {
+      if (extras.gol_latime_mm === null || extras.gol_inaltime_mm === null) {
+        throw new PozitieNetarifata(
+          "inchidere gol la foc fara dimensiunea golului; pretul vine din suprafata lui",
+          { index: extras.index },
+        );
+      }
+      return {
+        pret: tarifeazaGolFoc({
+          gol: { latime_mm: extras.gol_latime_mm, inaltime_mm: extras.gol_inaltime_mm },
+          cantitate,
+        }),
+      };
+    }
+    if (extras.sistem && extras.diametru_valoare !== null && extras.diametru_tip) {
+      return {
+        pret: tarifeaza({
+          diametru: { valoare: extras.diametru_valoare, tip: extras.diametru_tip },
+          straturi: [
+            { sistem: extras.sistem, ...(extras.grosime_mm !== null ? { grosime_mm: extras.grosime_mm } : {}) },
+            ...extras.straturi_extra.map((s) => ({
+              sistem: s.sistem, ...(s.grosime_mm !== null ? { grosime_mm: s.grosime_mm } : {}),
+            })),
+          ],
+          forma: extras.forma ?? "ml",
+          cantitate,
+        }),
+      };
+    }
+    return {};
+  } catch (e) {
+    return { eroare: e instanceof PozitieNetarifata ? e.message : String(e) };
+  }
 }
 
 /**
@@ -66,10 +128,17 @@ export async function importaFisier(
   }
 
   // L2b - model, doar pe rest
+  let faraRaspuns = 0;
   if (!optiuni.faraModel && reziduale.length > 0) {
     for (const e of await extrageCuModel(reziduale, optiuni)) {
       rezolvate.set(e.index, { extras: e, sursa: "model" });
     }
+    // Contractul e "cate un obiect per linie, cu acelasi index". Modelul il
+    // incalca in tacere: masurat pe `Oferta 27.04.2026.xlsx`, 43 de linii
+    // trimise, 35 intoarse. Liniile lipsa nu apar nicaieri in raport — nici ca
+    // pozitii, nici ca erori — deci disparitia lor arata exact ca un fisier cu
+    // mai putine pozitii. Se numara, ca sa se vada.
+    faraRaspuns = reziduale.filter((r) => !rezolvate.has(r.index)).length;
   }
 
   // L3 - tarifare determinista
@@ -79,46 +148,22 @@ export async function importaFisier(
     if (!r) continue;
     const { extras, sursa } = r;
 
+    // Doar pe iesirea modelului: stratul determinist citeste numerele direct
+    // din text, deci nu poate inventa, iar regulile lui au deja teste proprii.
+    const avertismente = sursa === "model"
+      ? valideazaExtragere(extras, { text: b.text, ...(b.um ? { um: b.um } : {}) })
+      : [];
+
     const proc: LinieProcesata = {
       bruta: b, extras, sursa,
-      necesitaValidare: extras.sistem !== null && extras.incredere < prag,
+      ...(avertismente.length ? { avertismente } : {}),
+      necesitaValidare: extras.sistem !== null
+        && (extras.incredere < prag || avertismente.length > 0),
     };
 
-    if (extras.sistem === "goluri_foc") {
-      try {
-        if (extras.gol_latime_mm === null || extras.gol_inaltime_mm === null) {
-          throw new PozitieNetarifata(
-            "inchidere gol la foc fara dimensiunea golului; pretul vine din suprafata lui",
-            { index: b.index },
-          );
-        }
-        proc.pret = tarifeazaGolFoc({
-          gol: { latime_mm: extras.gol_latime_mm, inaltime_mm: extras.gol_inaltime_mm },
-          cantitate: b.cantitate ?? 1,
-        });
-      } catch (e) {
-        proc.eroare = e instanceof PozitieNetarifata ? e.message : String(e);
-        proc.necesitaValidare = true;
-      }
-    } else if (extras.sistem && extras.diametru_valoare !== null && extras.diametru_tip) {
-      try {
-        proc.pret = tarifeaza({
-          diametru: { valoare: extras.diametru_valoare, tip: extras.diametru_tip },
-          straturi: [
-            { sistem: extras.sistem, ...(extras.grosime_mm !== null ? { grosime_mm: extras.grosime_mm } : {}) },
-            ...extras.straturi_extra.map((s) => ({
-              sistem: s.sistem, ...(s.grosime_mm !== null ? { grosime_mm: s.grosime_mm } : {}),
-            })),
-          ],
-          forma: extras.forma ?? "ml",
-          cantitate: b.cantitate ?? 1,
-        });
-      } catch (e) {
-        // Pozitia fara pret se MARCHEAZA, nu se ghiceste.
-        proc.eroare = e instanceof PozitieNetarifata ? e.message : String(e);
-        proc.necesitaValidare = true;
-      }
-    }
+    const t = tarifeazaExtras(extras, b.cantitate ?? 1);
+    if (t.pret) proc.pret = t.pret;
+    if (t.eroare !== undefined) { proc.eroare = t.eroare; proc.necesitaValidare = true; }
     linii.push(proc);
   }
 
@@ -131,6 +176,8 @@ export async function importaFisier(
     prinModel: izolatie.filter((l) => l.sursa === "model").length,
     tarifate: izolatie.filter((l) => l.pret).length,
     deValidat: izolatie.filter((l) => l.necesitaValidare).length,
+    cuAvertisment: izolatie.filter((l) => l.avertismente?.length).length,
+    modelFaraRaspuns: faraRaspuns,
     netarifate: izolatie.filter((l) => !l.pret).length,
     valoareTotala: Math.round(izolatie.reduce((s, l) => s + (l.pret?.total ?? 0), 0) * 100) / 100,
     linii,

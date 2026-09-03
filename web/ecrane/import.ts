@@ -352,7 +352,7 @@ export const ecran: Ecran = {
                  `<option value="${s}"${s === l.extras.sistem ? " selected" : ""}>${s.replace("_", " ")}</option>`).join("")}</select></td>
                <td class="extras n"><input type="number" step="any" data-camp="diametru" value="${l.extras.diametru_valoare ?? ""}" /></td>
                <td class="extras n"><input type="number" step="any" data-camp="grosime" value="${l.extras.grosime_mm ?? ""}" /></td>
-               <td class="extras fix"><span data-marca>${deValidat ? stare("de validat", "atentie") : ""}</span></td>`
+               <td class="extras fix"><span data-marca title="${esc(l.extras.motiv)}">${deValidat ? stare("de validat", "atentie") : ""}</span></td>`
             : `<td class="extras"></td><td class="extras"></td><td class="extras"></td><td class="extras"></td>`;
 
           return `<tr${l ? ` data-idx="${l.extras.index}"` : ""}>
