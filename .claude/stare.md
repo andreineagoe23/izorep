@@ -170,22 +170,44 @@ Astea blochează arhitectura, nu doar implementarea:
    Până atunci `CURS_BNR` rămâne constantă: cursul contează abia la facturare.)
 8. „Protecție la foc pentru tubulatură" (28 de rânduri în `Radoia.xlsx`) e o
    lucrare pe care o ofertați? Nu are listă de prețuri printre cele primite.
+9. **Două liste de cantități de la același client, din proiecte diferite.**
+   Cele 9 fișiere pe care le avem vin de la clienți diferiți, deci reutilizarea
+   șabloanelor între proiecte — tot câștigul lui L4 — nu se poate măsura.
+   Vezi `plan-l1-l4.md`.
 
 ## Ce urmează
+
+Măsurătorile care fundamentează pașii de mai jos stau în **`plan-l1-l4.md`**:
+rândurile de antet reale din fiecare fișier, vocabularul de roluri de coloană,
+și stabilitatea șabloanelor.
+
+**Deduplicarea reziduului pe șablon — prima, fiindcă e cea mai ieftină.**
+Liniile trimise la model se repetă în același fișier: 697 de linii reziduale pe
+toate fișierele înseamnă doar 318 șabloane, deci **−54% tokeni** fără nicio
+memorie persistentă. Se poate face pentru că rolul e stabil pe șablon: măsurat
+pe cele 64 de șabloane care apar de cel puțin două ori, tripleta
+`(sistem, tip_diametru, formă)` e identică în 100% din cazuri. Se memorează
+rolul, nu valorile — numerele se citesc per linie, din poziția lor în șablon.
 
 **L1 — maparea de coloane per client.** Rezolvă simultan două lucruri:
 euristica de cantitate (azi ghicește coloana lângă unitatea de măsură) și
 `Book15.xlsx`, unde din 412 rânduri ies doar 5 poziții, pentru că rândurile de
 continuare `"Same - Ø125 mm"` își pierd descrierea părinte.
 
+Rândul de antet e găsibil fizic pe 14 din 15 foi, dar nu pe poziție fixă
+(r1, r2, r5, r6, r9, r12, r14, r15). Cele două cazuri pe care regula fizică nu
+le prinde — o foaie fără antet și una unde detectorul ia un rând de coduri —
+sunt exact motivul pentru care modelul propune maparea, iar un validator
+determinist o acceptă sau o respinge.
+
 Contextul de secțiune (`sectiuni.ts`) rezolvă deja un nivel din problema asta:
 antetul îmbinat de deasupra dă sistemul liniilor care tac despre ele însele.
 L1 îl înlocuiește cu ceva care știe și ierarhii, și rânduri de continuare.
 
-**L4 — ecranul de validare cu învățare.** Piesa care duce al doilea proiect de
-la același client de la ~63% la 90%+: fiecare corecție umană se salvează ca
-mapare text normalizat → articol. Măsurat pe fișierele reale, 349 de linii
-ofertabile se reduc la 134 de șabloane distincte.
+**L4 — ecranul de validare cu învățare.** Fiecare corecție umană se salvează ca
+mapare `șablon → rol`. Cifra „90–95% la al doilea proiect" rămâne o ipoteză:
+fișierele pe care le avem vin de la clienți diferiți, deci reutilizarea între
+proiecte nu e măsurabilă (întrebarea 9 către firmă).
 
 Apoi: generare ofertă PDF, export în șablonul Excel al clientului, și modulele
 de contract, stoc și facturare.

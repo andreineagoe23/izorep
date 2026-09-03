@@ -34,7 +34,13 @@ L4  (nescris)           ecran de validare + salvarea corecțiilor ca mapping
 
 **L4 e piesa care rezolvă de fapt „nu există template comun".** Nu ai nevoie de
 format comun, ai nevoie de memorie per client. Primul proiect de la un client
-nou: ~60% automat. Al doilea, cu șabloanele deja mapate: 90–95%.
+nou: ~60% automat. Al doilea, cu șabloanele deja mapate: 90–95% — cifră
+**neverificată**, vezi `plan-l1-l4.md`.
+
+Măsurătorile și planul pentru L1 și L4 stau în `.claude/plan-l1-l4.md`:
+rândurile de antet reale, vocabularul de roluri, stabilitatea șabloanelor
+(100% pe 64 de șabloane repetate) și cele −54% tokeni care se pot lua imediat
+prin deduplicarea reziduului.
 
 ## Contextul de secțiune
 
