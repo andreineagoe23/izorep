@@ -18,7 +18,17 @@ if (!cale) {
   process.exit(1);
 }
 
-const raport = await importaFisier(cale, { faraModel: args.includes("--fara-model") });
+const faraModel = args.includes("--fara-model");
+
+// Modelul se afiseaza pentru ca OPENAI_MODEL din .env bate implicitul din cod,
+// iar .env e gitignorat: un commit care schimba implicitul nu atinge fisierul
+// nimanui. Fara linia asta, un dezvoltator poate rula luni la rand pe alt model
+// decat crede — si plafoanele difera de zece ori intre ele.
+console.log(faraModel
+  ? "\n  model: dezactivat (--fara-model), doar stratul determinist"
+  : `\n  model: ${process.env["OPENAI_MODEL"] ?? "gpt-4.1 (implicit)"}`);
+
+const raport = await importaFisier(cale, { faraModel });
 
 const proc = (n: number) => raport.liniiIzolatie ? `${(n / raport.liniiIzolatie * 100).toFixed(1)}%` : "-";
 console.log(`\n${raport.fisier}`);

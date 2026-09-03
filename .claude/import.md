@@ -119,7 +119,10 @@ distinge, ca să nu tragi în direcția greșită.
 
 ### Alegerea modelului
 
-Implicit: **`gpt-4.1`**. Nu `gpt-4o` — pe contul firmei acela are 90.000 tokeni
+Implicit: **`gpt-4.1`**. Atenție: `OPENAI_MODEL` din `.env` **bate** implicitul
+din cod, iar `.env` e gitignorat — un commit care schimbă implicitul nu atinge
+fișierul nimănui. Verifici cu ce rulezi de fapt în antetul `npm run import` sau
+în linia „Stratul cu model" de la `npm run dev`. Nu `gpt-4o` — pe contul firmei acela are 90.000 tokeni
 pe zi, iar `Radoia.xlsx` consumă ~50.000, deci două fișiere și ziua s-a
 terminat. `gpt-4.1` are 900.000 la aceeași limită pe minut.
 
