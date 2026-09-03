@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { JSON_SCHEMA, RaspunsModel, type LinieExtrasa } from "./schema.js";
+import { aplicaValidarea } from "./valideaza.js";
 
 /**
  * Stratul de completare cu model, pentru liniile pe care regex-ul nu le rezolva.
@@ -10,6 +11,9 @@ import { JSON_SCHEMA, RaspunsModel, type LinieExtrasa } from "./schema.js";
  *   - primeste DOAR liniile reziduale, nu tot fisierul.
  *   - NU vede si NU calculeaza preturi. Extrage parametri, atat.
  *     Tarifarea e in src/pricing/, determinista si testata.
+ *   - ce iese trece prin `aplicaValidarea` INAINTE sa plece de aici. Locul e
+ *     ales: e singurul punct prin care trec toate caile — CLI, ruta din vite,
+ *     scriptul de comparare — deci nu poate fi sarit dintr-un apelant nou.
  */
 const SYSTEM_PROMPT = `Esti un asistent care extrage parametri tehnici din linii de deviz pentru lucrari de IZOLATII TERMICE, in limba romana, engleza sau germana.
 
@@ -57,6 +61,16 @@ linia la validare umana decat sa nimeresti gresit.
 MOTIV: o propozitie scurta in romana, ce ai dedus si de ce.
 
 Nu inventa valori. Daca un camp nu apare in text, pune null.`;
+
+/**
+ * Snapshot DATAT, nu aliasul `gpt-4.1`.
+ *
+ * Aliasul e mutat de OpenAI pe alt snapshot fara sa se schimbe nimic in repo:
+ * acelasi fisier, acelasi cod, alt rezultat, si nicio urma in `git log`. La un
+ * import care produce oferte trimise clientilor, aia e o schimbare de pret
+ * fara autor. Snapshot-ul se schimba printr-un commit, dupa `npm run compara`.
+ */
+export const MODEL_IMPLICIT = "gpt-4.1-2025-04-14";
 
 export interface OptiuniModel {
   apiKey?: string;
@@ -125,7 +139,7 @@ export async function extrageCuModel(
   // altul a citit "Di60" ca 76 — diametru gresit inseamna rand gresit in
   // matrice, deci pret gresit. Se poate trece pe el, dar dupa ce
   // `npm run compara` da zero diferente cu impact pe mai multe fisiere.
-  const model = optiuni.model ?? process.env["OPENAI_MODEL"] ?? "gpt-4.1";
+  const model = optiuni.model ?? process.env["OPENAI_MODEL"] ?? MODEL_IMPLICIT;
   // Lotul implicit e 25, nu 12, si motivul e bugetul de tokeni pe ZI.
   //
   // Fiecare apel cara ~1.177 tokeni ficsi — system prompt (~735) plus schema
@@ -171,8 +185,11 @@ export async function extrageCuModel(
 
     const continut = raspuns.choices[0]?.message.content;
     if (!continut) throw new Error("model fara continut in raspuns");
-    // Validarea nu e optionala: ce nu trece de schema nu ajunge in aplicatie.
-    return RaspunsModel.parse(JSON.parse(continut)).linii;
+    // Doua validari, nu una. Zod verifica forma raspunsului; `aplicaValidarea`
+    // verifica sensul lui fata de textul sursa — numere inventate, DN care nu
+    // exista, grosimi pe care firma nu le oferteaza. Vezi valideaza.ts.
+    const linii = RaspunsModel.parse(JSON.parse(continut)).linii;
+    return aplicaValidarea(linii, new Map(bucata.map((l) => [l.index, l])));
   }
 
   // Rezultatele se aseaza pe pozitia lotului, nu in ordinea in care se intorc:

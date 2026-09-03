@@ -1,7 +1,7 @@
 # Stare curentă
 
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
-> Ultima actualizare: 2 septembrie 2026.
+> Ultima actualizare: 3 septembrie 2026.
 
 ## Contextul proiectului
 
@@ -32,6 +32,14 @@ aceasta e pornită local (`npm run dev`): pe `Izolatii Transavia.xlsx` ambele da
 72 poziții, 39 tarifate, 6.039,90 €. Pe `Oferta 27.04.2026 Matari.xlsx`
 (închideri goluri la foc): 53 de poziții, 100% tarifate determinist, fără niciun
 apel la model.
+
+**Guardrails pe stratul cu model** (`src/import/valideaza.ts`) — verificare
+deterministă a ceea ce iese din model, față de textul sursă: numere care nu
+apar în linie, DN inexistent, grosime pe care sistemul ăla nu o ofertează,
+formă care contrazice unitatea de măsură. Un avertisment anulează încrederea
+raportată de model și trimite poziția la validare umană. Modelul e pinuit pe
+**snapshot datat**, iar `tests/golden/` ține ieșirea lui reală pe fișiere de
+client, ca deriva să se vadă. Detaliile în `import.md`.
 
 **Aplicația** (`web/`) — 7 ecrane: tablou de bord, lucrări, cereri și oferte,
 calcul deviz, import Excel, clienți, liste de prețuri. Datele sunt reale,
@@ -67,6 +75,18 @@ Detalii în `import.md`.
 `scripts/vite-plugin-model.ts` există doar pe serverul de dezvoltare, deci cheia
 nu ajunge în pagină și nu poate ajunge într-un build. Pe Pages ruta lipsește și
 ecranul cade curat pe stratul determinist.
+
+**Ce iese din model se verifică determinist, nu se crede pe cuvânt.** Zod
+validează forma răspunsului, nu sensul lui: `diametru_valoare: 76` trece
+perfect și când în linie scria `Di60`, cu încredere raportată 0,95. Regulile de
+plauzibilitate stau în cod, cu teste, nu în prompt — o regulă din prompt e o
+rugăminte, una din cod e o verificare. Aplicarea e în `extrageCuModel`, singurul
+punct prin care trec toate căile.
+
+**Modelul e pinuit pe snapshot datat, nu pe alias.** `gpt-4.1` e mutat de
+OpenAI pe alt model fără ca nimic din repo să se schimbe — aceleași fișiere,
+alte prețuri, zero urme în `git log`. Implicitul din cod e
+`gpt-4.1-2025-04-14`, iar golden files spun când răspunsul începe să difere.
 
 **Nu inventăm identificatori pentru firme reale.** CUI-urile și telefoanele din
 `web/date/seed.ts` sunt `null` și se afișează „—". Un CUI plauzibil dar greșit
@@ -118,6 +138,18 @@ oțel ar fi fost tarifat de cinci ori prețul real. Reparat în ETL, cu test.
 ca țeavă PEHD față de tubulatură SPIRO în aceeași ofertă, și rotunjirea la
 stratul de jachetă.
 
+**Modelul nu întoarce toate liniile pe care le primește.** Contractul e „câte
+un obiect per linie, cu același index"; pe `Oferta 27.04.2026.xlsx` au plecat
+43 de linii și s-au întors 35. Liniile lipsă nu apăreau nicăieri în raport, deci
+un fișier ciuntit arăta ca un fișier cu mai puține poziții. Acum se numără
+(`modelFaraRaspuns`).
+
+**Tabelul de conversie DN, primit de la firmă, confirmă exact ce era în cod.**
+Coloana ISO coincide valoare cu valoare cu `DN_TO_OD` pe tot intervalul
+DN10–DN400 — dedus din listele de cantități, validat independent de sursă.
+Restul notițelor (cupru/inox pe altă serie, tubulaturi rectangulare, formula
+pentru diametre peste ultimul rând) stau în `tevi.md`, cu întrebările deschise.
+
 **Lista de manoperă are altă structură** decât matricea completă: tarif plat pe
 sistem și grosime (2,20 / 2,30 / 3,00 €/ml), nu matrice ø × grosime. Nu e o
 coloană a aceleiași linii, e o listă separată.
@@ -161,11 +193,13 @@ de contract, stoc și facturare.
 ## Comenzi
 
 ```bash
-npm test                                       # 140 teste (motor + baza)
+npm test                                       # 169 teste (motor, guardrails, baza)
 npm run typecheck
 npm run dev                                    # UI local, /izorep/
 npm run import -- ../attachments/Radoia.xlsx   # pipeline complet
 npm run import -- <fisier> --fara-model        # doar determinist
+npm run golden -- <fisier.xlsx>                # inregistreaza iesirea modelului
+npm run golden -- --verifica                   # cauta deriva modelului
 python scripts/extract_price_lists.py ../attachments   # regenerează prețurile
 npm run db:up && npm run db:migrate && npm run db:seed  # baza locală
 ```

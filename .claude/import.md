@@ -93,6 +93,89 @@ loopback și plafonează la 400 de linii per import.
 - primește doar liniile reziduale, în loturi de 12, câte 4 loturi în paralel
 - **nu vede și nu calculează prețuri**
 - scor de încredere pe linie; sub prag → validare umană obligatorie
+- ieșirea trece prin `valideaza.ts` înainte să plece din `extrageCuModel`
+
+## Guardrails pe ieșirea modelului
+
+Zod validează **forma** răspunsului. Nu validează **sensul** lui:
+`diametru_valoare: 76` trece perfect și când în linie scria `Di60` — exact ce a
+făcut `gpt-4.1-mini` pe `Izolatii Transavia.xlsx`, cu încredere raportată 0,95.
+Alt diametru înseamnă alt rând în matrice, deci alt preț, fără nimic care să se
+aprindă.
+
+`src/import/valideaza.ts` e stratul care se aprinde. Determinist, pur, testat:
+
+| Cod | Ce prinde |
+|---|---|
+| `diametru_necitat` | numărul nu apare în textul sursă |
+| `grosime_necitata` | idem, pe grosimi (inclusiv straturile suplimentare) |
+| `gol_necitat` | idem, pe dimensiunile golului |
+| `dn_necunoscut` | DN care nu există în tabelul de conversie |
+| `grosime_in_afara_listei` | grosime pe care sistemul ăla nu o are ofertată |
+| `forma_contrazice_um` | `forma: "ml"` pe un rând cu UM `buc` |
+
+Regula de citare vine din promptul propriu al stratului: *„nu inventa valori,
+dacă un câmp nu apare în text pune null"*. Aici doar se verifică dacă a
+respectat-o. O regulă scrisă în prompt e o rugăminte; una scrisă aici e o
+verificare cu test.
+
+**Conversiile legitime nu se raportează.** `Dn 2''` e o citare corectă a lui
+DN50 deși cifra 50 nu apare nicăieri, iar `Rohr 88,9` e DN80. Validatorul
+cunoaște tabelul de toli și pe cel ISO din `.claude/tevi.md`, tocmai ca să tacă
+acolo. Un avertisment care se aprinde mereu nu mai e citit de nimeni.
+
+Efectul unui avertisment: `incredere = 0`, motivul se scrie pe linie, poziția
+merge obligatoriu la validare umană. Prețul **nu** se șterge — omul vede și
+propunerea, și motivul pentru care nu e de încredere.
+
+Aplicarea stă în `extrageCuModel`, nu în pipeline: e singurul punct prin care
+trec toate căile — CLI, ruta din `vite`, scriptul de comparare — deci un
+apelant nou nu are cum să o sară. Pipeline-ul recalculează aceleași reguli
+pentru forma structurată din raport; funcția e pură, a doua trecere nu costă.
+
+**Ce nu prinde:** confuzia între două valori care apar amândouă în text. Aia
+rămâne treaba omului de la validare.
+
+### Liniile pe care modelul nu le întoarce
+
+Contractul e „câte un obiect per linie, cu același index". Modelul îl încalcă
+în tăcere: pe `Oferta 27.04.2026.xlsx`, 43 de linii trimise, **35 întoarse**.
+Liniile lipsă nu apăreau nicăieri în raport — nici ca poziții, nici ca erori —
+deci un fișier ciuntit arăta exact ca un fișier cu mai puține poziții.
+`RaportImport.modelFaraRaspuns` le numără.
+
+## Golden files: deriva modelului
+
+`OPENAI_MODEL` arată spre ceva care se poate schimba sub noi. Aliasul `gpt-4.1`
+e mutat de OpenAI pe alt snapshot fără să se schimbe nimic în repo: același
+fișier de la client, alte poziții, alte prețuri, zero urme în `git log`. De aceea
+implicitul din cod e **snapshot datat** (`MODEL_IMPLICIT`), iar `.env.example`
+la fel.
+
+Pinul singur nu ajunge — cineva tot schimbă snapshot-ul cândva. Golden files
+sunt măsurătoarea față de care se compară:
+
+```bash
+npm run golden -- ../attachments/Izolatii\ Transavia.xlsx   # înregistrează
+npm run golden -- --verifica                                # caută deriva
+```
+
+Fișierul înregistrat (`tests/golden/*.json`) ține textul liniilor, ce a răspuns
+modelul, avertismentele și prețurile rezultate. Servește la două lucruri
+diferite:
+
+- **`tests/golden.test.ts`** rejoacă **offline** partea deterministă — validare
+  + tarifare — peste ieșirea înregistrată. Rulează în CI, fără cheie și fără
+  rețea. Pică atunci când o schimbare de-a *noastră* mută prețurile pe linii
+  reale. `pricing.test.ts` acoperă pozițiile din ofertele semnate; asta acoperă
+  drumul complet, cu tot cu ce înțelege modelul din text.
+- **`--verifica`** re-cheamă modelul pe aceleași texte și compară câmpurile care
+  intră în tarifare. Costă tokeni, se rulează manual, și e singurul lucru care
+  poate spune „modelul răspunde altfel decât luna trecută". Nu spune cine are
+  dreptate — spune unde diferă.
+
+Se înregistrează doar textele și parametrii extrași. Prețurile firmei nu trec
+niciodată prin model, deci nu au ce căuta nici în golden files.
 
 ## Bugetul de tokeni
 
@@ -119,7 +202,8 @@ distinge, ca să nu tragi în direcția greșită.
 
 ### Alegerea modelului
 
-Implicit: **`gpt-4.1`**. Atenție: `OPENAI_MODEL` din `.env` **bate** implicitul
+Implicit: **`gpt-4.1-2025-04-14`** — snapshot datat, nu aliasul `gpt-4.1`.
+Atenție: `OPENAI_MODEL` din `.env` **bate** implicitul
 din cod, iar `.env` e gitignorat — un commit care schimbă implicitul nu atinge
 fișierul nimănui. Verifici cu ce rulezi de fapt în antetul `npm run import` sau
 în linia „Stratul cu model" de la `npm run dev`. Nu `gpt-4o` — pe contul firmei acela are 90.000 tokeni

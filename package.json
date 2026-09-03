@@ -21,7 +21,8 @@
     "db:psql": "docker compose exec db psql -U izorep -d izorep",
     "import": "tsx src/import/cli.ts",
     "price": "tsx src/pricing/cli.ts",
-    "compara": "tsx scripts/compara-modele.ts"
+    "compara": "tsx scripts/compara-modele.ts",
+    "golden": "tsx scripts/golden.ts"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2",

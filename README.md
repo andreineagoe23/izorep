@@ -107,7 +107,7 @@ deocamdată. Când apare serverul, intră în `docker-compose.yml` și `npm star
 |---|---|
 | `npm start` | bază + migrări + interfață |
 | `npm run dev` | doar interfața |
-| `npm test` | 142 de teste (cele de bază se sar fără Docker) |
+| `npm test` | 169 de teste (cele de bază se sar fără Docker) |
 | `npm run typecheck` | |
 | `npm run build:web` | build static în `dist-web/` |
 | `npm run db:up` / `db:down` | pornește / oprește Postgres |
@@ -118,6 +118,8 @@ deocamdată. Când apare serverul, intră în `docker-compose.yml` și `npm star
 | `npm run db:psql` | consolă SQL |
 | `npm run import -- <fisier.xlsx>` | import complet |
 | `npm run import -- <fisier> --fara-model` | doar stratul determinist |
+| `npm run golden -- <fisier.xlsx>` | înregistrează ieșirea modelului pe un fișier |
+| `npm run golden -- --verifica` | re-cheamă modelul și caută deriva |
 
 Regenerarea listelor de prețuri din Excel (Python cu `openpyxl` și `xlrd`):
 
