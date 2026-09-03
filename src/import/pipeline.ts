@@ -3,7 +3,8 @@ import { adaugaSectiuni } from "./sectiuni.js";
 import { extrageDeterminist } from "./extract-regex.js";
 import { extrageCuModel, type OptiuniModel } from "./extract-llm.js";
 import { valideazaExtragere, type Avertisment } from "./valideaza.js";
-import type { LinieExtrasa } from "./schema.js";
+import { grupeazaPeSablon, extindePeSablon } from "./sabloane.js";
+import type { LinieExtrasa, Sursa } from "./schema.js";
 import { tarifeaza } from "../pricing/engine.js";
 import { tarifeazaGolFoc } from "../pricing/goluri-foc.js";
 import {
@@ -11,7 +12,7 @@ import {
   type RezultatGolFoc, type RezultatTarifare,
 } from "../pricing/types.js";
 
-export type Sursa = "regex" | "model";
+export type { Sursa } from "./schema.js";
 
 export interface LinieProcesata {
   bruta: LinieBruta;
@@ -47,6 +48,11 @@ export interface RaportImport {
   deValidat: number;
   /** Linii pe care modelul a produs ceva ce nu se verifica in textul sursa. */
   cuAvertisment: number;
+  /** Linii deduse dintr-o linie geamana, fara apel la model. */
+  prinSablon: number;
+  /** Cate linii au plecat efectiv la model, din cate reziduale erau. */
+  trimiseLaModel: number;
+  reziduale: number;
   /** Linii trimise la model pentru care nu a intors niciun obiect. */
   modelFaraRaspuns: number;
   netarifate: number;
@@ -127,11 +133,33 @@ export async function importaFisier(
     else reziduale.push({ index: b.index, text: b.text, ...(b.um ? { um: b.um } : {}) });
   }
 
-  // L2b - model, doar pe rest
+  // L2b - model, doar pe rest, si doar cate un reprezentant per sablon
+  //
+  // Liniile reziduale se repeta masiv in acelasi fisier: masurat pe cele 9
+  // fisiere de client, 697 de linii reziduale inseamna 318 sabloane. Se
+  // trimite un reprezentant, iar rolul lui se duce pe restul grupului cu
+  // numerele recitite din fiecare linie. Verificat pe golden files: 27 de
+  // linii proiectate, 27 identice cu ce raspunsese modelul pentru ele.
   let faraRaspuns = 0;
+  let trimise = 0;
   if (!optiuni.faraModel && reziduale.length > 0) {
-    for (const e of await extrageCuModel(reziduale, optiuni)) {
-      rezolvate.set(e.index, { extras: e, sursa: "model" });
+    const grupuri = grupeazaPeSablon(reziduale);
+    const reprezentanti = grupuri.map((g) => g.reprezentant);
+    trimise = reprezentanti.length;
+
+    const extrase = await extrageCuModel(reprezentanti, optiuni);
+    for (const e of extrase) rezolvate.set(e.index, { extras: e, sursa: "model" });
+
+    const { proiectate, ramase } = extindePeSablon(grupuri, extrase);
+    for (const p of proiectate) rezolvate.set(p.index, { extras: p, sursa: "sablon" });
+
+    // Ce n-a putut fi proiectat merge la model ca orice alta linie. Deduplicarea
+    // e o optimizare de cost; acoperirea nu are voie sa scada din cauza ei.
+    if (ramase.length > 0) {
+      trimise += ramase.length;
+      for (const e of await extrageCuModel(ramase, optiuni)) {
+        rezolvate.set(e.index, { extras: e, sursa: "model" });
+      }
     }
     // Contractul e "cate un obiect per linie, cu acelasi index". Modelul il
     // incalca in tacere: masurat pe `Oferta 27.04.2026.xlsx`, 43 de linii
@@ -148,9 +176,11 @@ export async function importaFisier(
     if (!r) continue;
     const { extras, sursa } = r;
 
-    // Doar pe iesirea modelului: stratul determinist citeste numerele direct
-    // din text, deci nu poate inventa, iar regulile lui au deja teste proprii.
-    const avertismente = sursa === "model"
+    // Nu si pe stratul determinist: acela citeste numerele direct din text,
+    // deci nu poate inventa, iar regulile lui au deja teste proprii. Liniile
+    // venite prin sablon se verifica la fel ca cele din model — numerele lor
+    // vin din alt text decat cel citit de model, deci merita recontrolate.
+    const avertismente = sursa !== "regex"
       ? valideazaExtragere(extras, { text: b.text, ...(b.um ? { um: b.um } : {}) })
       : [];
 
@@ -174,6 +204,9 @@ export async function importaFisier(
     liniiIzolatie: izolatie.length,
     prinRegex: izolatie.filter((l) => l.sursa === "regex").length,
     prinModel: izolatie.filter((l) => l.sursa === "model").length,
+    prinSablon: izolatie.filter((l) => l.sursa === "sablon").length,
+    trimiseLaModel: trimise,
+    reziduale: reziduale.length,
     tarifate: izolatie.filter((l) => l.pret).length,
     deValidat: izolatie.filter((l) => l.necesitaValidare).length,
     cuAvertisment: izolatie.filter((l) => l.avertismente?.length).length,

@@ -27,6 +27,7 @@ L0  parse-workbook.ts   parsare fizică. Zero interpretare.
 L0b sectiuni.ts         contextul de secțiune (antetul de deasupra rândului)
 L1  (nescris)           mapare de coloane, o dată per client, apoi din cache
 L2a extract-regex.ts    determinist. ~55% din linii.
+L2a' sabloane.ts        deduplicare pe șablon: −54% linii trimise la model
 L2b extract-llm.ts      model, DOAR pe reziduu. Structured outputs, temp 0.
 L3  ../pricing/         tarifare deterministă
 L4  (nescris)           ecran de validare + salvarea corecțiilor ca mapping
@@ -100,6 +101,45 @@ loopback și plafonează la 400 de linii per import.
 - **nu vede și nu calculează prețuri**
 - scor de încredere pe linie; sub prag → validare umană obligatorie
 - ieșirea trece prin `valideaza.ts` înainte să plece din `extrageCuModel`
+
+## Deduplicarea pe șablon
+
+Liniile reziduale se repetă masiv **în același fișier**, înainte de orice
+memorie între proiecte. Măsurat pe cele 9 fișiere de client: **697 de linii
+reziduale → 321 de șabloane, −54%**. Pe `Izolatii Transavia` −72%, pe
+`Book15` −67%.
+
+Șablonul e textul normalizat cu numerele scoase, iar numerele rămân separat, pe
+poziții („sloturi"):
+
+```
+"…inox 304 Di89, g50 - COT"
+  tipar  "…inox # di#, g# - cot"
+  numere [304, 89, 50]
+```
+
+Se trimite la model **un reprezentant per șablon**. Rolul lui — sistem, tip de
+diametru, formă — se duce pe restul grupului; **valorile se recitesc din
+sloturile fiecărei linii**. Un cache care ar copia și valorile ar tarifa `Di60`
+cu prețul lui `Di89`.
+
+Regula pe care se sprijină: rolul e stabil pe șablon. Măsurat pe cele 64 de
+șabloane care apar de cel puțin două ori (302 linii), tripleta e identică între
+instanțe în **100%** din cazuri.
+
+**Când nu e sigur, nu se face.** Se refuză proiecția dacă valoarea întoarsă de
+model nu apare printre numerele liniei (a dedus-o — `DN50` din `2''` — sau a
+inventat-o), sau dacă sloturile care aveau aceeași valoare la reprezentant ajung
+să difere pe linia țintă. Liniile astea pleacă la model într-o a doua trecere,
+deci acoperirea nu scade — doar costul.
+
+Verificat pe golden files, unde există răspunsul modelului pentru **fiecare**
+linie: 27 de linii proiectate, 27 identice cu ce răspunsese modelul pentru ele.
+Testul rulează în CI (`tests/golden.test.ts`).
+
+Liniile venite pe drumul ăsta au `sursa: "sablon"` și trec prin aceleași
+verificări de plauzibilitate ca cele din model — numerele lor vin din alt text
+decât cel citit de model.
 
 ## Guardrails pe ieșirea modelului
 

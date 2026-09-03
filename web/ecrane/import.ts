@@ -1,7 +1,8 @@
 import { tarifeaza } from "../../src/pricing/engine.js";
 import { tarifeazaGolFoc } from "../../src/pricing/goluri-foc.js";
 import { extrageDeterminist } from "../../src/import/extract-regex.js";
-import { SISTEME, type LinieExtrasa } from "../../src/import/schema.js";
+import { grupeazaPeSablon, extindePeSablon } from "../../src/import/sabloane.js";
+import { SISTEME, type LinieExtrasa, type Sursa } from "../../src/import/schema.js";
 // Doar tipurile: `import type` se sterge la compilare, deci ExcelJS (~940 kB)
 // ramane incarcat lenes, prin `import()`-ul din `proceseaza`.
 import type { CelulaBruta, FoaieBruta, RandBrut } from "../../src/import/parse-workbook.js";
@@ -46,8 +47,6 @@ async function interogheazaModel(): Promise<StareModel | null> {
     return null; // pe Pages ruta nu exista: nu e o eroare, e alt mediu
   }
 }
-
-type Sursa = "regex" | "model";
 
 interface LinieRaport {
   text: string;
@@ -167,58 +166,86 @@ export const ecran: Ecran = {
           else reziduale.push({ index: b.index, text: b.text, ...(b.um ? { um: b.um } : {}) });
         }
 
-        // L2b — model, doar pe reziduu, in loturi paralele cu progres vizibil.
+        // L2b — model, doar pe reziduu, si doar cate un reprezentant per sablon.
+        //
+        // Liniile reziduale se repeta in acelasi fisier: 697 de linii pe cele 9
+        // fisiere de client inseamna 318 sabloane. Se trimite reprezentantul,
+        // iar rolul lui se duce pe restul grupului cu numerele recitite din
+        // fiecare linie. Ce nu se poate proiecta pleaca la model in a doua
+        // trecere, deci acoperirea nu scade.
         let avertisment = "";
-        const trunchiat = info ? Math.max(0, reziduale.length - MAX_LINII) : 0;
+        const grupuri = grupeazaPeSablon(reziduale);
+        const reprezentanti = grupuri.map((g) => g.reprezentant);
+        const trunchiat = info ? Math.max(0, reprezentanti.length - MAX_LINII) : 0;
         if (info && reziduale.length > 0) {
-          const deTrimis = reziduale.slice(0, MAX_LINII);
-          const loturi: (typeof deTrimis)[] = [];
           const lot = info.lot ?? LOT_IMPLICIT;
           const concurenta = info.concurenta ?? CONCURENTA_IMPLICITA;
-          for (let i = 0; i < deTrimis.length; i += lot) loturi.push(deTrimis.slice(i, i + lot));
 
           // Numarul de linii rezolvate determinist se fixeaza acum: `rezolvate`
           // creste pe masura ce se intorc loturile, iar eticheta ar minti.
           const determinist = rezolvate.size;
-          let gata = 0;
           let esuate = 0;
           let ultimaEroare = "";
-          const arataProgres = (): void => {
-            const p = Math.round((gata / loturi.length) * 100);
-            out.innerHTML = `<p class="nota">Extragere deterministă gata (${determinist} linii).
-              Modelul lucrează pe ${deTrimis.length} linii rămase — lotul ${Math.min(gata + 1, loturi.length)}
-              din ${loturi.length}.</p>${progres(p)}`;
-          };
-          arataProgres();
 
-          let urmator = 0;
-          const lucrator = async (): Promise<void> => {
-            for (let i = urmator++; i < loturi.length; i = urmator++) {
-              try {
-                const r = await fetch(RUTA_MODEL, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ linii: loturi[i] }),
-                  // Un lot blocat nu are voie sa tina importul agatat la nesfarsit.
-                  signal: AbortSignal.timeout(120_000),
-                });
-                const corp = (await r.json()) as { linii?: LinieExtrasa[]; eroare?: string };
-                if (!r.ok) throw new Error(corp.eroare ?? `HTTP ${r.status}`);
-                for (const e of corp.linii ?? []) rezolvate.set(e.index, { extras: e, sursa: "model" });
-              } catch (e) {
-                // Un lot cazut nu invalideaza importul: restul liniilor raman.
-                esuate++;
-                ultimaEroare = e instanceof Error ? e.message : String(e);
-              } finally {
-                gata++;
-                arataProgres();
+          /** O trecere completa prin model, in loturi paralele, cu progres. */
+          const trimite = async (
+            deTrimis: typeof reziduale, eticheta: string,
+          ): Promise<LinieExtrasa[]> => {
+            const loturi: (typeof deTrimis)[] = [];
+            for (let i = 0; i < deTrimis.length; i += lot) loturi.push(deTrimis.slice(i, i + lot));
+            const primite: LinieExtrasa[] = [];
+            let gata = 0;
+
+            const arataProgres = (): void => {
+              const p = Math.round((gata / loturi.length) * 100);
+              out.innerHTML = `<p class="nota">Extragere deterministă gata (${determinist} linii).
+                ${eticheta} — ${deTrimis.length} linii, lotul ${Math.min(gata + 1, loturi.length)}
+                din ${loturi.length}.</p>${progres(p)}`;
+            };
+            arataProgres();
+
+            let urmator = 0;
+            const lucrator = async (): Promise<void> => {
+              for (let i = urmator++; i < loturi.length; i = urmator++) {
+                try {
+                  const r = await fetch(RUTA_MODEL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ linii: loturi[i] }),
+                    // Un lot blocat nu are voie sa tina importul agatat la nesfarsit.
+                    signal: AbortSignal.timeout(120_000),
+                  });
+                  const corp = (await r.json()) as { linii?: LinieExtrasa[]; eroare?: string };
+                  if (!r.ok) throw new Error(corp.eroare ?? `HTTP ${r.status}`);
+                  for (const e of corp.linii ?? []) {
+                    primite.push(e);
+                    rezolvate.set(e.index, { extras: e, sursa: "model" });
+                  }
+                } catch (e) {
+                  // Un lot cazut nu invalideaza importul: restul liniilor raman.
+                  esuate++;
+                  ultimaEroare = e instanceof Error ? e.message : String(e);
+                } finally {
+                  gata++;
+                  arataProgres();
+                }
               }
-            }
+            };
+            await Promise.all(Array.from({ length: Math.min(concurenta, loturi.length) }, lucrator));
+            return primite;
           };
-          await Promise.all(Array.from({ length: Math.min(concurenta, loturi.length) }, lucrator));
+
+          const extrase = await trimite(
+            reprezentanti.slice(0, MAX_LINII),
+            `Modelul lucrează pe ${reprezentanti.length} șabloane (din ${reziduale.length} linii)`,
+          );
+
+          const { proiectate, ramase } = extindePeSablon(grupuri, extrase);
+          for (const p of proiectate) rezolvate.set(p.index, { extras: p, sursa: "sablon" });
+          if (ramase.length > 0) await trimite(ramase.slice(0, MAX_LINII), "Linii rămase");
 
           if (esuate > 0) {
-            avertisment = `<div class="alerta"><strong>${esuate} din ${loturi.length} loturi au eșuat</strong>
+            avertisment = `<div class="alerta"><strong>${esuate} loturi au eșuat</strong>
               ${esc(ultimaEroare)}<br>
               Raportul de mai jos conține restul liniilor. Reîncarcă fișierul ca să reîncerci.</div>`;
           }
@@ -250,6 +277,7 @@ export const ecran: Ecran = {
         function randStats(): string {
           const tarifate = izo.filter((l) => l.pret !== null);
           const prinModel = izo.filter((l) => l.sursa === "model");
+          const prinSablon = izo.filter((l) => l.sursa === "sablon");
           // Aceeasi definitie ca in `pipeline.ts`: sub prag SAU pozitie care nu
           // s-a putut tarifa. Ambele cazuri se opresc la validarea omului.
           const deValidat = izo.filter((l) => l.extras.incredere < prag || l.eroare !== null);
@@ -260,6 +288,9 @@ export const ecran: Ecran = {
             ${indicator(String(izo.length), "poziții de izolație")}
             ${indicator(String(tarifate.length), "tarifate", proc)}
             ${info ? indicator(String(prinModel.length), "rezolvate cu modelul") : ""}
+            ${info && prinSablon.length
+              ? indicator(String(prinSablon.length), "deduse din șablon", "linii geamăne, fără apel la model")
+              : ""}
             ${indicator(String(deValidat.length), "de validat de om", `încredere sub ${prag} sau fără preț`)}`;
         }
 

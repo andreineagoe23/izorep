@@ -1,5 +1,18 @@
 import { z } from "zod";
 
+/**
+ * De unde vine extragerea unei linii.
+ *
+ * Sta aici, langa contractul de extragere, fiindca il folosesc si pipeline-ul,
+ * si ecranul de import — iar ecranul nu are voie sa importe pipeline-ul, care
+ * trage dupa el clientul OpenAI intr-un bundle de browser.
+ *
+ * `sablon` inseamna ca linia n-a fost citita de model: are acelasi tipar cu o
+ * linie geamana, iar rolul ei a fost dus mai departe de acolo, cu numerele
+ * recitite din propriul text.
+ */
+export type Sursa = "regex" | "model" | "sablon";
+
 export const SISTEME = ["elastomer", "vata_minerala", "tabla", "pvc", "goluri_foc"] as const;
 export const FORME = [
   "ml", "mp", "manseta", "cot", "teu", "reductie", "robinet", "vana",

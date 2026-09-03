@@ -138,8 +138,9 @@ proiecte nu se poate nici măsura, nici promite.
 
 ## Ordinea propusă
 
-1. **Deduplicarea reziduului pe șablon** — −54% tokeni, independentă de UI,
-   verificabilă cu golden files (aceleași rezultate, mai puține apeluri).
+1. ~~**Deduplicarea reziduului pe șablon**~~ — **făcută**. `src/import/sabloane.ts`,
+   −54% linii trimise la model (697 → 321), verificată pe golden files: 27 de
+   linii proiectate, 27 identice cu răspunsul modelului. Detalii în `import.md`.
 2. **L1**, cu validator determinist și cache pe amprentă de antet.
 3. **L4**, ecranul de validare care salvează corecțiile ca `șablon → rol`.
 4. Abia după ce catalogul are volum: few-shot din catalogul propriu, ales prin

@@ -17,9 +17,10 @@
  * Fara niciun golden file inregistrat, suita trece si spune de ce.
  */
 import { describe, it, expect } from "vitest";
-import { citesteGolden, goldenuri } from "../scripts/golden-store.js";
+import { amprenta, citesteGolden, goldenuri } from "../scripts/golden-store.js";
 import { tarifeazaExtras } from "../src/import/pipeline.js";
 import { valideazaExtragere } from "../src/import/valideaza.js";
+import { grupeazaPeSablon, extindePeSablon } from "../src/import/sabloane.js";
 
 const fisiere = goldenuri();
 
@@ -35,6 +36,33 @@ describe.runIf(fisiere.length > 0)("golden files", () => {
             .map((a) => a.cod),
         }));
         expect(acum).toEqual(g.linii.map((l) => ({ index: l.index, coduri: l.avertismente })));
+      });
+
+      it("proiectia pe sablon da ce a raspuns modelul, linie cu linie", () => {
+        // Deduplicarea trimite un reprezentant per sablon si duce rolul lui pe
+        // restul grupului. Aici se verifica exact ce nu se poate verifica prin
+        // rationament: ca rezultatul proiectat coincide cu ce raspunsese
+        // modelul pentru fiecare linie in parte, pe fisiere reale.
+        //
+        // Golden file-ul contine raspunsul modelului pentru TOATE liniile, deci
+        // e singura ocazie in care cele doua drumuri pot fi comparate.
+        const grupuri = grupeazaPeSablon(g.linii.map((l) => ({
+          index: l.index, text: l.text, ...(l.um ? { um: l.um } : {}),
+        })));
+        const reprezentanti = new Set(grupuri.map((x) => x.reprezentant.index));
+        const { proiectate, ramase } = extindePeSablon(
+          grupuri,
+          g.linii.filter((l) => reprezentanti.has(l.index)).map((l) => l.extras),
+        );
+
+        const inregistrat = new Map(g.linii.map((l) => [l.index, l.extras]));
+        for (const p of proiectate) {
+          const asteptat = inregistrat.get(p.index)!;
+          expect(amprenta(p), `linia ${p.index}`).toBe(amprenta(asteptat));
+        }
+        // Liniile nededuplicabile nu sunt o eroare: merg la model ca oricare
+        // alta. Se afiseaza doar ca sa se vada cat costa deduplicarea in fapt.
+        expect(proiectate.length + ramase.length + reprezentanti.size).toBe(g.linii.length);
       });
 
       it("tarifarea da aceleasi preturi", () => {

@@ -37,6 +37,7 @@ console.log(`  randuri cu text          ${raport.total}`);
 console.log(`  pozitii de izolatie      ${raport.liniiIzolatie}`);
 console.log(`    rezolvate determinist  ${raport.prinRegex}  (${proc(raport.prinRegex)})`);
 console.log(`    rezolvate cu modelul   ${raport.prinModel}  (${proc(raport.prinModel)})`);
+console.log(`    deduse din sablon      ${raport.prinSablon}  (${proc(raport.prinSablon)})`);
 console.log(`  TARIFATE automat         ${raport.tarifate}  (${proc(raport.tarifate)})`);
 console.log(`  de validat de om         ${raport.deValidat}`);
 console.log(`    din care neverificate  ${raport.cuAvertisment}  (model, contrazis de textul sursa)`);
@@ -44,7 +45,13 @@ if (raport.modelFaraRaspuns > 0) {
   console.log(`  fara raspuns de la model ${raport.modelFaraRaspuns}  (trimise, dar neintoarse)`);
 }
 console.log(`  netarifate               ${raport.netarifate}`);
-console.log(`  valoare                  ${raport.valoareTotala.toFixed(2)} EUR\n`);
+console.log(`  valoare                  ${raport.valoareTotala.toFixed(2)} EUR`);
+if (raport.reziduale > 0) {
+  const economie = raport.reziduale - raport.trimiseLaModel;
+  console.log(`  linii la model           ${raport.trimiseLaModel} din ${raport.reziduale} reziduale` +
+    (economie > 0 ? `  (-${(economie / raport.reziduale * 100).toFixed(0)}%, deduplicare pe sablon)` : ""));
+}
+console.log();
 
 for (const l of raport.linii.filter((x) => x.pret).slice(0, 12)) {
   const e = l.extras;
