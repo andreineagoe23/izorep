@@ -33,6 +33,21 @@ const RE_DN = /\b(?:DN|Dn|dn)\s*\.?\s*(\d{1,3})\b/;
 const RE_DI = /\bDi\s*(\d{1,3})\b/;
 const RE_OD = /[øØ]\s*(\d{1,3})\b/;
 const RE_PLASTIC = /\b(?:PPR|PP|PEHD|PEX)\s*[D]?\s*(\d{1,3})\b/;
+/**
+ * Tubulatura spiro: nominalul E diametrul exterior, ca la plastic.
+ *
+ * Clientii o scriu tot cu "DN" — "Wickelfalzrohr starr SPIRO DN 160" — dar 160
+ * si 315 nu exista in seria de teava de otel, deci pozitia iesea cu
+ * `DiametruNecunoscut: DN160 nu exista in tabelul de conversie`. Mesajul e
+ * corect si diagnosticul complet gresit: tubulatura aia e perfect normala.
+ *
+ * `pricing.md` spune deja regula — la plastic, PEHD si SPIRO se rotunjeste in
+ * sus pe diametrul exterior. Aici doar se recunoaste notatia.
+ *
+ * "Wickelfalzrohr" e numele german al aceleiasi tubulaturi; apare in ofertele
+ * bilingve, uneori fara cuvantul SPIRO pe acelasi rand.
+ */
+const RE_SPIRO = /\bSPIRO\b|wickelfalzrohr/i;
 const RE_GROSIME = /(?:g\s*[=.]?\s*|gr\.?\s*|S\s*=\s*|grosime[a]?\s+de\s+|[-–]\s*)(\d{1,3})\s*mm/i;
 const RE_GROSIME_COMPACT = /\bg\s?(\d{2,3})\b/;
 const RE_MM = /(\d{1,3})\s*mm\b/g;
@@ -116,7 +131,9 @@ export function extrageDeterminist(
     // Plastic: dimensiunea nominala ESTE diametrul exterior.
     diametru_valoare = Number(m[1]); diametru_tip = "exterior";
   } else if ((m = text.match(RE_DN))) {
-    diametru_valoare = Number(m[1]); diametru_tip = "DN";
+    // "DN" scris pe o tubulatura spiro nu e DN de otel.
+    diametru_valoare = Number(m[1]);
+    diametru_tip = RE_SPIRO.test(text) ? "exterior" : "DN";
   } else if ((m = text.match(RE_OD))) {
     diametru_valoare = Number(m[1]); diametru_tip = "exterior";
   } else if ((m = text.match(RE_DI))) {

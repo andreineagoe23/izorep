@@ -409,6 +409,11 @@ real acolo.
   rânduri de acolo intrau ca închideri de gol, iar dimensiunea tubulaturii
   rectangulare (`1000/500`) era citită drept dimensiune de gol. Semnalul cere
   noțiunea de **gol** sau de **trecere prin perete**.
+- **`Oferta 27.04.2026`, tubulatură SPIRO** — „Wickelfalzrohr starr SPIRO
+  DN 160". Clientul scrie `DN`, dar la spiro nominalul *este* diametrul
+  exterior, iar 160 și 315 nu există în seria de oțel: poziția ieșea cu
+  „DN160 nu există în tabelul de conversie" — mesaj corect, diagnostic complet
+  greșit. Regula era deja în `pricing.md`; regexul n-o știa.
 - **Oferta 118** — ligaturi stricate (`sinte␣c`): textul e copiat dintr-un PDF.
 - **Cantitatea** — primul număr de pe rând e aproape întotdeauna *numărul curent*
   al poziției, nu cantitatea. Euristica actuală o caută lângă unitatea de măsură;

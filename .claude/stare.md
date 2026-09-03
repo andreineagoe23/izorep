@@ -184,7 +184,14 @@ Astea blochează arhitectura, nu doar implementarea:
    Până atunci `CURS_BNR` rămâne constantă: cursul contează abia la facturare.)
 8. „Protecție la foc pentru tubulatură" (28 de rânduri în `Radoia.xlsx`) e o
    lucrare pe care o ofertați? Nu are listă de prețuri printre cele primite.
-9. **Două liste de cantități de la același client, din proiecte diferite.**
+9. **Coturile și teurile de vată minerală sub ø76.** Lista de prețuri nu are
+   coeficient de element special pe banda 18–60 (are doar manșeta, 0,25), deci
+   12 poziții reale din `Izolatii Transavia` rămân netarifate. Cum se
+   tarifează azi?
+10. **SPIRO ø160.** Motorul dă 14,37 €/ml (rândul 169, rotunjire în sus pe
+    diametru exterior); oferta semnată are 14,16 (rândul 159). Aceeași ofertă
+    tarifează ø160 PEHD la 14,37. Care e regula?
+11. **Două liste de cantități de la același client, din proiecte diferite.**
    Cele 9 fișiere pe care le avem vin de la clienți diferiți, deci reutilizarea
    șabloanelor între proiecte — tot câștigul lui L4 — nu se poate măsura.
    Vezi `plan-l1-l4.md`.
@@ -229,7 +236,7 @@ de contract, stoc și facturare.
 ## Comenzi
 
 ```bash
-npm test                                       # 227 teste (motor, import, baza)
+npm test                                       # 229 teste (motor, import, baza)
 npm run typecheck
 npm run dev                                    # UI local, /izorep/
 npm run import -- ../attachments/Radoia.xlsx   # pipeline complet
