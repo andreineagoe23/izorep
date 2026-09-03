@@ -1,8 +1,11 @@
 import { tarifeaza } from "../../src/pricing/engine.js";
 import { tarifeazaGolFoc } from "../../src/pricing/goluri-foc.js";
 import { extrageDeterminist } from "../../src/import/extract-regex.js";
-import type { LinieExtrasa } from "../../src/import/schema.js";
-import { esc, eur, indicator, nota, progres, stare, tabel, type Ecran } from "./tip.js";
+import { SISTEME, type LinieExtrasa } from "../../src/import/schema.js";
+// Doar tipurile: `import type` se sterge la compilare, deci ExcelJS (~940 kB)
+// ramane incarcat lenes, prin `import()`-ul din `proceseaza`.
+import type { CelulaBruta, FoaieBruta, RandBrut } from "../../src/import/parse-workbook.js";
+import { esc, indicator, nota, progres, stare, type Ecran } from "./tip.js";
 
 /**
  * Ruta stratului cu model exista doar pe serverul de dezvoltare
@@ -146,9 +149,14 @@ export const ecran: Ecran = {
       out.innerHTML = `<p class="nota">Se citește ${esc(fisier.name)}…</p>`;
       try {
         // ExcelJS e ~940 kB: se încarcă la prima folosire, nu la deschiderea paginii.
-        const { parseWorkbookBuffer } = await import("../../src/import/parse-workbook.js");
+        const { parseFoiBuffer, liniile } = await import("../../src/import/parse-workbook.js");
         const { adaugaSectiuni } = await import("../../src/import/sectiuni.js");
-        const brute = adaugaSectiuni(await parseWorkbookBuffer(await fisier.arrayBuffer()));
+        // Registrul se citește ca grilă — foaie cu foaie, cu rândurile intacte.
+        // Liniile de poziție sunt ACELEAȘI obiecte care stau și în grilă, deci
+        // ce corectează omul într-un rând se vede în linia care merge la
+        // extragere, fără nicio potrivire după text.
+        const foi = await parseFoiBuffer(await fisier.arrayBuffer());
+        const brute = adaugaSectiuni(liniile(foi));
 
         // L2a — determinist. Ce iese complet de aici nu ajunge niciodată la model.
         const rezolvate = new Map<number, { extras: LinieExtrasa; sursa: Sursa }>();
@@ -228,25 +236,134 @@ export const ecran: Ecran = {
         }
 
         const izo = linii.filter((l) => l.extras.sistem !== null);
-        const tarifate = izo.filter((l) => l.pret !== null);
-        const prinModel = izo.filter((l) => l.sursa === "model");
         const prag = info?.prag ?? 0.85;
-        // Aceeasi definitie ca in `pipeline.ts`: sub prag SAU pozitie care nu s-a
-        // putut tarifa. Ambele cazuri se opresc la acelasi ecran de validare.
-        const deValidat = izo.filter((l) => l.extras.incredere < prag || l.eroare !== null);
-        const valoare = tarifate.reduce((s, l) => s + (l.total ?? 0), 0);
-        const proc = izo.length ? `${((tarifate.length / izo.length) * 100).toFixed(0)}%` : "–";
+        // Harta pe indexul din fisierul sursa: o editare cauta linia aici, nu
+        // tine minte un index de rand care s-ar deplasa la orice sortare.
+        const mapa = new Map(izo.map((l) => [l.extras.index, l]));
 
-        out.innerHTML = `
-          ${avertisment}
-          <div class="stats">
+        /** Reface pretul intern dupa ce omul de la tehnic corecteaza o celula. */
+        function recalculeaza(l: LinieRaport): void {
+          Object.assign(l, tarifeazaLinie(l.extras, l.cantitate ?? 1));
+        }
+
+        /** Randul de indicatoare — se reface dupa o editare, fara sa reconstruiasca tot tabelul. */
+        function randStats(): string {
+          const tarifate = izo.filter((l) => l.pret !== null);
+          const prinModel = izo.filter((l) => l.sursa === "model");
+          // Aceeasi definitie ca in `pipeline.ts`: sub prag SAU pozitie care nu
+          // s-a putut tarifa. Ambele cazuri se opresc la validarea omului.
+          const deValidat = izo.filter((l) => l.extras.incredere < prag || l.eroare !== null);
+          const proc = izo.length ? `${((tarifate.length / izo.length) * 100).toFixed(0)}%` : "–";
+          return `
+            ${foi.length > 1 ? indicator(String(foi.length), "foi în registru") : ""}
             ${indicator(String(brute.length), "rânduri cu text")}
             ${indicator(String(izo.length), "poziții de izolație")}
             ${indicator(String(tarifate.length), "tarifate", proc)}
             ${info ? indicator(String(prinModel.length), "rezolvate cu modelul") : ""}
-            ${indicator(String(deValidat.length), "de validat de om", `încredere sub ${prag} sau fără preț`)}
-            ${indicator(eur(valoare), "valoare tarifată")}
-          </div>
+            ${indicator(String(deValidat.length), "de validat de om", `încredere sub ${prag} sau fără preț`)}`;
+        }
+
+        /**
+         * Valoarea unei celule, ca text.
+         *
+         * Doua abateri de la valoarea bruta, amandoua ca sa arate ce vede omul
+         * cand deschide fisierul, nu ce tine ExcelJS in memorie:
+         *
+         * - numerele se rotunjesc la 12 cifre semnificative, pentru ca 8084,33
+         *   e tinut ca 8084.330000000001, iar cifra aia nu exista in fisier;
+         * - datele calendaristice se scriu ca in Excel. L0 le normalizeaza la
+         *   ISO ("2026-09-04T00:00:00.000Z"), forma buna pentru extragere si
+         *   proasta pentru citit.
+         *
+         * Nu e formatare in sens larg — despartitor de mii sau simbol de
+         * moneda ar fi, si alea ar schimba ce scrie in celula.
+         */
+        const ISO = /^(\d{4})-(\d{2})-(\d{2})T[\d:.]+Z$/;
+        const textCelula = (v: string | number | null): string => {
+          if (v === null) return "";
+          if (typeof v === "number") return String(Number(v.toPrecision(12)));
+          const d = ISO.exec(v);
+          return d ? `${d[3]}.${d[2]}.${d[1]}` : v;
+        };
+
+        /** A, B, … Z, AA — antetul de rezerva, pentru foile fara rand de antet. */
+        function litera(i: number): string {
+          let s = "";
+          for (let n = i; n >= 0; n = Math.floor(n / 26) - 1) s = String.fromCharCode(65 + (n % 26)) + s;
+          return s;
+        }
+
+        const latime = (celule: CelulaBruta[]): number => celule.reduce((s, c) => s + c.span, 0);
+        /** Celulele goale cu care se completeaza un rand mai scurt decat foaia. */
+        const umplutura = (n: number, eticheta = "td"): string =>
+          n > 0 ? `<${eticheta}></${eticheta}>`.repeat(n) : "";
+
+        /**
+         * Tabelul unei foi, 1:1 cu Excel-ul.
+         *
+         * Capetele NU sunt predefinite: sunt exact celulele randului de antet
+         * din foaia asta, cu imbinarile lor. Foaia fara antet (Transavia isi
+         * incepe datele de la primul rand) primeste literele de coloana, ca in
+         * Excel. Dupa coloanele fisierului vin cele patru coloane ale
+         * extragerii — singurele adaugate de noi.
+         */
+        function tabelFoaie(f: FoaieBruta): string {
+          if (f.randuri.length === 0) return nota(`Foaia „${esc(f.nume)}” e goală.`);
+
+          const capete = f.antet
+            ? f.antet.celule.map((c) =>
+                `<th scope="col"${c.span > 1 ? ` colspan="${c.span}"` : ""}>${esc(textCelula(c.v))}</th>`).join("")
+              + umplutura(f.coloane - latime(f.antet.celule), "th")
+            : Array.from({ length: f.coloane }, (_, i) => `<th scope="col" class="litera">${litera(i)}</th>`).join("");
+
+          const corp = f.randuri
+            .filter((r) => r !== f.antet)
+            .map((r) => randGrila(f, r))
+            .join("");
+
+          return `<div class="tabelwrap" tabindex="0"><table>
+            <thead><tr>
+              <th scope="col" class="gutter">${f.antet ? `r${f.antet.rand}` : "#"}</th>
+              ${capete}
+              ${["Sistem", "ø", "gros.", ""].map((c, i) =>
+                `<th scope="col" class="extras${i > 0 && i < 3 ? " n" : ""}">${esc(c)}</th>`).join("")}
+            </tr></thead>
+            <tbody>${corp}</tbody>
+          </table></div>`;
+        }
+
+        /**
+         * Un rand din grila. Celulele fisierului sunt editabile ca text —
+         * omul de la tehnic corecteaza acolo unde vede greseala, in coloana
+         * clientului. Dupa ele stau coloanele extrase, completate doar pe
+         * randurile care sunt pozitii de izolatie; pe un titlu sau pe un rand
+         * de total raman goale, ca sa se vada dintr-o privire ce a inteles
+         * sistemul si ce a sarit.
+         */
+        function randGrila(f: FoaieBruta, r: RandBrut): string {
+          const l = r.linie ? mapa.get(r.linie.index) : undefined;
+          const celule = r.celule.map((c, i) =>
+            `<td${c.span > 1 ? ` colspan="${c.span}"` : ""}><div class="camp" contenteditable="true"
+              spellcheck="false" data-rand="${r.rand}" data-cel="${i}">${esc(textCelula(c.v))}</div></td>`).join("");
+
+          const deValidat = l ? l.extras.incredere < prag || l.eroare !== null : false;
+          const extrase = l
+            ? `<td class="extras"><select data-camp="sistem">${SISTEME.map((s) =>
+                 `<option value="${s}"${s === l.extras.sistem ? " selected" : ""}>${s.replace("_", " ")}</option>`).join("")}</select></td>
+               <td class="extras n"><input type="number" step="any" data-camp="diametru" value="${l.extras.diametru_valoare ?? ""}" /></td>
+               <td class="extras n"><input type="number" step="any" data-camp="grosime" value="${l.extras.grosime_mm ?? ""}" /></td>
+               <td class="extras fix"><span data-marca>${deValidat ? stare("de validat", "atentie") : ""}</span></td>`
+            : `<td class="extras"></td><td class="extras"></td><td class="extras"></td><td class="extras"></td>`;
+
+          return `<tr${l ? ` data-idx="${l.extras.index}"` : ""}>
+            <td class="gutter">${r.rand}</td>
+            ${celule}${umplutura(f.coloane - latime(r.celule))}
+            ${extrase}</tr>`;
+        }
+
+        out.innerHTML = `
+          ${avertisment}
+          <div id="stats" class="stats">${randStats()}</div>
           ${trunchiat > 0 ? nota(`Plafonul per import e de 400 de linii trimise la model; ${trunchiat} au rămas netrimise.`) : ""}
           ${izo.some((l) => l.extras.sistem === "goluri_foc")
             ? nota("Fișierul conține <strong>închideri goluri la foc</strong>, tarifate pe altă regulă: prețul " +
@@ -254,27 +371,71 @@ export const ecran: Ecran = {
                 "colierul se adună peste el. O linie fără dimensiunea golului (<code>130/130</code>) rămâne " +
                 "netarifată și marcată, nu ghicită.")
             : ""}
-          ${nota(info
-            ? "Prețurile se calculează întotdeauna determinist, în browser. Modelul extrage doar parametri — sistem, " +
-              "diametru, grosime, formă — și nu vede și nu produce niciun preț. Liniile cu încredere sub prag merg " +
-              "obligatoriu prin ecranul de validare, unde corecțiile se memorează pe client."
-            : "Doar stratul determinist. Restul se rezolvă cu modelul (local, <code>npm run dev</code>) și prin " +
-              "ecranul de validare, unde corecțiile se memorează pe client — al doilea proiect de la același client " +
-              "pornește de mult mai sus.")}
-          ${tabel(
-            ["Descriere", "Sursă", "Sistem", "ø", "gros.", "cant.", "P.U.", "Total"],
-            izo.slice(0, 150).map((l) => `<tr>
-              <td><span class="desc" title="${esc(l.text)}">${esc(l.text.replace(/\s+/g, " ").slice(0, 70))}</span></td>
-              <td class="fix">${l.sursa === "regex" ? "reguli" : "model"}${
-                l.extras.incredere < prag || l.eroare !== null ? ` ${stare("de validat", "atentie")}` : ""}</td>
-              <td>${esc(l.extras.sistem!.replace("_", " "))}</td>
-              <td class="n">${l.extras.diametru_valoare ?? "–"}</td>
-              <td class="n">${l.extras.grosime_mm ?? "–"}</td>
-              <td class="n">${l.cantitate ?? "–"}</td>
-              <td class="n">${l.pret !== null ? eur(l.pret) : `<span class="rosu" title="${esc(l.eroare ?? "extragere incompletă")}">–</span>`}</td>
-              <td class="n">${l.total !== null ? eur(l.total) : ""}</td></tr>`),
-            ["", "", "", "n", "n", "n", "n", "n"])}
-          ${izo.length > 150 ? `<p class="hint">… și încă ${izo.length - 150} poziții.</p>` : ""}`;
+          ${nota(
+            "Tabelul e <strong>fișierul clientului, așa cum e</strong>: câte o filă per foaie din registru, " +
+            "capetele luate din rândul de antet al foii, coloanele în ordinea lor. Ultimele patru coloane sunt " +
+            "singurele adăugate de noi — ce a înțeles sistemul din rând. " +
+            (info
+              ? "Modelul extrage doar parametri și nu vede niciun preț; liniile sub pragul de încredere sunt marcate <strong>de validat</strong>."
+              : "Aici rulează doar stratul determinist; restul se rezolvă cu modelul, local, cu <code>npm run dev</code>.") +
+            " Orice celulă se corectează pe loc.")}
+          ${foi.length > 1
+            ? `<div class="filtre" role="group" aria-label="Foile din registru">${foi.map((f, i) =>
+                `<button class="filtru" data-foaie="${i}" aria-pressed="${i === 0}">${esc(f.nume)}
+                  <span class="hint">${f.randuri.length}</span></button>`).join("")}</div>`
+            : `<p class="hint">Foaia „${esc(foi[0]?.nume ?? "")}”</p>`}
+          <div id="grila"></div>`;
+
+        const statsEl = $("#stats");
+        const gazda = $("#grila");
+        let activa = 0;
+
+        const deseneaza = (i: number): void => { activa = i; gazda.innerHTML = tabelFoaie(foi[i]!); };
+        deseneaza(0);
+
+        for (const b of root.querySelectorAll<HTMLButtonElement>("button.filtru")) {
+          b.onclick = () => {
+            for (const alt of root.querySelectorAll<HTMLButtonElement>("button.filtru")) {
+              alt.setAttribute("aria-pressed", String(alt === b));
+            }
+            deseneaza(Number(b.dataset["foaie"]));
+          };
+        }
+
+        // Celulele fisierului: corectia se scrie in grila, deci ramane si dupa
+        // ce omul comuta pe alta foaie si se intoarce. Un numar corectat ramane
+        // numar — altfel prima editare a unei cantitati ar transforma-o in text.
+        gazda.addEventListener("input", (e) => {
+          const camp = e.target as HTMLElement;
+          if (!camp.matches("[data-cel]")) return;
+          const rand = foi[activa]?.randuri.find((r) => r.rand === Number(camp.dataset.rand));
+          const celula = rand?.celule[Number(camp.dataset.cel)];
+          if (!celula) return;
+          const nou = camp.textContent ?? "";
+          celula.v = typeof celula.v === "number" && nou.trim() !== "" && !Number.isNaN(Number(nou))
+            ? Number(nou)
+            : nou;
+        });
+
+        // Coloanele extrase schimba ce se poate tarifa: la fiecare corectie se
+        // reface pretul intern si se actualizeaza indicatoarele si eticheta
+        // "de validat" a randului — fara sa se redeseneze tabelul, ca omul sa
+        // nu-si piarda locul in editare.
+        gazda.addEventListener("change", (e) => {
+          const camp = e.target as HTMLInputElement | HTMLSelectElement;
+          const nume = camp.dataset.camp;
+          if (!nume) return;
+          const tr = camp.closest("tr");
+          const l = mapa.get(Number(tr?.dataset.idx));
+          if (!l) return;
+          if (nume === "sistem") l.extras.sistem = camp.value as LinieExtrasa["sistem"];
+          else if (nume === "diametru") l.extras.diametru_valoare = camp.value === "" ? null : Number(camp.value);
+          else if (nume === "grosime") l.extras.grosime_mm = camp.value === "" ? null : Number(camp.value);
+          recalculeaza(l);
+          const marca = tr?.querySelector("[data-marca]");
+          if (marca) marca.innerHTML = l.extras.incredere < prag || l.eroare !== null ? stare("de validat", "atentie") : "";
+          statsEl.innerHTML = randStats();
+        });
       } catch (e) {
         out.innerHTML = `<div class="alerta"><strong>Nu am putut citi fișierul</strong>
           ${esc(e instanceof Error ? e.message : String(e))}<br>

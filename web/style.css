@@ -256,6 +256,53 @@ span.desc { display: inline-block; vertical-align: bottom; }
 td.desc { color: var(--slab); }
 .desc.scurt { max-width: 22ch; }
 .ingust { max-width: 380px; }
+
+/*
+ * Celula de tabel editabila direct (ex. descrierea din raportul de import):
+ * text integral, pe cate randuri e nevoie — nu se trunchiaza niciodata cu "…".
+ */
+/*
+ * `min-width` mic, dinadins: intr-o grila 1:1 coloanele au latimi foarte
+ * diferite — "UM" tine "ml", "Denumire articol" tine opt randuri de text. Cu
+ * un minim generos, cele cinci coloane ale fisierului cereau mai mult decat
+ * latimea ecranului si impingeau coloanele extrase in afara lui. Ramane doar
+ * cat sa poti tinti celula goala cu mouse-ul; latimea o da continutul.
+ */
+.camp {
+  min-width: 3ch; max-width: 60ch; white-space: normal; line-height: 1.5;
+  padding: 5px 7px; margin: -5px -7px; border-radius: 6px; border: 1px solid transparent;
+}
+.camp:hover { border-color: var(--linie-tare); }
+.camp:focus { outline: none; border-color: var(--accent); background: var(--panou-2); }
+
+/* Controale intr-un tabel: mai mici decat cele dintr-un formular. */
+.tabelwrap input, .tabelwrap select { width: auto; min-height: 32px; padding: 4px 8px; margin: 0; font-size: 13.5px; }
+.tabelwrap input[type="number"] { width: 7ch; text-align: right; }
+.tabelwrap select { min-width: 13ch; }
+
+/*
+ * Grila 1:1 a unui registru Excel.
+ *
+ * Gutter-ul cu numarul randului si literele de coloana sunt ale Excel-ului,
+ * nu ale noastre: tin legatura dintre ce se vede pe ecran si ce vede omul cand
+ * deschide fisierul. De-aia sunt gri si inguste — se citesc cand le cauti,
+ * nu concureaza cu datele.
+ */
+.gutter {
+  width: 1%; white-space: nowrap; text-align: right; padding-right: 14px;
+  color: var(--slab); font-variant-numeric: tabular-nums; font-size: 12.5px;
+  background: var(--panou-2);
+}
+th.litera { color: var(--slab); font-weight: 500; }
+
+/*
+ * Coloanele adaugate de noi, dupa cele ale fisierului. Bordura din stanga e
+ * granita: la stanga ei e fisierul clientului, la dreapta ce a inteles
+ * sistemul. Fara ea, cele doua se citesc ca un singur tabel si nu se mai vede
+ * ce a venit si ce s-a dedus.
+ */
+.extras { background: var(--panou-2); }
+th.extras:first-of-type, td.extras:first-of-type { border-left: 2px solid var(--linie-tare); }
 code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.92em; background: var(--panou-2); padding: 1px 5px; border-radius: 4px; }
 a { color: var(--accent); }
 
