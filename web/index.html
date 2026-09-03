@@ -11,14 +11,21 @@
     try {
       const t = localStorage.getItem("izorep-tema");
       if (t === "dark" || t === "light") document.documentElement.dataset.tema = t;
-    } catch { /* localStorage blocat: ramane tema sistemului */ }
+      // Acelasi motiv pentru bara laterala: pusa in main.ts, bara ar aparea
+      // intinsa si s-ar plia sub ochii omului la fiecare incarcare.
+      document.documentElement.dataset.meniu =
+        localStorage.getItem("izorep-meniu") === "pliat" ? "pliat" : "extins";
+    } catch { /* localStorage blocat: ramane tema sistemului, bara extinsa */ }
   </script>
 </head>
 <body>
   <button class="sari" id="sari">Sari la conținut</button>
 
   <div class="aplicatie">
-    <aside>
+    <!-- Pe ecran ingust bara e sertar peste continut: fundalul o inchide. -->
+    <div class="fundal-sertar" id="fundal-sertar" hidden></div>
+
+    <aside id="bara">
       <div class="marca">
         <strong>IzoERP</strong>
         <span>RADOIA ISOLIRUNG SRL</span>
@@ -36,6 +43,9 @@
 
     <div class="continut">
       <header>
+        <button type="button" class="pliaza" id="pliaza" aria-controls="bara" aria-expanded="true">
+          <span class="doar-citit" id="pliaza-eticheta">Ascunde meniul</span>
+        </button>
         <span class="demo">DEMO · date reale din fișierele firmei</span>
         <span id="curs" class="curs"></span>
       </header>

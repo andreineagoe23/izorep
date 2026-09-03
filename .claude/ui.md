@@ -9,8 +9,10 @@ Aplicație pe ecrane, fără framework. Vite + TypeScript, rutare pe hash
 
 ```
 web/index.html        shell: bară laterală + zonă de conținut
-web/main.ts           router, meniu, comutator de rol
+web/main.ts           router, meniu, bară laterală, comutator de temă și de rol
 web/nav.ts            definiția meniului, modulele viitoare și rolurile
+web/meniu-stare.ts    preferința de bară pliată (localStorage, best-effort)
+web/icoane.ts         pictogramele meniului, pentru bara pliată
 web/style.css         tot CSS-ul. Ecranele NU adaugă clase noi.
 web/date/seed.ts      datele demo-ului
 web/ecrane/tip.ts     contractul de ecran + helperele de randare
@@ -36,6 +38,23 @@ lor și nu manipulează meniul.
 
 Ecran nou: creezi fișierul în `web/ecrane/`, îl adaugi în `ECRANE` din `main.ts`
 și pui itemul în `MENIU` din `nav.ts`.
+
+## Poziția în pagină
+
+La fiecare navigare, `navigheaza` derulează sus. Rutarea e pe hash, deci nu
+există navigare reală care să miște scroll-ul: fără asta treci de pe lista de
+lucrări derulată la jumătate pe tabloul de bord și aterizezi în mijlocul lui.
+
+La refresh, browserul restaurează singur poziția, iar aici e greșit de două ori:
+ecranul se redesenează de la zero, deci poziția veche nu mai corespunde
+aceluiași conținut, și unele ecrane își randează conținutul după un `await`,
+când restaurarea deja s-a întâmplat. De aceea `history.scrollRestoration` e pus
+pe `"manual"` și treaba o face routerul.
+
+Costul, asumat: și butonul de înapoi aduce sus, nu unde erai.
+
+Focusul pe `#ecran` se mută cu `preventScroll: true` — altfel focusarea trage
+pagina înapoi peste derularea de mai sus.
 
 ## Randare
 
@@ -112,6 +131,51 @@ sunt **același obiect** în stadii diferite ale aceluiași flux — cerere → 
 → contract (cu oferta ca anexă) → situație de lucrări. Două ecrane ascundeau
 exact lanțul care trebuie văzut. Rutele vechi `#/cereri` și `#/oferte` sunt
 redirectate în `ALIAS` din `main.ts`.
+
+### Pliere și sertar
+
+Un singur buton, în bara de sus (`#pliaza`), pentru două comportamente — pentru
+că sunt aceeași intenție, „dă meniul la o parte":
+
+- **peste 860px** bara se pliază la o bandă de 68px cu doar pictogramele, iar
+  eticheta devine tooltip lângă item. Preferința se ține în `localStorage` sub
+  `izorep-meniu` și se aplică dintr-un script inline în `<head>`, ca și tema:
+  altfel bara ar apărea întinsă și s-ar plia sub ochii omului la fiecare
+  încărcare. Comutatorul de temă și cel de rol dispar cât timp e pliată — nu
+  încap în bandă și nu sunt navigație.
+- **sub 860px** bara nu se pliază, ci glisează peste conținut ca sertar, cu
+  fundal care o închide. Starea sertarului **nu** se reține: un sertar deschis
+  la fiecare încărcare ar acoperi exact ecranul pentru care a venit omul.
+  Închis, bara e și `visibility: hidden`, altfel linkurile ei rămân în ordinea
+  de tabulare și focusul pleacă într-un panou din afara ecranului.
+
+Varianta anterioară de mobil întindea meniul sub antet, ca un rând de chip-uri:
+șapte destinații plus modulele viitoare împingeau conținutul în jos la fiecare
+încărcare.
+
+Sertarul se închide la navigare, la `Escape`, la click pe fundal și la click pe
+un item — inclusiv pe ecranul curent, care nu schimbă hash-ul și deci nu trece
+prin router. Focusul intră pe primul link la deschidere și se întoarce pe buton
+la închidere.
+
+Pictogramele (`web/icoane.ts`) există pentru bara pliată: fără etichetă, un item
+trebuie să rămână recognoscibil. Sunt contur pe `currentColor`, `aria-hidden` —
+eticheta o citește cititorul de ecran, nu desenul.
+
+**Tooltipul e aceeași etichetă, mutată** — nu un al doilea element și nu
+atributul `title`. Ascunsă cu `display: none`, eticheta ar dispărea și din
+numele accesibil al linkului, iar pe bandă ar rămâne șapte linkuri fără nume;
+`opacity` o scoate din ochi fără s-o scoată din arborele de accesibilitate.
+`title` nativ ar veni după ~1s, n-ar apărea la navigarea cu tastatura și nu se
+poate stiliza pe bara închisă la culoare — tooltipul CSS apare și pe
+`:focus-visible`.
+
+Cât e pliată, `#meniu` trece pe `overflow: visible`: `auto` ar tăia tooltipul la
+68px. Banda ține cele șapte destinații fără derulare, deci nu se pierde nimic.
+
+Logica de preferință stă în `web/meniu-stare.ts`, cu depozit injectabil, ca să
+fie testabilă în Node (`tests/meniu-stare.test.ts`). Ca la orice depozit din
+browser, e best-effort: blocat, preferința se pierde, meniul merge.
 
 ## Rolul activ
 

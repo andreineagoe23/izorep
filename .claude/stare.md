@@ -64,7 +64,8 @@ redeschiderea unui import vechi **nu cheamă modelul din nou**. Detaliile în
 **Aplicația** (`web/`) — 7 ecrane: tablou de bord, lucrări, cereri și oferte,
 calcul deviz, import Excel, clienți, liste de prețuri. Datele sunt reale,
 extrase din fișierele firmei. Paleta și tipografia respectă WCAG AA; detaliile
-în `ui.md`.
+în `ui.md`. Bara laterală se pliază la o bandă de pictograme pe ecran larg
+(preferință reținută) și glisează ca sertar pe ecran îngust.
 
 **Baza de date** (`src/db/`) — Postgres 18 local în Docker, Drizzle, migrări
 commit-uite. Izolarea între tenanți e impusă de bază prin row-level security,
@@ -249,7 +250,7 @@ de contract, stoc și facturare.
 ## Comenzi
 
 ```bash
-npm test                                       # 228 teste (motor, import, baza)
+npm test                                       # 234 teste (motor, import, baza)
 npm run typecheck
 npm run dev                                    # UI local, /izorep/
 npm run import -- ../attachments/Radoia.xlsx   # pipeline complet
