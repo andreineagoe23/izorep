@@ -122,11 +122,38 @@ Ecranele care afișează bani trebuie să îl respecte.
 În aplicația reală asta se verifică pe server; aici e doar demonstrația
 modelului de permisiuni.
 
+## Istoricul importurilor
+
+Ecranul de import ține ultimele 10 importuri în **IndexedDB**, nu în
+`localStorage`: acolo intră ~5 MB de text, iar un registru de la client are sute
+de kB binari.
+
+Se salvează **fișierul**, plus extragerile și corecțiile omului. **Nu grila**:
+aceeași parsare pe aceiași bytes dă aceleași rânduri, deci grila se reface la
+deschidere. Două consecințe care contează:
+
+- reîncărcarea paginii nu pierde munca — importul curent se redeschide singur,
+  și rămâne până când se încarcă alt fișier sau se șterge din istoric;
+- redeschiderea unui import vechi **nu cheamă modelul din nou**, deci nu costă
+  tokeni și nu poate da alt rezultat decât cel pe care l-a validat omul.
+
+Corecțiile de celule se rețin separat de grilă (`foaie`, `rând`, `celulă`,
+valoare) — altfel s-ar pierde odată cu grila refăcută. Salvarea e amânată cu
+400 ms: `input` vine la fiecare tastă.
+
+Tot ce ține de depozit e best-effort. În fereastră privată sau cu stocarea
+blocată, fiecare apel eșuează tăcut și ecranul se poartă ca înainte. Istoricul e
+o comoditate; documentele adevărate vor sta în bază.
+
 ## Ce rulează în browser și ce nu
 
 Motorul de prețuri și extragerea deterministă rulează integral în browser:
 listele de prețuri sunt importate static, iar parsarea Excel are o variantă
 care pornește de la conținutul fișierului. Același cod rulează în teste.
+
+Ecranul spune **cu ce model** lucrează — în bara de stare de sus și în textul de
+progres, cât timp extrage. Nu e cosmetic: e singurul loc din aplicație unde
+datele clientului pleacă la un terț, iar omul trebuie să vadă asta fără să caute.
 
 Stratul cu model **nu** rulează în browser, dar ecranul de import îl folosește
 când e disponibil: `scripts/vite-plugin-model.ts` expune `POST /api/extrage`

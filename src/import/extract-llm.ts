@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { JSON_SCHEMA, RaspunsModel, type LinieExtrasa } from "./schema.js";
+import { aplicaValidarea } from "./valideaza.js";
 
 /**
  * Stratul de completare cu model, pentru liniile pe care regex-ul nu le rezolva.
@@ -10,6 +11,9 @@ import { JSON_SCHEMA, RaspunsModel, type LinieExtrasa } from "./schema.js";
  *   - primeste DOAR liniile reziduale, nu tot fisierul.
  *   - NU vede si NU calculeaza preturi. Extrage parametri, atat.
  *     Tarifarea e in src/pricing/, determinista si testata.
+ *   - ce iese trece prin `aplicaValidarea` INAINTE sa plece de aici. Locul e
+ *     ales: e singurul punct prin care trec toate caile — CLI, ruta din vite,
+ *     scriptul de comparare — deci nu poate fi sarit dintr-un apelant nou.
  */
 const SYSTEM_PROMPT = `Esti un asistent care extrage parametri tehnici din linii de deviz pentru lucrari de IZOLATII TERMICE, in limba romana, engleza sau germana.
 
@@ -58,6 +62,16 @@ MOTIV: o propozitie scurta in romana, ce ai dedus si de ce.
 
 Nu inventa valori. Daca un camp nu apare in text, pune null.`;
 
+/**
+ * Snapshot DATAT, nu aliasul `gpt-4.1`.
+ *
+ * Aliasul e mutat de OpenAI pe alt snapshot fara sa se schimbe nimic in repo:
+ * acelasi fisier, acelasi cod, alt rezultat, si nicio urma in `git log`. La un
+ * import care produce oferte trimise clientilor, aia e o schimbare de pret
+ * fara autor. Snapshot-ul se schimba printr-un commit, dupa `npm run compara`.
+ */
+export const MODEL_IMPLICIT = "gpt-4.1-2025-04-14";
+
 export interface OptiuniModel {
   apiKey?: string;
   model?: string;
@@ -96,22 +110,44 @@ export class LimitaDeRata extends Error {
   }
 }
 
+/**
+ * Clientul si modelul, dintr-un singur loc.
+ *
+ * Exista ca sa nu se configureze de doua ori: maparea de coloane (L1) foloseste
+ * acelasi cont, acelasi snapshot si aceleasi reincercari ca extragerea. Doua
+ * configurari separate ar insemna ca o schimbare de model se aplica pe jumatate.
+ */
+export function clientSiModel(optiuni: OptiuniModel = {}): { client: OpenAI; model: string } {
+  const apiKey = optiuni.apiKey ?? process.env["OPENAI_API_KEY"];
+  if (!apiKey) throw new Error("OPENAI_API_KEY lipseste. Copiaza .env.example in .env.");
+  return {
+    // 90s per apel: un lot blocat nu are voie sa tina importul la nesfarsit.
+    //
+    // maxRetries e EXPLICIT, nu lasat pe implicitul SDK-ului: la 429 clientul
+    // reincearca cu backoff in loc sa piarda lotul.
+    client: new OpenAI({ apiKey, timeout: 90_000, maxRetries: 4 }),
+    model: optiuni.model ?? process.env["OPENAI_MODEL"] ?? MODEL_IMPLICIT,
+  };
+}
+
+/** Traduce 429-ul in ceva ce spune ce ai de facut. */
+export async function cuLimitaDeRata<T>(f: () => Promise<T>): Promise<T> {
+  try {
+    return await f();
+  } catch (e) {
+    const m = e instanceof Error ? e.message : String(e);
+    if (/429|rate limit|quota/i.test(m)) throw new LimitaDeRata(m.slice(0, 200));
+    throw e;
+  }
+}
+
 export async function extrageCuModel(
   linii: { index: number; text: string; um?: string }[],
   optiuni: OptiuniModel = {},
 ): Promise<LinieExtrasa[]> {
   if (linii.length === 0) return [];
 
-  const apiKey = optiuni.apiKey ?? process.env["OPENAI_API_KEY"];
-  if (!apiKey) throw new Error("OPENAI_API_KEY lipseste. Copiaza .env.example in .env.");
-
-  // 90s per apel: un lot blocat nu are voie sa tina importul la nesfarsit.
-  //
-  // maxRetries e EXPLICIT, nu lasat pe implicitul SDK-ului: la 429 clientul
-  // reincearca cu backoff in loc sa piarda lotul. Pe un cont cu limite mici,
-  // patru loturi in paralel ating limita usor, iar fara reincercare fiecare
-  // lot cazut inseamna linii ramase netarifate degeaba.
-  const client = new OpenAI({ apiKey, timeout: 90_000, maxRetries: 4 });
+  const { client, model } = clientSiModel(optiuni);
   // gpt-4.1, nu gpt-4o. Pe contul firmei gpt-4o are 90.000 de tokeni pe zi,
   // adica doua fisiere ca Radoia.xlsx; gpt-4.1 are 900.000, la aceeasi limita
   // pe minut. Masurat pe doua fisiere reale, nicio diferenta de calitate.
@@ -125,7 +161,7 @@ export async function extrageCuModel(
   // altul a citit "Di60" ca 76 — diametru gresit inseamna rand gresit in
   // matrice, deci pret gresit. Se poate trece pe el, dar dupa ce
   // `npm run compara` da zero diferente cu impact pe mai multe fisiere.
-  const model = optiuni.model ?? process.env["OPENAI_MODEL"] ?? "gpt-4.1";
+  //
   // Lotul implicit e 25, nu 12, si motivul e bugetul de tokeni pe ZI.
   //
   // Fiecare apel cara ~1.177 tokeni ficsi — system prompt (~735) plus schema
@@ -143,23 +179,12 @@ export async function extrageCuModel(
   const loturi: (typeof linii)[] = [];
   for (let i = 0; i < linii.length; i += lot) loturi.push(linii.slice(i, i + lot));
 
-  /** Traduce 429-ul in ceva ce spune ce ai de facut. */
-  async function cerere<T>(f: () => Promise<T>): Promise<T> {
-    try {
-      return await f();
-    } catch (e) {
-      const m = e instanceof Error ? e.message : String(e);
-      if (/429|rate limit|quota/i.test(m)) throw new LimitaDeRata(m.slice(0, 200));
-      throw e;
-    }
-  }
-
   async function proceseaza(bucata: typeof linii): Promise<LinieExtrasa[]> {
     const payload = bucata
       .map((l) => `[${l.index}]${l.um ? ` (UM: ${l.um})` : ""} ${l.text.replace(/\s+/g, " ").slice(0, 900)}`)
       .join("\n");
 
-    const raspuns = await cerere(() => client.chat.completions.create({
+    const raspuns = await cuLimitaDeRata(() => client.chat.completions.create({
       model,
       temperature: 0,
       messages: [
@@ -171,8 +196,11 @@ export async function extrageCuModel(
 
     const continut = raspuns.choices[0]?.message.content;
     if (!continut) throw new Error("model fara continut in raspuns");
-    // Validarea nu e optionala: ce nu trece de schema nu ajunge in aplicatie.
-    return RaspunsModel.parse(JSON.parse(continut)).linii;
+    // Doua validari, nu una. Zod verifica forma raspunsului; `aplicaValidarea`
+    // verifica sensul lui fata de textul sursa — numere inventate, DN care nu
+    // exista, grosimi pe care firma nu le oferteaza. Vezi valideaza.ts.
+    const linii = RaspunsModel.parse(JSON.parse(continut)).linii;
+    return aplicaValidarea(linii, new Map(bucata.map((l) => [l.index, l])));
   }
 
   // Rezultatele se aseaza pe pozitia lotului, nu in ordinea in care se intorc:

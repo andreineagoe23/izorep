@@ -306,6 +306,26 @@ th.extras:first-of-type, td.extras:first-of-type { border-left: 2px solid var(--
 code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.92em; background: var(--panou-2); padding: 1px 5px; border-radius: 4px; }
 a { color: var(--accent); }
 
+/*
+ * Buton care arata ca un link.
+ *
+ * E buton, nu <a>: nu duce nicaieri, executa o actiune in pagina. Un <a href="#">
+ * ar promite o destinatie si ar strica navigarea inapoi. Culoarea e accentul,
+ * singura culoare de "clicabil" din paleta.
+ */
+.ca-link {
+  padding: 0; border: 0; background: none; font: inherit; color: var(--accent);
+  text-align: left; cursor: pointer; text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.ca-link:hover { text-decoration-thickness: 2px; }
+
+/* Titlu de sectiune in interiorul unui ecran, sub titlul dat de router. */
+h2.sectiune { margin: 26px 0 10px; font-size: 15px; font-weight: 600; color: var(--text); }
+
+/* Randul importului deschis acum: se marcheaza si prin eticheta, nu doar prin fundal. */
+tbody tr.curent { background: var(--accent-slab); }
+
 /* --------------------------------------------------------- formulare */
 label { display: block; margin-bottom: 13px; font-size: 14px; color: var(--text); }
 input, select {

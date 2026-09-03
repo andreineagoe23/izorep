@@ -25,16 +25,82 @@ clientului.
 ```
 L0  parse-workbook.ts   parsare fizică. Zero interpretare.
 L0b sectiuni.ts         contextul de secțiune (antetul de deasupra rândului)
-L1  (nescris)           mapare de coloane, o dată per client, apoi din cache
+L1  mapare.ts           roluri de coloană, un apel per layout, apoi din cache
+L4  memorie.ts          șabloane învățate din corecțiile omului. Zero apeluri.
 L2a extract-regex.ts    determinist. ~55% din linii.
+L2a' sabloane.ts        deduplicare pe șablon: −54% linii trimise la model
 L2b extract-llm.ts      model, DOAR pe reziduu. Structured outputs, temp 0.
 L3  ../pricing/         tarifare deterministă
-L4  (nescris)           ecran de validare + salvarea corecțiilor ca mapping
 ```
 
+Ordinea de rulare nu e ordinea numerelor: memoria (L4) stă **înaintea**
+modelului, fiindcă e mai ieftină și deterministă. Fiecare strat lasă mai
+departe ce nu rezolvă, deci niciunul nu poate scădea acoperirea — doar costul.
+
 **L4 e piesa care rezolvă de fapt „nu există template comun".** Nu ai nevoie de
-format comun, ai nevoie de memorie per client. Primul proiect de la un client
-nou: ~60% automat. Al doilea, cu șabloanele deja mapate: 90–95%.
+format comun, ai nevoie de memorie per client. Cifra „90–95% la al doilea
+proiect" rămâne **neverificată** — fișierele primite vin de la clienți diferiți.
+Vezi `plan-l1-l4.md`.
+
+## L1 — rolurile coloanelor
+
+Rândul de antet nu era citit deloc. Cantitatea se ghicea: *„primul număr lipit
+de unitatea de măsură"*. Măsurat pe oferta semnată, euristica aia dădea
+**0 din 56 de cantități corecte** — citea prețul unitar (5,99) în loc de
+cantitate (187 ml). Cu maparea: **56 din 56**. Testul stă în `tests/mapare.test.ts`,
+pe o foaie reală salvată ca fixtură.
+
+```bash
+npm run mapare -- ../attachments/Radoia.xlsx   # înregistrează
+npm run mapare -- --lista                      # ce e în cache
+```
+
+- **Un apel per LAYOUT**, nu per foaie: amprenta e antetul normalizat plus
+  lățimea. `Radoia.xlsx` are 7 foi cu același antet — un apel. Al doilea fișier
+  cu același layout — zero.
+- **Modelul propune, `valideazaMapare` decide.** Verificarea nu se uită la
+  etichete, ci la conținutul coloanelor pe rândurile de date: `cantitate` să fie
+  majoritar numerică, `um` majoritar tokeni de unitate, `denumire` majoritar
+  text, rolurile unice să fie unice. Pe cele 8 fișiere: **8 mapări acceptate,
+  2 respinse** — `Izolatii Transavia` (pivot pe zone, modelul a dat `cantitate`
+  pe 3 coloane) și `Anexa 1` (sub-antete repetate în date). Amândouă corect
+  respinse; acolo rămâne euristica de azi.
+- Textul liniei devine **denumire + denumire_alt + dimensiune + observații**,
+  nu concatenarea tuturor celulelor. Nu doar denumirea: prima variantă lăsa
+  `Oferta Matari` cu 0 poziții din 53 (dimensiunea golului e coloană separată)
+  și `Book15` cu 2 din 5 (fișierul are descrierea de două ori, engleză și
+  română, iar „vată minerală" apare doar în coloana română — de aceea există
+  rolul `denumire_alt`).
+- Fără mapare în cache nu se schimbă nimic. `IZOREP_FARA_MAPARE=1` o dezactivează,
+  pentru măsurători A/B.
+
+Verificat pe toate fișierele, cu și fără mapare: **aceleași poziții, aceleași
+prețuri unitare**, cantități corecte. Singura diferență de valoare totală vine
+din cantitățile reparate.
+
+## L4 — memoria de șabloane
+
+Ce a corectat omul o dată nu se mai întreabă. Același mecanism ca deduplicarea,
+dar peste importuri: se memorează **rolul și harta sloturilor**, iar numerele se
+recitesc din fiecare linie nouă.
+
+Se învață **doar de la om**, la corecția din ecranul de import. Dacă ar intra și
+ce zice modelul, o extragere greșită s-ar propaga tăcut peste toate proiectele
+următoare. Se învață doar pozițiile complete: un șablon cu jumătate de rol arată
+că știe și dă valori pe jumătate.
+
+Depozitul e o interfață (`StocSabloane`) cu două implementări — fișier
+(`data/sabloane.json`, pentru CLI) și `localStorage` (demo). Când apare serverul,
+a treia e o tabelă per tenant: o corecție a unui coleg trebuie să ajute pe toată
+lumea.
+
+Ce decide dacă se învață stă în `invataDinCorectie`, nu în ecran: în ecran ar fi
+fost câteva linii într-un handler de `change`, adică exact codul pe care nu-l
+acoperă nimic. Ecranul rămâne cu un singur apel.
+
+**Netestat automat:** interacțiunea din browser — încărcarea fișierului,
+editarea celulei, reimportul. Nu există driver de browser în proiect. Verificat
+manual că modulele se încarcă în `vite dev` și că build-ul static trece.
 
 ## Contextul de secțiune
 
@@ -93,6 +159,128 @@ loopback și plafonează la 400 de linii per import.
 - primește doar liniile reziduale, în loturi de 12, câte 4 loturi în paralel
 - **nu vede și nu calculează prețuri**
 - scor de încredere pe linie; sub prag → validare umană obligatorie
+- ieșirea trece prin `valideaza.ts` înainte să plece din `extrageCuModel`
+
+## Deduplicarea pe șablon
+
+Liniile reziduale se repetă masiv **în același fișier**, înainte de orice
+memorie între proiecte. Măsurat pe cele 9 fișiere de client: **697 de linii
+reziduale → 321 de șabloane, −54%**. Pe `Izolatii Transavia` −72%, pe
+`Book15` −67%.
+
+Șablonul e textul normalizat cu numerele scoase, iar numerele rămân separat, pe
+poziții („sloturi"):
+
+```
+"…inox 304 Di89, g50 - COT"
+  tipar  "…inox # di#, g# - cot"
+  numere [304, 89, 50]
+```
+
+Se trimite la model **un reprezentant per șablon**. Rolul lui — sistem, tip de
+diametru, formă — se duce pe restul grupului; **valorile se recitesc din
+sloturile fiecărei linii**. Un cache care ar copia și valorile ar tarifa `Di60`
+cu prețul lui `Di89`.
+
+Regula pe care se sprijină: rolul e stabil pe șablon. Măsurat pe cele 64 de
+șabloane care apar de cel puțin două ori (302 linii), tripleta e identică între
+instanțe în **100%** din cazuri.
+
+**Când nu e sigur, nu se face.** Se refuză proiecția dacă valoarea întoarsă de
+model nu apare printre numerele liniei (a dedus-o — `DN50` din `2''` — sau a
+inventat-o), sau dacă sloturile care aveau aceeași valoare la reprezentant ajung
+să difere pe linia țintă. Liniile astea pleacă la model într-o a doua trecere,
+deci acoperirea nu scade — doar costul.
+
+Verificat pe golden files, unde există răspunsul modelului pentru **fiecare**
+linie: 27 de linii proiectate, 27 identice cu ce răspunsese modelul pentru ele.
+Testul rulează în CI (`tests/golden.test.ts`).
+
+Liniile venite pe drumul ăsta au `sursa: "sablon"` și trec prin aceleași
+verificări de plauzibilitate ca cele din model — numerele lor vin din alt text
+decât cel citit de model.
+
+## Guardrails pe ieșirea modelului
+
+Zod validează **forma** răspunsului. Nu validează **sensul** lui:
+`diametru_valoare: 76` trece perfect și când în linie scria `Di60` — exact ce a
+făcut `gpt-4.1-mini` pe `Izolatii Transavia.xlsx`, cu încredere raportată 0,95.
+Alt diametru înseamnă alt rând în matrice, deci alt preț, fără nimic care să se
+aprindă.
+
+`src/import/valideaza.ts` e stratul care se aprinde. Determinist, pur, testat:
+
+| Cod | Ce prinde |
+|---|---|
+| `diametru_necitat` | numărul nu apare în textul sursă |
+| `grosime_necitata` | idem, pe grosimi (inclusiv straturile suplimentare) |
+| `gol_necitat` | idem, pe dimensiunile golului |
+| `dn_necunoscut` | DN care nu există în tabelul de conversie |
+| `grosime_in_afara_listei` | grosime pe care sistemul ăla nu o are ofertată |
+| `forma_contrazice_um` | `forma: "ml"` pe un rând cu UM `buc` |
+
+Regula de citare vine din promptul propriu al stratului: *„nu inventa valori,
+dacă un câmp nu apare în text pune null"*. Aici doar se verifică dacă a
+respectat-o. O regulă scrisă în prompt e o rugăminte; una scrisă aici e o
+verificare cu test.
+
+**Conversiile legitime nu se raportează.** `Dn 2''` e o citare corectă a lui
+DN50 deși cifra 50 nu apare nicăieri, iar `Rohr 88,9` e DN80. Validatorul
+cunoaște tabelul de toli și pe cel ISO din `.claude/tevi.md`, tocmai ca să tacă
+acolo. Un avertisment care se aprinde mereu nu mai e citit de nimeni.
+
+Efectul unui avertisment: `incredere = 0`, motivul se scrie pe linie, poziția
+merge obligatoriu la validare umană. Prețul **nu** se șterge — omul vede și
+propunerea, și motivul pentru care nu e de încredere.
+
+Aplicarea stă în `extrageCuModel`, nu în pipeline: e singurul punct prin care
+trec toate căile — CLI, ruta din `vite`, scriptul de comparare — deci un
+apelant nou nu are cum să o sară. Pipeline-ul recalculează aceleași reguli
+pentru forma structurată din raport; funcția e pură, a doua trecere nu costă.
+
+**Ce nu prinde:** confuzia între două valori care apar amândouă în text. Aia
+rămâne treaba omului de la validare.
+
+### Liniile pe care modelul nu le întoarce
+
+Contractul e „câte un obiect per linie, cu același index". Modelul îl încalcă
+în tăcere: pe `Oferta 27.04.2026.xlsx`, 43 de linii trimise, **35 întoarse**.
+Liniile lipsă nu apăreau nicăieri în raport — nici ca poziții, nici ca erori —
+deci un fișier ciuntit arăta exact ca un fișier cu mai puține poziții.
+`RaportImport.modelFaraRaspuns` le numără.
+
+## Golden files: deriva modelului
+
+`OPENAI_MODEL` arată spre ceva care se poate schimba sub noi. Aliasul `gpt-4.1`
+e mutat de OpenAI pe alt snapshot fără să se schimbe nimic în repo: același
+fișier de la client, alte poziții, alte prețuri, zero urme în `git log`. De aceea
+implicitul din cod e **snapshot datat** (`MODEL_IMPLICIT`), iar `.env.example`
+la fel.
+
+Pinul singur nu ajunge — cineva tot schimbă snapshot-ul cândva. Golden files
+sunt măsurătoarea față de care se compară:
+
+```bash
+npm run golden -- ../attachments/Izolatii\ Transavia.xlsx   # înregistrează
+npm run golden -- --verifica                                # caută deriva
+```
+
+Fișierul înregistrat (`tests/golden/*.json`) ține textul liniilor, ce a răspuns
+modelul, avertismentele și prețurile rezultate. Servește la două lucruri
+diferite:
+
+- **`tests/golden.test.ts`** rejoacă **offline** partea deterministă — validare
+  + tarifare — peste ieșirea înregistrată. Rulează în CI, fără cheie și fără
+  rețea. Pică atunci când o schimbare de-a *noastră* mută prețurile pe linii
+  reale. `pricing.test.ts` acoperă pozițiile din ofertele semnate; asta acoperă
+  drumul complet, cu tot cu ce înțelege modelul din text.
+- **`--verifica`** re-cheamă modelul pe aceleași texte și compară câmpurile care
+  intră în tarifare. Costă tokeni, se rulează manual, și e singurul lucru care
+  poate spune „modelul răspunde altfel decât luna trecută". Nu spune cine are
+  dreptate — spune unde diferă.
+
+Se înregistrează doar textele și parametrii extrași. Prețurile firmei nu trec
+niciodată prin model, deci nu au ce căuta nici în golden files.
 
 ## Bugetul de tokeni
 
@@ -119,7 +307,8 @@ distinge, ca să nu tragi în direcția greșită.
 
 ### Alegerea modelului
 
-Implicit: **`gpt-4.1`**. Atenție: `OPENAI_MODEL` din `.env` **bate** implicitul
+Implicit: **`gpt-4.1-2025-04-14`** — snapshot datat, nu aliasul `gpt-4.1`.
+Atenție: `OPENAI_MODEL` din `.env` **bate** implicitul
 din cod, iar `.env` e gitignorat — un commit care schimbă implicitul nu atinge
 fișierul nimănui. Verifici cu ce rulezi de fapt în antetul `npm run import` sau
 în linia „Stratul cu model" de la `npm run dev`. Nu `gpt-4o` — pe contul firmei acela are 90.000 tokeni
@@ -171,6 +360,39 @@ Un lot căzut nu invalidează importul: restul liniilor rămân, iar raportul sp
 câte loturi au eșuat. Clientul are `maxRetries: 4`, deci un 429 se reia cu
 backoff înainte să devină `LimitaDeRata`.
 
+## Notele de la finalul ofertei
+
+Fiecare ofertă se termină cu note, semnături și titluri. Textul lor conține
+exact cuvintele după care se recunoaște sistemul:
+
+```
+"Preturile se refera la inchideri goluri la foc EI60 si EI90 pentru conducte metalice"
+"In pretul inchiderilor golurilor la foc nu sunt incluse colierele si banda wrap"
+"1. Izolatii conducte PPR cu Armaflex gr. 9 mm - manopera :"
+```
+
+Toate trei ieșeau `goluri_foc` sau `elastomer`, intrau în raport ca poziții
+netarifate și plecau la model degeaba.
+
+Regula: **un rând fără unitate de măsură ȘI fără cantitate nu e poziție.**
+Semnalul e fizic, nu semantic — cuvintele dintr-o notă sunt aceleași cu ale unei
+poziții, măsura nu e. Măsurat pe cele 9 fișiere de client: scoate **35 de
+rânduri, dintre care 0 erau tarifate**.
+
+| Fișier | Poziții înainte | După | Tarifate |
+|---|---|---|---|
+| `Oferta pret inchideri goluri la foc` | 55 | 0 | 0 → 0 |
+| `Anexa 1 la contract` | 5 | 0 | 0 → 0 |
+| `Oferta Matari` | 73 | 65 | 53 → 53 |
+| `Oferta 27.04.2026` | 59 | 58 | 30 → 30 |
+| `Book15` | 9 | 7 | 1 → 1 |
+| **total** | **513** | **441** | **261 → 261** |
+
+Rândurile nu dispar din fișier: rămân în grilă și rămân antete de secțiune. Se
+opresc doar din a fi poziții, și se numără (`faraMasura` în raport, „note și
+titluri" pe ecran) — ca să se vadă dacă într-un fișier nou începe să cadă ceva
+real acolo.
+
 ## Capcane găsite în fișierele reale
 
 - **`Book15.xlsx`** — rânduri de continuare `"Same - Ø125 mm"` care moștenesc
@@ -187,6 +409,13 @@ backoff înainte să devină `LimitaDeRata`.
   rânduri de acolo intrau ca închideri de gol, iar dimensiunea tubulaturii
   rectangulare (`1000/500`) era citită drept dimensiune de gol. Semnalul cere
   noțiunea de **gol** sau de **trecere prin perete**.
+- **`Oferta 27.04.2026`, tubulatură SPIRO** — „Wickelfalzrohr starr SPIRO
+  DN 160". Clientul scrie `DN`, dar la spiro nominalul *este* diametrul
+  exterior, iar 160 și 315 nu există în seria de oțel, deci poziția iese cu
+  „DN160 nu există în tabelul de conversie". Citită ca diametru exterior s-ar
+  tarifa la 14,37 €/ml, dar oferta semnată are 14,16. **Lăsată marcată
+  intenționat** până răspunde firma (întrebarea 10): un preț greșit tăcut e mai
+  scump decât o poziție marcată.
 - **Oferta 118** — ligaturi stricate (`sinte␣c`): textul e copiat dintr-un PDF.
 - **Cantitatea** — primul număr de pe rând e aproape întotdeauna *numărul curent*
   al poziției, nu cantitatea. Euristica actuală o caută lângă unitatea de măsură;

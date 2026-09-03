@@ -1,0 +1,30 @@
+{
+  "amprenta": "16::nr. articol|descriere articol|model de referinta|unitate de masura|cantitate / unitate|nr. unitati|cantitate total|pret unitar [eur]|total [eur]|",
+  "fisier": "Lista de cantitati Flower City_F4.xlsx",
+  "foaie": "ITV-Casa A+B",
+  "model": "gpt-4.1-2025-04-14",
+  "generat": "2026-09-03T16:51:15.859Z",
+  "mapare": {
+    "rand_antet": 2,
+    "rand_start": 7,
+    "roluri": [
+      "nr",
+      "denumire",
+      "ignora",
+      "um",
+      "cantitate_unitara",
+      "nr_unitati",
+      "cantitate",
+      "pret_unitar",
+      "pret_total",
+      "ignora",
+      "ignora",
+      "ignora",
+      "ignora",
+      "ignora",
+      "ignora",
+      "ignora"
+    ],
+    "motiv": "Randul 2 contine capetele de coloana relevante, iar datele incep de la randul 7. Coloanele sunt mapate dupa antet si structura randurilor de date."
+  }
+}

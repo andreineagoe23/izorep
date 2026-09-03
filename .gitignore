@@ -12,3 +12,6 @@ dist-web/
 
 # Baza de date locala
 .env
+
+# Sabloane invatate din corectiile omului: date de lucru, per instalare.
+data/sabloane.json

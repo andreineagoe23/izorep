@@ -1,0 +1,22 @@
+{
+  "amprenta": "8::nr. crt.|denumire|um|cantitate|dimensiune gol|suprafata|p.u. / elem|pret total",
+  "fisier": "Oferta 27.04.2026 Matari.xlsx",
+  "foaie": "Matari",
+  "model": "gpt-4.1-2025-04-14",
+  "generat": "2026-09-03T16:50:39.445Z",
+  "mapare": {
+    "rand_antet": 5,
+    "rand_start": 7,
+    "roluri": [
+      "nr",
+      "denumire",
+      "um",
+      "cantitate",
+      "dimensiune",
+      "cantitate_unitara",
+      "pret_unitar",
+      "pret_total"
+    ],
+    "motiv": "Randul 5 contine capetele de coloana, iar datele incep de la randul 7. Coloanele corespund clar rolurilor standard."
+  }
+}

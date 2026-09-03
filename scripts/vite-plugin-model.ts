@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Plugin } from "vite";
-import { extrageCuModel } from "../src/import/extract-llm.js";
+import { extrageCuModel, MODEL_IMPLICIT } from "../src/import/extract-llm.js";
 import { RaspunsModel } from "../src/import/schema.js";
 
 /**
@@ -57,7 +57,7 @@ export function pluginModel(): Plugin {
       // .env e gitignorat si contine cheia. Node 21+ il incarca nativ.
       if (existsSync(".env")) process.loadEnvFile(".env");
       const cheie = process.env["OPENAI_API_KEY"];
-      const model = process.env["OPENAI_MODEL"] ?? "gpt-4.1";
+      const model = process.env["OPENAI_MODEL"] ?? MODEL_IMPLICIT;
       const prag = Number(process.env["IZOREP_CONFIDENCE_THRESHOLD"] ?? 0.85);
       // Prima manevra cand contul OpenAI da 429: IZOREP_CONCURENTA=1.
       const nr = (c: string, i: number) => {

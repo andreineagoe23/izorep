@@ -1,0 +1,20 @@
+{
+  "amprenta": "6::nr. crt.|dimensiune|pret euro / buc",
+  "fisier": "Oferta pret inchideri goluri la foc.xlsx",
+  "foaie": "Izolatie Termice",
+  "model": "gpt-4.1-2025-04-14",
+  "generat": "2026-09-03T16:50:42.591Z",
+  "mapare": {
+    "rand_antet": 2,
+    "rand_start": 3,
+    "roluri": [
+      "nr",
+      "dimensiune",
+      "pret_unitar",
+      "ignora",
+      "ignora",
+      "ignora"
+    ],
+    "motiv": "Randul 2 contine capetele de coloana (Nr. Crt., Dimensiune, Pret Euro / buc), iar datele incep de la randul 3. Coloanele 4-6 sunt goale sau nefolosite."
+  }
+}
