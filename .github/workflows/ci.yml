@@ -15,6 +15,28 @@ jobs:
   verifica:
     name: typecheck + teste
     runs-on: ubuntu-latest
+
+    # Fara Postgres, testele de baza se SAR, iar CI-ul arata verde fara sa fi
+    # verificat izolarea intre tenanti, imutabilitatea listelor sau
+    # echivalenta catalogului. O suita care se sare arata exact ca una care
+    # trece — de-aia baza ruleaza si aici, nu doar pe laptop.
+    #
+    # Versiunea majora si portul sunt aceleasi ca in docker-compose.yml.
+    services:
+      db:
+        image: postgres:18
+        env:
+          POSTGRES_USER: izorep
+          POSTGRES_PASSWORD: izorep
+          POSTGRES_DB: izorep
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U izorep -d izorep"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
     steps:
       - uses: actions/checkout@v4
 
@@ -28,10 +50,26 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Migrari si date
+        run: npm run db:migrate && npm run db:seed
+
       # Suita reproduce oferte reale trimise clientilor. Daca pica, motorul
       # nu mai da aceleasi preturi ca ofertele istorice si nu se poate emite.
-      - name: Teste motor de preturi
+      - name: Teste
         run: npm test
+
+      # Plasa peste plasa: daca baza n-a pornit, testele ei s-ar sari in
+      # tacere si pasul de mai sus ar trece. Numarul trebuie sa creasca odata
+      # cu suita.
+      - name: Nicio suita sarita
+        run: |
+          iesire=$(npm test 2>&1)
+          if echo "$iesire" | grep -qE "[0-9]+ skipped"; then
+            echo "::error::Teste sarite in CI — probabil baza n-a pornit."
+            echo "$iesire" | grep -E "Tests |skipped"
+            exit 1
+          fi
+          echo "$iesire" | grep -E "Tests "
 
   preturi-neschimbate:
     name: listele de preturi nu s-au schimbat accidental
