@@ -14,7 +14,7 @@ import { join } from "node:path";
 import ExcelJS from "exceljs";
 import { importaFisier } from "../src/import/pipeline.js";
 import { invata, stocInMemorie } from "../src/import/memorie.js";
-import { tarifeaza, tarifeazaSimplu } from "../src/pricing/engine.js";
+import { tarifeazaSimplu } from "../src/pricing/engine.js";
 import type { LinieExtrasa } from "../src/import/schema.js";
 
 let dir: string;
@@ -177,34 +177,20 @@ describe("notele de la finalul ofertei nu sunt pozitii", () => {
   });
 });
 
-describe("tubulatura spiro nu e teava de otel", () => {
-  it("SPIRO DN160 se tarifeaza pe diametru exterior, nu ca DN", async () => {
-    // Textul e din Oferta 27.04.2026, in germana. Inainte, linia iesea cu
-    // "DN160 nu exista in tabelul de conversie" — mesaj corect, diagnostic
-    // gresit: tubulatura aia e perfect normala, doar ca nominalul ei E
-    // diametrul exterior.
+describe("tubulatura spiro ramane marcata, nu ghicita", () => {
+  it("SPIRO DN160 nu se tarifeaza pana nu confirma firma regula", async () => {
+    // Ar fi justificat sa fie citit ca diametru exterior — asa scrie si in
+    // `pricing.md`. Dar atunci pozitia s-ar tarifa la 14,37 EUR/ml, iar oferta
+    // semnata are 14,16. Cat timp nu stim care e regula, linia merge la om.
     const raport = await importaFisier(await registru([
       RANDURI[0]!,
       [1, "Zuluft Wickelfalzrohr starr SPIRO DN 160, Armaflex 9mm", "ml", 12],
     ]), { faraModel: true, stoc: stocInMemorie() });
 
-    expect(raport.tarifate).toBe(1);
-    const l = raport.linii.find((x) => x.extras.sistem !== null)!;
-    expect(l.extras.diametru_tip).toBe("exterior");
-    // ø160 se rotunjeste IN SUS la randul 169, regula pentru diametru
-    // exterior: mufa de izolatie trebuie sa incapa peste teava.
-    expect(l.pret?.pret_unitar).toBe(tarifeaza({
-      diametru: { valoare: 160, tip: "exterior" },
-      straturi: [{ sistem: "elastomer", grosime_mm: 9 }], forma: "ml", cantitate: 1,
-    }).pret_unitar);
-  });
-
-  it("acelasi DN pe o teava obisnuita ramane DN", async () => {
-    const raport = await importaFisier(await registru([
-      RANDURI[0]!,
-      [1, "Izolatie elastomer 13 mm pe teava DN25 apa rece", "ml", 10],
-    ]), { faraModel: true, stoc: stocInMemorie() });
+    expect(raport.tarifate).toBe(0);
     const l = raport.linii.find((x) => x.extras.sistem !== null)!;
     expect(l.extras.diametru_tip).toBe("DN");
+    expect(l.eroare).toContain("tabelul de conversie");
+    expect(l.necesitaValidare).toBe(true);
   });
 });

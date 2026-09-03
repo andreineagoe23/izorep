@@ -411,9 +411,11 @@ real acolo.
   noțiunea de **gol** sau de **trecere prin perete**.
 - **`Oferta 27.04.2026`, tubulatură SPIRO** — „Wickelfalzrohr starr SPIRO
   DN 160". Clientul scrie `DN`, dar la spiro nominalul *este* diametrul
-  exterior, iar 160 și 315 nu există în seria de oțel: poziția ieșea cu
-  „DN160 nu există în tabelul de conversie" — mesaj corect, diagnostic complet
-  greșit. Regula era deja în `pricing.md`; regexul n-o știa.
+  exterior, iar 160 și 315 nu există în seria de oțel, deci poziția iese cu
+  „DN160 nu există în tabelul de conversie". Citită ca diametru exterior s-ar
+  tarifa la 14,37 €/ml, dar oferta semnată are 14,16. **Lăsată marcată
+  intenționat** până răspunde firma (întrebarea 10): un preț greșit tăcut e mai
+  scump decât o poziție marcată.
 - **Oferta 118** — ligaturi stricate (`sinte␣c`): textul e copiat dintr-un PDF.
 - **Cantitatea** — primul număr de pe rând e aproape întotdeauna *numărul curent*
   al poziției, nu cantitatea. Euristica actuală o caută lângă unitatea de măsură;

@@ -33,21 +33,6 @@ const RE_DN = /\b(?:DN|Dn|dn)\s*\.?\s*(\d{1,3})\b/;
 const RE_DI = /\bDi\s*(\d{1,3})\b/;
 const RE_OD = /[øØ]\s*(\d{1,3})\b/;
 const RE_PLASTIC = /\b(?:PPR|PP|PEHD|PEX)\s*[D]?\s*(\d{1,3})\b/;
-/**
- * Tubulatura spiro: nominalul E diametrul exterior, ca la plastic.
- *
- * Clientii o scriu tot cu "DN" — "Wickelfalzrohr starr SPIRO DN 160" — dar 160
- * si 315 nu exista in seria de teava de otel, deci pozitia iesea cu
- * `DiametruNecunoscut: DN160 nu exista in tabelul de conversie`. Mesajul e
- * corect si diagnosticul complet gresit: tubulatura aia e perfect normala.
- *
- * `pricing.md` spune deja regula — la plastic, PEHD si SPIRO se rotunjeste in
- * sus pe diametrul exterior. Aici doar se recunoaste notatia.
- *
- * "Wickelfalzrohr" e numele german al aceleiasi tubulaturi; apare in ofertele
- * bilingve, uneori fara cuvantul SPIRO pe acelasi rand.
- */
-const RE_SPIRO = /\bSPIRO\b|wickelfalzrohr/i;
 const RE_GROSIME = /(?:g\s*[=.]?\s*|gr\.?\s*|S\s*=\s*|grosime[a]?\s+de\s+|[-–]\s*)(\d{1,3})\s*mm/i;
 const RE_GROSIME_COMPACT = /\bg\s?(\d{2,3})\b/;
 const RE_MM = /(\d{1,3})\s*mm\b/g;
@@ -131,9 +116,15 @@ export function extrageDeterminist(
     // Plastic: dimensiunea nominala ESTE diametrul exterior.
     diametru_valoare = Number(m[1]); diametru_tip = "exterior";
   } else if ((m = text.match(RE_DN))) {
-    // "DN" scris pe o tubulatura spiro nu e DN de otel.
-    diametru_valoare = Number(m[1]);
-    diametru_tip = RE_SPIRO.test(text) ? "exterior" : "DN";
+    // NU se face exceptie pentru tubulatura spiro, desi ar fi justificata:
+    // "Wickelfalzrohr starr SPIRO DN 160" e diametru exterior, nu DN de otel,
+    // iar `pricing.md` spune deja regula. Citita asa, pozitia s-ar tarifa la
+    // 14,37 EUR/ml (randul 169), dar oferta semnata are 14,16 (randul 159) —
+    // si nu stim care e regula corecta. Vezi intrebarea 10 catre firma.
+    //
+    // Pana la raspuns, linia iese cu `DiametruNecunoscut` si merge la om.
+    // Un pret gresit tacut e mai scump decat o pozitie marcata.
+    diametru_valoare = Number(m[1]); diametru_tip = "DN";
   } else if ((m = text.match(RE_OD))) {
     diametru_valoare = Number(m[1]); diametru_tip = "exterior";
   } else if ((m = text.match(RE_DI))) {
