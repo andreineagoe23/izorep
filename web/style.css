@@ -86,10 +86,18 @@ aside :focus-visible { outline-color: #9ecbf5; }
 .sari:focus { top: 8px; }
 
 /* ------------------------------------------------------------- structura */
-.aplicatie { display: grid; grid-template-columns: 250px minmax(0, 1fr); min-height: 100vh; }
+/*
+ * Latimea barei e o variabila ca sa poata fi animata dintr-un singur loc:
+ * bara pliata schimba `--lat-bara`, nu sase reguli de latime.
+ */
+.aplicatie {
+  display: grid; grid-template-columns: var(--lat-bara, 250px) minmax(0, 1fr);
+  min-height: 100vh; transition: grid-template-columns .18s ease;
+}
 aside {
   background: var(--bara); color: #d5dae0; padding: 20px 0 18px;
   display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh;
+  overflow-x: hidden;
 }
 .marca { padding: 0 20px 18px; border-bottom: 1px solid rgba(255,255,255,.12); }
 .marca strong { display: block; font-size: 17px; color: #fff; letter-spacing: -0.01em; }
@@ -106,6 +114,9 @@ aside {
   padding: 8px 12px; border-radius: 7px; color: #d5dae0;
   text-decoration: none; font-size: 14.5px; border-left: 3px solid transparent;
 }
+.ico { flex: 0 0 auto; }
+/* Eticheta nu se rupe pe doua randuri cat timp bara se ingusteaza. */
+.eticheta-item { overflow: hidden; white-space: nowrap; }
 a.item:hover { background: rgba(255,255,255,.09); color: #fff; }
 a.item[aria-current="page"] {
   background: var(--accent-fill); color: #fff; border-left-color: #9ecbf5; font-weight: 600;
@@ -145,24 +156,109 @@ a.item[aria-current="page"] {
   font-size: 12.5px; background: var(--panou-2); color: var(--slab);
   padding: 4px 10px; border-radius: 6px;
 }
-.curs { font-size: 13.5px; color: var(--slab); font-variant-numeric: tabular-nums; }
+/* Cursul ramane lipit de marginea din dreapta, oricate controale apar in stanga. */
+.curs { font-size: 13.5px; color: var(--slab); font-variant-numeric: tabular-nums; margin-left: auto; }
+
+/*
+ * Un singur buton pentru doua comportamente: pe ecran larg plieaza bara la o
+ * banda de pictograme, pe ecran ingust deschide sertarul. Eticheta lui se
+ * schimba din `main.ts` si e vizibila doar pentru cititorul de ecran —
+ * pictograma plus `title` sunt de ajuns pentru ochi.
+ */
+.pliaza {
+  display: inline-flex; align-items: center; justify-content: center;
+  flex: 0 0 auto; width: 36px; height: 36px; padding: 0; cursor: pointer;
+  border: 1px solid var(--linie-tare); border-radius: 8px;
+  background: var(--panou); color: var(--text);
+}
+.pliaza:hover { background: var(--accent-slab); color: var(--accent); border-color: var(--accent); }
+
+/* Vizibil doar pentru cititorul de ecran; ramane focusabil, spre deosebire de `hidden`. */
+.doar-citit {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+  overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
+}
 main { padding: 26px 28px 56px; max-width: 1400px; }
 .titlu-ecran { margin-bottom: 22px; }
 .titlu-ecran h1 { margin: 0; font-size: 26px; letter-spacing: -0.02em; }
 .titlu-ecran p { margin: 6px 0 0; color: var(--slab); max-width: 74ch; }
 
+/*
+ * Bara pliata: raman doar pictogramele, cu eticheta in `title`.
+ *
+ * Comutatorul de tema si cel de rol dispar odata cu etichetele — nu incap in
+ * banda si nu sunt controale de navigatie. Se intorc la prima extindere.
+ */
+@media (min-width: 861px) {
+  :root[data-meniu="pliat"] .aplicatie { --lat-bara: 68px; }
+  :root[data-meniu="pliat"] .marca { padding: 0 8px 18px; text-align: center; }
+  :root[data-meniu="pliat"] .marca strong { font-size: 15px; }
+  :root[data-meniu="pliat"] .marca span,
+  :root[data-meniu="pliat"] .grup h3,
+  :root[data-meniu="pliat"] .viitor,
+  :root[data-meniu="pliat"] .tema,
+  :root[data-meniu="pliat"] .rol { display: none; }
+  :root[data-meniu="pliat"] .item { justify-content: center; padding: 8px 0; border-left: 0; }
+  :root[data-meniu="pliat"] a.item[aria-current="page"] { border-left: 0; }
+
+  /*
+   * Tooltip-ul benzii: eticheta itemului, mutata langa el.
+   *
+   * E acelasi element, nu unul nou — ascunsa cu `display:none`, eticheta ar
+   * disparea si din numele accesibil al linkului. `opacity` o scoate din ochi
+   * fara s-o scoata din arborele de accesibilitate.
+   *
+   * Nu `title`: tooltipul nativ vine dupa ~1s, nu apare la navigarea cu
+   * tastatura si nu se poate stiliza pe bara inchisa la culoare.
+   */
+  :root[data-meniu="pliat"] #meniu { padding: 16px 10px; overflow: visible; }
+  /* Banda tine sapte itemi fara derulare; `auto` ar taia tooltipul la 68px. */
+  :root[data-meniu="pliat"] aside { overflow-x: visible; }
+  :root[data-meniu="pliat"] .item { position: relative; }
+  :root[data-meniu="pliat"] .eticheta-item {
+    position: absolute; left: calc(100% + 10px); top: 50%; z-index: 40;
+    transform: translateY(-50%); pointer-events: none;
+    opacity: 0; transition: opacity .12s ease;
+    background: #262b33; color: #fff; border: 1px solid #4a525c;
+    padding: 6px 11px; border-radius: 7px; font-size: 13.5px; font-weight: 400;
+    box-shadow: 0 6px 20px rgba(4, 7, 11, .5);
+  }
+  :root[data-meniu="pliat"] .item:hover .eticheta-item,
+  :root[data-meniu="pliat"] .item:focus-visible .eticheta-item { opacity: 1; }
+}
+
 @media (max-width: 860px) {
   /* `1fr` singur ia latimea minima a continutului: un tabel lat ar impinge
      toata pagina in afara ecranului, in loc sa deruleze in `.tabelwrap`. */
   .aplicatie { grid-template-columns: minmax(0, 1fr); }
-  aside { position: static; height: auto; padding-bottom: 12px; }
-  #meniu { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px; }
-  .grup { margin: 0; display: contents; }
-  .grup h3 { display: none; }
-  .item { border-left: 0; border-radius: 20px; padding: 8px 14px; }
-  a.item[aria-current="page"] { border-left: 0; }
-  .viitor { flex-basis: 100%; margin: 4px 0 0; }
+
+  /*
+   * Pe ecran ingust bara nu se plieaza, ci gliseaza peste continut. Varianta
+   * anterioara o intindea sub antet, ca un rand de chip-uri: sapte destinatii
+   * plus modulele viitoare impingeau ecranul in jos la fiecare incarcare.
+   *
+   * Inchisa, bara e si `visibility: hidden` — altfel linkurile ei raman in
+   * ordinea de tabulare, iar focusul pleaca intr-un panou din afara ecranului.
+   */
+  aside {
+    position: fixed; inset: 0 auto 0 0; z-index: 30; width: 272px; height: 100dvh;
+    transform: translateX(-100%); visibility: hidden;
+    transition: transform .2s ease, visibility 0s linear .2s;
+    box-shadow: 0 10px 40px rgba(4, 7, 11, .45);
+  }
+  :root[data-sertar="deschis"] aside {
+    transform: none; visibility: visible; transition-delay: 0s;
+  }
+  .fundal-sertar { position: fixed; inset: 0; z-index: 20; background: rgba(8, 11, 15, .5); }
+  /* Cat timp sertarul e deschis, pagina de dedesubt nu deruleaza sub el. */
+  :root[data-sertar="deschis"] body { overflow: hidden; }
+
   main, .continut > header { padding-left: 16px; padding-right: 16px; }
+}
+
+/* Miscarea e comoditate, nu informatie: cine a cerut mai putina nu pierde nimic. */
+@media (prefers-reduced-motion: reduce) {
+  .aplicatie, aside, .eticheta-item { transition: none; }
 }
 
 /* ---------------------------------------------------------- componente */
