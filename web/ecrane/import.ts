@@ -8,7 +8,11 @@ import { SISTEME, type LinieExtrasa, type Sursa } from "../../src/import/schema.
 // Doar tipurile: `import type` se sterge la compilare, deci ExcelJS (~940 kB)
 // ramane incarcat lenes, prin `import()`-ul din `proceseaza`.
 import type { CelulaBruta, FoaieBruta, RandBrut } from "../../src/import/parse-workbook.js";
-import { esc, indicator, nota, progres, stare, type Ecran } from "./tip.js";
+import { data, esc, eur, indicator, nota, progres, stare, tabel, type Ecran } from "./tip.js";
+import {
+  idCurent, incarca, listeaza, puneCurent, salveaza, sterge,
+  type EditareCelula, type SesiuneImport,
+} from "../istoric.js";
 
 /**
  * Ruta stratului cu model exista doar pe serverul de dezvoltare
@@ -120,7 +124,7 @@ export const ecran: Ecran = {
 
     root.innerHTML = `
       <p>${info
-        ? stare(`Stratul cu model: activ local`, "ok")
+        ? stare(`Extragere cu ${esc(info.model)}`, "ok")
         : stare("Stratul cu model: indisponibil aici", "neutru")}</p>
       <label id="drop" class="drop" for="fisier">
         <strong>Trage un fișier .xlsx aici</strong>
@@ -128,6 +132,7 @@ export const ecran: Ecran = {
         <input id="fisier" type="file" accept=".xlsx" />
         ${explicatie}
       </label>
+      <div id="istoric"></div>
       <div id="raport"></div>`;
 
     const $ = <T extends HTMLElement>(s: string) => root.querySelector(s) as T;
@@ -145,6 +150,112 @@ export const ecran: Ecran = {
       if (f) void proceseaza(f);
     });
 
+    const stoc = stocLocal();
+
+    /**
+     * Lista importurilor de pana acum.
+     *
+     * Nu tine documente — alea vor sta in baza. Tine ce a lucrat omul: fisierul,
+     * ce s-a extras si ce a corectat. De-aia redeschiderea unui import vechi nu
+     * cheama modelul din nou: nu costa tokeni si nu poate da alt rezultat decat
+     * cel pe care l-a validat el.
+     */
+    async function deseneazaIstoric(): Promise<void> {
+      const intrari = await listeaza();
+      const gazda = $("#istoric");
+      if (intrari.length === 0) { gazda.innerHTML = ""; return; }
+
+      const curent = idCurent();
+      const randuri = intrari.map((i) => `
+        <tr${i.id === curent ? ' class="curent"' : ""}>
+          <td><button class="ca-link" data-redeschide="${esc(i.id)}">${esc(i.nume)}</button>
+            ${i.id === curent ? ` ${stare("deschis", "ok")}` : ""}</td>
+          <td class="hint">${esc(data(i.cand))}</td>
+          <td class="n">${i.pozitii}</td>
+          <td class="n">${i.tarifate}</td>
+          <td class="n">${eur(i.valoare)}</td>
+          <td class="hint">${i.model ? esc(i.model) : "doar reguli"}</td>
+          <td><button class="ca-link" data-sterge="${esc(i.id)}" aria-label="Șterge importul ${esc(i.nume)}">șterge</button></td>
+        </tr>`);
+
+      gazda.innerHTML = `<h2 class="sectiune">Importuri recente</h2>
+        ${tabel(
+          ["Fișier", "Când", "Poziții", "Tarifate", "Valoare", "Extras cu", ""],
+          randuri, ["", "", "n", "n", "n", "", ""],
+        )}
+        ${nota("Se păstrează ultimele 10 importuri, în browserul ăsta. Redeschiderea " +
+          "unuia <strong>nu cheamă modelul din nou</strong>: se refolosesc extragerile și corecțiile salvate.")}`;
+
+      for (const b of gazda.querySelectorAll<HTMLButtonElement>("[data-redeschide]")) {
+        b.onclick = () => void redeschide(b.dataset["redeschide"]!);
+      }
+      for (const b of gazda.querySelectorAll<HTMLButtonElement>("[data-sterge]")) {
+        b.onclick = async () => {
+          await sterge(b.dataset["sterge"]!);
+          if (idCurent() === null) $("#raport").innerHTML = "";
+          await deseneazaIstoric();
+        };
+      }
+    }
+
+    async function redeschide(id: string): Promise<void> {
+      const s = await incarca(id);
+      if (!s) { await deseneazaIstoric(); return; }
+      puneCurent(id);
+      await afiseazaSesiune(s, true);
+      await deseneazaIstoric();
+    }
+
+    /**
+     * Reface ecranul dintr-o sesiune salvata.
+     *
+     * Grila NU se salveaza: aceeasi parsare pe acelasi fisier da aceleasi
+     * randuri, deci se reface din bytes. Peste ea se pun corectiile de celule
+     * si extragerile de atunci — inclusiv cele venite de la model, care astfel
+     * nu se mai cer o data.
+     */
+    async function afiseazaSesiune(s: SesiuneImport, restaurat: boolean): Promise<void> {
+      const { parseFoiBuffer, liniile } = await import("../../src/import/parse-workbook.js");
+      const { adaugaSectiuni } = await import("../../src/import/sectiuni.js");
+      const foi = await parseFoiBuffer(s.fisier);
+
+      for (const e of s.editari) {
+        const celula = foi.find((f) => f.nume === e.foaie)?.randuri
+          .find((r) => r.rand === e.rand)?.celule[e.cel];
+        if (celula) celula.v = e.v;
+      }
+
+      const brute = adaugaSectiuni(liniile(foi));
+      const rezolvate = new Map(s.extrase.map((x) => [x.index, { extras: x.extras, sursa: x.sursa }]));
+      afiseaza({
+        foi, brute, rezolvate, avertisment: "", trunchiat: 0,
+        meta: s, editari: [...s.editari], restaurat,
+      });
+    }
+
+    /**
+     * La deschiderea ecranului: istoricul, plus importul la care se lucra.
+     *
+     * Reincarcarea paginii nu are voie sa arunce munca. Importul curent ramane
+     * pana cand omul incarca alt fisier sau il sterge din istoric.
+     */
+    async function laDeschidere(): Promise<void> {
+      await deseneazaIstoric();
+      const id = idCurent();
+      if (!id) return;
+      const s = await incarca(id);
+      if (!s) { puneCurent(null); await deseneazaIstoric(); return; }
+      try {
+        await afiseazaSesiune(s, true);
+      } catch {
+        // Sesiune ilizibila (alt format, fisier trunchiat): se uita, nu se
+        // blocheaza ecranul pe ea.
+        puneCurent(null);
+      }
+      await deseneazaIstoric();
+    }
+    void laDeschidere();
+
     async function proceseaza(fisier: File): Promise<void> {
       const out = $("#raport");
       out.innerHTML = `<p class="nota">Se citește ${esc(fisier.name)}…</p>`;
@@ -156,7 +267,10 @@ export const ecran: Ecran = {
         // Liniile de poziție sunt ACELEAȘI obiecte care stau și în grilă, deci
         // ce corectează omul într-un rând se vede în linia care merge la
         // extragere, fără nicio potrivire după text.
-        const foi = await parseFoiBuffer(await fisier.arrayBuffer());
+        //
+        // Bytes-ii se păstrează: din ei se reface grila la reîncărcarea paginii.
+        const buf = await fisier.arrayBuffer();
+        const foi = await parseFoiBuffer(buf.slice(0));
         const brute = adaugaSectiuni(liniile(foi));
 
         // L2a — determinist. Ce iese complet de aici nu ajunge niciodată la model.
@@ -168,10 +282,9 @@ export const ecran: Ecran = {
           else reziduale.push({ index: b.index, text: b.text, ...(b.um ? { um: b.um } : {}) });
         }
 
-        // L4 — memoria de sabloane: ce a corectat omul intr-un import anterior
-        // se aplica acum fara sa mai intrebe modelul. Sta inaintea lui fiindca
-        // e mai ieftina si determinista; ce nu stie merge mai departe.
-        const stoc = stocLocal();
+        // L4 — memoria de șabloane: ce a corectat omul într-un import anterior
+        // se aplică acum fără să mai întrebe modelul. Stă înaintea lui fiindcă
+        // e mai ieftină și deterministă; ce nu știe merge mai departe.
         const dinMemorie = aplicaMemorie(reziduale, stoc);
         for (const e of dinMemorie.rezolvate) rezolvate.set(e.index, { extras: e, sursa: "memorie" });
         const deLucrat = dinMemorie.ramase;
@@ -209,8 +322,8 @@ export const ecran: Ecran = {
             const arataProgres = (): void => {
               const p = Math.round((gata / loturi.length) * 100);
               out.innerHTML = `<p class="nota">Extragere deterministă gata (${determinist} linii).
-                ${eticheta} — ${deTrimis.length} linii, lotul ${Math.min(gata + 1, loturi.length)}
-                din ${loturi.length}.</p>${progres(p)}`;
+                <strong>Extragere cu ${esc(info.model)}</strong> — ${eticheta}, ${deTrimis.length} linii,
+                lotul ${Math.min(gata + 1, loturi.length)} din ${loturi.length}.</p>${progres(p)}`;
             };
             arataProgres();
 
@@ -245,14 +358,11 @@ export const ecran: Ecran = {
             return primite;
           };
 
-          const extrase = await trimite(
-            reprezentanti.slice(0, MAX_LINII),
-            `Modelul lucrează pe ${reprezentanti.length} șabloane (din ${deLucrat.length} linii)`,
-          );
+          const extrase = await trimite(reprezentanti.slice(0, MAX_LINII), `${reprezentanti.length} șabloane`);
 
           const { proiectate, ramase } = extindePeSablon(grupuri, extrase);
           for (const p of proiectate) rezolvate.set(p.index, { extras: p, sursa: "sablon" });
-          if (ramase.length > 0) await trimite(ramase.slice(0, MAX_LINII), "Linii rămase");
+          if (ramase.length > 0) await trimite(ramase.slice(0, MAX_LINII), "linii rămase");
 
           if (esuate > 0) {
             avertisment = `<div class="alerta"><strong>${esuate} loturi au eșuat</strong>
@@ -261,6 +371,37 @@ export const ecran: Ecran = {
           }
         }
 
+        afiseaza({
+          foi, brute, rezolvate, avertisment, trunchiat,
+          meta: {
+            id: `${Date.now()}-${fisier.name}`,
+            nume: fisier.name, marime: fisier.size, cand: new Date().toISOString(),
+            model: info?.model ?? null, fisier: buf,
+            pozitii: 0, tarifate: 0, valoare: 0, extrase: [], editari: [],
+          },
+          editari: [], restaurat: false,
+        });
+      } catch (e) {
+        out.innerHTML = `<div class="alerta"><strong>Nu am putut citi fișierul</strong>
+          ${esc(e instanceof Error ? e.message : String(e))}<br>
+          Formatul .xls vechi nu e suportat în browser — salvează-l ca .xlsx.</div>`;
+      }
+    }
+
+    interface ContextRaport {
+      foi: FoaieBruta[];
+      brute: { index: number; text: string; um?: string; cantitate?: number }[];
+      rezolvate: Map<number, { extras: LinieExtrasa; sursa: Sursa }>;
+      avertisment: string;
+      trunchiat: number;
+      meta: SesiuneImport;
+      editari: EditareCelula[];
+      restaurat: boolean;
+    }
+
+    function afiseaza(ctx: ContextRaport): void {
+      const out = $("#raport");
+      const { foi, brute, rezolvate, avertisment, trunchiat } = ctx;
         // L3 — tarifare determinista, aceeasi si pentru liniile venite de la model.
         const linii: LinieRaport[] = [];
         for (const b of brute) {
@@ -408,6 +549,10 @@ export const ecran: Ecran = {
 
         out.innerHTML = `
           ${avertisment}
+          ${ctx.restaurat
+            ? nota(`Import redeschis: <strong>${esc(ctx.meta.nume)}</strong>, ${esc(data(ctx.meta.cand))}. ` +
+                "Extragerile și corecțiile sunt cele salvate atunci — modelul nu a fost chemat din nou.")
+            : ""}
           <div id="stats" class="stats">${randStats()}</div>
           ${trunchiat > 0 ? nota(`Plafonul per import e de 400 de linii trimise la model; ${trunchiat} au rămas netrimise.`) : ""}
           ${izo.some((l) => l.extras.sistem === "goluri_foc")
@@ -435,6 +580,28 @@ export const ecran: Ecran = {
         const gazda = $("#grila");
         let activa = 0;
 
+        /**
+         * Scrie sesiunea in istoric.
+         *
+         * Amanata cu 400 ms: la editarea unei celule evenimentul `input` vine
+         * la fiecare tasta, iar o scriere in IndexedDB per tasta ar incetini
+         * tocmai lucrul pe care il salveaza.
+         */
+        let ceas: ReturnType<typeof setTimeout> | undefined;
+        const salveazaSesiune = (): void => {
+          clearTimeout(ceas);
+          ceas = setTimeout(() => {
+            void salveaza({
+              ...ctx.meta,
+              pozitii: izo.length,
+              tarifate: izo.filter((l) => l.pret !== null).length,
+              valoare: Math.round(izo.reduce((sa, l) => sa + (l.total ?? 0), 0) * 100) / 100,
+              extrase: [...rezolvate].map(([index, r]) => ({ index, extras: r.extras, sursa: r.sursa })),
+              editari: ctx.editari,
+            }).then(deseneazaIstoric);
+          }, 400);
+        };
+
         const deseneaza = (i: number): void => { activa = i; gazda.innerHTML = tabelFoaie(foi[i]!); };
         deseneaza(0);
 
@@ -460,6 +627,15 @@ export const ecran: Ecran = {
           celula.v = typeof celula.v === "number" && nou.trim() !== "" && !Number.isNaN(Number(nou))
             ? Number(nou)
             : nou;
+
+          // Se retine si separat de grila: grila se reface din bytes-ii
+          // fisierului la reincarcare, deci corectia s-ar pierde cu ea.
+          const cheie = { foaie: foi[activa]!.nume, rand: Number(camp.dataset.rand), cel: Number(camp.dataset.cel) };
+          const i = ctx.editari.findIndex((x) => x.foaie === cheie.foaie && x.rand === cheie.rand && x.cel === cheie.cel);
+          const editare = { ...cheie, v: celula.v };
+          if (i >= 0) ctx.editari[i] = editare;
+          else ctx.editari.push(editare);
+          salveazaSesiune();
         });
 
         // Coloanele extrase schimba ce se poate tarifa: la fiecare corectie se
@@ -486,12 +662,13 @@ export const ecran: Ecran = {
           const marca = tr?.querySelector("[data-marca]");
           if (marca) marca.innerHTML = l.extras.incredere < prag || l.eroare !== null ? stare("de validat", "atentie") : "";
           statsEl.innerHTML = randStats();
+          salveazaSesiune();
         });
-      } catch (e) {
-        out.innerHTML = `<div class="alerta"><strong>Nu am putut citi fișierul</strong>
-          ${esc(e instanceof Error ? e.message : String(e))}<br>
-          Formatul .xls vechi nu e suportat în browser — salvează-l ca .xlsx.</div>`;
-      }
+
+        // Prima salvare, imediat: daca omul inchide tabul fara sa corecteze
+        // nimic, importul trebuie sa fie acolo cand se intoarce.
+        salveazaSesiune();
+
     }
   },
 };

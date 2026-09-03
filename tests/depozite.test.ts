@@ -14,6 +14,7 @@ import { stocPeDisc } from "../src/import/stoc-sabloane.js";
 import { invata } from "../src/import/memorie.js";
 import type { LinieExtrasa } from "../src/import/schema.js";
 import type { MapareFoaie } from "../src/import/mapare.js";
+import { idsDeSters } from "../web/istoric.js";
 
 const extras: LinieExtrasa = {
   index: 0, sistem: "elastomer", diametru_valoare: 25, diametru_tip: "DN",
@@ -111,5 +112,37 @@ describe("cache-ul de mapari", () => {
     } finally {
       rmSync(cale, { force: true });
     }
+  });
+});
+
+describe("plafonul istoricului de importuri", () => {
+  const intrare = (id: string, cand: string) => ({
+    id, cand, nume: `${id}.xlsx`, marime: 1, model: null,
+    pozitii: 0, tarifate: 0, valoare: 0,
+  });
+
+  it("nu sterge nimic cat timp sunt sub plafon", () => {
+    const v = [intrare("a", "2026-09-01T10:00:00Z"), intrare("b", "2026-09-02T10:00:00Z")];
+    expect(idsDeSters(v, 10)).toEqual([]);
+  });
+
+  it("scoate cele mai VECHI intrari, nu ultimele adaugate", () => {
+    // Ordinea in care vin din IndexedDB e a cheilor, nu a timpului: daca s-ar
+    // taia dupa ea, un import de azi ar putea cadea in locul unuia de anul
+    // trecut.
+    const v = [
+      intrare("vechi", "2026-01-01T10:00:00Z"),
+      intrare("nou", "2026-09-03T10:00:00Z"),
+      intrare("mijloc", "2026-05-01T10:00:00Z"),
+    ];
+    expect(idsDeSters(v, 2)).toEqual(["vechi"]);
+  });
+
+  it("taie exact cate trebuie", () => {
+    const v = Array.from({ length: 15 }, (_, i) =>
+      intrare(String(i), `2026-09-${String(i + 1).padStart(2, "0")}T10:00:00Z`));
+    // Ordinea stergerii nu conteaza, multimea da.
+    expect(idsDeSters(v, 10)).toHaveLength(5);
+    expect([...idsDeSters(v, 10)].sort()).toEqual(["0", "1", "2", "3", "4"]);
   });
 });
