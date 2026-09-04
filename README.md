@@ -107,7 +107,7 @@ deocamdată. Când apare serverul, intră în `docker-compose.yml` și `npm star
 |---|---|
 | `npm start` | bază + migrări + interfață |
 | `npm run dev` | doar interfața |
-| `npm test` | 228 de teste (cele de bază se sar fără Docker) |
+| `npm test` | 237 de teste (cele de bază se sar fără Docker) |
 | `npm run typecheck` | |
 | `npm run build:web` | build static în `dist-web/` |
 | `npm run db:up` / `db:down` | pornește / oprește Postgres |
@@ -123,10 +123,12 @@ deocamdată. Când apare serverul, intră în `docker-compose.yml` și `npm star
 | `npm run mapare -- <fisier.xlsx>` | înregistrează rolurile de coloană ale foilor |
 | `npm run mapare -- --lista` | ce mapări sunt în cache |
 
-Regenerarea listelor de prețuri din Excel (Python cu `openpyxl` și `xlrd`):
+Regenerarea listelor de prețuri și a seriilor de țevi din Excel (Python cu
+`openpyxl` și `xlrd`):
 
 ```bash
 python scripts/extract_price_lists.py ../attachments
+python scripts/extract_conversii.py ../attachments
 ```
 
 ### De știut
@@ -144,7 +146,9 @@ python scripts/extract_price_lists.py ../attachments
 
 | Cale | Ce e |
 |---|---|
-| `data/price-lists/` | listele de prețuri, extrase din Excel-urile firmei |
+| `data/price-lists/` | listele rezidențiale, extrase din Excel-urile firmei |
+| `data/price-lists/industrial/` | listele industriale — doar în bază, nu în motor |
+| `data/referinte/` | seriile de diametre pe material, secțiuni de tubulatură |
 | `src/pricing/` | motorul de prețuri — determinist, testat |
 | `src/import/` | pipeline de import Excel de la clienți |
 | `src/db/` | schemă, migrări, repository — **doar Node** |

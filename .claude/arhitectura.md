@@ -40,7 +40,9 @@ cerere client (Excel/poză) → deviz → ofertă → contract → lucrare
 ## Structura
 
 ```
-data/price-lists/    listele de prețuri ale firmei, extrase din Excel (commit-uite)
+data/price-lists/    listele rezidențiale — cele pe care rulează motorul
+data/price-lists/industrial/   listele industriale — deocamdată doar în bază
+data/referinte/      seriile de diametre pe material, secțiuni rectangulare
 scripts/             ETL one-off Excel → JSON (Python, .xls vechi)
 src/pricing/         motorul de prețuri — determinist, testat pe oferte reale
 src/import/          pipeline L0–L4 de citire a Excel-urilor de la clienți
@@ -54,7 +56,8 @@ npm test                                      # suita de referință a motorului
 npm run typecheck
 npm run import -- <fisier.xlsx>               # import cu model
 npm run import -- <fisier.xlsx> --fara-model  # doar stratul determinist
-python scripts/extract_price_lists.py ../attachments   # regenerează data/
+python scripts/extract_price_lists.py ../attachments   # regenerează prețurile
+python scripts/extract_conversii.py ../attachments     # regenerează seriile de țevi
 ```
 
 ## Context de domeniu

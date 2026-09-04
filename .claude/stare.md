@@ -13,8 +13,13 @@ Problema de rezolvat: clienții trimit liste de cantități în Excel, fiecare �
 alt format, iar tarifarea se face manual, linie cu linie — 300+ linii pe
 proiect, câteva ore, cu greșeli invizibile.
 
-Materialul sursă (17 fișiere Excel primite de la firmă) stă în `../attachments/`
-și **nu e commit-uit** — conține prețurile reale ale firmei.
+Materialul sursă stă în `../attachments/` și **nu e commit-uit** — conține
+prețurile reale ale firmei. E grupat pe ce înseamnă, nu plat: `preturi/` pe
+segment (rezidențiale / industriale / rafinărie) plus listele marcate „NUUUU"
+de firmă, și `clienti/` pentru listele de cantități și ofertele trimise pe ele.
+Inventarul complet, cu ce lipsește din fiecare segment, e în
+`../attachments/README.md`. ETL-ul caută fișierele după nume, recursiv, deci
+gruparea nu-l afectează.
 
 ## Ce e construit
 
@@ -131,6 +136,49 @@ tema închisă și se bătea cu albastrul.
 salvat în `localStorage`. Înainte, tema urma orbește sistemul și nu se putea
 schimba din interfață.
 
+## Prețurile pe destinație (4 septembrie 2026)
+
+Firma a spus că listele sunt de **trei feluri**: rezidențiale, industriale,
+rafinărie — prima axă din `liste-preturi.md`. Am primit primele două;
+**rafinăria nu a venit încă**.
+
+- **Rezidențiale** — cele 5 pe care le aveam deja. Zip-ul nou e identic ca
+  conținut; `L.pret elastomer` diferă doar la nivel de bytes (re-salvat pe
+  4 iunie 2026), celulă cu celulă aceleași valori. Nu e o listă nouă.
+- **Industriale** — 4 fișiere noi: vată minerală, elastomer, tablă aluminiu și
+  **tablă inox**, sistem pe care motorul nu-l are deloc. Inoxul e jachetare, ca
+  aluminiul: ø80–ø710 din 10 în 10, grosimi 0,4 / 0,5 / 0,6 mm, 192 de celule
+  pline (aluminiul are 63, rare). Lipsesc PVC și închiderile goluri la foc.
+- **Rafinărie** — nimic.
+
+**Industrialul nu e un coeficient peste rezidențial**, deci nu se poate ține ca
+multiplicator: vata e ×1,25 constant, elastomerul e ×1,25 la 9/13/19 mm dar
+**×1,20** la 25/32 mm, iar tabla variază pe rând în jurul lui ×1,10–1,11.
+Trebuie stocate ca liste proprii, versionate pe destinație.
+
+**Motorul rămâne pe rezidențial. Baza le ține pe amândouă.**
+`data/price-lists/*.json` — ce importă static `src/pricing/lists.ts` — e
+neatins, verificat byte cu byte după regenerare. Industrialul stă separat, în
+`data/price-lists/industrial/`, și intră în `lista_preturi` cu destinația lui.
+
+Împărțirea e deliberată: motorul ar trebui să afle de undeva *care* destinație
+se aplică unei lucrări, iar regula aia nu există încă (întrebarea 12). Un motor
+care cunoaște două liste și nu știe să aleagă între ele e mai prost decât unul
+care cunoaște una singură și o spune.
+
+Riscul concret, prins cu test: cu două liste active pe același sistem,
+interogarea veche — filtru pe sistem + status, `order by valabil_de_la desc` —
+ar fi ales-o tăcut pe cea industrială, fiindcă e mai recentă. Vata industrială
+e ×1,25, deci toate ofertele ar fi ieșit cu 25% mai mari fără nicio urmă.
+`catalogDinBaza` cere acum destinația explicit. Detalii în `backend.md`.
+
+Ce s-a mai adăugat în bază: **seriile de diametre pe material** (oțel, cupru,
+PP-R, PE-HD, PE-Xa, PVC, spiro — 141 de rânduri) și cele 34 de secțiuni
+standard de tubulatură rectangulară, din registrul de conversie ml → mp.
+Sunt norme, deci tabele globale, fără `tenant_id` și fără RLS. Motorul încă nu
+le folosește: azi `dn-table.ts` aplică tabelul de oțel tuturor materialelor,
+deci o poziție DN15 de cupru se caută pe rândul 22 în loc de 18.
+
 ## Ce am descoperit din datele reale
 
 **Regula de potrivire pe rând diferă după notația diametrului.** La DN de oțel
@@ -181,6 +229,61 @@ poziție. Pe cele 9 fișiere, 513 poziții devin 441, iar cele tarifate rămân 
 sistem și grosime (2,20 / 2,30 / 3,00 €/ml), nu matrice ø × grosime. Nu e o
 coloană a aceleiași linii, e o listă separată.
 
+**Lista de inox lipsea, dar lucrările de inox nu.** `Izolatii Transavia.xlsx`
+are **72 de rânduri** care spun „tabla de inox 304" — practic tot fișierul.
+Neavând listă, `extract-llm.ts` mapa explicit inoxul pe `tabla`, adică pe lista
+de aluminiu, iar cele 39 de poziții tarifate din el (6.039,90 €) au ieșit pe
+lista greșită. Inoxul e mult mai scump: la ø90, 30,89 € (0,4 mm) față de
+17,08 € (aluminiu 0,6 mm). Lista industrială de inox rezolvă asta — dar abia
+după ce motorul capătă sistemul și regula de segment.
+
+**Prima pereche cerere → ofertă pe aceleași rânduri.** `Cerere oferta 2
+Izolatii - Abur.xlsx` (99 rânduri) și `Oferta 284 Abur TRANSAVIA
+27.05.2026 - tabla aluminiu.xlsx` sunt același proiect, întrebat și răspuns.
+Până acum aveam ori cereri, ori oferte, niciodată perechea — deci nu se putea
+măsura tarifarea fără să ghicim ce a fost întrebat.
+
+**Lucrarea e industrială, dar a fost tarifată pe lista rezidențială.** Transavia
+Alba-Iulia, abur, beneficiar Grup Energoinstal. Pe cele 30 de linii distincte
+`Di<ø>, g<gr>` (vată + tablă de aluminiu), prețurile ofertei ies **exact** din
+listele rezidențiale; pe cele industriale ar fi ieșit cu 25% mai mult. Deci
+segmentul nu se deduce din tipul lucrării — cineva îl alege. Întrebarea 12.
+
+**Regula de rând se confirmă pe straturi diferite: primul strat cel mai
+apropiat, jacheta în sus.** Măsurat pe cele 30 de linii, cu cele patru
+combinații posibile:
+
+| primul strat / jachetă | potriviri exacte |
+|---|---|
+| în sus / în sus (motorul de azi) | 23 / 30 |
+| în sus / cel mai apropiat | 21 / 30 |
+| **cel mai apropiat / în sus** | **27 / 30** |
+| cel mai apropiat / cel mai apropiat | 24 / 30 |
+
+Cele două linii care despart variantele sunt Di114 (geometric 214, între
+rândurile 210 și 220 — oferta ia 220) și Di273 (geometric 393 — oferta ia 400).
+Asta e exact „rotunjirea la stratul de jachetă" din blocul de abateri
+cunoscute, acum cu dovadă independentă: **jacheta se rotunjește în sus**.
+
+Diametrele sunt scrise `Di21, Di27, Di34, Di49, Di60, Di76, Di89, Di114, Di140,
+Di169, Di273` — adică seria de țeavă de oțel rotunjită (21,3 · 26,9 · 33,7 ·
+48,3 · 60,3 · 76,1 · 88,9 · 114,3 · 139,7 · 168,3). Notația spune „exterior",
+dar rândurile *sunt* seria standard, deci se aplică regula de la `tip: "DN"`.
+Motorul leagă azi regula de notație, nu de serie: pe fișierul ăsta ar rotunji
+în sus și ar rata Di49, Di169 și Di273.
+
+**Coturile și teurile de vată sub ø76 se facturează doar cu jacheta.** Banda
+18–60 nu are coeficient de cot/teu în lista de prețuri (întrebarea 9), dar
+oferta le tarifează: Di21 și Di27 = 17,78 €, Di34 = 18,12 €, Di49 = 18,48 €,
+Di60 = 18,83 €. Fiecare e **exact** prețul tablei la rândul geometric
+(ø110, ø110, ø120, ø130, ø140) — stratul de vată nu intră în preț. Cinci
+poziții din cinci. De confirmat cu firma înainte să intre în cod.
+
+**Două abateri rămân pe oferta asta.** Di114 cot și teu sunt 76,43 € în loc de
+45,24 € (banda 76–114 spune ×1 pentru cot; raportul real e 1,689 — nu e niciun
+coeficient din tabel). Iar Di21 la 40 mm pe metru liniar e 25,68 € față de
+25,73 € calculat: lista noastră n-are ø22 la 40 mm, iar motorul cade pe ø28.
+
 ## Întrebări deschise către firmă
 
 Astea blochează arhitectura, nu doar implementarea:
@@ -188,8 +291,10 @@ Astea blochează arhitectura, nu doar implementarea:
 1. **Cine ține stocul oficial — aplicația sau Saga?** Determină tot modulul de
    stoc și cine răspunde pentru SAF-T.
 2. Cine emite factura și cine o trimite în SPV?
-3. La ø90 și ø160, care e regula corectă de rotunjire?
-4. Există listă de prețuri pentru elastomer peste ø219?
+3. La ø90 și ø160, care e regula corectă de rotunjire? (Rotunjirea la stratul
+   de jachetă e acum lămurită de Oferta 284 — **în sus**. ø90 și ø160 rămân.)
+4. Există listă de prețuri pentru elastomer peste ø219? Nici lista industrială
+   nu trece de ø219, deci întrebarea e acum pe amândouă segmentele.
 5. Lista de manoperă e scrisă undeva sau se negociază de fiecare dată?
 6. Cum se împart cele două firme (RADOIA ISOLIRUNG / R&F ISORAD SYSTEM)?
 7. Care e regula de curs folosită azi la facturare — BNR din ziua anterioară,
@@ -197,10 +302,12 @@ Astea blochează arhitectura, nu doar implementarea:
    Până atunci `CURS_BNR` rămâne constantă: cursul contează abia la facturare.)
 8. „Protecție la foc pentru tubulatură" (28 de rânduri în `Radoia.xlsx`) e o
    lucrare pe care o ofertați? Nu are listă de prețuri printre cele primite.
-9. **Coturile și teurile de vată minerală sub ø76.** Lista de prețuri nu are
-   coeficient de element special pe banda 18–60 (are doar manșeta, 0,25), deci
-   12 poziții reale din `Izolatii Transavia` rămân netarifate. Cum se
-   tarifează azi?
+9. **Coturile și teurile de vată minerală sub ø76.** Lista nu are coeficient de
+   element special pe banda 18–60 (are doar manșeta, 0,25), deci 12 poziții
+   reale din `Izolatii Transavia` rămân netarifate. Oferta 284 le tarifează
+   totuși, iar pe cinci poziții din cinci prețul e **exact tabla la rândul
+   geometric, fără stratul de vată**. Regula asta e corectă, sau au fost cinci
+   decizii separate?
 10. **SPIRO ø160.** Citit ca diametru exterior, motorul ar da 14,37 €/ml
     (rândul 169); oferta semnată are 14,16 (rândul 159), iar aceeași ofertă
     tarifează ø160 PEHD la 14,37. Până la răspuns, `DN 160` pe spiro rămâne
@@ -209,6 +316,20 @@ Astea blochează arhitectura, nu doar implementarea:
    Cele 9 fișiere pe care le avem vin de la clienți diferiți, deci reutilizarea
    șabloanelor între proiecte — tot câștigul lui L4 — nu se poate măsura.
    Vezi `plan-l1-l4.md`.
+12. **Cine alege segmentul de preț și după ce regulă?** Oferta 284 e o lucrare
+   industrială (Transavia, abur) tarifată pe lista rezidențială. Dacă alegerea
+   e a omului la deschiderea lucrării, e un câmp pe lucrare. Dacă se deduce din
+   client sau din tipul obiectivului, e o regulă. Fără răspuns, motorul nu
+   poate ține două liste — nu știe pe care să o aplice.
+13. **Lista de prețuri pentru rafinărie.** E al treilea segment anunțat și
+   singurul care lipsește complet. Până vine, `data/price-lists/` rămâne pe
+   rezidențial.
+14. **PVC și închiderile goluri la foc pe industrial.** Nu au venit în pachetul
+   industrial. Nu se ofertează pe industrial, sau se folosesc cele
+   rezidențiale?
+15. **Tabla de inox.** Sistem nou, doar pe industrial, fără corespondent
+   rezidențial. Se ofertează și pe rezidențial? Are aceleași benzi de
+   multiplicatori ca tabla de aluminiu (subsolul listei zice că da)?
 
 ## Ce urmează
 
@@ -250,15 +371,16 @@ de contract, stoc și facturare.
 ## Comenzi
 
 ```bash
-npm test                                       # 234 teste (motor, import, baza)
+npm test                                       # 237 teste (motor, import, baza)
 npm run typecheck
 npm run dev                                    # UI local, /izorep/
-npm run import -- ../attachments/Radoia.xlsx   # pipeline complet
+npm run import -- ../attachments/clienti/Radoia.xlsx   # pipeline complet
 npm run import -- <fisier> --fara-model        # doar determinist
 npm run golden -- <fisier.xlsx>                # inregistreaza iesirea modelului
 npm run golden -- --verifica                   # cauta deriva modelului
 npm run mapare -- <fisier.xlsx>                # inregistreaza maparea de coloane
 IZOREP_FARA_MAPARE=1 npm run import -- <fisier>  # masoara A/B fara L1
 python scripts/extract_price_lists.py ../attachments   # regenerează prețurile
+python scripts/extract_conversii.py ../attachments     # regenerează seriile de țevi
 npm run db:up && npm run db:migrate && npm run db:seed  # baza locală
 ```

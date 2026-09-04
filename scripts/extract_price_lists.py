@@ -2,6 +2,11 @@
 """
 ETL one-off: liste de preturi Excel (RADOIA) -> JSON versionat in data/price-lists/.
 
+Doua segmente. Rezidentialul iese PLAT in data/price-lists/ pentru ca acolo il
+cauta src/pricing/lists.ts cu import static — e segmentul pe care ruleaza
+motorul. Industrialul iese in data/price-lists/industrial/ si e consumat doar
+prin baza de date, pana cand motorul stie sa aleaga segmentul.
+
 Ruleaza o singura data, sau cand firma trimite liste noi:
     python scripts/extract_price_lists.py ../attachments
 
@@ -16,16 +21,34 @@ import openpyxl, xlrd
 
 SRC = Path(sys.argv[1] if len(sys.argv) > 1 else "../attachments")
 OUT = Path(__file__).resolve().parent.parent / "data" / "price-lists"
+OUT_IND = OUT / "industrial"
 OUT.mkdir(parents=True, exist_ok=True)
+OUT_IND.mkdir(parents=True, exist_ok=True)
+
+
+def gaseste(name):
+    """Cauta fisierul recursiv sub SRC.
+
+    Listele stau grupate pe segment (preturi/rezidentiale, preturi/industriale,
+    preturi/rafinarie), nu plat in radacina. Cautarea dupa nume, nu dupa cale,
+    tine ETL-ul independent de aranjarea folderelor. Doua fisiere cu acelasi
+    nume in segmente diferite sunt o eroare, nu o alegere: opreste.
+    """
+    hits = [p for p in SRC.rglob(name) if p.is_file()]
+    if not hits:
+        raise SystemExit(f"lipseste: {name} (cautat sub {SRC})")
+    if len(hits) > 1:
+        raise SystemExit(f"ambiguu: {name} apare in {[str(h) for h in hits]}")
+    return hits[0]
 
 
 def rows_xls(name):
-    ws = xlrd.open_workbook(str(SRC / name)).sheet_by_index(0)
+    ws = xlrd.open_workbook(str(gaseste(name))).sheet_by_index(0)
     return [ws.row_values(i) for i in range(ws.nrows)]
 
 
 def rows_xlsx(name, sheet=0):
-    wb = openpyxl.load_workbook(SRC / name, data_only=True)
+    wb = openpyxl.load_workbook(gaseste(name), data_only=True)
     ws = wb.worksheets[sheet]
     return [list(r) for r in ws.iter_rows(values_only=True)]
 
@@ -208,9 +231,99 @@ out["goluri_foc"] = {
     "colier_promastop": colier,
 }
 
-for k, v in out.items():
-    p = OUT / f"{k}.json"
-    p.write_text(json.dumps(v, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    n = len(v.get("cells", {})) or len(v.get("praguri_suprafata", []))
-    print(f"  {p.name:22s} {n:4d} intrari")
-print(f"\nScris in {OUT}")
+# --------------------------------------------------------------------------
+# INDUSTRIAL — aceeasi forma, alte valori. Primit 4 septembrie 2026.
+#
+# Nu e un coeficient peste rezidential: vata e x1,25 constant, elastomerul
+# x1,25 la 9/13/19 mm dar x1,20 la 25/32 mm, iar tabla variaza pe rand in jurul
+# lui x1,10-1,11. De aceea sunt liste proprii, nu un multiplicator.
+# --------------------------------------------------------------------------
+ind = {}
+
+r = rows_xlsx("Oferta pret pentru elastomer.xlsx")
+ind["elastomer"] = {
+    "sistem": "elastomer",
+    "denumire": "Izolatii conducte cu cauciuc elastomeric, clasa B-s3,d0 (industrial)",
+    "contine": "material + manopera",
+    "moneda": "EUR",
+    "grosimi_mm": [9, 13, 19, 25, 32],
+    **matrix(r, first_row=11, last_row=28, thicknesses=[9, 13, 19, 25, 32], cols=[1, 2, 3, 4, 5], mp_row=29),
+    "multiplicatori": BANDS_PIPE,
+}
+
+r = rows_xlsx("Oferta pret pentru vata minerala.xlsx")
+ind["vata_minerala"] = {
+    "sistem": "vata_minerala",
+    "denumire": "Izolatii conducte cu vata minerala caserata cu folie de aluminiu (industrial)",
+    "contine": "material + manopera",
+    "moneda": "EUR",
+    "grosimi_mm": [20, 30, 40, 50, 60, 80, 100],
+    **matrix(r, first_row=12, last_row=32, thicknesses=[20, 30, 40, 50, 60, 80, 100], cols=[1, 2, 3, 4, 5, 6, 7], mp_row=33),
+    "multiplicatori": [dict(b, cot_teu_reductie=(None if b["band"] == [18, 60] else b["cot_teu_reductie"])) for b in BANDS_PIPE],
+}
+
+# Tabla industriala are ALTE coloane decat cea rezidentiala: 0,8 mm din primul
+# bloc sta in coloana D, nu C. Citita cu indicii rezidentiali, tot blocul de
+# 0,8 pana la ø390 ar lipsi.
+r = rows_xlsx("Oferta pret pentru protectie cu tabla de aluminiu.xlsx")
+cells = {}
+for i in range(11, 43):
+    row = r[i]
+    for d_col, price_cols in ((0, [(0.6, 1), (0.8, 3)]), (4, [(0.8, 5), (1.0, 6)])):
+        d = num(row[d_col])
+        if d is None:
+            continue
+        for th, c in price_cols:
+            p = num(row[c])
+            if p is not None:
+                cells[f"{int(d)}|{th}"] = round(p, 6)
+ind["tabla"] = {
+    "sistem": "tabla",
+    "denumire": "Protectie izolatii cu tabla de aluminiu (jachetare, industrial)",
+    "contine": "material + manopera",
+    "moneda": "EUR",
+    "grosimi_mm": [0.6, 0.8, 1.0],
+    "cells": cells,
+    "per_mp": {"0.6": num(r[43][1]), "0.8": num(r[43][3])},
+    "multiplicatori": BANDS_SHEET,
+}
+
+# Tabla de inox: sistem NOU, fara corespondent rezidential. E jachetare, ca
+# aluminiul — indexata pe diametrul exterior al izolatiei, nu pe DN, in ciuda
+# antetului care scrie "DN". Doua blocuri de cate patru coloane.
+r = rows_xls("Oferta pret pentru protectie cu tabla de inox.xls")
+cells = {}
+for i in range(8, 40):
+    row = r[i]
+    for d_col, price_cols in ((0, [(0.4, 1), (0.5, 2), (0.6, 3)]), (4, [(0.4, 5), (0.5, 6), (0.6, 7)])):
+        d = num(row[d_col])
+        if d is None:
+            continue
+        for th, c in price_cols:
+            p = num(row[c])
+            if p is not None:
+                cells[f"{int(d)}|{th}"] = round(p, 6)
+ind["tabla_inox"] = {
+    "sistem": "tabla_inox",
+    "denumire": "Protectie izolatii cu tabla de inox (jachetare, industrial)",
+    "contine": "material + manopera",
+    "moneda": "EUR",
+    "grosimi_mm": [0.4, 0.5, 0.6],
+    "cells": cells,
+    "per_mp": {"0.4": num(r[40][1]), "0.5": num(r[40][2]), "0.6": num(r[40][3])},
+    "multiplicatori": BANDS_SHEET,
+}
+
+
+def scrie(unde, liste, eticheta):
+    print(f"\n{eticheta}")
+    for k, v in liste.items():
+        p = unde / f"{k}.json"
+        p.write_text(json.dumps(v, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        n = len(v.get("cells", {})) or len(v.get("praguri_suprafata", []))
+        print(f"  {p.name:22s} {n:4d} intrari")
+    print(f"  -> {unde}")
+
+
+scrie(OUT, out, "REZIDENTIAL")
+scrie(OUT_IND, ind, "INDUSTRIAL")

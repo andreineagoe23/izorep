@@ -169,21 +169,62 @@ sistem și grosime. Asta ar face „conținut" nu o a treia dimensiune a aceleia
 matrice, ci **două forme diferite de listă**, fiecare cu motorul ei de căutare.
 E prima verificare de făcut când vin fișierele.
 
-## Ce trebuie să vină odată cu listele
+## Ce a venit pe 4 septembrie 2026
 
-Ca ETL-ul să nu ghicească:
+Firma a trimis **rezidențialul și industrialul**. Rafinăria nu a venit.
+Fișierele sunt în `../attachments/preturi/`, grupate pe destinație; inventarul
+complet e în `../attachments/README.md`.
 
-1. **Ce combinații există.** Toate 24, sau doar unele? Există PVC de rafinărie?
-   Există „doar manoperă" rezidențial?
-2. **Forma fiecărei liste** — matrice φ × grosime, sau tarif plat pe grosime?
-3. **Dacă destinația schimbă doar prețurile sau și matricea** — aceleași
-   diametre și grosimi ofertate peste tot, sau altele la rafinărie?
-4. **Multiplicatorii de formă** (cot, teu, flanșă, manșetă) — sunt aceiași
-   pentru toate destinațiile, sau fiecare listă are banda ei?
-5. **Tabelele `per_mp`** — există pentru fiecare combinație?
-6. **De când sunt valabile** și ce înlocuiesc. O listă activată nu se mai
-   editează niciodată; corectura înseamnă versiune nouă.
-7. **Moneda** — EUR peste tot, sau apar și liste în lei?
+| Sistem | Rezidențial | Industrial | Rafinărie |
+|---|---|---|---|
+| Vată minerală | 106 celule | 105 celule | — |
+| Elastomer | 88 | 87 | — |
+| Tablă aluminiu | 63 | 63 | — |
+| **Tablă inox** | nu există | **192** | — |
+| PVC | 64 | **lipsă** | — |
+| Închideri goluri la foc | praguri aditive | **lipsă** | — |
+
+Răspunsurile la lista de mai jos, atât cât se pot citi din fișiere:
+
+1. **Ce combinații există** — nu toate. Industrialul n-are PVC și n-are goluri
+   la foc, dar are un sistem în plus, tabla de inox. „Doar manoperă" nu a venit
+   pe niciuna dintre destinații.
+2. **Forma** — identică: matrice φ × grosime, cu benzile de multiplicatori la
+   subsol. Nu s-a schimbat nimic structural, deci ETL-ul rezidențial a mers pe
+   industrial cu alți indici de rând, nu cu alt cod. O singură capcană: la
+   tabla industrială coloana de 0,8 mm din primul bloc e **D**, nu C; citită cu
+   indicii rezidențiali, tot blocul de 0,8 până la ø390 lipsea.
+3. **Destinația schimbă și matricea, puțin.** Industrialul adaugă rândul ø108
+   la vată și îi lipsește ø15 la elastomer. Elastomerul se oprește tot la
+   **ø219** pe amândouă, deci întrebarea „există preț peste ø219?" rămâne.
+4. **Multiplicatorii sunt aceiași** — subsolurile celor patru liste industriale
+   sunt identice cu cele rezidențiale, inclusiv absența coeficientului de
+   cot/teu pe banda 18–60 la vată.
+5. **`per_mp` există peste tot**, plus unul nou: tabla industrială are și
+   coloana de 0,6 mm (45,00 €/mp), pe care rezidențialul nu o are.
+6. **Valabilitate** — nedeclarată în fișiere. În bază, industrialul e pus pe
+   `2026-09-04` (data primirii), rezidențialul rămâne pe `2026-01-01`.
+   **De confirmat cu firma.**
+7. **Moneda** — EUR fără TVA peste tot.
+
+**Industrialul nu e un coeficient peste rezidențial.** Vata e ×1,25 constant,
+elastomerul ×1,25 la 9/13/19 mm dar **×1,20** la 25/32 mm, tabla variază pe
+rând în jurul lui ×1,10–1,11. De aceea sunt documente separate, nu un câmp de
+înmulțire.
+
+### Unde stau
+
+| | Rezidențial | Industrial |
+|---|---|---|
+| Fișiere | `data/price-lists/*.json` | `data/price-lists/industrial/*.json` |
+| Motor | import static, `lists.ts` | **nu** — nimic din `src/pricing/` nu le vede |
+| Bază | `lista_preturi`, destinație `rezidential` | idem, destinație `industrial` |
+
+Asimetria e deliberată: rezidențialul stă plat pentru că acolo îl caută
+importul static al motorului, care trebuie să ruleze identic în browser.
+Industrialul există deocamdată **numai ca date**. `catalogDinBaza` cere
+destinația explicit, implicit rezidențial — vezi `backend.md`, „Destinația e în
+`where`, nu în `order by`".
 
 ## Întrebări deschise
 
@@ -198,7 +239,15 @@ Ca ETL-ul să nu ghicească:
 4. **Se poate deduce materialul din „material + manoperă" minus „doar
    manoperă"?** Dacă da, o singură pereche de liste acoperă și cazul în care
    clientul dă materialul.
-5. **Listele de manoperă din `../attachments/` sunt cele bune?** Fișierele lor
-   sunt prefixate `NUUUU` — ceea ce pare a însemna „nu se folosesc".
+5. **Listele de manoperă din `../attachments/preturi/nefolosite/` sunt cele
+   bune?** Fișierele lor sunt prefixate `NUUUU` — ceea ce pare a însemna „nu se
+   folosesc". Pachetul din 4 septembrie nu a adus altele.
 6. **Țolii vin vreodată singuri** pe linie, fără DN alături? De asta depinde
    dacă tabelul Toli e obligatoriu la extragere sau doar de siguranță.
+7. **Ce e cu tabla de inox?** A venit doar pe industrial, fără corespondent
+   rezidențial, deși `Izolatii Transavia.xlsx` — 72 de rânduri de inox — e o
+   lucrare pe care firma a ofertat-o deja. Se ofertează inox și pe rezidențial?
+8. **PVC și goluri la foc pe industrial** — nu se ofertează acolo, sau se
+   folosesc listele rezidențiale?
+9. **De când sunt valabile listele industriale?** În bază sunt puse pe data
+   primirii, 4 septembrie 2026, fiindcă fișierele nu spun.

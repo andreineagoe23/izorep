@@ -1,0 +1,1136 @@
+{
+  "sursa": "Conversie_ml_in_mp_tevi_si_tubulaturi.xlsx",
+  "nota": "Transcriere generata (openpyxl), nu fisier scris de firma in Excel. Conflict cunoscut: DN150 apare aici ca 165,1 (EN 10255), iar in Tabel_Conversie_Tevi.docx si in dn-table.ts ca 168,3 (ISO 4200). Pentru tarifare conteaza 168,3 — randul din listele de preturi e 168.",
+  "formule": {
+    "circular": "m2/ml = PI * (fi + 2 * izolatie) / 1000",
+    "rectangular": "m2/ml = 2 * (A + B + 4 * izolatie) / 1000",
+    "piese_speciale": "+5-10% suprafata pentru coturi si fitinguri"
+  },
+  "serii_diametre": [
+    {
+      "material": "otel_negru",
+      "dn": 6,
+      "diametru_exterior": 10.2,
+      "toli": "1/8\"",
+      "standard": "EN 10255 / EN 10220"
+    },
+    {
+      "material": "otel_negru",
+      "dn": 8,
+      "diametru_exterior": 13.5,
+      "toli": "1/4\"",
+      "standard": "EN 10255 / EN 10220"
+    },
+    {
+      "material": "otel_negru",
+      "dn": 10,
+      "diametru_exterior": 17.2,
+      "toli": "3/8\"",
+      "standard": "EN 10255 / EN 10220"
+    },
+    {
+      "material": "otel_negru",
+      "dn": 15,
+      "diametru_exterior": 21.3,
+      "toli": "1/2\"",
+      "standard": "EN 10255 / EN 10220"
+    },
+    {
+      "material": "otel_negru",
+      "dn": 20,
+      "diametru_exterior": 26.9,
+      "toli": "3/4\"",
+      "standard": "EN 10255 / EN 10220"
+    },
+    {
+      "material": "otel_negru",
+      "dn": 25,
+      "diametru_exterior": 33.7,
+      "toli": "1\"",
+      "standard": "EN 10255 / EN 10220"
+    },
+    {
+      "material": "otel_negru",
+      "dn": 32,
+      "diametru_exterior": 42.4,
+      "toli": "1.1/4\"",
+      "standard": "EN 10255 / EN 10220"
+    },
+    {
+      "material": "otel_negru",
+      "dn": 40,
+      "diametru_exterior": 48.3,
+      "toli": "1.1/2\"",
+      "standard": "EN 10255 / EN 10220"
+    },
+    {
+      "material": "otel_negru",
+      "dn": 50,
+      "diametru_exterior": 60.3,
+      "toli": "2\"",
+      "standard": "EN 10255 / EN 10220"
+    },
+    {
+      "material": "otel_negru",
+      "dn": 65,
+      "diametru_exterior": 76.1,
+      "toli": "2.1/2\"",
+      "standard": "EN 10255 / EN 10220"
+    },
+    {
+      "material": "otel_negru",
+      "dn": 80,
+      "diametru_exterior": 88.9,
+      "toli": "3\"",
+      "standard": "EN 10255 / EN 10220"
+    },
+    {
+      "material": "otel_negru",
+      "dn": 100,
+      "diametru_exterior": 114.3,
+      "toli": "4\"",
+      "standard": "EN 10255 / EN 10220"
+    },
+    {
+      "material": "otel_negru",
+      "dn": 125,
+      "diametru_exterior": 139.7,
+      "toli": "5\"",
+      "standard": "EN 10255 / EN 10220"
+    },
+    {
+      "material": "otel_negru",
+      "dn": 150,
+      "diametru_exterior": 165.1,
+      "toli": "6\"",
+      "standard": "EN 10255 / EN 10220"
+    },
+    {
+      "material": "otel_negru",
+      "dn": 200,
+      "diametru_exterior": 219.1,
+      "toli": "8\"",
+      "standard": "EN 10255 / EN 10220"
+    },
+    {
+      "material": "otel_negru",
+      "dn": 250,
+      "diametru_exterior": 273.0,
+      "toli": "10\"",
+      "standard": "EN 10255 / EN 10220"
+    },
+    {
+      "material": "otel_negru",
+      "dn": 300,
+      "diametru_exterior": 323.9,
+      "toli": "12\"",
+      "standard": "EN 10255 / EN 10220"
+    },
+    {
+      "material": "otel_negru",
+      "dn": 350,
+      "diametru_exterior": 355.6,
+      "toli": "14\"",
+      "standard": "EN 10255 / EN 10220"
+    },
+    {
+      "material": "otel_negru",
+      "dn": 400,
+      "diametru_exterior": 406.4,
+      "toli": "16\"",
+      "standard": "EN 10255 / EN 10220"
+    },
+    {
+      "material": "otel_negru",
+      "dn": 450,
+      "diametru_exterior": 457.0,
+      "toli": "18\"",
+      "standard": "EN 10255 / EN 10220"
+    },
+    {
+      "material": "otel_negru",
+      "dn": 500,
+      "diametru_exterior": 508.0,
+      "toli": "20\"",
+      "standard": "EN 10255 / EN 10220"
+    },
+    {
+      "material": "otel_negru",
+      "dn": 600,
+      "diametru_exterior": 610.0,
+      "toli": "24\"",
+      "standard": "EN 10255 / EN 10220"
+    },
+    {
+      "material": "otel_zincat",
+      "dn": 6,
+      "diametru_exterior": 10.2,
+      "toli": "1/8\"",
+      "standard": "EN 10255 / EN 10220"
+    },
+    {
+      "material": "otel_zincat",
+      "dn": 8,
+      "diametru_exterior": 13.5,
+      "toli": "1/4\"",
+      "standard": "EN 10255 / EN 10220"
+    },
+    {
+      "material": "otel_zincat",
+      "dn": 10,
+      "diametru_exterior": 17.2,
+      "toli": "3/8\"",
+      "standard": "EN 10255 / EN 10220"
+    },
+    {
+      "material": "otel_zincat",
+      "dn": 15,
+      "diametru_exterior": 21.3,
+      "toli": "1/2\"",
+      "standard": "EN 10255 / EN 10220"
+    },
+    {
+      "material": "otel_zincat",
+      "dn": 20,
+      "diametru_exterior": 26.9,
+      "toli": "3/4\"",
+      "standard": "EN 10255 / EN 10220"
+    },
+    {
+      "material": "otel_zincat",
+      "dn": 25,
+      "diametru_exterior": 33.7,
+      "toli": "1\"",
+      "standard": "EN 10255 / EN 10220"
+    },
+    {
+      "material": "otel_zincat",
+      "dn": 32,
+      "diametru_exterior": 42.4,
+      "toli": "1.1/4\"",
+      "standard": "EN 10255 / EN 10220"
+    },
+    {
+      "material": "otel_zincat",
+      "dn": 40,
+      "diametru_exterior": 48.3,
+      "toli": "1.1/2\"",
+      "standard": "EN 10255 / EN 10220"
+    },
+    {
+      "material": "otel_zincat",
+      "dn": 50,
+      "diametru_exterior": 60.3,
+      "toli": "2\"",
+      "standard": "EN 10255 / EN 10220"
+    },
+    {
+      "material": "otel_zincat",
+      "dn": 65,
+      "diametru_exterior": 76.1,
+      "toli": "2.1/2\"",
+      "standard": "EN 10255 / EN 10220"
+    },
+    {
+      "material": "otel_zincat",
+      "dn": 80,
+      "diametru_exterior": 88.9,
+      "toli": "3\"",
+      "standard": "EN 10255 / EN 10220"
+    },
+    {
+      "material": "otel_zincat",
+      "dn": 100,
+      "diametru_exterior": 114.3,
+      "toli": "4\"",
+      "standard": "EN 10255 / EN 10220"
+    },
+    {
+      "material": "otel_zincat",
+      "dn": 125,
+      "diametru_exterior": 139.7,
+      "toli": "5\"",
+      "standard": "EN 10255 / EN 10220"
+    },
+    {
+      "material": "otel_zincat",
+      "dn": 150,
+      "diametru_exterior": 165.1,
+      "toli": "6\"",
+      "standard": "EN 10255 / EN 10220"
+    },
+    {
+      "material": "cupru",
+      "dn": 10,
+      "diametru_exterior": 12.0,
+      "toli": "3/8\"",
+      "standard": "EN 1057"
+    },
+    {
+      "material": "cupru",
+      "dn": 12,
+      "diametru_exterior": 15.0,
+      "toli": "1/2\"",
+      "standard": "EN 1057"
+    },
+    {
+      "material": "cupru",
+      "dn": 15,
+      "diametru_exterior": 18.0,
+      "toli": "1/2\"",
+      "standard": "EN 1057"
+    },
+    {
+      "material": "cupru",
+      "dn": 20,
+      "diametru_exterior": 22.0,
+      "toli": "3/4\"",
+      "standard": "EN 1057"
+    },
+    {
+      "material": "cupru",
+      "dn": 25,
+      "diametru_exterior": 28.0,
+      "toli": "1\"",
+      "standard": "EN 1057"
+    },
+    {
+      "material": "cupru",
+      "dn": 32,
+      "diametru_exterior": 35.0,
+      "toli": "1.1/4\"",
+      "standard": "EN 1057"
+    },
+    {
+      "material": "cupru",
+      "dn": 40,
+      "diametru_exterior": 42.0,
+      "toli": "1.1/2\"",
+      "standard": "EN 1057"
+    },
+    {
+      "material": "cupru",
+      "dn": 50,
+      "diametru_exterior": 54.0,
+      "toli": "2\"",
+      "standard": "EN 1057"
+    },
+    {
+      "material": "cupru",
+      "dn": 65,
+      "diametru_exterior": 76.1,
+      "toli": "2.1/2\"",
+      "standard": "EN 1057"
+    },
+    {
+      "material": "cupru",
+      "dn": 80,
+      "diametru_exterior": 88.9,
+      "toli": "3\"",
+      "standard": "EN 1057"
+    },
+    {
+      "material": "cupru",
+      "dn": 100,
+      "diametru_exterior": 108.0,
+      "toli": "4\"",
+      "standard": "EN 1057"
+    },
+    {
+      "material": "cupru",
+      "dn": 125,
+      "diametru_exterior": 133.0,
+      "toli": "5\"",
+      "standard": "EN 1057"
+    },
+    {
+      "material": "cupru",
+      "dn": 150,
+      "diametru_exterior": 159.0,
+      "toli": "6\"",
+      "standard": "EN 1057"
+    },
+    {
+      "material": "ppr",
+      "dn": 10,
+      "diametru_exterior": 16.0,
+      "toli": "3/8\"",
+      "standard": "EN ISO 15874"
+    },
+    {
+      "material": "ppr",
+      "dn": 15,
+      "diametru_exterior": 20.0,
+      "toli": "1/2\"",
+      "standard": "EN ISO 15874"
+    },
+    {
+      "material": "ppr",
+      "dn": 20,
+      "diametru_exterior": 25.0,
+      "toli": "3/4\"",
+      "standard": "EN ISO 15874"
+    },
+    {
+      "material": "ppr",
+      "dn": 25,
+      "diametru_exterior": 32.0,
+      "toli": "1\"",
+      "standard": "EN ISO 15874"
+    },
+    {
+      "material": "ppr",
+      "dn": 32,
+      "diametru_exterior": 40.0,
+      "toli": "1.1/4\"",
+      "standard": "EN ISO 15874"
+    },
+    {
+      "material": "ppr",
+      "dn": 40,
+      "diametru_exterior": 50.0,
+      "toli": "1.1/2\"",
+      "standard": "EN ISO 15874"
+    },
+    {
+      "material": "ppr",
+      "dn": 50,
+      "diametru_exterior": 63.0,
+      "toli": "2\"",
+      "standard": "EN ISO 15874"
+    },
+    {
+      "material": "ppr",
+      "dn": 65,
+      "diametru_exterior": 75.0,
+      "toli": "2.1/2\"",
+      "standard": "EN ISO 15874"
+    },
+    {
+      "material": "ppr",
+      "dn": 80,
+      "diametru_exterior": 90.0,
+      "toli": "3\"",
+      "standard": "EN ISO 15874"
+    },
+    {
+      "material": "ppr",
+      "dn": 100,
+      "diametru_exterior": 110.0,
+      "toli": "4\"",
+      "standard": "EN ISO 15874"
+    },
+    {
+      "material": "ppr",
+      "dn": 125,
+      "diametru_exterior": 125.0,
+      "toli": "5\"",
+      "standard": "EN ISO 15874"
+    },
+    {
+      "material": "ppr",
+      "dn": 150,
+      "diametru_exterior": 160.0,
+      "toli": "6\"",
+      "standard": "EN ISO 15874"
+    },
+    {
+      "material": "pehd",
+      "dn": 15,
+      "diametru_exterior": 20.0,
+      "toli": "1/2\"",
+      "standard": "EN 12201"
+    },
+    {
+      "material": "pehd",
+      "dn": 20,
+      "diametru_exterior": 25.0,
+      "toli": "3/4\"",
+      "standard": "EN 12201"
+    },
+    {
+      "material": "pehd",
+      "dn": 25,
+      "diametru_exterior": 32.0,
+      "toli": "1\"",
+      "standard": "EN 12201"
+    },
+    {
+      "material": "pehd",
+      "dn": 32,
+      "diametru_exterior": 40.0,
+      "toli": "1.1/4\"",
+      "standard": "EN 12201"
+    },
+    {
+      "material": "pehd",
+      "dn": 40,
+      "diametru_exterior": 50.0,
+      "toli": "1.1/2\"",
+      "standard": "EN 12201"
+    },
+    {
+      "material": "pehd",
+      "dn": 50,
+      "diametru_exterior": 63.0,
+      "toli": "2\"",
+      "standard": "EN 12201"
+    },
+    {
+      "material": "pehd",
+      "dn": 65,
+      "diametru_exterior": 75.0,
+      "toli": "2.1/2\"",
+      "standard": "EN 12201"
+    },
+    {
+      "material": "pehd",
+      "dn": 80,
+      "diametru_exterior": 90.0,
+      "toli": "3\"",
+      "standard": "EN 12201"
+    },
+    {
+      "material": "pehd",
+      "dn": 100,
+      "diametru_exterior": 110.0,
+      "toli": "4\"",
+      "standard": "EN 12201"
+    },
+    {
+      "material": "pehd",
+      "dn": 125,
+      "diametru_exterior": 125.0,
+      "toli": "5\"",
+      "standard": "EN 12201"
+    },
+    {
+      "material": "pehd",
+      "dn": 125,
+      "diametru_exterior": 140.0,
+      "toli": "5\"",
+      "standard": "EN 12201"
+    },
+    {
+      "material": "pehd",
+      "dn": 150,
+      "diametru_exterior": 160.0,
+      "toli": "6\"",
+      "standard": "EN 12201"
+    },
+    {
+      "material": "pehd",
+      "dn": 150,
+      "diametru_exterior": 180.0,
+      "toli": "6\"",
+      "standard": "EN 12201"
+    },
+    {
+      "material": "pehd",
+      "dn": 200,
+      "diametru_exterior": 200.0,
+      "toli": "8\"",
+      "standard": "EN 12201"
+    },
+    {
+      "material": "pehd",
+      "dn": 200,
+      "diametru_exterior": 225.0,
+      "toli": "8\"",
+      "standard": "EN 12201"
+    },
+    {
+      "material": "pehd",
+      "dn": 250,
+      "diametru_exterior": 250.0,
+      "toli": "10\"",
+      "standard": "EN 12201"
+    },
+    {
+      "material": "pehd",
+      "dn": 250,
+      "diametru_exterior": 280.0,
+      "toli": "10\"",
+      "standard": "EN 12201"
+    },
+    {
+      "material": "pehd",
+      "dn": 300,
+      "diametru_exterior": 315.0,
+      "toli": "12\"",
+      "standard": "EN 12201"
+    },
+    {
+      "material": "pehd",
+      "dn": 350,
+      "diametru_exterior": 355.0,
+      "toli": "14\"",
+      "standard": "EN 12201"
+    },
+    {
+      "material": "pehd",
+      "dn": 400,
+      "diametru_exterior": 400.0,
+      "toli": "16\"",
+      "standard": "EN 12201"
+    },
+    {
+      "material": "pehd",
+      "dn": 450,
+      "diametru_exterior": 450.0,
+      "toli": "18\"",
+      "standard": "EN 12201"
+    },
+    {
+      "material": "pehd",
+      "dn": 500,
+      "diametru_exterior": 500.0,
+      "toli": "20\"",
+      "standard": "EN 12201"
+    },
+    {
+      "material": "pehd",
+      "dn": 600,
+      "diametru_exterior": 630.0,
+      "toli": "24\"",
+      "standard": "EN 12201"
+    },
+    {
+      "material": "pexa",
+      "dn": 10,
+      "diametru_exterior": 16.0,
+      "toli": "3/8\"",
+      "standard": "EN ISO 15875"
+    },
+    {
+      "material": "pexa",
+      "dn": 12,
+      "diametru_exterior": 17.0,
+      "toli": "3/8\"",
+      "standard": "EN ISO 15875"
+    },
+    {
+      "material": "pexa",
+      "dn": 15,
+      "diametru_exterior": 20.0,
+      "toli": "1/2\"",
+      "standard": "EN ISO 15875"
+    },
+    {
+      "material": "pexa",
+      "dn": 20,
+      "diametru_exterior": 25.0,
+      "toli": "3/4\"",
+      "standard": "EN ISO 15875"
+    },
+    {
+      "material": "pexa",
+      "dn": 25,
+      "diametru_exterior": 32.0,
+      "toli": "1\"",
+      "standard": "EN ISO 15875"
+    },
+    {
+      "material": "pexa",
+      "dn": 32,
+      "diametru_exterior": 40.0,
+      "toli": "1.1/4\"",
+      "standard": "EN ISO 15875"
+    },
+    {
+      "material": "pexa",
+      "dn": 40,
+      "diametru_exterior": 50.0,
+      "toli": "1.1/2\"",
+      "standard": "EN ISO 15875"
+    },
+    {
+      "material": "pexa",
+      "dn": 50,
+      "diametru_exterior": 63.0,
+      "toli": "2\"",
+      "standard": "EN ISO 15875"
+    },
+    {
+      "material": "pvc_presiune",
+      "dn": 15,
+      "diametru_exterior": 20.0,
+      "toli": "1/2\"",
+      "standard": "EN ISO 1452"
+    },
+    {
+      "material": "pvc_presiune",
+      "dn": 20,
+      "diametru_exterior": 25.0,
+      "toli": "3/4\"",
+      "standard": "EN ISO 1452"
+    },
+    {
+      "material": "pvc_presiune",
+      "dn": 25,
+      "diametru_exterior": 32.0,
+      "toli": "1\"",
+      "standard": "EN ISO 1452"
+    },
+    {
+      "material": "pvc_presiune",
+      "dn": 32,
+      "diametru_exterior": 40.0,
+      "toli": "1.1/4\"",
+      "standard": "EN ISO 1452"
+    },
+    {
+      "material": "pvc_presiune",
+      "dn": 40,
+      "diametru_exterior": 50.0,
+      "toli": "1.1/2\"",
+      "standard": "EN ISO 1452"
+    },
+    {
+      "material": "pvc_presiune",
+      "dn": 50,
+      "diametru_exterior": 63.0,
+      "toli": "2\"",
+      "standard": "EN ISO 1452"
+    },
+    {
+      "material": "pvc_presiune",
+      "dn": 65,
+      "diametru_exterior": 75.0,
+      "toli": "2.1/2\"",
+      "standard": "EN ISO 1452"
+    },
+    {
+      "material": "pvc_presiune",
+      "dn": 80,
+      "diametru_exterior": 90.0,
+      "toli": "3\"",
+      "standard": "EN ISO 1452"
+    },
+    {
+      "material": "pvc_presiune",
+      "dn": 100,
+      "diametru_exterior": 110.0,
+      "toli": "4\"",
+      "standard": "EN ISO 1452"
+    },
+    {
+      "material": "pvc_presiune",
+      "dn": 125,
+      "diametru_exterior": 125.0,
+      "toli": "5\"",
+      "standard": "EN ISO 1452"
+    },
+    {
+      "material": "pvc_presiune",
+      "dn": 150,
+      "diametru_exterior": 160.0,
+      "toli": "6\"",
+      "standard": "EN ISO 1452"
+    },
+    {
+      "material": "pvc_presiune",
+      "dn": 200,
+      "diametru_exterior": 200.0,
+      "toli": "8\"",
+      "standard": "EN ISO 1452"
+    },
+    {
+      "material": "pvc_presiune",
+      "dn": 200,
+      "diametru_exterior": 225.0,
+      "toli": "8\"",
+      "standard": "EN ISO 1452"
+    },
+    {
+      "material": "pvc_presiune",
+      "dn": 250,
+      "diametru_exterior": 250.0,
+      "toli": "10\"",
+      "standard": "EN ISO 1452"
+    },
+    {
+      "material": "pvc_presiune",
+      "dn": 300,
+      "diametru_exterior": 315.0,
+      "toli": "12\"",
+      "standard": "EN ISO 1452"
+    },
+    {
+      "material": "pvc_canalizare",
+      "dn": 32,
+      "diametru_exterior": 32.0,
+      "toli": "1.1/4\"",
+      "standard": "EN 1329 / EN 1401"
+    },
+    {
+      "material": "pvc_canalizare",
+      "dn": 40,
+      "diametru_exterior": 40.0,
+      "toli": "1.1/2\"",
+      "standard": "EN 1329 / EN 1401"
+    },
+    {
+      "material": "pvc_canalizare",
+      "dn": 50,
+      "diametru_exterior": 50.0,
+      "toli": "2\"",
+      "standard": "EN 1329 / EN 1401"
+    },
+    {
+      "material": "pvc_canalizare",
+      "dn": 75,
+      "diametru_exterior": 75.0,
+      "toli": "2.1/2\"",
+      "standard": "EN 1329 / EN 1401"
+    },
+    {
+      "material": "pvc_canalizare",
+      "dn": 100,
+      "diametru_exterior": 110.0,
+      "toli": "4\"",
+      "standard": "EN 1329 / EN 1401"
+    },
+    {
+      "material": "pvc_canalizare",
+      "dn": 125,
+      "diametru_exterior": 125.0,
+      "toli": "5\"",
+      "standard": "EN 1329 / EN 1401"
+    },
+    {
+      "material": "pvc_canalizare",
+      "dn": 150,
+      "diametru_exterior": 160.0,
+      "toli": "6\"",
+      "standard": "EN 1329 / EN 1401"
+    },
+    {
+      "material": "pvc_canalizare",
+      "dn": 200,
+      "diametru_exterior": 200.0,
+      "toli": "8\"",
+      "standard": "EN 1329 / EN 1401"
+    },
+    {
+      "material": "pvc_canalizare",
+      "dn": 250,
+      "diametru_exterior": 250.0,
+      "toli": "10\"",
+      "standard": "EN 1329 / EN 1401"
+    },
+    {
+      "material": "pvc_canalizare",
+      "dn": 300,
+      "diametru_exterior": 315.0,
+      "toli": "12\"",
+      "standard": "EN 1329 / EN 1401"
+    },
+    {
+      "material": "pvc_canalizare",
+      "dn": 400,
+      "diametru_exterior": 400.0,
+      "toli": "16\"",
+      "standard": "EN 1329 / EN 1401"
+    },
+    {
+      "material": "spiro",
+      "dn": null,
+      "diametru_exterior": 80.0,
+      "toli": "3\"",
+      "standard": null
+    },
+    {
+      "material": "spiro",
+      "dn": null,
+      "diametru_exterior": 100.0,
+      "toli": "4\"",
+      "standard": null
+    },
+    {
+      "material": "spiro",
+      "dn": null,
+      "diametru_exterior": 125.0,
+      "toli": "5\"",
+      "standard": null
+    },
+    {
+      "material": "spiro",
+      "dn": null,
+      "diametru_exterior": 150.0,
+      "toli": "6\"",
+      "standard": null
+    },
+    {
+      "material": "spiro",
+      "dn": null,
+      "diametru_exterior": 160.0,
+      "toli": "6\"",
+      "standard": null
+    },
+    {
+      "material": "spiro",
+      "dn": null,
+      "diametru_exterior": 180.0,
+      "toli": "7\"",
+      "standard": null
+    },
+    {
+      "material": "spiro",
+      "dn": null,
+      "diametru_exterior": 200.0,
+      "toli": "8\"",
+      "standard": null
+    },
+    {
+      "material": "spiro",
+      "dn": null,
+      "diametru_exterior": 224.0,
+      "toli": "9\"",
+      "standard": null
+    },
+    {
+      "material": "spiro",
+      "dn": null,
+      "diametru_exterior": 250.0,
+      "toli": "10\"",
+      "standard": null
+    },
+    {
+      "material": "spiro",
+      "dn": null,
+      "diametru_exterior": 280.0,
+      "toli": "11\"",
+      "standard": null
+    },
+    {
+      "material": "spiro",
+      "dn": null,
+      "diametru_exterior": 315.0,
+      "toli": "12\"",
+      "standard": null
+    },
+    {
+      "material": "spiro",
+      "dn": null,
+      "diametru_exterior": 355.0,
+      "toli": "14\"",
+      "standard": null
+    },
+    {
+      "material": "spiro",
+      "dn": null,
+      "diametru_exterior": 400.0,
+      "toli": "16\"",
+      "standard": null
+    },
+    {
+      "material": "spiro",
+      "dn": null,
+      "diametru_exterior": 450.0,
+      "toli": "18\"",
+      "standard": null
+    },
+    {
+      "material": "spiro",
+      "dn": null,
+      "diametru_exterior": 500.0,
+      "toli": "20\"",
+      "standard": null
+    },
+    {
+      "material": "spiro",
+      "dn": null,
+      "diametru_exterior": 560.0,
+      "toli": "22\"",
+      "standard": null
+    },
+    {
+      "material": "spiro",
+      "dn": null,
+      "diametru_exterior": 630.0,
+      "toli": "25\"",
+      "standard": null
+    },
+    {
+      "material": "spiro",
+      "dn": null,
+      "diametru_exterior": 710.0,
+      "toli": "28\"",
+      "standard": null
+    },
+    {
+      "material": "spiro",
+      "dn": null,
+      "diametru_exterior": 800.0,
+      "toli": "32\"",
+      "standard": null
+    },
+    {
+      "material": "spiro",
+      "dn": null,
+      "diametru_exterior": 900.0,
+      "toli": "35\"",
+      "standard": null
+    },
+    {
+      "material": "spiro",
+      "dn": null,
+      "diametru_exterior": 1000.0,
+      "toli": "40\"",
+      "standard": null
+    },
+    {
+      "material": "spiro",
+      "dn": null,
+      "diametru_exterior": 1120.0,
+      "toli": "44\"",
+      "standard": null
+    },
+    {
+      "material": "spiro",
+      "dn": null,
+      "diametru_exterior": 1250.0,
+      "toli": "50\"",
+      "standard": null
+    }
+  ],
+  "sectiuni_rectangulare": [
+    {
+      "a_mm": 200,
+      "b_mm": 100
+    },
+    {
+      "a_mm": 200,
+      "b_mm": 150
+    },
+    {
+      "a_mm": 200,
+      "b_mm": 200
+    },
+    {
+      "a_mm": 250,
+      "b_mm": 150
+    },
+    {
+      "a_mm": 250,
+      "b_mm": 200
+    },
+    {
+      "a_mm": 300,
+      "b_mm": 150
+    },
+    {
+      "a_mm": 300,
+      "b_mm": 200
+    },
+    {
+      "a_mm": 300,
+      "b_mm": 250
+    },
+    {
+      "a_mm": 300,
+      "b_mm": 300
+    },
+    {
+      "a_mm": 400,
+      "b_mm": 200
+    },
+    {
+      "a_mm": 400,
+      "b_mm": 250
+    },
+    {
+      "a_mm": 400,
+      "b_mm": 300
+    },
+    {
+      "a_mm": 400,
+      "b_mm": 400
+    },
+    {
+      "a_mm": 500,
+      "b_mm": 200
+    },
+    {
+      "a_mm": 500,
+      "b_mm": 250
+    },
+    {
+      "a_mm": 500,
+      "b_mm": 300
+    },
+    {
+      "a_mm": 500,
+      "b_mm": 400
+    },
+    {
+      "a_mm": 500,
+      "b_mm": 500
+    },
+    {
+      "a_mm": 600,
+      "b_mm": 300
+    },
+    {
+      "a_mm": 600,
+      "b_mm": 400
+    },
+    {
+      "a_mm": 600,
+      "b_mm": 500
+    },
+    {
+      "a_mm": 600,
+      "b_mm": 600
+    },
+    {
+      "a_mm": 700,
+      "b_mm": 400
+    },
+    {
+      "a_mm": 700,
+      "b_mm": 500
+    },
+    {
+      "a_mm": 800,
+      "b_mm": 400
+    },
+    {
+      "a_mm": 800,
+      "b_mm": 500
+    },
+    {
+      "a_mm": 800,
+      "b_mm": 600
+    },
+    {
+      "a_mm": 1000,
+      "b_mm": 400
+    },
+    {
+      "a_mm": 1000,
+      "b_mm": 500
+    },
+    {
+      "a_mm": 1000,
+      "b_mm": 600
+    },
+    {
+      "a_mm": 1000,
+      "b_mm": 800
+    },
+    {
+      "a_mm": 1200,
+      "b_mm": 600
+    },
+    {
+      "a_mm": 1200,
+      "b_mm": 800
+    },
+    {
+      "a_mm": 1200,
+      "b_mm": 1000
+    }
+  ]
+}

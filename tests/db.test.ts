@@ -14,6 +14,8 @@ import { eq, sql } from "drizzle-orm";
 import { caTenant, conecteaza, type Baza } from "../src/db/client.js";
 import { client, listaPreturi, tenant } from "../src/db/schema.js";
 import { catalogDinBaza, ListaLipsa } from "../src/db/repo-preturi.js";
+import { serieDiametre } from "../src/db/schema.js";
+import { and } from "drizzle-orm";
 import { catalogDinFisiere } from "../src/pricing/lists.js";
 import { tarifeazaSimplu } from "../src/pricing/engine.js";
 
@@ -175,6 +177,65 @@ describe("catalogul din baza e identic cu cel din fisiere", () => {
       expect(dinBaza.matrice[sistem]).toEqual(dinFisiere.matrice[sistem]);
     }
     expect(dinBaza.goluriFoc).toEqual(dinFisiere.goluriFoc);
+  });
+
+  /**
+   * Regresia care ar fi tacuta.
+   *
+   * Din 4 septembrie 2026 baza tine DOUA liste active pe acelasi sistem —
+   * rezidentiala si industriala. Interogarea veche filtra doar pe sistem si
+   * status, iar `order by valabil_de_la desc` ar fi ales-o pe cea industriala:
+   * aceleasi fisiere, alte preturi, nimic care sa se aprinda. Vata industriala
+   * e x1,25, deci ofertele ar fi iesit cu 25% mai mari fara nicio urma.
+   */
+  daca()("listele industriale nu se strecoara peste cele rezidentiale", async () => {
+    const [t] = await db.select().from(tenant).where(eq(tenant.denumire, "RADOIA"));
+    if (!t) return expect.unreachable("ruleaza intai npm run db:seed");
+
+    // Data e DUPA ce intra in vigoare listele industriale (2026-09-04).
+    const implicit = await caTenant(db, t.id, (tx) => catalogDinBaza(tx, "2026-12-01"));
+    expect(implicit.matrice.vata_minerala).toEqual(catalogDinFisiere().matrice.vata_minerala);
+
+    const [randInd] = await caTenant(db, t.id, (tx) => tx
+      .select({ continut: listaPreturi.continut })
+      .from(listaPreturi)
+      .where(and(
+        eq(listaPreturi.sistem, "vata_minerala"),
+        eq(listaPreturi.destinatie, "industrial"),
+        eq(listaPreturi.status, "activa"),
+      )));
+    const cheie = "89|50";
+    const rez = implicit.matrice.vata_minerala.cells[cheie]!;
+    const ind = (randInd!.continut as { cells: Record<string, number> }).cells[cheie]!;
+    expect(ind / rez).toBeCloseTo(1.25, 6);
+  });
+
+  /**
+   * Pachetul industrial e INCOMPLET: n-au venit PVC-ul si inchiderile goluri
+   * la foc. Un catalog industrial cerut intreg trebuie sa spuna asta, nu sa
+   * completeze tacut din rezidential — altfel diferenta dintre "n-avem lista"
+   * si "avem alta lista" dispare exact acolo unde conteaza.
+   */
+  daca()("catalogul industrial spune ce lipseste, nu completeaza din rezidential", async () => {
+    const [t] = await db.select().from(tenant).where(eq(tenant.denumire, "RADOIA"));
+    if (!t) return expect.unreachable("ruleaza intai npm run db:seed");
+
+    await expect(
+      caTenant(db, t.id, (tx) => catalogDinBaza(tx, "2026-12-01", "industrial")),
+    ).rejects.toThrow(/pvc \(industrial\)/);
+  });
+
+  daca()("seriile de diametre difera pe material: DN15 nu e acelasi lucru peste tot", async () => {
+    // Tabelul e referinta globala, fara tenant: sunt norme, nu date de client.
+    const randuri = await db.select().from(serieDiametre);
+    if (randuri.length === 0) return expect.unreachable("ruleaza intai npm run db:seed");
+
+    const la = (material: string, dn: number) =>
+      Number(randuri.find((r) => r.material === material && r.dn === dn)?.diametruExterior);
+
+    expect(la("otel_negru", 15)).toBe(21.3);
+    expect(la("cupru", 15)).toBe(18);
+    expect(la("ppr", 15)).toBe(20);
   });
 
   daca()("preturile din baza dau aceleasi cifre ca ofertele istorice", async () => {

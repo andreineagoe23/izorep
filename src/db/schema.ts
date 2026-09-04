@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
-  boolean, date, index, jsonb, pgPolicy, pgTable,
+  boolean, date, index, integer, jsonb, numeric, pgPolicy, pgTable,
   text, timestamp, uniqueIndex, uuid,
 } from "drizzle-orm/pg-core";
 
@@ -121,8 +121,23 @@ export const client = pgTable("client", {
 export const listaPreturi = pgTable("lista_preturi", {
   id: uuid("id").primaryKey().defaultRandom(),
   tenantId: uuid("tenant_id").notNull().references(() => tenant.id, { onDelete: "restrict" }),
-  /** elastomer | vata_minerala | tabla | pvc | goluri_foc */
+  /** elastomer | vata_minerala | tabla | tabla_inox | pvc | goluri_foc */
   sistem: text("sistem").notNull(),
+  /**
+   * rezidential | industrial | rafinarie
+   *
+   * Firma tine trei liste pentru acelasi sistem, cu valori diferite. Nu e un
+   * coeficient peste rezidential — vata e x1,25 constant, dar elastomerul e
+   * x1,25 la 9/13/19 mm si x1,20 la 25/32 mm — deci sunt documente separate,
+   * nu un camp de inmultire. Destinatia intra in cheia de unicitate: doua
+   * liste active pe acelasi sistem sunt corecte daca sunt pe destinatii
+   * diferite, si o eroare daca nu. A doua axa din `liste-preturi.md` —
+   * `contine`, material+manopera fata de doar manopera — exista deja ca
+   * coloana, dar nu e inca in cheie: listele de manopera au alta FORMA (tarif
+   * plat, nu matrice), deci intra cand se decide daca sunt acelasi tip de
+   * document.
+   */
+  destinatie: text("destinatie").notNull().default("rezidential"),
   denumire: text("denumire").notNull(),
   /** "material + manopera" sau "manopera" — schimba ce inseamna pretul. */
   contine: text("contine").notNull(),
@@ -137,11 +152,65 @@ export const listaPreturi = pgTable("lista_preturi", {
   creatLa: timestamp("creat_la", { withTimezone: true }).notNull().defaultNow(),
   creatDe: uuid("creat_de").references(() => utilizator.id, { onDelete: "set null" }),
 }, (t) => [
-  index("lista_preturi_tenant_sistem_idx").on(t.tenantId, t.sistem, t.status),
-  // O singura lista ACTIVA per sistem, per tenant. Doua liste active in
-  // acelasi timp inseamna ca nimeni nu stie dupa care s-a ofertat.
+  index("lista_preturi_tenant_sistem_idx").on(t.tenantId, t.sistem, t.destinatie, t.status),
+  // O singura lista ACTIVA per sistem SI destinatie, per tenant. Doua liste
+  // active pe acelasi sistem si aceeasi destinatie inseamna ca nimeni nu stie
+  // dupa care s-a ofertat.
   uniqueIndex("lista_preturi_una_activa_idx")
-    .on(t.tenantId, t.sistem)
+    .on(t.tenantId, t.sistem, t.destinatie)
     .where(sql`status = 'activa'`),
   doarTenantul("lista_preturi_tenant"),
+]);
+
+
+/**
+ * Seriile de diametre pe material.
+ *
+ * DN nu e un diametru masurabil, iar conversia DN -> diametru exterior DIFERA
+ * dupa material: DN15 e ø21,3 la otel, dar ø18 la cupru si ø20 la PP-R. Codul
+ * (`src/pricing/dn-table.ts`) aplica azi tabelul de otel tuturor, deci o
+ * pozitie de cupru se tarifeaza pe randul gresit.
+ *
+ * Tabelul NU e per tenant: sunt norme (EN 10255, EN 10220, EN 1057,
+ * EN ISO 15874, EN 12201, EN ISO 15875, EN ISO 1452, EN 1329/1401), aceleasi
+ * pentru oricine. Un tenant_id aici ar sugera ca doua firme pot avea serii
+ * diferite pentru aceeasi teava, ceea ce nu se poate. De aceea nu are nici
+ * politica de RLS — nu e nimic de izolat.
+ *
+ * Sursa: `attachments/referinte/Conversie_ml_in_mp_tevi_si_tubulaturi.xlsx`.
+ */
+export const serieDiametre = pgTable("serie_diametre", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  /** otel_negru | otel_zincat | cupru | ppr | pehd | pexa | pvc_presiune | pvc_canalizare | spiro */
+  material: text("material").notNull(),
+  /** Diametrul nominal. La spiro nominalul ESTE diametrul exterior. */
+  dn: integer("dn"),
+  /** Diametrul exterior real, in mm. Dupa el se cauta randul din lista. */
+  diametruExterior: numeric("diametru_exterior", { precision: 8, scale: 2 }).notNull(),
+  /** Echivalenta in toli, orientativa la plastic si cupru. */
+  toli: text("toli"),
+  /** Norma din care vine randul, cand se stie. */
+  standard: text("standard"),
+}, (t) => [
+  // Un material poate avea doua randuri cu acelasi DN (PE-HD: DN125 e si
+  // ø125, si ø140), deci unicitatea e pe diametrul exterior, nu pe DN.
+  uniqueIndex("serie_diametre_material_od_idx").on(t.material, t.diametruExterior),
+  index("serie_diametre_material_dn_idx").on(t.material, t.dn),
+]);
+
+/**
+ * Sectiunile standard de tubulatura rectangulara.
+ *
+ * Suprafata nu se stocheaza: e `2 x (A + B + 4 x izolatie) / 1000` si depinde
+ * de grosimea izolatiei, care e per pozitie. Un mp calculat si salvat ar fi
+ * primul lucru care se invecheste.
+ *
+ * Referinta, ca si seria de diametre — nu e per tenant.
+ */
+export const sectiuneRectangulara = pgTable("sectiune_rectangulara", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  aMm: integer("a_mm").notNull(),
+  bMm: integer("b_mm").notNull(),
+}, (t) => [
+  uniqueIndex("sectiune_rectangulara_ab_idx").on(t.aMm, t.bMm),
 ]);

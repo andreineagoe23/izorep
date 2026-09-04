@@ -51,7 +51,7 @@ cantitate (187 ml). Cu maparea: **56 din 56**. Testul stă în `tests/mapare.tes
 pe o foaie reală salvată ca fixtură.
 
 ```bash
-npm run mapare -- ../attachments/Radoia.xlsx   # înregistrează
+npm run mapare -- ../attachments/clienti/Radoia.xlsx   # înregistrează
 npm run mapare -- --lista                      # ce e în cache
 ```
 
@@ -261,7 +261,7 @@ Pinul singur nu ajunge — cineva tot schimbă snapshot-ul cândva. Golden files
 sunt măsurătoarea față de care se compară:
 
 ```bash
-npm run golden -- ../attachments/Izolatii\ Transavia.xlsx   # înregistrează
+npm run golden -- ../attachments/clienti/Izolatii\ Transavia.xlsx   # înregistrează
 npm run golden -- --verifica                                # caută deriva
 ```
 

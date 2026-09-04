@@ -70,7 +70,44 @@ status) și conținutul ca `jsonb`. Deliberat:
 
 Imutabilitatea e impusă de **trigger**, nu de aplicație: o migrare de date sau
 o conexiune de `psql` ocolesc aplicația, dar nu ocolesc un trigger. Index unic
-parțial garantează o singură listă activă per sistem per tenant.
+parțial garantează o singură listă activă per sistem **și destinație** per
+tenant.
+
+### Destinația e în `where`, nu în `order by`
+
+Din 4 septembrie 2026 baza ține două liste active pe același sistem:
+rezidențială și industrială. Interogarea inițială filtra doar pe sistem și
+status, cu `order by valabil_de_la desc limit 1` — deci ar fi ales-o pe cea
+industrială, fiindcă e mai recentă. Aceleași fișiere de client, alte prețuri,
+nimic care să se aprindă: vata industrială e ×1,25.
+
+`catalogDinBaza(db, la, destinatie)` cere destinația explicit, implicit
+`"rezidential"` — singura pe care o reproduc cele 130 de teste ale motorului.
+Regresia are testul ei în `tests/db.test.ts` („listele industriale nu se
+strecoară peste cele rezidențiale").
+
+Pachetul industrial e **incomplet**: n-au venit PVC-ul și închiderile goluri la
+foc. Un catalog industrial cerut întreg aruncă `ListaLipsa` și spune care
+sistem lipsește — nu completează tăcut din rezidențial. Diferența dintre
+„n-avem listă" și „avem altă listă" trebuie să rămână vizibilă.
+
+A doua axă din `liste-preturi.md` — `contine`, material+manoperă față de doar
+manoperă — are coloană de la prima migrare, dar **nu e în cheia unică**:
+listele de manoperă au altă formă (tarif plat pe sistem și grosime, nu matrice
+ø × grosime), deci s-ar putea să nu fie același tip de document.
+
+## Referințele nu sunt per tenant
+
+`serie_diametre` și `sectiune_rectangulara` (migrarea 0004) nu au `tenant_id`
+și nu au politici de RLS. Sunt **norme** — EN 10255, EN 10220, EN 1057,
+EN ISO 15874, EN 12201, EN ISO 15875, EN ISO 1452, EN 1329/1401 — aceleași
+pentru oricine. Un `tenant_id` acolo ar sugera că două firme pot avea serii
+diferite pentru aceeași țeavă.
+
+Ce rezolvă: DN nu e un diametru măsurabil, iar conversia diferă după material.
+DN15 e ø21,3 la oțel, ø18 la cupru, ø20 la PP-R. `src/pricing/dn-table.ts`
+aplică azi tabelul de oțel tuturor materialelor. Datele sunt în bază și în
+`data/referinte/conversii-tevi.json`; motorul încă nu le folosește.
 
 ## Catalogul: două surse, aceeași formă
 
@@ -111,5 +148,7 @@ care nu o poți reproduce.
 - Server HTTP. Stratul de bază e independent de alegerea de framework.
 - Autentificare, jurnal de audit, verificarea permisiunilor pe server.
 - Restul tabelelor: cerere, deviz, ofertă, contract, lucrare, stoc, factură.
+- Regula după care se alege destinația unei lucrări. Coloana există și e
+  populată; cine o setează, nu.
 - Motorul primește încă listele prin import static, nu ca argument. Pasul
   următor pentru ca serverul să tarifeze per tenant.

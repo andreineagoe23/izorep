@@ -2,7 +2,7 @@
 /**
  * L1: inregistreaza maparea de coloane a fiecarei foi dintr-un fisier.
  *
- *   npm run mapare -- ../attachments/Radoia.xlsx
+ *   npm run mapare -- ../attachments/clienti/Radoia.xlsx
  *   npm run mapare -- --lista
  *
  * Un apel la model per LAYOUT, nu per foaie: amprenta e antetul normalizat plus

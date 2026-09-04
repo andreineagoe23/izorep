@@ -67,6 +67,25 @@ Când firma confirmă regula corectă, cazul se mută în suita principală.
 
 ## Ce lipsește
 
+- **Destinația.** Listele firmei sunt de trei feluri — rezidențiale,
+  industriale, rafinărie. Motorul vede **doar rezidențialele**: `lists.ts`
+  importă static `data/price-lists/*.json`. Industrialele sunt extrase în
+  `data/price-lists/industrial/` și încărcate în bază cu destinația lor, dar
+  nimic din `src/pricing/` nu le atinge; rafinăria nu a venit. Nu se pot pune
+  ca un coeficient peste rezidențial: raportul diferă pe sistem și pe grosime
+  (vata ×1,25; elastomerul ×1,25 la 9/13/19 mm și ×1,20 la 25/32 mm). Ce
+  lipsește ca să intre în motor e regula după care se alege destinația
+  (întrebarea 12 din `stare.md`).
+- **Tabla de inox** — sistem întreg care nu există în tipul `Sistem`. ETL-ul îl
+  extrage (`data/price-lists/industrial/tabla_inox.json`, 192 de celule) și e
+  în bază, dar motorul nu-l poate cere: `SistemMatrice` nu-l conține, deci
+  `lista()` nu-l întoarce. Apare doar pe industrial. E jachetare, indexată ca
+  tabla de aluminiu pe diametrul exterior al izolației: ø80–ø710, grosimi
+  0,4 / 0,5 / 0,6 mm.
+- **Seriile de diametre pe material.** `dn-table.ts` are un singur tabel, cel
+  de oțel, și îl aplică tuturor. Datele pentru cupru, PP-R, PE-HD, PE-Xa, PVC
+  și spiro sunt în `data/referinte/conversii-tevi.json` și în bază, dar motorul
+  nu le citește: o poziție DN15 de cupru se caută pe rândul 22 în loc de 18.
 - Lista de manoperă separată (structură diferită: tarif plat, nu matrice).
 - Coeficienți (înălțime, urgență, weekend) peste prețul de bază.
 - Versionarea listelor de prețuri și snapshot-ul pe linia de deviz.
