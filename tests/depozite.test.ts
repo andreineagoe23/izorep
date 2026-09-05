@@ -79,39 +79,34 @@ describe("cache-ul de mapari", () => {
   };
 
   it("citeste inapoi ce s-a scris, pe amprenta", async () => {
-    // Modulul isi ia directorul din URL-ul lui, deci calea de test se dă prin
-    // parametru abia cand exista. Pana atunci se verifica pe directorul real,
-    // scriind si stergand o intrare de test.
-    const { citesteMapari, scrieMapare, DIR_MAPARI } = await import("../src/import/cache-mapari.js");
+    // Directorul e cel temporar, nu `data/mapari/`: `scrieMapare` regenereaza
+    // acum si `index.json`, iar `mapari-statice.test.ts` compara indexul cu
+    // continutul directorului. Suita ruleaza fisierele in paralel, deci o
+    // scriere de test in directorul real ar pica bariera aia intermitent.
+    const { citesteMapari, scrieMapare } = await import("../src/import/cache-mapari.js");
     const amprenta = `test::${Date.now()}`;
     const cale = scrieMapare({
       amprenta, fisier: "test.xlsx", foaie: "Test", model: "test",
       generat: new Date().toISOString(), mapare,
-    });
-    try {
-      const citit = citesteMapari().get(amprenta);
-      expect(citit?.mapare).toEqual(mapare);
-      expect(readdirSync(DIR_MAPARI)).toContain(cale.split("/").pop());
-    } finally {
-      rmSync(cale, { force: true });
-    }
-    expect(citesteMapari().has(amprenta)).toBe(false);
+    }, dir);
+
+    const citit = citesteMapari(dir).get(amprenta);
+    expect(citit?.mapare).toEqual(mapare);
+    expect(readdirSync(dir)).toContain(cale.split("/").pop());
+
+    rmSync(cale, { force: true });
+    expect(citesteMapari(dir).has(amprenta)).toBe(false);
   });
 
   it("refuza o mapare stricata de pe disc in loc sa o foloseasca", async () => {
     // Fisierele din data/ sunt commit-uite si editabile de mana. Ce e pe disc
     // trece prin aceeasi schema ca ce vine de la model.
-    const { citesteMapari, DIR_MAPARI } = await import("../src/import/cache-mapari.js");
-    const cale = join(DIR_MAPARI, "zzz-test-stricat.json");
-    writeFileSync(cale, JSON.stringify({
+    const { citesteMapari } = await import("../src/import/cache-mapari.js");
+    writeFileSync(join(dir, "zzz-test-stricat.json"), JSON.stringify({
       amprenta: "x", fisier: "x", foaie: "x", model: "x", generat: "x",
       mapare: { rand_antet: 0, rand_start: 1, roluri: ["rol-inexistent"], motiv: "" },
     }));
-    try {
-      expect(() => citesteMapari()).toThrow();
-    } finally {
-      rmSync(cale, { force: true });
-    }
+    expect(() => citesteMapari(dir)).toThrow();
   });
 });
 

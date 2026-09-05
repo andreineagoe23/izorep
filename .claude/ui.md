@@ -209,6 +209,52 @@ Tot ce ține de depozit e best-effort. În fereastră privată sau cu stocarea
 blocată, fiecare apel eșuează tăcut și ecranul se poartă ca înainte. Istoricul e
 o comoditate; documentele adevărate vor sta în bază.
 
+## Fluxul de validare
+
+Indicatorul „N de validat de om" spunea *câte* sunt, nu *unde*. Pe `Radoia.xlsx`
+— 105 poziții pe 7 foi — găsirea lor însemna derulare manuală după marcajul
+chihlimbariu. Deasupra grilei stau acum trei lucruri:
+
+- **Lentilele**: `Toate` · `De validat (n)` · `Netarifate (n)`. Ascund rândurile
+  care nu se potrivesc, dar **numărul din marginea stângă rămâne cel din
+  Excel** — ancora 1:1 cu fișierul nu se pierde, rândurile lipsă se văd ca
+  salturi în numerotare. Filtrul nu e o preferință persistentă: se resetează la
+  fiecare fișier, fiindcă „de validat" înseamnă altceva de la un fișier la
+  altul.
+- **Contorul pe fila fiecărei foi**, ca să se vadă pe care foaie mai e treabă
+  fără să fie deschise pe rând.
+- **„Următoarea de validat"**, ciclic, cu derulare în vizor și focus pe primul
+  control din coloanele extrase — poziția se corectează de la tastatură, fără
+  mouse.
+
+**Confirmarea în masă acționează pe exact ce e vizibil** sub filtrul curent, pe
+foaia activă, iar butonul spune asta („Confirmă cele 12 poziții marcate din
+foaia asta"). Un buton „confirmă tot" ar bifa și poziții pe care omul nu le-a
+avut niciodată pe ecran.
+
+**Confirmarea nu învață șabloane.** `invataDinCorectie` intră în memoria care
+rezolvă importurile viitoare; o confirmare în masă spune doar „am văzut și e
+bine", nu „ăsta e tiparul corect". Dacă ar învăța, un click pe 40 de linii ar
+propaga tăcut 40 de tipare peste toate proiectele următoare — exact ce
+interzice `memorie.ts`, unde se învață numai din corecția umană explicită,
+linie cu linie.
+
+**Are anulare, un nivel.** O acțiune în masă fără drum înapoi e o capcană: omul
+confirmă foaia greșită și pe urmă nu mai poate deosebi liniile alea de restul —
+toate arată la fel. Un nivel ajunge; instantaneul dispare la următoarea
+confirmare sau la schimbarea fișierului.
+
+Ce se întâmplă în spate: confirmarea pune `sursa: "om"` pe linie. Nucleul
+tratează asta ca pe o corecție umană — nu o mai re-extrage niciodată în
+`reevalueaza` și nu o mai trece prin guardrails, fiindcă `valideaza.ts` există
+ca să verifice **modelul**, nu omul care se uită direct la fișierul sursă. Se
+salvează de la sine în istoric: `SesiuneImport.extrase` ținea deja `sursa` per
+linie, deci confirmarea supraviețuiește reîncărcării fără câmp nou.
+
+Logica — ce intră într-un filtru, ce se confirmă, ce se anulează — stă în
+`web/validare.ts`, nu în handlere: același motiv ca la `invataDinCorectie`, cod
+riscant care fără test nu se verifică. Ecranul rămâne cu apeluri simple.
+
 ## Ce rulează în browser și ce nu
 
 Motorul de prețuri și extragerea deterministă rulează integral în browser:

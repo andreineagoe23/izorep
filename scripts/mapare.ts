@@ -4,6 +4,7 @@
  *
  *   npm run mapare -- ../attachments/clienti/Radoia.xlsx
  *   npm run mapare -- --lista
+ *   npm run mapare -- --reindex
  *
  * Un apel la model per LAYOUT, nu per foaie: amprenta e antetul normalizat plus
  * latimea, deci cele sapte foi ale lui `Radoia.xlsx` costa un singur apel, iar
@@ -12,18 +13,32 @@
  * O mapare care nu trece de `valideazaMapare` NU se salveaza. Mai bine ramane
  * euristica de azi — pe care o stim si o masuram — decat o mapare gresita care
  * muta cantitatile pe alta coloana fara ca cineva sa observe.
+ *
+ * `--reindex` regenereaza `data/mapari/index.json` din directorul curent, fara
+ * niciun apel la model. `scrieMapare()` il regenereaza deja la fiecare mapare
+ * noua; flagul e pentru dupa o stergere sau editare manuala a unui fisier de
+ * mapare, care nu trece prin `scrieMapare()`.
  */
 import { existsSync } from "node:fs";
 import { basename } from "node:path";
 import { parseFoi } from "../src/import/parse-workbook.js";
 import { amprentaFoaie, indexAntetFizic } from "../src/import/mapare.js";
 import { mapeazaFoaie } from "../src/import/mapare-llm.js";
-import { citesteMapari, scrieMapare } from "../src/import/cache-mapari.js";
+import { citesteMapari, scrieMapare, scrieIndex } from "../src/import/cache-mapari.js";
 import { MODEL_IMPLICIT } from "../src/import/extract-llm.js";
 
 if (existsSync(".env")) process.loadEnvFile(".env");
 
 const args = process.argv.slice(2);
+
+if (args.includes("--reindex")) {
+  // Util dupa ce se sterge sau se editeaza manual o mapare pe disc: indexul se
+  // regenereaza automat la `scrieMapare`, dar o stergere manuala nu trece pe
+  // acolo, deci ramane in urma pana la un `--reindex` explicit.
+  const cale = scrieIndex();
+  console.log(`\n  ${cale}\n  ${citesteMapari().size} mapari\n`);
+  process.exit(0);
+}
 
 if (args.includes("--lista")) {
   const mapari = citesteMapari();

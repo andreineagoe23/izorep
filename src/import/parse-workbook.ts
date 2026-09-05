@@ -1,50 +1,11 @@
 import ExcelJS from "exceljs";
+import { construiesteLinie, liniile, type CelulaBruta, type FoaieBruta, type LinieBruta, type RandBrut } from "./rand.js";
 
-export interface LinieBruta {
-  index: number;
-  foaie: string;
-  rand: number;
-  /** Textul concatenat al celulelor de tip text din rand. */
-  text: string;
-  um?: string;
-  cantitate?: number;
-  celule: (string | number | null)[];
-}
-
-/**
- * O celula din grila afisata 1:1. `span` e latimea imbinarii, ca ecranul sa
- * redea titlul intins peste sase coloane ca pe un singur titlu, nu ca pe
- * aceeasi valoare repetata de sase ori.
- *
- * ATENTIE: imbinarile se desfac DOAR aici. `LinieBruta.celule` pastreaza
- * valoarea repetata, pentru ca `esteAntetSectiune` recunoaste antetul de
- * sectiune exact dupa repetitia aia — desfacut acolo, extragerea inchiderilor
- * goluri la foc pierde sectiunea si, cu ea, 53 de pozitii.
- */
-export interface CelulaBruta {
-  v: string | number | null;
-  span: number;
-}
-
-export interface RandBrut {
-  /** Numarul randului din Excel, cel din gutter-ul aplicatiei. */
-  rand: number;
-  celule: CelulaBruta[];
-  /** Pozitia extrasa din randul asta, cand randul e o pozitie. */
-  linie?: LinieBruta;
-}
-
-/** O foaie din registru, asa cum se vede in Excel. */
-export interface FoaieBruta {
-  /** Numele foii, exact cum e scris in registru. */
-  nume: string;
-  /** Randul de antet, daca s-a gasit unul. Lipseste la foile fara antet. */
-  antet?: RandBrut;
-  /** Toate randurile care contin ceva, in ordinea din fisier, antetul inclus. */
-  randuri: RandBrut[];
-  /** Latimea grilei: randul cel mai lat da numarul de coloane. */
-  coloane: number;
-}
+// Partea pura a lui L0 sta in `rand.ts`, ca sa nu traga ExcelJS in
+// bundle-ul de browser prin `editare.ts`. Se re-exporta de aici: apelantii
+// vechi importa in continuare din `parse-workbook.js`.
+export { construiesteLinie, liniile } from "./rand.js";
+export type { CelulaBruta, FoaieBruta, LinieBruta, RandBrut } from "./rand.js";
 
 const valoare = (c: ExcelJS.CellValue): string | number | null => {
   if (c === null || c === undefined) return null;
@@ -58,30 +19,6 @@ const valoare = (c: ExcelJS.CellValue): string | number | null => {
   }
   return null;
 };
-
-const UM = /^(ml|m|m²|m2|mp|buc|buc\.|pcs|stk|lm|kg|to)$/i;
-
-/**
- * Cantitatea de pe rand.
- *
- * Euristica provizorie: cantitatea sta lipita de unitatea de masura — dupa ea
- * in listele de cantitati (Nr | Denumire | UM | Cantitate), inainte in oferte
- * (Nr | Denumire | Cant | UM | Pret). Primul numar de pe rand e aproape
- * intotdeauna numarul curent al pozitiei, nu cantitatea.
- *
- * Asta e o ghicitoare si trebuie sa ramana asa doar pana exista maparea de
- * coloane per client (L1). Odata mapata coloana, euristica nu se mai foloseste.
- */
-function cantitate(celule: (string | number | null)[], iUm: number): number | undefined {
-  const nr = (i: number) => (typeof celule[i] === "number" && (celule[i] as number) > 0 ? (celule[i] as number) : undefined);
-  if (iUm >= 0) {
-    for (let i = iUm + 1; i < celule.length; i++) { const v = nr(i); if (v !== undefined) return v; }
-    for (let i = iUm - 1; i >= 0; i--) { const v = nr(i); if (v !== undefined) return v; }
-    return undefined;
-  }
-  const numere = celule.filter((c): c is number => typeof c === "number" && c > 0);
-  return numere.length > 1 ? numere[1] : numere[0];
-}
 
 /**
  * Randul de antet al unei foi.
@@ -161,15 +98,6 @@ async function incarca(cale: string): Promise<FoaieBruta[]> {
   return extrageFoi(wb);
 }
 
-/**
- * Liniile de pozitie, in ordinea din registru. Sunt aceleasi obiecte care stau
- * si in grila: indexul se atribuie o singura data, la parcurgerea foilor, deci
- * randul din tabel si linia trimisa la model nu pot ajunge sa se refere la
- * randuri diferite.
- */
-export const liniile = (foi: FoaieBruta[]): LinieBruta[] =>
-  foi.flatMap((f) => f.randuri.flatMap((r) => (r.linie ? [r.linie] : [])));
-
 function extrageFoi(wb: ExcelJS.Workbook): FoaieBruta[] {
   const foi: FoaieBruta[] = [];
   let index = 0;
@@ -199,22 +127,8 @@ function extrageFoi(wb: ExcelJS.Workbook): FoaieBruta[] {
       const rand: RandBrut = { rand: nr, celule };
       randuri.push(rand);
 
-      const texte = brute.filter((c): c is string => typeof c === "string" && c.trim().length > 3);
-      if (texte.length === 0) return;
-      const text = texte.join(" | ").trim();
-      if (text.length < 12) return;
-
-      const iUm = brute.findIndex((c) => typeof c === "string" && UM.test(c.trim()));
-      const um = iUm >= 0 ? String(brute[iUm]).trim() : undefined;
-
-      rand.linie = {
-        index: index++, foaie: ws.name, rand: nr, text, celule: brute,
-        ...(um ? { um } : {}),
-        ...(() => {
-          const q = cantitate(brute, iUm);
-          return q === undefined ? {} : { cantitate: q };
-        })(),
-      };
+      const linie = construiesteLinie(brute, { index, foaie: ws.name, rand: nr });
+      if (linie) { rand.linie = linie; index++; }
     });
 
     const antet = randuri.slice(0, RANDURI_CAUTARE_ANTET).find((r) => esteRandAntet(r.celule));

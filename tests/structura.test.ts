@@ -55,4 +55,20 @@ describe("codul de browser nu atinge stratul de Node", () => {
 
     expect(vinovate).toEqual([]);
   });
+
+  it("niciun ecran nu importa direct extract-regex.js, sabloane.js sau valideaza.js", () => {
+    // Exact drift-ul asta a produs cele trei bug-uri masurate in nucleu.ts:
+    // ecranul de import reimplementa L2a-L4 in loc sa treaca prin
+    // `proceseazaRegistru`, si a ramas in urma — guardrails care nu rulau pe
+    // ecran, `modelFaraRaspuns` numarat doar in CLI, plafonul de linii trimise
+    // la model aplicat per apel in loc de per import. Orice ecran nou care
+    // vrea sa extraga sau sa valideze trebuie sa treaca prin `nucleu.js`.
+    // `memorie.js` ramane permis: ecranul cheama `invataDinCorectie` direct.
+    const interzise = /from\s+["'][^"']*src\/import\/(extract-regex|sabloane|valideaza)\.js["']/;
+    const vinovate = fisiereTs(join(RADACINA, "web"))
+      .filter((f) => interzise.test(readFileSync(f, "utf8")))
+      .map(relativ);
+
+    expect(vinovate).toEqual([]);
+  });
 });

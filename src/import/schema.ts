@@ -11,8 +11,15 @@ import { z } from "zod";
  * linie geamana din acelasi fisier, iar rolul ei a fost dus mai departe de
  * acolo, cu numerele recitite din propriul text. `memorie` e acelasi lucru,
  * dar tiparul vine dintr-o corectie umana de la un import anterior.
+ *
+ * `om` inseamna corectat sau confirmat direct de om, in ecranul de import —
+ * nu prin `invataDinCorectie` (aia ramane `memorie` la urmatorul fisier), ci
+ * chiar linia pe care a atins-o. Doua reguli, in `nucleu.ts`: o linie `om` nu
+ * se mai re-extrage niciodata in `reevalueaza`, si nu trece prin guardrails —
+ * `valideaza.ts` exista ca sa verifice MODELUL, nu pe omul care se uita direct
+ * la fisierul sursa.
  */
-export type Sursa = "regex" | "model" | "sablon" | "memorie";
+export type Sursa = "regex" | "model" | "sablon" | "memorie" | "om";
 
 export const SISTEME = ["elastomer", "vata_minerala", "tabla", "pvc", "goluri_foc"] as const;
 export const FORME = [

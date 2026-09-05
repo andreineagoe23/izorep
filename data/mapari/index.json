@@ -1,0 +1,198 @@
+{
+  "generat": "2026-09-05T13:06:28.120Z",
+  "mapari": [
+    {
+      "amprenta": "12::no.|item description||unit|quantity|supply|install|rate|total (euro)|recommended producer/material|producer/material offered|comments / document ref.",
+      "fisier": "Book15.xlsx",
+      "foaie": "E3 Mechanical",
+      "model": "gpt-4.1-2025-04-14",
+      "generat": "2026-09-03T16:56:03.092Z",
+      "mapare": {
+        "rand_antet": 0,
+        "rand_start": 4,
+        "roluri": [
+          "nr",
+          "denumire",
+          "denumire_alt",
+          "um",
+          "cantitate",
+          "ignora",
+          "ignora",
+          "ignora",
+          "ignora",
+          "observatii",
+          "observatii",
+          "observatii"
+        ],
+        "motiv": "Randul 0 contine capetele de coloana, iar datele incep de la randul 4, unde apar primele pozitii cu cantitati si unitati de masura. Coloana 2 este a doua descriere (romana), iar ultimele trei coloane sunt pentru observatii si referinte."
+      }
+    },
+    {
+      "amprenta": "16::nr. articol|descriere articol|model de referinta|unitate de masura|cantitate / unitate|nr. unitati|cantitate total|pret unitar [eur]|total [eur]|",
+      "fisier": "Lista de cantitati Flower City_F4.xlsx",
+      "foaie": "ITV-Casa A+B",
+      "model": "gpt-4.1-2025-04-14",
+      "generat": "2026-09-03T16:51:15.859Z",
+      "mapare": {
+        "rand_antet": 2,
+        "rand_start": 7,
+        "roluri": [
+          "nr",
+          "denumire",
+          "ignora",
+          "um",
+          "cantitate_unitara",
+          "nr_unitati",
+          "cantitate",
+          "pret_unitar",
+          "pret_total",
+          "ignora",
+          "ignora",
+          "ignora",
+          "ignora",
+          "ignora",
+          "ignora",
+          "ignora"
+        ],
+        "motiv": "Randul 2 contine capetele de coloana relevante, iar datele incep de la randul 7. Coloanele sunt mapate dupa antet si structura randurilor de date."
+      }
+    },
+    {
+      "amprenta": "18::nr. articol|descriere articol|model de referinta|unitate de masura|cantitate|nr. unitati|cantitate total|pret unitar [eur]|total [eur]|",
+      "fisier": "Lista de cantitati Flower City_F4.xlsx",
+      "foaie": "ITV-Casa C",
+      "model": "gpt-4.1-2025-04-14",
+      "generat": "2026-09-03T16:51:16.896Z",
+      "mapare": {
+        "rand_antet": 2,
+        "rand_start": 7,
+        "roluri": [
+          "nr",
+          "denumire",
+          "ignora",
+          "um",
+          "cantitate_unitara",
+          "nr_unitati",
+          "cantitate",
+          "ignora",
+          "ignora",
+          "ignora",
+          "ignora",
+          "ignora",
+          "ignora",
+          "ignora",
+          "ignora",
+          "ignora",
+          "ignora",
+          "ignora"
+        ],
+        "motiv": "Randul 2 contine capetele de coloana relevante pentru datele de izolatii, iar datele incep de la randul 7. Coloanele relevante sunt identificate dupa denumire si structura."
+      }
+    },
+    {
+      "amprenta": "5::numar curent|denumire articol|um|cantitate|observatii",
+      "fisier": "Radoia.xlsx",
+      "foaie": "izolatie",
+      "model": "gpt-4.1-2025-04-14",
+      "generat": "2026-09-03T16:50:28.802Z",
+      "mapare": {
+        "rand_antet": 4,
+        "rand_start": 6,
+        "roluri": [
+          "nr",
+          "denumire",
+          "um",
+          "cantitate",
+          "observatii"
+        ],
+        "motiv": "Randul 4 contine capetele de coloana, iar datele incep de la randul 6, dupa un rand de titlu la 5."
+      }
+    },
+    {
+      "amprenta": "6::nr. crt.|dimensiune|pret euro / buc",
+      "fisier": "Oferta pret inchideri goluri la foc.xlsx",
+      "foaie": "Izolatie Termice",
+      "model": "gpt-4.1-2025-04-14",
+      "generat": "2026-09-03T16:50:42.591Z",
+      "mapare": {
+        "rand_antet": 2,
+        "rand_start": 3,
+        "roluri": [
+          "nr",
+          "dimensiune",
+          "pret_unitar",
+          "ignora",
+          "ignora",
+          "ignora"
+        ],
+        "motiv": "Randul 2 contine capetele de coloana (Nr. Crt., Dimensiune, Pret Euro / buc), iar datele incep de la randul 3. Coloanele 4-6 sunt goale sau nefolosite."
+      }
+    },
+    {
+      "amprenta": "8::02.54.04|z|wickelfalzrohre aus verz. stahlblech||||p.u. euro/elem|pret total euro",
+      "fisier": "Oferta 27.04.2026.xlsx",
+      "foaie": "Ventilatie",
+      "model": "gpt-4.1-2025-04-14",
+      "generat": "2026-09-03T16:50:34.582Z",
+      "mapare": {
+        "rand_antet": null,
+        "rand_start": 1,
+        "roluri": [
+          "nr",
+          "ignora",
+          "denumire",
+          "ignora",
+          "cantitate",
+          "um",
+          "pret_unitar",
+          "pret_total"
+        ],
+        "motiv": "Nu exista un rand de antet explicit, datele incep direct cu pozitiile de lucrari. Coloanele sunt identificate dupa continutul lor."
+      }
+    },
+    {
+      "amprenta": "8::nr. crt.|denumire|um|cantitate|dimensiune gol|suprafata|p.u. / elem|pret total",
+      "fisier": "Oferta 27.04.2026 Matari.xlsx",
+      "foaie": "Matari",
+      "model": "gpt-4.1-2025-04-14",
+      "generat": "2026-09-03T16:50:39.445Z",
+      "mapare": {
+        "rand_antet": 5,
+        "rand_start": 7,
+        "roluri": [
+          "nr",
+          "denumire",
+          "um",
+          "cantitate",
+          "dimensiune",
+          "cantitate_unitara",
+          "pret_unitar",
+          "pret_total"
+        ],
+        "motiv": "Randul 5 contine capetele de coloana, iar datele incep de la randul 7. Coloanele corespund clar rolurilor standard."
+      }
+    },
+    {
+      "amprenta": "8::nr.||denumire material, date tehnice, operatiuni incluse in articol (u_center 3 - pth)|cant. quantity|u.m.|p.u. euro/elem|pret total euro",
+      "fisier": "Oferta 27.04.2026.xlsx",
+      "foaie": "Termice+Sanitare",
+      "model": "gpt-4.1-2025-04-14",
+      "generat": "2026-09-03T16:50:32.914Z",
+      "mapare": {
+        "rand_antet": 5,
+        "rand_start": 7,
+        "roluri": [
+          "nr",
+          "ignora",
+          "denumire",
+          "observatii",
+          "cantitate",
+          "um",
+          "pret_unitar",
+          "pret_total"
+        ],
+        "motiv": "Randul 5 contine capetele de coloana, iar datele incep de la randul 7. Coloanele corespund cu rolurile standard, cu o coloana suplimentara de observatii/descriere suplimentara."
+      }
+    }
+  ]
+}

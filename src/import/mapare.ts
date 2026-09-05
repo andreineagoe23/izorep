@@ -235,7 +235,20 @@ const numar = (v: string | number | null): number | undefined => {
  * Randurile de deasupra `rand_start` raman neatinse: acolo sunt antetul si
  * titlurile, iar contextul de sectiune se calculeaza pe ele.
  */
-export function aplicaMapare(foaie: FoaieBruta, m: MapareFoaie): number {
+/**
+ * Aplica maparea pe UN singur rand deja extras.
+ *
+ * Separata de bucla peste foaie fiindca dupa o corectie de celula in ecranul
+ * de import, `editare.reconstruieste` reface `linie.text/um/cantitate` din
+ * `construiesteLinie` — care nu stie nimic despre mapare — deci maparea
+ * trebuie reaplicata pe ACEL rand, nu pe toata foaia. Reaplicata pe toata
+ * foaia, corectia ar costa un rescan inutil al randurilor neatinse; deloc
+ * reaplicata, coloana mapata nu se mai citeste dupa prima editare din foaia
+ * aia si randul cade inapoi pe euristica de cantitate.
+ */
+export function aplicaMapareRand(rand: RandBrut, m: MapareFoaie): void {
+  if (!rand.linie) return;
+
   const col = (rol: RolColoana): number => m.roluri.indexOf(rol);
   const cUm = col("um");
   const cCantitate = col("cantitate") >= 0 ? col("cantitate") : col("cantitate_unitara");
@@ -256,34 +269,37 @@ export function aplicaMapare(foaie: FoaieBruta, m: MapareFoaie): number {
       || x.rol === "dimensiune" || x.rol === "observatii")
     .map((x) => x.i);
 
+  if (cText.length > 0) {
+    const bucati = cText
+      .map((i) => laColoana(rand.celule, i))
+      .filter((v): v is string | number => v !== null && String(v).trim() !== "")
+      .map((v) => String(v).trim());
+    // Randul fara nimic in coloanele descriptive e un subtotal sau o
+    // continuare: acolo textul concatenat e tot ce avem si ramane cum era.
+    if (bucati.join(" | ").length > 3) rand.linie.text = bucati.join(" | ");
+  }
+
+  if (cUm >= 0) {
+    const v = laColoana(rand.celule, cUm);
+    if (typeof v === "string" && UM_TOKEN.test(v.trim())) rand.linie.um = v.trim();
+    else delete rand.linie.um;
+  }
+
+  if (cCantitate >= 0) {
+    const q = numar(laColoana(rand.celule, cCantitate));
+    // Cantitatea din coloana mapata BATE euristica, inclusiv cand lipseste:
+    // o cantitate ghicita dintr-o coloana gresita e mai rea decat una absenta.
+    if (q === undefined) delete rand.linie.cantitate;
+    else rand.linie.cantitate = q;
+  }
+}
+
+export function aplicaMapare(foaie: FoaieBruta, m: MapareFoaie): number {
   let rafinate = 0;
   for (const r of foaie.randuri.slice(m.rand_start)) {
     if (!r.linie) continue;
     rafinate++;
-
-    if (cText.length > 0) {
-      const bucati = cText
-        .map((i) => laColoana(r.celule, i))
-        .filter((v): v is string | number => v !== null && String(v).trim() !== "")
-        .map((v) => String(v).trim());
-      // Randul fara nimic in coloanele descriptive e un subtotal sau o
-      // continuare: acolo textul concatenat e tot ce avem si ramane cum era.
-      if (bucati.join(" | ").length > 3) r.linie.text = bucati.join(" | ");
-    }
-
-    if (cUm >= 0) {
-      const v = laColoana(r.celule, cUm);
-      if (typeof v === "string" && UM_TOKEN.test(v.trim())) r.linie.um = v.trim();
-      else delete r.linie.um;
-    }
-
-    if (cCantitate >= 0) {
-      const q = numar(laColoana(r.celule, cCantitate));
-      // Cantitatea din coloana mapata BATE euristica, inclusiv cand lipseste:
-      // o cantitate ghicita dintr-o coloana gresita e mai rea decat una absenta.
-      if (q === undefined) delete r.linie.cantitate;
-      else r.linie.cantitate = q;
-    }
+    aplicaMapareRand(r, m);
   }
   return rafinate;
 }

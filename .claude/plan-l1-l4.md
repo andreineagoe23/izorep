@@ -149,15 +149,35 @@ proiecte nu se poate nici măsura, nici promite.
 3. ~~**L4, memoria de șabloane**~~ — `memorie.ts` plus depozit pe disc
    (`stoc-sabloane.ts`) și în `localStorage` (`web/stoc-local.ts`). Se învață
    doar din corecția omului, în ecranul de import.
+4. ~~**Cache-ul de mapări în browser**~~ — `mapari-statice.ts`. Indexul
+   `data/mapari/index.json` se generează la fiecare `npm run mapare` și se
+   importă static, ca listele de prețuri; un test compară indexul cu
+   directorul, ca desincronizarea să nu treacă tăcut. Cele 8 mapări lucrează
+   acum și în ecran, nu doar în CLI.
+5. ~~**Ecranul de validare, partea de flux**~~ — filtre (toate / de validat /
+   netarifate), contor de poziții marcate pe fila fiecărei foi, navigare
+   ciclică prin rândurile marcate cu focus pe coloanele extrase, și confirmare
+   în masă pe exact ce e vizibil sub filtrul curent, cu un nivel de anulare.
+   Confirmarea pune `sursa: "om"` — nucleul nu mai re-extrage linia și nu o mai
+   trece prin guardrails — dar **nu învață șabloane**: vezi `ui.md`.
+6. ~~**Rândurile de continuare**~~ — `continuare.ts`. `"Same - Ø125 mm"`
+   moștenește descrierea poziției de deasupra. Măsurat pe cele 10 fișiere de
+   client: `Book15.xlsx` trece de la **5 la 24 de poziții** (1 → 6 tarifate),
+   celelalte 9 rămân identice.
+
+Pe drum s-au reparat și două lucruri care nu erau în planul ăsta, dar îl
+blocau: corecția dintr-o celulă a grilei nu reintra în extragere (se vedea pe
+ecran, prețul rămânea pe datele vechi — `editare.ts`), iar ecranul
+reimplementa L2a–L4 în loc să treacă prin pipeline, de unde trei diferențe față
+de CLI: guardrails care nu rulau acolo, liniile pe care modelul nu le întoarce
+nenumărate, și plafonul de 400 aplicat per apel în loc de per import. Ambele
+sunt acum într-un nucleu comun (`nucleu.ts`), cu o barieră în
+`tests/structura.test.ts` care spune că ecranul nu-l mai poate ocoli.
 
 Detaliile de proiectare și capcanele găsite pe drum stau în `import.md`.
 
 ## Ce urmează
 
-- **Ecranul de validare, partea de flux.** Azi corecția se salvează, dar nu
-  există o listă „de validat" separată, nici un buton de confirmare în masă.
-- **Cache-ul de mapări în browser.** Azi maparea vine din `data/mapari/`, citit
-  cu `node:fs`, deci demo-ul de pe Pages nu o folosește.
 - Few-shot din catalogul propriu, abia după ce memoria are volum. Singurul loc
   unde căutarea semantică își are rostul.
-- Măsurarea reutilizării între proiecte — blocată de întrebarea 9 către firmă.
+- Măsurarea reutilizării între proiecte — blocată de întrebarea 11 către firmă.
