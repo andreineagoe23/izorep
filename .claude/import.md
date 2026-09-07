@@ -218,6 +218,7 @@ aprindă.
 | `dn_necunoscut` | DN care nu există în tabelul de conversie |
 | `grosime_in_afara_listei` | grosime pe care sistemul ăla nu o are ofertată |
 | `forma_contrazice_um` | `forma: "ml"` pe un rând cu UM `buc` |
+| `notatie_contrazice_materialul` | scrie `DN`, dar materialul din text dă diametrul exterior |
 
 Regula de citare vine din promptul propriu al stratului: *„nu inventa valori,
 dacă un câmp nu apare în text pune null"*. Aici doar se verifică dacă a
@@ -233,13 +234,64 @@ Efectul unui avertisment: `incredere = 0`, motivul se scrie pe linie, poziția
 merge obligatoriu la validare umană. Prețul **nu** se șterge — omul vede și
 propunerea, și motivul pentru care nu e de încredere.
 
-Aplicarea stă în `extrageCuModel`, nu în pipeline: e singurul punct prin care
+### Excepția: verificarea care rulează pe orice sursă
+
+`notatie_contrazice_materialul` **nu** e un guardrail pe model, deși stă în
+același fișier, și de aceea `nucleu.ts` îl cheamă separat. Restul verificărilor
+nu se aplică liniilor `sursa: "regex"` — alea citesc direct din text și au
+testele lor. Dar tocmai acolo era gaura: **SPIRO e prins chiar de `RE_DN` din
+`extract-regex.ts`**, deci pe calea deterministă nu trecea pe la niciun
+validator.
+
+Ce lăsa să treacă, măsurat: `Wickelfalzrohr starr SPIRO DN 125` se tarifează pe
+seria de oțel — DN125 → ø139,7 → rândul 140 → **13,74 €/ml**, în loc de rândul
+125 → 11,36 €. **+21%, în tăcere.** Inversarea e ce face capcana periculoasă:
+cazurile *sigure* dau eroare și se văd (ø160, ø250, ø315 nu există în tabelul de
+oțel, deci `DiametruNecunoscut`), iar cele *periculoase* trec neobservate, exact
+fiindcă 125 și 200 există în tabel și se convertesc „cu succes".
+
+Verificarea nu e despre încrederea în model, e despre **textul sursă care spune
+că notația minte** — deci rulează indiferent de sursă, cu o singură excepție:
+`"om"`. Pe cele 10 fișiere reale aprinde **16 linii**. Nu schimbă niciun preț:
+poziția primește avertisment, `incredere = 0` prin mecanismul existent, și merge
+la om. Care e prețul corect al lui ø160 rămâne întrebarea 10; ce s-a reparat e
+**vizibilitatea lui ø125**.
+
+PVC-ul e deliberat în afara listei de materiale, deși e în `PLASTIC_IS_OD`: în
+textele clienților „PVC" înseamnă aproape întotdeauna jacheta de PVC peste
+izolație (sistemul `pvc` al motorului), nu țeavă de PVC — s-ar aprinde pe
+poziții perfect corecte, iar un avertisment care se aprinde degeaba nu mai e
+citit de nimeni.
+
+Aplicarea restului stă în `extrageCuModel`, nu în pipeline: e singurul punct prin care
 trec toate căile — CLI, ruta din `vite`, scriptul de comparare — deci un
 apelant nou nu are cum să o sară. Pipeline-ul recalculează aceleași reguli
 pentru forma structurată din raport; funcția e pură, a doua trecere nu costă.
 
 **Ce nu prinde:** confuzia între două valori care apar amândouă în text. Aia
 rămâne treaba omului de la validare.
+
+### Ce știe promptul, și ce verifică codul în locul lui
+
+Regula casei: *o regulă din prompt e o rugăminte, una din cod e o verificare*.
+Fiecare adăugare la prompt de pe 7 septembrie 2026 are perechea ei deterministă:
+
+| În prompt | Verificarea care îl ține de scurt |
+|---|---|
+| `tabla` e doar aluminiu/zincată; `tabla_inox` e sistem separat | `extract-regex.ts` recunoaște inoxul determinist, iar `MATRICE` din `valideaza.ts` îl include, deci `grosime_in_afara_listei` funcționează și pe el |
+| grosimile de jachetare: aluminiu 0,6/0,8/1,0 · inox 0,4/0,5/0,6 | aceeași `grosime_in_afara_listei` |
+| grosimea jachetei lipsește aproape mereu → `null`, nu se ghicește | `grosimeEfectiva` din motor o deduce doar când sistemul are **o singură** grosime la acel diametru; altfel „grosime nespecificată și ambiguă" |
+| **NU SUBSTITUI** — dacă în text scrie `g48`, se întoarce 48, nu 50 | motorul refuză poziția (`g48` nu e grosime ofertată la vată) în loc să o tarifeze cu 50. Substituția e decizia omului |
+
+Ultima e cea care contează cel mai mult și e cea mai contraintuitivă: un model
+„serviabil" care rotunjește `g48` la `g50` produce un preț plauzibil și complet
+fals, pe care nimeni nu-l mai prinde. Un model care întoarce fidel `48` produce
+o poziție marcată, pe care o rezolvă omul într-o secundă.
+
+Ordinea în `extract-regex.ts` contează: inoxul e căutat **după** elastomer și
+vată minerală. Textul real din Transavia e „Izolații cu vată minerală și
+protecție cu tablă de inox 304" — sistemul principal e vata, inoxul e strat
+peste ea. Pus înaintea vatei, regex-ul ar clasifica greșit toată linia.
 
 ### Liniile pe care modelul nu le întoarce
 

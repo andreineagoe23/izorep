@@ -7,16 +7,21 @@ import type { MapareSalvata } from "./cache-mapari.js";
 import { adaugaSectiuni, type LinieCuSectiune } from "./sectiuni.js";
 import { aplicaContinuare } from "./continuare.js";
 import { extrageDeterminist } from "./extract-regex.js";
-import { valideazaExtragere, type Avertisment } from "./valideaza.js";
+import {
+  notatieContraziceMaterialul, valideazaExtragere,
+  type Avertisment, type CodAvertisment,
+} from "./valideaza.js";
 import { grupeazaPeSablon, extindePeSablon, type LinieSursa } from "./sabloane.js";
 import { aplicaMemorie, type StocSabloane } from "./memorie.js";
 import type { LinieExtrasa, Sursa } from "./schema.js";
 import { tarifeaza } from "../pricing/engine.js";
 import { tarifeazaGolFoc } from "../pricing/goluri-foc.js";
+import { SISTEME_FARA_REZIDENTIAL } from "../pricing/lists.js";
 import {
   PozitieNetarifata,
-  type RezultatGolFoc, type RezultatTarifare,
+  type CodNetarifare, type RezultatGolFoc, type RezultatTarifare,
 } from "../pricing/types.js";
+import { DiametruNecunoscut } from "../pricing/dn-table.js";
 
 /**
  * Nucleul comun de import, IZOMORF: fara `node:*`, fara DOM.
@@ -37,6 +42,17 @@ import {
  * serverul de dezvoltare. Tot ce e determinist — sectiuni, continuare, regex,
  * memorie, dedup pe sablon, guardrails, tarifare — sta o singura data aici.
  */
+
+/**
+ * Re-export pentru `web/`: `tests/structura.test.ts` interzice ecranelor sa
+ * importe direct `valideaza.js` sau `extract-regex.js` — bariera care spune ca
+ * ecranul nu mai reimplementeaza L2a-L4 pe cont propriu. Ecranul are insa
+ * nevoie de TIPURILE avertismentelor ca sa le grupeze pe cauza, iar regex-ul
+ * barierei se uita la calea importului, nu la `import type`. Nucleul e usa
+ * legitima catre stratul de import, deci tipurile trec pe aici.
+ */
+export type { Avertisment, CodAvertisment } from "./valideaza.js";
+export type { CodNetarifare } from "../pricing/types.js";
 
 /** In ce faza a dedupului pe sablon se afla liniile trimise unui `Extractor`. */
 export interface ContextExtragere { faza: "reprezentanti" | "ramase" }
@@ -82,8 +98,18 @@ export interface LinieProcesata {
    * total, singurele campuri de care are nevoie raportul.
    */
   pret?: RezultatTarifare | RezultatGolFoc;
-  /** Motivul pentru care linia nu s-a putut tarifa. */
+  /** Motivul pentru care linia nu s-a putut tarifa, ca text citit de om. */
   eroare?: string;
+  /**
+   * Aceeasi cauza, ca valoare stabila pe care se poate GRUPA.
+   *
+   * Sta LANGA `eroare`, nu in locul lui: `eroare` e afisat azi si in CLI, si in
+   * `web/ecrane/import.ts`, iar inlocuirea lui ar rupe cod care merge fara sa
+   * castige nimic. Textul ramane pentru citit, codul pentru numarat — ecranul
+   * poate spune "64 de pozitii sunt blocate de acelasi lucru", ceea ce dintr-un
+   * camp de text liber nu se poate deduce.
+   */
+  codEroare?: CodNetarifare;
   /**
    * Ce n-a trecut de validarea de plauzibilitate. Se recalculeaza aici, desi
    * un `Extractor` poate sa fi aplicat deja aceleasi reguli (`extrageCuModel`
@@ -126,6 +152,25 @@ export interface Statistici {
   cuAvertisment: number;
   netarifate: number;
   valoareTotala: number;
+  /**
+   * Randuri care spun ca fisierul e o lista de MANOPERA, nu de material +
+   * manopera.
+   *
+   * Nu e un detaliu de afisare, e o capcana de pret masurata. `Anexa 1 la
+   * contract - Oferta 06.12.2024.xlsx` e o oferta de manopera pura: sectiunile
+   * ei scriu "1. Izolatii conducte PPR cu Armaflex gr. 9 mm - manopera :", iar
+   * preturile semnate sunt 2,20 / 2,30 / 3,00 EUR/ml — tariful plat de
+   * manopera din `.claude/liste-preturi.md`. Listele pe care le are motorul
+   * sunt material + manopera, deci aceleasi pozitii ies la 5,79-8,84 EUR/ml,
+   * adica **de 2,5 pana la 3,8 ori** pretul semnat.
+   *
+   * Fisierul iese azi cu 0 pozitii, fiindca randurile lui de date n-au text
+   * (descrierea sta in antetul de sectiune, randul are doar cifre). Rezultatul
+   * e CORECT — ce ar fi gresit e sa fortam acoperirea pana cand pozitiile se
+   * tarifeaza din matricea nepotrivita. Contorul asta exista ca ecranul sa
+   * poata spune "n-avem lista" in loc sa arate o foaie goala.
+   */
+  randuriManopera: number;
 }
 
 export interface Rezultat {
@@ -148,11 +193,12 @@ export interface Rezultat {
 export function tarifeazaExtras(
   extras: LinieExtrasa,
   cantitate: number,
-): { pret?: RezultatTarifare | RezultatGolFoc; eroare?: string } {
+): { pret?: RezultatTarifare | RezultatGolFoc; eroare?: string; codEroare?: CodNetarifare } {
   try {
     if (extras.sistem === "goluri_foc") {
       if (extras.gol_latime_mm === null || extras.gol_inaltime_mm === null) {
         throw new PozitieNetarifata(
+          "gol_fara_dimensiuni",
           "inchidere gol la foc fara dimensiunea golului; pretul vine din suprafata lui",
           { index: extras.index },
         );
@@ -165,23 +211,65 @@ export function tarifeazaExtras(
       };
     }
     if (extras.sistem && extras.diametru_valoare !== null && extras.diametru_tip) {
-      return {
-        pret: tarifeaza({
-          diametru: { valoare: extras.diametru_valoare, tip: extras.diametru_tip },
-          straturi: [
-            { sistem: extras.sistem, ...(extras.grosime_mm !== null ? { grosime_mm: extras.grosime_mm } : {}) },
-            ...extras.straturi_extra.map((s) => ({
-              sistem: s.sistem, ...(s.grosime_mm !== null ? { grosime_mm: s.grosime_mm } : {}),
-            })),
-          ],
-          forma: extras.forma ?? "ml",
-          cantitate,
-        }),
-      };
+      const pret = tarifeaza({
+        diametru: { valoare: extras.diametru_valoare, tip: extras.diametru_tip },
+        straturi: [
+          { sistem: extras.sistem, ...(extras.grosime_mm !== null ? { grosime_mm: extras.grosime_mm } : {}) },
+          ...extras.straturi_extra.map((s) => ({
+            sistem: s.sistem, ...(s.grosime_mm !== null ? { grosime_mm: s.grosime_mm } : {}),
+          })),
+        ],
+        forma: extras.forma ?? "ml",
+        cantitate,
+      });
+      // Marcaj vizibil de destinatie mixta: engine.ts nu stie de destinatii
+      // (rezidential/industrial) si nu trebuie sa afle aici — se ataseaza pe
+      // rezultat, dupa tarifare. Tabla de inox e singurul sistem fara lista
+      // rezidentiala (intrebarea 15 din .claude/stare.md), deci pretul lui
+      // vine mereu din cea industriala, chiar cand restul straturilor
+      // pozitiei sunt tarifate rezidential.
+      if (pret.straturi.some((s) => SISTEME_FARA_REZIDENTIAL.has(s.sistem))) {
+        pret.note = [
+          ...(pret.note ?? []),
+          "tabla_inox: pret din lista INDUSTRIALA — nu exista lista rezidentiala pentru inox (intrebarea 15). Restul straturilor sunt tarifate rezidential.",
+        ];
+      }
+      return { pret };
+    }
+
+    // Sistemul e cunoscut, dar diametrul nu — deci nu se poate cauta NICIUN
+    // rand: listele sunt indexate doar pe o. Pana acum aici se intorcea `{}`,
+    // adica pozitia ramanea fara pret, fara eroare, fara cod si — daca modelul
+    // raportase incredere peste prag — fara sa fie nici macar marcata. Se vedea
+    // exclusiv ca diferenta intre doua contoare.
+    //
+    // Masurat pe golden files: doua pozitii din `Oferta 27.04.2026.xlsx`,
+    // amandoua tubulatura RECTANGULARA (`Luftleitg. eckig`,
+    // `Entrauchungskanal`, UM `m²`) — care chiar n-are diametru, ci A x B.
+    // Conversia perimetrului e in `.claude/tevi.md` si nu e implementata.
+    // Pana atunci pozitia se MARCHEAZA, ca oricare alta fara pret.
+    if (extras.sistem !== null) {
+      throw new PozitieNetarifata(
+        "fara_diametru",
+        "pozitia n-are diametru, iar listele de preturi se cauta doar pe diametru exterior; "
+        + "tubulatura rectangulara se masoara A x B si nu are inca regula de conversie",
+        { index: extras.index, sistem: extras.sistem, forma: extras.forma },
+      );
     }
     return {};
   } catch (e) {
-    return { eroare: e instanceof PozitieNetarifata ? e.message : String(e) };
+    // `DiametruNecunoscut` nu e `PozitieNetarifata` — vine din `dn-table.ts`,
+    // care nu stie nimic despre tarifare — dar pentru omul care se uita la
+    // ecran e exact acelasi fel de blocaj: o pozitie fara pret, cu o cauza.
+    // Se mapeaza aici, la granita, ca sa nu se imprastie doua ierarhii de
+    // erori mai departe in cod.
+    if (e instanceof DiametruNecunoscut) {
+      return { eroare: e.message, codEroare: "dn_necunoscut" };
+    }
+    if (e instanceof PozitieNetarifata) {
+      return { eroare: e.message, codEroare: e.cod };
+    }
+    return { eroare: String(e) };
   }
 }
 
@@ -205,9 +293,19 @@ function construiesteLinii(
     // Guardrails (bugul 1): nu pe regex — citeste direct din text, are teste
     // proprii — si nu pe corectia omului: validatorul exista ca sa verifice
     // MODELUL, nu omul care se uita la fisierul sursa.
-    const avertismente = sursa !== "regex" && sursa !== "om"
-      ? valideazaExtragere(r.extras, { text: b.text, ...(b.um ? { um: b.um } : {}) })
-      : [];
+    //
+    // `notatieContraziceMaterialul` e insa APELATA SEPARAT, si pe regex: nu e
+    // o verificare a increderii in model, e o verificare a TEXTULUI SURSA, care
+    // spune ca notatia minte. SPIRO e prins chiar de `RE_DN` din
+    // `extract-regex.ts`, deci pe calea determinista nu trecea pe la niciun
+    // validator — si tocmai acolo `DN125` se tarifa tacut pe seria de otel,
+    // cu +21%. Singura sursa exceptata ramane "om": el s-a uitat la fisier.
+    const avertismente = sursa === "om" ? [] : [
+      ...(sursa === "regex"
+        ? []
+        : valideazaExtragere(r.extras, { text: b.text, ...(b.um ? { um: b.um } : {}) })),
+      ...notatieContraziceMaterialul(r.extras, b.text),
+    ];
 
     // Increderea coboara la 0 cand ceva nu se verifica in text, la fel ca in
     // `aplicaValidarea` — dar AICI, nu doar in `extrageCuModel`. Un `Extractor`
@@ -228,8 +326,16 @@ function construiesteLinii(
 
     const t = tarifeazaExtras(extras, b.cantitate ?? 1);
     if (t.pret) proc.pret = t.pret;
+    // O nota pe rezultat (ex: strat exclus fara coeficient de forma pe banda
+    // lui) inseamna ca pretul se sprijina pe o regula DEDUSA din date, nu pe
+    // lista de preturi ca atare. Omul trebuie sa o vada inainte sa plece
+    // intr-o oferta — indiferent de sursa extragerii.
+    if (t.pret && "note" in t.pret && t.pret.note && t.pret.note.length > 0) {
+      proc.necesitaValidare = true;
+    }
     if (t.eroare !== undefined) {
       proc.eroare = t.eroare;
+      if (t.codEroare !== undefined) proc.codEroare = t.codEroare;
       // Nu si pe "om": omul s-a uitat la fisierul sursa, nu la o propunere a
       // modelului. Ramane netarifata si vizibila prin `eroare`/absenta lui
       // `pret`, dar nu intra la coada de validare de plauzibilitate.
@@ -241,6 +347,9 @@ function construiesteLinii(
 }
 
 /** Partea de `Statistici` care se recalculeaza intotdeauna din `linii`. */
+/** „- manopera :" din antetele de sectiune ale ofertelor de manopera. */
+const RE_MANOPERA = /manoper/i;
+
 function statisticiDeterministe(
   foi: FoaieBruta[], foiMapate: number, brute: LinieCuSectiune[], linii: LinieProcesata[],
 ): Omit<Statistici, "trimiseLaModel" | "reziduale" | "modelFaraRaspuns" | "trunchiat"> {
@@ -261,6 +370,11 @@ function statisticiDeterministe(
     deValidat: izolatie.filter((l) => l.necesitaValidare).length,
     cuAvertisment: izolatie.filter((l) => l.avertismente?.length).length,
     netarifate: izolatie.filter((l) => !l.pret).length,
+    // Se numara pe RANDURILE BRUTE, nu pe pozitii: intr-o oferta de manopera
+    // marcajul sta in antetele de sectiune, iar alea nu sunt pozitii — daca
+    // s-ar cauta doar in pozitii, exact fisierul care are nevoie de semnal ar
+    // iesi cu zero.
+    randuriManopera: brute.filter((b) => RE_MANOPERA.test(b.text)).length,
     valoareTotala: Math.round(izolatie.reduce((s, l) => s + (l.pret?.total ?? 0), 0) * 100) / 100,
   };
 }

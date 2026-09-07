@@ -30,7 +30,7 @@
       "avertismente": [],
       "pret_unitar": null,
       "total": null,
-      "eroare": null
+      "eroare": "pozitia n-are diametru, iar listele de preturi se cauta doar pe diametru exterior; tubulatura rectangulara se masoara A x B si nu are inca regula de conversie"
     },
     {
       "index": 36,
@@ -722,7 +722,7 @@
       "avertismente": [],
       "pret_unitar": null,
       "total": null,
-      "eroare": null
+      "eroare": "pozitia n-are diametru, iar listele de preturi se cauta doar pe diametru exterior; tubulatura rectangulara se masoara A x B si nu are inca regula de conversie"
     },
     {
       "index": 82,

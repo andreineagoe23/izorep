@@ -4,7 +4,11 @@
  * testata direct aici.
  */
 import { describe, it, expect } from "vitest";
-import { anuleaza, confirma, potrivit, type Filtru } from "../web/validare.js";
+import {
+  anuleaza, blocaje, confirma, ETICHETE_BLOCAJ, nrBlocate, potrivit,
+  type Filtru,
+} from "../web/validare.js";
+import type { Avertisment, CodNetarifare } from "../src/import/nucleu.js";
 import type { LinieProcesata } from "../src/import/nucleu.js";
 import type { LinieExtrasa, Sursa } from "../src/import/schema.js";
 
@@ -24,6 +28,8 @@ const linie = (p: {
   extras?: Partial<LinieExtrasa>;
   /** true = pozitia are deja un pret calculat (continutul exact nu conteaza aici). */
   arePret?: boolean;
+  codEroare?: CodNetarifare;
+  avertismente?: Avertisment[];
 }): LinieProcesata => {
   const l: LinieProcesata = {
     bruta: bruta(p.index) as LinieProcesata["bruta"],
@@ -34,8 +40,12 @@ const linie = (p: {
   if (p.arePret) {
     l.pret = { pret_unitar: 10, cantitate: 1, total: 10 } as NonNullable<LinieProcesata["pret"]>;
   }
+  if (p.codEroare) l.codEroare = p.codEroare;
+  if (p.avertismente) l.avertismente = p.avertismente;
   return l;
 };
+
+const av = (cod: Avertisment["cod"]): Avertisment => ({ cod, mesaj: `test ${cod}` });
 
 describe("potrivit", () => {
   it("'toate' selecteaza orice linie, indiferent de stare", () => {
@@ -168,5 +178,102 @@ describe("anuleaza", () => {
 
     anuleaza(inst, rezolvate);
     expect(rezolvate).toEqual(initial);
+  });
+});
+
+
+/* ------------------------------------------------------------------ *
+ * Lentila pe cauza si blocul „Ce blocheaza N pozitii"
+ * ------------------------------------------------------------------ */
+
+describe("lentila pe cod", () => {
+  it("selecteaza exact liniile netarifate cu acel cod", () => {
+    const a = linie({ index: 1, codEroare: "fara_coeficient_de_forma" });
+    const b = linie({ index: 2, codEroare: "grosime_inexistenta" });
+    const c = linie({ index: 3, arePret: true });
+
+    expect(potrivit(a, { cod: "fara_coeficient_de_forma" })).toBe(true);
+    expect(potrivit(b, { cod: "fara_coeficient_de_forma" })).toBe(false);
+    expect(potrivit(c, { cod: "fara_coeficient_de_forma" })).toBe(false);
+  });
+
+  it("selecteaza si liniile CU pret care poarta acel cod de avertisment", () => {
+    // SPIRO DN125 e cazul real: are pret (13,74, gresit) si e marcat. Daca
+    // lentila ar cere absenta pretului, exact pozitiile periculoase — cele care
+    // trec tacut — n-ar fi vizibile prin ea.
+    const spiro = linie({
+      index: 1, arePret: true, avertismente: [av("notatie_contrazice_materialul")],
+    });
+    expect(potrivit(spiro, { cod: "notatie_contrazice_materialul" })).toBe(true);
+  });
+
+  it("un cod de eroare pe o linie care TOTUSI are pret nu se potriveste", () => {
+    // Nu poate aparea din nucleu (codul se pune doar cand tarifarea a esuat),
+    // dar lentila nu se sprijina pe asta: citeste starea, nu presupune.
+    const l = linie({ index: 1, arePret: true, codEroare: "grosime_inexistenta" });
+    expect(potrivit(l, { cod: "grosime_inexistenta" })).toBe(false);
+  });
+
+  it("o linie care nu e pozitie de izolatie nu intra sub nicio lentila de cauza", () => {
+    const antet = linie({ index: 1, extras: { sistem: null }, codEroare: "lista_goala" });
+    expect(potrivit(antet, { cod: "lista_goala" })).toBe(false);
+  });
+});
+
+describe("blocaje", () => {
+  const set = () => [
+    linie({ index: 1, codEroare: "fara_coeficient_de_forma" }),
+    linie({ index: 2, codEroare: "fara_coeficient_de_forma" }),
+    linie({ index: 3, codEroare: "fara_coeficient_de_forma" }),
+    linie({ index: 4, codEroare: "grosime_inexistenta" }),
+    // Are pret si e marcata: intra doar la avertisment.
+    linie({ index: 5, arePret: true, avertismente: [av("notatie_contrazice_materialul")] }),
+    // N-are pret SI e marcata: intra la amandoua galetile.
+    linie({ index: 6, codEroare: "dn_necunoscut", avertismente: [av("notatie_contrazice_materialul")] }),
+    // Fara probleme, si un antet: niciuna nu apare nicaieri.
+    linie({ index: 7, arePret: true }),
+    linie({ index: 8, extras: { sistem: null } }),
+  ];
+
+  it("grupeaza pe cauza, descrescator dupa numar", () => {
+    expect(blocaje(set()).map((b) => [b.cod, b.n])).toEqual([
+      ["fara_coeficient_de_forma", 3],
+      ["notatie_contrazice_materialul", 2],
+      ["dn_necunoscut", 1],
+      ["grosime_inexistenta", 1],
+    ]);
+  });
+
+  it("la egalitate ordinea e alfabetica, deci stabila intre redesenari", () => {
+    const l = blocaje(set()).filter((b) => b.n === 1).map((b) => b.cod);
+    expect(l).toEqual([...l].sort());
+  });
+
+  it("poarta eticheta umana si trimiterea la intrebarea deschisa", () => {
+    const b = blocaje(set()).find((x) => x.cod === "fara_coeficient_de_forma")!;
+    expect(b.eticheta).toBe(ETICHETE_BLOCAJ.fara_coeficient_de_forma.eticheta);
+    expect(b.intrebare).toBe(9);
+    // Nu toate au intrebare: cele care tin de datele fisierului, nu de un
+    // raspuns neprimit, n-au pe cine astepta.
+    expect(blocaje(set()).find((x) => x.cod === "grosime_inexistenta")!.intrebare).toBeUndefined();
+  });
+
+  it("numara pozitii DISTINCTE in antet, chiar cand una apare la doua cauze", () => {
+    // Suma galetilor e 3+2+1+1 = 7, dar pozitiile atinse sunt 6: linia 6 e si
+    // netarifata, si marcata. Titlul ar minti daca ar aduna coloana.
+    expect(blocaje(set()).reduce((s, b) => s + b.n, 0)).toBe(7);
+    expect(nrBlocate(set())).toBe(6);
+  });
+
+  it("un fisier fara probleme nu produce niciun blocaj", () => {
+    const curat = [linie({ index: 1, arePret: true }), linie({ index: 2, arePret: true })];
+    expect(blocaje(curat)).toEqual([]);
+    expect(nrBlocate(curat)).toBe(0);
+  });
+
+  it("fiecare cod are eticheta lui, fara text lipsa", () => {
+    for (const [cod, e] of Object.entries(ETICHETE_BLOCAJ)) {
+      expect(e.eticheta, cod).toBeTruthy();
+    }
   });
 });

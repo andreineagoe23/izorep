@@ -48,6 +48,10 @@ if (raport.modelFaraRaspuns > 0) {
 }
 console.log(`  netarifate               ${raport.netarifate}`);
 console.log(`  valoare                  ${raport.valoareTotala.toFixed(2)} EUR`);
+if (raport.randuriManopera > 0 && raport.tarifate === 0) {
+  console.log("\n  ATENTIE: oferta de MANOPERA (tarif plat 2,20-3,00 EUR/ml).");
+  console.log("  Motorul n-are lista de manopera; din matricea material+manopera ar iesi de 2,5-3,8x pretul.");
+}
 if (raport.reziduale > 0) {
   const economie = raport.reziduale - raport.trimiseLaModel;
   console.log(`  linii la model           ${raport.trimiseLaModel} din ${raport.reziduale} reziduale` +

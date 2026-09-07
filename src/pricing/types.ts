@@ -1,4 +1,4 @@
-export type Sistem = "elastomer" | "vata_minerala" | "tabla" | "pvc" | "goluri_foc";
+export type Sistem = "elastomer" | "vata_minerala" | "tabla" | "tabla_inox" | "pvc" | "goluri_foc";
 
 /**
  * Sistemele tarifate din matrice ø × grosime. Etansarile la foc sunt
@@ -6,6 +6,16 @@ export type Sistem = "elastomer" | "vata_minerala" | "tabla" | "pvc" | "goluri_f
  * asta — nu un cast care ascunde diferenta pana la runtime.
  */
 export type SistemMatrice = Exclude<Sistem, "goluri_foc">;
+
+/**
+ * Sistemele care au lista de preturi REZIDENTIALA.
+ *
+ * Tabla de inox e SINGURUL sistem fara corespondent rezidential (intrebarea
+ * 15 din .claude/stare.md): a venit doar pe industrial, deci pretul lui vine
+ * mereu din lista INDUSTRIALA, indiferent de restul pozitiei. Nu e o alegere
+ * de segment — e singura lista care exista pentru el.
+ */
+export type SistemRezidential = Exclude<SistemMatrice, "tabla_inox">;
 
 export type Forma =
   | "ml" | "mp" | "manseta" | "cot" | "teu" | "reductie"
@@ -39,21 +49,87 @@ export interface StratTarifat {
   diametru_geometric: number;
   /** Randul efectiv folosit din matricea de preturi. */
   rand_lista: number;
+  /**
+   * Pretul BRUT al stratului (rotunjit la 2 zecimale), inainte de propriul
+   * multiplicator. 0 cand `inclus` e fals — stratul nu s-a mai cautat in
+   * matrice, deci n-are pret de raportat.
+   */
   pret_unitar: number;
+  /**
+   * Multiplicatorul PROPRIU al acestui strat pentru forma ceruta. 0 cand
+   * `inclus` e fals — nu exista un coeficient definit, deci nu e un numar
+   * cu sens, doar un loc gol.
+   */
+  multiplicator: number;
+  /**
+   * Fals cand sistemul stratului n-are coeficient de forma pe banda lui
+   * (ex: vata cot/teu pe banda 18-60). Stratul contribuie totusi cu
+   * GEOMETRIA lui — randul si grosimea — la diametrul stratului urmator,
+   * dar nu intra in pret. Vezi Oferta 284 (9/9 potriviri exacte), intrebarea 9.
+   */
+  inclus: boolean;
 }
 
 export interface RezultatTarifare {
   straturi: StratTarifat[];
-  /** Pretul pe unitate, dupa aplicarea multiplicatorului de forma. */
+  /** Pretul pe unitate, suma straturilor INCLUSE, fiecare cu multiplicatorul lui propriu. */
   pret_unitar: number;
+  /** Multiplicatorul primului strat INCLUS (nu neaparat straturi[0] — acela poate fi exclus). */
   multiplicator: number;
   cantitate: number;
   total: number;
   moneda: "EUR";
+  /**
+   * Note VIZIBILE pe pozitie, nu erori — de exemplu ca un strat a fost
+   * tarifat dintr-o lista de alta destinatie decat restul (tabla_inox, care
+   * n-are lista rezidentiala). Pretul e corect si complet; nota e doar
+   * informatie pentru omul care valideaza oferta.
+   */
+  note?: string[];
 }
 
+/**
+ * De ce nu s-a putut tarifa o pozitie, ca valoare STABILA.
+ *
+ * `motiv` ramane textul citit de om si nu se schimba — e bun si e afisat azi
+ * in CLI si pe ecran. Ce lipsea era o cheie pe care se poate GRUPA: masurat pe
+ * cele 10 fisiere reale, 130 de pozitii netarifate au 5 cauze, iar 64 dintre
+ * ele sunt un singur raspuns nevenit de la firma (intrebarea 9). Cu `motiv`
+ * text liber, gruparea aia n-are pe ce sa se faca: doua mesaje identice ca
+ * sens dar diferite ca formulare ar cadea in gramezi separate, iar o
+ * reformulare de mesaj ar rupe tacit ecranul. Codul e contractul; mesajul
+ * ramane proza.
+ */
+export type CodNetarifare =
+  /* --- matrice o x grosime (src/pricing/engine.ts) --- */
+  | "grosime_inexistenta"      // combinatia diametru/grosime nu exista in lista
+  | "grosime_ambigua"          // sistemul are mai multe grosimi la randul ala
+  | "peste_maximul_listei"
+  | "fara_coeficient_de_forma" // niciun strat n-are coeficient pe banda lui
+  | "banda_inexistenta"        // diametrul nu cade in nicio banda de multiplicatori
+  | "lista_goala"
+  | "pozitie_fara_straturi"
+  | "fara_pret_pe_mp"
+  /* --- inchideri goluri la foc (src/pricing/goluri-foc.ts) --- */
+  | "gol_fara_dimensiuni"
+  | "gol_dimensiuni_invalide"
+  | "banda_wrap_inexistenta"
+  | "colier_inexistent"
+  | "diametru_conducta_lipsa"
+  | "material_conducta_lipsa"
+  /* --- rutare gresita intre cele doua forme de pret --- */
+  | "gol_foc_in_matrice"
+  /* --- sistemul e cunoscut, dar nu se poate cauta pe nimic --- */
+  | "fara_diametru"
+  /* --- din DiametruNecunoscut, mapat in tarifeazaExtras --- */
+  | "dn_necunoscut";
+
 export class PozitieNetarifata extends Error {
-  constructor(readonly motiv: string, readonly context: Record<string, unknown>) {
+  constructor(
+    readonly cod: CodNetarifare,
+    readonly motiv: string,
+    readonly context: Record<string, unknown>,
+  ) {
     super(motiv);
     this.name = "PozitieNetarifata";
   }

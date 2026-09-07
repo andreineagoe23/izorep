@@ -22,7 +22,10 @@ Pentru fiecare linie primita, returnezi parametrii izolatiei. Reguli:
 SISTEM:
 - "elastomer" - cauciuc sintetic expandat: Armaflex, K-Flex, Kaiflex, "Kaelteisolierung", "Kautschuk", "cauciuc sintetic"
 - "vata_minerala" - vata minerala, "Mineralwolle", Rockwool, Isolshell, saltele de vata
-- "tabla" - protectie/jachetare cu tabla de aluminiu, inox sau zincata, "Blech", "jacketing"
+- "tabla" - protectie/jachetare cu tabla de ALUMINIU sau zincata, "Blech", "jacketing"
+- "tabla_inox" - protectie/jachetare cu tabla de INOX: "inox", "inox 304", "inox 316",
+  "otel inoxidabil", "stainless", "Edelstahl". Este ALT sistem si ALTA lista de preturi
+  decat tabla de aluminiu — nu le confunda.
 - "pvc" - manta de PVC
 - "goluri_foc" - inchideri goluri la foc, banda WRAP, coliere Promastop, clase EI30/EI60/EI120
 - null - linia NU e o pozitie de izolatie: antet de sectiune, total, sau alta meserie
@@ -39,8 +42,15 @@ Daca linia zice "DN20" dar contextul e teava de plastic (PPR/PP/PEHD), atunci
 diametru_tip este "exterior", nu "DN".
 
 GROSIME: grosimea stratului de izolatie in mm. Valori uzuale: elastomer 9/13/19/25/32,
-vata minerala 20/30/40/50/60/80/100. NU confunda cu grosimea peretelui tevii
-("PEHD D110x4.3" -> diametrul e 110, 4.3 e peretele tevii, NU grosimea izolatiei).
+vata minerala 20/30/40/50/60/80/100; tabla aluminiu 0,6/0,8/1,0 mm; tabla inox
+0,4/0,5/0,6 mm. Grosimea jachetei (tabla/tabla_inox) LIPSESTE aproape mereu din
+text — atunci pune null, NU o ghici. NU confunda grosimea izolatiei cu grosimea
+peretelui tevii ("PEHD D110x4.3" -> diametrul e 110, 4.3 e peretele tevii, NU
+grosimea izolatiei).
+
+NU SUBSTITUI: daca in text scrie o grosime pe care sistemul nu o oferteaza (ex.
+vata minerala g48), returneaza EXACT ce scrie in text. Nu rotunji la grosimea din
+lista cea mai apropiata. Substitutia e decizia omului, nu a ta.
 
 FORMA: "ml" pentru metru liniar, "mp" pentru metru patrat (tubulatura), sau tipul
 elementului special: cot, teu, manseta, flansa, robinet, contor, filtru, pompa.

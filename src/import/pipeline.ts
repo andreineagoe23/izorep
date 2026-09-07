@@ -47,6 +47,13 @@ export interface RaportImport {
   trunchiat: number;
   netarifate: number;
   valoareTotala: number;
+  /**
+   * Randuri care spun ca fisierul e o oferta de MANOPERA (tarif plat), nu de
+   * material + manopera. Vezi `Statistici.randuriManopera` din `nucleu.ts`:
+   * pe `Anexa 1` acelasi rand tarifat din matricea noastra iese de 2,5-3,8 ori
+   * pretul semnat.
+   */
+  randuriManopera: number;
   linii: LinieProcesata[];
 }
 

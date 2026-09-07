@@ -83,17 +83,24 @@ care oamenii citesc tabelul.
 **Pe straturile de deasupra, „în sus" e însă exact.** Oferta 284 (Transavia,
 abur, 30 de linii distincte vată + tablă) despică cele patru combinații
 posibile: primul strat pe rândul cel mai apropiat **și** jacheta rotunjită în
-sus dă 27/30 potriviri exacte, față de 23/30 pentru regula de azi (în sus pe
-ambele). Liniile care despart variantele sunt Di114 (geometric 214, între 210
-și 220 — oferta ia 220) și Di273 (geometric 393 — oferta ia 400). Vezi
-`stare.md`.
+sus dă **18/30** potriviri exacte, față de 12/30 pentru regula de azi pe
+notația `interior`. Liniile care despart variantele sunt Di114 (geometric 214,
+între 210 și 220 — oferta ia 220) și Di273 (geometric 393 — oferta ia 400).
+Zece linii sunt refuzate de motor în toate cele patru combinații, deci raportat
+la cele 20 tarifabile: **18/20**. Vezi `stare.md` pentru de ce cifrele
+înregistrate inițial (27/30 și 23/30) erau greșite.
 
 **Capcana de notație.** Aceeași ofertă scrie diametrele exterioare de oțel
 rotunjite la întreg: `Di21, Di27, Di34, Di49, Di60, Di76, Di89, Di114, Di140,
 Di169, Di273` — adică 21,3 · 26,9 · 33,7 · 48,3 · 60,3 · 76,1 · 88,9 · 114,3 ·
-139,7 · 168,3. Notația spune „exterior", deci `randPentruTeava` rotunjește în
-sus și ratează Di49 (ia 54 în loc de 48), Di169 (219 în loc de 168) și Di273.
-Regula e legată azi de **notație**, dar ar trebui legată de **serie**: dacă
+139,7 · 168,3. Notația spune „exterior", deci `randPentruTeava` rotunjea în
+sus și rata Di49 (lua 54 în loc de 48), Di169 (219 în loc de 168) și Di273.
+**Reparat:** regula e legată acum de **serie**, nu de notație — `peSeriaDeOtel`
+cu toleranță 0,8 mm. Pragul e ales pe date: maximul măsurat e 0,70 (Di49, Di169),
+iar ø90 e la 1,1 de 88,9 și ø75 la 1,1 de 76,1, deci țevile de plastic **nu** se
+confundă cu seria de oțel. Se aplică doar pe `interior`; pe `exterior` nu se
+schimbă nimic, acolo rotunjirea în sus e dovedită pe 12/13 poziții de plastic.
+Textul de mai jos descrie regula veche: dacă
 valoarea cade pe seria de oțel, se aplică „cel mai apropiat" indiferent cum a
 fost scrisă.
 

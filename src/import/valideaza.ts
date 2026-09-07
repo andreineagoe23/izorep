@@ -25,7 +25,8 @@ export type CodAvertisment =
   | "gol_necitat"
   | "dn_necunoscut"
   | "grosime_in_afara_listei"
-  | "forma_contrazice_um";
+  | "forma_contrazice_um"
+  | "notatie_contrazice_materialul";
 
 export interface Avertisment {
   cod: CodAvertisment;
@@ -102,7 +103,7 @@ function umContrazice(um: string, forma: NonNullable<LinieExtrasa["forma"]>): bo
   return false;
 }
 
-const MATRICE = new Set<string>(["elastomer", "vata_minerala", "tabla", "pvc"]);
+const MATRICE = new Set<string>(["elastomer", "vata_minerala", "tabla", "tabla_inox", "pvc"]);
 
 /**
  * Verifica o linie extrasa fata de textul din care a fost extrasa.
@@ -174,6 +175,63 @@ export function valideazaExtragere(
   }
 
   return av;
+}
+
+/**
+ * Materiale la care dimensiunea nominala ESTE diametrul exterior, deci `DN`
+ * scris in fata ei e o notatie care minte.
+ *
+ * Lista vine din `PLASTIC_IS_OD` (`dn-table.ts`) plus tubulatura spiro, care in
+ * fisierele reale apare si nemteste — `Wickelfalzrohr`. PVC-ul e in tabelul ala
+ * dar NU e aici: in textele clientilor "PVC" inseamna aproape intotdeauna
+ * jacheta de PVC peste izolatie (sistemul `pvc` al motorului), nu teava de PVC,
+ * deci ar aprinde avertismentul pe pozitii perfect corecte. Un avertisment care
+ * se aprinde degeaba nu mai e citit de nimeni — aceeasi regula pentru care
+ * exista tabelul de toli mai sus.
+ *
+ * `PPR` sta inaintea lui `PP` in alternativa: altfel `\bPP\b` n-ar prinde
+ * `PPR` (nu e granita intre P si R), dar ordinea o face explicita in loc sa se
+ * sprijine pe cum incearca motorul de regex alternativele.
+ */
+const RE_NOMINAL_E_EXTERIOR =
+  /\b(?:WICKELFALZROHR|SPIRO|PPR|PP-R|PE-?HD|PE-?X|PP)\b/i;
+
+/**
+ * Notatia diametrului spune `DN`, dar materialul din text spune ca nominalul E
+ * diametrul exterior.
+ *
+ * Capcana pe care o repara, masurata: `Wickelfalzrohr starr SPIRO DN 125` se
+ * tarifeaza azi pe seria de teava de OTEL — DN125 -> o139,7 -> randul 140 ->
+ * 13,74 EUR/ml, in loc de randul 125 -> 11,36. **+21%, in tacere.** Inversarea
+ * e perversa: cazurile SIGURE dau eroare si se vad (o160, o250, o315 nu exista
+ * in tabelul de otel, deci `DiametruNecunoscut`), iar cele PERICULOASE trec
+ * neobservate, tocmai fiindca 125 si 200 exista in tabel si se convertesc
+ * "cu succes".
+ *
+ * De ce e o functie separata de `valideazaExtragere`, si nu inca un `if` in
+ * ea: `valideazaExtragere` verifica MODELUL fata de textul sursa si de-aia
+ * `nucleu.ts` nu o ruleaza pe liniile `sursa: "regex"` — alea citesc direct
+ * din text si au testele lor. Verificarea asta nu e despre incredere in model:
+ * SPIRO e prins chiar de `RE_DN` din `extract-regex.ts`, deci pe calea
+ * determinista nu trece azi pe la niciun validator. Trebuie sa ruleze
+ * INDIFERENT de sursa, ceea ce inseamna alt punct de apel — deci alta functie.
+ *
+ * NU schimba niciun pret. Pozitia primeste avertisment, `incredere = 0` prin
+ * mecanismul existent, si merge la om. Care e pretul corect al lui o160 ramane
+ * intrebarea 10 catre firma; ce se repara aici e VIZIBILITATEA lui o125.
+ */
+export function notatieContraziceMaterialul(
+  l: LinieExtrasa,
+  text: string,
+): Avertisment[] {
+  if (l.diametru_tip !== "DN" || l.diametru_valoare === null) return [];
+  const m = RE_NOMINAL_E_EXTERIOR.exec(text);
+  if (!m) return [];
+  return [{
+    cod: "notatie_contrazice_materialul",
+    mesaj: `textul spune "${m[0]}", material la care nominalul ESTE diametrul exterior, `
+      + `dar diametrul e citit ca DN${l.diametru_valoare} si se converteste pe seria de otel`,
+  }];
 }
 
 /**

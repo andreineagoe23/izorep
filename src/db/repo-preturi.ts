@@ -2,7 +2,7 @@ import { and, eq, lte, or, isNull, desc } from "drizzle-orm";
 import type { Baza } from "./client.js";
 import { listaPreturi } from "./schema.js";
 import type { Catalog, ListaGoluriFoc, ListaPreturi } from "../pricing/lists.js";
-import type { Sistem, SistemMatrice } from "../pricing/types.js";
+import type { Sistem, SistemRezidential } from "../pricing/types.js";
 
 export type { Catalog };
 
@@ -31,7 +31,11 @@ export type Destinatie = "rezidential" | "industrial" | "rafinarie";
  */
 export const DESTINATIE_IMPLICITA: Destinatie = "rezidential";
 
-const SISTEME_MATRICE: SistemMatrice[] = ["elastomer", "vata_minerala", "tabla", "pvc"];
+// Cele 4 sisteme cu lista REZIDENTIALA. Tabla de inox nu e printre ele — n-are
+// lista rezidentiala (vezi SistemRezidential) — deci un catalog de destinatie
+// "industrial" cerut prin functia asta nu-l poate incarca; el ramane azi doar
+// in baza, cerut direct pe sistem, nu prin catalogDinBaza.
+const SISTEME_MATRICE: SistemRezidential[] = ["elastomer", "vata_minerala", "tabla", "pvc"];
 
 /**
  * Lista activa pentru un sistem, la o data.
@@ -85,7 +89,7 @@ export async function catalogDinBaza(
     SISTEME_MATRICE.map(async (s) => [s, await listaActiva(db, s, la, destinatie)] as const),
   );
   return {
-    matrice: Object.fromEntries(perechi) as Record<SistemMatrice, ListaPreturi>,
+    matrice: Object.fromEntries(perechi) as Record<SistemRezidential, ListaPreturi>,
     // Inchiderile goluri la foc au venit doar pe rezidential; pana vine si
     // varianta industriala, catalogul oricarei destinatii o ia de acolo.
     goluriFoc: (await listaActiva(db, "goluri_foc", la, "rezidential")) as ListaGoluriFoc,

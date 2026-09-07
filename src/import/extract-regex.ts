@@ -14,6 +14,25 @@ const SISTEM: [LinieExtrasa["sistem"], RegExp][] = [
   // "mineral wool" lipsea, desi `Book15.xlsx` e integral in engleza: acolo
   // pozitiile se recunosteau doar din coloana romana de descriere.
   ["vata_minerala", /vat[aă]\s+mineral|mineral\s+wool|rock\s?wool|mineralwolle|rockwool|isolshell|fiberglass|saltele\s+de\s+vat/i],
+  // Tabla de INOX, alta lista de preturi decat tabla de aluminiu/zincata (care
+  // nu are intrare aici — vezi mai jos). Verificata DUPA elastomer/vata: in
+  // Izolatii Transavia.xlsx textul e mereu "Izolatii cu vata minerala si
+  // protectie cu tabla de inox 304 ...", iar sistemul PRINCIPAL trebuie sa
+  // ramana vata_minerala, nu inoxul din stratul de protectie. Cand linia e
+  // DOAR jachetare de inox (fara semnal de izolatie), vata_minerala nu
+  // matcheaza si asta ia locul ei.
+  ["tabla_inox", /\binox\b|o[țt]el\s+inoxidabil|stainless|edelstahl/i],
+  // NU exista o intrare "tabla" (aluminiu/zincata) aici, desi ar fi simetrica
+  // cu inoxul: masurat pe fisierele reale, o regula ["tabla",
+  // /tabl[aă]\s+(?:de\s+)?(?:aluminiu|zincat)|jachetare|\bblech\b/i] ar prinde
+  // determinist si liniile din Radoia.xlsx despre PROTECTIA MECANICA a
+  // tubulaturii de ventilatie ("Sistem complet de protectie mecanica a
+  // izolatiilor ... din tabla zincata", "Protectie la foc ... pentru
+  // tubulaturile din tabla zincata") — alta lucrare, fara diametru si fara
+  // lista de pret, azi lasata sa cada pe model (sistem=null, netarifata).
+  // Adaugarea ar schimba clasificarea lor determinista fara sa schimbe
+  // rezultatul de tarifare (tot netarifate), dar tot e o schimbare de
+  // comportament pe fisiere reale, deci ramane omisa pana se decide separat.
   ["pvc", /\bpvc\b/i],
   // Cere notiunea de GOL sau de TRECERE prin perete, nu doar mentiunea focului.
   // "Protectie la foc EI 60 pentru tubulaturile din tabla zincata" din

@@ -31,7 +31,7 @@ import {
 export function suprafataGol(gol: Gol): number {
   const { latime_mm, inaltime_mm } = gol;
   if (!(latime_mm > 0) || !(inaltime_mm > 0)) {
-    throw new PozitieNetarifata("dimensiunile golului trebuie sa fie pozitive", { gol });
+    throw new PozitieNetarifata("gol_dimensiuni_invalide", "dimensiunile golului trebuie sa fie pozitive", { gol });
   }
   return (latime_mm * inaltime_mm) / 1_000_000;
 }
@@ -84,7 +84,7 @@ export function pretBandaWrap(diametru: number, material: MaterialConducta): num
   const tabel = listaGoluriFoc().banda_wrap[material];
   const b = tabel.find((x) => x.diametru === diametru);
   if (!b) {
-    throw new PozitieNetarifata("banda WRAP nu e ofertata la acest diametru", {
+    throw new PozitieNetarifata("banda_wrap_inexistenta", "banda WRAP nu e ofertata la acest diametru", {
       diametru, material,
       disponibile: tabel.map((x) => x.diametru),
     });
@@ -104,7 +104,7 @@ export function pretColier(diametru: number, traversare: Traversare): number {
   const tabel = listaGoluriFoc().colier_promastop;
   const c = tabel.find((x) => x.diametru === diametru);
   if (!c) {
-    throw new PozitieNetarifata("colierul PROMASTOP nu e ofertat la acest diametru", {
+    throw new PozitieNetarifata("colier_inexistent", "colierul PROMASTOP nu e ofertat la acest diametru", {
       diametru, disponibile: tabel.map((x) => x.diametru),
     });
   }
@@ -133,6 +133,7 @@ export function tarifeazaGolFoc(cerere: CerereGolFoc): RezultatGolFoc {
   if (banda_wrap || colier) {
     if (diametru_conducta === undefined) {
       throw new PozitieNetarifata(
+        "diametru_conducta_lipsa",
         "banda WRAP si colierul se tarifeaza pe diametrul conductei, care lipseste",
         { gol, banda_wrap, colier },
       );
@@ -142,6 +143,7 @@ export function tarifeazaGolFoc(cerere: CerereGolFoc): RezultatGolFoc {
         // Fara material nu exista un pret unic: tabelele de otel si de plastic
         // dau valori diferite la acelasi diametru. Un implicit ar ghici.
         throw new PozitieNetarifata(
+          "material_conducta_lipsa",
           "banda WRAP are pret diferit pe conducta de otel fata de plastic; materialul lipseste",
           { diametru_conducta },
         );

@@ -1,4 +1,6 @@
-import type { LinieProcesata } from "../src/import/nucleu.js";
+import type {
+  CodAvertisment, CodNetarifare, LinieProcesata,
+} from "../src/import/nucleu.js";
 import type { LinieExtrasa, Sursa } from "../src/import/schema.js";
 
 /**
@@ -20,6 +22,112 @@ import type { LinieExtrasa, Sursa } from "../src/import/schema.js";
 export type Filtru = "toate" | "de_validat" | "netarifate";
 
 /**
+ * Cauza unui blocaj, oricare din cele doua feluri.
+ *
+ * Cele doua enumerari se suprapun deliberat pe `dn_necunoscut`: motorul si
+ * validatorul ajung la aceeasi concluzie pe drumuri diferite (unul cade la
+ * conversie, celalalt se uita in tabel inainte), iar pentru omul de la validare
+ * e acelasi lucru. Uniunea le colapseaza, deci si eticheta e una singura.
+ */
+export type CodBlocaj = CodNetarifare | CodAvertisment;
+
+/**
+ * Lentila peste grila: fie una dintre cele trei de dinainte, fie o cauza
+ * anume.
+ *
+ * Varianta pe cod e obiect, nu inca un sir in uniune: `Filtru` e o multime
+ * inchisa de trei valori care apar in `data-lentila` si in
+ * `ETICHETA_CONFIRMARE`, iar amestecarea celor ~20 de coduri acolo ar fi cerut
+ * un `Record` cu 23 de intrari pentru un buton care spune acelasi lucru.
+ */
+export type Lentila = Filtru | { cod: CodBlocaj };
+
+/**
+ * Ce inseamna fiecare cod pentru omul care valideaza, si care intrebare
+ * deschisa catre firma il deblocheaza.
+ *
+ * Trimiterea la intrebare nu e decor: masurat pe cele 10 fisiere reale, 64 din
+ * cele 130 de pozitii netarifate sunt acelasi raspuns neprimit (intrebarea 9).
+ * Fara harta asta, ecranul spune "130 de pozitii n-au pret" si omul cauta 130
+ * de cauze; cu ea, spune ca **jumatate** din ele se rezolva cu un singur
+ * telefon. Numerele sunt cele din `.claude/stare.md`, „Intrebari deschise".
+ */
+export const ETICHETE_BLOCAJ: Record<CodBlocaj, { eticheta: string; intrebare?: number }> = {
+  /* --- fara pret (CodNetarifare) --- */
+  fara_coeficient_de_forma: { eticheta: "niciun strat n-are coeficient pe banda lui", intrebare: 9 },
+  grosime_inexistenta: { eticheta: "grosime care nu există în listă" },
+  peste_maximul_listei: { eticheta: "diametru peste maximul listei", intrebare: 4 },
+  dn_necunoscut: { eticheta: "DN inexistent în seria de oțel", intrebare: 10 },
+  grosime_ambigua: { eticheta: "grosimea nu e scrisă, iar sistemul are mai multe la rândul ăla", intrebare: 15 },
+  banda_inexistenta: { eticheta: "diametrul nu cade în nicio bandă de multiplicatori" },
+  lista_goala: { eticheta: "lista de prețuri e goală" },
+  pozitie_fara_straturi: { eticheta: "poziție fără niciun strat" },
+  fara_pret_pe_mp: { eticheta: "nu există preț pe mp pentru grosimea cerută" },
+  gol_fara_dimensiuni: { eticheta: "închidere de gol fără dimensiunile golului" },
+  gol_dimensiuni_invalide: { eticheta: "dimensiunile golului nu sunt pozitive" },
+  banda_wrap_inexistenta: { eticheta: "banda WRAP nu e ofertată la diametrul ăsta" },
+  colier_inexistent: { eticheta: "colierul PROMASTOP nu e ofertat la diametrul ăsta" },
+  diametru_conducta_lipsa: { eticheta: "lipsește diametrul conductei" },
+  material_conducta_lipsa: { eticheta: "lipsește materialul conductei (oțel sau plastic)" },
+  gol_foc_in_matrice: { eticheta: "închidere de gol la foc trimisă pe matricea ø × grosime" },
+  fara_diametru: { eticheta: "poziția n-are diametru (tubulatură rectangulară?): listele se caută doar pe ø" },
+  /* --- au pret, dar sunt marcate (CodAvertisment) --- */
+  notatie_contrazice_materialul: { eticheta: "scrie DN, dar materialul dă diametrul exterior", intrebare: 10 },
+  diametru_necitat: { eticheta: "diametrul nu apare în textul sursă" },
+  grosime_necitata: { eticheta: "grosimea nu apare în textul sursă" },
+  gol_necitat: { eticheta: "dimensiunea golului nu apare în textul sursă" },
+  grosime_in_afara_listei: { eticheta: "grosime pe care sistemul ăla nu o ofertează" },
+  forma_contrazice_um: { eticheta: "forma contrazice unitatea de măsură" },
+};
+
+export interface Blocaj {
+  cod: CodBlocaj;
+  /** Cate pozitii de izolatie sunt oprite de cauza asta, pe foile date. */
+  n: number;
+  eticheta: string;
+  intrebare?: number;
+}
+
+/**
+ * Grupeaza pozitiile pe CAUZA, nu pe simptom.
+ *
+ * Ecranul spunea pana acum *cate* pozitii n-au pret, niciodata *de ce* —
+ * `eroare` e text liber, iar lentila „Netarifate" da o lista, nu un
+ * diagnostic. Aici se raspunde la intrebarea pe care si-o pune omul cand
+ * deschide fisierul: ce anume trebuie rezolvat, si in ce ordine.
+ *
+ * O pozitie poate aparea in DOUA galeti — SPIRO ø160 n-are pret
+ * (`dn_necunoscut`) SI poarta avertismentul de notatie — si e corect asa:
+ * galetile sunt cauze, nu o impartire a pozitiilor. Antetul numara insa
+ * pozitii DISTINCTE, ca sa nu iasa un total mai mare decat fisierul.
+ *
+ * Ordinea e descrescatoare dupa numar, apoi alfabetica pe cod: cauza care
+ * blocheaza cel mai mult sta prima, iar doua cauze la egalitate nu-si schimba
+ * locul intre doua redesenari.
+ */
+export function blocaje(linii: LinieProcesata[]): Blocaj[] {
+  const contor = new Map<CodBlocaj, number>();
+  const adauga = (c: CodBlocaj): void => { contor.set(c, (contor.get(c) ?? 0) + 1); };
+
+  for (const l of linii) {
+    if (l.extras.sistem === null) continue;   // antet, nota, total: nu e pozitie
+    if (!l.pret && l.codEroare) adauga(l.codEroare);
+    for (const a of l.avertismente ?? []) adauga(a.cod);
+  }
+
+  return [...contor]
+    .map(([cod, n]) => ({ cod, n, ...ETICHETE_BLOCAJ[cod] }))
+    .sort((a, b) => b.n - a.n || a.cod.localeCompare(b.cod));
+}
+
+/** Cate pozitii DISTINCTE sunt atinse de cel putin un blocaj. */
+export function nrBlocate(linii: LinieProcesata[]): number {
+  return linii.filter((l) =>
+    l.extras.sistem !== null
+    && ((!l.pret && l.codEroare !== undefined) || (l.avertismente?.length ?? 0) > 0)).length;
+}
+
+/**
  * Daca linia intra in filtrul dat.
  *
  * `netarifate` cere explicit `sistem !== null`: o linie care nu e pozitie de
@@ -29,7 +137,14 @@ export type Filtru = "toate" | "de_validat" | "netarifate";
  * (incredere sub prag, avertisment, sau eroare de tarifare pe o linie care nu
  * vine de la om) — filtrul nu recalculeaza nimic, doar selecteaza.
  */
-export function potrivit(l: LinieProcesata, f: Filtru): boolean {
+export function potrivit(l: LinieProcesata, f: Lentila): boolean {
+  if (typeof f === "object") {
+    // Aceeasi regula ca la `blocaje`: o linie care nu e pozitie de izolatie nu
+    // poate fi blocata de nimic, deci nu intra sub nicio lentila de cauza.
+    if (l.extras.sistem === null) return false;
+    if (!l.pret && l.codEroare === f.cod) return true;
+    return (l.avertismente ?? []).some((a) => a.cod === f.cod);
+  }
   switch (f) {
     case "toate": return true;
     case "de_validat": return l.necesitaValidare;

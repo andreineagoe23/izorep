@@ -18,6 +18,7 @@ import { serieDiametre } from "../src/db/schema.js";
 import { and } from "drizzle-orm";
 import { catalogDinFisiere } from "../src/pricing/lists.js";
 import { tarifeazaSimplu } from "../src/pricing/engine.js";
+import type { SistemRezidential } from "../src/pricing/types.js";
 
 const { db, inchide } = conecteaza();
 let tenantA = "";
@@ -244,7 +245,10 @@ describe("catalogul din baza e identic cu cel din fisiere", () => {
     const dinBaza = await caTenant(db, t.id, (tx) => catalogDinBaza(tx, "2026-09-02"));
 
     // Pozitii din Oferta 118, verificate aici prin listele venite din baza.
-    const cazuri: [Parameters<typeof tarifeazaSimplu>[0], number, number, number][] = [
+    // Tipizat pe SistemRezidential, nu pe Parameters<typeof tarifeazaSimplu>[0]:
+    // dinBaza.matrice e catalogul rezidential (4 sisteme), nu SistemMatrice cu
+    // 5 — tabla_inox n-are lista rezidentiala.
+    const cazuri: [SistemRezidential, number, number, number][] = [
       ["elastomer", 15, 13, 5.99],
       ["elastomer", 100, 32, 28.96],
       ["vata_minerala", 65, 30, 9.80],

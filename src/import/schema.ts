@@ -21,7 +21,7 @@ import { z } from "zod";
  */
 export type Sursa = "regex" | "model" | "sablon" | "memorie" | "om";
 
-export const SISTEME = ["elastomer", "vata_minerala", "tabla", "pvc", "goluri_foc"] as const;
+export const SISTEME = ["elastomer", "vata_minerala", "tabla", "tabla_inox", "pvc", "goluri_foc"] as const;
 export const FORME = [
   "ml", "mp", "manseta", "cot", "teu", "reductie", "robinet", "vana",
   "flansa", "contor", "compensator", "pompa", "filtru", "distribuitor", "schimbator",

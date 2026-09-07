@@ -3,7 +3,13 @@ import vata_minerala from "../../data/price-lists/vata_minerala.json" with { typ
 import tabla from "../../data/price-lists/tabla.json" with { type: "json" };
 import pvc from "../../data/price-lists/pvc.json" with { type: "json" };
 import goluri_foc from "../../data/price-lists/goluri_foc.json" with { type: "json" };
-import type { MaterialConducta, SistemMatrice } from "./types.js";
+// Tabla de inox n-are lista rezidentiala (vezi SistemRezidential): singura
+// care exista e cea industriala, importata static aici la fel ca celelalte —
+// modulul trebuie sa ruleze identic in Node si in browser, deci nu se citeste
+// cu fs. Nu intra in `catalogDinFisiere()`/`Catalog.matrice`, care raman pe
+// destinatia rezidentiala; e disponibila doar prin `lista("tabla_inox")`.
+import tabla_inox from "../../data/price-lists/industrial/tabla_inox.json" with { type: "json" };
+import type { MaterialConducta, SistemMatrice, SistemRezidential } from "./types.js";
 
 export interface BandaMultiplicator {
   band: [number, number];
@@ -33,7 +39,7 @@ export interface ListaPreturi {
  * trebuie sa ruleze identic in Node si in browser. Demo-ul de pe GitHub Pages
  * ruleaza exact acest cod, fara backend.
  */
-const LISTE = { elastomer, vata_minerala, tabla, pvc } as unknown as Record<SistemMatrice, ListaPreturi>;
+const LISTE = { elastomer, vata_minerala, tabla, pvc, tabla_inox } as unknown as Record<SistemMatrice, ListaPreturi>;
 
 /**
  * Lista unui sistem tarifat din matrice ø × grosime.
@@ -41,12 +47,24 @@ const LISTE = { elastomer, vata_minerala, tabla, pvc } as unknown as Record<Sist
  * `goluri_foc` NU e printre ele si nici nu poate fi cerut aici: lista lui are
  * alta forma (praguri de suprafata + doua tabele de banda + coliere), iar
  * tipul trebuie sa spuna asta. Pentru ea exista `listaGoluriFoc`.
+ *
+ * `tabla_inox` merge prin acelasi accesor ca restul, desi lista lui e
+ * industriala: cine cheama `lista()` cere un pret pe sistem, nu pe destinatie.
  */
 export function lista(sistem: SistemMatrice): ListaPreturi {
   const l = LISTE[sistem];
   if (!l) throw new Error(`lista de preturi lipseste: ${sistem}`);
   return l;
 }
+
+/**
+ * Sistemele care NU au lista de preturi rezidentiala: pretul lor vine mereu
+ * din lista industriala, indiferent de restul pozitiei. Azi doar tabla de
+ * inox (intrebarea 15 din .claude/stare.md). Folosit ca sa se ataseze o nota
+ * vizibila de destinatie mixta pe pozitiile care il folosesc — vezi
+ * `tarifeazaExtras` din src/import/nucleu.ts.
+ */
+export const SISTEME_FARA_REZIDENTIAL: ReadonlySet<string> = new Set(["tabla_inox"]);
 
 export interface PragGol {
   /** Limita SUPERIOARA a pragului, inclusiva: "Goluri pana la 0,05 mp". */
@@ -114,7 +132,15 @@ export function grosimiLa(sistem: SistemMatrice, diametru: number): number[] {
  * motorul nu are nevoie sa stie de unde vin preturile.
  */
 export interface Catalog {
-  matrice: Record<SistemMatrice, ListaPreturi>;
+  /**
+   * Ramane pe destinatia REZIDENTIALA, nu pe toate cele din SistemMatrice.
+   *
+   * `seed.ts` insereaza continutul lui `catalogDinFisiere()` cu
+   * `destinatie: "rezidential"`; daca tabla_inox ar intra aici, baza ar minti
+   * despre destinatia lui. Lista lui industriala intra separat, prin
+   * `listeIndustriale()` din seed.ts.
+   */
+  matrice: Record<SistemRezidential, ListaPreturi>;
   goluriFoc: ListaGoluriFoc;
 }
 
@@ -123,9 +149,10 @@ export interface Catalog {
  *
  * Sursa asta ramane pentru teste, pentru CLI si pentru demo-ul care ruleaza
  * fara server. Un server multi-tenant NU o foloseste: acolo listele vin din
- * baza, per tenant.
+ * baza, per tenant. Intoarce exact aceleasi 4 liste ca inainte de tabla_inox —
+ * vezi comentariul de pe `Catalog.matrice`.
  */
 export const catalogDinFisiere = (): Catalog => ({
-  matrice: { elastomer, vata_minerala, tabla, pvc } as unknown as Record<SistemMatrice, ListaPreturi>,
+  matrice: { elastomer, vata_minerala, tabla, pvc } as unknown as Record<SistemRezidential, ListaPreturi>,
   goluriFoc: goluri_foc as unknown as ListaGoluriFoc,
 });

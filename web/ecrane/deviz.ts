@@ -7,6 +7,7 @@ const SISTEME: [SistemMatrice, string][] = [
   ["elastomer", "elastomer (Armaflex)"],
   ["vata_minerala", "vată minerală"],
   ["tabla", "protecție tablă"],
+  ["tabla_inox", "tablă inox"],
   ["pvc", "PVC"],
 ];
 
@@ -129,6 +130,7 @@ export const ecran: Ecran = {
               <td class="n">${s.rand_lista}</td>
               <td class="n">${eur(s.pret_unitar)}</td></tr>`),
             ["", "n", "n", "n"])}
+          ${(r.note ?? []).map((n) => nota(esc(n))).join("")}
           ${nota("Fiecare strat se rotunjește separat la 2 zecimale, apoi se însumează. Diametrul geometric pornește de la rândul primului strat și crește cu 2 × grosime.")}`;
       } catch (e) {
         const p = e instanceof PozitieNetarifata;

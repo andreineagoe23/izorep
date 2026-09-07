@@ -227,6 +227,93 @@ chihlimbariu. Deasupra grilei stau acum trei lucruri:
   control din coloanele extrase — poziția se corectează de la tastatură, fără
   mouse.
 
+### „Ce blochează N poziții" — cauze, nu simptome
+
+Indicatoarele spuneau *câte* poziții n-au preț. Niciodată **de ce**: `eroare`
+era text liber, iar lentila „Netarifate" dădea o listă, nu un diagnostic.
+Măsurat pe cele 10 fișiere reale, cele 130 de poziții netarifate au **patru
+cauze**, iar 64 din 130 sunt același răspuns neprimit de la firmă:
+
+```
+Ce blochează 130 de poziții
+  64  niciun strat n-are coeficient pe banda lui   → întrebarea 9    [arată]
+  43  grosime care nu există în listă                                [arată]
+  15  diametru peste maximul listei                 → întrebarea 4   [arată]
+   8  DN inexistent în seria de oțel                → întrebarea 10  [arată]
+```
+
+Diferența nu e cosmetică: omul care vede „130 netarifate" crede că are 130 de
+probleme, când are patru, dintre care una jumătate — și pe care o rezolvă un
+telefon, nu o zi de lucru.
+
+Gruparea se sprijină pe `CodNetarifare`, un cod stabil pe care `PozitieNetarifata`
+îl poartă alături de mesaj (`src/pricing/types.ts`). Mesajul rămâne proza citită
+de om; codul e contractul pe care se numără. Harta `cod → { etichetă, întrebare }`
+stă în `web/validare.ts`, lângă restul logicii de filtrare.
+
+`[arată]` extinde lentila existentă: `Lentila` primește o variantă `{ cod }`, iar
+`potrivit()` filtrează pe ea. Mecanismul de lentile, contoarele pe filă și
+„Următoarea de validat" rămân neatinse. Blocul se recalculează pe **tot
+registrul**, nu pe foaia activă — cauza nu ține de foaie, iar `Radoia.xlsx` are
+șapte.
+
+O poziție poate apărea la două cauze (SPIRO ø160 n-are preț **și** e marcată),
+deci suma coloanei poate depăși numărul din titlu, care numără poziții
+distincte. Titlul ar minți dacă ar aduna coloana.
+
+### Ecranul nu explică, arată
+
+Notele explicative de pe ecranul de import au fost **șterse** — erau ~250 de
+cuvinte de proză permanentă, utile o dată și zgomot la fiecare fișier. Regulile
+de business pe care le spuneau (unde stă cheia API, cum se citește grila, de ce
+suma cauzelor poate depăși titlul, cum se tarifează golurile la foc) stau în
+`.claude/`, unde le caută cine are nevoie de ele.
+
+Ce a rămas pe ecran e **stare sau cifre**, nu explicație: ce foaie e goală, ce
+import e redeschis, câte linii n-au plecat la model, și alerta de ofertă de
+manoperă. Regula de fond: dacă un text nu se schimbă de la un fișier la altul,
+n-are ce căuta în interfață.
+
+### Ieșirea: registrul de ofertă
+
+Până acum nu ieșea **nimic** din aplicație — importul se oprea într-o grilă, iar
+munca de validare rămânea în browser. Butonul „Generează oferta" din bara de
+validare deschide un formular de antet (firmă emitentă, număr, dată, beneficiar,
+obiectiv, persoană) și descarcă un `.xlsx` cu **trei foi**:
+
+- **`Ofertă`** — doar pozițiile cu preț **și** nemarcate. Totalul e doar aici.
+  Layoutul copiază oferta 284 reală.
+- **`De validat`** — au preț, dar prețul e o propunere, cu motivul pe coloană.
+- **`Netarifate`** — fără preț, cu **eticheta umană** a cauzei și cu întrebarea
+  deschisă, nu cu textul brut al erorii.
+
+Foaia 1 e ce se trimite. Foile 2–3 fac golurile **imposibil de ratat** — exact
+opusul situației de dinainte, unde dispăreau din vedere.
+
+`.xlsx`, nu PDF: toate cele patru oferte semnate din `attachments/clienti/` sunt
+`.xlsx`, deci ăsta e formatul pe care firma îl trimite azi. ExcelJS e deja
+dependență și rulează deja în browser la citire, iar scrierea trece prin același
+`await import(...)`, deci cele ~940 kB rămân un chunk separat.
+
+Împărțirea pe îndelete: `web/oferta.ts` e **pur, fără DOM** — primește linii,
+întoarce un `ArrayBuffer` — exact ca motorul, și din același motiv: se testează
+în Node. `tests/oferta.test.ts` verifică pe `Oferta 27.04.2026 Matari.xlsx` că
+totalul iese **12.692,04 €**, adică exact totalul ofertei semnate. `Blob`,
+`createObjectURL` și `<a download>` stau singure în `web/descarca.ts`, un singur
+loc, ca să nu se împrăștie o secvență în care se uită ușor `revokeObjectURL`.
+
+Registrul poate purta și **discount**, ca ofertele reale: `TOTAL LUCRARI`,
+`DISCOUNT n %` (valoarea reducerii, nu procentul) și `TOTAL GENERAL`, structura
+ofertei 284. Toate trei trec prin `bani()` — în fișierul semnat scrie
+`2837.25189` și `91737.81111`, cinci zecimale într-un document trimis
+clientului. Fără discount, registrul are un singur rând de total, ca înainte.
+
+Registrul poartă, la subsolul foii 1, **cum a fost calculat**: data generării,
+destinația listelor, snapshot-ul de model, fișierul sursă și `id`-ul sesiunii de
+import. Regula 3 din `arhitectura.md` — prețul se copiază în document, nu se
+referențiază — aplicată la ce avem: peste un an, întrebarea „de unde a ieșit
+13,74 pe rândul ăla?" trebuie să aibă răspuns în fișierul însuși.
+
 **Confirmarea în masă acționează pe exact ce e vizibil** sub filtrul curent, pe
 foaia activă, iar butonul spune asta („Confirmă cele 12 poziții marcate din
 foaia asta"). Un buton „confirmă tot" ar bifa și poziții pe care omul nu le-a

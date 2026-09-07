@@ -24,17 +24,27 @@ gruparea nu-l afectează.
 ## Ce e construit
 
 **Motorul de prețuri** (`src/pricing/`) — determinist, fără AI, izomorf
-(rulează identic în Node și în browser). 130 de teste care reproduc poziții
-reale facturate din Oferta 118 / 27.04.2026, inclusiv poziții compuse din trei
-straturi și totalurile pe linie, plus toate cele 53 de poziții din oferta 118.1
-de închideri goluri la foc (12.692,04 €, exact totalul semnat).
+(rulează identic în Node și în browser). Reproduce pozițiile reale facturate din
+Oferta 118 / 27.04.2026, inclusiv cele compuse din trei straturi și totalurile
+pe linie, plus toate cele 53 de poziții din oferta 118.1 de închideri goluri la
+foc (12.692,04 €, exact totalul semnat). Din 7 septembrie 2026 reproduce și
+Oferta 284: **13 din 13** linii verificate direct, la bănuț. Regulile complete
+sunt în `pricing.md`; ce s-a schimbat atunci — regula de serie, jacheta în sus,
+multiplicatorii pe strat, toleranța de capăt de listă — e mai jos, la „Ce am
+descoperit".
+
+**`tabla_inox` e sistem de sine stătător** (7 septembrie 2026). Înainte,
+promptul mapa explicit inoxul pe `tabla`, adică pe lista de **aluminiu**. E
+singurul sistem fără listă rezidențială, deci `lista("tabla_inox")` întoarce
+lista industrială — nu ca alegere de segment, ci fiindcă e singura care există.
+Poziția primește `note` că amestecă destinații. Întrebarea 15 rămâne.
 
 **Pipeline-ul de import** (`src/import/`) — L0 parsare fizică, L2a extragere
 deterministă (~55% din linii), L2b completare cu OpenAI prin structured outputs
 pe reziduu, L3 tarifare. Rulat pe lista reală a unui spital: 191 poziții
 detectate, 63% tarifate automat. Rulează identic din CLI și din aplicație, când
 aceasta e pornită local (`npm run dev`): pe `Izolatii Transavia.xlsx` ambele dau
-72 poziții, 39 tarifate, 6.039,90 €. Pe `Oferta 27.04.2026 Matari.xlsx`
+72 poziții, 39 tarifate, 6.034,70 €. Pe `Oferta 27.04.2026 Matari.xlsx`
 (închideri goluri la foc): 53 de poziții, 100% tarifate determinist, fără niciun
 apel la model.
 
@@ -52,6 +62,18 @@ se învață doar din corecția umană, niciodată din ce a zis modelul.
 șablon pleacă la model, restul se deduc: −54% linii trimise (697 → 321), cu
 rezultate identice pe golden files.
 
+**Capcana SPIRO, făcută vizibilă** (7 septembrie 2026) — tubulatura spiro scrisă
+`DN` se tarifa pe seria de țeavă de oțel: `DN125` ieșea **13,74 €/ml** (rândul
+140) în loc de 11,36 (rândul 125), adică **+21%, tăcut**. Inversarea era ce o
+făcea periculoasă: cazurile sigure dădeau eroare și se vedeau (ø160, ø250, ø315
+nu există în tabelul de oțel), iar cele periculoase treceau neobservate, tocmai
+fiindcă 125 și 200 există și se convertesc „cu succes". Cauza: `valideazaExtragere`
+nu se aplică liniilor `sursa: "regex"`, iar SPIRO e prins chiar de `RE_DN`, deci
+pe calea deterministă nu trecea pe la niciun validator.
+`notatieContraziceMaterialul` rulează acum **indiferent de sursă** (excepție
+`"om"`) și aprinde 16 linii pe cele 10 fișiere. **Nu schimbă niciun preț** —
+poziția e marcată și merge la om. Prețul corect al lui ø160 rămâne întrebarea 10.
+
 **Guardrails pe stratul cu model** (`src/import/valideaza.ts`) — verificare
 deterministă a ceea ce iese din model, față de textul sursă: numere care nu
 apar în linie, DN inexistent, grosime pe care sistemul ăla nu o ofertează,
@@ -59,6 +81,34 @@ formă care contrazice unitatea de măsură. Un avertisment anulează încredere
 raportată de model și trimite poziția la validare umană. Modelul e pinuit pe
 **snapshot datat**, iar `tests/golden/` ține ieșirea lui reală pe fișiere de
 client, ca deriva să se vadă. Detaliile în `import.md`.
+
+**Ieșirea ofertei** (`web/oferta.ts`, `web/descarca.ts`) — din 7 septembrie 2026
+importul nu se mai oprește în grilă. Butonul „Generează oferta" produce un
+registru `.xlsx` cu trei foi: `Ofertă` (doar pozițiile cu preț **și** nemarcate,
+în layoutul ofertei 284 reale), `De validat` și `Netarifate`, ultimele două cu
+motivul scris pe fiecare rând. Verificat cap-coadă: `Oferta 27.04.2026
+Matari.xlsx` importat determinist dă un registru cu 53 de poziții și total
+**12.692,04 €**, adică exact totalul ofertei semnate. `web/oferta.ts` e pur,
+fără DOM, deci se testează în Node ca motorul; `Blob` și `<a download>` stau
+singure în `web/descarca.ts`. Detaliile în `ui.md`.
+
+**Nicio poziție fără preț nu mai rămâne fără cauză.** `tarifeazaExtras` întorcea
+`{}` când sistemul era cunoscut dar diametrul lipsea: fără preț, fără eroare,
+fără cod și — dacă modelul raportase încredere peste prag — fără să fie nici
+marcată. Se vedea exclusiv ca diferență între două contoare, iar pe `Radoia.xlsx`
+însemna ~45 din 51 de poziții netarifate invizibile în blocul de cauze. Codul
+`fara_diametru` acoperă cazul (tubulatură **rectangulară**, care chiar n-are ø,
+ci A×B — conversia e în `tevi.md`, neimplementată). Un test exhaustiv peste toate
+combinațiile de câmpuri garantează acum: **ori preț, ori cauză, niciodată
+tăcere.**
+
+**Cauzele netarifării, ca valori** (`CodNetarifare` în `src/pricing/types.ts`) —
+`PozitieNetarifata` poartă un cod stabil lângă mesaj, iar ecranul grupează pe
+el: „Ce blochează 130 de poziții — 64 niciun strat n-are coeficient pe banda lui
+(întrebarea 9), 43 grosime care nu există în listă, 15 diametru peste maximul
+listei (întrebarea 4), 8 DN inexistent în seria de oțel (întrebarea 10)".
+Mesajele nu s-au schimbat: textul rămâne pentru citit, codul e ce se poate
+număra. Fiecare click filtrează grila prin lentila existentă.
 
 **Istoricul importurilor** (`web/istoric.ts`) — ultimele 10 importuri în
 IndexedDB: fișierul, extragerile și corecțiile omului, nu grila (aceeași parsare
@@ -255,10 +305,17 @@ combinații posibile:
 
 | primul strat / jachetă | potriviri exacte |
 |---|---|
-| în sus / în sus (motorul de azi) | 23 / 30 |
-| în sus / cel mai apropiat | 21 / 30 |
-| **cel mai apropiat / în sus** | **27 / 30** |
-| cel mai apropiat / cel mai apropiat | 24 / 30 |
+| în sus / în sus | 15 / 30 |
+| în sus / cel mai apropiat (motorul de azi, pe `interior`) | 12 / 30 |
+| **cel mai apropiat / în sus** | **18 / 30** |
+| cel mai apropiat / cel mai apropiat | 15 / 30 |
+
+Cifrele astea le înlocuiesc pe cele înregistrate inițial (23 / 21 / 27 / 24),
+care erau greșite: măsurătoarea veche nu rula `multiplicator()` din motor, deci
+nu contoriza ca eșec cele **10 linii pe care motorul le refuză în toate cele
+patru combinații** — 3 la Di21 g40 (lista n-are celula `22|40`) și 7 coturi/teuri
+de vată pe banda 18–60, unde coeficientul e `null`. Raportat doar la cele 20 de
+linii pe care motorul dă vreun preț: 15 / 12 / **18** / 15. Ordinea e neschimbată.
 
 Cele două linii care despart variantele sunt Di114 (geometric 214, între
 rândurile 210 și 220 — oferta ia 220) și Di273 (geometric 393 — oferta ia 400).
@@ -276,13 +333,146 @@ Motorul leagă azi regula de notație, nu de serie: pe fișierul ăsta ar rotunj
 18–60 nu are coeficient de cot/teu în lista de prețuri (întrebarea 9), dar
 oferta le tarifează: Di21 și Di27 = 17,78 €, Di34 = 18,12 €, Di49 = 18,48 €,
 Di60 = 18,83 €. Fiecare e **exact** prețul tablei la rândul geometric
-(ø110, ø110, ø120, ø130, ø140) — stratul de vată nu intră în preț. Cinci
-poziții din cinci. De confirmat cu firma înainte să intre în cod.
+(ø110, ø110, ø120, ø130, ø140) — stratul de vată nu intră în preț.
+
+**Nouă poziții din nouă**, nu cinci cum se scrisese prima dată: cot și teu la
+Di21, Di27, Di34, Di60, plus cot la Di49 (teu nu există acolo). Cinci diametre,
+două forme, exacte la bănuț pe o ofertă semnată.
+
+Regula generalizează fără caz special: **un strat al cărui sistem n-are
+coeficient pentru forma cerută pe banda lui contribuie cu geometria — rândul și
+grosimea, pentru diametrul stratului următor — dar nu cu prețul.** La Di60 cot
+vata iese, tabla intră cu ×1 → 18,83 €. La Di114 cot ambele au coeficient, deci
+nimic nu se schimbă și abaterea de 76,43 față de 45,24 rămâne exact cum era.
+
+Consecință care nu se vedea din formularea veche: la Di21 stratul de vată nu
+mai e nici măcar căutat în matrice, deci lipsa celulei `22|40` nu mai blochează
+poziția — Di21 cot și teu devin tarifabile la 17,78 €. Di21 **ml** rămâne
+netarifat, corect: acolo vata are coeficient 1, deci e inclusă, deci celula
+lipsă oprește poziția.
+
+Intră în cod cu preț **plus notă de proveniență**, iar poziția trece obligatoriu
+pe la om. Rămâne de confirmat cu firma (întrebarea 9).
 
 **Două abateri rămân pe oferta asta.** Di114 cot și teu sunt 76,43 € în loc de
 45,24 € (banda 76–114 spune ×1 pentru cot; raportul real e 1,689 — nu e niciun
 coeficient din tabel). Iar Di21 la 40 mm pe metru liniar e 25,68 € față de
 25,73 € calculat: lista noastră n-are ø22 la 40 mm, iar motorul cade pe ø28.
+
+**Ce a intrat în cod pe 7 septembrie 2026.** Patru reguli, toate cu dovadă
+măsurată, plus o a cincea care e o corecție a uneia dintre ele:
+
+1. **Regula de serie, nu de notație** — `peSeriaDeOtel`, toleranță 0,8 mm.
+   Pragul e ales pe date: maximul măsurat e 0,70 (Di49, Di169), iar ø90 e la
+   1,1 de 88,9 și ø75 la 1,1 de 76,1, deci plasticul nu se confundă cu oțelul.
+   Doar pe `interior`; pe `exterior` nu se schimbă nimic.
+2. **Jacheta se rotunjește în sus** — după **material** (`tabla`, `tabla_inox`),
+   nu după poziția în stivă. Prima variantă lega regula de „ultimul strat" și
+   dădea același rezultat pe datele de azi, dar predicatul se rupe la prima
+   poziție cu altă ordine. Motivul fizic e materialul: tabla se croiește pe
+   șantier la măsura superioară, manșoanele vin în alezaje fixe și se ia cel mai
+   apropiat — de-aia stratul de vată din mijloc la DN80 compus rămâne pe 114.
+3. **Multiplicatorii se aplică pe strat**, iar straturile fără coeficient pe
+   banda lor ies din preț păstrându-și geometria. Asta rezolvă cele 9 poziții
+   de cot/teu sub ø76.
+4. **Toleranță de 0,5 mm la capătul listei.** DN200 (ø219,1) cădea cu 0,1 mm
+   peste ultimul rând al elastomerului, care e 219 — adică exact DN200.
+5. **Corecție la 3, găsită de testul golden.** Excluzând stratul de vată din
+   preț, îi dispărea și verificarea grosimii — iar `Di60, g48` (48 mm nu se
+   ofertează la vată, în niciun segment) a început să se tarifeze la 19,45 €.
+   Greșit: `geometric = rând + 2 × grosime`, deci grosimea stratului exclus
+   decide rândul jachetei. Un strat scos din preț nu e un strat inexistent.
+   Regula corectă: îi trebuie o grosime **ofertată de sistem**, nu îi trebuie
+   celula `rând|grosime`. Separă exact `Di21 g40` (40 e ofertat, celula `22|40`
+   lipsește → 17,78 €) de `Di60 g48` (48 nu e ofertat → rămâne netarifat).
+   Fixtura golden avea dreptate; nu s-a re-înregistrat nimic.
+
+**Inoxul nu se tarifează automat, și ăsta e răspunsul corect.** Lista de
+aluminiu e **rară** — exact o grosime per diametru — deci grosimea jachetei e
+implicită și poziția iese cu preț fără ca textul să spună ceva. Lista de inox e
+**densă**: toate cele trei grosimi (0,4 / 0,5 / 0,6) la fiecare din cele 64 de
+rânduri, 192 de celule pline. Textul clientului nu spune niciodată grosimea
+jachetei — „tablă de inox 304", atât — deci `grosimeEfectiva` nu mai are ce
+deduce și poziția iese „grosime nespecificată și ambiguă".
+
+Deci cele 39 de poziții din `Izolatii Transavia` nu trec de la *preț greșit* la
+*preț corect*, ci de la **preț greșit, tăcut** la **poziție marcată**. La rândul
+140, aceeași poziție e 18,83 € pe aluminiu și 45,57 € pe inox 0,5 mm — de 2,4
+ori. Un număr fals cu care semnezi o ofertă e mai scump decât o casetă goală.
+
+Rezultă o întrebare nouă, îngustă și ușor de răspuns, care deblochează 72 de
+rânduri dintr-un singur fișier: **care e grosimea implicită de tablă de inox?**
+E acum partea concretă a întrebării 15.
+
+**Golden files sunt acum decalate față de prompt.** `tests/golden/` conține
+ieșirea modelului de **dinainte** ca promptul să știe de `tabla_inox`: liniile
+de inox din `Izolatii Transavia` sunt înregistrate cu `{"sistem": "tabla"}`,
+adică pe lista de aluminiu. Testul trece — el rejoacă partea deterministă peste
+ce e înregistrat — dar înregistrarea nu mai reprezintă ce ar răspunde modelul
+azi. Re-înregistrarea costă un apel real:
+`npm run golden -- ../attachments/clienti/Izolatii\ Transavia.xlsx`.
+
+**Efectul pe fișierele reale, doar pe stratul determinist** (`--fara-model`,
+cele 10 fișiere din `attachments/clienti/`):
+
+| | înainte | după |
+|---|---|---|
+| poziții de izolație | 505 | 505 |
+| tarifate | 370 (73,3%) | **375 (74,3%)** |
+| valoare | 700.130,82 € | 717.230,26 € |
+
+Cifra mică e înșelătoare și merită spus de ce: pe calea deterministă nu se
+construiesc `straturi_extra`, deci fiecare poziție e un singur strat. Regula 3
+și `tabla_inox` lucrează numai pe poziții **compuse**, adică pe cele care trec
+prin model. Acolo se vede efectul, iar dovada lor sunt testele unitare și
+golden files, nu sweep-ul. Valoarea s-a schimbat și în minus pe unele fișiere
+(Oferta 284: 24.052 → 23.788 €) — corect: regula de serie mută Di49 de pe
+rândul 54 pe 48, care e mai ieftin și e cel din oferta semnată.
+
+## Acoperirea față de ofertele semnate (7 septembrie 2026)
+
+Din cele 9 fișiere de client, **4 sunt oferte** cu rând de TOTAL — restul sunt
+cereri, n-au cu ce fi comparate. Măsurat pe `--fara-model`, comparând registrul
+generat cu totalul semnat. `tests/oferte-semnate.test.ts` ține cifrele ca
+clichetă: dacă cresc, se actualizează; dacă scad, s-a stricat ceva.
+
+| Ofertă semnată | poz | pe ofertă | generat | semnat | |
+|---|---|---|---|---|---|
+| Matari (goluri foc) | 53 | 53 | 12.692,04 | 12.692,04 | **100%** |
+| Oferta 27.04.2026 | 43 | 29 | 92.609,35 | 170.519,39 | 54% |
+| Oferta 284 Transavia | 98 | 61 | 23.787,78 | 94.575,06 | 25% |
+| Anexa 1 / 06.12.2024 | 0 | 0 | 0,00 | 706,90 | **0%** |
+
+Distincția care contează: **nu e o problemă de preț, e una de acoperire.**
+Prețurile pe liniile care ies sunt verificate la bănuț (13/13 pe Oferta 284);
+lipsește ce motorul refuză deliberat să ghicească.
+
+- **Oferta 284** — 24 din cele 37 netarifate sunt întrebarea 9. Regula există în
+  motor, dar lucrează pe poziții **compuse**, iar calea deterministă nu
+  construiește `straturi_extra`. Deci 25% e un artefact al lui `--fara-model`,
+  nu plafonul real.
+- **Oferta 27.04.2026** — 8 poziții SPIRO marcate (întrebarea 10), 4 DN
+  inexistent, 3 peste maximul listei (întrebarea 4), 5 grosime inexistentă.
+- **Anexa 1 — zero e răspunsul CORECT.** Vezi mai jos.
+
+**Anexa 1 e o ofertă de MANOPERĂ, și forțarea acoperirii ar fi cea mai scumpă
+greșeală posibilă.** Fișierul are altă formă: descrierea stă în antetul de
+secțiune („1. Izolatii conducte PPR cu Armaflex gr. 9 mm - **manopera** :"), iar
+rândurile de date sunt numai cifre — `1 | 22 | 2,3 | m | 20 | 46` — deci
+`construiesteLinie` nu le vede ca linii (n-au text). Prețurile semnate sunt
+2,20 / 2,30 / 3,00 €/ml, adică exact tariful plat de manoperă din
+`liste-preturi.md`. Motorul are doar liste **material + manoperă**:
+
+| poziție | motorul | semnat | raport |
+|---|---|---|---|
+| Armaflex g13 ø22 | 5,99 € | 2,30 € | **2,6×** |
+| Armaflex g13 ø48 | 8,84 € | 2,30 € | **3,8×** |
+| vată g30 ø28 | 6,86 € | 2,20 € | **3,1×** |
+
+Aceeași capcană ca la SPIRO, dar de trei ori mai mare. `randuriManopera` din
+`Statistici` recunoaște fișierul după marcajul „manoperă" din secțiuni și
+aprinde o alertă în ecran și în CLI, ca zero-ul să spună **„n-avem lista"**, nu
+să arate ca o foaie goală. Se aprinde pe exact un fișier din zece.
 
 ## Întrebări deschise către firmă
 
@@ -303,11 +493,12 @@ Astea blochează arhitectura, nu doar implementarea:
 8. „Protecție la foc pentru tubulatură" (28 de rânduri în `Radoia.xlsx`) e o
    lucrare pe care o ofertați? Nu are listă de prețuri printre cele primite.
 9. **Coturile și teurile de vată minerală sub ø76.** Lista nu are coeficient de
-   element special pe banda 18–60 (are doar manșeta, 0,25), deci 12 poziții
-   reale din `Izolatii Transavia` rămân netarifate. Oferta 284 le tarifează
-   totuși, iar pe cinci poziții din cinci prețul e **exact tabla la rândul
-   geometric, fără stratul de vată**. Regula asta e corectă, sau au fost cinci
-   decizii separate?
+   element special pe banda 18–60 (are doar manșeta, 0,25). Oferta 284 le
+   tarifează totuși, iar pe **nouă poziții din nouă** prețul e exact tabla la
+   rândul geometric, fără stratul de vată. Regula e acum **în cod**, dar cu
+   notă de proveniență pe poziție și validare umană obligatorie: e dedusă din
+   date, nu citită dintr-o listă. Întrebarea rămâne — e regula firmei, sau au
+   fost nouă decizii separate care s-au nimerit consecvente?
 10. **SPIRO ø160.** Citit ca diametru exterior, motorul ar da 14,37 €/ml
     (rândul 169); oferta semnată are 14,16 (rândul 159), iar aceeași ofertă
     tarifează ø160 PEHD la 14,37. Până la răspuns, `DN 160` pe spiro rămâne
@@ -327,9 +518,15 @@ Astea blochează arhitectura, nu doar implementarea:
 14. **PVC și închiderile goluri la foc pe industrial.** Nu au venit în pachetul
    industrial. Nu se ofertează pe industrial, sau se folosesc cele
    rezidențiale?
-15. **Tabla de inox.** Sistem nou, doar pe industrial, fără corespondent
-   rezidențial. Se ofertează și pe rezidențial? Are aceleași benzi de
-   multiplicatori ca tabla de aluminiu (subsolul listei zice că da)?
+15. **Tabla de inox.** Două întrebări acum, prima fiind cea care blochează:
+   - **Care e grosimea implicită — 0,4, 0,5 sau 0,6 mm?** Lista are toate trei
+     la fiecare diametru, iar clienții nu scriu grosimea jachetei niciodată.
+     Fără răspuns, toate cele 72 de rânduri de inox din `Izolatii Transavia`
+     rămân marcate. La rândul 140 diferența e 40,25 / 45,57 / 50,89 €.
+   - Se ofertează inox și pe **rezidențial**? Fiind singurul sistem fără listă
+     rezidențială, prețul vine azi din cea industrială chiar când restul
+     straturilor sunt rezidențiale; poziția poartă `note`, nu e tăcută.
+   (Benzile de multiplicatori sunt confirmate identice cu ale aluminiului.)
 
 ## Ce urmează
 
@@ -365,13 +562,17 @@ mapare `șablon → rol`. Cifra „90–95% la al doilea proiect" rămâne o ipo
 fișierele pe care le avem vin de la clienți diferiți, deci reutilizarea între
 proiecte nu e măsurabilă (întrebarea 9 către firmă).
 
-Apoi: generare ofertă PDF, export în șablonul Excel al clientului, și modulele
-de contract, stoc și facturare.
+~~Export în formatul firmei~~ — făcut, vezi „Ieșirea ofertei". Ce rămâne:
+generarea PDF cu print CSS, exportul în **șablonul clientului** (altceva decât
+al firmei), anexa cu tabelele de multiplicatori pe care ofertele reale o poartă
+la final, tabelele de ofertă în Postgres — azi registrul e artefact de client,
+iar `SesiuneImport.id` scris în subsolul lui e singura legătură — și modulele de
+contract, stoc și facturare.
 
 ## Comenzi
 
 ```bash
-npm test                                       # 237 teste (motor, import, baza)
+npm test                                       # 386 teste (motor, import, baza, ofertă)
 npm run typecheck
 npm run dev                                    # UI local, /izorep/
 npm run import -- ../attachments/clienti/Radoia.xlsx   # pipeline complet

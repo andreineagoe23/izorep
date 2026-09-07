@@ -7,6 +7,7 @@ const SISTEME: { id: SistemMatrice; eticheta: string }[] = [
   { id: "elastomer", eticheta: "Elastomer" },
   { id: "vata_minerala", eticheta: "Vată minerală" },
   { id: "tabla", eticheta: "Tablă" },
+  { id: "tabla_inox", eticheta: "Tablă inox" },
   { id: "pvc", eticheta: "PVC" },
 ];
 

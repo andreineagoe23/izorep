@@ -22,7 +22,14 @@ export type TipDiametru = "DN" | "exterior" | "interior";
 
 export class DiametruNecunoscut extends Error {
   constructor(readonly dn: number) {
-    super(`DN${dn} nu exista in tabelul de conversie DN -> diametru exterior`);
+    super(
+      `DN${dn} nu exista in tabelul de conversie DN -> diametru exterior. ` +
+      `Daca e tubulatura SPIRO sau teava de plastic, notatia e diametru exterior, ` +
+      `nu DN — vezi tip: "exterior". Reincadrarea NU se face automat: la SPIRO ` +
+      `o160 oferta semnata da 14,16 (randul 159), iar acelasi 160 citit ca PEHD ` +
+      `da 14,37 (randul 169), deci nu stim care e regula. Intrebarea 10 catre ` +
+      `firma; pana la raspuns pozitia ramane marcata, nu tarifata.`,
+    );
     this.name = "DiametruNecunoscut";
   }
 }
@@ -33,4 +40,28 @@ export function toOuterDiameter(valoare: number, tip: TipDiametru): number {
   const od = DN_TO_OD[valoare];
   if (od === undefined) throw new DiametruNecunoscut(valoare);
   return od;
+}
+
+/**
+ * Pragul de potrivire pe SERIA de teava de otel (DN_TO_OD), indiferent de
+ * notatia cu care a venit diametrul.
+ *
+ * De ce 0,8 si nu altceva: maximul masurat pe serie e 0,70 mm (Di49 -> 48,3,
+ * Di169 -> 168,3 — vezi Oferta 284). Iar o90 e la 1,1 mm de 88,9 si o75 la
+ * 1,1 mm de 76,1 (tevi de plastic, nu de otel) — pragul trebuie sa ramana
+ * SUB 1,1 ca tevile de plastic sa NU fie confundate cu seria de otel.
+ */
+export const TOLERANTA_SERIE_OTEL = 0.8;
+
+/**
+ * True daca `valoare` cade pe seria standard de teava de otel, la cel mult
+ * `toleranta` mm de vreo valoare din DN_TO_OD.
+ *
+ * Foloseste asta, nu notatia diametrului, ca sa decizi daca se aplica regula
+ * "randul cel mai apropiat": clientii scriu des seria de otel cu notatia
+ * "interior" (Di21, Di49, Di169...), dar randurile listei sunt chiar seria
+ * standard, deci se cauta cel mai apropiat rand, nu se rotunjeste in sus.
+ */
+export function peSeriaDeOtel(valoare: number, toleranta = TOLERANTA_SERIE_OTEL): boolean {
+  return Object.values(DN_TO_OD).some((od) => Math.abs(od - valoare) <= toleranta);
 }
