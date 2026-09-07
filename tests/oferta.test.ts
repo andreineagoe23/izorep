@@ -402,8 +402,13 @@ describe("propunerile din formular", () => {
 
 const MATARI = "../attachments/clienti/Oferta 27.04.2026 Matari.xlsx";
 
-describe.runIf(existsSync(MATARI))("cap-coadă pe oferta semnată 118.1", () => {
+describe("cap-coadă pe oferta semnată 118.1", () => {
   it("53 de poziții pe foaia Ofertă, total 12.692,04 € — exact totalul semnat", async () => {
+    // Fara `describe.runIf`: fisierele firmei nu-s commit-uite, deci in CI ar
+    // fi o suita SARITA — iar CI pica deliberat pe orice suita sarita, fiindca
+    // una sarita arata exact ca una care trece. Testul ruleaza mereu si iese
+    // devreme cand n-are pe ce lucra, ca in `golden.test.ts`.
+    if (!existsSync(MATARI)) return;
     // Fișierul se tarifează 100% determinist, fără niciun apel la model, deci
     // testul e reproductibil bit cu bit. Dacă numărul ăsta se mișcă, registrul
     // generat nu mai reproduce oferta pe care firma a trimis-o clientului.

@@ -13,13 +13,15 @@
  * toate contoarele de azi, exact ca unul care merge.
  *
  * **Cifrele de mai jos nu sunt ținte, sunt măsurători.** O acoperire sub 100%
- * nu e un bug de reparat cu orice preț — vezi comentariul fiecărui caz, unde
- * scrie ce anume lipsește. Testul e o clichetă: dacă un număr **crește**, e
- * bine, se actualizează aici. Dacă **scade**, s-a stricat ceva și trebuie
- * aflat ce, înainte de a atinge cifra.
+ * nu e un bug de reparat cu orice preț — vezi `deCe` la fiecare caz. Testul e o
+ * clichetă: dacă un număr **crește**, e bine, se actualizează aici. Dacă
+ * **scade**, s-a stricat ceva și trebuie aflat ce, înainte de a atinge cifra.
  *
- * Rulează doar cu fișierele firmei pe disc (nu sunt commit-uite), ca restul
- * suitelor care ating `../attachments/`.
+ * **De ce bucla e ÎN test și nu un `describe.runIf`:** fișierele firmei nu sunt
+ * commit-uite, deci în CI nu există. Cu `describe.runIf` suita se SARE, iar CI
+ * pică deliberat pe orice suită sărită — „o suită care se sare arată exact ca
+ * una care trece". Același tipar ca în `golden.test.ts`: fără fișiere, testele
+ * rulează, nu verifică nimic despre ele și spun asta.
  */
 import { describe, it, expect } from "vitest";
 import { existsSync } from "node:fs";
@@ -82,92 +84,106 @@ const CAZURI: Caz[] = [
 
 const prezente = CAZURI.filter((c) => existsSync(`${DIR}/${c.fisier}`));
 
-describe.runIf(prezente.length > 0)("acoperirea față de ofertele semnate", () => {
-  for (const caz of prezente) {
-    describe(caz.fisier, () => {
-      const ruleaza = async () => {
-        const raport = await importaFisier(`${DIR}/${caz.fisier}`, {
-          faraModel: true, stoc: stocInMemorie(),
-        });
-        return { raport, ...imparte(raport.linii) };
-      };
+const ruleaza = async (caz: Caz) => {
+  const raport = await importaFisier(`${DIR}/${caz.fisier}`, {
+    faraModel: true, stoc: stocInMemorie(),
+  });
+  return { raport, ...imparte(raport.linii) };
+};
 
-      it(`duce ${caz.peOferta} poziții pe foaia Ofertă`, async () => {
-        const { oferta } = await ruleaza();
-        expect(oferta.length, `dacă a CRESCUT, actualizează cifra; dacă a SCĂZUT, s-a stricat ceva. ${caz.deCe}`)
-          .toBe(caz.peOferta);
+describe("acoperirea față de ofertele semnate", () => {
+  it("tabelul de cazuri e coerent", () => {
+    // Ruleaza si fara fisierele firmei: verifica fixtura in sine, nu importul.
+    // Fara el, in CI toata suita ar trece fara sa fi afirmat nimic.
+    for (const c of CAZURI) {
+      expect(c.semnat, `${c.fisier}: total semnat`).toBeGreaterThan(0);
+      expect(c.deCe.length, `${c.fisier}: fara explicatie pentru cifra`).toBeGreaterThan(20);
+      expect(c.generat, `${c.fisier}: generat peste semnat`).toBeLessThanOrEqual(c.semnat + 0.01);
+      expect(c.peOferta, `${c.fisier}: pozitii negative`).toBeGreaterThanOrEqual(0);
+      // O acoperire nenula fara nicio pozitie pe oferta (sau invers) ar
+      // insemna ca tabelul a fost actualizat pe jumatate.
+      expect(c.peOferta === 0, `${c.fisier}: pozitii si total nu se potrivesc`)
+        .toBe(c.generat === 0);
+    }
+  });
+
+  it("fiecare ofertă semnată duce exact atâtea poziții pe foaia Ofertă", async () => {
+    for (const caz of prezente) {
+      const { oferta } = await ruleaza(caz);
+      expect(oferta.length, `${caz.fisier} — dacă a CRESCUT, actualizează cifra; dacă a SCĂZUT, s-a stricat ceva. ${caz.deCe}`)
+        .toBe(caz.peOferta);
+    }
+  });
+
+  it("totalul generat rămâne cel măsurat", async () => {
+    for (const caz of prezente) {
+      const { oferta } = await ruleaza(caz);
+      expect(totalOferta(oferta), `${caz.fisier} (semnat: ${caz.semnat.toFixed(2)} €)`)
+        .toBeCloseTo(caz.generat, 2);
+    }
+  });
+
+  it("registrul scris pe disc are exact totalul calculat", async () => {
+    // Nu e redundant cu testul de mai sus: acolo se verifica functia pura, aici
+    // ce ajunge CHIAR in fisierul care pleaca la client. Intre ele stau
+    // scrierea randurilor si randul de TOTAL, adica exact locul unde o pozitie
+    // se poate pierde fara ca vreun contor sa se miste.
+    const ExcelJS = (await import("exceljs")).default;
+    for (const caz of prezente) {
+      const { raport } = await ruleaza(caz);
+      const buf = await registruOferta({ linii: raport.linii, antet: ANTET, provenienta: PROV });
+      const wb = new ExcelJS.Workbook();
+      await wb.xlsx.load(buf);
+      const ws = wb.getWorksheet("Ofertă")!;
+
+      const valori: number[] = [];
+      let randTotal = 0;
+      ws.eachRow((r, n) => {
+        if (n < 16) return;
+        if (String(r.getCell(1).value ?? "").startsWith("TOTAL")) { randTotal = n; return; }
+        const v = r.getCell(6).value;
+        if (typeof v === "number" && !randTotal) valori.push(v);
       });
 
-      it(`totalul generat e ${caz.generat.toFixed(2)} € din ${caz.semnat.toFixed(2)} € semnate`, async () => {
-        const { oferta } = await ruleaza();
-        expect(totalOferta(oferta)).toBeCloseTo(caz.generat, 2);
-      });
-
-      it("registrul scris pe disc are exact totalul calculat", async () => {
-        // Nu e redundant cu testul de mai sus: acolo se verifica functia pura,
-        // aici ce ajunge CHIAR in fisierul care pleaca la client. Intre ele
-        // stau scrierea randurilor si rândul de TOTAL, adica exact locul unde
-        // o pozitie se poate pierde fara ca vreun contor sa se miste.
-        const { raport, oferta } = await ruleaza();
-        const buf = await registruOferta({ linii: raport.linii, antet: ANTET, provenienta: PROV });
-        const ExcelJS = (await import("exceljs")).default;
-        const wb = new ExcelJS.Workbook();
-        await wb.xlsx.load(buf);
-        const ws = wb.getWorksheet("Ofertă")!;
-
-        const valori: number[] = [];
-        let randTotal = 0;
-        ws.eachRow((r, n) => {
-          if (n < 16) return;
-          if (String(r.getCell(1).value ?? "").startsWith("TOTAL")) { randTotal = n; return; }
-          const v = r.getCell(6).value;
-          if (typeof v === "number" && !randTotal) valori.push(v);
-        });
-
-        expect(valori).toHaveLength(caz.peOferta);
-        if (caz.peOferta > 0) {
-          expect(Number(ws.getCell(`F${randTotal}`).value)).toBeCloseTo(caz.generat, 2);
-          expect(Math.round(valori.reduce((s, v) => s + v, 0) * 100) / 100).toBeCloseTo(caz.generat, 2);
-        }
-        expect(totalOferta(oferta)).toBeCloseTo(caz.generat, 2);
-      });
-    });
-  }
+      expect(valori, caz.fisier).toHaveLength(caz.peOferta);
+      if (caz.peOferta > 0) {
+        expect(Number(ws.getCell(`F${randTotal}`).value), caz.fisier).toBeCloseTo(caz.generat, 2);
+        expect(Math.round(valori.reduce((s, v) => s + v, 0) * 100) / 100, caz.fisier)
+          .toBeCloseTo(caz.generat, 2);
+      }
+    }
+  });
 
   it("Matari reproduce oferta semnată la bănuț", async () => {
     // Singurul caz la 100%, si de-aia e scris separat: e dovada ca lantul
     // import -> tarifare -> registru chiar poate reproduce un document semnat.
     // Celelalte trei masoara cat mai lipseste pana acolo.
-    const caz = prezente.find((c) => c.fisier.includes("Matari"));
-    if (!caz) return;
+    const caz = CAZURI.find((c) => c.fisier.includes("Matari"))!;
     expect(caz.generat).toBe(caz.semnat);
+
+    if (!existsSync(`${DIR}/${caz.fisier}`)) return;
+    const { oferta } = await ruleaza(caz);
+    expect(totalOferta(oferta)).toBe(caz.semnat);
+  });
+
+  it("oferta de manoperă rămâne netarifată, și se vede de ce", async () => {
+    // Cea mai scumpa regresie posibila din tot testul: „acoperirea a crescut de
+    // la 0 la 100%" ar arata ca un progres si ar fi de fapt un pret de 2,5-3,8
+    // ori mai mare, semnat si trimis.
+    const anexa = `${DIR}/Anexa 1 la contract - Oferta 06.12.2024.xlsx`;
+    if (!existsSync(anexa)) return;
+    const raport = await importaFisier(anexa, { faraModel: true, stoc: stocInMemorie() });
+    expect(raport.randuriManopera).toBeGreaterThan(0);
+    expect(raport.tarifate).toBe(0);
+    expect(raport.valoareTotala).toBe(0);
+  });
+
+  it("niciun alt fișier de client nu se dă drept manoperă", async () => {
+    // Semnalul trebuie sa ramana ingust: aprins pe fisierele obisnuite, ar pune
+    // o alerta rosie pe importuri perfect normale si n-ar mai fi citit.
+    const matari = `${DIR}/Oferta 27.04.2026 Matari.xlsx`;
+    if (!existsSync(matari)) return;
+    const raport = await importaFisier(matari, { faraModel: true, stoc: stocInMemorie() });
+    expect(raport.randuriManopera).toBe(0);
   });
 });
-
-/**
- * Fișierul de manoperă nu trebuie să înceapă tăcut să se tarifeze.
- *
- * E cea mai scumpă regresie posibilă din tot testul ăsta: „acoperirea a crescut
- * de la 0 la 100%" ar arăta ca un progres și ar fi de fapt un preț de 2,5-3,8
- * ori mai mare, semnat și trimis.
- */
-describe.runIf(existsSync(`${DIR}/Anexa 1 la contract - Oferta 06.12.2024.xlsx`))(
-  "oferta de manoperă rămâne netarifată, și se vede de ce", () => {
-    it("se recunoaște ca manoperă și nu produce niciun preț", async () => {
-      const raport = await importaFisier(`${DIR}/Anexa 1 la contract - Oferta 06.12.2024.xlsx`, {
-        faraModel: true, stoc: stocInMemorie(),
-      });
-      expect(raport.randuriManopera).toBeGreaterThan(0);
-      expect(raport.tarifate).toBe(0);
-      expect(raport.valoareTotala).toBe(0);
-    });
-
-    it("niciun alt fișier de client nu se dă drept manoperă", async () => {
-      // Semnalul trebuie sa ramana ingust: aprins pe fisierele obisnuite, ar
-      // pune o alerta rosie pe importuri perfect normale si n-ar mai fi citit.
-      const raport = await importaFisier(`${DIR}/Oferta 27.04.2026 Matari.xlsx`, {
-        faraModel: true, stoc: stocInMemorie(),
-      });
-      expect(raport.randuriManopera).toBe(0);
-    });
-  });
