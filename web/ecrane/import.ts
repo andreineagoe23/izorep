@@ -483,12 +483,28 @@ export const ecran: Ecran = {
             + umplutura(f.coloane - latime(f.antet.celule), "th")
           : Array.from({ length: f.coloane }, (_, i) => `<th scope="col" class="litera">${litera(i)}</th>`).join("");
 
+        // Tabelul incepe DUPA randul de antet. Ce sta deasupra lui e antetul
+        // foii — nume de proiect, beneficiar, garantie, termen de oferta — si
+        // nu are coloanele tabelului: sub capetele reale ajungea „Nume proiect"
+        // in dreptul lui „Denumire articol" si „SPITAL REGINA MARIA" in dreptul
+        // lui „UM". Randurile alea raman vizibile, dar deasupra tabelului, ca
+        // text. Foaia fara antet nu are ce taia: acolo datele incep de la
+        // primul rand.
+        const inceput = f.antet ? f.antet.rand : 0;
+        const preambul = f.randuri
+          .filter((r) => r.rand < inceput)
+          .map((r) => r.celule.map((c) => textCelula(c.v)).filter((t) => t.trim() !== "").join(" · "))
+          .filter((t) => t !== "");
+
+        const antetFoaie = preambul.length === 0 ? "" : `<div class="preambul">${
+          preambul.map((t) => `<span>${esc(t)}</span>`).join("")}</div>`;
+
         // Sub un filtru se vad DOAR randurile care se potrivesc. Numarul din
         // gutter ramane numarul real de rand din Excel, deci ancora 1:1 cu
         // fisierul nu se pierde: randurile lipsa se vad ca salturi in
         // numerotare, nu ca alta ordine.
         const vizibile = f.randuri
-          .filter((r) => r !== f.antet)
+          .filter((r) => r.rand > inceput)
           .filter((r) => {
             if (filtru === "toate") return true;
             const l = r.linie ? mapa.get(r.linie.index) : undefined;
@@ -496,12 +512,12 @@ export const ecran: Ecran = {
           });
 
         if (vizibile.length === 0) {
-          return nota(`Nicio poziție pe foaia „${esc(f.nume)}” sub filtrul curent.`);
+          return antetFoaie + nota(`Nicio poziție pe foaia „${esc(f.nume)}” sub filtrul curent.`);
         }
 
         const corp = vizibile.map((r) => randGrila(f, r)).join("");
 
-        return `<div class="tabelwrap" tabindex="0"><table>
+        return `${antetFoaie}<div class="tabelwrap" tabindex="0"><table>
           <thead><tr>
             <th scope="col" class="gutter">${f.antet ? `r${f.antet.rand}` : "#"}</th>
             ${capete}

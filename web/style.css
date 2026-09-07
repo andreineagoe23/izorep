@@ -392,6 +392,18 @@ td.desc { color: var(--slab); }
 th.litera { color: var(--slab); font-weight: 500; }
 
 /*
+ * Antetul foii: randurile de deasupra randului de antet — proiect, beneficiar,
+ * garantie, termen de oferta. Nu sunt pozitii si nu impart coloanele tabelului,
+ * deci stau deasupra lui, ca text. Randate ca randuri de tabel, ajungeau sub
+ * capete cu care n-au nicio legatura: „Nume proiect" sub „Denumire articol".
+ */
+.preambul {
+  display: flex; flex-direction: column; gap: 2px;
+  margin: 0 0 10px; padding-left: 2px;
+  color: var(--slab); font-size: 13px; line-height: 1.5;
+}
+
+/*
  * Coloanele adaugate de noi, dupa cele ale fisierului. Bordura din stanga e
  * granita: la stanga ei e fisierul clientului, la dreapta ce a inteles
  * sistemul. Fara ea, cele doua se citesc ca un singur tabel si nu se mai vede
