@@ -1,17 +1,18 @@
 import type { Ecran } from "./tip.js";
 import { eur, nr, esc, card, indicator, tabel, nota, stare } from "./tip.js";
 import {
-  DESTINATII, diametreDin, listaPe, sistemePe,
+  DESTINATII, diametreDin, inventarPe, listaGoluriFoc, listaPe,
   type BandaMultiplicator, type Destinatie, type ListaPreturi,
 } from "../../src/pricing/lists.js";
-import type { SistemMatrice } from "../../src/pricing/types.js";
+import type { MaterialConducta, Sistem, SistemMatrice } from "../../src/pricing/types.js";
 
-const SISTEME: { id: SistemMatrice; eticheta: string }[] = [
+const SISTEME: { id: Sistem; eticheta: string }[] = [
   { id: "elastomer", eticheta: "Elastomer" },
   { id: "vata_minerala", eticheta: "Vată minerală" },
   { id: "tabla", eticheta: "Tablă aluminiu" },
   { id: "tabla_inox", eticheta: "Tablă inox" },
   { id: "pvc", eticheta: "PVC" },
+  { id: "goluri_foc", eticheta: "Închideri goluri la foc" },
 ];
 
 const ETICHETA_DEST: Record<Destinatie, string> = {
@@ -125,9 +126,9 @@ function deseneazaInventar(): string {
   const capete = ["Sistem", ...DESTINATII.map((d) => ETICHETA_DEST[d])];
   const clase = capete.map((_, i) => (i === 0 ? "" : "n"));
 
-  const randuri = SISTEME.map((s) => {
+  const randuri = SISTEME.filter((s) => s.id !== "goluri_foc").map((s) => {
     const celule = DESTINATII.map((d) => {
-      const l = listaPe(s.id, d);
+      const l = listaPe(s.id as SistemMatrice, d);
       if (!l) return `<td class="n gol" title="${esc(`${s.eticheta} — nicio listă pe ${ETICHETA_DEST[d].toLowerCase()}`)}">—</td>`;
       const diam = diametreDin(l);
       const detaliu = `Ø${nr(diam[0]!)}–${nr(diam[diam.length - 1]!)}`;
@@ -148,8 +149,82 @@ function deseneazaInventar(): string {
   return tabel(capete, randuri, clase);
 }
 
-function construiesteContinut(sistem: SistemMatrice, dest: Destinatie): string {
-  const l = listaPe(sistem, dest);
+/**
+ * Inchiderile goluri la foc — singura lista care NU e matrice ø × grosime.
+ *
+ * Pretul e ADITIV: golul (dupa suprafata lui) + banda WRAP + colierul. De-aia
+ * are trei tabele, nu unul, si de-aia banda apare de doua ori: preturile difera
+ * dupa materialul conductei, pentru ca difera numarul de infasurari. La ø140
+ * sunt 12,19 € pe otel si 65,67 € pe plastic — aceeasi conducta, alt pret,
+ * deci un singur tabel ar fi o capcana.
+ */
+function construiesteGoluriFoc(): string {
+  const l = listaGoluriFoc();
+  const mp = (v: number): string => `${nr(v, 2)} mp`;
+
+  const praguri = tabel(
+    ["Gol până la", "€ / buc"],
+    [
+      ...l.praguri_suprafata.map((p) =>
+        `<tr><th scope="row">${esc(mp(p.pana_la_mp))}</th><td class="n">${eur(p.pret_buc)}</td></tr>`),
+      `<tr><th scope="row">peste 1,00 mp</th><td class="n">${eur(l.peste_1mp_pret_pe_mp)} <span class="hint">/ mp</span></td></tr>`,
+    ],
+    ["", "n"],
+  );
+
+  const banda = (material: MaterialConducta): string => tabel(
+    ["Ø mm", "€", "Observații"],
+    l.banda_wrap[material].map((b) =>
+      `<tr><th scope="row">${nr(b.diametru)}</th><td class="n">${eur(b.pret)}</td>
+       <td class="hint">${esc(b.obs)}</td></tr>`),
+    ["", "n", ""],
+  );
+
+  const coliere = tabel(
+    ["Ø mm", "Urcare (1 colier)", "Orizontal (2 coliere)"],
+    l.colier_promastop.map((c) =>
+      `<tr><th scope="row">${nr(c.diametru)}</th>
+       <td class="n">${eur(c.pret_urcare_1colier)}</td>
+       <td class="n">${eur(c.pret_orizontal_2coliere)}</td></tr>`),
+    ["", "n", "n"],
+  );
+
+  return `
+    <h2>${esc(l.denumire)}</h2>
+    ${nota(`Preț aditiv, nu matrice: <strong>${esc(l.regula)}</strong>.`)}
+
+    <h2>Golul, după suprafața lui</h2>
+    ${praguri}
+    ${nota(
+      "Suprafața = lățime × înălțime, din coloana „dimensiune gol” (<code>130/130</code>) — " +
+      "<strong>diametrul conductei nu intră</strong> în prețul golului. Pragurile sunt scrise „Goluri până la " +
+      "0,05 mp”, deci limita de sus e <strong>inclusivă</strong>: se vede în ofertă la 1000/600 = 0,60 mp și " +
+      "1500/600 = 0,90 mp, amândouă tarifate pe pragul cu acea limită.",
+    )}
+
+    <h2>Banda WRAP, pe conductă de plastic</h2>
+    ${banda("plastic")}
+    <h2>Banda WRAP, pe conductă de oțel</h2>
+    ${banda("otel")}
+    ${nota(
+      "Două tabele, nu unul: prețul urmează <strong>numărul de înfășurări</strong>, care diferă după material " +
+      "(1 la oțel, 2–6 la plastic). La ø140 sunt 12,19 € pe oțel și 65,67 € pe plastic — de aceea materialul " +
+      "conductei e obligatoriu, nu implicit. Căutarea e pe <strong>diametru exact</strong>: între două trepte " +
+      "nu există valoare intermediară, ci o decizie umană.",
+    )}
+
+    <h2>Colier PROMASTOP UNICOLLAR</h2>
+    ${coliere}
+    ${nota(
+      "Clasa peretelui (EI30, EI60, EI120) e <strong>etichetă de grupare, nu variabilă de preț</strong>: " +
+      "în oferta 118.1 aceeași conductă DN15 costă 23,05 € și la EI30, și la EI120.",
+    )}
+  `;
+}
+
+function construiesteContinut(sistem: Sistem, dest: Destinatie): string {
+  if (sistem === "goluri_foc") return construiesteGoluriFoc();
+  const l = listaPe(sistem as SistemMatrice, dest);
   if (!l) {
     return nota(`Nu există listă de <strong>${esc(SISTEME.find((s) => s.id === sistem)?.eticheta ?? sistem)}</strong> ` +
       `pe segmentul ${esc(ETICHETA_DEST[dest].toLowerCase())}.`);
@@ -201,7 +276,7 @@ export const ecran: Ecran = {
       )) +
       `<div class="filtre" role="group" aria-label="Segmentul listei de prețuri">
          ${DESTINATII.map((d) => `<button class="filtru" data-dest="${d}" aria-pressed="${d === dest}">
-           ${esc(ETICHETA_DEST[d])} <span class="hint">${nr(sistemePe(d).length)}</span></button>`).join("")}
+           ${esc(ETICHETA_DEST[d])} <span class="hint">${nr(inventarPe(d).length)}</span></button>`).join("")}
        </div>
        <label for="sistemSel">Alege sistemul de izolație</label>
        <select id="sistemSel" class="ingust"></select>
@@ -218,9 +293,9 @@ export const ecran: Ecran = {
      * un `select` gol care ar arata ca o eroare.
      */
     const deseneaza = (): void => {
-      const disponibile = sistemePe(dest);
-      const pastrat = disponibile.includes(select.value as SistemMatrice)
-        ? (select.value as SistemMatrice)
+      const disponibile = inventarPe(dest);
+      const pastrat = disponibile.includes(select.value as Sistem)
+        ? (select.value as Sistem)
         : disponibile[0];
 
       select.innerHTML = SISTEME.filter((s) => disponibile.includes(s.id))

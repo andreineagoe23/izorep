@@ -15,7 +15,7 @@ import tabla_inox from "../../data/price-lists/industrial/tabla_inox.json" with 
 import elastomer_industrial from "../../data/price-lists/industrial/elastomer.json" with { type: "json" };
 import vata_minerala_industrial from "../../data/price-lists/industrial/vata_minerala.json" with { type: "json" };
 import tabla_industrial from "../../data/price-lists/industrial/tabla.json" with { type: "json" };
-import type { MaterialConducta, SistemMatrice, SistemRezidential } from "./types.js";
+import type { MaterialConducta, Sistem, SistemMatrice, SistemRezidential } from "./types.js";
 
 export interface BandaMultiplicator {
   band: [number, number];
@@ -139,6 +139,17 @@ export const DESTINATII: readonly Destinatie[] = ["rezidential", "industrial", "
 /** Sistemele care au lista pe destinatia data, in ordinea din inventar. */
 export const sistemePe = (d: Destinatie): SistemMatrice[] =>
   Object.keys(PE_DESTINATIE[d]) as SistemMatrice[];
+
+/**
+ * Inventarul complet al unei destinatii, inclusiv ce nu e matrice ø × grosime.
+ *
+ * Inchiderile goluri la foc au pret aditiv si accesor propriu
+ * (`listaGoluriFoc`), deci nu incap in `PE_DESTINATIE`, care tine liste de
+ * matrice. Dar pentru cine intreaba „ce liste am pe rezidential?" sunt o lista
+ * ca oricare alta — si lipsa lor din raspuns ar fi un fals.
+ */
+export const inventarPe = (d: Destinatie): Sistem[] =>
+  d === "rezidential" ? [...sistemePe(d), "goluri_foc"] : sistemePe(d);
 
 /** Lista unui sistem pe o destinatie anume, sau `undefined` daca nu exista. */
 export const listaPe = (sistem: SistemMatrice, d: Destinatie): ListaPreturi | undefined =>
