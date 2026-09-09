@@ -9,6 +9,12 @@ import goluri_foc from "../../data/price-lists/goluri_foc.json" with { type: "js
 // cu fs. Nu intra in `catalogDinFisiere()`/`Catalog.matrice`, care raman pe
 // destinatia rezidentiala; e disponibila doar prin `lista("tabla_inox")`.
 import tabla_inox from "../../data/price-lists/industrial/tabla_inox.json" with { type: "json" };
+// Celelalte trei liste industriale. Importate ca sa poata fi CITITE — ecranul
+// de liste le arata pe destinatii — nu ca sa fie aplicate: `lista()` si, prin
+// ea, `tarifeaza` raman pe rezidential. Vezi `PE_DESTINATIE`.
+import elastomer_industrial from "../../data/price-lists/industrial/elastomer.json" with { type: "json" };
+import vata_minerala_industrial from "../../data/price-lists/industrial/vata_minerala.json" with { type: "json" };
+import tabla_industrial from "../../data/price-lists/industrial/tabla.json" with { type: "json" };
 import type { MaterialConducta, SistemMatrice, SistemRezidential } from "./types.js";
 
 export interface BandaMultiplicator {
@@ -102,12 +108,52 @@ export interface ListaGoluriFoc {
 /** Lista de inchideri goluri la foc. Alta structura, deci alt accesor. */
 export const listaGoluriFoc = (): ListaGoluriFoc => goluri_foc as unknown as ListaGoluriFoc;
 
-/** Diametrele disponibile in lista, sortate crescator. */
-export function diametre(sistem: SistemMatrice): number[] {
-  const l = lista(sistem);
+export type Destinatie = "rezidential" | "industrial" | "rafinarie";
+
+/**
+ * Inventarul: ce lista EXISTA pe fiecare destinatie.
+ *
+ * E un inventar, nu un drum de tarifare. `tarifeaza` merge in continuare prin
+ * `lista()`, adica pe rezidential (plus tabla de inox, care n-are alta
+ * varianta). Cat timp regula dupa care se alege destinatia nu e raspunsa —
+ * intrebarea 12 din `.claude/stare.md` — industrialele se pot CITI, nu si
+ * aplica: un motor care ar alege singur segmentul ar ofert cu preturi de
+ * industrial o lucrare rezidentiala, fara ca nimeni sa fi cerut asta.
+ *
+ * Rafinaria e listata anume, goala: absenta ei e o informatie — s-a cerut si
+ * nu a venit — nu un rand care lipseste din tabel.
+ */
+const PE_DESTINATIE = {
+  rezidential: { elastomer, vata_minerala, tabla, pvc },
+  industrial: {
+    elastomer: elastomer_industrial,
+    vata_minerala: vata_minerala_industrial,
+    tabla: tabla_industrial,
+    tabla_inox,
+  },
+  rafinarie: {},
+} as unknown as Record<Destinatie, Partial<Record<SistemMatrice, ListaPreturi>>>;
+
+export const DESTINATII: readonly Destinatie[] = ["rezidential", "industrial", "rafinarie"];
+
+/** Sistemele care au lista pe destinatia data, in ordinea din inventar. */
+export const sistemePe = (d: Destinatie): SistemMatrice[] =>
+  Object.keys(PE_DESTINATIE[d]) as SistemMatrice[];
+
+/** Lista unui sistem pe o destinatie anume, sau `undefined` daca nu exista. */
+export const listaPe = (sistem: SistemMatrice, d: Destinatie): ListaPreturi | undefined =>
+  PE_DESTINATIE[d][sistem];
+
+/** Diametrele dintr-o lista data, sortate crescator. */
+export function diametreDin(l: ListaPreturi): number[] {
   const s = new Set<number>();
   for (const k of Object.keys(l.cells)) s.add(Number(k.split("|")[0]));
   return [...s].sort((a, b) => a - b);
+}
+
+/** Diametrele disponibile in lista, sortate crescator. */
+export function diametre(sistem: SistemMatrice): number[] {
+  return diametreDin(lista(sistem));
 }
 
 /** Grosimile ofertate la un diametru dat (tabla are una singura per diametru). */

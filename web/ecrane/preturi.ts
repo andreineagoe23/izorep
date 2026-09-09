@@ -1,15 +1,24 @@
 import type { Ecran } from "./tip.js";
-import { eur, nr, esc, card, indicator, tabel, nota } from "./tip.js";
-import { lista, diametre, type BandaMultiplicator } from "../../src/pricing/lists.js";
+import { eur, nr, esc, card, indicator, tabel, nota, stare } from "./tip.js";
+import {
+  DESTINATII, diametreDin, listaPe, sistemePe,
+  type BandaMultiplicator, type Destinatie, type ListaPreturi,
+} from "../../src/pricing/lists.js";
 import type { SistemMatrice } from "../../src/pricing/types.js";
 
 const SISTEME: { id: SistemMatrice; eticheta: string }[] = [
   { id: "elastomer", eticheta: "Elastomer" },
   { id: "vata_minerala", eticheta: "Vată minerală" },
-  { id: "tabla", eticheta: "Tablă" },
+  { id: "tabla", eticheta: "Tablă aluminiu" },
   { id: "tabla_inox", eticheta: "Tablă inox" },
   { id: "pvc", eticheta: "PVC" },
 ];
+
+const ETICHETA_DEST: Record<Destinatie, string> = {
+  rezidential: "Rezidențial",
+  industrial: "Industrial",
+  rafinarie: "Rafinărie",
+};
 
 /** Coloanele din tabelul de multiplicatori, in ordinea ceruta. "band" e desenat separat. */
 type CampFactor = Exclude<keyof BandaMultiplicator, "band">;
@@ -29,10 +38,9 @@ const formatGrosime = (g: number): string => nr(g, Number.isInteger(g) ? 0 : 1);
 const formatFactor = (v: number | null | undefined): string =>
   v == null ? "—" : `× ${nr(v, Number.isInteger(v) ? 0 : 2)}`;
 
-/** Matricea diametru x grosime pentru sistemul dat, cu randul "per mp" adaugat la final daca exista. */
-function deseneazaMatrice(sistem: SistemMatrice): string {
-  const l = lista(sistem);
-  const diam = diametre(sistem);
+/** Matricea diametru x grosime a unei liste, cu randul "per mp" adaugat la final daca exista. */
+function deseneazaMatrice(l: ListaPreturi): string {
+  const diam = diametreDin(l);
   const areGrosimi = l.grosimi_mm.length > 0;
   // PVC nu are coloana de grosime: cheia din lista e "diametru|-".
   const coloane: (number | null)[] = areGrosimi ? l.grosimi_mm : [null];
@@ -68,8 +76,7 @@ function deseneazaMatrice(sistem: SistemMatrice): string {
   return `<div class="matrice">${tabel(capete, [...randuriDiam, ...randMp], clase)}</div>`;
 }
 
-function deseneazaMultiplicatori(sistem: SistemMatrice): string {
-  const l = lista(sistem);
+function deseneazaMultiplicatori(l: ListaPreturi): string {
   const campuriActive = CAMPURI_MULT.filter((c) => l.multiplicatori.some((m) => c.cheie in m));
   const capete = ["Bandă Ø mm", ...campuriActive.map((c) => c.eticheta)];
   const clase = capete.map((_, i) => (i === 0 ? "" : "n"));
@@ -84,9 +91,8 @@ function deseneazaMultiplicatori(sistem: SistemMatrice): string {
   return tabel(capete, randuri, clase);
 }
 
-function deseneazaIndicatori(sistem: SistemMatrice): string {
-  const l = lista(sistem);
-  const diam = diametre(sistem);
+function deseneazaIndicatori(l: ListaPreturi): string {
+  const diam = diametreDin(l);
   const areGrosimi = l.grosimi_mm.length > 0;
   const coloane = areGrosimi ? l.grosimi_mm.length : 1;
   const completate = Object.keys(l.cells).length;
@@ -99,21 +105,73 @@ function deseneazaIndicatori(sistem: SistemMatrice): string {
       "grosimi disponibile",
       areGrosimi ? `${l.grosimi_mm.map((g) => formatGrosime(g)).join(", ")} mm` : "sistem fără variație de grosime",
     )}
+    ${indicator(
+      diam.length ? `Ø${nr(diam[0]!)}–${nr(diam[diam.length - 1]!)}` : "—",
+      "interval de diametre",
+      `${nr(diam.length)} rânduri`,
+    )}
   </div>`;
 }
 
-function construiesteContinut(sistem: SistemMatrice): string {
-  const l = lista(sistem);
+/**
+ * Inventarul, pe sisteme si destinatii.
+ *
+ * Aici absentele spun la fel de mult ca prezentele: tabla de inox exista DOAR
+ * pe industrial, PVC-ul si inchiderile la foc doar pe rezidential, iar
+ * rafinaria n-a venit deloc. De-aia coloana ei ramane in tabel, goala, in loc
+ * sa fie stearsa.
+ */
+function deseneazaInventar(): string {
+  const capete = ["Sistem", ...DESTINATII.map((d) => ETICHETA_DEST[d])];
+  const clase = capete.map((_, i) => (i === 0 ? "" : "n"));
+
+  const randuri = SISTEME.map((s) => {
+    const celule = DESTINATII.map((d) => {
+      const l = listaPe(s.id, d);
+      if (!l) return `<td class="n gol" title="${esc(`${s.eticheta} — nicio listă pe ${ETICHETA_DEST[d].toLowerCase()}`)}">—</td>`;
+      const diam = diametreDin(l);
+      const detaliu = `Ø${nr(diam[0]!)}–${nr(diam[diam.length - 1]!)}`;
+      return `<td class="n" title="${esc(`${l.denumire} — ${detaliu}`)}">${nr(Object.keys(l.cells).length)}
+        <span class="hint">${esc(detaliu)}</span></td>`;
+    }).join("");
+    return `<tr><th scope="row">${esc(s.eticheta)}</th>${celule}</tr>`;
+  });
+
+  // Inchiderile goluri la foc nu sunt matrice o × grosime, deci n-au numar de
+  // celule comparabil: se trec cu forma lor, nu cu o cifra care ar sugera ca
+  // se citesc la fel ca restul.
+  randuri.push(`<tr><th scope="row">Închideri goluri la foc</th>
+    <td class="n">${stare("preț aditiv", "ok")}</td>
+    <td class="n gol">—</td>
+    <td class="n gol">—</td></tr>`);
+
+  return tabel(capete, randuri, clase);
+}
+
+function construiesteContinut(sistem: SistemMatrice, dest: Destinatie): string {
+  const l = listaPe(sistem, dest);
+  if (!l) {
+    return nota(`Nu există listă de <strong>${esc(SISTEME.find((s) => s.id === sistem)?.eticheta ?? sistem)}</strong> ` +
+      `pe segmentul ${esc(ETICHETA_DEST[dest].toLowerCase())}.`);
+  }
   return `
     <h2>${esc(l.denumire)}</h2>
-    ${deseneazaMatrice(sistem)}
-    ${deseneazaIndicatori(sistem)}
+    ${deseneazaMatrice(l)}
+    ${deseneazaIndicatori(l)}
     ${nota(
       "Matricile sunt <strong>rare</strong>: combinațiile care nu se execută rămân goale. Golul înseamnă " +
       "„nu se ofertează”, NU „preț zero”. O poziție fără preț se marchează pentru tarifare manuală — nu se ghicește.",
     )}
+    ${dest === "industrial"
+      ? nota(
+          "Lista industrială se poate <strong>citi</strong>, dar motorul încă nu tarifează cu ea: ofertele ies " +
+          "pe prețuri rezidențiale. Nu e o scăpare — lipsește regula după care se alege segmentul, iar un motor " +
+          "care ar alege singur ar putea oferta o lucrare rezidențială la prețuri de industrial. Excepția e " +
+          "<strong>tabla de inox</strong>, care n-are variantă rezidențială: acolo lista asta e singura care există.",
+        )
+      : ""}
     <h2>Multiplicatori pentru elemente speciale</h2>
-    ${deseneazaMultiplicatori(sistem)}
+    ${deseneazaMultiplicatori(l)}
     ${nota(
       "Fitingurile (coturi, teuri, robinete, vane, flanșe…) nu au preț propriu: se tarifează ca multiplu al " +
       "prețului pe metru liniar de la acel diametru, pe benzi de diametru. Tabelul de mai sus e valoare " +
@@ -131,26 +189,64 @@ function construiesteContinut(sistem: SistemMatrice): string {
 export const ecran: Ecran = {
   id: "preturi",
   titlu: "Liste de prețuri",
-  subtitlu: "Datele reale de tarifare ale firmei, pe sistem de izolație.",
+  subtitlu: "Datele reale de tarifare ale firmei, pe segment și pe sistem de izolație.",
   render(root) {
+    let dest: Destinatie = "rezidential";
+
     root.innerHTML =
-      card(
-        "SistemMatrice",
-        `<label for="sistemSel">Alege sistemul de izolație</label>
-         <select id="sistemSel" class="ingust">
-           ${SISTEME.map((s) => `<option value="${s.id}">${esc(s.eticheta)}</option>`).join("")}
-         </select>`,
-      ) + `<div id="corpPreturi"></div>`;
+      card("Ce liste avem, pe segment", deseneazaInventar() + nota(
+        "Industrialul <strong>nu e un coeficient</strong> peste rezidențial: raportul diferă pe sistem și " +
+        "chiar pe grosime — vata ×1,25 constant, elastomerul ×1,25 la 9/13/19 mm dar ×1,20 la 25/32 mm. " +
+        "De-asta sunt liste proprii, nu un procent aplicat la ofertare.",
+      )) +
+      `<div class="filtre" role="group" aria-label="Segmentul listei de prețuri">
+         ${DESTINATII.map((d) => `<button class="filtru" data-dest="${d}" aria-pressed="${d === dest}">
+           ${esc(ETICHETA_DEST[d])} <span class="hint">${nr(sistemePe(d).length)}</span></button>`).join("")}
+       </div>
+       <label for="sistemSel">Alege sistemul de izolație</label>
+       <select id="sistemSel" class="ingust"></select>
+       <div id="corpPreturi"></div>`;
 
     const select = root.querySelector<HTMLSelectElement>("#sistemSel");
     const corp = root.querySelector<HTMLDivElement>("#corpPreturi");
     if (!select || !corp) return;
 
-    const deseneaza = (sistem: SistemMatrice): void => {
-      corp.innerHTML = construiesteContinut(sistem);
+    /**
+     * Reface lista de sisteme pentru segmentul curent si pastreaza selectia
+     * daca sistemul exista si acolo. Trecerea de pe industrial (unde e tabla de
+     * inox) pe rezidential (unde nu e) cade pe primul sistem disponibil, nu pe
+     * un `select` gol care ar arata ca o eroare.
+     */
+    const deseneaza = (): void => {
+      const disponibile = sistemePe(dest);
+      const pastrat = disponibile.includes(select.value as SistemMatrice)
+        ? (select.value as SistemMatrice)
+        : disponibile[0];
+
+      select.innerHTML = SISTEME.filter((s) => disponibile.includes(s.id))
+        .map((s) => `<option value="${s.id}"${s.id === pastrat ? " selected" : ""}>${esc(s.eticheta)}</option>`)
+        .join("");
+      select.disabled = disponibile.length === 0;
+
+      corp.innerHTML = pastrat
+        ? construiesteContinut(pastrat, dest)
+        : nota(
+            "Lista de <strong>rafinărie</strong> nu a fost primită încă. Segmentul rămâne aici, gol, pentru că " +
+            "absența lui e o informație: s-a cerut și nu a venit.",
+          );
     };
 
-    select.addEventListener("change", () => deseneaza(select.value as SistemMatrice));
-    deseneaza(SISTEME[0]!.id);
+    for (const b of root.querySelectorAll<HTMLButtonElement>("button.filtru")) {
+      b.onclick = () => {
+        for (const alt of root.querySelectorAll<HTMLButtonElement>("button.filtru")) {
+          alt.setAttribute("aria-pressed", String(alt === b));
+        }
+        dest = b.dataset["dest"] as Destinatie;
+        deseneaza();
+      };
+    }
+
+    select.addEventListener("change", deseneaza);
+    deseneaza();
   },
 };

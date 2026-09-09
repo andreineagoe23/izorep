@@ -109,14 +109,18 @@ Când firma confirmă regula corectă, cazul se mută în suita principală.
 ## Ce lipsește
 
 - **Destinația.** Listele firmei sunt de trei feluri — rezidențiale,
-  industriale, rafinărie. Motorul vede **doar rezidențialele**: `lists.ts`
-  importă static `data/price-lists/*.json`. Industrialele sunt extrase în
-  `data/price-lists/industrial/` și încărcate în bază cu destinația lor, dar
-  nimic din `src/pricing/` nu le atinge; rafinăria nu a venit. Nu se pot pune
-  ca un coeficient peste rezidențial: raportul diferă pe sistem și pe grosime
-  (vata ×1,25; elastomerul ×1,25 la 9/13/19 mm și ×1,20 la 25/32 mm). Ce
-  lipsește ca să intre în motor e regula după care se alege destinația
-  (întrebarea 12 din `stare.md`).
+  industriale, rafinărie. `tarifeaza` vede **doar rezidențialele**: trece prin
+  `lista()`, care rămâne pe `data/price-lists/*.json` (plus tabla de inox, care
+  n-are altă variantă). Industrialele sunt extrase în
+  `data/price-lists/industrial/`, încărcate în bază cu destinația lor și
+  **citibile** din `lists.ts` prin `listaPe(sistem, destinatie)` — inventarul
+  `PE_DESTINATIE`, folosit de ecranul de liste ca să le arate pe segmente.
+  Citit, nu aplicat: distincția e tot ce ține motorul pe rezidențial cât timp
+  regula de alegere a segmentului nu există (întrebarea 12 din `stare.md`) —
+  altfel o lucrare rezidențială ar putea ieși ofertată la prețuri de
+  industrial. Rafinăria nu a venit. Nu se pot pune nici ca un coeficient peste
+  rezidențial: raportul diferă pe sistem și pe grosime (vata ×1,25;
+  elastomerul ×1,25 la 9/13/19 mm și ×1,20 la 25/32 mm).
 - ~~**Tabla de inox**~~ — e acum sistem de sine stătător. Rămâne o asimetrie
   deliberată: inoxul e **singurul sistem fără listă rezidențială**, deci
   `lista("tabla_inox")` întoarce lista **industrială**. Nu e o alegere de
