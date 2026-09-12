@@ -177,20 +177,23 @@ describe("notele de la finalul ofertei nu sunt pozitii", () => {
   });
 });
 
-describe("tubulatura spiro ramane marcata, nu ghicita", () => {
-  it("SPIRO DN160 nu se tarifeaza pana nu confirma firma regula", async () => {
-    // Ar fi justificat sa fie citit ca diametru exterior — asa scrie si in
-    // `pricing.md`. Dar atunci pozitia s-ar tarifa la 14,37 EUR/ml, iar oferta
-    // semnata are 14,16. Cat timp nu stim care e regula, linia merge la om.
+describe("tubulatura spiro se citeste ca diametru exterior", () => {
+  it("SPIRO DN160 se tarifeaza singur, dupa raspunsul firmei", async () => {
+    // Testul asta a cerut exact opusul pana pe 11 septembrie 2026: pozitia
+    // trebuia sa ramana NETARIFATA, fiindca nu stiam daca "DN 160" pe spiro e
+    // DN de otel sau diametru exterior, iar un pret gresit tacut e mai scump
+    // decat o pozitie marcata. Firma a raspuns — "la spiro este doar diametru
+    // exterior" — deci nu mai e nimic de ghicit si linia trece singura.
     const raport = await importaFisier(await registru([
       RANDURI[0]!,
       [1, "Zuluft Wickelfalzrohr starr SPIRO DN 160, Armaflex 9mm", "ml", 12],
     ]), { faraModel: true, stoc: stocInMemorie() });
 
-    expect(raport.tarifate).toBe(0);
+    expect(raport.tarifate).toBe(1);
     const l = raport.linii.find((x) => x.extras.sistem !== null)!;
-    expect(l.extras.diametru_tip).toBe("DN");
-    expect(l.eroare).toContain("tabelul de conversie");
-    expect(l.necesitaValidare).toBe(true);
+    expect(l.extras.diametru_tip).toBe("exterior");
+    expect(l.extras.diametru_valoare).toBe(160);
+    expect(l.eroare).toBeUndefined();
+    expect(l.necesitaValidare).toBe(false);
   });
 });

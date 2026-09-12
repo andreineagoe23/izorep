@@ -171,7 +171,7 @@ const CAZURI: { cod: CodNetarifare; de: string; f: () => unknown }[] = [
   },
   {
     cod: "dn_necunoscut",
-    de: "SPIRO DN160: `DiametruNecunoscut`, mapat la granita in `tarifeazaExtras`",
+    de: "DN160 (care nu exista in seria de otel): `DiametruNecunoscut`, mapat la granita in `tarifeazaExtras`",
     f: () => {
       const r = tarifeazaExtras(extrasa({ diametru_valoare: 160, grosime_mm: 9 }), 1);
       if (r.codEroare) throw new PozitieNetarifata(r.codEroare, r.eroare ?? "", {});
@@ -278,49 +278,46 @@ async function registru(randuri: (string | number | null)[][]): Promise<ArrayBuf
 /** Textul real din `Oferta 27.04.2026.xlsx`, foaia Ventilatie. */
 const SPIRO_125 = "Zuluft Wickelfalzrohr starr SPIRO DN 125, Armaflex 9mm";
 
-describe("SPIRO pe calea determinista ajunge marcat", () => {
-  it("o linie prinsa de regex primeste avertismentul, desi guardrails n-o ating", () => {
-    // Bug-ul reparat: `construiesteLinii` sarea peste `valideazaExtragere` pe
-    // `sursa: "regex"` — corect, aia verifica modelul — dar asta lasa SPIRO,
-    // care e prins chiar de `RE_DN`, complet nevalidat. Rezultatul: DN125 se
-    // tarifa pe seria de otel (randul 140, 13,74) in loc de randul 125 (11,36),
-    // adica +21%, in tacere.
-    return (async () => {
-      const foi = await parseFoiBuffer(await registru([
-        ["Nr", "Denumire articol", "UM", "Cantitate"],
-        [1, SPIRO_125, "ml", 10],
-      ]));
-      const rez = await proceseazaRegistru(foi, { stoc: stocInMemorie() });
-      const linie = rez.linii.find((l) => l.bruta.text.includes("SPIRO"))!;
-
-      expect(linie.sursa).toBe("regex");
-      expect(linie.avertismente?.map((a) => a.cod)).toContain("notatie_contrazice_materialul");
-      // Pretul NU se schimba si NU se sterge: omul vede si propunerea, si
-      // motivul pentru care nu e de incredere. Repretarea e intrebarea 10.
-      expect(linie.pret).toBeDefined();
-      expect(linie.necesitaValidare).toBe(true);
-      expect(linie.extras.incredere).toBe(0);
-    })();
-  });
-
-  it("o linie confirmata de om nu primeste avertismentul", async () => {
-    // Omul s-a uitat la fisierul sursa. Validatoarele exista ca sa verifice
-    // ce n-a vazut nimeni, nu ca sa-l contrazica pe cel care a vazut.
+describe("SPIRO se citeste ca diametru exterior", () => {
+  it("DN125 pe spiro cade pe randul 125, nu pe seria de otel", async () => {
+    // Istoricul acestui test conteaza. A fost scris cand NU stiam regula:
+    // `RE_DN` prindea "SPIRO DN 125" ca DN de otel, il convertea la o139,7 si
+    // il tarifa pe randul 140 (13,74) in loc de 125 (11,36) — cu +21%, in
+    // tacere. Reparatia de atunci a fost un AVERTISMENT: pozitia isi pastra
+    // pretul gresit, dar era marcata pentru om.
+    //
+    // Pe 11 septembrie 2026 firma a raspuns: "la spiro este doar diametru
+    // exterior". Acum se citeste corect de la inceput, deci nu mai e nimic de
+    // marcat — testul pazeste pretul, nu marcajul. Un avertisment e un bandaj;
+    // regula e leacul.
     const foi = await parseFoiBuffer(await registru([
       ["Nr", "Denumire articol", "UM", "Cantitate"],
       [1, SPIRO_125, "ml", 10],
     ]));
     const rez = await proceseazaRegistru(foi, { stoc: stocInMemorie() });
-    const tinta = rez.linii.find((l) => l.bruta.text.includes("SPIRO"))!;
+    const linie = rez.linii.find((l) => l.bruta.text.includes("SPIRO"))!;
 
-    rez.rezolvate.set(tinta.extras.index, { extras: tinta.extras, sursa: "om" });
-    const { reevalueaza } = await import("../src/import/nucleu.js");
-    reevalueaza(rez, { stoc: stocInMemorie() });
+    expect(linie.extras.diametru_tip).toBe("exterior");
+    expect(linie.extras.diametru_valoare).toBe(125);
+    expect(linie.pret).toBeDefined();
+    expect(linie.pret && "straturi" in linie.pret ? linie.pret.straturi[0]!.rand_lista : null).toBe(125);
+    expect(linie.pret!.pret_unitar).toBeCloseTo(11.36, 2);
+    // Nici avertisment, nici oprire la validare: nu mai e nimic incert.
+    expect(linie.avertismente).toBeUndefined();
+    expect(linie.necesitaValidare).toBe(false);
+  });
 
-    const dupa = rez.linii.find((l) => l.bruta.text.includes("SPIRO"))!;
-    expect(dupa.sursa).toBe("om");
-    expect(dupa.avertismente).toBeUndefined();
-    expect(dupa.necesitaValidare).toBe(false);
+  it("o teava de otel scrisa cu DN ramane pe seria de otel", async () => {
+    // Gardul celalalt al aceleiasi reguli: exceptia e pentru SPIRO, nu pentru
+    // orice "DN". Fara testul asta, o regula prea lata ar muta toate tevile de
+    // otel pe diametrul exterior gresit.
+    const foi = await parseFoiBuffer(await registru([
+      ["Nr", "Denumire articol", "UM", "Cantitate"],
+      [1, "Izolatie conducta otel DN 125, Armaflex 9mm", "ml", 10],
+    ]));
+    const rez = await proceseazaRegistru(foi, { stoc: stocInMemorie() });
+    const linie = rez.linii.find((l) => l.bruta.text.includes("DN 125"))!;
+    expect(linie.extras.diametru_tip).toBe("DN");
   });
 });
 

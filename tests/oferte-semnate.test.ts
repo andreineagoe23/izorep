@@ -60,18 +60,24 @@ const CAZURI: Caz[] = [
   },
   {
     fisier: "Oferta 27.04.2026.xlsx",
-    semnat: 162585.99 + 7933.40, peOferta: 29, generat: 92609.35,
-    deCe: "8 poziții SPIRO marcate (întrebarea 10), 4 DN inexistent, 3 peste maximul listei "
-        + "(întrebarea 4), 5 grosime inexistentă. Prețurile pe liniile care ies sunt corecte; "
-        + "lipsește ce motorul refuză deliberat să ghicească.",
+    semnat: 162585.99 + 7933.40, peOferta: 33, generat: 94724.03,
+    deCe: "3 peste maximul listei (întrebarea 4), 5 grosime inexistentă. Cele 4 poziții SPIRO "
+        + "s-au deblocat pe 11 sep 2026, când firma a confirmat că „la spiro este doar diametru "
+        + "exterior”: DN125 cade acum pe rândul 125 (11,36 €), nu pe 140 (13,74 €). "
+        + "Prețurile pe liniile care ies sunt corecte; lipsește ce motorul refuză deliberat să "
+        + "ghicească. Crescut cu 123,66 € față de măsurătoarea din 7 sep, când extragerea "
+        + "deterministă a început să vadă TOATE materialele dintr-un rând: poziția „Enteisungssystem "
+        + "Regenwasserrohre” cere explicit „jacketing cu tabla de aluminiu 0,6mm” peste izolația "
+        + "Kflex, iar jacheta aia nu se tarifa deloc (86,22 € → 209,88 €).",
   },
   {
     fisier: "Oferta 284 Abur TRANSAVIA 27.05.2026 - tabla aluminiu.xlsx",
-    semnat: 94575.06, peOferta: 61, generat: 23787.78,
-    deCe: "24 din cele 37 netarifate sunt întrebarea 9 (cot/teu de vată pe banda 18-60). Regula "
-        + "există în motor, dar lucrează pe poziții COMPUSE, iar calea deterministă nu construiește "
-        + "`straturi_extra` — deci cifra asta e un artefact al lui `--fara-model`, nu plafonul real. "
-        + "Restul de 13 sunt grosimi inexistente în listă.",
+    semnat: 94575.06, peOferta: 85, generat: 74993.76,
+    deCe: "79% din oferta semnată. Două schimbări au urcat-o de la 25%: extragerea deterministă a "
+        + "început să construiască `straturi_extra` (jachetele nu se tarifau deloc), iar firma a "
+        + "confirmat pe 11 sep 2026 regula „cot/teu de vată sub ø60 nu intră în preț” — cele 24 de "
+        + "poziții care o foloseau nu mai sunt oprite la validare, fiindcă regula nu mai e o "
+        + "presupunere a noastră. Au rămas 13 netarifate, toate `grosime_inexistenta`.",
   },
   {
     fisier: "Anexa 1 la contract - Oferta 06.12.2024.xlsx",

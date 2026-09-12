@@ -106,6 +106,53 @@ Blocul „abateri cunoscute" e diferit: acolo motorul dă *intenționat* alt
 rezultat decât oferta, pentru că oferta a fost tarifată inconsecvent manual.
 Când firma confirmă regula corectă, cazul se mută în suita principală.
 
+## Grosimea pe care clientul n-o scrie
+
+`src/pricing/grosimi-uzuale.ts`. Sursa e **răspunsul firmei din 11 septembrie
+2026**, nu o deducție din oferte — și distincția asta a costat o rescriere.
+
+Prima variantă dedusese regula din perechea cerere → ofertă TRANSAVIA: pe 108
+rânduri, fiecare diametru primea exact o grosime (40/50/60 mm), zero excepții,
+iar propunerea reproducea 10 din 11 prețuri unitare din oferta semnată. Părea
+o regulă. Era o **excepție**: firma a spus că acolo grosimile „au fost opționale
+la cererea clientului". O regulă dedusă dintr-o singură ofertă poate fi exact
+cazul particular.
+
+Două tabele, după serviciu:
+
+| ø | Vată minerală — apă caldă, agent termic, abur |
+|---|---|
+| ≤ 33,7 (DN15/20/25) | 20 mm |
+| ≤ 42,4 (DN32) | 30 mm |
+| ≤ 48,3 (DN40) | 40 mm |
+| ≤ 60,3 (DN50) | 50 mm |
+| ≤ 76,1 (DN65) | 60 mm |
+| ≤ 88,9 (DN80) | 80 mm |
+| peste (DN100+) | 100 mm, oricât de mare |
+
+| ø | Elastomer — apă rece, agent de frig |
+|---|---|
+| ≤ 60 | 13 mm |
+| ≤ 219 | 19 mm |
+| ≤ 324 | 25 mm |
+
+Firma a dat tabelul vatei pe DN; în cod e convertit în ø (coloana ISO), ca să
+funcționeze și când clientul scrie direct diametrul exterior. Elastomerul a fost
+dat direct în ø.
+
+**9 mm și 32 mm nu se propun niciodată**, deși există în listă: 9 se folosește
+„mai mult la pluviale", 32 „la sisteme de răcire, la ø-uri mai mari, depinde de
+mediul înconjurător". Amândouă cer o informație care nu e pe rândul din Excel.
+Peste ø324 elastomerul nu primește propunere deloc.
+
+Alegerea se face după **sistemul liniei**, nu după un câmp separat de fluid:
+materialul cerut de client spune deja în ce regim suntem. Când clientul nu scrie
+nici materialul, alegerea rămâne a omului.
+
+**Se propune, nu se aplică.** Ecranul o arată ca valoare-fantomă în coloana de
+grosime și o scrie doar la un clic. Firma a cerut explicit să rămână
+modificabilă manual, „unde e personalizat pentru client" — exact cazul TRANSAVIA.
+
 ## Ce lipsește
 
 - **Destinația.** Listele firmei sunt de trei feluri — rezidențiale,

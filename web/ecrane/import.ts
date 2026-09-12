@@ -12,6 +12,8 @@ import {
 // Doar tipurile: `import type` se sterge la compilare, deci ExcelJS (~940 kB)
 // ramane incarcat lenes, prin `import()`-ul din `proceseaza`.
 import type { CelulaBruta, FoaieBruta, RandBrut } from "../../src/import/parse-workbook.js";
+import type { Destinatie } from "../../src/pricing/lists.js";
+import { grosimePropusa } from "../../src/pricing/grosimi-uzuale.js";
 import { card, data, esc, eur, indicator, nota, progres, stare, tabel, type Ecran } from "./tip.js";
 import { FIRME } from "../date/seed.js";
 // ExcelJS sta dincolo de un `await import(...)` in `oferta.ts`, ca la citire:
@@ -95,6 +97,42 @@ function marcajValidare(l: LinieProcesata): string {
 }
 
 /**
+ * Grosimea propusa pentru o linie careia clientul nu i-a scris una.
+ *
+ * Se propune DOAR cand lipseste cu adevarat: o grosime scrisa de client sau
+ * corectata de om nu se atinge niciodata. Vezi `grosimi-uzuale.ts` pentru de
+ * unde vine regula si de ce e doar o propunere.
+ */
+function propunereGrosime(l: LinieProcesata): number | null {
+  if (l.extras.grosime_mm !== null) return null;
+  // `goluri_foc` nu e sistem de matrice: pretul lui vine din suprafata
+  // golului, deci n-are grosime de propus.
+  if (l.extras.sistem === null || l.extras.sistem === "goluri_foc") return null;
+  if (l.extras.diametru_valoare === null || !l.extras.diametru_tip) return null;
+  return grosimePropusa(l.extras.sistem, l.extras.diametru_valoare, l.extras.diametru_tip);
+}
+
+/**
+ * Cele doua coloane de pret ale unui rand: unitar si total.
+ *
+ * Calculate, nu citite din fisier — clientul trimite cantitati, noi punem
+ * preturile. Cand pozitia n-a putut fi tarifata, coloanele nu raman goale: ar
+ * arata la fel ca un rand care nu e pozitie de izolatie. Arata o liniuta cu
+ * cauza in `title`, ca omul sa stie DE CE lipseste pretul, nu doar CA lipseste.
+ */
+function celulePret(l: LinieProcesata): string {
+  if (!l.pret) {
+    const motiv = l.eroare ?? "poziție netarifată";
+    return `<td class="extras n gol" data-pret title="${esc(motiv)}">—</td>`
+      + `<td class="extras n gol" data-pret title="${esc(motiv)}">—</td>`;
+  }
+  const note = "note" in l.pret && l.pret.note?.length ? l.pret.note.join(" · ") : "";
+  const titlu = note ? ` title="${esc(note)}"` : "";
+  return `<td class="extras n" data-pret${titlu}>${eur(l.pret.pret_unitar)}${note ? " *" : ""}</td>`
+    + `<td class="extras n" data-pret${titlu}>${eur(l.pret.total)}</td>`;
+}
+
+/**
  * Eticheta butonului de confirmare in masa, dupa filtrul activ.
  *
  * Ambiguitatea e periculoasa aici: un buton "Confirma tot" ar putea sa
@@ -119,6 +157,20 @@ const etichetaConfirmare = (l: Lentila, n: number): string =>
   typeof l === "object"
     ? `Confirmă cele ${n} poziții cu „${ETICHETE_BLOCAJ[l.cod].eticheta}” din foaia asta`
     : ETICHETA_CONFIRMARE[l](n);
+
+/**
+ * Segmentele intre care se poate alege la import.
+ *
+ * Rafinaria lipseste dinadins: nu exista nicio lista pentru ea, deci un buton
+ * ar promite un pret pe care nimeni nu-l poate calcula. Reapare cand vin
+ * listele. Vezi `.claude/liste-preturi.md`.
+ */
+const SEGMENTE: Destinatie[] = ["rezidential", "industrial"];
+const ETICHETA_SEGMENT: Record<Destinatie, string> = {
+  rezidential: "Rezidențială",
+  industrial: "Industrială",
+  rafinarie: "Rafinărie",
+};
 
 /**
  * Valoarea unei celule, ca text.
@@ -176,10 +228,28 @@ export const ecran: Ecran = {
       ? `<p class="hint">Reguli + <code>${esc(info.model)}</code> pe liniile rămase, apoi tarifare.</p>`
       : `<p class="hint">Doar stratul determinist. Modelul pornește local, cu <code>npm run dev</code>.</p>`;
 
+    /**
+     * Segmentul pe care se tarifeaza importul curent. Schimbarea lui nu
+     * recheama modelul si nu reciteste fisierul — doar retarifeaza ce e deja
+     * extras, prin `reevalueaza`.
+     */
+    let destinatie: Destinatie = "rezidential";
+    /**
+     * Retarifarea raportului curent, pusa de `afiseaza`. Butonul de segment nu
+     * poate ajunge singur la `rez`: acela traieste in inchiderea raportului.
+     * Lipseste cat timp nu e niciun import pe ecran.
+     */
+    let retarifeaza: (() => void) | null = null;
+
     root.innerHTML = `
       <p>${info
         ? stare(`Extragere cu ${esc(info.model)}`, "ok")
         : stare("Stratul cu model: indisponibil aici", "neutru")}</p>
+      <div class="filtre" role="group" aria-label="Segmentul ofertei">
+        <span class="hint">Tipul ofertei:</span>
+        ${SEGMENTE.map((d) => `<button class="filtru" data-segment="${d}" aria-pressed="${d === destinatie}">
+          ${esc(ETICHETA_SEGMENT[d])}</button>`).join("")}
+      </div>
       <label id="drop" class="drop" for="fisier">
         <strong>Trage un fișier .xlsx aici</strong>
         <span>sau click pentru a alege</span>
@@ -204,9 +274,23 @@ export const ecran: Ecran = {
       if (f) void proceseaza(f);
     });
 
+    for (const b of root.querySelectorAll<HTMLButtonElement>("[data-segment]")) {
+      b.onclick = () => {
+        const ales = b.dataset["segment"] as Destinatie;
+        if (ales === destinatie) return;
+        destinatie = ales;
+        for (const alt of root.querySelectorAll<HTMLButtonElement>("[data-segment]")) {
+          alt.setAttribute("aria-pressed", String(alt === b));
+        }
+        // Nu se reciteste fisierul si nu se recheama modelul: ce s-a extras
+        // ramane extras, se schimba doar lista din care se iau preturile.
+        retarifeaza?.();
+      };
+    }
+
     const stoc = stocLocal();
     /** Optiunile date nucleului: aceleasi la fiecare apel, dintr-un singur loc. */
-    const optiuniNucleu = () => ({ stoc, mapari, prag });
+    const optiuniNucleu = () => ({ stoc, mapari, prag, destinatie });
 
     /**
      * Lista importurilor de pana acum.
@@ -580,8 +664,8 @@ export const ecran: Ecran = {
           <thead><tr>
             <th scope="col" class="gutter">${f.antet ? `r${f.antet.rand}` : "#"}</th>
             ${capete}
-            ${["Sistem", "ø", "gros.", ""].map((c, i) =>
-              `<th scope="col" class="extras${i > 0 && i < 3 ? " n" : ""}">${esc(c)}</th>`).join("")}
+            ${["Sistem", "ø", "gros.", "P.U.", "Total", ""].map((c, i) =>
+              `<th scope="col" class="extras${i > 0 && i < 5 ? " n" : ""}">${esc(c)}</th>`).join("")}
           </tr></thead>
           <tbody>${corp}</tbody>
         </table></div>`;
@@ -605,9 +689,15 @@ export const ecran: Ecran = {
           ? `<td class="extras"><select data-camp="sistem">${SISTEME.map((s) =>
                `<option value="${s}"${s === l.extras.sistem ? " selected" : ""}>${s.replace("_", " ")}</option>`).join("")}</select></td>
              <td class="extras n"><input type="number" step="any" data-camp="diametru" value="${l.extras.diametru_valoare ?? ""}" /></td>
-             <td class="extras n"><input type="number" step="any" data-camp="grosime" value="${l.extras.grosime_mm ?? ""}" /></td>
+             <td class="extras n"><input type="number" step="any" data-camp="grosime"
+               value="${l.extras.grosime_mm ?? ""}"${(() => {
+                 const g = propunereGrosime(l);
+                 return g === null ? "" : ` placeholder="${g}" title="Propus ${g} mm după diametru, din practica firmei. Nu e aplicat: scrie-l sau folosește butonul din bară."`;
+               })()} /></td>
+             ${celulePret(l)}
              <td class="extras fix"><span data-marca title="${esc(titluMarcaj(l))}">${marcajValidare(l)}</span></td>`
-          : `<td class="extras"></td><td class="extras"></td><td class="extras"></td><td class="extras"></td>`;
+          : `<td class="extras"></td><td class="extras"></td><td class="extras"></td>
+             <td class="extras"></td><td class="extras"></td><td class="extras"></td>`;
 
         return `<tr${l ? ` data-idx="${l.extras.index}"` : ""}>
           <td class="gutter">${r.rand}</td>
@@ -721,6 +811,11 @@ export const ecran: Ecran = {
             ${lentilaCod}
             <button class="secundar" data-actiune="urmatoarea"${marcate ? "" : " disabled"}>Următoarea de validat</button>
             <button class="secundar" data-actiune="confirma"${vizibile.length ? "" : " hidden"}>${esc(etichetaConfirmare(filtru, vizibile.length))}</button>
+            ${(() => {
+              const n = liniiFoaie(f).filter((l) => propunereGrosime(l) !== null).length;
+              return n === 0 ? "" : `<button class="secundar" data-actiune="grosimi"
+                title="Grosimea pe care o alege tehnicul după diametru: 40 mm până la ø60, 50 până la ø169, 60 peste. Dedusă din oferta 284, neconfirmată de firmă.">Completează ${n} grosimi lipsă</button>`;
+            })()}
             <button class="secundar" data-actiune="oferta">Generează oferta</button>
             ${ultimaConfirmare
               ? `<button class="secundar" data-actiune="anuleaza">Anulează confirmarea celor ${ultimaConfirmare.intrari.length}</button>`
@@ -835,8 +930,29 @@ export const ecran: Ecran = {
             marca.setAttribute("title", titluMarcaj(l));
             marca.innerHTML = marcajValidare(l);
           }
+          // Si coloanele de pret: o corectie in descriere sau in o schimba
+          // pretul, iar un pret vechi langa o dimensiune noua arata ca un
+          // calcul, nu ca o ramasita — deci e mai rau decat o celula goala.
+          const vechiPret = [...tr.querySelectorAll<HTMLElement>("[data-pret]")];
+          if (vechiPret.length > 0) {
+            const proaspete = document.createElement("tr");
+            proaspete.innerHTML = celulePret(l);
+            vechiPret.forEach((td, k) => {
+              const nou = proaspete.children[k];
+              if (nou) td.replaceWith(nou);
+            });
+          }
         }
       }
+
+      // Schimbarea segmentului retarifeaza tot raportul si redeseneaza grila:
+      // preturile din coloanele noi si toate contoarele se schimba deodata.
+      retarifeaza = () => {
+        reevalueaza(rez, optiuniNucleu());
+        sincronizeaza();
+        deseneaza(activa);
+        salveazaSesiune();
+      };
 
       /**
        * Navigarea prin randurile marcate ale foii active, ciclic.
@@ -890,6 +1006,30 @@ export const ecran: Ecran = {
           panouOferta.innerHTML = randFormularOferta();
           panouOferta.querySelector<HTMLInputElement>('[name="numar"]')?.focus();
           panouOferta.scrollIntoView({ block: "nearest" });
+          return;
+        }
+
+        if (actiune === "grosimi") {
+          // Propunerea devine valoare DOAR aici, la un clic explicit — de-aia
+          // linia primeste `sursa: "om"`: decizia e a lui, noi doar i-am pus
+          // cifra in fata. Se aplica pe foaia activa, ca tot ce e in bara.
+          const f = foi[activa];
+          if (!f) return;
+          let aplicate = 0;
+          for (const l of liniiFoaie(f)) {
+            const g = propunereGrosime(l);
+            if (g === null) continue;
+            rez.rezolvate.set(l.extras.index, {
+              extras: { ...l.extras, grosime_mm: g },
+              sursa: "om",
+            });
+            aplicate++;
+          }
+          if (aplicate === 0) return;
+          reevalueaza(rez, optiuniNucleu());
+          sincronizeaza();
+          deseneaza(activa);
+          salveazaSesiune();
           return;
         }
 

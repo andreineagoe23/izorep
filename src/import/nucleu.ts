@@ -1,4 +1,5 @@
 import { liniile, type FoaieBruta, type LinieBruta } from "./rand.js";
+import type { Destinatie } from "../pricing/lists.js";
 import { amprentaFoaie, aplicaMapare } from "./mapare.js";
 // Type-only: precedentul e in mapari-statice.ts. `cache-mapari.ts` scrie pe
 // disc cu `node:fs` — importat ca valoare aici, ar trage Node in bundle-ul de
@@ -16,7 +17,6 @@ import { aplicaMemorie, type StocSabloane } from "./memorie.js";
 import type { LinieExtrasa, Sursa } from "./schema.js";
 import { tarifeaza } from "../pricing/engine.js";
 import { tarifeazaGolFoc } from "../pricing/goluri-foc.js";
-import { SISTEME_FARA_REZIDENTIAL } from "../pricing/lists.js";
 import {
   PozitieNetarifata,
   type CodNetarifare, type RezultatGolFoc, type RezultatTarifare,
@@ -75,6 +75,11 @@ export interface OptiuniNucleu {
   extrage?: Extractor;
   /** Plafon de linii trimise la model, COMUN celor doua treceri ale dedupului. */
   maxLiniiModel?: number;
+  /**
+   * Segmentul ofertei. Implicit rezidential — asa se tarifa pana sa existe
+   * listele industriale, deci CLI-ul si testele nu-si schimba rezultatul.
+   */
+  destinatie?: Destinatie;
   laProgres?: (p: Progres) => void;
 }
 
@@ -193,6 +198,7 @@ export interface Rezultat {
 export function tarifeazaExtras(
   extras: LinieExtrasa,
   cantitate: number,
+  destinatie: Destinatie = "rezidential",
 ): { pret?: RezultatTarifare | RezultatGolFoc; eroare?: string; codEroare?: CodNetarifare } {
   try {
     if (extras.sistem === "goluri_foc") {
@@ -221,19 +227,8 @@ export function tarifeazaExtras(
         ],
         forma: extras.forma ?? "ml",
         cantitate,
+        destinatie,
       });
-      // Marcaj vizibil de destinatie mixta: engine.ts nu stie de destinatii
-      // (rezidential/industrial) si nu trebuie sa afle aici — se ataseaza pe
-      // rezultat, dupa tarifare. Tabla de inox e singurul sistem fara lista
-      // rezidentiala (intrebarea 15 din .claude/stare.md), deci pretul lui
-      // vine mereu din cea industriala, chiar cand restul straturilor
-      // pozitiei sunt tarifate rezidential.
-      if (pret.straturi.some((s) => SISTEME_FARA_REZIDENTIAL.has(s.sistem))) {
-        pret.note = [
-          ...(pret.note ?? []),
-          "tabla_inox: pret din lista INDUSTRIALA — nu exista lista rezidentiala pentru inox (intrebarea 15). Restul straturilor sunt tarifate rezidential.",
-        ];
-      }
       return { pret };
     }
 
@@ -274,6 +269,30 @@ export function tarifeazaExtras(
 }
 
 /**
+ * Plasa de siguranta: ce a vazut determinismul pe o linie pe care n-a
+ * rezolvat-o nimeni altcineva.
+ *
+ * Pana acum extragerea partiala se arunca. Masurat pe cererea reala TRANSAVIA:
+ * "Caseta izolatie armaturi cu flanse DN100 din tabla aluminiu si vata
+ * minerala" da sistem + diametru + forma, dar clientul nu scrie grosimea —
+ * deci `complet: false`, deci linia pleca la model si, fara model, disparea cu
+ * totul. Nu aparea nici macar ca pozitie: omul vedea un rand gol, fara sa afle
+ * CE lipseste.
+ *
+ * Acum ramane pozitie, cu increderea ei mica (0,3), deci marcata pentru
+ * validare. Nu concureaza cu nimic: se aplica DOAR pe indecsii pe care nici
+ * memoria, nici sablonul, nici modelul nu i-au rezolvat.
+ */
+function completeazaCuPartiale(
+  rezolvate: Map<number, { extras: LinieExtrasa; sursa: Sursa }>,
+  partiale: Map<number, LinieExtrasa>,
+): void {
+  for (const [index, extras] of partiale) {
+    if (!rezolvate.has(index)) rezolvate.set(index, { extras, sursa: "regex" });
+  }
+}
+
+/**
  * L3 + guardrails, pentru toata lista de linii brute rezolvate.
  *
  * Comun lui `proceseazaRegistru` si `reevalueaza`, ca sa nu poata drifta unul
@@ -283,6 +302,7 @@ function construiesteLinii(
   brute: LinieCuSectiune[],
   rezolvate: Map<number, { extras: LinieExtrasa; sursa: Sursa }>,
   prag: number,
+  destinatie: Destinatie,
 ): LinieProcesata[] {
   const linii: LinieProcesata[] = [];
   for (const b of brute) {
@@ -324,13 +344,13 @@ function construiesteLinii(
         && (extras.incredere < prag || avertismente.length > 0),
     };
 
-    const t = tarifeazaExtras(extras, b.cantitate ?? 1);
+    const t = tarifeazaExtras(extras, b.cantitate ?? 1, destinatie);
     if (t.pret) proc.pret = t.pret;
-    // O nota pe rezultat (ex: strat exclus fara coeficient de forma pe banda
-    // lui) inseamna ca pretul se sprijina pe o regula DEDUSA din date, nu pe
-    // lista de preturi ca atare. Omul trebuie sa o vada inainte sa plece
-    // intr-o oferta — indiferent de sursa extragerii.
-    if (t.pret && "note" in t.pret && t.pret.note && t.pret.note.length > 0) {
+    // Doar notele care CER ochi opresc linia la validare — azi, pretul venit
+    // din lista altui segment. Regula "cot/teu de vata sub o60 nu intra in
+    // pret" era si ea aici pana cand firma a confirmat-o (11 sep 2026): nota
+    // ramane pe pozitie, fiindca explica pretul, dar nu mai cheama omul.
+    if (t.pret && "noteDeVerificat" in t.pret && t.pret.noteDeVerificat?.length) {
       proc.necesitaValidare = true;
     }
     if (t.eroare !== undefined) {
@@ -416,10 +436,14 @@ export async function proceseazaRegistru(foi: FoaieBruta[], o: OptiuniNucleu): P
   // L2a - determinist
   const rezolvate = new Map<number, { extras: LinieExtrasa; sursa: Sursa }>();
   const reziduale: LinieSursa[] = [];
+  const partiale = new Map<number, LinieExtrasa>();
   for (const b of brute) {
     const r = extrageDeterminist(b.index, b.text, b.um, b.sectiune, b.cantitate);
     if (r.complet) rezolvate.set(b.index, { extras: r.linie, sursa: "regex" });
-    else reziduale.push({ index: b.index, text: b.text, ...(b.um ? { um: b.um } : {}) });
+    else {
+      reziduale.push({ index: b.index, text: b.text, ...(b.um ? { um: b.um } : {}) });
+      if (r.linie.sistem !== null) partiale.set(b.index, r.linie);
+    }
   }
   o.laProgres?.({ faza: "determinist", gata: rezolvate.size, total: brute.length });
 
@@ -474,7 +498,8 @@ export async function proceseazaRegistru(foi: FoaieBruta[], o: OptiuniNucleu): P
   }
 
   // Guardrails + L3
-  const linii = construiesteLinii(brute, rezolvate, prag);
+  completeazaCuPartiale(rezolvate, partiale);
+  const linii = construiesteLinii(brute, rezolvate, prag, o.destinatie ?? "rezidential");
   o.laProgres?.({ faza: "tarifare", gata: linii.length, total: brute.length });
 
   const statistici: Statistici = {
@@ -535,10 +560,14 @@ export function reevalueaza(rez: Rezultat, o: OptiuniNucleu): void {
 
   // Trecerea 2: determinist, pe restul.
   const reziduale: LinieSursa[] = [];
+  const partiale = new Map<number, LinieExtrasa>();
   for (const b of candidati) {
     const r = extrageDeterminist(b.index, b.text, b.um, b.sectiune, b.cantitate);
     if (r.complet) rezolvate.set(b.index, { extras: r.linie, sursa: "regex" });
-    else reziduale.push({ index: b.index, text: b.text, ...(b.um ? { um: b.um } : {}) });
+    else {
+      reziduale.push({ index: b.index, text: b.text, ...(b.um ? { um: b.um } : {}) });
+      if (r.linie.sistem !== null) partiale.set(b.index, r.linie);
+    }
   }
 
   // Trecerea 3: memorie, pe ce a ramas dupa determinist.
@@ -555,8 +584,9 @@ export function reevalueaza(rez: Rezultat, o: OptiuniNucleu): void {
     }
   }
 
+  completeazaCuPartiale(rezolvate, partiale);
   rez.rezolvate = rezolvate;
-  rez.linii = construiesteLinii(brute, rezolvate, prag);
+  rez.linii = construiesteLinii(brute, rezolvate, prag, o.destinatie ?? "rezidential");
   rez.statistici = {
     ...statisticiDeterministe(rez.foi, foiMapate, brute, rez.linii),
     // Astea descriu apelul la model care a produs starea INITIALA a lui `rez`;

@@ -40,6 +40,13 @@ export interface CerereTarifare {
   straturi: Strat[];
   forma: Forma;
   cantitate: number;
+  /**
+   * Segmentul ofertei. Implicit rezidential — asa se tarifa inainte sa existe
+   * listele industriale, si asa raman reproductibile ofertele istorice din
+   * suita de referinta. Un strat al carui sistem n-are lista pe segmentul
+   * cerut se tarifeaza din singura care exista, cu nota pe rezultat.
+   */
+  destinatie?: import("./lists.js").Destinatie;
 }
 
 export interface StratTarifat {
@@ -86,6 +93,15 @@ export interface RezultatTarifare {
    * informatie pentru omul care valideaza oferta.
    */
   note?: string[];
+  /**
+   * Subsetul de note care CER ochi de om. Restul sunt informative.
+   *
+   * Distinctia a aparut cand firma a confirmat regula "cot/teu de vata sub
+   * o60 nu intra in pret" (11 septembrie 2026): nota ramane, fiindca explica
+   * de ce pretul e ce e, dar nu mai are rost sa opreasca 47 de randuri la
+   * validare. O regula confirmata nu mai e o presupunere.
+   */
+  noteDeVerificat?: string[];
 }
 
 /**

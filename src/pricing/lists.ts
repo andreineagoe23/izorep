@@ -155,6 +155,39 @@ export const inventarPe = (d: Destinatie): Sistem[] =>
 export const listaPe = (sistem: SistemMatrice, d: Destinatie): ListaPreturi | undefined =>
   PE_DESTINATIE[d][sistem];
 
+/**
+ * Lista pe care se TARIFEAZA un strat, pe segmentul cerut.
+ *
+ * Cand segmentul ales n-are lista sistemului, se cade pe singura care exista
+ * si se spune care e — nu se refuza tarifarea si nu se tace. Cazurile reale
+ * sunt asimetrice in ambele sensuri: tabla de inox exista doar industrial, PVC
+ * si inchiderile la foc doar rezidential. O pozitie industriala cu jacheta de
+ * PVC trebuie sa iasa cu pret, dar cu nota ca acel strat vine din alt segment;
+ * altfel omul ar vedea "netarifat" pentru un material care are pret.
+ */
+export function listaDe(
+  sistem: SistemMatrice,
+  dest: Destinatie,
+): { lista: ListaPreturi; folosita: Destinatie } {
+  const ceruta = PE_DESTINATIE[dest][sistem];
+  if (ceruta) return { lista: ceruta, folosita: dest };
+  for (const d of DESTINATII) {
+    const alta = PE_DESTINATIE[d][sistem];
+    if (alta) return { lista: alta, folosita: d };
+  }
+  throw new Error(`lista de preturi lipseste: ${sistem}`);
+}
+
+/** Grosimile ofertate la un diametru dat, intr-o lista deja aleasa. */
+export function grosimiLaDin(l: ListaPreturi, diametru: number): number[] {
+  const out: number[] = [];
+  for (const k of Object.keys(l.cells)) {
+    const [d, g] = k.split("|");
+    if (Number(d) === diametru && g !== "-") out.push(Number(g));
+  }
+  return out.sort((a, b) => a - b);
+}
+
 /** Diametrele dintr-o lista data, sortate crescator. */
 export function diametreDin(l: ListaPreturi): number[] {
   const s = new Set<number>();
@@ -169,13 +202,7 @@ export function diametre(sistem: SistemMatrice): number[] {
 
 /** Grosimile ofertate la un diametru dat (tabla are una singura per diametru). */
 export function grosimiLa(sistem: SistemMatrice, diametru: number): number[] {
-  const l = lista(sistem);
-  const out: number[] = [];
-  for (const k of Object.keys(l.cells)) {
-    const [d, g] = k.split("|");
-    if (Number(d) === diametru && g !== "-") out.push(Number(g));
-  }
-  return out.sort((a, b) => a - b);
+  return grosimiLaDin(lista(sistem), diametru);
 }
 
 /**

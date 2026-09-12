@@ -1,5 +1,8 @@
 import { toOuterDiameter, peSeriaDeOtel, type TipDiametru } from "./dn-table.js";
-import { lista, diametre, grosimiLa, type BandaMultiplicator } from "./lists.js";
+import {
+  diametre, diametreDin, grosimiLaDin, listaDe,
+  type BandaMultiplicator, type Destinatie, type ListaPreturi,
+} from "./lists.js";
 import {
   PozitieNetarifata,
   type CerereTarifare, type Forma, type RezultatTarifare,
@@ -114,18 +117,20 @@ export function randPentruJacheta(valoare: number, randuri: number[]): number {
   return randuri.find((r) => r >= valoare) ?? max;
 }
 
-function grosimeEfectiva(sistem: SistemMatrice, rand: number, ceruta: number | undefined): number | null {
+function grosimeEfectiva(
+  sistem: SistemMatrice, rand: number, ceruta: number | undefined, l: ListaPreturi,
+): number | null {
   if (sistem === "pvc") return null;               // PVC nu are coloana de grosime
   if (ceruta !== undefined) return ceruta;
-  const disp = grosimiLa(sistem, rand);
+  const disp = grosimiLaDin(l, rand);
   // Tabla de jachetare are o singura grosime ofertata per diametru: e implicita.
   if (disp.length === 1) return disp[0]!;
   throw new PozitieNetarifata("grosime_ambigua", "grosime nespecificata si ambigua", { sistem, rand, disponibile: disp });
 }
 
-function cauta(sistem: SistemMatrice, rand: number, grosime: number | null): number {
+function cauta(sistem: SistemMatrice, rand: number, grosime: number | null, l: ListaPreturi): number {
   const cheie = `${rand}|${grosime === null ? "-" : grosime}`;
-  const p = lista(sistem).cells[cheie];
+  const p = l.cells[cheie];
   if (p === undefined) {
     // Principiu: golul din matrice inseamna "nu se oferteaza", nu "pret zero".
     throw new PozitieNetarifata("grosime_inexistenta", "combinatia diametru/grosime nu exista in lista", {
@@ -165,9 +170,11 @@ function cauta(sistem: SistemMatrice, rand: number, grosime: number | null): num
  * specificata, n-are ce sa verifice — grosimea ei se deduce din randul deja
  * gasit (`grosimeEfectiva`), nu vine de la client.
  */
-function verificaGrosimeOfertata(sistem: SistemMatrice, grosimeCeruta: number | undefined): void {
+function verificaGrosimeOfertata(
+  sistem: SistemMatrice, grosimeCeruta: number | undefined, l: ListaPreturi,
+): void {
   if (grosimeCeruta === undefined) return;
-  const disponibile = lista(sistem).grosimi_mm;
+  const disponibile = l.grosimi_mm;
   if (disponibile.length > 0 && !disponibile.includes(grosimeCeruta)) {
     throw new PozitieNetarifata("grosime_inexistenta", "combinatia diametru/grosime nu exista in lista", {
       sistem, grosime: grosimeCeruta, disponibile,
@@ -201,9 +208,11 @@ const CAMP_MULTIPLICATOR: Record<Forma, (keyof BandaMultiplicator)[]> = {
  * de mai jos e varianta care arunca, pastrata pentru codul care chiar are
  * nevoie de o valoare sau de o eroare.
  */
-export function multiplicatorOptional(sistem: SistemMatrice, rand: number, forma: Forma): number | null {
+export function multiplicatorOptional(
+  sistem: SistemMatrice, rand: number, forma: Forma, dest: Destinatie = "rezidential",
+): number | null {
   if (forma === "ml" || forma === "mp") return 1;
-  const banda = lista(sistem).multiplicatori.find(
+  const banda = listaDe(sistem, dest).lista.multiplicatori.find(
     (b) => rand >= b.band[0] && rand <= b.band[1],
   );
   if (!banda) return null;
@@ -222,10 +231,12 @@ export function multiplicatorOptional(sistem: SistemMatrice, rand: number, forma
  * abateri negociate. Apelantul poate suprascrie, dar abaterea trebuie
  * marcata vizibil pe linie.
  */
-export function multiplicator(sistem: SistemMatrice, rand: number, forma: Forma): number {
-  const m = multiplicatorOptional(sistem, rand, forma);
+export function multiplicator(
+  sistem: SistemMatrice, rand: number, forma: Forma, dest: Destinatie = "rezidential",
+): number {
+  const m = multiplicatorOptional(sistem, rand, forma, dest);
   if (m !== null) return m;
-  const banda = lista(sistem).multiplicatori.find(
+  const banda = listaDe(sistem, dest).lista.multiplicatori.find(
     (b) => rand >= b.band[0] && rand <= b.band[1],
   );
   if (!banda) {
@@ -289,18 +300,43 @@ function straturiMatrice(straturi: Strat[]): StratMatrice[] {
  *   6. rotunjire la 2 zecimale PE FIECARE STRAT (pret brut, apoi contributia
  *      cu multiplicator propriu), apoi se aduna
  */
+/** Segmentul, scris ca sa poata fi citit intr-o nota, nu ca identificator. */
+const ADJECTIV_DEST: Record<Destinatie, string> = {
+  rezidential: "rezidentiala",
+  industrial: "industriala",
+  rafinarie: "de rafinarie",
+};
+
 export function tarifeaza(cerere: CerereTarifare): RezultatTarifare {
   const { diametru, straturi, forma, cantitate } = cerere;
+  const dest: Destinatie = cerere.destinatie ?? "rezidential";
   if (straturi.length === 0) throw new PozitieNetarifata("pozitie_fara_straturi", "pozitie fara straturi", { cerere });
 
   const matrice = straturiMatrice(straturi);
   const od = toOuterDiameter(diametru.valoare, diametru.tip);
   const tarifate: StratTarifat[] = [];
   const note: string[] = [];
+  const noteDeVerificat: string[] = [];
   let geometric = od;
 
   for (const [i, strat] of matrice.entries()) {
-    const randuri = diametre(strat.sistem);
+    // Segmentul e PE STRAT, nu pe pozitie: o pozitie industriala cu jacheta de
+    // PVC ia PVC-ul din rezidential, singurul care exista. `listaDe` spune si
+    // ce a folosit, iar diferenta fata de ce s-a cerut ajunge in `note` —
+    // altfel pretul ar veni din alt segment fara ca nimeni sa vada.
+    const { lista: listaStrat, folosita } = listaDe(strat.sistem, dest);
+    if (folosita !== dest) {
+      // Asta CERE ochi: pretul vine din alt segment decat cel ales.
+      noteDeVerificat.push(
+        `${strat.sistem}: pret din lista ${ADJECTIV_DEST[folosita].toUpperCase()} — nu exista lista ` +
+        `${ADJECTIV_DEST[dest]} pentru materialul asta. Restul straturilor raman pe segmentul ${dest}.`,
+      );
+      note.push(
+        `${strat.sistem}: pret din lista ${ADJECTIV_DEST[folosita].toUpperCase()} — nu exista lista ` +
+        `${ADJECTIV_DEST[dest]} pentru materialul asta. Restul straturilor raman pe segmentul ${dest}.`,
+      );
+    }
+    const randuri = diametreDin(listaStrat);
     // Primul strat sta pe teava si respecta regula de potrivire a tevii.
     // Straturile de dupa primul sunt fie jacheta de tabla (tabla, tabla_inox)
     // — rotunjire in sus, mufa ei trebuie sa incapa peste izolatie — fie alt
@@ -313,7 +349,7 @@ export function tarifeaza(cerere: CerereTarifare): RezultatTarifare {
       : esteJacheta
         ? randPentruJacheta(geometric, randuri)
         : randCelMaiApropiat(geometric, randuri);
-    const grosime = grosimeEfectiva(strat.sistem, rand, strat.grosime_mm);
+    const grosime = grosimeEfectiva(strat.sistem, rand, strat.grosime_mm, listaStrat);
 
     // Grosimea CERUTA a stratului decide geometria straturilor de deasupra
     // indiferent daca stratul ajunge inclus in pret — vezi
@@ -321,26 +357,26 @@ export function tarifeaza(cerere: CerereTarifare): RezultatTarifare {
     // incluse e redundanta cu `cauta` (o celula existenta are mereu o grosime
     // valida), dar pentru cele EXCLUSE e singura verificare care mai ramane,
     // fiindca ele nu se mai cauta in matrice.
-    verificaGrosimeOfertata(strat.sistem, strat.grosime_mm);
+    verificaGrosimeOfertata(strat.sistem, strat.grosime_mm, listaStrat);
 
     // Multiplicatorul e PE STRAT: un strat fara coeficient pentru forma asta
     // pe banda lui nu intra in pret. Cand e exclus, nici nu se mai cauta in
     // matrice — la Di21 g40 celula "22|40" a vatei nu exista, dar cu vata
     // exclusa din pret, lipsa ei nu mai conteaza.
-    const multStrat = multiplicatorOptional(strat.sistem, rand, forma);
+    const multStrat = multiplicatorOptional(strat.sistem, rand, forma, dest);
     const inclus = multStrat !== null;
 
     let pretBrut = 0;
     if (inclus) {
       const p = forma === "mp"
-        ? lista(strat.sistem).per_mp[String(grosime)]
-        : cauta(strat.sistem, rand, grosime);
+        ? listaStrat.per_mp[String(grosime)]
+        : cauta(strat.sistem, rand, grosime, listaStrat);
       if (p === undefined) {
         throw new PozitieNetarifata("fara_pret_pe_mp", "nu exista pret pe mp pentru grosimea ceruta", { sistem: strat.sistem, grosime });
       }
       pretBrut = p;
     } else {
-      const banda = lista(strat.sistem).multiplicatori.find(
+      const banda = listaStrat.multiplicatori.find(
         (b) => rand >= b.band[0] && rand <= b.band[1],
       );
       const bandaTxt = banda ? `${banda.band[0]}-${banda.band[1]}` : "necunoscuta";
@@ -389,6 +425,7 @@ export function tarifeaza(cerere: CerereTarifare): RezultatTarifare {
     total: bani(unitar * cantitate),
     moneda: "EUR",
     ...(note.length ? { note } : {}),
+    ...(noteDeVerificat.length ? { noteDeVerificat } : {}),
   };
 }
 
