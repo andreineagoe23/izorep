@@ -240,6 +240,13 @@ export const ecran: Ecran = {
      * Lipseste cat timp nu e niciun import pe ecran.
      */
     let retarifeaza: (() => void) | null = null;
+    /**
+     * Grosimile uzuale pe care omul a cerut sa fie puse pe importul curent, pe
+     * indexul liniei. Stau aici, langa segment, fiindca `optiuniNucleu` le da
+     * nucleului la fiecare recalcul; se golesc la un fisier nou si se refac din
+     * sesiune la redeschidere.
+     */
+    let grosimiPropuse = new Map<number, number>();
 
     root.innerHTML = `
       <p>${info
@@ -274,14 +281,19 @@ export const ecran: Ecran = {
       if (f) void proceseaza(f);
     });
 
+    /** Butoanele de segment arata `destinatie`, oricine ar fi schimbat-o. */
+    const aratSegment = (): void => {
+      for (const b of root.querySelectorAll<HTMLButtonElement>("[data-segment]")) {
+        b.setAttribute("aria-pressed", String(b.dataset["segment"] === destinatie));
+      }
+    };
+
     for (const b of root.querySelectorAll<HTMLButtonElement>("[data-segment]")) {
       b.onclick = () => {
         const ales = b.dataset["segment"] as Destinatie;
         if (ales === destinatie) return;
         destinatie = ales;
-        for (const alt of root.querySelectorAll<HTMLButtonElement>("[data-segment]")) {
-          alt.setAttribute("aria-pressed", String(alt === b));
-        }
+        aratSegment();
         // Nu se reciteste fisierul si nu se recheama modelul: ce s-a extras
         // ramane extras, se schimba doar lista din care se iau preturile.
         retarifeaza?.();
@@ -290,7 +302,7 @@ export const ecran: Ecran = {
 
     const stoc = stocLocal();
     /** Optiunile date nucleului: aceleasi la fiecare apel, dintr-un singur loc. */
-    const optiuniNucleu = () => ({ stoc, mapari, prag, destinatie });
+    const optiuniNucleu = () => ({ stoc, mapari, prag, destinatie, grosimiPropuse });
 
     /**
      * Lista importurilor de pana acum.
@@ -313,7 +325,8 @@ export const ecran: Ecran = {
           <td class="hint">${esc(data(i.cand))}</td>
           <td class="n">${i.pozitii}</td>
           <td class="n">${i.tarifate}</td>
-          <td class="n">${eur(i.valoare)}</td>
+          <td class="n">${eur(i.valoare)}${i.destinatie && i.destinatie !== "rezidential"
+            ? ` <span class="hint">${esc(ETICHETA_SEGMENT[i.destinatie].toLowerCase())}</span>` : ""}</td>
           <td class="hint">${i.model ? esc(i.model) : "doar reguli"}</td>
           <td><button class="ca-link" data-sterge="${esc(i.id)}" aria-label="Șterge importul ${esc(i.nume)}">șterge</button></td>
         </tr>`);
@@ -366,6 +379,13 @@ export const ecran: Ecran = {
         scrieCelula(rand, e.cel, e.v);
         reconstruieste(rand);
       }
+
+      // Segmentul si grosimile propuse se pun INAINTE de tarifare. Fara ele,
+      // un import lucrat pe industrial se redeschidea pe rezidential, cu alte
+      // preturi decat cele pe care le vazuse omul si fara niciun semn.
+      destinatie = s.destinatie ?? "rezidential";
+      aratSegment();
+      grosimiPropuse = new Map(s.grosimiPropuse ?? []);
 
       const rez = await proceseazaRegistru(foi, optiuniNucleu());
       for (const x of s.extrase) rez.rezolvate.set(x.index, { extras: x.extras, sursa: x.sursa });
@@ -468,6 +488,9 @@ export const ecran: Ecran = {
           return primite;
         } : undefined;
 
+        // Propunerile tin de indecsii fisierului de dinainte: pe altul ar
+        // cadea pe alte randuri.
+        grosimiPropuse = new Map();
         const rez = await proceseazaRegistru(foi, {
           ...optiuniNucleu(),
           laProgres: (p) => { if (p.faza === "memorie") determinist = p.gata; },
@@ -753,6 +776,8 @@ export const ecran: Ecran = {
             valoare: rez.statistici.valoareTotala,
             extrase: [...rez.rezolvate].map(([index, r]) => ({ index, extras: r.extras, sursa: r.sursa })),
             editari: ctx.editari,
+            destinatie,
+            grosimiPropuse: [...grosimiPropuse],
           }).then(deseneazaIstoric);
         }, 400);
       };
@@ -814,7 +839,7 @@ export const ecran: Ecran = {
             ${(() => {
               const n = liniiFoaie(f).filter((l) => propunereGrosime(l) !== null).length;
               return n === 0 ? "" : `<button class="secundar" data-actiune="grosimi"
-                title="Grosimea pe care o alege tehnicul după diametru: 40 mm până la ø60, 50 până la ø169, 60 peste. Dedusă din oferta 284, neconfirmată de firmă.">Completează ${n} grosimi lipsă</button>`;
+                title="Grosimea uzuală a firmei după diametru (răspunsul din 11 septembrie 2026): vată 20–100 mm, elastomer 13/19/25 mm. Pozițiile rămân de validat până le confirmi.">Completează ${n} grosimi lipsă</button>`;
             })()}
             <button class="secundar" data-actiune="oferta">Generează oferta</button>
             ${ultimaConfirmare
@@ -850,6 +875,7 @@ export const ecran: Ecran = {
           ${nota(
             `<strong>${oferta.length} ${oferta.length === 1 ? "poziție" : "poziții"}</strong>, ` +
             `<strong>${eur(total)}</strong>` +
+            ` · ofertă ${esc(ETICHETA_SEGMENT[destinatie].toLowerCase())}` +
             (deValidat.length + netarifate.length > 0
               ? ` · în afara ofertei: ${deValidat.length} de validat, ${netarifate.length} netarifate`
               : ""))}
@@ -1010,19 +1036,19 @@ export const ecran: Ecran = {
         }
 
         if (actiune === "grosimi") {
-          // Propunerea devine valoare DOAR aici, la un clic explicit — de-aia
-          // linia primeste `sursa: "om"`: decizia e a lui, noi doar i-am pus
-          // cifra in fata. Se aplica pe foaia activa, ca tot ce e in bara.
+          // Propunerea devine valoare DOAR aici, la un clic explicit — dar nu
+          // si confirmare. Grosimea decide pretul si n-a scris-o clientul, deci
+          // liniile raman „de validat" pana le confirma omul, ca pe oricare
+          // altele. Pana acum clicul punea `sursa: "om"` pe toata foaia, adica
+          // o confirmare in masa pe care butonul nu o anunta.
+          // Se aplica pe foaia activa, ca tot ce e in bara.
           const f = foi[activa];
           if (!f) return;
           let aplicate = 0;
           for (const l of liniiFoaie(f)) {
             const g = propunereGrosime(l);
             if (g === null) continue;
-            rez.rezolvate.set(l.extras.index, {
-              extras: { ...l.extras, grosime_mm: g },
-              sursa: "om",
-            });
+            grosimiPropuse.set(l.extras.index, g);
             aplicate++;
           }
           if (aplicate === 0) return;
@@ -1111,10 +1137,10 @@ export const ecran: Ecran = {
           antet,
           provenienta: {
             generatLa: new Date().toISOString(),
-            // Motorul ruleaza pe listele rezidentiale — `src/pricing/lists.ts`
-            // le importa static. Cand va sti sa aleaga destinatia (intrebarea
-            // 12), valoarea vine de acolo, nu de aici.
-            destinatie: "rezidential",
+            // Segmentul ales la import, adica listele din care s-au calculat
+            // chiar preturile din registru. Scris fix "rezidential", o oferta
+            // tarifata pe industrial pleca cu provenienta falsa.
+            destinatie,
             model: ctx.meta.model,
             sesiune: ctx.meta.id,
             fisierSursa: ctx.meta.nume,
@@ -1181,6 +1207,14 @@ export const ecran: Ecran = {
         if (!l) return;
 
         const extras: LinieExtrasa = { ...l.extras };
+        // O grosime propusa se vede in `l.extras`, dar n-a scris-o nimeni.
+        // Corectia omului o inlocuieste: la grosime cu ce scrie el, la sistem
+        // sau diametru cu nimic — propunerea era pentru valorile vechi, iar
+        // butonul din bara o recalculeaza pentru cele noi. Fara stergere, o
+        // grosime golita de om ar fi fost pusa la loc la urmatorul recalcul.
+        const dinPropunere = grosimiPropuse.has(idx) && rez.rezolvate.get(idx)?.extras.grosime_mm === null;
+        grosimiPropuse.delete(idx);
+        if (dinPropunere && nume !== "grosime") extras.grosime_mm = null;
         if (nume === "sistem") extras.sistem = camp.value as LinieExtrasa["sistem"];
         else if (nume === "diametru") extras.diametru_valoare = camp.value === "" ? null : Number(camp.value);
         else if (nume === "grosime") extras.grosime_mm = camp.value === "" ? null : Number(camp.value);

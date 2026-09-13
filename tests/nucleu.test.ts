@@ -216,3 +216,60 @@ describe("reevalueaza", () => {
     expect(rez.rezolvate.get(tinta.index)).toEqual({ extras: corectat, sursa: "om" });
   });
 });
+
+describe("grosimile propuse", () => {
+  // Textul real de pe cererea Abur: clientul nu scrie grosimea vatei.
+  const CASETA = "Caseta izolatie armaturi cu flanse DN50 din tabla aluminiu si vata minerala";
+
+  it("intra in pret, dar linia ramane de validat si nu devine a omului", async () => {
+    const rez = await proceseazaRegistru(await parseFoi(await registru([ANTET, [1, CASETA, "buc", 6]])), { stoc: stocInMemorie() });
+    const fara = rez.linii.find((l) => l.bruta.text.includes("Caseta"))!;
+    expect(fara.extras.grosime_mm).toBeNull();
+    expect(fara.pret).toBeUndefined();
+
+    reevalueaza(rez, { stoc: stocInMemorie(), grosimiPropuse: new Map([[fara.extras.index, 40]]) });
+    const cu = rez.linii.find((l) => l.bruta.text.includes("Caseta"))!;
+    expect(cu.extras.grosime_mm).toBe(40);
+    expect(cu.pret).toBeDefined();
+    expect(cu.sursa).not.toBe("om");
+    expect(cu.necesitaValidare).toBe(true);
+    expect(cu.pret!.noteDeVerificat?.join(" ")).toContain("propusa");
+    // Nimic scris in `rezolvate`: grosimea nu se da drept extrasa din text.
+    expect(rez.rezolvate.get(cu.extras.index)!.extras.grosime_mm).toBeNull();
+  });
+
+  it("confirmarea o scoate de la validare si pastreaza pretul", async () => {
+    const rez = await proceseazaRegistru(await parseFoi(await registru([ANTET, [1, CASETA, "buc", 6]])), { stoc: stocInMemorie() });
+    const idx = rez.linii.find((l) => l.bruta.text.includes("Caseta"))!.extras.index;
+    const opt = { stoc: stocInMemorie(), grosimiPropuse: new Map([[idx, 40]]) };
+    reevalueaza(rez, opt);
+    const pret = rez.linii.find((l) => l.extras.index === idx)!.pret!.pret_unitar;
+
+    // Exact ce face `confirma` din web/validare.ts.
+    rez.rezolvate.set(idx, { extras: rez.rezolvate.get(idx)!.extras, sursa: "om" });
+    reevalueaza(rez, opt);
+    const dupa = rez.linii.find((l) => l.extras.index === idx)!;
+    expect(dupa.necesitaValidare).toBe(false);
+    expect(dupa.pret!.pret_unitar).toBe(pret);
+  });
+});
+
+describe("o nota care cere ochi se stinge la confirmare", () => {
+  it("PVC pe industrial: marcat inainte, nemarcat dupa confirmare", async () => {
+    const opt = { stoc: stocInMemorie(), destinatie: "industrial" as const };
+    const rez = await proceseazaRegistru(await parseFoi(await registru([
+      ANTET, [1, "Izolatie vata minerala 50 mm DN50 cu protectie PVC", "ml", 10],
+    ])), opt);
+    const l = rez.linii.find((x) => x.extras.sistem !== null)!;
+    expect(l.pret?.noteDeVerificat?.length).toBeGreaterThan(0);
+    expect(l.necesitaValidare).toBe(true);
+
+    rez.rezolvate.set(l.extras.index, { extras: l.extras, sursa: "om" });
+    reevalueaza(rez, opt);
+    const dupa = rez.linii.find((x) => x.extras.index === l.extras.index)!;
+    // Inainte ramanea marcata la nesfarsit: confirmarea n-avea niciun efect,
+    // iar pozitia nu ajungea niciodata pe foaia Ofertă.
+    expect(dupa.necesitaValidare).toBe(false);
+    expect(dupa.pret?.noteDeVerificat?.length).toBeGreaterThan(0);
+  });
+});

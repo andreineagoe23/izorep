@@ -80,6 +80,18 @@ export interface OptiuniNucleu {
    * listele industriale, deci CLI-ul si testele nu-si schimba rezultatul.
    */
   destinatie?: Destinatie;
+  /**
+   * Grosimile uzuale ale firmei (`grosimi-uzuale.ts`) pe care omul a cerut sa
+   * fie puse, pe indexul liniei. Se aplica DOAR liniilor fara grosime extrasa
+   * si NU le confirma: o grosime propusa decide pretul, dar n-a scris-o
+   * clientul, deci linia ramane de validat pana o confirma omul.
+   *
+   * Sta separat de `rezolvate` fiindca `reevalueaza` re-extrage de la zero
+   * liniile care nu sunt "om", iar grosimea propusa nu vine din textul lor.
+   * Pana acum butonul punea `sursa: "om"`, adica o confirmare in masa ascunsa:
+   * 24 de casete de pe cererea Abur plecau direct in oferta, fara validare.
+   */
+  grosimiPropuse?: ReadonlyMap<number, number>;
   laProgres?: (p: Progres) => void;
 }
 
@@ -304,6 +316,7 @@ function construiesteLinii(
   rezolvate: Map<number, { extras: LinieExtrasa; sursa: Sursa }>,
   prag: number,
   destinatie: Destinatie,
+  grosimiPropuse?: ReadonlyMap<number, number>,
 ): LinieProcesata[] {
   const linii: LinieProcesata[] = [];
   for (const b of brute) {
@@ -338,20 +351,36 @@ function construiesteLinii(
     // schimba nimic.
     const extras = avertismente.length > 0 ? { ...r.extras, incredere: 0 } : r.extras;
 
+    // Grosimea propusa intra DUPA guardrails: nu vine din text, deci
+    // `grosime_necitata` s-ar aprinde pe o valoare pe care chiar omul a cerut-o.
+    const propusa = grosimiPropuse?.get(b.index);
+    const cuPropunere = propusa !== undefined && extras.grosime_mm === null
+      && extras.sistem !== null && extras.sistem !== "goluri_foc";
+    const deTarifat = cuPropunere ? { ...extras, grosime_mm: propusa } : extras;
+
     const proc: LinieProcesata = {
-      bruta: b, extras, sursa,
+      bruta: b, extras: deTarifat, sursa,
       ...(avertismente.length ? { avertismente } : {}),
       necesitaValidare: sursa !== "om" && extras.sistem !== null
-        && (extras.incredere < prag || avertismente.length > 0),
+        && (extras.incredere < prag || avertismente.length > 0 || cuPropunere),
     };
 
-    const t = tarifeazaExtras(extras, b.cantitate ?? 1, destinatie);
+    const t = tarifeazaExtras(deTarifat, b.cantitate ?? 1, destinatie);
+    if (t.pret && cuPropunere) {
+      const n = `grosime ${propusa} mm propusa dupa diametru (grosimea uzuala a firmei), nu scrisa de client`;
+      t.pret.note = [...(t.pret.note ?? []), n];
+      t.pret.noteDeVerificat = [...(t.pret.noteDeVerificat ?? []), n];
+    }
     if (t.pret) proc.pret = t.pret;
-    // Doar notele care CER ochi opresc linia la validare — azi, pretul venit
-    // din lista altui segment. Regula "cot/teu de vata sub o60 nu intra in
-    // pret" era si ea aici pana cand firma a confirmat-o (11 sep 2026): nota
-    // ramane pe pozitie, fiindca explica pretul, dar nu mai cheama omul.
-    if (t.pret && "noteDeVerificat" in t.pret && t.pret.noteDeVerificat?.length) {
+    // Doar notele care CER ochi opresc linia la validare: pretul venit din
+    // lista altui segment, rotunjirea neconfirmata, grosimea propusa. Regula
+    // "cot/teu de vata sub o60 nu intra in pret" era si ea aici pana cand
+    // firma a confirmat-o (11 sep 2026): nota ramane, dar nu mai cheama omul.
+    //
+    // Nu si pe "om": confirmarea ESTE raspunsul la nota. Fara exceptia asta, o
+    // pozitie confirmata ramanea marcata la nesfarsit si nu ajungea niciodata
+    // pe foaia `Ofertă` — butonul de confirmare n-avea niciun efect pe ea.
+    if (sursa !== "om" && t.pret?.noteDeVerificat?.length) {
       proc.necesitaValidare = true;
     }
     if (t.eroare !== undefined) {
@@ -500,7 +529,7 @@ export async function proceseazaRegistru(foi: FoaieBruta[], o: OptiuniNucleu): P
 
   // Guardrails + L3
   completeazaCuPartiale(rezolvate, partiale);
-  const linii = construiesteLinii(brute, rezolvate, prag, o.destinatie ?? "rezidential");
+  const linii = construiesteLinii(brute, rezolvate, prag, o.destinatie ?? "rezidential", o.grosimiPropuse);
   o.laProgres?.({ faza: "tarifare", gata: linii.length, total: brute.length });
 
   const statistici: Statistici = {
@@ -587,7 +616,7 @@ export function reevalueaza(rez: Rezultat, o: OptiuniNucleu): void {
 
   completeazaCuPartiale(rezolvate, partiale);
   rez.rezolvate = rezolvate;
-  rez.linii = construiesteLinii(brute, rezolvate, prag, o.destinatie ?? "rezidential");
+  rez.linii = construiesteLinii(brute, rezolvate, prag, o.destinatie ?? "rezidential", o.grosimiPropuse);
   rez.statistici = {
     ...statisticiDeterministe(rez.foi, foiMapate, brute, rez.linii),
     // Astea descriu apelul la model care a produs starea INITIALA a lui `rez`;

@@ -5,7 +5,7 @@
  */
 import { describe, it, expect } from "vitest";
 import {
-  anuleaza, blocaje, confirma, ETICHETE_BLOCAJ, nrBlocate, potrivit,
+  anuleaza, blocaje, confirma, ETICHETE_BLOCAJ, intrebareaPentru, nrBlocate, potrivit,
   type Filtru,
 } from "../web/validare.js";
 import type { Avertisment, CodNetarifare } from "../src/import/nucleu.js";
@@ -275,5 +275,22 @@ describe("blocaje", () => {
     for (const [cod, e] of Object.entries(ETICHETE_BLOCAJ)) {
       expect(e.eticheta, cod).toBeTruthy();
     }
+  });
+});
+
+describe("intrebarea la grosime ambigua", () => {
+  it("trimite la intrebarea 15 doar cand linia are tabla de inox", () => {
+    // Cu intrebarea fixa, cele 24 de casete de vata fara grosime de pe cererea
+    // Abur trimiteau la o intrebare despre inox. Acolo grosimea lipsa se
+    // completeaza cu cea uzuala a firmei; nu asteapta niciun raspuns.
+    const vata = linie({ index: 1, codEroare: "grosime_ambigua", extras: { sistem: "vata_minerala" } });
+    const inox = linie({
+      index: 2, codEroare: "grosime_ambigua",
+      extras: { sistem: "vata_minerala", straturi_extra: [{ sistem: "tabla_inox", grosime_mm: null }] },
+    });
+    expect(intrebareaPentru("grosime_ambigua", vata)).toBeUndefined();
+    expect(intrebareaPentru("grosime_ambigua", inox)).toBe(15);
+    expect(blocaje([vata])[0]!.intrebare).toBeUndefined();
+    expect(blocaje([vata, inox])[0]!.intrebare).toBe(15);
   });
 });

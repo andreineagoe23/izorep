@@ -58,7 +58,8 @@ export const ETICHETE_BLOCAJ: Record<CodBlocaj, { eticheta: string; intrebare?: 
   grosime_inexistenta: { eticheta: "grosime care nu există în listă" },
   peste_maximul_listei: { eticheta: "diametru peste maximul listei", intrebare: 4 },
   dn_necunoscut: { eticheta: "DN inexistent în seria de oțel", intrebare: 10 },
-  grosime_ambigua: { eticheta: "grosimea nu e scrisă, iar sistemul are mai multe la rândul ăla", intrebare: 15 },
+  // Fara intrebare fixa: vezi `intrebareaPentru`.
+  grosime_ambigua: { eticheta: "grosimea nu e scrisă, iar sistemul are mai multe la rândul ăla" },
   banda_inexistenta: { eticheta: "diametrul nu cade în nicio bandă de multiplicatori" },
   lista_goala: { eticheta: "lista de prețuri e goală" },
   pozitie_fara_straturi: { eticheta: "poziție fără niciun strat" },
@@ -79,6 +80,25 @@ export const ETICHETE_BLOCAJ: Record<CodBlocaj, { eticheta: string; intrebare?: 
   grosime_in_afara_listei: { eticheta: "grosime pe care sistemul ăla nu o ofertează" },
   forma_contrazice_um: { eticheta: "forma contrazice unitatea de măsură" },
 };
+
+/**
+ * Intrebarea deschisa catre firma care deblocheaza linia, pentru cauza data.
+ *
+ * Aproape mereu e cea din `ETICHETE_BLOCAJ`. Exceptia e `grosime_ambigua`, cu
+ * doua situatii diferite sub acelasi cod: la tabla de inox lista are trei
+ * grosimi la fiecare rand, iar clientul nu scrie niciodata care — intrebarea
+ * 15; la vata sau elastomer grosimea lipsa se completeaza cu cea uzuala a
+ * firmei, deci nu asteapta pe nimeni. Cu intrebarea fixa, cele 24 de casete de
+ * vata de pe cererea Abur trimiteau la o intrebare despre inox.
+ */
+export function intrebareaPentru(cod: CodBlocaj, l: LinieProcesata): number | undefined {
+  if (cod === "grosime_ambigua") {
+    const cuInox = l.extras.sistem === "tabla_inox"
+      || l.extras.straturi_extra.some((s) => s.sistem === "tabla_inox");
+    return cuInox ? 15 : undefined;
+  }
+  return ETICHETE_BLOCAJ[cod].intrebare;
+}
 
 export interface Blocaj {
   cod: CodBlocaj;
@@ -107,16 +127,24 @@ export interface Blocaj {
  */
 export function blocaje(linii: LinieProcesata[]): Blocaj[] {
   const contor = new Map<CodBlocaj, number>();
-  const adauga = (c: CodBlocaj): void => { contor.set(c, (contor.get(c) ?? 0) + 1); };
+  const intrebari = new Map<CodBlocaj, number>();
+  const adauga = (c: CodBlocaj, l: LinieProcesata): void => {
+    contor.set(c, (contor.get(c) ?? 0) + 1);
+    const q = intrebareaPentru(c, l);
+    if (q !== undefined) intrebari.set(c, q);
+  };
 
   for (const l of linii) {
     if (l.extras.sistem === null) continue;   // antet, nota, total: nu e pozitie
-    if (!l.pret && l.codEroare) adauga(l.codEroare);
-    for (const a of l.avertismente ?? []) adauga(a.cod);
+    if (!l.pret && l.codEroare) adauga(l.codEroare, l);
+    for (const a of l.avertismente ?? []) adauga(a.cod, l);
   }
 
   return [...contor]
-    .map(([cod, n]) => ({ cod, n, ...ETICHETE_BLOCAJ[cod] }))
+    .map(([cod, n]) => {
+      const intrebare = intrebari.get(cod);
+      return { cod, n, eticheta: ETICHETE_BLOCAJ[cod].eticheta, ...(intrebare !== undefined ? { intrebare } : {}) };
+    })
     .sort((a, b) => b.n - a.n || a.cod.localeCompare(b.cod));
 }
 

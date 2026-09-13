@@ -1,6 +1,6 @@
 import type { LinieProcesata } from "../src/import/nucleu.js";
 import { bani } from "../src/pricing/engine.js";
-import { ETICHETE_BLOCAJ } from "./validare.js";
+import { ETICHETE_BLOCAJ, intrebareaPentru } from "./validare.js";
 
 /**
  * Registrul de ofertă: ce pleacă din aplicație către client.
@@ -71,7 +71,7 @@ export interface AntetOferta {
 export interface Provenienta {
   /** Momentul generării, ISO. */
   generatLa: string;
-  /** Destinația listelor pe care a rulat motorul. Azi mereu `rezidential`. */
+  /** Segmentul ales la import: listele din care s-au calculat chiar prețurile din registru. */
   destinatie: string;
   /** Snapshot-ul de model folosit la import, sau `null` pe calea deterministă. */
   model: string | null;
@@ -148,14 +148,21 @@ const norma = (l: LinieProcesata): string =>
 /** Eticheta umană a cauzei, plus întrebarea deschisă când există una. */
 function cauzaCitita(l: LinieProcesata): string {
   if (!l.codEroare) return l.eroare ?? "—";
-  const e = ETICHETE_BLOCAJ[l.codEroare];
-  return e.intrebare ? `${e.eticheta} (întrebarea ${e.intrebare} către firmă)` : e.eticheta;
+  const { eticheta } = ETICHETE_BLOCAJ[l.codEroare];
+  const intrebare = intrebareaPentru(l.codEroare, l);
+  return intrebare ? `${eticheta} (întrebarea ${intrebare} către firmă)` : eticheta;
 }
 
-/** Motivele pentru care o poziție cu preț e totuși marcată. */
+/**
+ * Motivele pentru care o poziție cu preț e totuși marcată.
+ *
+ * Doar notele care CER verificare: o notă informativă — regula de cot/teu
+ * confirmată de firmă — explică prețul, dar nu e motivul pentru care poziția
+ * stă în foaia asta, iar scrisă aici ar ascunde motivul adevărat.
+ */
 function motivulMarcarii(l: LinieProcesata): string {
   const av = (l.avertismente ?? []).map((a) => ETICHETE_BLOCAJ[a.cod].eticheta);
-  const note = l.pret && "note" in l.pret ? (l.pret.note ?? []) : [];
+  const note = l.pret?.noteDeVerificat ?? [];
   const tot = [...av, ...note.map((n) => n.replace(/\s+/g, " ").trim())];
   return tot.length > 0 ? tot.join(" · ") : `încredere ${l.extras.incredere} sub prag`;
 }
