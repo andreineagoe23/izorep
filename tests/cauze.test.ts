@@ -275,7 +275,7 @@ async function registru(randuri: (string | number | null)[][]): Promise<ArrayBuf
   return (await wb.xlsx.writeBuffer()) as ArrayBuffer;
 }
 
-/** Textul real din `Oferta 27.04.2026.xlsx`, foaia Ventilatie. */
+/** Textul real din `oferta-118-nisal.xlsx`, foaia Ventilatie. */
 const SPIRO_125 = "Zuluft Wickelfalzrohr starr SPIRO DN 125, Armaflex 9mm";
 
 describe("SPIRO se citeste ca diametru exterior", () => {

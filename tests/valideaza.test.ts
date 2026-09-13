@@ -21,7 +21,7 @@ const coduri = (l: LinieExtrasa, text: string, um?: string): string[] =>
 
 describe("numere inventate", () => {
   it("prinde diametrul care nu apare in text", () => {
-    // Cazul real: gpt-4.1-mini a citit "Di60" ca 76 pe Izolatii Transavia.xlsx.
+    // Cazul real: gpt-4.1-mini a citit "Di60" ca 76 pe cerere-de-oferta-transavia-inox.xlsx.
     // Un rand gresit in matrice inseamna alt pret, iar modelul raporteaza 0,95
     // incredere pe el. Fara verificarea asta, nimic nu se aprinde.
     const l = linie({ sistem: "elastomer", diametru_valoare: 76, diametru_tip: "interior", grosime_mm: 19 });

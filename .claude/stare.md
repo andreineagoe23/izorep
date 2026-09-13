@@ -17,7 +17,9 @@ Materialul sursă stă în `../attachments/` și **nu e commit-uit** — conțin
 prețurile reale ale firmei. E grupat pe ce înseamnă, nu plat: `preturi/` pe
 segment (rezidențiale / industriale / rafinărie) plus listele marcate „NUUUU"
 de firmă, și `clienti/` pentru listele de cantități și ofertele trimise pe ele.
-Inventarul complet, cu ce lipsește din fiecare segment, e în
+Inventarul complet, cu ce lipsește din fiecare segment și cu numele
+cu care au venit fișierele (redenumite pe 13 septembrie 2026: scurte, fără
+spații — `clienti/cerere-de-oferta-transavia-abur.xlsx`), e în
 `../attachments/README.md`. ETL-ul caută fișierele după nume, recursiv, deci
 gruparea nu-l afectează.
 
@@ -43,8 +45,8 @@ Poziția primește `note` că amestecă destinații. Întrebarea 15 rămâne.
 deterministă (~55% din linii), L2b completare cu OpenAI prin structured outputs
 pe reziduu, L3 tarifare. Rulat pe lista reală a unui spital: 191 poziții
 detectate, 63% tarifate automat. Rulează identic din CLI și din aplicație, când
-aceasta e pornită local (`npm run dev`): pe `Izolatii Transavia.xlsx` ambele dau
-72 poziții, 39 tarifate, 6.034,70 €. Pe `Oferta 27.04.2026 Matari.xlsx`
+aceasta e pornită local (`npm run dev`): pe `cerere-de-oferta-transavia-inox.xlsx` ambele dau
+72 poziții, 39 tarifate, 6.034,70 €. Pe `oferta-118-1-matari-goluri-foc.xlsx`
 (închideri goluri la foc): 53 de poziții, 100% tarifate determinist, fără niciun
 apel la model.
 
@@ -88,8 +90,7 @@ client, ca deriva să se vadă. Detaliile în `import.md`.
 importul nu se mai oprește în grilă. Butonul „Generează oferta" produce un
 registru `.xlsx` cu trei foi: `Ofertă` (doar pozițiile cu preț **și** nemarcate,
 în layoutul ofertei 284 reale), `De validat` și `Netarifate`, ultimele două cu
-motivul scris pe fiecare rând. Verificat cap-coadă: `Oferta 27.04.2026
-Matari.xlsx` importat determinist dă un registru cu 53 de poziții și total
+motivul scris pe fiecare rând. Verificat cap-coadă: `oferta-118-1-matari-goluri-foc.xlsx` importat determinist dă un registru cu 53 de poziții și total
 **12.692,04 €**, adică exact totalul ofertei semnate. `web/oferta.ts` e pur,
 fără DOM, deci se testează în Node ca motorul; `Blob` și `<a download>` stau
 singure în `web/descarca.ts`. Detaliile în `ui.md`.
@@ -97,7 +98,7 @@ singure în `web/descarca.ts`. Detaliile în `ui.md`.
 **Nicio poziție fără preț nu mai rămâne fără cauză.** `tarifeazaExtras` întorcea
 `{}` când sistemul era cunoscut dar diametrul lipsea: fără preț, fără eroare,
 fără cod și — dacă modelul raportase încredere peste prag — fără să fie nici
-marcată. Se vedea exclusiv ca diferență între două contoare, iar pe `Radoia.xlsx`
+marcată. Se vedea exclusiv ca diferență între două contoare, iar pe `cerere-de-oferta-spital.xlsx`
 însemna ~45 din 51 de poziții netarifate invizibile în blocul de cauze. Codul
 `fara_diametru` acoperă cazul (tubulatură **rectangulară**, care chiar n-are ø,
 ci A×B — conversia e în `tevi.md`, neimplementată). Un test exhaustiv peste toate
@@ -263,7 +264,7 @@ ca țeavă PEHD față de tubulatură SPIRO în aceeași ofertă, și rotunjirea
 stratul de jachetă.
 
 **Modelul nu întoarce toate liniile pe care le primește.** Contractul e „câte
-un obiect per linie, cu același index"; pe `Oferta 27.04.2026.xlsx` au plecat
+un obiect per linie, cu același index"; pe `oferta-118-nisal.xlsx` au plecat
 43 de linii și s-au întors 35. Liniile lipsă nu apăreau nicăieri în raport, deci
 un fișier ciuntit arăta ca un fișier cu mai puține poziții. Acum se numără
 (`modelFaraRaspuns`).
@@ -284,7 +285,7 @@ poziție. Pe cele 9 fișiere, 513 poziții devin 441, iar cele tarifate rămân 
 sistem și grosime (2,20 / 2,30 / 3,00 €/ml), nu matrice ø × grosime. Nu e o
 coloană a aceleiași linii, e o listă separată.
 
-**Lista de inox lipsea, dar lucrările de inox nu.** `Izolatii Transavia.xlsx`
+**Lista de inox lipsea, dar lucrările de inox nu.** `cerere-de-oferta-transavia-inox.xlsx`
 are **72 de rânduri** care spun „tabla de inox 304" — practic tot fișierul.
 Neavând listă, `extract-llm.ts` mapa explicit inoxul pe `tabla`, adică pe lista
 de aluminiu, iar cele 39 de poziții tarifate din el (6.039,90 €) au ieșit pe
@@ -292,9 +293,8 @@ lista greșită. Inoxul e mult mai scump: la ø90, 30,89 € (0,4 mm) față de
 17,08 € (aluminiu 0,6 mm). Lista industrială de inox rezolvă asta — dar abia
 după ce motorul capătă sistemul și regula de segment.
 
-**Prima pereche cerere → ofertă pe aceleași rânduri.** `Cerere oferta 2
-Izolatii - Abur.xlsx` (99 rânduri) și `Oferta 284 Abur TRANSAVIA
-27.05.2026 - tabla aluminiu.xlsx` sunt același proiect, întrebat și răspuns.
+**Prima pereche cerere → ofertă pe aceleași rânduri.** `cerere-de-oferta-transavia-abur.xlsx` (99 rânduri) și
+`oferta-284-transavia-abur.xlsx` sunt același proiect, întrebat și răspuns.
 Până acum aveam ori cereri, ori oferte, niciodată perechea — deci nu se putea
 măsura tarifarea fără să ghicim ce a fost întrebat.
 
@@ -416,7 +416,7 @@ de inox din `Izolatii Transavia` sunt înregistrate cu `{"sistem": "tabla"}`,
 adică pe lista de aluminiu. Testul trece — el rejoacă partea deterministă peste
 ce e înregistrat — dar înregistrarea nu mai reprezintă ce ar răspunde modelul
 azi. Re-înregistrarea costă un apel real:
-`npm run golden -- ../attachments/clienti/Izolatii\ Transavia.xlsx`.
+`npm run golden -- ../attachments/clienti/cerere-de-oferta-transavia-inox.xlsx`.
 
 **Efectul pe fișierele reale, doar pe stratul determinist** (`--fara-model`,
 cele 10 fișiere din `attachments/clienti/`):
@@ -546,7 +546,7 @@ Astea blochează arhitectura, nu doar implementarea:
 7. Care e regula de curs folosită azi la facturare — BNR din ziua anterioară,
    din ziua facturii, sau cursul din contract? (De verificat cu contabila.
    Până atunci `CURS_BNR` rămâne constantă: cursul contează abia la facturare.)
-8. „Protecție la foc pentru tubulatură" (28 de rânduri în `Radoia.xlsx`) e o
+8. „Protecție la foc pentru tubulatură" (28 de rânduri în `cerere-de-oferta-spital.xlsx`) e o
    lucrare pe care o ofertați? Nu are listă de prețuri printre cele primite.
 9. ~~**Coturile și teurile de vată minerală sub ø76.**~~ **Răspuns 11
    septembrie 2026: e regula firmei.** Prețul e tabla la rândul geometric, fără
@@ -604,7 +604,7 @@ rolul, nu valorile — numerele se citesc per linie, din poziția lor în șablo
 
 **L1 — maparea de coloane per client.** Rezolvă simultan două lucruri:
 euristica de cantitate (azi ghicește coloana lângă unitatea de măsură) și
-`Book15.xlsx`, unde din 412 rânduri ies doar 5 poziții, pentru că rândurile de
+`cerere-de-oferta-book15.xlsx`, unde din 412 rânduri ies doar 5 poziții, pentru că rândurile de
 continuare `"Same - Ø125 mm"` își pierd descrierea părinte.
 
 Rândul de antet e găsibil fizic pe 14 din 15 foi, dar nu pe poziție fixă
@@ -635,7 +635,7 @@ contract, stoc și facturare.
 npm test                                       # 421 teste (motor, import, baza, ofertă)
 npm run typecheck
 npm run dev                                    # UI local, /izorep/
-npm run import -- ../attachments/clienti/Radoia.xlsx   # pipeline complet
+npm run import -- ../attachments/clienti/cerere-de-oferta-spital.xlsx   # pipeline complet
 npm run import -- <fisier> --fara-model        # doar determinist
 npm run golden -- <fisier.xlsx>                # inregistreaza iesirea modelului
 npm run golden -- --verifica                   # cauta deriva modelului

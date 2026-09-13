@@ -23,7 +23,7 @@ const valoare = (c: ExcelJS.CellValue): string | number | null => {
 /**
  * Randul de antet al unei foi.
  *
- * Nu e pe pozitie fixa: in `Radoia.xlsx` e r6, in oferta Matari r14, in
+ * Nu e pe pozitie fixa: in `cerere-de-oferta-spital.xlsx` e r6, in oferta Matari r14, in
  * `Flower City` r5, in `Book15` r1, iar in `Izolatii Transavia` nu exista
  * deloc — datele incep direct de la primul rand. De-aia se cauta, si de-aia
  * cautarea are voie sa nu gaseasca nimic.

@@ -129,7 +129,7 @@ describe("guardrails pe drumul ecranului", () => {
     // Textul spune Di60, dar n-are nicio grosime plauzibila — regexul il lasa
     // deci incomplet (reziduala), desi gaseste sistemul si diametrul.
     // Extractorul falsifica diametrul la 76 la intoarcere — exact cazul
-    // masurat pe Izolatii Transavia.xlsx cu gpt-4.1-mini.
+    // masurat pe cerere-de-oferta-transavia-inox.xlsx cu gpt-4.1-mini.
     const RANDURI = [
       ANTET,
       [1, "Izolatii cu vata minerala pentru teava Di60, fara alte detalii - COT", "buc", 2],

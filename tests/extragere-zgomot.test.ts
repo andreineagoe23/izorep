@@ -1,7 +1,7 @@
 /**
  * Ce NU e o poziție de izolație, și ce numere nu sunt grosimi.
  *
- * Toate cazurile de aici vin din `Book15.xlsx` și `Oferta 27.04.2026.xlsx`,
+ * Toate cazurile de aici vin din `cerere-de-oferta-book15.xlsx` și `oferta-118-nisal.xlsx`,
  * unde extragerea producea zgomot: rânduri de altă meserie citite ca izolație,
  * diametre citite ca grosimi, unități citite din densitatea zincului. Zgomotul
  * ăsta nu se vedea ca greșeală — se vedea ca **muncă**, fiindcă fiecare rând

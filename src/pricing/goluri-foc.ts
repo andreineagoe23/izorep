@@ -16,7 +16,7 @@ import {
  *
  *   pret = golul (dupa SUPRAFATA lui) + banda WRAP + colier PROMASTOP
  *
- * Nota 2 din "Oferta pret inchideri goluri la foc.xlsx" o scrie explicit:
+ * Nota 2 din "pret-rezidential-goluri-foc.xlsx" o scrie explicit:
  * "Daca inchiderile golurilor la foc necesita banda wrap, pretul acestora va
  * fi constituit din pretul inchiderii golului la foc + pretul benzii wrap".
  * Nota 1, la fel: "In pretul inchiderilor golurilor la foc nu sunt incluse

@@ -169,7 +169,7 @@ export class PozitieNetarifata extends Error {
 /* ------------------------------------------------------------------ *
  * Inchideri goluri la foc
  *
- * Termenii sunt ai firmei, luati din "Oferta pret inchideri goluri la foc.xlsx"
+ * Termenii sunt ai firmei, luati din "pret-rezidential-goluri-foc.xlsx"
  * si din oferta 118.1: "inchideri goluri la foc", "goluri pana la 0,05 mp",
  * "banda WRAP", "conducta plastic" / "conducta otel", "colier de protectie
  * antifoc PROMASTOP UNICOLLAR", "urcare" / "orizontala".

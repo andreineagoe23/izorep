@@ -246,7 +246,7 @@ e în `where`, nu în `order by`".
 6. **Țolii vin vreodată singuri** pe linie, fără DN alături? De asta depinde
    dacă tabelul Toli e obligatoriu la extragere sau doar de siguranță.
 7. **Ce e cu tabla de inox?** A venit doar pe industrial, fără corespondent
-   rezidențial, deși `Izolatii Transavia.xlsx` — 72 de rânduri de inox — e o
+   rezidențial, deși `cerere-de-oferta-transavia-inox.xlsx` — 72 de rânduri de inox — e o
    lucrare pe care firma a ofertat-o deja. Se ofertează inox și pe rezidențial?
 8. **PVC și goluri la foc pe industrial** — nu se ofertează acolo, sau se
    folosesc listele rezidențiale?

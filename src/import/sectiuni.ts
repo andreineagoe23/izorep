@@ -15,7 +15,7 @@ import type { LinieBruta } from "./parse-workbook.js";
  *
  * E o solutie ingusta pentru un singur nivel de sectiune. Maparea de coloane
  * per client (L1) o inlocuieste cu ceva care stie si ierarhii, si randuri de
- * continuare ("Same - Ø125 mm" din Book15.xlsx).
+ * continuare ("Same - Ø125 mm" din cerere-de-oferta-book15.xlsx).
  */
 export interface LinieCuSectiune extends LinieBruta {
   /** Textul ultimului antet de sectiune de deasupra, daca exista. */

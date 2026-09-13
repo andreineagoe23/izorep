@@ -54,12 +54,12 @@ interface Caz {
 
 const CAZURI: Caz[] = [
   {
-    fisier: "Oferta 27.04.2026 Matari.xlsx",
+    fisier: "oferta-118-1-matari-goluri-foc.xlsx",
     semnat: 12692.04, peOferta: 53, generat: 12692.04,
     deCe: "nimic — închiderile la foc se tarifează 100% determinist, la bănuț",
   },
   {
-    fisier: "Oferta 27.04.2026.xlsx",
+    fisier: "oferta-118-nisal.xlsx",
     semnat: 162585.99 + 7933.40, peOferta: 39, generat: 117484.07,
     deCe: "Pe 13 sep 2026, două mișcări în sensuri opuse. SCĂZUT deliberat: pozițiile la ø90 și "
         + "ø160 (SPIRO, țeavă PEHD, „Enteisungssystem Regenwasserrohre”) au preț, dar stau la 1 mm "
@@ -73,7 +73,7 @@ const CAZURI: Caz[] = [
         + "țevi scrise în țoli.",
   },
   {
-    fisier: "Oferta 284 Abur TRANSAVIA 27.05.2026 - tabla aluminiu.xlsx",
+    fisier: "oferta-284-transavia-abur.xlsx",
     semnat: 94575.06, peOferta: 85, generat: 74993.76,
     deCe: "79% din oferta semnată. Două schimbări au urcat-o de la 25%: extragerea deterministă a "
         + "început să construiască `straturi_extra` (jachetele nu se tarifau deloc), iar firma a "
@@ -82,7 +82,7 @@ const CAZURI: Caz[] = [
         + "presupunere a noastră. Au rămas 13 netarifate, toate `grosime_inexistenta`.",
   },
   {
-    fisier: "Anexa 1 la contract - Oferta 06.12.2024.xlsx",
+    fisier: "oferta-manopera-anexa-contract-2024.xlsx",
     semnat: 706.90, peOferta: 0, generat: 0,
     deCe: "ofertă de MANOPERĂ pură (2,20 / 2,30 / 3,00 €/ml), listă pe care motorul nu o are. "
         + "Zero e răspunsul CORECT: tarifată din matricea material+manoperă, aceeași poziție iese "
@@ -166,7 +166,7 @@ describe("acoperirea față de ofertele semnate", () => {
     // Singurul caz la 100%, si de-aia e scris separat: e dovada ca lantul
     // import -> tarifare -> registru chiar poate reproduce un document semnat.
     // Celelalte trei masoara cat mai lipseste pana acolo.
-    const caz = CAZURI.find((c) => c.fisier.includes("Matari"))!;
+    const caz = CAZURI.find((c) => c.fisier.includes("matari"))!;
     expect(caz.generat).toBe(caz.semnat);
 
     if (!existsSync(`${DIR}/${caz.fisier}`)) return;
@@ -178,7 +178,7 @@ describe("acoperirea față de ofertele semnate", () => {
     // Cea mai scumpa regresie posibila din tot testul: „acoperirea a crescut de
     // la 0 la 100%" ar arata ca un progres si ar fi de fapt un pret de 2,5-3,8
     // ori mai mare, semnat si trimis.
-    const anexa = `${DIR}/Anexa 1 la contract - Oferta 06.12.2024.xlsx`;
+    const anexa = `${DIR}/oferta-manopera-anexa-contract-2024.xlsx`;
     if (!existsSync(anexa)) return;
     const raport = await importaFisier(anexa, { faraModel: true, stoc: stocInMemorie() });
     expect(raport.randuriManopera).toBeGreaterThan(0);
@@ -189,7 +189,7 @@ describe("acoperirea față de ofertele semnate", () => {
   it("niciun alt fișier de client nu se dă drept manoperă", async () => {
     // Semnalul trebuie sa ramana ingust: aprins pe fisierele obisnuite, ar pune
     // o alerta rosie pe importuri perfect normale si n-ar mai fi citit.
-    const matari = `${DIR}/Oferta 27.04.2026 Matari.xlsx`;
+    const matari = `${DIR}/oferta-118-1-matari-goluri-foc.xlsx`;
     if (!existsSync(matari)) return;
     const raport = await importaFisier(matari, { faraModel: true, stoc: stocInMemorie() });
     expect(raport.randuriManopera).toBe(0);

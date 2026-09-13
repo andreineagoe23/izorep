@@ -51,12 +51,12 @@ cantitate (187 ml). Cu maparea: **56 din 56**. Testul stă în `tests/mapare.tes
 pe o foaie reală salvată ca fixtură.
 
 ```bash
-npm run mapare -- ../attachments/clienti/Radoia.xlsx   # înregistrează
+npm run mapare -- ../attachments/clienti/cerere-de-oferta-spital.xlsx   # înregistrează
 npm run mapare -- --lista                      # ce e în cache
 ```
 
 - **Un apel per LAYOUT**, nu per foaie: amprenta e antetul normalizat plus
-  lățimea. `Radoia.xlsx` are 7 foi cu același antet — un apel. Al doilea fișier
+  lățimea. `cerere-de-oferta-spital.xlsx` are 7 foi cu același antet — un apel. Al doilea fișier
   cu același layout — zero.
 - **Modelul propune, `valideazaMapare` decide.** Verificarea nu se uită la
   etichete, ci la conținutul coloanelor pe rândurile de date: `cantitate` să fie
@@ -140,7 +140,7 @@ progres la fiecare lot întors. Un lot care cade nu invalidează importul: restu
 liniilor rămân, iar raportul spune câte loturi au eșuat.
 
 Latența e dominată de generarea răspunsului, nu de rețea. Măsurat pe
-`Oferta 27.04.2026 Matari.xlsx` (84 de linii reziduale, înainte de contextul de
+`oferta-118-1-matari-goluri-foc.xlsx` (84 de linii reziduale, înainte de contextul de
 secțiune) cu gpt-4o: un lot de 25
 de linii ia ~19s, deci varianta secvențială inițială ținea ecranul gol ~80s. În
 loturi de 12, câte 4 deodată: **19–39s**, cu progres vizibil de la prima
@@ -204,7 +204,7 @@ decât cel citit de model.
 
 Zod validează **forma** răspunsului. Nu validează **sensul** lui:
 `diametru_valoare: 76` trece perfect și când în linie scria `Di60` — exact ce a
-făcut `gpt-4.1-mini` pe `Izolatii Transavia.xlsx`, cu încredere raportată 0,95.
+făcut `gpt-4.1-mini` pe `cerere-de-oferta-transavia-inox.xlsx`, cu încredere raportată 0,95.
 Alt diametru înseamnă alt rând în matrice, deci alt preț, fără nimic care să se
 aprindă.
 
@@ -300,7 +300,7 @@ peste ea. Pus înaintea vatei, regex-ul ar clasifica greșit toată linia.
 ### Liniile pe care modelul nu le întoarce
 
 Contractul e „câte un obiect per linie, cu același index". Modelul îl încalcă
-în tăcere: pe `Oferta 27.04.2026.xlsx`, 43 de linii trimise, **35 întoarse**.
+în tăcere: pe `oferta-118-nisal.xlsx`, 43 de linii trimise, **35 întoarse**.
 Liniile lipsă nu apăreau nicăieri în raport — nici ca poziții, nici ca erori —
 deci un fișier ciuntit arăta exact ca un fișier cu mai puține poziții.
 `RaportImport.modelFaraRaspuns` le numără.
@@ -317,7 +317,7 @@ Pinul singur nu ajunge — cineva tot schimbă snapshot-ul cândva. Golden files
 sunt măsurătoarea față de care se compară:
 
 ```bash
-npm run golden -- ../attachments/clienti/Izolatii\ Transavia.xlsx   # înregistrează
+npm run golden -- ../attachments/clienti/cerere-de-oferta-transavia-inox.xlsx   # înregistrează
 npm run golden -- --verifica                                # caută deriva
 ```
 
@@ -341,7 +341,7 @@ niciodată prin model, deci nu au ce căuta nici în golden files.
 ## Bugetul de tokeni
 
 Fiecare apel cară **~1.177 tokeni ficși** — system prompt (~735) plus schema
-JSON (~442) — retrimiși integral la fiecare lot. Pe `Radoia.xlsx` pleacă 153 de
+JSON (~442) — retrimiși integral la fiecare lot. Pe `cerere-de-oferta-spital.xlsx` pleacă 153 de
 linii la model:
 
 | Lot | Apeluri | Doar overhead |
@@ -368,7 +368,7 @@ Atenție: `OPENAI_MODEL` din `.env` **bate** implicitul
 din cod, iar `.env` e gitignorat — un commit care schimbă implicitul nu atinge
 fișierul nimănui. Verifici cu ce rulezi de fapt în antetul `npm run import` sau
 în linia „Stratul cu model" de la `npm run dev`. Nu `gpt-4o` — pe contul firmei acela are 90.000 tokeni
-pe zi, iar `Radoia.xlsx` consumă ~50.000, deci două fișiere și ziua s-a
+pe zi, iar `cerere-de-oferta-spital.xlsx` consumă ~50.000, deci două fișiere și ziua s-a
 terminat. `gpt-4.1` are 900.000 la aceeași limită pe minut.
 
 **Familia `gpt-5` nu se poate folosi aici.** Respinge `temperature: 0` — acceptă
@@ -451,15 +451,15 @@ real acolo.
 
 ## Capcane găsite în fișierele reale
 
-- **`Book15.xlsx`** — rânduri de continuare `"Same - Ø125 mm"` care moștenesc
+- **`cerere-de-oferta-book15.xlsx`** — rânduri de continuare `"Same - Ø125 mm"` care moștenesc
   descrierea de deasupra. Fără carry-forward pierzi specificația. Încă nerezolvat:
   de-asta ies doar 5 poziții din 412 rânduri.
-- **`Izolatii Transavia.xlsx`** — pivot pe 11 coloane de zone; tipul e codat în
+- **`cerere-de-oferta-transavia-inox.xlsx`** — pivot pe 11 coloane de zone; tipul e codat în
   text: `"...Di89, g50 - COT"`.
 - **`Flower City`** — `cantitate/unitate × nr. unități = total`, plus `#REF!`.
-- **`Radoia.xlsx`** — descrieri multi-linie cu specificații complete într-o
+- **`cerere-de-oferta-spital.xlsx`** — descrieri multi-linie cu specificații complete într-o
   singură celulă; zona lipită de observații cu `/`.
-- **`Radoia.xlsx` / închideri la foc** — „Protecție la foc EI 60 pentru
+- **`cerere-de-oferta-spital.xlsx` / închideri la foc** — „Protecție la foc EI 60 pentru
   tubulaturile din tablă zincată" e protecția *tubulaturii*, altă lucrare, fără
   listă de prețuri. Cu „rezistent la foc" sau „EI 60" ca semnal de sistem, 28 de
   rânduri de acolo intrau ca închideri de gol, iar dimensiunea tubulaturii
@@ -472,14 +472,14 @@ real acolo.
   DN200 ies exact. ø160 iese cu preț (14,37, rândul 169) dar **marcat**: oferta
   semnată are 14,16 (rândul 159), iar rotunjirea la 1 mm peste un rând e
   întrebarea 3 — vezi „Rotunjirea neconfirmată" în `pricing.md`.
-- **`Book15.xlsx`, tabla tubulaturii** — „izolat cu vată minerală de 30 mm ...
+- **`cerere-de-oferta-book15.xlsx`, tabla tubulaturii** — „izolat cu vată minerală de 30 mm ...
   realizat din tablă zincată la cald". Tabla e materialul tubulaturii, nu
   jacheta; citită ca jachetă, prețul urca de la 16,17 la 30,77–56,08 €/ml, fără
   marcă. `TABLA_E_TUBULATURA` o scoate („realizat din tablă", „made of ...
   sheet", „tubulaturile din tablă"), iar `TABLA_E_JACHETA` o păstrează când
   rândul spune și jacheta („protejată cu tablă", „protecție mecanică",
   „casetă", „jacketing").
-- **`Radoia.xlsx`, țevile de instalații** — „inclusiv fitinguri, treceri prin
+- **`cerere-de-oferta-spital.xlsx`, țevile de instalații** — „inclusiv fitinguri, treceri prin
   pereți și planșee cu țeavă de protecție". „Treceri prin pereți" e închidere
   la foc **doar lângă foc** (`foc`, `EI xx`); fără regula asta, 58 de rânduri de
   altă meserie apăreau ca închideri de gol fără dimensiuni.

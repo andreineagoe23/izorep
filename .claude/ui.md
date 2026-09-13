@@ -326,7 +326,7 @@ dependență și rulează deja în browser la citire, iar scrierea trece prin ac
 
 Împărțirea pe îndelete: `web/oferta.ts` e **pur, fără DOM** — primește linii,
 întoarce un `ArrayBuffer` — exact ca motorul, și din același motiv: se testează
-în Node. `tests/oferta.test.ts` verifică pe `Oferta 27.04.2026 Matari.xlsx` că
+în Node. `tests/oferta.test.ts` verifică pe `oferta-118-1-matari-goluri-foc.xlsx` că
 totalul iese **12.692,04 €**, adică exact totalul ofertei semnate. `Blob`,
 `createObjectURL` și `<a download>` stau singure în `web/descarca.ts`, un singur
 loc, ca să nu se împrăștie o secvență în care se uită ușor `revokeObjectURL`.

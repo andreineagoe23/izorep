@@ -2,8 +2,8 @@
 /**
  * Import de proba pe un fisier de la client.
  *
- *   npm run import -- ../attachments/clienti/Book15.xlsx
- *   npm run import -- ../attachments/clienti/Book15.xlsx --fara-model
+ *   npm run import -- ../attachments/clienti/cerere-de-oferta-book15.xlsx
+ *   npm run import -- ../attachments/clienti/cerere-de-oferta-book15.xlsx --fara-model
  */
 import { existsSync } from "node:fs";
 import { importaFisier } from "./pipeline.js";

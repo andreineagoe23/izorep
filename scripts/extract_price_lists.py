@@ -105,7 +105,7 @@ BANDS_SHEET = [  # tabla si PVC au benzi proprii (vezi subsolul listelor)
 out = {}
 
 # --- elastomer ------------------------------------------------------------
-r = rows_xls("L.pret elastomer SC RADOIA ISOLIRUNG SRL.xls")
+r = rows_xls("pret-rezidential-elastomer.xls")
 out["elastomer"] = {
     "sistem": "elastomer",
     "denumire": "Izolatii conducte cu cauciuc elastomeric, clasa B-s3,d0",
@@ -117,7 +117,7 @@ out["elastomer"] = {
 }
 
 # --- vata minerala --------------------------------------------------------
-r = rows_xls("L.pret  vata minerala SC RADOIA ISOLIRUNG SRL.xls")
+r = rows_xls("pret-rezidential-vata-minerala.xls")
 out["vata_minerala"] = {
     "sistem": "vata_minerala",
     "denumire": "Izolatii conducte cu vata minerala caserata cu folie de aluminiu",
@@ -129,7 +129,7 @@ out["vata_minerala"] = {
 }
 
 # --- tabla (doua blocuri pe aceeasi foaie: A-C si D-F) --------------------
-r = rows_xlsx("Lista pret  protectie cu tabla.xlsx")
+r = rows_xlsx("pret-rezidential-tabla-aluminiu.xlsx")
 cells = {}
 for i in range(10, 42):
     row = r[i]
@@ -153,7 +153,7 @@ out["tabla"] = {
 }
 
 # --- PVC (doua blocuri: A/B si C/E — atentie, coloana D e goala) ----------
-r = rows_xls("Lista pret PVC .xls")
+r = rows_xls("pret-rezidential-pvc.xls")
 cells = {}
 for i in range(8, 40):
     row = r[i]
@@ -173,7 +173,7 @@ out["pvc"] = {
 }
 
 # --- inchideri goluri la foc (pret ADITIV: gol + wrap + colier) -----------
-r = rows_xlsx("Oferta pret inchideri goluri la foc.xlsx")
+r = rows_xlsx("pret-rezidential-goluri-foc.xlsx")
 praguri = []
 for i in range(12, 24):
     label, price = r[i][2], num(r[i][4])
@@ -240,7 +240,7 @@ out["goluri_foc"] = {
 # --------------------------------------------------------------------------
 ind = {}
 
-r = rows_xlsx("Oferta pret pentru elastomer.xlsx")
+r = rows_xlsx("pret-industrial-elastomer.xlsx")
 ind["elastomer"] = {
     "sistem": "elastomer",
     "denumire": "Izolatii conducte cu cauciuc elastomeric, clasa B-s3,d0 (industrial)",
@@ -251,7 +251,7 @@ ind["elastomer"] = {
     "multiplicatori": BANDS_PIPE,
 }
 
-r = rows_xlsx("Oferta pret pentru vata minerala.xlsx")
+r = rows_xlsx("pret-industrial-vata-minerala.xlsx")
 ind["vata_minerala"] = {
     "sistem": "vata_minerala",
     "denumire": "Izolatii conducte cu vata minerala caserata cu folie de aluminiu (industrial)",
@@ -265,7 +265,7 @@ ind["vata_minerala"] = {
 # Tabla industriala are ALTE coloane decat cea rezidentiala: 0,8 mm din primul
 # bloc sta in coloana D, nu C. Citita cu indicii rezidentiali, tot blocul de
 # 0,8 pana la ø390 ar lipsi.
-r = rows_xlsx("Oferta pret pentru protectie cu tabla de aluminiu.xlsx")
+r = rows_xlsx("pret-industrial-tabla-aluminiu.xlsx")
 cells = {}
 for i in range(11, 43):
     row = r[i]
@@ -291,7 +291,7 @@ ind["tabla"] = {
 # Tabla de inox: sistem NOU, fara corespondent rezidential. E jachetare, ca
 # aluminiul — indexata pe diametrul exterior al izolatiei, nu pe DN, in ciuda
 # antetului care scrie "DN". Doua blocuri de cate patru coloane.
-r = rows_xls("Oferta pret pentru protectie cu tabla de inox.xls")
+r = rows_xls("pret-industrial-tabla-inox.xls")
 cells = {}
 for i in range(8, 40):
     row = r[i]

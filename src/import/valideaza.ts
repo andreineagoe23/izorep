@@ -8,7 +8,7 @@ import type { LinieExtrasa } from "./schema.js";
  *
  * Zod verifica FORMA raspunsului: tipuri, enum-uri, campuri obligatorii. Nu
  * verifica SENSUL. `diametru_valoare: 76` trece perfect si cand in linia sursa
- * scria `Di60` — masurat pe `Izolatii Transavia.xlsx` cu gpt-4.1-mini. Un
+ * scria `Di60` — masurat pe `cerere-de-oferta-transavia-inox.xlsx` cu gpt-4.1-mini. Un
  * diametru gresit inseamna alt rand in matricea de preturi, deci alt pret, si
  * nu se vede nicaieri: modelul e sigur pe el, incredere 0,95.
  *

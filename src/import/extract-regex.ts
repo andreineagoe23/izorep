@@ -12,11 +12,11 @@ import type { LinieExtrasa } from "./schema.js";
  */
 const SISTEM: [LinieExtrasa["sistem"], RegExp][] = [
   ["elastomer", /elastomer|armaflex|cauciuc\s+sinte|a?uciuc\s+sinte|k[aä]lteiso|k-?flex|kaiflex|kautschuk/i],
-  // "mineral wool" lipsea, desi `Book15.xlsx` e integral in engleza: acolo
+  // "mineral wool" lipsea, desi `cerere-de-oferta-book15.xlsx` e integral in engleza: acolo
   // pozitiile se recunosteau doar din coloana romana de descriere.
   ["vata_minerala", /vat[aă]\s+mineral|mineral\s+wool|rock\s?wool|mineralwolle|rockwool|isolshell|fiberglass|saltele\s+de\s+vat/i],
   // Tabla de INOX, alta lista de preturi decat tabla de aluminiu/zincata.
-  // Verificata DUPA elastomer/vata: in Izolatii Transavia.xlsx textul e mereu
+  // Verificata DUPA elastomer/vata: in cerere-de-oferta-transavia-inox.xlsx textul e mereu
   // "Izolatii cu vata minerala si protectie cu tabla de inox 304 ...", iar
   // sistemul PRINCIPAL trebuie sa ramana vata_minerala, nu inoxul din stratul
   // de protectie. Cand linia e DOAR jachetare de inox (fara semnal de
@@ -31,7 +31,7 @@ const SISTEM: [LinieExtrasa["sistem"], RegExp][] = [
   ["tabla", /tabl[aă]\s+(?:de\s+)?(?:aluminiu|zincat)|jachet|jacket|\bblech\b/i],
   ["pvc", /\bpvc\b/i],
   // Cere notiunea de GOL, nu doar mentiunea focului. "Protectie la foc EI 60
-  // pentru tubulaturile din tabla zincata" din Radoia.xlsx e protectia
+  // pentru tubulaturile din tabla zincata" din cerere-de-oferta-spital.xlsx e protectia
   // tubulaturii, alta lucrare, si nu are lista de preturi. Cu "rezistent la
   // foc" sau "EI 60" ca semnal, 28 de randuri de acolo intrau ca inchideri de
   // gol, iar dimensiunea tubulaturii rectangulare ("1000/500") era citita
@@ -47,7 +47,7 @@ const SISTEM: [LinieExtrasa["sistem"], RegExp][] = [
  * ("Teceri" nu e greseala mea: asa scrie acolo). Caietele de instalatii scriu
  * insa aceleasi cuvinte la TEAVA: "Teava din otel zincata ... inclusiv
  * fitinguri, treceri prin pereti si plansee cu teava de protectie". Masurat pe
- * `Radoia.xlsx`: 58 de randuri de alta meserie intrau asa ca inchideri de gol
+ * `cerere-de-oferta-spital.xlsx`: 58 de randuri de alta meserie intrau asa ca inchideri de gol
  * fara dimensiuni, deci ca munca de validat pentru omul de la tehnic.
  */
 const TRECERI_PRIN_PERETI = /\b(?:t|tr)eceri\s+prin\s+pereti/i;
@@ -57,11 +57,11 @@ const CONTEXT_FOC = /\bfoc\b|\bEI\s*\d{2,3}\b/i;
  * Tabla care e MATERIALUL tubulaturii, nu jacheta pusa de noi peste izolatie.
  *
  * Masurat pe cele 10 fisiere de client, doua tipare:
- *   - `Book15.xlsx`, 9 randuri: "tubulatura circulara tip SPIRO ... izolat cu
+ *   - `cerere-de-oferta-book15.xlsx`, 9 randuri: "tubulatura circulara tip SPIRO ... izolat cu
  *     vata minerala de 30 mm ... realizat din tabla zincata la cald". Citit ca
  *     vata + jacheta de aluminiu, pretul urca de la 16,17 la 30,77-56,08 €/ml,
  *     fara nicio marca;
- *   - `Radoia.xlsx`, 3 randuri: "Protectie la foc EI 60 pentru tubulaturile din
+ *   - `cerere-de-oferta-spital.xlsx`, 3 randuri: "Protectie la foc EI 60 pentru tubulaturile din
  *     tabla zincata - torcret" — protectie la foc a tubulaturii, alta lucrare.
  *
  * Singur, "din tabla" nu ajunge ca semnal: "Caseta izolatie armaturi cu flanse
@@ -88,7 +88,7 @@ const ALTE_MESERII =
  * Caietele de sarcini descriu tubulatura prin MATERIALUL din care e facuta —
  * "Made of hot-dip galvanized sheet", "tabla zincata la cald" — iar asta
  * prinde regula de `tabla`, desi rândul e o pozitie de alta meserie: clientul
- * cumpara tubulatura, nu jachetarea ei. Masurat pe `Book15.xlsx`: 21 de
+ * cumpara tubulatura, nu jachetarea ei. Masurat pe `cerere-de-oferta-book15.xlsx`: 21 de
  * randuri intrau asa, cu grosimea citita din "Ø100 mm" si forma din "275 g/m2".
  *
  * Semnalele sunt de LIVRARE (sistem de tubulatura, piese speciale, standarde
@@ -117,7 +117,7 @@ const RE_OD = /[øØ]\s*(\d{1,3})\b/;
  * Teava de plastic: `PPR 20`, `PEHD 110`, `PEHD D40x3.0`.
  *
  * Forma cu grosimea peretelui lipita (`D40x3.0`) nu se citea: dupa `40` vine
- * `x`, deci nu e granita de cuvant. Masurat pe `Oferta 27.04.2026.xlsx`: 11
+ * `x`, deci nu e granita de cuvant. Masurat pe `oferta-118-nisal.xlsx`: 11
  * pozitii de elastomer pe PEHD ieseau "fara diametru", desi sunt exact
  * cazurile de plastic din `tests/pricing.test.ts`.
  */
@@ -126,7 +126,7 @@ const RE_PLASTIC = /\b(?:PPR|PP|PEHD|PEX)\s*[D]?\s*(\d{1,3})(?:\b|(?=x\d))/;
  * Diametru in toli, legat de notatia lui: `Ø1/2"`, `Ø1 1/4"`, `Dn 2 1/2"`.
  *
  * Fara el, `RE_OD` citea `Ø1/2"` ca diametru exterior 1 si `RE_DN` citea
- * `Dn 1 1/4"` ca DN1. Masurat pe `Oferta 27.04.2026.xlsx`: sase pozitii de
+ * `Dn 1 1/4"` ca DN1. Masurat pe `oferta-118-nisal.xlsx`: sase pozitii de
  * elastomer, de la 1/2" la 2", ieseau toate pe primul rand al listei
  * (5,70 €/ml), fata de 5,79 ... 8,88 in oferta semnata.
  *
@@ -155,10 +155,10 @@ const FORMA: [LinieExtrasa["forma"], RegExp][] = [
   ["contor", /contor/i], ["filtru", /filtru\s*Y|filtru/i], ["pompa", /pomp[aă]/i],
   ["robinet", /robinet|van[aă]/i],
   // `mp` NU se citeste dupa un slash: "275 g/m2" e densitatea zincului din
-  // caietul de sarcini, nu unitatea pozitiei. Masurat pe `Book15.xlsx`, de
+  // caietul de sarcini, nu unitatea pozitiei. Masurat pe `cerere-de-oferta-book15.xlsx`, de
   // acolo veneau forme `mp` pe randuri cu UM `lm`.
   ["mp", /(?<!\/)\bmp\b|(?<!\/)\bm²\b|(?<!\/)\bm2\b/i],
-  // `lm` = metru liniar, scris asa in `Book15.xlsx`. Lipsea, desi parserul il
+  // `lm` = metru liniar, scris asa in `cerere-de-oferta-book15.xlsx`. Lipsea, desi parserul il
   // accepta deja ca unitate de masura, deci randul cadea pe textul liniei.
   ["ml", /\bML\b|\bml\b|\blm\b|\bm\b/i],
 ];
@@ -228,7 +228,7 @@ const FEREASTRA_GROSIME = 40;
 /**
  * Grosimea scrisa imediat INAINTEA numelui: "13mm+40mm vata minerala".
  *
- * Asa scrie randul real din `Oferta 27.04.2026.xlsx` (DN80 si DN100,
+ * Asa scrie randul real din `oferta-118-nisal.xlsx` (DN80 si DN100,
  * elastomer + vata + tabla, 44,35 si 57,82 €/ml semnat): vata n-are niciun
  * numar DUPA nume, deci iesea fara grosime, iar pozitia "grosime ambigua".
  * Fereastra e mica, iar numarul trebuie sa fie o grosime a ACELUI sistem —

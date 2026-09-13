@@ -371,12 +371,17 @@ describe("discountul comercial", () => {
 
 describe("propunerile din formular", () => {
   it("scoate din numele fișierului zgomotul care apare în toate", () => {
-    // Numele reale din `attachments/clienti/`. Propunerea nu trebuie să fie
+    // Numele cu care au venit fișierele de la clienți. Propunerea nu trebuie să fie
     // perfectă — câmpul rămâne editabil — dar trebuie să fie mai bună decât
     // numele întreg, altfel omul o șterge de fiecare dată și n-are rost.
     expect(clientPropus("Oferta 27.04.2026 Matari.xlsx")).toBe("Matari");
     expect(clientPropus("Izolatii Transavia.xlsx")).toBe("Izolatii Transavia");
     expect(clientPropus("Lista de cantitati Flower City_F4.xlsx")).toBe("Lista de cantitati Flower City F4");
+    // Numele scurte, fără spații, cu care stau acum în `attachments/clienti/`.
+    expect(clientPropus("cerere-de-oferta-transavia-abur.xlsx")).toBe("Transavia Abur");
+    expect(clientPropus("oferta-284-transavia-abur.xlsx")).toBe("Transavia Abur");
+    expect(clientPropus("oferta-118-1-matari-goluri-foc.xlsx")).toBe("Matari Goluri Foc");
+    expect(clientPropus("Cerere oferta 2 Izolatii - Abur.xlsx")).toBe("Izolatii Abur");
   });
 
   it("când n-ar rămâne nimic, propune numele întreg", () => {
@@ -386,6 +391,8 @@ describe("propunerile din formular", () => {
     // după el; aici cade tot, deci se întoarce numele întreg.
     expect(clientPropus("Oferta 27.04.2026.xlsx")).toBe("Oferta 27.04.2026");
     expect(clientPropus("Oferta 27.04.2026 (1).xlsx")).toBe("Oferta 27.04.2026 (1)");
+    expect(clientPropus("cerere de oferta.xlsx")).toBe("cerere de oferta");
+    expect(clientPropus("oferta.xlsx")).toBe("oferta");
   });
 
   it("data e scrisă cum o scriu ofertele firmei", () => {
@@ -400,7 +407,7 @@ describe("propunerile din formular", () => {
  * Cap-coadă, pe o ofertă semnată.
  * ------------------------------------------------------------------ */
 
-const MATARI = "../attachments/clienti/Oferta 27.04.2026 Matari.xlsx";
+const MATARI = "../attachments/clienti/oferta-118-1-matari-goluri-foc.xlsx";
 
 describe("cap-coadă pe oferta semnată 118.1", () => {
   it("53 de poziții pe foaia Ofertă, total 12.692,04 € — exact totalul semnat", async () => {
@@ -419,7 +426,7 @@ describe("cap-coadă pe oferta semnată 118.1", () => {
     const buf = await registruOferta({
       linii: raport.linii,
       antet: { ...ANTET, numar: "118.1", client: "NISAL SRL", obiectiv: "XXXLutz+Momax Balotesti" },
-      provenienta: { ...PROV, fisierSursa: "Oferta 27.04.2026 Matari.xlsx" },
+      provenienta: { ...PROV, fisierSursa: "oferta-118-1-matari-goluri-foc.xlsx" },
     });
     const ws = (await citeste(buf)).getWorksheet("Ofertă")!;
 

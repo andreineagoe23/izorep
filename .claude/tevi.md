@@ -1,8 +1,8 @@
 # Țevi: conversii de diametru și tipuri
 
 > Surse, amândouă în `../attachments/referinte/`:
-> `Tabel_Conversie_Tevi.docx` (3 septembrie 2026) și
-> `Conversie_ml_in_mp_tevi_si_tubulaturi.xlsx` (4 septembrie 2026).
+> `tabel-conversie-tevi.docx` (3 septembrie 2026) și
+> `conversie-ml-mp-tevi-tubulaturi.xlsx` (4 septembrie 2026).
 > Context pentru `src/pricing/dn-table.ts` și pentru extragerea diametrului din
 > `src/import/`.
 >
@@ -106,7 +106,7 @@ fost scrisă.
 
 ## Suprafața: ml → mp
 
-`Conversie_ml_in_mp_tevi_si_tubulaturi.xlsx` e un registru de calcul cu trei
+`conversie-ml-mp-tevi-tubulaturi.xlsx` e un registru de calcul cu trei
 foi — Țevi, Tubulatură circulară, Tubulatură rectangulară — plus o foaie de
 instrucțiuni. Formulele:
 

@@ -6,7 +6,7 @@
  * tests/fixtures-oferta-118-1.json — 53 de pozitii cu pretul exact care a
  * fost ofertat, plus totalul semnat de 12.692,04 EUR.
  *
- * Preturile de lista vin din "Oferta pret inchideri goluri la foc.xlsx".
+ * Preturile de lista vin din "pret-rezidential-goluri-foc.xlsx".
  * Daca un test de aici pica, motorul nu mai reproduce oferta si NU se poate
  * emite cu el.
  */
@@ -242,7 +242,7 @@ describe("recunoasterea liniilor de inchideri goluri la foc", () => {
   });
 
   it("protectia la foc A TUBULATURII nu e inchidere de gol", () => {
-    // Radoia.xlsx: 28 de randuri de felul asta. Sunt alta lucrare, fara
+    // cerere-de-oferta-spital.xlsx: 28 de randuri de felul asta. Sunt alta lucrare, fara
     // lista de preturi, iar dimensiunea tubulaturii rectangulare ("1000/500")
     // nu e dimensiune de gol. Cu "EI 60" ca semnal, intrau toate ca goluri.
     for (const text of [

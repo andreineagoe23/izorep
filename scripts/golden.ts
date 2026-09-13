@@ -2,7 +2,7 @@
 /**
  * Golden files: iesirea modelului pe fisierele reale, inghetata in repo.
  *
- *   npm run golden -- ../attachments/clienti/Izolatii\ Transavia.xlsx   # inregistreaza
+ *   npm run golden -- ../attachments/clienti/cerere-de-oferta-transavia-inox.xlsx   # inregistreaza
  *   npm run golden -- --verifica                                # cauta deriva
  *
  * De ce exista: `OPENAI_MODEL` pointeaza spre un model care se poate schimba

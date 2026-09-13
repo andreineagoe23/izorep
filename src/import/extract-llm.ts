@@ -159,7 +159,7 @@ export async function extrageCuModel(
 
   const { client, model } = clientSiModel(optiuni);
   // gpt-4.1, nu gpt-4o. Pe contul firmei gpt-4o are 90.000 de tokeni pe zi,
-  // adica doua fisiere ca Radoia.xlsx; gpt-4.1 are 900.000, la aceeasi limita
+  // adica doua fisiere ca cerere-de-oferta-spital.xlsx; gpt-4.1 are 900.000, la aceeasi limita
   // pe minut. Masurat pe doua fisiere reale, nicio diferenta de calitate.
   //
   // Familia gpt-5 are plafoane si mai mari, dar RESPINGE temperature 0 —
@@ -175,7 +175,7 @@ export async function extrageCuModel(
   // Lotul implicit e 25, nu 12, si motivul e bugetul de tokeni pe ZI.
   //
   // Fiecare apel cara ~1.177 tokeni ficsi — system prompt (~735) plus schema
-  // (~442) — retrimisi integral. Pe Radoia.xlsx pleaca 153 de linii la model:
+  // (~442) — retrimisi integral. Pe cerere-de-oferta-spital.xlsx pleaca 153 de linii la model:
   // in loturi de 12 sunt 13 apeluri, deci 15.300 de tokeni doar overhead; in
   // loturi de 25 sunt 7 apeluri si 8.200. La un plafon de 90.000 tokeni pe zi,
   // diferenta e intre doua fisiere pe zi si trei.

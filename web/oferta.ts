@@ -21,7 +21,7 @@ import { ETICHETE_BLOCAJ, intrebareaPentru } from "./validare.js";
  * **De ce e pur, fără DOM:** exact motivul pentru care motorul de prețuri e
  * izomorf. Un registru construit aici se poate scrie într-un buffer și reciti
  * cu ExcelJS într-un test din Node — vezi `tests/oferta.test.ts`, care verifică
- * pe `Oferta 27.04.2026 Matari.xlsx` că totalul iese **12.692,04 €**, adică
+ * pe `oferta-118-1-matari-goluri-foc.xlsx` că totalul iese **12.692,04 €**, adică
  * exact totalul ofertei semnate. Blob-ul și `<a download>` stau singure în
  * `web/descarca.ts`.
  */
@@ -331,11 +331,14 @@ export function clientPropus(numeFisier: string): string {
   const fara = numeFisier
     .replace(/\.(xlsx|xls)$/i, "")
     .replace(/\s*\(\d+\)\s*$/, "")
-    .replace(/\b(cerere\s+)?oferta\b/gi, " ")
     .replace(/\b\d{1,2}[.\-/]\d{1,2}[.\-/]\d{2,4}\b/g, " ")
     .replace(/[_-]+/g, " ")
+    // „cerere de oferta 2", „oferta 118 1": cuvantul si numarul documentului, nu clientul.
+    .replace(/\b(cerere\s+(de\s+)?)?oferta(\s+nr\.?)?(\s+\d+){0,2}\b/gi, " ")
     .replace(/\s+/g, " ")
     .trim();
+  // Numele scrise tot cu litere mici (`transavia-abur`) primesc majuscula la fiecare cuvant.
+  if (fara && fara === fara.toLowerCase()) return fara.replace(/(^|\s)\p{L}/gu, (c) => c.toUpperCase());
   return fara || numeFisier.replace(/\.(xlsx|xls)$/i, "");
 }
 

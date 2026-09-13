@@ -251,7 +251,7 @@ export function tarifeazaExtras(
     // raportase incredere peste prag — fara sa fie nici macar marcata. Se vedea
     // exclusiv ca diferenta intre doua contoare.
     //
-    // Masurat pe golden files: doua pozitii din `Oferta 27.04.2026.xlsx`,
+    // Masurat pe golden files: doua pozitii din `oferta-118-nisal.xlsx`,
     // amandoua tubulatura RECTANGULARA (`Luftleitg. eckig`,
     // `Entrauchungskanal`, UM `m²`) — care chiar n-are diametru, ci A x B.
     // Conversia perimetrului e in `.claude/tevi.md` si nu e implementata.
@@ -460,7 +460,7 @@ export async function proceseazaRegistru(foi: FoaieBruta[], o: OptiuniNucleu): P
   }
   o.laProgres?.({ faza: "mapare", gata: foiMapate, total: foi.length });
 
-  // L0b + randurile de continuare ("Same - O125 mm" din Book15.xlsx): fara ele,
+  // L0b + randurile de continuare ("Same - O125 mm" din cerere-de-oferta-book15.xlsx): fara ele,
   // 19 din cele 24 de pozitii ale fisierului ies neclasificate.
   const brute = aplicaContinuare(adaugaSectiuni(liniile(foi)));
 
@@ -517,7 +517,7 @@ export async function proceseazaRegistru(foi: FoaieBruta[], o: OptiuniNucleu): P
 
     trimise = deTrimis1.length + deTrimis2.length;
     // Contractul e "cate un obiect per linie, cu acelasi index". Modelul il
-    // incalca in tacere (bugul 2): masurat pe `Oferta 27.04.2026.xlsx`, 43 de
+    // incalca in tacere (bugul 2): masurat pe `oferta-118-nisal.xlsx`, 43 de
     // linii trimise, 35 intoarse — si disparitia lor nu se vedea nicaieri pe
     // ecran, doar in CLI. Se numara doar ce s-a TRIMIS efectiv, nu tot
     // reziduul: liniile netrimise din cauza plafonului sunt `trunchiat`, nu

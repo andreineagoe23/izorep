@@ -1,7 +1,7 @@
 /**
  * Tabla de inox ca sistem de prima clasa.
  *
- * Sursa problemei: `Izolatii Transavia.xlsx` are 72 de randuri "tabla de inox
+ * Sursa problemei: `cerere-de-oferta-transavia-inox.xlsx` are 72 de randuri "tabla de inox
  * 304", dar promptul din extract-llm.ts mapa explicit inoxul pe sistemul
  * "tabla", care e lista de ALUMINIU. Cele 39 de pozitii tarifate din el
  * (6.039,90 EUR) au iesit pe lista gresita — la ø90 inoxul e 30,89 EUR

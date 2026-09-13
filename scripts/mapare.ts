@@ -2,12 +2,12 @@
 /**
  * L1: inregistreaza maparea de coloane a fiecarei foi dintr-un fisier.
  *
- *   npm run mapare -- ../attachments/clienti/Radoia.xlsx
+ *   npm run mapare -- ../attachments/clienti/cerere-de-oferta-spital.xlsx
  *   npm run mapare -- --lista
  *   npm run mapare -- --reindex
  *
  * Un apel la model per LAYOUT, nu per foaie: amprenta e antetul normalizat plus
- * latimea, deci cele sapte foi ale lui `Radoia.xlsx` costa un singur apel, iar
+ * latimea, deci cele sapte foi ale lui `cerere-de-oferta-spital.xlsx` costa un singur apel, iar
  * al doilea fisier cu acelasi antet costa zero.
  *
  * O mapare care nu trece de `valideazaMapare` NU se salveaza. Mai bine ramane
