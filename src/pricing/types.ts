@@ -205,6 +205,12 @@ export interface CerereGolFoc {
    */
   clasa_foc?: string;
   cantitate: number;
+  /**
+   * Segmentul ofertei. Inchiderile la foc au lista doar pe rezidential, deci
+   * pretul vine de acolo oricum; pe alt segment rezultatul poarta nota, ca la
+   * straturile din `tarifeaza` (intrebarea 14).
+   */
+  destinatie?: import("./lists.js").Destinatie;
 }
 
 export interface ComponentaGolFoc {
@@ -227,4 +233,7 @@ export interface RezultatGolFoc {
   cantitate: number;
   total: number;
   moneda: "EUR";
+  /** Aceeasi semnificatie ca pe `RezultatTarifare`. */
+  note?: string[];
+  noteDeVerificat?: string[];
 }

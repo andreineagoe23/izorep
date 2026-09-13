@@ -213,6 +213,7 @@ export function tarifeazaExtras(
         pret: tarifeazaGolFoc({
           gol: { latime_mm: extras.gol_latime_mm, inaltime_mm: extras.gol_inaltime_mm },
           cantitate,
+          destinatie,
         }),
       };
     }

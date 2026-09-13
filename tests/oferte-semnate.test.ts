@@ -60,15 +60,14 @@ const CAZURI: Caz[] = [
   },
   {
     fisier: "Oferta 27.04.2026.xlsx",
-    semnat: 162585.99 + 7933.40, peOferta: 33, generat: 94724.03,
-    deCe: "3 peste maximul listei (întrebarea 4), 5 grosime inexistentă. Cele 4 poziții SPIRO "
-        + "s-au deblocat pe 11 sep 2026, când firma a confirmat că „la spiro este doar diametru "
-        + "exterior”: DN125 cade acum pe rândul 125 (11,36 €), nu pe 140 (13,74 €). "
-        + "Prețurile pe liniile care ies sunt corecte; lipsește ce motorul refuză deliberat să "
-        + "ghicească. Crescut cu 123,66 € față de măsurătoarea din 7 sep, când extragerea "
-        + "deterministă a început să vadă TOATE materialele dintr-un rând: poziția „Enteisungssystem "
-        + "Regenwasserrohre” cere explicit „jacketing cu tabla de aluminiu 0,6mm” peste izolația "
-        + "Kflex, iar jacheta aia nu se tarifa deloc (86,22 € → 209,88 €).",
+    semnat: 162585.99 + 7933.40, peOferta: 29, generat: 93134.63,
+    deCe: "3 peste maximul listei (întrebarea 4), 5 grosime inexistentă. SPIRO DN125 și DN200 "
+        + "ies singure din 11 sep 2026, când firma a confirmat că „la spiro este doar diametru "
+        + "exterior”. SCĂZUT deliberat de la 33 la 29 pe 13 sep 2026: cele 4 poziții la ø160 "
+        + "(2 SPIRO, 1 țeavă, „Enteisungssystem Regenwasserrohre”) au preț, dar ø160 stă la 1 mm "
+        + "peste rândul 159, iar oferta semnată le-a tarifat și pe 159, și pe 169 — rotunjire "
+        + "neconfirmată, întrebarea 3. Merg la „De validat” în loc să plece tăcut cu una dintre "
+        + "variante (−1.589,40 € din total).",
   },
   {
     fisier: "Oferta 284 Abur TRANSAVIA 27.05.2026 - tabla aluminiu.xlsx",

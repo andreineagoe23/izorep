@@ -41,6 +41,30 @@ describe("vata minerala — apa calda, agent termic, abur", () => {
   });
 });
 
+describe("aceeasi teava, scrisa altfel, primeste aceeasi grosime", () => {
+  it("seria de otel rotunjita la intreg, ca in Oferta 284 (Di34, Di49, Di89)", () => {
+    // Comparate direct cu pragurile ISO, 34 > 33,7, 49 > 48,3 si 89 > 88,9
+    // urcau o treapta: 30, 50 si 100 mm in loc de 20, 40 si 80.
+    for (const [di, dn] of [[21, 15], [27, 20], [34, 25], [42, 32], [49, 40], [60, 50], [76, 65], [89, 80], [114, 100]] as const) {
+      expect(grosimePropusa("vata_minerala", di, "interior"), `Di${di}`)
+        .toBe(grosimePropusa("vata_minerala", dn, "DN"));
+      expect(grosimePropusa("vata_minerala", di, "exterior"), `ø${di}`)
+        .toBe(grosimePropusa("vata_minerala", dn, "DN"));
+    }
+  });
+
+  it("elastomerul pe DN50 si DN200 ramane in treapta randului care e chiar teava lor", () => {
+    // Randul 60 e DN50 (ø60,3), randul 219 e DN200 (ø219,1). Fara toleranta,
+    // 0,3 si 0,1 mm peste prag ridicau grosimea la 19 si 25.
+    expect(grosimePropusa("elastomer", 50, "DN")).toBe(13);
+    expect(grosimePropusa("elastomer", 65, "DN")).toBe(19);
+    expect(grosimePropusa("elastomer", 200, "DN")).toBe(19);
+    expect(grosimePropusa("elastomer", 250, "DN")).toBe(25);
+    // Un diametru care chiar e intre randuri urca, ca inainte.
+    expect(grosimePropusa("elastomer", 64, "exterior")).toBe(19);
+  });
+});
+
 describe("elastomer — apa rece, agent de frig", () => {
   it("cele trei benzi date de firma", () => {
     expect(grosimePropusa("elastomer", 60, "exterior")).toBe(13);

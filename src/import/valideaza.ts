@@ -1,4 +1,4 @@
-import { DN_TO_OD } from "../pricing/dn-table.js";
+import { DN_TO_OD, TOLI_DN } from "../pricing/dn-table.js";
 import { lista } from "../pricing/lists.js";
 import type { SistemMatrice } from "../pricing/types.js";
 import type { LinieExtrasa } from "./schema.js";
@@ -33,20 +33,13 @@ export interface Avertisment {
   mesaj: string;
 }
 
-/**
- * Tolii, din tabelul de conversie primit de la firma (vezi `.claude/tevi.md`).
- *
- * Exista aici ca sa NU dea alarma falsa: linia "Dn 2''" e o citare corecta a
- * lui DN50, chiar daca cifra 50 nu apare nicaieri in text. Fara tabelul asta,
- * fiecare pozitie scrisa in toli ar fi marcata pentru validare degeaba — iar un
- * avertisment care se aprinde mereu nu mai e citit de nimeni.
+/*
+ * Tolii (`TOLI_DN`, din `dn-table.ts`) exista aici ca sa NU dea alarma falsa:
+ * linia "Dn 2''" e o citare corecta a lui DN50, chiar daca cifra 50 nu apare
+ * nicaieri in text. Fara tabelul ala, fiecare pozitie scrisa in toli ar fi
+ * marcata pentru validare degeaba — iar un avertisment care se aprinde mereu
+ * nu mai e citit de nimeni.
  */
-const TOLI_DN: Readonly<Record<string, number>> = {
-  "3/8": 10, "1/2": 15, "3/4": 20, "1": 25, "1 1/4": 32, "1 1/2": 40,
-  "2": 50, "2 1/2": 65, "3": 80, "4": 100, "5": 125, "6": 150, "8": 200,
-  "10": 250, "12": 300, "14": 350, "16": 400, "18": 450, "20": 500,
-  "24": 600, "28": 700, "32": 800, "36": 900, "40": 1000,
-};
 
 /** `2 1/2"`, `1 1/4”`, `3/4''`, `2 toli`. Ghilimeaua e obligatorie: fara ea,
  *  "1/2" din "130/130" ar deveni DN15. */

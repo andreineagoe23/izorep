@@ -18,17 +18,32 @@ export const DN_TO_OD: Readonly<Record<number, number>> = {
 /** Conducte de plastic: dimensiunea nominala ESTE diametrul exterior. */
 export const PLASTIC_IS_OD = new Set(["PPR", "PP", "PEHD", "PEX", "PVC"]);
 
+/**
+ * Tolii -> DN, coloana Toli din tabelul de conversie primit de la firma (vezi
+ * `.claude/tevi.md`). Cheile sunt scrise cu un singur spatiu: `"1 1/4"`.
+ *
+ * Sta aici, langa `DN_TO_OD`, fiindca il folosesc doi cititori diferiti:
+ * validatorul modelului (`valideaza.ts`), ca `Dn 2''` sa nu dea alarma de
+ * diametru necitat, si extragerea determinista (`extract-regex.ts`), ca
+ * `Ø1/2"` sa nu mai fie citit ca diametrul exterior 1.
+ */
+export const TOLI_DN: Readonly<Record<string, number>> = {
+  "3/8": 10, "1/2": 15, "3/4": 20, "1": 25, "1 1/4": 32, "1 1/2": 40,
+  "2": 50, "2 1/2": 65, "3": 80, "4": 100, "5": 125, "6": 150, "8": 200,
+  "10": 250, "12": 300, "14": 350, "16": 400, "18": 450, "20": 500,
+  "24": 600, "28": 700, "32": 800, "36": 900, "40": 1000,
+};
+
 export type TipDiametru = "DN" | "exterior" | "interior";
 
 export class DiametruNecunoscut extends Error {
   constructor(readonly dn: number) {
     super(
       `DN${dn} nu exista in tabelul de conversie DN -> diametru exterior. ` +
-      `Daca e tubulatura SPIRO sau teava de plastic, notatia e diametru exterior, ` +
-      `nu DN — vezi tip: "exterior". Reincadrarea NU se face automat: la SPIRO ` +
-      `o160 oferta semnata da 14,16 (randul 159), iar acelasi 160 citit ca PEHD ` +
-      `da 14,37 (randul 169), deci nu stim care e regula. Intrebarea 10 catre ` +
-      `firma; pana la raspuns pozitia ramane marcata, nu tarifata.`,
+      `Daca e teava de plastic sau tubulatura SPIRO, notatia e diametru exterior, ` +
+      `nu DN — vezi tip: "exterior". Extragerea determinista face asta singura ` +
+      `la SPIRO (confirmat de firma pe 11 septembrie 2026); aici ajung doar ` +
+      `notatiile pe care nimic nu le-a putut reincadra.`,
     );
     this.name = "DiametruNecunoscut";
   }

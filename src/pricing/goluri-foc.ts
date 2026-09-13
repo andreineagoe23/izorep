@@ -1,4 +1,4 @@
-import { bani } from "./engine.js";
+import { ADJECTIV_DEST, bani } from "./engine.js";
 import { listaGoluriFoc } from "./lists.js";
 import {
   PozitieNetarifata,
@@ -163,6 +163,15 @@ export function tarifeazaGolFoc(cerere: CerereGolFoc): RezultatGolFoc {
     }
   }
 
+  // Lista de inchideri la foc exista doar pe rezidential. Pe alt segment
+  // pretul vine tot de acolo — nu se refuza, fiindca pozitia are pret — dar
+  // se spune, exact ca la PVC in `tarifeaza`. Fara nota, o oferta industriala
+  // ar amesteca tacut preturi rezidentiale printre cele industriale.
+  const dest = cerere.destinatie ?? "rezidential";
+  const nota = dest === "rezidential" ? null
+    : `goluri_foc: pret din lista ${ADJECTIV_DEST.rezidential.toUpperCase()} — nu exista lista `
+      + `${ADJECTIV_DEST[dest]} pentru inchideri goluri la foc (intrebarea 14).`;
+
   const unitar = bani(componente.reduce((s, c) => s + c.pret, 0));
   return {
     componente,
@@ -173,5 +182,6 @@ export function tarifeazaGolFoc(cerere: CerereGolFoc): RezultatGolFoc {
     cantitate,
     total: bani(unitar * cantitate),
     moneda: "EUR",
+    ...(nota ? { note: [nota], noteDeVerificat: [nota] } : {}),
   };
 }

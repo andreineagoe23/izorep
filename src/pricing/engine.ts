@@ -67,8 +67,9 @@ export function randCelMaiApropiat(valoare: number, randuri: number[]): number {
  *    seria de otel: se rotunjeste IN SUS. Mufa de izolatie trebuie sa incapa
  *    peste teava, deci un rand sub diametrul real nu e o optiune fizica.
  *    Reproduce 12 din 13 pozitii de plastic din oferta 118; abaterea ramasa
- *    (ø90 tarifat pe randul 89) e documentata in tests/pricing.test.ts. La
- *    SPIRO ø160 regula asta il lasa MARCAT, nu tarifat — intrebarea 10.
+ *    (ø90 tarifat pe randul 89) e documentata in tests/pricing.test.ts, iar
+ *    pozitiile care cad in situatia ei se marcheaza — vezi
+ *    `randInferiorNeconfirmat`.
  */
 export function randPentruTeava(valoare: number, randuri: number[], tip: TipDiametru): number {
   if (tip === "DN" || (tip === "interior" && peSeriaDeOtel(valoare))) {
@@ -80,6 +81,37 @@ export function randPentruTeava(valoare: number, randuri: number[], tip: TipDiam
     throw new PozitieNetarifata("peste_maximul_listei", "diametru peste maximul listei de preturi", { valoare, max });
   }
   return randuri.find((r) => r >= valoare) ?? max;
+}
+
+/**
+ * Cat de aproape trebuie sa fie randul de DEDESUBT ca rotunjirea in sus a
+ * primului strat sa nu mai fie sigura.
+ *
+ * Masurat pe ofertele semnate: ø90 (la 1 mm peste randul 89) si ø160 (la 1 mm
+ * peste 159) sunt singurele diametre de plastic/tubulatura tarifate cand pe
+ * randul de sus, cand pe cel de jos — ø160 chiar in aceeasi oferta, 14,37 ca
+ * teava PEHD si 14,16 ca SPIRO. La 2 mm (PPR 20 peste randul 18) nu exista
+ * nicio oferta care sa fi coborat. Intrebarea 3 catre firma.
+ */
+export const PRAG_ROTUNJIRE_NECONFIRMATA = 1;
+
+/**
+ * Randul de dedesubt, cand primul strat a fost rotunjit IN SUS peste un rand
+ * aflat la cel mult `PRAG_ROTUNJIRE_NECONFIRMATA` mm sub diametru; altfel
+ * `null`.
+ *
+ * Nu schimba randul ales si nu schimba pretul: regula in sus ramane cea care
+ * reproduce 12 din 13 pozitii de plastic. Spune doar ca aici exista a doua
+ * varianta, folosita si ea de firma, ca pozitia sa treaca pe la om in loc sa
+ * plece tacut cu una dintre ele.
+ */
+export function randInferiorNeconfirmat(
+  valoare: number, rand: number, randuri: number[], tip: TipDiametru,
+): number | null {
+  if (tip === "DN" || (tip === "interior" && peSeriaDeOtel(valoare))) return null;
+  if (rand <= valoare) return null;
+  const jos = randuri.filter((r) => r < valoare).at(-1);
+  return jos !== undefined && valoare - jos <= PRAG_ROTUNJIRE_NECONFIRMATA ? jos : null;
 }
 
 /**
@@ -301,7 +333,7 @@ function straturiMatrice(straturi: Strat[]): StratMatrice[] {
  *      cu multiplicator propriu), apoi se aduna
  */
 /** Segmentul, scris ca sa poata fi citit intr-o nota, nu ca identificator. */
-const ADJECTIV_DEST: Record<Destinatie, string> = {
+export const ADJECTIV_DEST: Record<Destinatie, string> = {
   rezidential: "rezidentiala",
   industrial: "industriala",
   rafinarie: "de rafinarie",
@@ -349,6 +381,16 @@ export function tarifeaza(cerere: CerereTarifare): RezultatTarifare {
       : esteJacheta
         ? randPentruJacheta(geometric, randuri)
         : randCelMaiApropiat(geometric, randuri);
+    if (i === 0) {
+      const jos = randInferiorNeconfirmat(geometric, rand, randuri, diametru.tip);
+      if (jos !== null) {
+        const n = `${strat.sistem}: diametrul ${geometric} e la ${bani(geometric - jos)} mm peste randul ${jos}; ` +
+          `s-a luat randul ${rand} (in sus). Ofertele semnate au tarifat o90 si o160 si pe randul de ` +
+          `dedesubt — rotunjire neconfirmata, intrebarea 3.`;
+        note.push(n);
+        noteDeVerificat.push(n);
+      }
+    }
     const grosime = grosimeEfectiva(strat.sistem, rand, strat.grosime_mm, listaStrat);
 
     // Grosimea CERUTA a stratului decide geometria straturilor de deasupra
@@ -382,8 +424,8 @@ export function tarifeaza(cerere: CerereTarifare): RezultatTarifare {
       const bandaTxt = banda ? `${banda.band[0]}-${banda.band[1]}` : "necunoscuta";
       note.push(
         `${strat.sistem} nu are coeficient de ${forma} pe banda ${bandaTxt}: pozitia e tarifata doar cu ` +
-        `straturile de deasupra. Regula dedusa din Oferta 284 (9/9 potriviri exacte) — de confirmat cu firma, ` +
-        `intrebarea 9.`,
+        `straturile de deasupra. Regula dedusa din Oferta 284 (9/9 potriviri exacte), confirmata de firma ` +
+        `pe 11 septembrie 2026.`,
       );
     }
 
