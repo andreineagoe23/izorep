@@ -102,7 +102,22 @@ export interface RezultatTarifare {
    * validare. O regula confirmata nu mai e o presupunere.
    */
   noteDeVerificat?: string[];
+  /**
+   * Aceleasi note de verificat, ca valori pe care ecranul le poate numara si
+   * scrie in cuvinte simple. Textul din `noteDeVerificat` ramane pentru
+   * registru si pentru cine vrea detaliul.
+   */
+  motiveDeVerificat?: MotivVerificare[];
 }
+
+/** De ce o pozitie cu pret trebuie totusi vazuta de om. */
+export type MotivVerificare =
+  /** Un strat vine din lista altui segment decat cel ales la import. */
+  | "segment_diferit"
+  /** Primul strat e la 1 mm peste un rand; ofertele au folosit ambele randuri. */
+  | "rotunjire_neconfirmata"
+  /** Grosimea e cea uzuala a firmei, nu scrisa de client. */
+  | "grosime_propusa";
 
 /**
  * De ce nu s-a putut tarifa o pozitie, ca valoare STABILA.
@@ -236,4 +251,5 @@ export interface RezultatGolFoc {
   /** Aceeasi semnificatie ca pe `RezultatTarifare`. */
   note?: string[];
   noteDeVerificat?: string[];
+  motiveDeVerificat?: MotivVerificare[];
 }

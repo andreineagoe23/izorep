@@ -370,6 +370,7 @@ function construiesteLinii(
       const n = `grosime ${propusa} mm propusa dupa diametru (grosimea uzuala a firmei), nu scrisa de client`;
       t.pret.note = [...(t.pret.note ?? []), n];
       t.pret.noteDeVerificat = [...(t.pret.noteDeVerificat ?? []), n];
+      t.pret.motiveDeVerificat = [...(t.pret.motiveDeVerificat ?? []), "grosime_propusa"];
     }
     if (t.pret) proc.pret = t.pret;
     // Doar notele care CER ochi opresc linia la validare: pretul venit din

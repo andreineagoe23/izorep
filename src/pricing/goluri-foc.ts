@@ -182,6 +182,6 @@ export function tarifeazaGolFoc(cerere: CerereGolFoc): RezultatGolFoc {
     cantitate,
     total: bani(unitar * cantitate),
     moneda: "EUR",
-    ...(nota ? { note: [nota], noteDeVerificat: [nota] } : {}),
+    ...(nota ? { note: [nota], noteDeVerificat: [nota], motiveDeVerificat: ["segment_diferit" as const] } : {}),
   };
 }

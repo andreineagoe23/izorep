@@ -5,7 +5,7 @@ import {
 } from "./lists.js";
 import {
   PozitieNetarifata,
-  type CerereTarifare, type Forma, type RezultatTarifare,
+  type CerereTarifare, type Forma, type MotivVerificare, type RezultatTarifare,
   type SistemMatrice, type Strat, type StratMatrice, type StratTarifat,
 } from "./types.js";
 
@@ -349,6 +349,7 @@ export function tarifeaza(cerere: CerereTarifare): RezultatTarifare {
   const tarifate: StratTarifat[] = [];
   const note: string[] = [];
   const noteDeVerificat: string[] = [];
+  const motive = new Set<MotivVerificare>();
   let geometric = od;
 
   for (const [i, strat] of matrice.entries()) {
@@ -359,6 +360,7 @@ export function tarifeaza(cerere: CerereTarifare): RezultatTarifare {
     const { lista: listaStrat, folosita } = listaDe(strat.sistem, dest);
     if (folosita !== dest) {
       // Asta CERE ochi: pretul vine din alt segment decat cel ales.
+      motive.add("segment_diferit");
       noteDeVerificat.push(
         `${strat.sistem}: pret din lista ${ADJECTIV_DEST[folosita].toUpperCase()} — nu exista lista ` +
         `${ADJECTIV_DEST[dest]} pentru materialul asta. Restul straturilor raman pe segmentul ${dest}.`,
@@ -389,6 +391,7 @@ export function tarifeaza(cerere: CerereTarifare): RezultatTarifare {
           `dedesubt — rotunjire neconfirmata, intrebarea 3.`;
         note.push(n);
         noteDeVerificat.push(n);
+        motive.add("rotunjire_neconfirmata");
       }
     }
     const grosime = grosimeEfectiva(strat.sistem, rand, strat.grosime_mm, listaStrat);
@@ -468,6 +471,7 @@ export function tarifeaza(cerere: CerereTarifare): RezultatTarifare {
     moneda: "EUR",
     ...(note.length ? { note } : {}),
     ...(noteDeVerificat.length ? { noteDeVerificat } : {}),
+    ...(motive.size ? { motiveDeVerificat: [...motive] } : {}),
   };
 }
 
