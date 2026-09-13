@@ -59,9 +59,37 @@ Regula 4 le recuperează pe nouă din acele zece: coturile și teurile de vată 
 la rândul geometric — 9 din 9, la bănuț. După toate regulile de mai sus,
 **13 din 13** linii verificate direct față de ofertă ies exact.
 
-Regula 4 e **dedusă din date, nu citită dintr-o listă**. Poziția primește preț
-plus `note` cu proveniența, iar `nucleu.ts` o trimite obligatoriu la validare
-umană. Rămâne întrebarea 9 către firmă.
+Regula 4 a fost **dedusă din date** și **confirmată de firmă pe 11 septembrie
+2026**. Poziția păstrează `note` cu proveniența, dar nu mai e oprită la
+validare — vezi „Notele de pe poziție", mai jos.
+
+### Rotunjirea neconfirmată (ø90, ø160)
+
+Rotunjirea **în sus** a primului strat reproduce 12 din 13 poziții de plastic,
+dar ofertele semnate au două excepții exact acolo unde un rând stă **la 1 mm
+dedesubt**: ø90 tarifat pe rândul 89, și ø160 tarifat pe 159 ca SPIRO și pe 169
+ca PEHD, **în aceeași ofertă**. Motorul nu schimbă rândul — regula rămâne în
+sus — dar `randInferiorNeconfirmat` pune pe poziție o notă de verificat
+(`PRAG_ROTUNJIRE_NECONFIRMATA = 1 mm`). Prețul iese, poziția merge la „De
+validat". La 2 mm (PPR 20 peste rândul 18) nu există nicio ofertă care să fi
+coborât, deci nu se marchează. Întrebarea 3.
+
+Pe cele 10 fișiere de client asta atinge 7 linii, toate la ø90 sau ø160.
+
+## Notele de pe poziție
+
+`RezultatTarifare` și `RezultatGolFoc` au două liste:
+
+- **`note`** — explică prețul. Informative: regula de cot/teu confirmată,
+  grosimea propusă, lista din care vine un strat.
+- **`noteDeVerificat`** — subsetul care **cere ochi**: preț luat din lista
+  altui segment decât cel ales, rotunjire neconfirmată, grosime propusă (nu
+  scrisă de client). `nucleu.ts` trimite poziția la validare pentru ele.
+
+O poziție confirmată de om (`sursa: "om"`) **nu** mai e marcată pentru o notă de
+verificat: confirmarea e chiar răspunsul la notă. Până pe 13 septembrie 2026
+confirmarea n-avea efect pe ele — poziția rămânea marcată și nu ajungea
+niciodată pe foaia `Ofertă`.
 
 ## Închiderile goluri la foc: altă regulă
 
@@ -149,30 +177,44 @@ Alegerea se face după **sistemul liniei**, nu după un câmp separat de fluid:
 materialul cerut de client spune deja în ce regim suntem. Când clientul nu scrie
 nici materialul, alegerea rămâne a omului.
 
+**Pragurile se compară pe seria de oțel, cu toleranță.** Clienții scriu seria
+rotunjită (`Di34`, `Di49`, `Di89`), iar pragurile vatei sunt chiar valorile ISO
+(33,7 · 48,3 · 88,9): comparate direct, Di34 primea 30 mm în loc de 20, Di49 50
+în loc de 40, Di89 100 în loc de 80. Diametrul se aduce întâi pe seria de oțel
+(`TOLERANTA_SERIE_OTEL`), apoi pragul se compară cu `TOLERANTA_CAPAT_LISTA`:
+pragurile elastomerului sunt **rânduri** din listă, iar rândul 60 e DN50
+(ø60,3), rândul 219 e DN200 (ø219,1) — fără toleranță, DN50 primea 19 mm în loc
+de 13 și DN200 25 în loc de 19. Interpretarea asta (DN50 = „până la ø60") e a
+noastră, aliniată cu toleranța motorului; de confirmat la prima ofertă reală pe
+elastomer DN50.
+
 **Se propune, nu se aplică.** Ecranul o arată ca valoare-fantomă în coloana de
 grosime și o scrie doar la un clic. Firma a cerut explicit să rămână
 modificabilă manual, „unde e personalizat pentru client" — exact cazul TRANSAVIA.
 
+**Nici clicul nu confirmă.** „Completează N grosimi lipsă" pune grosimile în
+`OptiuniNucleu.grosimiPropuse`, nu în `rezolvate`: poziția primește preț și o
+notă de verificat, și rămâne „de validat" până o confirmă omul. Prima variantă
+punea `sursa: "om"` pe toată foaia — o confirmare în masă pe care butonul nu o
+anunța; pe cererea Abur, 24 de casete plecau direct în ofertă.
+
 ## Ce lipsește
 
-- **Destinația.** Listele firmei sunt de trei feluri — rezidențiale,
-  industriale, rafinărie. `tarifeaza` vede **doar rezidențialele**: trece prin
-  `lista()`, care rămâne pe `data/price-lists/*.json` (plus tabla de inox, care
-  n-are altă variantă). Industrialele sunt extrase în
-  `data/price-lists/industrial/`, încărcate în bază cu destinația lor și
-  **citibile** din `lists.ts` prin `listaPe(sistem, destinatie)` — inventarul
-  `PE_DESTINATIE`, folosit de ecranul de liste ca să le arate pe segmente.
-  Citit, nu aplicat: distincția e tot ce ține motorul pe rezidențial cât timp
-  regula de alegere a segmentului nu există (întrebarea 12 din `stare.md`) —
-  altfel o lucrare rezidențială ar putea ieși ofertată la prețuri de
-  industrial. Rafinăria nu a venit. Nu se pot pune nici ca un coeficient peste
+- **Rafinăria și regula de segment.** Din 12 septembrie 2026 `tarifeaza`
+  primește `destinatie` (implicit `rezidential`) și caută fiecare strat prin
+  `listaDe(sistem, destinatie)` în `PE_DESTINATIE`. Segmentul **îl alege omul**
+  la import (comutatorul „Tipul ofertei"); motorul nu-l deduce — întrebarea 12
+  rămâne, ca regulă după care s-ar putea deduce din client sau obiectiv.
+  Unde segmentul ales n-are listă pentru un material, se ia singura care există
+  și poziția primește notă de verificat: PVC și închiderile la foc pe
+  industrial (întrebarea 14), tabla de inox pe rezidențial (întrebarea 15).
+  Rafinăria nu a venit și nu are buton. Nu se pot pune ca un coeficient peste
   rezidențial: raportul diferă pe sistem și pe grosime (vata ×1,25;
   elastomerul ×1,25 la 9/13/19 mm și ×1,20 la 25/32 mm).
 - ~~**Tabla de inox**~~ — e acum sistem de sine stătător. Rămâne o asimetrie
-  deliberată: inoxul e **singurul sistem fără listă rezidențială**, deci
-  `lista("tabla_inox")` întoarce lista **industrială**. Nu e o alegere de
-  segment — e singura listă care există. Poziția care îl folosește primește
-  `note` că amestecă destinații, ca să nu treacă tăcut. Întrebarea 15.
+  deliberată: inoxul e **singurul sistem fără listă rezidențială**. Pe o ofertă
+  rezidențială prețul lui vine din lista industrială, cu notă de verificat.
+  Care e grosimea implicită a jachetei rămâne întrebarea 15.
 - **Seriile de diametre pe material.** `dn-table.ts` are un singur tabel, cel
   de oțel, și îl aplică tuturor. Datele pentru cupru, PP-R, PE-HD, PE-Xa, PVC
   și spiro sunt în `data/referinte/conversii-tevi.json` și în bază, dar motorul

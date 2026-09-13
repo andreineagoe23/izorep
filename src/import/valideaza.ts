@@ -210,8 +210,9 @@ const RE_NOMINAL_E_EXTERIOR =
  * INDIFERENT de sursa, ceea ce inseamna alt punct de apel — deci alta functie.
  *
  * NU schimba niciun pret. Pozitia primeste avertisment, `incredere = 0` prin
- * mecanismul existent, si merge la om. Care e pretul corect al lui o160 ramane
- * intrebarea 10 catre firma; ce se repara aici e VIZIBILITATEA lui o125.
+ * mecanismul existent, si merge la om. Din 11 septembrie 2026 regex-ul citeste
+ * singur SPIRO ca diametru exterior (raspunsul firmei), deci verificarea
+ * ramane utila pe iesirea modelului si pe tevile de plastic scrise cu DN.
  */
 export function notatieContraziceMaterialul(
   l: LinieExtrasa,

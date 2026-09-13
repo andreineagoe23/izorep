@@ -227,6 +227,35 @@ chihlimbariu. Deasupra grilei stau acum trei lucruri:
   control din coloanele extrase — poziția se corectează de la tastatură, fără
   mouse.
 
+### Tipul ofertei: segmentul de preț
+
+Deasupra zonei de încărcare stă comutatorul **Rezidențială / Industrială**.
+Rafinăria nu are buton: n-are nicio listă, deci un buton ar promite un preț pe
+care nimeni nu-l poate calcula.
+
+- Schimbarea lui **nu** recitește fișierul și **nu** recheamă modelul — doar
+  retarifează ce e extras, prin `reevalueaza`.
+- Segmentul se salvează în `SesiuneImport.destinatie` și se reface la
+  redeschidere, **înainte** de tarifare. Fără asta, un import lucrat pe
+  industrial se redeschidea pe rezidențial, cu alte prețuri. Istoricul arată
+  segmentul lângă valoare, când nu e rezidențial.
+- Registrul de ofertă scrie segmentul real în proveniență, iar formularul îl
+  spune în sumar („ofertă industrială").
+
+### Grila: prețuri și grosimi lipsă
+
+După coloanele fișierului și cele extrase (sistem, ø, grosime) stau **P.U.** și
+**Total**. O poziție fără preț arată „—" cu cauza în `title`; una cu note are
+„*" lângă preț și notele în `title`.
+
+Unde clientul n-a scris grosimea, coloana arată grosimea uzuală a firmei ca
+placeholder. „Completează N grosimi lipsă" o pune pe toate liniile foii active,
+dar **nu le confirmă**: rămân „de validat", cu notă, până le confirmă omul.
+Propunerile stau în `SesiuneImport.grosimiPropuse`, separat de extrageri. O
+corecție manuală pe rândul respectiv șterge propunerea: la grosime o înlocuiește
+cu ce scrie omul; la sistem sau ø o golește, fiindcă era calculată pentru
+valorile vechi.
+
 ### „Ce blochează N poziții" — cauze, nu simptome
 
 Indicatoarele spuneau *câte* poziții n-au preț. Niciodată **de ce**: `eroare`

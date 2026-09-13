@@ -252,10 +252,14 @@ fiindcă 125 și 200 există în tabel și se convertesc „cu succes".
 
 Verificarea nu e despre încrederea în model, e despre **textul sursă care spune
 că notația minte** — deci rulează indiferent de sursă, cu o singură excepție:
-`"om"`. Pe cele 10 fișiere reale aprinde **16 linii**. Nu schimbă niciun preț:
+`"om"`. Pe cele 10 fișiere reale aprindea **16 linii**. Nu schimbă niciun preț:
 poziția primește avertisment, `incredere = 0` prin mecanismul existent, și merge
-la om. Care e prețul corect al lui ø160 rămâne întrebarea 10; ce s-a reparat e
-**vizibilitatea lui ø125**.
+la om.
+
+Din 11 septembrie 2026 regex-ul citește singur SPIRO ca diametru exterior
+(răspunsul firmei), deci pe calea deterministă verificarea nu mai are ce prinde
+la spiro. Rămâne utilă pe ieșirea modelului și pe țevile de plastic scrise cu
+`DN`.
 
 PVC-ul e deliberat în afara listei de materiale, deși e în `PLASTIC_IS_OD`: în
 textele clienților „PVC" înseamnă aproape întotdeauna jacheta de PVC peste
@@ -463,11 +467,31 @@ real acolo.
   noțiunea de **gol** sau de **trecere prin perete**.
 - **`Oferta 27.04.2026`, tubulatură SPIRO** — „Wickelfalzrohr starr SPIRO
   DN 160". Clientul scrie `DN`, dar la spiro nominalul *este* diametrul
-  exterior, iar 160 și 315 nu există în seria de oțel, deci poziția iese cu
-  „DN160 nu există în tabelul de conversie". Citită ca diametru exterior s-ar
-  tarifa la 14,37 €/ml, dar oferta semnată are 14,16. **Lăsată marcată
-  intenționat** până răspunde firma (întrebarea 10): un preț greșit tăcut e mai
-  scump decât o poziție marcată.
+  exterior. **Firma a confirmat pe 11 septembrie 2026** („la spiro este doar
+  diametru exterior"), deci `extract-regex.ts` o citește `exterior`. DN125 și
+  DN200 ies exact. ø160 iese cu preț (14,37, rândul 169) dar **marcat**: oferta
+  semnată are 14,16 (rândul 159), iar rotunjirea la 1 mm peste un rând e
+  întrebarea 3 — vezi „Rotunjirea neconfirmată" în `pricing.md`.
+- **`Book15.xlsx`, tabla tubulaturii** — „izolat cu vată minerală de 30 mm ...
+  realizat din tablă zincată la cald". Tabla e materialul tubulaturii, nu
+  jacheta; citită ca jachetă, prețul urca de la 16,17 la 30,77–56,08 €/ml, fără
+  marcă. `TABLA_E_TUBULATURA` o scoate („realizat din tablă", „made of ...
+  sheet", „tubulaturile din tablă"), iar `TABLA_E_JACHETA` o păstrează când
+  rândul spune și jacheta („protejată cu tablă", „protecție mecanică",
+  „casetă", „jacketing").
+- **`Radoia.xlsx`, țevile de instalații** — „inclusiv fitinguri, treceri prin
+  pereți și planșee cu țeavă de protecție". „Treceri prin pereți" e închidere
+  la foc **doar lângă foc** (`foc`, `EI xx`); fără regula asta, 58 de rânduri de
+  altă meserie apăreau ca închideri de gol fără dimensiuni.
+- **Țolii** — `Ø1/2"`, `Dn 1 1/4"`. Se citeau ca ø1 și DN1: pe `Oferta
+  27.04.2026` șase poziții ieșeau toate la 5,70 €/ml. `RE_TOLI` cere prefixul
+  (ø/DN) și ghilimeaua; `Dn 25 (1'')` rămâne DN25.
+- **`PEHD D40x3.0`** — grosimea peretelui lipită de diametru nu lăsa granița de
+  cuvânt: 11 poziții de pe `Oferta 27.04.2026` ieșeau „fără diametru".
+- **Grosimea înaintea materialului** — „DN80 elastomer 13mm+40mm vata
+  minerala": vata n-are număr după nume. `grosimeLangaSistem` caută și imediat
+  înainte, doar o grosime a acelui sistem (elastomerul și vata n-au grosimi
+  comune). DN80 și DN100 compus ies acum 44,35 și 57,82 €, ca în oferta semnată.
 - **Oferta 118** — ligaturi stricate (`sinte␣c`): textul e copiat dintr-un PDF.
 - **Cantitatea** — primul număr de pe rând e aproape întotdeauna *numărul curent*
   al poziției, nu cantitatea. Euristica actuală o caută lângă unitatea de măsură;
