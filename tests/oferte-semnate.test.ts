@@ -60,14 +60,17 @@ const CAZURI: Caz[] = [
   },
   {
     fisier: "Oferta 27.04.2026.xlsx",
-    semnat: 162585.99 + 7933.40, peOferta: 29, generat: 93134.63,
-    deCe: "3 peste maximul listei (întrebarea 4), 5 grosime inexistentă. SPIRO DN125 și DN200 "
-        + "ies singure din 11 sep 2026, când firma a confirmat că „la spiro este doar diametru "
-        + "exterior”. SCĂZUT deliberat de la 33 la 29 pe 13 sep 2026: cele 4 poziții la ø160 "
-        + "(2 SPIRO, 1 țeavă, „Enteisungssystem Regenwasserrohre”) au preț, dar ø160 stă la 1 mm "
-        + "peste rândul 159, iar oferta semnată le-a tarifat și pe 159, și pe 169 — rotunjire "
-        + "neconfirmată, întrebarea 3. Merg la „De validat” în loc să plece tăcut cu una dintre "
-        + "variante (−1.589,40 € din total).",
+    semnat: 162585.99 + 7933.40, peOferta: 39, generat: 117484.07,
+    deCe: "Pe 13 sep 2026, două mișcări în sensuri opuse. SCĂZUT deliberat: pozițiile la ø90 și "
+        + "ø160 (SPIRO, țeavă PEHD, „Enteisungssystem Regenwasserrohre”) au preț, dar stau la 1 mm "
+        + "peste rândul de dedesubt, iar oferta semnată le-a tarifat și pe acela, și pe cel de sus — "
+        + "rotunjire neconfirmată, întrebarea 3 — deci merg la „De validat”. CRESCUT: șase poziții "
+        + "în țoli (Ø1/2\"…Ø2\") se citeau ca ø1…ø3 și ieșeau toate la 5,70 €; unsprezece poziții "
+        + "„PEHD D40x3.0” nu aveau diametru; DN80 și DN100 elastomer + vată + tablă (44,35 și "
+        + "57,82 €) ieșeau cu grosime ambiguă. Toate cele noi sunt exacte față de oferta semnată. "
+        + "Rămân: 3 peste maximul listei (întrebarea 4), grosimi inexistente, și DN20–DN40 de la "
+        + "rândurile 44–47, pe care oferta însăși le-a tarifat cu un rând mai jos decât aceleași "
+        + "țevi scrise în țoli.",
   },
   {
     fisier: "Oferta 284 Abur TRANSAVIA 27.05.2026 - tabla aluminiu.xlsx",

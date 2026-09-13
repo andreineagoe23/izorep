@@ -1,3 +1,4 @@
+import { TOLI_DN } from "../pricing/dn-table.js";
 import type { LinieExtrasa } from "./schema.js";
 
 /**
@@ -14,44 +15,72 @@ const SISTEM: [LinieExtrasa["sistem"], RegExp][] = [
   // "mineral wool" lipsea, desi `Book15.xlsx` e integral in engleza: acolo
   // pozitiile se recunosteau doar din coloana romana de descriere.
   ["vata_minerala", /vat[aă]\s+mineral|mineral\s+wool|rock\s?wool|mineralwolle|rockwool|isolshell|fiberglass|saltele\s+de\s+vat/i],
-  // Tabla de INOX, alta lista de preturi decat tabla de aluminiu/zincata (care
-  // nu are intrare aici — vezi mai jos). Verificata DUPA elastomer/vata: in
-  // Izolatii Transavia.xlsx textul e mereu "Izolatii cu vata minerala si
-  // protectie cu tabla de inox 304 ...", iar sistemul PRINCIPAL trebuie sa
-  // ramana vata_minerala, nu inoxul din stratul de protectie. Cand linia e
-  // DOAR jachetare de inox (fara semnal de izolatie), vata_minerala nu
-  // matcheaza si asta ia locul ei.
+  // Tabla de INOX, alta lista de preturi decat tabla de aluminiu/zincata.
+  // Verificata DUPA elastomer/vata: in Izolatii Transavia.xlsx textul e mereu
+  // "Izolatii cu vata minerala si protectie cu tabla de inox 304 ...", iar
+  // sistemul PRINCIPAL trebuie sa ramana vata_minerala, nu inoxul din stratul
+  // de protectie. Cand linia e DOAR jachetare de inox (fara semnal de
+  // izolatie), vata_minerala nu matcheaza si asta ia locul ei.
   ["tabla_inox", /\binox\b|o[țt]el\s+inoxidabil|stainless|edelstahl/i],
-  // Tabla de aluminiu/zincata. Lipsea dinadins (vezi nota de mai jos), dar
-  // omisiunea costa mai mult decat riscul ei: o pozitie "vata + jacheta de
-  // tabla" iesea tarifata DOAR cu vata, adica mai ieftin decat e in realitate,
-  // si tacut. Verificata dupa inox, ca "tabla de inox" sa nu cada aici.
+  // Tabla de aluminiu/zincata, ca JACHETA. Verificata dupa inox, ca "tabla de
+  // inox" sa nu cada aici. A lipsit mult timp dinadins, fiindca pe fisierele
+  // reale prinde si randuri in care tabla e materialul TUBULATURII; fara ea
+  // insa, o pozitie "vata + jacheta de tabla" iesea tarifata doar cu vata,
+  // mai ieftin si tacut. Capcana de material e tratata separat, in
+  // `sistemeDinText` — vezi `TABLA_E_TUBULATURA`.
   ["tabla", /tabl[aă]\s+(?:de\s+)?(?:aluminiu|zincat)|jachet|jacket|\bblech\b/i],
-  // NU exista o intrare "tabla" (aluminiu/zincata) aici, desi ar fi simetrica
-  // cu inoxul: masurat pe fisierele reale, o regula ["tabla",
-  // /tabl[aă]\s+(?:de\s+)?(?:aluminiu|zincat)|jachetare|\bblech\b/i] ar prinde
-  // determinist si liniile din Radoia.xlsx despre PROTECTIA MECANICA a
-  // tubulaturii de ventilatie ("Sistem complet de protectie mecanica a
-  // izolatiilor ... din tabla zincata", "Protectie la foc ... pentru
-  // tubulaturile din tabla zincata") — alta lucrare, fara diametru si fara
-  // lista de pret, azi lasata sa cada pe model (sistem=null, netarifata).
-  // Adaugarea ar schimba clasificarea lor determinista fara sa schimbe
-  // rezultatul de tarifare (tot netarifate), dar tot e o schimbare de
-  // comportament pe fisiere reale, deci ramane omisa pana se decide separat.
   ["pvc", /\bpvc\b/i],
-  // Cere notiunea de GOL sau de TRECERE prin perete, nu doar mentiunea focului.
-  // "Protectie la foc EI 60 pentru tubulaturile din tabla zincata" din
-  // Radoia.xlsx e protectia tubulaturii, alta lucrare, si nu are lista de
-  // preturi. Cu "rezistent la foc" sau "EI 60" ca semnal, 28 de randuri de
-  // acolo intrau ca inchideri de gol, iar dimensiunea tubulaturii
-  // rectangulare ("1000/500") era citita drept dimensiune de gol.
-  // "Teceri" nu e greseala mea: asa scrie antetul din oferta 118.1.
-  ["goluri_foc", /inchideri?\s+goluri|goluri\s+la\s+foc|\b(?:t|tr)eceri\s+prin\s+pereti|\bwrap\b|promastop/i],
+  // Cere notiunea de GOL, nu doar mentiunea focului. "Protectie la foc EI 60
+  // pentru tubulaturile din tabla zincata" din Radoia.xlsx e protectia
+  // tubulaturii, alta lucrare, si nu are lista de preturi. Cu "rezistent la
+  // foc" sau "EI 60" ca semnal, 28 de randuri de acolo intrau ca inchideri de
+  // gol, iar dimensiunea tubulaturii rectangulare ("1000/500") era citita
+  // drept dimensiune de gol. "Treceri prin pereti" e al doilea semnal, dar
+  // numai langa foc — vezi `TRECERI_PRIN_PERETI`.
+  ["goluri_foc", /inchideri?\s+goluri|goluri\s+la\s+foc|\bwrap\b|promastop/i],
 ];
+
+/**
+ * "Treceri prin pereti" e inchidere la foc DOAR langa foc.
+ *
+ * Antetele din oferta 118.1 scriu "Teceri prin pereti rezistenti la foc EI30"
+ * ("Teceri" nu e greseala mea: asa scrie acolo). Caietele de instalatii scriu
+ * insa aceleasi cuvinte la TEAVA: "Teava din otel zincata ... inclusiv
+ * fitinguri, treceri prin pereti si plansee cu teava de protectie". Masurat pe
+ * `Radoia.xlsx`: 58 de randuri de alta meserie intrau asa ca inchideri de gol
+ * fara dimensiuni, deci ca munca de validat pentru omul de la tehnic.
+ */
+const TRECERI_PRIN_PERETI = /\b(?:t|tr)eceri\s+prin\s+pereti/i;
+const CONTEXT_FOC = /\bfoc\b|\bEI\s*\d{2,3}\b/i;
+
+/**
+ * Tabla care e MATERIALUL tubulaturii, nu jacheta pusa de noi peste izolatie.
+ *
+ * Masurat pe cele 10 fisiere de client, doua tipare:
+ *   - `Book15.xlsx`, 9 randuri: "tubulatura circulara tip SPIRO ... izolat cu
+ *     vata minerala de 30 mm ... realizat din tabla zincata la cald". Citit ca
+ *     vata + jacheta de aluminiu, pretul urca de la 16,17 la 30,77-56,08 €/ml,
+ *     fara nicio marca;
+ *   - `Radoia.xlsx`, 3 randuri: "Protectie la foc EI 60 pentru tubulaturile din
+ *     tabla zincata - torcret" — protectie la foc a tubulaturii, alta lucrare.
+ *
+ * Singur, "din tabla" nu ajunge ca semnal: "Caseta izolatie armaturi cu flanse
+ * DN100 din tabla aluminiu" e chiar jacheta. De-aia cere verbul de fabricatie
+ * sau tubulatura ca subiect, iar `TABLA_E_JACHETA` bate oricum.
+ */
+const TABLA_E_TUBULATURA =
+  /(?:realizat|executat|confec[țt]ionat)\w*\s+din\s+tabl|made\s+of\s+(?:[\w-]+\s+){0,3}sheet|tubulatur\w*\s+din\s+tabl/i;
+/**
+ * Semnalele de jacheta care raman jacheta chiar langa tabla tubulaturii:
+ * "protectie mecanica a izolatiilor ... din tabla zincata", "protejata la
+ * exterior cu tabla zincata", "caseta ... din tabla aluminiu", "jacketing".
+ */
+const TABLA_E_JACHETA =
+  /jachet|jacket|cladding|caset[aăe]|protec[țt]i\w*\s+(?:cu\s+tabl|mecanic)|protejat\w*\s+(?:la\s+exterior\s+)?cu\s+tabl/i;
 
 /** Alte meserii din caietul de sarcini: se resping explicit, nu se ghicesc. */
 const ALTE_MESERII =
-  /gril[aă]|difuzor|clapet[aă]|demont|dismant|relocare|relocation|ventilator|cazan|boiler|chiller|\bAHU\b|centrala de tratare|vas de expansiune|grundu|priming|swirl|anemostat|plenum|recuperator/i;
+  /gril[aă]|difuzor|clapet[aă]|demont|dismant|relocare|relocation|ventilator|cazan|boiler|chiller|\bAHU\b|centrala de tratare|vas de expansiune|grundu|priming|swirl|anemostat|plenum|recuperator|air\s+conditioning\s+unit/i;
 
 /**
  * Livrarea tubulaturii in sine, nu izolarea ei.
@@ -84,7 +113,29 @@ const RE_DN = /\b(?:DN|Dn|dn)\s*\.?\s*(\d{1,3})\b/;
 const RE_SPIRO = /\bspiro\b|wickelfalzrohr/i;
 const RE_DI = /\bDi\s*(\d{1,3})\b/;
 const RE_OD = /[øØ]\s*(\d{1,3})\b/;
-const RE_PLASTIC = /\b(?:PPR|PP|PEHD|PEX)\s*[D]?\s*(\d{1,3})\b/;
+/**
+ * Teava de plastic: `PPR 20`, `PEHD 110`, `PEHD D40x3.0`.
+ *
+ * Forma cu grosimea peretelui lipita (`D40x3.0`) nu se citea: dupa `40` vine
+ * `x`, deci nu e granita de cuvant. Masurat pe `Oferta 27.04.2026.xlsx`: 11
+ * pozitii de elastomer pe PEHD ieseau "fara diametru", desi sunt exact
+ * cazurile de plastic din `tests/pricing.test.ts`.
+ */
+const RE_PLASTIC = /\b(?:PPR|PP|PEHD|PEX)\s*[D]?\s*(\d{1,3})(?:\b|(?=x\d))/;
+/**
+ * Diametru in toli, legat de notatia lui: `Ø1/2"`, `Ø1 1/4"`, `Dn 2 1/2"`.
+ *
+ * Fara el, `RE_OD` citea `Ø1/2"` ca diametru exterior 1 si `RE_DN` citea
+ * `Dn 1 1/4"` ca DN1. Masurat pe `Oferta 27.04.2026.xlsx`: sase pozitii de
+ * elastomer, de la 1/2" la 2", ieseau toate pe primul rand al listei
+ * (5,70 €/ml), fata de 5,79 ... 8,88 in oferta semnata.
+ *
+ * Ghilimeaua si prefixul (ø sau DN) sunt obligatorii: fara ghilimea, "1/2"
+ * dintr-un "130/130" ar deveni DN15; fara prefix, un `2"` oarecare dintr-o
+ * descriere de robinet ar deveni DN50. `Dn 25 (1'')` ramane DN25 — tolii din
+ * paranteza sunt notatie secundara.
+ */
+const RE_TOLI = /(?:\b(?:DN|Dn|dn)\s*\.?\s*|[øØФ]\s*)(\d{1,2}\s+\d\/\d|\d\/\d|\d{1,2})\s*(?:"|”|“|''|′′|″)/;
 const RE_GROSIME = /(?:g\s*[=.]?\s*|gr\.?\s*|S\s*=\s*|grosime[a]?\s+de\s+|[-–]\s*)(\d{1,3})\s*mm/i;
 const RE_GROSIME_COMPACT = /\bg\s?(\d{2,3})\b/;
 const RE_MM = /(\d{1,3})\s*mm\b/g;
@@ -174,26 +225,56 @@ const ORDINE_STRATURI: Exclude<LinieExtrasa["sistem"], null>[] =
  */
 const FEREASTRA_GROSIME = 40;
 
+/**
+ * Grosimea scrisa imediat INAINTEA numelui: "13mm+40mm vata minerala".
+ *
+ * Asa scrie randul real din `Oferta 27.04.2026.xlsx` (DN80 si DN100,
+ * elastomer + vata + tabla, 44,35 si 57,82 €/ml semnat): vata n-are niciun
+ * numar DUPA nume, deci iesea fara grosime, iar pozitia "grosime ambigua".
+ * Fereastra e mica, iar numarul trebuie sa fie o grosime a ACELUI sistem —
+ * elastomerul (9/13/19/25/32) si vata (20/30/40/50/60/80/100) nu au nicio
+ * grosime comuna, deci "Elastomer 13mm vata minerala" nu da vatei 13.
+ */
+const FEREASTRA_INAINTE = 12;
+const GROSIMI_SISTEM: Partial<Record<Exclude<LinieExtrasa["sistem"], null>, ReadonlySet<number>>> = {
+  elastomer: new Set([9, 13, 19, 25, 32]),
+  vata_minerala: new Set([20, 30, 40, 50, 60, 80, 100]),
+};
+
 function grosimeLangaSistem(
   text: string, sistem: Exclude<LinieExtrasa["sistem"], null>,
 ): number | null {
   const re = SISTEM.find(([s]) => s === sistem)?.[1];
   if (!re) return null;
   const m = new RegExp(re.source, re.flags.includes("g") ? re.flags : `${re.flags}g`);
-  for (const gasit of text.matchAll(m)) {
+  const gasite = [...text.matchAll(m)];
+  for (const gasit of gasite) {
     const dupa = text.slice(gasit.index! + gasit[0].length, gasit.index! + gasit[0].length + FEREASTRA_GROSIME);
     for (const nr of dupa.matchAll(/(\d{1,3})\s*mm\b/g)) {
       const v = Number(nr[1]);
       if (GROSIMI_PLAUZIBILE.has(v)) return v;
     }
   }
+  // A doua trecere, doar daca prima n-a gasit nimic: ce e scris dupa nume
+  // ramane regula, ce e scris inainte e ultima sansa.
+  const proprii = GROSIMI_SISTEM[sistem];
+  if (!proprii) return null;
+  for (const gasit of gasite) {
+    const inainte = text.slice(Math.max(0, gasit.index! - FEREASTRA_INAINTE), gasit.index!);
+    const nr = /(\d{1,3})\s*mm\s*$/i.exec(inainte);
+    if (nr && proprii.has(Number(nr[1]))) return Number(nr[1]);
+  }
   return null;
 }
 
 function sistemeDinText(text: string): Exclude<LinieExtrasa["sistem"], null>[] {
   const potrivite = SISTEM.filter(([, re]) => re.test(text)).map(([s]) => s!);
+  if (TRECERI_PRIN_PERETI.test(text) && CONTEXT_FOC.test(text)) potrivite.push("goluri_foc");
   if (potrivite.includes("goluri_foc")) return ["goluri_foc"];
-  return ORDINE_STRATURI.filter((s) => potrivite.includes(s));
+  const straturi = TABLA_E_TUBULATURA.test(text) && !TABLA_E_JACHETA.test(text)
+    ? potrivite.filter((s) => s !== "tabla")
+    : potrivite;
+  return ORDINE_STRATURI.filter((s) => straturi.includes(s));
 }
 
 export function extrageDeterminist(
@@ -256,6 +337,9 @@ export function extrageDeterminist(
   if ((m = text.match(RE_PLASTIC))) {
     // Plastic: dimensiunea nominala ESTE diametrul exterior.
     diametru_valoare = Number(m[1]); diametru_tip = "exterior";
+  } else if ((m = text.match(RE_TOLI)) && TOLI_DN[m[1]!.replace(/\s+/g, " ")] !== undefined) {
+    // Tolii sunt DN scris altfel: 1/2" = DN15, deci pe seria de otel.
+    diametru_valoare = TOLI_DN[m[1]!.replace(/\s+/g, " ")]!; diametru_tip = "DN";
   } else if ((m = text.match(RE_DN))) {
     // La tubulatura SPIRO, "DN 160" e diametrul EXTERIOR, nu un DN de teava de
     // otel — confirmat de firma pe 11 septembrie 2026 ("la spiro este doar
