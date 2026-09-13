@@ -37,6 +37,30 @@ export const indicator = (valoare: string, eticheta: string, detaliu = ""): stri
   }</div>`;
 
 /**
+ * „3 poziții", „24 de poziții", „101 poziții": in romana numeralul cere „de"
+ * cand ultimele doua cifre sunt 00 sau trec de 19.
+ */
+export const cate = (n: number, substantiv: string): string => {
+  const r = n % 100;
+  return `${n} ${n !== 0 && (r === 0 || r >= 20) ? "de " : ""}${substantiv}`;
+};
+
+/**
+ * Indicator care e si filtru: aceeasi cifra mare, dar apasabila.
+ *
+ * Pentru cand cifra si lista pe care o numara sunt acelasi lucru. Un indicator
+ * „33 fara pret" plus un buton separat „Netarifate (33)" sunt doua controale
+ * pentru o singura intentie, iar cand ajung sa numere gramezi putin diferite,
+ * omul nu mai stie pe care sa-l creada. `ton` coloreaza doar cifra.
+ */
+export const indicatorFiltru = (
+  valoare: string, eticheta: string, atribute: string, apasat: boolean,
+  detaliu = "", ton?: "ok" | "atentie",
+): string =>
+  `<button type="button" class="stat stat-filtru"${ton ? ` data-ton="${ton}"` : ""} aria-pressed="${apasat}" ${atribute}>`
+  + `<b>${esc(valoare)}</b><span>${esc(eticheta)}</span>${detaliu ? `<em>${esc(detaliu)}</em>` : ""}</button>`;
+
+/**
  * Bara de progres, 0..100, cu valoarea scrisa alaturi: o bara goala si una
  * lipsa arata identic, iar 0% e o informatie, nu absenta ei.
  */

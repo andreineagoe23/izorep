@@ -14,12 +14,19 @@ import type { LinieExtrasa, Sursa } from "../src/import/schema.js";
  */
 
 /**
- * Cele trei filtre ale gutter-ului de validare.
+ * Filtrele grilei: tot fisierul, sau una dintre cele trei gramezi in care se
+ * imparte importul la iesire (`imparte` din `web/oferta.ts`).
+ *
+ * Gramezile sunt DISJUNCTE, exact ca foile registrului: gata de oferta (pret,
+ * fara marcaj), de validat (pret, dar marcat), fara pret. Varianta dinainte
+ * avea „de validat" = orice linie marcata, deci si cele fara pret: pe cererea
+ * Abur bara spunea „De validat (33) · Netarifate (33)" despre ACELEASI 33 de
+ * linii, iar confirmarea lor nu le ducea nicaieri — ramaneau fara pret.
  *
  * `toate` e implicit la fiecare fisier nou incarcat — filtrul nu e o
  * preferinta persistenta, e o lentila temporara peste fisierul curent.
  */
-export type Filtru = "toate" | "de_validat" | "netarifate";
+export type Filtru = "toate" | "gata" | "de_validat" | "netarifate";
 
 /**
  * Cauza unui blocaj, oricare din cele doua feluri.
@@ -158,12 +165,12 @@ export function nrBlocate(linii: LinieProcesata[]): number {
 /**
  * Daca linia intra in filtrul dat.
  *
- * `netarifate` cere explicit `sistem !== null`: o linie care nu e pozitie de
- * izolatie (antet, total, nota) nu are pret nici n-o sa aiba, deci n-are ce
- * cauta la "netarifate" — n-ar fi o problema de rezolvat, ar fi zgomot.
- * `de_validat` citeste direct `necesitaValidare`, calculat deja in nucleu
- * (incredere sub prag, avertisment, sau eroare de tarifare pe o linie care nu
- * vine de la om) — filtrul nu recalculeaza nimic, doar selecteaza.
+ * Gramezile cer toate `sistem !== null`: o linie care nu e pozitie de izolatie
+ * (antet, total, nota) nu are pret nici n-o sa aiba, deci n-are ce cauta in
+ * ele — n-ar fi o problema de rezolvat, ar fi zgomot. Marcajul vine direct din
+ * `necesitaValidare`, calculat deja in nucleu; filtrul nu recalculeaza nimic,
+ * doar selecteaza. Regula e aceeasi cu `imparte`, iar un test tine cele doua
+ * aliniate.
  */
 export function potrivit(l: LinieProcesata, f: Lentila): boolean {
   if (typeof f === "object") {
@@ -175,7 +182,8 @@ export function potrivit(l: LinieProcesata, f: Lentila): boolean {
   }
   switch (f) {
     case "toate": return true;
-    case "de_validat": return l.necesitaValidare;
+    case "gata": return l.extras.sistem !== null && l.pret !== undefined && !l.necesitaValidare;
+    case "de_validat": return l.extras.sistem !== null && l.pret !== undefined && l.necesitaValidare;
     case "netarifate": return l.extras.sistem !== null && !l.pret;
   }
 }

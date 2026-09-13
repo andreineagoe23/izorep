@@ -8,6 +8,7 @@ import {
   anuleaza, blocaje, confirma, ETICHETE_BLOCAJ, intrebareaPentru, nrBlocate, potrivit,
   type Filtru,
 } from "../web/validare.js";
+import { imparte } from "../web/oferta.js";
 import type { Avertisment, CodNetarifare } from "../src/import/nucleu.js";
 import type { LinieProcesata } from "../src/import/nucleu.js";
 import type { LinieExtrasa, Sursa } from "../src/import/schema.js";
@@ -55,11 +56,36 @@ describe("potrivit", () => {
     expect(potrivit(l2, "toate")).toBe(true);
   });
 
-  it("'de_validat' urmeaza exact necesitaValidare", () => {
-    const daValidat = linie({ index: 1, necesitaValidare: true });
-    const nuValidat = linie({ index: 2, necesitaValidare: false });
-    expect(potrivit(daValidat, "de_validat")).toBe(true);
-    expect(potrivit(nuValidat, "de_validat")).toBe(false);
+  it("'de_validat' cere pret SI marcaj: nu se suprapune cu 'netarifate'", () => {
+    // Inainte urma doar `necesitaValidare`, deci o linie fara pret era si „de
+    // validat", si „netarifata" — pe cererea Abur, aceleasi 33 in ambele.
+    expect(potrivit(linie({ index: 1, necesitaValidare: true, arePret: true }), "de_validat")).toBe(true);
+    expect(potrivit(linie({ index: 2, necesitaValidare: true }), "de_validat")).toBe(false);
+    expect(potrivit(linie({ index: 3, arePret: true }), "de_validat")).toBe(false);
+  });
+
+  it("'gata' e exact ce pleaca in oferta: pret, fara marcaj, pozitie de izolatie", () => {
+    expect(potrivit(linie({ index: 1, arePret: true }), "gata")).toBe(true);
+    expect(potrivit(linie({ index: 2, arePret: true, necesitaValidare: true }), "gata")).toBe(false);
+    expect(potrivit(linie({ index: 3 }), "gata")).toBe(false);
+    expect(potrivit(linie({ index: 4, arePret: true, extras: { sistem: null } }), "gata")).toBe(false);
+  });
+
+  it("gramezile sunt cele din `imparte`: fiecare pozitie cade in exact una", () => {
+    const linii = [
+      linie({ index: 1, arePret: true }),
+      linie({ index: 2, arePret: true, necesitaValidare: true }),
+      linie({ index: 3, necesitaValidare: true }),
+      linie({ index: 4 }),
+      linie({ index: 5, extras: { sistem: null } }),
+    ];
+    const { oferta, deValidat, netarifate } = imparte(linii);
+    expect(linii.filter((l) => potrivit(l, "gata"))).toEqual(oferta);
+    expect(linii.filter((l) => potrivit(l, "de_validat"))).toEqual(deValidat);
+    expect(linii.filter((l) => potrivit(l, "netarifate"))).toEqual(netarifate);
+    for (const l of linii.filter((x) => x.extras.sistem !== null)) {
+      expect((["gata", "de_validat", "netarifate"] as const).filter((f) => potrivit(l, f))).toHaveLength(1);
+    }
   });
 
   it("'netarifate' cere pozitie de izolatie (sistem non-null) fara pret", () => {
@@ -77,7 +103,7 @@ describe("potrivit", () => {
   });
 
   it("acopera toate valorile lui Filtru", () => {
-    const filtre: Filtru[] = ["toate", "de_validat", "netarifate"];
+    const filtre: Filtru[] = ["toate", "gata", "de_validat", "netarifate"];
     const l = linie({ index: 1 });
     for (const f of filtre) expect(() => potrivit(l, f)).not.toThrow();
   });

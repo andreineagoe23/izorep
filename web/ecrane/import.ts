@@ -2,7 +2,6 @@ import { proceseazaRegistru, reevalueaza, type Extractor, type LinieProcesata, t
 import { scrieCelula, reconstruieste } from "../../src/import/editare.js";
 import { invataDinCorectie } from "../../src/import/memorie.js";
 import { mapariStatice } from "../../src/import/mapari-statice.js";
-import { amprentaFoaie } from "../../src/import/mapare.js";
 import { stocLocal } from "../stoc-local.js";
 import { SISTEME, type LinieExtrasa } from "../../src/import/schema.js";
 import {
@@ -14,7 +13,7 @@ import {
 import type { CelulaBruta, FoaieBruta, RandBrut } from "../../src/import/parse-workbook.js";
 import type { Destinatie } from "../../src/pricing/lists.js";
 import { grosimePropusa } from "../../src/pricing/grosimi-uzuale.js";
-import { card, data, esc, eur, indicator, nota, progres, stare, tabel, type Ecran } from "./tip.js";
+import { card, cate, data, dataScurta, esc, eur, indicatorFiltru, nota, progres, stare, tabel, type Ecran } from "./tip.js";
 import { FIRME } from "../date/seed.js";
 // ExcelJS sta dincolo de un `await import(...)` in `oferta.ts`, ca la citire:
 // aici se importa doar functia, deci cele ~940 kB nu intra in bundle-ul cu
@@ -133,30 +132,16 @@ function celulePret(l: LinieProcesata): string {
 }
 
 /**
- * Eticheta butonului de confirmare in masa, dupa filtrul activ.
+ * Eticheta butonului de confirmare.
  *
- * Ambiguitatea e periculoasa aici: un buton "Confirma tot" ar putea sa
- * confirme si pozitii pe care omul nu le-a vazut. Eticheta spune exact pe ce
- * actioneaza — numarul SI filtrul curent, nu doar numarul.
+ * Confirmarea actioneaza DOAR pe pozitiile cu pret si marcate care se vad sub
+ * filtrul curent — de-aia butonul apare numai sub un filtru, niciodata pe tot
+ * fisierul, iar eticheta spune ca e vorba de randurile de mai jos. Varianta
+ * dinainte oferea si „Confirmă toate cele 99 poziții din foaia asta", adica o
+ * bifa si pe randuri pe care omul nu le avusese pe ecran.
  */
-const ETICHETA_CONFIRMARE: Record<Filtru, (n: number) => string> = {
-  toate: (n) => `Confirmă toate cele ${n} poziții din foaia asta`,
-  de_validat: (n) => `Confirmă cele ${n} poziții marcate din foaia asta`,
-  netarifate: (n) => `Confirmă cele ${n} poziții netarifate din foaia asta`,
-};
-
-/**
- * Eticheta butonului sub lentila curenta, oricare ar fi ea.
- *
- * Sub o lentila de cauza, eticheta spune CAUZA, nu doar numarul: „Confirmă
- * cele 8 poziții cu «DN inexistent în seria de oțel» din foaia asta". Acelasi
- * motiv ca la cele trei de dinainte — un buton care spune doar cate, nu si
- * care, poate confirma pozitii pe care omul nu le-a vazut.
- */
-const etichetaConfirmare = (l: Lentila, n: number): string =>
-  typeof l === "object"
-    ? `Confirmă cele ${n} poziții cu „${ETICHETE_BLOCAJ[l.cod].eticheta}” din foaia asta`
-    : ETICHETA_CONFIRMARE[l](n);
+const etichetaConfirmare = (n: number): string =>
+  n === 1 ? "Confirmă poziția de mai jos" : `Confirmă cele ${cate(n, "poziții")} de mai jos`;
 
 /**
  * Segmentele intre care se poate alege la import.
@@ -210,7 +195,9 @@ const umplutura = (n: number, eticheta = "td"): string =>
 export const ecran: Ecran = {
   id: "import",
   titlu: "Import Excel",
-  subtitlu: "Trage o listă de cantități aici. Fișierul nu pleacă de pe calculatorul tău.",
+  // Fara „fisierul nu pleaca de pe calculatorul tau": cu modelul pornit,
+  // randurile nerecunoscute pleaca la OpenAI, iar ecranul o spune explicit.
+  subtitlu: "Încarcă lista de cantități a clientului. Prețurile se calculează din listele firmei.",
 
   async render(root) {
     const info = await interogheazaModel();
@@ -220,13 +207,13 @@ export const ecran: Ecran = {
     const mapari = mapariStatice();
     const prag = info?.prag ?? 0.85;
 
-    // Ce ruleaza, atat. Explicatiile de business (unde sta cheia API, de ce
-    // ecranul cade pe stratul determinist pe Pages, cum se citeste grila) stau
-    // in `.claude/ui.md` si `.claude/import.md` — sunt utile o data, nu la
-    // fiecare fisier. Ecranul ramane cu date, contoare si controale.
+    // Pe ecran ramane doar ce schimba ce face omul. Cu modelul pornit se spune
+    // ca randurile pleaca la un tert — asta omul trebuie sa vada fara sa caute
+    // (`.claude/ui.md`). Fara model nu e nimic de spus: „stratul determinist"
+    // si `npm run dev` erau vorbe pentru noi, nu pentru omul de la tehnic.
     const explicatie = info
-      ? `<p class="hint">Reguli + <code>${esc(info.model)}</code> pe liniile rămase, apoi tarifare.</p>`
-      : `<p class="hint">Doar stratul determinist. Modelul pornește local, cu <code>npm run dev</code>.</p>`;
+      ? `<p class="hint">Rândurile pe care regulile nu le recunosc se trimit la <code>${esc(info.model)}</code> (OpenAI).</p>`
+      : "";
 
     /**
      * Segmentul pe care se tarifeaza importul curent. Schimbarea lui nu
@@ -249,26 +236,36 @@ export const ecran: Ecran = {
     let grosimiPropuse = new Map<number, number>();
 
     root.innerHTML = `
-      <p>${info
-        ? stare(`Extragere cu ${esc(info.model)}`, "ok")
-        : stare("Stratul cu model: indisponibil aici", "neutru")}</p>
-      <div class="filtre" role="group" aria-label="Segmentul ofertei">
-        <span class="hint">Tipul ofertei:</span>
-        ${SEGMENTE.map((d) => `<button class="filtru" data-segment="${d}" aria-pressed="${d === destinatie}">
-          ${esc(ETICHETA_SEGMENT[d])}</button>`).join("")}
+      <div class="bara-import">
+        <div class="filtre" role="group" aria-label="Tipul ofertei">
+          <span class="hint">Tipul ofertei</span>
+          ${SEGMENTE.map((d) => `<button class="filtru" data-segment="${d}" aria-pressed="${d === destinatie}">
+            ${esc(ETICHETA_SEGMENT[d])}</button>`).join("")}
+        </div>
+        <label id="drop" class="drop" for="fisier">
+          <strong>Trage un fișier .xlsx aici</strong>
+          <span>sau click pentru a alege</span>
+          <input id="fisier" type="file" accept=".xlsx" />
+        </label>
       </div>
-      <label id="drop" class="drop" for="fisier">
-        <strong>Trage un fișier .xlsx aici</strong>
-        <span>sau click pentru a alege</span>
-        <input id="fisier" type="file" accept=".xlsx" />
-        ${explicatie}
-      </label>
+      ${explicatie}
       <div id="istoric"></div>
       <div id="raport"></div>`;
 
     const $ = <T extends HTMLElement>(s: string) => root.querySelector(s) as T;
     const drop = $("#drop");
     const input = $<HTMLInputElement>("#fisier");
+
+    /**
+     * Zona de incarcare: mare cat timp nu e nimic deschis, o tinta ingusta
+     * dupa aceea. Cu un import pe ecran, munca e grila; o zona de 180 px
+     * deasupra ei, plus istoricul, impingeau rezumatul sub marginea ecranului.
+     */
+    const aratDrop = (compact: boolean): void => {
+      drop.classList.toggle("compact", compact);
+      drop.querySelector("strong")!.textContent = compact ? "Alt fișier" : "Trage un fișier .xlsx aici";
+      drop.querySelector("span")!.textContent = compact ? "trage-l aici sau click" : "sau click pentru a alege";
+    };
 
     // Deschiderea selectorului vine din <label for>, nu din JS: asa functioneaza
     // si de la tastatura, iar inputul ramane focusabil (ascuns vizual, nu `hidden`).
@@ -320,22 +317,21 @@ export const ecran: Ecran = {
       const curent = idCurent();
       const randuri = intrari.map((i) => `
         <tr${i.id === curent ? ' class="curent"' : ""}>
-          <td><button class="ca-link" data-redeschide="${esc(i.id)}">${esc(i.nume)}</button>
+          <td><button class="ca-link" data-redeschide="${esc(i.id)}" title="${esc(i.model ? `extras cu ${i.model}` : "extras doar cu reguli")}">${esc(i.nume)}</button>
             ${i.id === curent ? ` ${stare("deschis", "ok")}` : ""}</td>
-          <td class="hint">${esc(data(i.cand))}</td>
+          <td class="hint">${esc(dataScurta(i.cand))}</td>
           <td class="n">${i.pozitii}</td>
-          <td class="n">${i.tarifate}</td>
           <td class="n">${eur(i.valoare)}${i.destinatie && i.destinatie !== "rezidential"
             ? ` <span class="hint">${esc(ETICHETA_SEGMENT[i.destinatie].toLowerCase())}</span>` : ""}</td>
-          <td class="hint">${i.model ? esc(i.model) : "doar reguli"}</td>
           <td><button class="ca-link" data-sterge="${esc(i.id)}" aria-label="Șterge importul ${esc(i.nume)}">șterge</button></td>
         </tr>`);
 
-      gazda.innerHTML = `<h2 class="sectiune">Importuri recente</h2>
-        ${tabel(
-          ["Fișier", "Când", "Poziții", "Tarifate", "Valoare", "Extras cu", ""],
-          randuri, ["", "", "n", "n", "n", "", ""],
-        )}
+      // Istoricul e drumul inapoi la un import vechi, nu munca de acum: cu un
+      // import deschis sta pliat, ca sa nu imparta ecranul cu grila.
+      gazda.innerHTML = `<details class="istoric"${curent ? "" : " open"}>
+        <summary><strong>Importuri recente</strong> <span class="hint">${intrari.length}</span></summary>
+        ${tabel(["Fișier", "Când", "Poziții", "Valoare", ""], randuri, ["", "", "n", "n", ""])}
+        </details>
 `;
 
       for (const b of gazda.querySelectorAll<HTMLButtonElement>("[data-redeschide]")) {
@@ -344,7 +340,7 @@ export const ecran: Ecran = {
       for (const b of gazda.querySelectorAll<HTMLButtonElement>("[data-sterge]")) {
         b.onclick = async () => {
           await sterge(b.dataset["sterge"]!);
-          if (idCurent() === null) $("#raport").innerHTML = "";
+          if (idCurent() === null) { $("#raport").innerHTML = ""; aratDrop(false); }
           await deseneazaIstoric();
         };
       }
@@ -533,10 +529,6 @@ export const ecran: Ecran = {
       const out = $("#raport");
       const { foi, rez } = ctx;
 
-      // Pe fila fiecarei foi: un semn cand foaia n-are mapare de coloane —
-      // cantitatile ei raman pe euristica veche, nu pe coloana mapata.
-      const foaieMapata = (f: FoaieBruta): boolean => mapari.has(amprentaFoaie(f));
-
       let izo = rez.linii.filter((l) => l.extras.sistem !== null);
       // Harta pe indexul din fisierul sursa: o editare cauta linia aici, nu
       // tine minte un index de rand care s-ar deplasa la orice sortare.
@@ -567,32 +559,48 @@ export const ecran: Ecran = {
       /** Ce ramane vizibil pe foaia data, sub filtrul curent. */
       const subFiltru = (f: FoaieBruta): LinieProcesata[] =>
         liniiFoaie(f).filter((l) => potrivit(l, filtru));
-      const deValidatPe = (f: FoaieBruta): number =>
-        liniiFoaie(f).filter((l) => l.necesitaValidare).length;
 
-      /** Randul de indicatoare — se reface dupa o editare, fara sa reconstruiasca tot tabelul. */
+      /**
+       * Rezumatul: patru cifre, si fiecare e si filtrul care arata randurile
+       * numarate. Gramezile sunt ale registrului — gata de oferta, de validat,
+       * fara pret, disjuncte — deci ce scrie aici e exact ce pleaca in fisier.
+       *
+       * Varianta dinainte avea pana la unsprezece indicatoare (foi mapate,
+       * randuri cu text, deduse din sablon, note si titluri...) plus trei
+       * butoane de filtru care numarau alte gramezi decat indicatoarele. Cum
+       * s-a extras sta acum in „Detalii extragere", sub grila.
+       */
       function randStats(): string {
+        const { oferta, deValidat, netarifate } = imparte(rez.linii);
+        const f = (v: Filtru, valoare: string, eticheta: string, detaliu: string, ton?: "ok" | "atentie"): string =>
+          indicatorFiltru(valoare, eticheta, `data-lentila="${v}"`, filtru === v, detaliu, ton);
+        return f("toate", String(izo.length), "poziții", "tot fișierul")
+          + f("gata", String(oferta.length), "gata de ofertă", eur(totalOferta(oferta)), oferta.length ? "ok" : undefined)
+          + f("de_validat", String(deValidat.length), "de validat", "au preț, trebuie văzute",
+            deValidat.length ? "atentie" : undefined)
+          + f("netarifate", String(netarifate.length), "fără preț", netarifate.length ? "cauzele, mai jos" : "—");
+      }
+
+      /**
+       * Cum s-a ajuns la cifrele din rezumat. Pliat: e pentru cine intreaba de
+       * ce, nu pentru fiecare import — dar nu dispare, fiindca e singurul loc
+       * unde se vede, de exemplu, ca o foaie n-a avut coloanele recunoscute.
+       */
+      function randDetalii(): string {
         const s = rez.statistici;
-        const proc = s.liniiIzolatie ? `${((s.tarifate / s.liniiIzolatie) * 100).toFixed(0)}%` : "–";
-        return `
-          ${foi.length > 1 ? indicator(String(foi.length), "foi în registru") : ""}
-          ${indicator(`${s.foiMapate}/${s.foi}`, "foi mapate", "coloane mapate: cantitatea nu se mai ghicește")}
-          ${indicator(String(s.total), "rânduri cu text")}
-          ${indicator(String(s.liniiIzolatie), "poziții de izolație")}
-          ${indicator(String(s.tarifate), "tarifate", proc)}
-          ${info ? indicator(String(s.prinModel), "rezolvate cu modelul") : ""}
-          ${info && s.prinSablon
-            ? indicator(String(s.prinSablon), "deduse din șablon", "linii geamăne, fără apel la model")
-            : ""}
-          ${s.prinMemorie
-            ? indicator(String(s.prinMemorie), "din corecții anterioare", "șabloane învățate la importurile trecute")
-            : ""}
-          ${s.prinOm ? indicator(String(s.prinOm), "corectate de om") : ""}
-          ${indicator(String(s.deValidat), "de validat de om", `încredere sub ${prag} sau fără preț`)}
-          ${s.modelFaraRaspuns > 0
-            ? indicator(String(s.modelFaraRaspuns), "fără răspuns de la model", "trimise, dar modelul n-a întors nimic")
-            : ""}
-          ${s.faraMasura ? indicator(String(s.faraMasura), "note și titluri", "fără UM și fără cantitate: nu sunt poziții") : ""}`;
+        const r = (n: number | string, text: string): string =>
+          `<li><strong>${esc(String(n))}</strong> ${esc(text)}</li>`;
+        return `<details class="detalii"${detaliiDeschise() ? " open" : ""}><summary>Detalii extragere</summary><ul>
+          ${r(`${s.foiMapate}/${s.foi}`, "foi cu coloanele recunoscute; pe celelalte cantitatea se ghicește")}
+          ${r(s.total, "rânduri cu text")}
+          ${s.faraMasura ? r(s.faraMasura, "note și titluri: fără UM și fără cantitate, deci nu sunt poziții") : ""}
+          ${r(s.prinRegex, "poziții citite de reguli")}
+          ${s.prinModel ? r(s.prinModel, `citite de ${ctx.meta.model ?? "model"}`) : ""}
+          ${s.prinSablon ? r(s.prinSablon, "deduse din rânduri geamăne, fără model") : ""}
+          ${s.prinMemorie ? r(s.prinMemorie, "din corecții de la importuri anterioare") : ""}
+          ${s.prinOm ? r(s.prinOm, "corectate sau confirmate de om") : ""}
+          ${s.cuAvertisment ? r(s.cuAvertisment, "cu valori pe care textul sursă nu le confirmă") : ""}
+        </ul></details>`;
       }
 
       /**
@@ -625,8 +633,8 @@ export const ecran: Ecran = {
           </tr>`;
         });
 
-        return `<details class="card" open>
-          <summary><strong>Ce blochează ${total} ${total === 1 ? "poziție" : "poziții"}</strong></summary>
+        return `<details class="card"${blocajeDeschise() ? " open" : ""}>
+          <summary><strong>Ce blochează ${total === 1 ? "o poziție" : cate(total, "poziții")}</strong></summary>
           ${tabel(["", "Cauza", ""], randuri, ["n", "", "fix"])}
         </details>`;
       }
@@ -715,7 +723,7 @@ export const ecran: Ecran = {
              <td class="extras n"><input type="number" step="any" data-camp="grosime"
                value="${l.extras.grosime_mm ?? ""}"${(() => {
                  const g = propunereGrosime(l);
-                 return g === null ? "" : ` placeholder="${g}" title="Propus ${g} mm după diametru, din practica firmei. Nu e aplicat: scrie-l sau folosește butonul din bară."`;
+                 return g === null ? "" : ` placeholder="~${g}" title="Propus ${g} mm după diametru, grosimea uzuală a firmei. Nu e aplicat: scrie-l sau folosește „Completează grosimi lipsă"."`;
                })()} /></td>
              ${celulePret(l)}
              <td class="extras fix"><span data-marca title="${esc(titluMarcaj(l))}">${marcajValidare(l)}</span></td>`
@@ -728,13 +736,15 @@ export const ecran: Ecran = {
           ${extrase}</tr>`;
       }
 
+      aratDrop(true);
       out.innerHTML = `
+        <p class="fisier-curent"><strong>${esc(ctx.meta.nume)}</strong>
+          <span class="hint">${ctx.restaurat ? "redeschis · " : ""}${esc(data(ctx.meta.cand))}</span></p>
         ${ctx.avertisment}
-        ${ctx.restaurat
-          ? nota(`Import redeschis: <strong>${esc(ctx.meta.nume)}</strong>, ${esc(data(ctx.meta.cand))}.`)
+        ${rez.statistici.modelFaraRaspuns > 0
+          ? `<p class="alerta"><strong>${rez.statistici.modelFaraRaspuns} rânduri trimise la model n-au primit răspuns.</strong>
+             Reîncarcă fișierul ca să reîncerci.</p>`
           : ""}
-        <div id="stats" class="stats">${randStats()}</div>
-        <div id="blocaje">${randBlocaje()}</div>
         ${rez.statistici.trunchiat > 0
           ? nota(`Plafonul per import e de 400 de linii trimise la model; ${rez.statistici.trunchiat} au rămas netrimise.`)
           : ""}
@@ -743,10 +753,13 @@ export const ecran: Ecran = {
              (tarif plat 2,20–3,00 €/ml). Listele motorului sunt material + manoperă: ar da de 2,5–3,8×
              prețul corect.</p>`
           : ""}
+        <div id="stats" class="stats"></div>
+        <div id="blocaje"></div>
         <div id="foi"></div>
         <div id="validare"></div>
         <div id="oferta"></div>
-        <div id="grila"></div>`;
+        <div id="grila"></div>
+        <div id="detalii"></div>`;
 
       const statsEl = $("#stats");
       const blocajeEl = $("#blocaje");
@@ -754,7 +767,22 @@ export const ecran: Ecran = {
       const bara = $("#validare");
       const panouOferta = $("#oferta");
       const file = $("#foi");
+      const detaliiEl = $("#detalii");
       let activa = 0;
+
+      /**
+       * Starea unui `<details>` care se reface la fiecare recalcul. Fara ea,
+       * orice corectie in grila l-ar inchide sub ochii omului.
+       */
+      const pliabil = (el: HTMLElement): (() => boolean) => {
+        let deschis = false;
+        el.addEventListener("toggle", (e) => { deschis = (e.target as HTMLDetailsElement).open; }, true);
+        return () => deschis;
+      };
+      const blocajeDeschise = pliabil(blocajeEl);
+      const detaliiDeschise = pliabil(detaliiEl);
+      blocajeEl.innerHTML = randBlocaje();
+      detaliiEl.innerHTML = randDetalii();
 
       /**
        * Scrie sesiunea in istoric.
@@ -783,70 +811,65 @@ export const ecran: Ecran = {
       };
 
       /**
-       * Filele foilor din registru.
-       *
-       * Se refac dupa fiecare confirmare, fiindca poarta contorul de pozitii
-       * marcate al fiecarei foi — omul trebuie sa vada pe CARE foaie mai e
-       * treaba fara sa le deschida pe rand (`Radoia.xlsx` are 7).
+       * Filele foilor din registru, doar cand sunt mai multe. Fiecare poarta
+       * cate pozitii mai are nerezolvate, ca omul sa vada pe CARE foaie mai e
+       * treaba fara sa le deschida pe rand (`Radoia.xlsx` are 7). Numarul de
+       * randuri si „fara mapare" au plecat in „Detalii extragere".
        */
       function randFile(): string {
-        if (foi.length === 1) {
-          const f = foi[0];
-          return `<p class="hint">Foaia „${esc(f?.nume ?? "")}”${f && !foaieMapata(f) ? ` ${stare("fără mapare", "neutru")}` : ""}</p>`;
-        }
-        return `<div class="filtre" role="group" aria-label="Foile din registru">${foi.map((f, i) =>
-          `<button class="filtru" data-foaie="${i}" aria-pressed="${i === activa}">${esc(f.nume)}
-            <span class="hint">${f.randuri.length}</span>${foaieMapata(f) ? "" : ` ${stare("fără mapare", "neutru")}`}
-            ${deValidatPe(f) ? stare(`${deValidatPe(f)} de validat`, "atentie") : ""}</button>`).join("")}</div>`;
+        if (foi.length === 1) return "";
+        return `<div class="filtre" role="group" aria-label="Foile din registru">${foi.map((f, i) => {
+          const ramase = liniiFoaie(f).filter((l) => !potrivit(l, "gata")).length;
+          return `<button class="filtru" data-foaie="${i}" aria-pressed="${i === activa}">${esc(f.nume)}${
+            ramase ? ` ${stare(`${ramase} de rezolvat`, "atentie")}` : ""}</button>`;
+        }).join("")}</div>`;
       }
 
       /**
-       * Bara de validare: lentilele, navigarea si actiunea in masa.
+       * Bara de actiuni. In stanga, doar ce are sens sub filtrul curent; in
+       * dreapta, actiunea principala a ecranului. Filtrele insele sunt cifrele
+       * din rezumat.
        *
-       * Se reface la fiecare `sincronizeaza`, fiindca numerele din ea vin din
-       * starea recalculata. De-aia butoanele NU-si primesc handler direct: bara
-       * asculta delegat, o singura data (vezi mai jos), altfel fiecare
-       * reconstructie ar trebui sa relege totul si un `addEventListener` uitat
-       * s-ar dubla tacut.
+       * Drumul pe care il sugereaza: fara pret → „Completeaza grosimi" → de
+       * validat → „Confirma" → gata de oferta → „Genereaza oferta". Inainte,
+       * sapte butoane de aceeasi greutate stateau pe doua randuri, iar
+       * actiunea pentru care exista ecranul era ultima, pe randul al doilea.
+       *
+       * Se reface la fiecare `sincronizeaza`; butoanele NU-si primesc handler
+       * direct, bara asculta delegat, o singura data (vezi mai jos).
        */
       function randValidare(): string {
         const f = foi[activa];
         if (!f) return "";
         const vizibile = subFiltru(f);
-        const marcate = deValidatPe(f);
-        const netarifate = liniiFoaie(f).filter((l) => potrivit(l, "netarifate")).length;
+        const deConfirmat = vizibile.filter((l) => potrivit(l, "de_validat")).length;
+        const grosimi = liniiFoaie(f).filter((l) => propunereGrosime(l) !== null).length;
+        const peCod = typeof filtru === "object";
 
-        const lentila = (v: Filtru, eticheta: string): string =>
-          `<button class="filtru" data-lentila="${v}" aria-pressed="${filtru === v}">${eticheta}</button>`;
-
-        // Sub o lentila de cauza, cele trei butoane obisnuite raman nepresate
-        // si apare al patrulea, care spune pe ce cauza suntem si cum se iese.
-        // Fara el, omul care a dat click pe „arată" dintr-un blocaj n-ar avea
-        // in bara niciun semn ca grila e filtrata pe altceva decat cele trei.
         const lentilaCod = typeof filtru === "object"
           ? `<button class="filtru" data-lentila="toate" aria-pressed="true">${
               esc(ETICHETE_BLOCAJ[filtru.cod].eticheta)} (${vizibile.length}) ✕</button>`
           : "";
+        const completeaza = grosimi > 0 && (filtru === "toate" || filtru === "netarifate"
+            || (typeof filtru === "object" && filtru.cod === "grosime_ambigua"))
+          ? `<button class="secundar" data-actiune="grosimi"
+              title="Grosimea uzuală a firmei după diametru (răspunsul din 11 septembrie 2026): vată 20–100 mm, elastomer 13/19/25 mm. Pozițiile rămân de validat până le confirmi.">Completează ${cate(grosimi, "grosimi")} lipsă</button>`
+          : "";
+        const urmatoarea = filtru === "de_validat" && deConfirmat > 1
+          ? `<button class="secundar" data-actiune="urmatoarea">Următoarea</button>`
+          : "";
+        const confirmare = deConfirmat > 0 && (filtru === "de_validat" || peCod)
+          ? `<button class="secundar" data-actiune="confirma">${esc(etichetaConfirmare(deConfirmat))}</button>`
+          : "";
+        const anulare = ultimaConfirmare
+          ? `<button class="secundar" data-actiune="anuleaza">Anulează confirmarea celor ${ultimaConfirmare.intrari.length}</button>`
+          : "";
 
-        return `
-          <div class="filtre" role="group" aria-label="Ce se vede din foaie">
-            ${lentila("toate", "Toate")}
-            ${lentila("de_validat", `De validat (${marcate})`)}
-            ${lentila("netarifate", `Netarifate (${netarifate})`)}
-            ${lentilaCod}
-            <button class="secundar" data-actiune="urmatoarea"${marcate ? "" : " disabled"}>Următoarea de validat</button>
-            <button class="secundar" data-actiune="confirma"${vizibile.length ? "" : " hidden"}>${esc(etichetaConfirmare(filtru, vizibile.length))}</button>
-            ${(() => {
-              const n = liniiFoaie(f).filter((l) => propunereGrosime(l) !== null).length;
-              return n === 0 ? "" : `<button class="secundar" data-actiune="grosimi"
-                title="Grosimea uzuală a firmei după diametru (răspunsul din 11 septembrie 2026): vată 20–100 mm, elastomer 13/19/25 mm. Pozițiile rămân de validat până le confirmi.">Completează ${n} grosimi lipsă</button>`;
-            })()}
-            <button class="secundar" data-actiune="oferta">Generează oferta</button>
-            ${ultimaConfirmare
-              ? `<button class="secundar" data-actiune="anuleaza">Anulează confirmarea celor ${ultimaConfirmare.intrari.length}</button>`
-              : ""}
+        return `<div class="bara-actiuni">
+            ${lentilaCod}${completeaza}${urmatoarea}${confirmare}${anulare}
+            <button class="primar principal" data-actiune="oferta">Generează oferta</button>
           </div>
-          <p class="hint" role="status">${filtru === "toate" ? "" : "Rândurile păstrează numerele din Excel."}</p>`;
+          <p class="hint" role="status"></p>`;
       }
 
       /**
@@ -873,13 +896,13 @@ export const ecran: Ecran = {
 
         return card("Generează oferta", `
           ${nota(
-            `<strong>${oferta.length} ${oferta.length === 1 ? "poziție" : "poziții"}</strong>, ` +
+            `<strong>${oferta.length === 1 ? "1 poziție" : cate(oferta.length, "poziții")} gata</strong>, ` +
             `<strong>${eur(total)}</strong>` +
             ` · ofertă ${esc(ETICHETA_SEGMENT[destinatie].toLowerCase())}` +
             (deValidat.length + netarifate.length > 0
-              ? ` · în afara ofertei: ${deValidat.length} de validat, ${netarifate.length} netarifate`
+              ? ` · rămân în afara ofertei: ${deValidat.length} de validat, ${netarifate.length} fără preț`
               : ""))}
-          <form id="antet-oferta">
+          <form id="antet-oferta" class="formular-oferta">
             <label>Firma emitentă
               <select name="firma">${FIRME.map((f) =>
                 `<option value="${f.id}">${esc(f.denumire)} (${esc(f.serieOferta)})</option>`).join("")}</select></label>
@@ -890,19 +913,32 @@ export const ecran: Ecran = {
             ${camp("persoana", "În atenția d-lui/d-nei", "")}
             ${camp("localitate", "Localitatea de pe ofertă", "PALTINIS")}
             ${camp("discount", "Discount %  (0 = fără)", "0", "number")}
-            <button class="secundar" type="submit">Descarcă registrul .xlsx</button>
-            <button class="secundar" type="button" data-actiune="inchide-oferta">Renunță</button>
+            <div class="butoane">
+              <button class="primar" type="submit">Descarcă registrul .xlsx</button>
+              <button class="secundar" type="button" data-actiune="inchide-oferta">Renunță</button>
+            </div>
           </form>`);
       }
 
       const deseneaza = (i: number): void => {
         activa = i;
         pozitiaSarita = -1;
+        statsEl.innerHTML = randStats();
         file.innerHTML = randFile();
         gazda.innerHTML = tabelFoaie(foi[i]!);
         bara.innerHTML = randValidare();
       };
       deseneaza(0);
+
+      // Cifrele din rezumat sunt filtrele. Un clic pe filtrul deja apasat
+      // intoarce la tot fisierul, ca un tab care se poate deselecta.
+      statsEl.addEventListener("click", (e) => {
+        const b = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-lentila]");
+        if (!b) return;
+        const v = b.dataset["lentila"] as Filtru;
+        filtru = v === filtru ? "toate" : v;
+        deseneaza(activa);
+      });
 
       // Blocul de cauze isi are propriul ascultator delegat: el sta in afara
       // barei de validare (`#validare`) si se reface separat, la `sincronizeaza`.
@@ -938,6 +974,7 @@ export const ecran: Ecran = {
         mapa = new Map(izo.map((l) => [l.extras.index, l]));
         statsEl.innerHTML = randStats();
         blocajeEl.innerHTML = randBlocaje();
+        detaliiEl.innerHTML = randDetalii();
         file.innerHTML = randFile();
         bara.innerHTML = randValidare();
 
@@ -1060,12 +1097,15 @@ export const ecran: Ecran = {
         }
 
         if (actiune === "confirma") {
-          // Confirma EXACT ce e vizibil sub filtrul curent, pe foaia activa —
-          // ce scrie pe buton. Un "confirma tot" ar bifa si pozitii pe care
-          // omul nu le-a avut niciodata pe ecran.
+          // Confirma EXACT pozitiile cu pret si marcate care se vad sub filtrul
+          // curent, pe foaia activa — ce scrie pe buton. Una fara pret n-are ce
+          // confirma: ar ramane fara pret, doar fara marcaj.
           const f = foi[activa];
           if (!f) return;
-          ultimaConfirmare = confirma(subFiltru(f).map((l) => l.extras.index), rez.rezolvate);
+          ultimaConfirmare = confirma(
+            subFiltru(f).filter((l) => potrivit(l, "de_validat")).map((l) => l.extras.index),
+            rez.rezolvate,
+          );
           reevalueaza(rez, optiuniNucleu());
           sincronizeaza();
           // Redesenare completa: sub filtrul "de validat" liniile tocmai

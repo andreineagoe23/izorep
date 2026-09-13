@@ -480,3 +480,89 @@ button.filtru[aria-pressed="true"], button.filtru.activ {
 .drop strong { font-size: 17px; }
 .drop span { color: var(--slab); font-size: 14.5px; }
 .drop .hint { max-width: 60ch; margin: 14px 0 0; }
+
+/* ------------------------------------------------------ ecranul de import */
+
+/*
+ * Bara de sus: tipul ofertei si incarcarea. Zona mare de drag&drop apare doar
+ * cand nu e niciun import deschis si ocupa tot randul; dupa aceea ramane o
+ * tinta ingusta langa segment — munca e grila, nu incarcarea.
+ */
+.bara-import { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; margin-bottom: 14px; }
+.bara-import .filtre { margin-bottom: 0; align-items: center; }
+.bara-import .drop { flex: 1 1 100%; }
+.drop.compact {
+  flex: 0 1 auto; flex-direction: row; gap: 8px; padding: 8px 16px;
+  border-width: 1px; border-radius: 8px; min-height: 40px;
+}
+.drop.compact strong { font-size: 14.5px; }
+.drop.compact span { font-size: 14px; }
+
+.fisier-curent { margin: 6px 0 14px; font-size: 16px; }
+.fisier-curent .hint { margin-left: 6px; }
+
+details.istoric > summary, #blocaje details > summary { cursor: pointer; }
+details.istoric[open] > summary { margin-bottom: 10px; }
+
+/*
+ * Indicatorii care sunt si filtre. Aceeasi forma ca `.stat`; starea apasata e
+ * conturul si fundalul de accent slab, nu umplerea plina — un card albastru
+ * ar concura cu singurul buton principal al ecranului.
+ */
+button.stat-filtru { font: inherit; text-align: left; color: var(--text); cursor: pointer; }
+button.stat-filtru:hover { border-color: var(--accent); }
+button.stat-filtru[aria-pressed="true"] {
+  border-color: var(--accent); background: var(--accent-slab); box-shadow: inset 0 0 0 1px var(--accent);
+}
+.stat-filtru[data-ton="ok"] b { color: var(--ok); }
+.stat-filtru[data-ton="atentie"] b { color: var(--atentie); }
+
+/*
+ * Bara de actiuni de deasupra grilei: in stanga ce are sens sub filtrul
+ * curent, in dreapta actiunea principala a ecranului.
+ */
+.bara-actiuni { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 12px; }
+.bara-actiuni .principal { margin-left: auto; }
+.primar {
+  border: 1px solid var(--accent-fill); background: var(--accent-fill); color: var(--pe-accent);
+  min-height: 40px; padding: 8px 18px; border-radius: 8px; cursor: pointer;
+  font: inherit; font-size: 14.5px; font-weight: 600;
+}
+.primar:hover { filter: brightness(1.1); }
+#validare [role="status"]:empty { display: none; }
+
+/*
+ * Controalele din coloanele extrase stau linistite pana le atingi: pe 99 de
+ * randuri, un select si doua casete cu chenar fiecare faceau din grila un
+ * formular. Chenarul revine la hover pe rand si la focus, deci ramane clar ce
+ * se poate edita; focusul de la tastatura are oricum `:focus-visible`.
+ */
+.tabelwrap td.extras input, .tabelwrap td.extras select { border-color: transparent; background: transparent; }
+.tabelwrap td.extras select { appearance: none; -webkit-appearance: none; }
+.tabelwrap tr:hover td.extras input, .tabelwrap tr:hover td.extras select,
+.tabelwrap td.extras input:focus, .tabelwrap td.extras select:focus {
+  border-color: var(--linie-tare); background: var(--panou);
+}
+.tabelwrap tr:hover td.extras select, .tabelwrap td.extras select:focus { appearance: auto; -webkit-appearance: auto; }
+/* Propunerea de grosime („~100") nu trebuie sa semene cu o valoare scrisa. */
+.tabelwrap td.extras input::placeholder { font-style: italic; color: var(--slab); opacity: 1; }
+
+/* Formularul ofertei pe doua coloane: opt campuri unul sub altul cereau un ecran intreg. */
+.formular-oferta { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0 16px; }
+.formular-oferta .butoane { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* Detaliile tehnice de sub grila: pentru cine intreaba, deci discrete. */
+details.detalii { margin-top: 16px; color: var(--slab); font-size: 14px; }
+details.detalii > summary { cursor: pointer; }
+details.detalii ul { margin: 8px 0 0; padding-left: 18px; line-height: 1.7; }
+details.detalii strong { color: var(--text); font-variant-numeric: tabular-nums; }
+
+/* Istoricul pliat e un rand de text, nu un card: e drumul inapoi, nu munca. */
+details.istoric { margin-bottom: 12px; font-size: 14px; }
+details.istoric > summary strong { font-weight: 500; }
+details.istoric[open] {
+  background: var(--panou); border: 1px solid var(--linie); border-radius: 12px; padding: 12px 20px;
+}
+#blocaje details.card:not([open]) { padding-block: 11px; }
+/* Loc pentru „~100": la 7ch propunerea iesea taiata („~10"). */
+.tabelwrap td.extras input[type="number"] { width: 8.5ch; }

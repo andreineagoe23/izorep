@@ -211,21 +211,45 @@ o comoditate; documentele adevărate vor sta în bază.
 
 ## Fluxul de validare
 
-Indicatorul „N de validat de om" spunea *câte* sunt, nu *unde*. Pe `Radoia.xlsx`
-— 105 poziții pe 7 foi — găsirea lor însemna derulare manuală după marcajul
-chihlimbariu. Deasupra grilei stau acum trei lucruri:
+**Un singur drum, de sus în jos.** Simplificat pe 13 septembrie 2026, după ce
+ecranul a fost găsit „prea încărcat": pe cererea Abur, grila — munca propriu-zisă
+— începea la ~1300 px, sub zona de încărcare, istoric, până la 11 indicatoare și
+o bară cu șapte butoane de aceeași greutate.
 
-- **Lentilele**: `Toate` · `De validat (n)` · `Netarifate (n)`. Ascund rândurile
-  care nu se potrivesc, dar **numărul din marginea stângă rămâne cel din
-  Excel** — ancora 1:1 cu fișierul nu se pierde, rândurile lipsă se văd ca
-  salturi în numerotare. Filtrul nu e o preferință persistentă: se resetează la
-  fiecare fișier, fiindcă „de validat" înseamnă altceva de la un fișier la
-  altul.
-- **Contorul pe fila fiecărei foi**, ca să se vadă pe care foaie mai e treabă
-  fără să fie deschise pe rând.
-- **„Următoarea de validat"**, ciclic, cu derulare în vizor și focus pe primul
-  control din coloanele extrase — poziția se corectează de la tastatură, fără
-  mouse.
+```
+Tipul ofertei (Rezidențială | Industrială) · Alt fișier
+nume fișier · dată
+[ poziții ]  [ gata de ofertă · € ]  [ de validat ]  [ fără preț ]
+▸ Ce blochează N poziții
+[acțiuni sub filtrul curent]                            [Generează oferta]
+grila
+▸ Detalii extragere
+```
+
+- **Rezumatul e filtrul.** Patru cifre, fiecare apăsabilă (`indicatorFiltru`):
+  tot fișierul, gata de ofertă cu valoarea, de validat, fără preț. Grămezile
+  sunt **disjuncte** și sunt exact foile registrului (`imparte`), deci ce scrie
+  pe ecran e ce pleacă în fișier; un test le ține aliniate. Înainte, lentilele
+  numărau alte grămezi decât indicatoarele: bara spunea „De validat (33) ·
+  Netarifate (33)" despre aceleași 33 de linii. Filtrul ascunde rândurile care
+  nu se potrivesc, dar **numărul din marginea stângă rămâne cel din Excel**. Nu
+  e o preferință persistentă: se resetează la fiecare fișier.
+- **Bara arată doar ce are sens sub filtrul curent**, iar în dreapta stă
+  singurul buton principal (`.primar`), „Generează oferta". Drumul sugerat:
+  fără preț → „Completează N grosimi lipsă" → de validat → „Confirmă" → gata de
+  ofertă. „Următoarea", ciclic, cu focus pe primul control extras, apare doar
+  sub „de validat".
+- **Ce nu cere nimic stă pliat**: istoricul (deschis doar când nu e niciun
+  import pe ecran), cauzele blocajelor și „Detalii extragere" sub grilă (foi cu
+  coloane recunoscute, rânduri cu text, note, cât a citit fiecare strat). Starea
+  lor pliat/deschis supraviețuiește recalculului după o corecție. Zona mare de
+  încărcare apare doar pe ecranul gol; după import devine „Alt fișier", lângă
+  segment. Mesajul despre `npm run dev` a dispărut; cu modelul pornit, un rând
+  spune că rândurile nerecunoscute pleacă la OpenAI.
+- **Contorul pe fila fiecărei foi** („N de rezolvat"), doar când registrul are
+  mai multe foi.
+- **Controalele din grilă n-au chenar** până la hover sau focus: pe 99 de
+  rânduri, un select și două casete cu chenar făceau din grilă un formular.
 
 ### Tipul ofertei: segmentul de preț
 
@@ -249,7 +273,7 @@ După coloanele fișierului și cele extrase (sistem, ø, grosime) stau **P.U.**
 „*" lângă preț și notele în `title`.
 
 Unde clientul n-a scris grosimea, coloana arată grosimea uzuală a firmei ca
-placeholder. „Completează N grosimi lipsă" o pune pe toate liniile foii active,
+placeholder cursiv („~100"), ca să nu semene cu o valoare scrisă. „Completează N grosimi lipsă" o pune pe toate liniile foii active,
 dar **nu le confirmă**: rămân „de validat", cu notă, până le confirmă omul.
 Propunerile stau în `SesiuneImport.grosimiPropuse`, separat de extrageri. O
 corecție manuală pe rândul respectiv șterge propunerea: la grosime o înlocuiește
@@ -343,10 +367,11 @@ import. Regula 3 din `arhitectura.md` — prețul se copiază în document, nu s
 referențiază — aplicată la ce avem: peste un an, întrebarea „de unde a ieșit
 13,74 pe rândul ăla?" trebuie să aibă răspuns în fișierul însuși.
 
-**Confirmarea în masă acționează pe exact ce e vizibil** sub filtrul curent, pe
-foaia activă, iar butonul spune asta („Confirmă cele 12 poziții marcate din
-foaia asta"). Un buton „confirmă tot" ar bifa și poziții pe care omul nu le-a
-avut niciodată pe ecran.
+**Confirmarea acționează pe pozițiile cu preț și marcate care se văd** sub
+filtrul curent, pe foaia activă, iar butonul spune asta („Confirmă cele 24 de
+poziții de mai jos"). Apare doar sub un filtru: nu există „confirmă tot
+fișierul", care ar bifa poziții pe care omul nu le-a avut pe ecran. O poziție
+fără preț nu se confirmă — ar rămâne fără preț, doar fără marcaj.
 
 **Confirmarea nu învață șabloane.** `invataDinCorectie` intră în memoria care
 rezolvă importurile viitoare; o confirmare în masă spune doar „am văzut și e
