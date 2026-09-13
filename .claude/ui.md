@@ -229,7 +229,7 @@ Principiul: ce trebuie făcut se vede din așezare, nu dintr-un text explicativ.
   De verificat · Fără preț. Grupurile sunt disjuncte și sunt exact foile
   registrului (`imparte`). Sub „De verificat" și „Fără preț" apare al doilea
   rând, pe motiv („Lipsește grosimea 24").
-- **Fiecare poziție e un card**: textul clientului (tăiat la trei rânduri, cu
+- **În listă, fiecare poziție e un card**: textul clientului (tăiat la trei rânduri, cu
   „Tot textul"), rândul din Excel, cantitatea, ce am înțeles („Vată minerală
   50 mm", „+ Tablă aluminiu", „DN100", „flanșă"), prețul, starea cu motivul în
   cuvinte simple, și acțiunea care o rezolvă:
@@ -246,9 +246,17 @@ Principiul: ce trebuie făcut se vede din așezare, nu dintr-un text explicativ.
   omul. Grosimea uzuală pusă cu un clic nu se învață deloc: n-a scris-o clientul.
 - **Bara de jos, lipită**: câte poziții sunt gata, valoarea și „Mergi la ofertă",
   inactiv când nu e nimic gata.
-- **„Arată ca în Excel"** schimbă lista cu foaia 1:1 (`web/import/grila.ts`),
-  cu celulele editabile și numărul rândului din Excel. Pe telefon nu apare: un
-  tabel de zece coloane nu se citește acolo.
+- **Vederea implicită e foaia ca în Excel** (`web/import/grila.ts`, cerută pe
+  13 septembrie 2026): aceleași rânduri, coloane și numere de rând ca în
+  fișier, cu celulele editabile. După coloanele clientului: ce am înțeles,
+  prețul, starea și butonul care rezolvă rândul; corectura se deschide pe un
+  rând sub poziție. Filtrele ascund rândurile fără să schimbe numerotarea.
+  „Arată ca listă" trece pe carduri, mai ușor de citit pe telefon.
+- **Antetul documentului** — rândurile de deasupra tabelului: titlul ofertei,
+  numărul, beneficiarul — nu mai stă ca rânduri lipite una sub alta
+  (`antetDocument`). Cea mai lungă linie scrisă cu majuscule e titlul;
+  perechile „Etichetă : valoare", sau două celule pe rând, devin plăcuțe
+  aliniate în grilă; restul, o linie de detalii.
 - **„Detalii despre citire"**, pliat la final: foi cu coloane recunoscute,
   rânduri cu text, titluri, cât s-a citit din reguli, automat sau din corecturi.
 - **Pasul 3 — Oferta.** Ce intră (valoare, poziții, tip) și ce rămâne afară, cu
@@ -272,6 +280,13 @@ explicit pe 13 septembrie 2026. Modelul rămâne scris în importul salvat
   la margine nu spune că mai e ceva în dreapta. Pe telefon stau două câte două.
 - Ținte de minimum 44 px; câmpuri de 16 px, ca iOS să nu mărească pagina la
   focus.
+- **Tabelul se derulează lateral în cardul lui**, cu numărul rândului lipit la
+  stânga; capetele de coloană se rup pe rânduri, iar coloana cu descrieri lungi
+  își păstrează loc de citit. Containerul are `position: relative`: fără el,
+  eticheta ascunsă „Acțiuni" din antet ieșea din zona derulată și lățea pagina
+  la 809 px pe un telefon de 360. Verificarea de lățime se face față de
+  `screen.width` — în emulare mobilă `innerWidth` crește odată cu conținutul și
+  ascundea exact problema asta.
 - Verificat în browser la 360, 390, 768, 1024, 1440 și 1920 px, în temă
   deschisă și închisă: fără derulare orizontală, fără ținte sub 40 px, fără
   erori în pagină, fluxul complet până la registrul descărcat.

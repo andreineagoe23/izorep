@@ -187,8 +187,9 @@ export function actiuniLista(o: OptiuniActiuni): string {
 }
 
 /**
- * Comutatorul intre lista de pozitii si foaia ca in Excel. Pe telefon, cat
- * timp e lista, nu apare: un tabel de zece coloane nu se poate citi acolo.
+ * Comutatorul intre foaia ca in Excel (implicita: e forma pe care o cunosc
+ * toti cei care primesc liste de cantitati) si lista de carduri, mai usor de
+ * citit pe telefon.
  */
 export const comutaExcel = (excel: boolean): string =>
   `<button type="button" class="legatura imp-comuta-excel" data-act="excel" data-excel="${excel ? "da" : "nu"}">${
@@ -211,22 +212,38 @@ function detaliu(l: LinieProcesata): string {
   ].filter(Boolean).join(" · ");
 }
 
+/**
+ * Butoanele care rezolva o pozitie, aceleasi in card si in randul din tabel:
+ * de verificat → „Confirmă"; fara pret, cu grosime uzuala → „Pune X mm";
+ * oricare → „Modifică".
+ */
+export function actiuniPozitie(l: LinieProcesata, propunere: number | null, editeaza: boolean): string {
+  const idx = l.extras.index;
+  const stare = stareLinie(l);
+  return [
+    stare === "de_validat" ? `<button type="button" class="primar" data-act="confirma" data-idx="${idx}">Confirmă</button>` : "",
+    stare === "netarifate" && propunere !== null
+      ? `<button type="button" class="primar" data-act="pune-grosime" data-idx="${idx}" data-g="${propunere}">Pune ${numar(propunere)} mm</button>`
+      : "",
+    `<button type="button" class="secundar" data-act="modifica" data-idx="${idx}" aria-expanded="${editeaza}">Modifică</button>`,
+  ].join("");
+}
+
+/** Starea in cuvinte, cu motivul dedesubt; detaliul tehnic in `title`. */
+export function starePozitie(l: LinieProcesata): string {
+  const stare = stareLinie(l);
+  const motive = motiveLinie(l).map((m) => MOTIV[m]);
+  return `<span class="imp-stare" data-stare="${stare}"${detaliu(l) ? ` title="${esc(detaliu(l))}"` : ""}>${STARE[stare]}</span>`
+    + (motive.length ? `<span class="imp-poz-motiv">${esc(motive.join(" · "))}</span>` : "");
+}
+
 export function cardPozitie(l: LinieProcesata, o: OptiuniCard): string {
   const idx = l.extras.index;
   const stare = stareLinie(l);
   const text = l.bruta.text.replace(/\s+/g, " ").trim();
   const um = l.bruta.um ?? "buc";
   const cantitate = l.bruta.cantitate ?? 1;
-  const motive = motiveLinie(l).map((m) => MOTIV[m]);
   const p = l.pret;
-
-  const actiuni = [
-    stare === "de_validat" ? `<button type="button" class="primar" data-act="confirma" data-idx="${idx}">Confirmă</button>` : "",
-    stare === "netarifate" && o.propunere !== null
-      ? `<button type="button" class="primar" data-act="pune-grosime" data-idx="${idx}" data-g="${o.propunere}">Pune ${numar(o.propunere)} mm</button>`
-      : "",
-    `<button type="button" class="secundar" data-act="modifica" data-idx="${idx}" aria-expanded="${o.editeaza}">Modifică</button>`,
-  ].join("");
 
   return `<article class="imp-poz" data-idx="${idx}" data-stare="${stare}" aria-labelledby="poz-${idx}">
     <div class="imp-poz-text">
@@ -239,11 +256,8 @@ export function cardPozitie(l: LinieProcesata, o: OptiuniCard): string {
     <div class="imp-poz-pret">${p
       ? `<strong>${eur(p.total)}</strong><span>${eur(p.pret_unitar)} / ${esc(um)}</span>`
       : `<strong class="imp-fara-pret">—</strong>`}</div>
-    <div class="imp-poz-stare"${detaliu(l) ? ` title="${esc(detaliu(l))}"` : ""}>
-      <span class="imp-stare" data-stare="${stare}">${STARE[stare]}</span>
-      ${motive.length ? `<span class="imp-poz-motiv">${esc(motive.join(" · "))}</span>` : ""}
-    </div>
-    <div class="imp-poz-actiuni">${actiuni}</div>
+    <div class="imp-poz-stare">${starePozitie(l)}</div>
+    <div class="imp-poz-actiuni">${actiuniPozitie(l, o.propunere, o.editeaza)}</div>
     ${o.editeaza ? editorPozitie(l) : ""}
   </article>`;
 }

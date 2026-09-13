@@ -21,8 +21,8 @@ import {
   actiuniLista, antetVerificare, baraJos, cardPozitie, comutaExcel, ecranOferta, ecranProgres, ecranStart,
   filtreMotiv, filtreStare, numaraMotive, pasi, toast, type FiltruStare, type Pas,
 } from "../import/vizual.js";
-import { grilaFoaie } from "../import/grila.js";
-import { motiveLinie, type CodMotiv } from "../import/text.js";
+import { celuleExtrase, grilaFoaie } from "../import/grila.js";
+import { motiveLinie, stareLinie, type CodMotiv } from "../import/text.js";
 
 /**
  * Ecranul de import, in trei pasi: fisierul, verificarea pozitiilor, oferta.
@@ -94,7 +94,8 @@ export const ecran: Ecran = {
     let motiv: CodMotiv | null = null;
     let foaie: string | null = null;
     let editIdx: number | null = null;
-    let excel = false;
+    /** Foaia ca in Excel e vederea implicita; lista de carduri e la un clic. */
+    let excel = true;
     let detaliiDeschise = false;
     let stergeDe: string | null = null;
     let eroareStart = "";
@@ -236,22 +237,30 @@ export const ecran: Ecran = {
       const { oferta } = imparte(s.rez.linii);
       const cuFoaie = s.foi.length > 1;
 
-      const corp = excel
-        ? s.foi.filter((f) => !foaie || f.nume === foaie)
-            .map((f) => grilaFoaie(f, new Map(s.rez.linii.map((l) => [l.extras.index, l])))).join("")
-        : lista.length
+      const gol = `<p class="imp-gol">Nicio poziție aici.</p>`;
+      let corp: string;
+      if (excel) {
+        // Fara filtru se vede tot fisierul, cu titluri si note, ca in Excel.
+        const vizibileIdx = filtru === "toate" && motiv === null ? null : new Set(lista.map((l) => l.extras.index));
+        const harta = new Map(s.rez.linii.map((l) => [l.extras.index, l]));
+        corp = s.foi.filter((f) => !foaie || f.nume === foaie)
+          .map((f) => grilaFoaie(f, harta, { vizibile: vizibileIdx, editIdx, propunere, cuNumeFoaie: cuFoaie }))
+          .join("") || gol;
+      } else {
+        corp = lista.length
           ? lista.map((l) => cardPozitie(l, { propunere: propunere(l), editeaza: editIdx === l.extras.index, cuFoaie })).join("")
-          : `<p class="imp-gol">Nicio poziție aici.</p>`;
+          : gol;
+      }
 
       return `${alerte(s)}
         <section class="imp-card">${antetVerificare({
           nume: s.meta.nume, cand: s.meta.cand, destinatie, foi: s.foi.map((f) => f.nume), foaie,
         })}</section>
-        <div class="imp-bara-lista">${excel ? "" : filtreStare(numere, filtru)}${comutaExcel(excel)}</div>
-        ${excel ? "" : filtreMotiv(motive, motiv)}
+        <div class="imp-bara-lista">${filtreStare(numere, filtru)}${comutaExcel(excel)}</div>
+        ${filtreMotiv(motive, motiv)}
         ${actiuniLista({
-          deConfirmat: !excel && filtru === "de_validat" ? lista.length : 0,
-          grosimi: excel ? 0 : lista.filter((l) => potrivit(l, "netarifate") && propunere(l) !== null).length,
+          deConfirmat: filtru === "de_validat" ? lista.length : 0,
+          grosimi: lista.filter((l) => potrivit(l, "netarifate") && propunere(l) !== null).length,
         })}
         <div class="imp-lista">${corp}</div>
         ${detalii(s)}
@@ -261,8 +270,8 @@ export const ecran: Ecran = {
     /** Focus dupa redesenare: pe cardul atins, sau pe urmatorul cand acela a plecat din lista. */
     function focuseaza(idx: number | null, act = "modifica"): void {
       if (idx === null) return;
-      const tinta = pagina.querySelector<HTMLElement>(`.imp-poz[data-idx="${idx}"] [data-act="${act}"]`)
-        ?? pagina.querySelector<HTMLElement>(`.imp-poz[data-idx="${idx}"] button`);
+      const tinta = pagina.querySelector<HTMLElement>(`:is(.imp-poz, tr)[data-idx="${idx}"] [data-act="${act}"]`)
+        ?? pagina.querySelector<HTMLElement>(`:is(.imp-poz, tr)[data-idx="${idx}"] button`);
       tinta?.focus();
     }
 
@@ -277,7 +286,7 @@ export const ecran: Ecran = {
     /* ------------------------------------------------------------- actiuni */
     function deschideSesiune(s: Sesiune): void {
       sesiune = s;
-      pas = 2; filtru = "toate"; motiv = null; foaie = null; editIdx = null; excel = false;
+      pas = 2; filtru = "toate"; motiv = null; foaie = null; editIdx = null; excel = true;
       eroareStart = "";
       salveazaSesiune();
       deseneaza();
@@ -521,7 +530,7 @@ export const ecran: Ecran = {
           const urm = urmatorul(idx);
           confirmaIndecsi([idx]);
           deseneaza();
-          focuseaza(pagina.querySelector(`.imp-poz[data-idx="${idx}"]`) ? idx : urm, "confirma");
+          focuseaza(pagina.querySelector(`:is(.imp-poz, tr)[data-idx="${idx}"]`) ? idx : urm, "confirma");
           return;
         }
         case "confirma-tot":
@@ -533,7 +542,7 @@ export const ecran: Ecran = {
           const urm = urmatorul(idx);
           corecteaza(idx, { grosime_mm: Number(b.dataset["g"]) }, false);
           deseneaza();
-          focuseaza(pagina.querySelector(`.imp-poz[data-idx="${idx}"]`) ? idx : urm);
+          focuseaza(pagina.querySelector(`:is(.imp-poz, tr)[data-idx="${idx}"]`) ? idx : urm);
           return;
         }
         case "grosimi": {
@@ -633,6 +642,16 @@ export const ecran: Ecran = {
       const i = s.editari.findIndex((x) => x.foaie === editare.foaie && x.rand === editare.rand && x.cel === cel);
       if (i >= 0) s.editari[i] = editare; else s.editari.push(editare);
       retarifeaza();
+      // Randul atins isi reface coloanele noastre pe loc, fara redesenarea
+      // tabelului: cursorul ramane in celula in care scrie omul.
+      const tr = camp.closest<HTMLTableRowElement>("tr");
+      const l = s.rez.linii.find((x) => x.bruta.foaie === numeFoaie && x.bruta.rand === rand.rand);
+      if (tr && l && l.extras.sistem !== null) {
+        tr.querySelectorAll("td.extras").forEach((td) => td.remove());
+        tr.insertAdjacentHTML("beforeend", celuleExtrase(l, { propunere, editIdx }));
+        tr.dataset["stare"] = stareLinie(l);
+        tr.dataset["idx"] = String(l.extras.index);
+      }
       const { oferta } = imparte(s.rez.linii);
       const bara = pagina.querySelector(".imp-bara-jos");
       bara?.insertAdjacentHTML("afterend", baraJos(oferta.length, totalOferta(oferta)));

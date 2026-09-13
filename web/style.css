@@ -624,7 +624,6 @@ button.filtru[aria-pressed="true"], button.filtru.activ {
 .imp-bara-lista { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
 .imp-filtre, .imp-motive { display: flex; flex-wrap: wrap; gap: 8px; }
 @container imp (max-width: 619px) {
-  .imp-comuta-excel[data-excel="nu"] { display: none; }
   .imp-filtre { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
   .imp-filtru { justify-content: center; }
 }
@@ -739,10 +738,62 @@ button.filtru[aria-pressed="true"], button.filtru.activ {
 .imp-toast .legatura { color: inherit; font-weight: 700; }
 
 /* ---- vederea ca in Excel */
-.imp-excel { display: grid; gap: 8px; min-width: 0; }
-.imp-excel-foaie { margin: 0; font-size: 15px; }
-.imp-excel .preambul { margin: 0; }
-.imp-excel .tabelwrap { padding: 0 12px; border: 1px solid var(--linie); border-radius: 12px; background: var(--panou); }
+.imp-excel { display: grid; gap: var(--imp-gap); }
+
+/*
+ * Antetul documentului: randurile de deasupra tabelului. Nu sase randuri
+ * lipite una sub alta, ci un antet — titlul, o linie de detalii si perechile
+ * eticheta–valoare aliniate in grila, cu acelasi spatiu intre toate.
+ */
+.imp-doc { display: grid; gap: 8px; min-width: 0; }
+.imp-doc-foaie { margin: 0; font-size: 13.5px; color: var(--slab); }
+.imp-doc-titlu { margin: 0; font-size: 19px; line-height: 1.3; letter-spacing: -.01em; overflow-wrap: anywhere; }
+.imp-doc-linii { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0; font-size: 15px; color: var(--slab); }
+.imp-doc-date {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); gap: 8px; margin: 0;
+}
+.imp-doc-date > div { min-width: 0; padding: 8px 12px; border-radius: 10px; background: var(--panou-2); }
+.imp-doc-date dt { font-size: 13px; color: var(--slab); }
+.imp-doc-date dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+
+/*
+ * `position: relative` nu e decor: fara el, eticheta ascunsa „Acțiuni" din
+ * antet (pozitionata absolut) iesea din zona care se deruleaza si latea
+ * documentul la 809 px pe un telefon de 360 — browserul micsora toata pagina.
+ */
+.imp-excel .tabelwrap { position: relative; margin: 0; padding: 0; border: 0; border-radius: 8px; background: none; }
+/*
+ * Capetele se rup pe randuri. Pe un singur rand, „Pret unitar Euro /elem Vata
+ * + Tabla aluminiu" lua 287 px, iar coloana cu descrierea ramanea cu 108 —
+ * adica opt randuri de cate doua cuvinte pe fiecare pozitie.
+ */
+.imp-excel th { padding: 8px 12px 8px 0; white-space: normal; vertical-align: bottom; min-width: 11ch; }
+.imp-excel th.gutter { min-width: 0; }
+.imp-excel .camp.lung { min-width: min(34ch, 70cqw); }
+/* Numarul randului ramane pe ecran cand tabelul se deruleaza lateral. */
+.imp-excel td.gutter, .imp-excel th.gutter { position: sticky; left: 0; z-index: 1; padding-left: 10px; }
+.imp-excel tr[data-stare] td.gutter { box-shadow: inset 4px 0 0 var(--c); }
+.imp-excel td.extras, .imp-excel th.extras { padding-left: 12px; }
+.imp-excel td.n strong { display: block; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.imp-excel td.n small { display: block; font-size: 13px; color: var(--slab); white-space: nowrap; }
+.imp-eticheta {
+  display: inline-block; margin: 0 4px 4px 0; padding: 2px 8px; border-radius: 999px;
+  background: var(--panou); font-size: 13px; white-space: nowrap;
+}
+.imp-grila-stare { min-width: 150px; }
+.imp-grila-stare .imp-poz-motiv { display: block; margin-top: 2px; font-size: 13.5px; }
+.imp-grila-actiuni { white-space: nowrap; }
+.imp-grila-actiuni button { min-height: 40px; padding: 8px 14px; font-size: 14px; }
+.imp-grila-actiuni button + button { margin-left: 6px; }
+/* Corectura, pe un rand sub pozitie, lipita de marginea vizibila a tabelului. */
+.imp-grila-editor > td { padding: var(--imp-gap); background: var(--accent-slab); }
+.imp-grila-editor .imp-editor {
+  position: sticky; left: var(--imp-gap); width: min(760px, calc(100cqw - 4 * var(--imp-gap)));
+  padding-top: 0; border-top: 0;
+}
+.imp-grila-editor .imp-editor input, .imp-grila-editor .imp-editor select,
+.imp-grila-editor .imp-editor input[type="number"] { width: 100%; min-height: 44px; padding: 8px 11px; font-size: 16px; }
+.imp-grila-editor .imp-rand-campuri select { width: 5.2em; }
 
 .imp-detalii { font-size: 14px; color: var(--slab); }
 .imp-detalii summary { display: flex; align-items: center; min-height: 44px; cursor: pointer; }
