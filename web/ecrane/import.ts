@@ -18,7 +18,7 @@ import {
   type EditareCelula, type IntrareIstoric, type SesiuneImport,
 } from "../istoric.js";
 import {
-  actiuniLista, antetVerificare, baraJos, cardPozitie, comutaExcel, ecranOferta, ecranProgres, ecranStart,
+  actiuniLista, antetVerificare, cardPozitie, comutaExcel, ecranOferta, ecranProgres, ecranStart,
   filtreMotiv, filtreStare, numaraMotive, pasi, toast, type FiltruStare, type Pas,
 } from "../import/vizual.js";
 import { celuleExtrase, grilaFoaie } from "../import/grila.js";
@@ -234,7 +234,6 @@ export const ecran: Ecran = {
         netarifate: peFoaie.filter((l) => potrivit(l, "netarifate")).length,
       };
       const motive = filtru === "de_validat" || filtru === "netarifate" ? numaraMotive(peStare) : [];
-      const { oferta } = imparte(s.rez.linii);
       const cuFoaie = s.foi.length > 1;
 
       const gol = `<p class="imp-gol">Nicio poziție aici.</p>`;
@@ -263,8 +262,7 @@ export const ecran: Ecran = {
           grosimi: lista.filter((l) => potrivit(l, "netarifate") && propunere(l) !== null).length,
         })}
         <div class="imp-lista">${corp}</div>
-        ${detalii(s)}
-        ${baraJos(oferta.length, totalOferta(oferta))}`;
+        ${detalii(s)}`;
     }
 
     /** Focus dupa redesenare: pe cardul atins, sau pe urmatorul cand acela a plecat din lista. */
@@ -480,7 +478,14 @@ export const ecran: Ecran = {
       const t = e.target as HTMLElement;
 
       const bPas = t.closest<HTMLButtonElement>("[data-pas]");
-      if (bPas) { pas = Number(bPas.dataset["pas"]) as Pas; stergeDe = null; editIdx = null; deseneaza(); scrollTo({ top: 0 }); return; }
+      if (bPas) {
+        pas = Number(bPas.dataset["pas"]) as Pas;
+        stergeDe = null; editIdx = null;
+        deseneaza();
+        scrollTo({ top: 0 });
+        if (pas === 3) pagina.querySelector<HTMLInputElement>('[name="numar"]')?.focus({ preventScroll: true });
+        return;
+      }
 
       const bFiltru = t.closest<HTMLButtonElement>("[data-filtru]");
       if (bFiltru) { filtru = bFiltru.dataset["filtru"] as FiltruStare; motiv = null; editIdx = null; deseneaza(); return; }
@@ -512,10 +517,6 @@ export const ecran: Ecran = {
           return;
         }
         case "schimba-fisier": pas = 1; editIdx = null; deseneaza(); scrollTo({ top: 0 }); return;
-        case "la-oferta":
-          pas = 3; deseneaza(); scrollTo({ top: 0 });
-          pagina.querySelector<HTMLInputElement>('[name="numar"]')?.focus({ preventScroll: true });
-          return;
         case "la-verificare": pas = 2; deseneaza(); scrollTo({ top: 0 }); return;
         case "excel": excel = !excel; editIdx = null; deseneaza(); return;
         case "modifica":
@@ -652,10 +653,6 @@ export const ecran: Ecran = {
         tr.dataset["stare"] = stareLinie(l);
         tr.dataset["idx"] = String(l.extras.index);
       }
-      const { oferta } = imparte(s.rez.linii);
-      const bara = pagina.querySelector(".imp-bara-jos");
-      bara?.insertAdjacentHTML("afterend", baraJos(oferta.length, totalOferta(oferta)));
-      bara?.remove();
     });
 
     gazda.addEventListener("toggle", (e) => {

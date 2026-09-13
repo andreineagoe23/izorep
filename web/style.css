@@ -717,20 +717,9 @@ button.filtru[aria-pressed="true"], button.filtru.activ {
   .imp-editor-butoane > * { flex: 0 0 auto; }
 }
 
-/* ---- bara de jos si mesajul de dupa o actiune */
-.imp-bara-jos {
-  position: sticky; bottom: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  padding: 12px 16px; padding-bottom: max(12px, env(safe-area-inset-bottom));
-  border: 1px solid var(--linie); border-radius: 14px;
-  background: color-mix(in srgb, var(--panou) 94%, transparent); backdrop-filter: blur(6px);
-  box-shadow: 0 -6px 20px rgba(16, 22, 30, .10);
-}
-.imp-bara-jos p { margin: 0; min-width: 0; line-height: 1.35; }
-.imp-bara-jos strong { display: block; }
-.imp-bara-jos span { color: var(--slab); font-variant-numeric: tabular-nums; }
-.imp-bara-jos .primar { flex: 0 0 auto; }
+/* ---- mesajul de dupa o actiune, cu „Anulează” */
 .imp-toast {
-  position: fixed; left: 50%; bottom: 100px; z-index: 40; transform: translateX(-50%);
+  position: fixed; left: 50%; bottom: max(24px, env(safe-area-inset-bottom)); z-index: 40; transform: translateX(-50%);
   display: flex; align-items: center; gap: 10px; max-width: calc(100vw - 32px);
   padding: 6px 8px 6px 16px; border-radius: 12px; background: var(--text); color: var(--bg);
   box-shadow: 0 8px 28px rgba(0, 0, 0, .25);

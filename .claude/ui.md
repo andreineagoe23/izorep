@@ -244,8 +244,6 @@ Principiul: ce trebuie făcut se vede din așezare, nu dintr-un text explicativ.
   Tiparul unei corecturi se învață (L4) abia după ce anularea nu mai e
   posibilă — învățat pe loc, memoria ar fi pus rândul înapoi cum îl corectase
   omul. Grosimea uzuală pusă cu un clic nu se învață deloc: n-a scris-o clientul.
-- **Bara de jos, lipită**: câte poziții sunt gata, valoarea și „Mergi la ofertă",
-  inactiv când nu e nimic gata.
 - **Vederea implicită e foaia ca în Excel** (`web/import/grila.ts`, cerută pe
   13 septembrie 2026): aceleași rânduri, coloane și numere de rând ca în
   fișier, cu celulele editabile. După coloanele clientului: ce am înțeles,
@@ -259,7 +257,8 @@ Principiul: ce trebuie făcut se vede din așezare, nu dintr-un text explicativ.
   aliniate în grilă; restul, o linie de detalii.
 - **„Detalii despre citire"**, pliat la final: foi cu coloane recunoscute,
   rânduri cu text, titluri, cât s-a citit din reguli, automat sau din corecturi.
-- **Pasul 3 — Oferta.** Ce intră (valoare, poziții, tip) și ce rămâne afară, cu
+- **Pasul 3 — Oferta**, deschis din pașii de sus (fără bară lipită jos: dubla
+  butonul de pas și acoperea ultimul rând). Ce intră (valoare, poziții, tip) și ce rămâne afară, cu
   drum înapoi la verificare; datele ofertei pe două coloane; „Descarcă oferta".
 
 Ecranul **nu mai spune cu ce model** citește rândurile nerecunoscute — cerut

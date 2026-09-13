@@ -304,14 +304,6 @@ export function editorPozitie(l: LinieProcesata): string {
   </form>`;
 }
 
-/** Actiunea principala, lipita jos: cat e gata si drumul mai departe. */
-export function baraJos(gata: number, valoare: number): string {
-  return `<div class="imp-bara-jos">
-    <p><strong>${pozitii(gata)} gata</strong> <span>${eur(valoare)}</span></p>
-    <button type="button" class="primar" data-act="la-oferta"${gata === 0 ? " disabled" : ""}>Mergi la ofertă</button>
-  </div>`;
-}
-
 export function toast(text: string, cuAnulare: boolean): string {
   return `<div class="imp-toast" role="status">${esc(text)}${
     cuAnulare ? ` <button type="button" class="legatura" data-act="anuleaza">Anulează</button>` : ""}</div>`;

@@ -9,7 +9,7 @@
 import { describe, it, expect } from "vitest";
 import type { LinieProcesata } from "../src/import/nucleu.js";
 import type { LinieExtrasa } from "../src/import/schema.js";
-import { baraJos, cardPozitie, ecranStart, editorPozitie, numaraMotive, pasi } from "../web/import/vizual.js";
+import { cardPozitie, ecranStart, editorPozitie, numaraMotive, pasi } from "../web/import/vizual.js";
 import { antetDocument, grilaFoaie } from "../web/import/grila.js";
 import type { FoaieBruta } from "../src/import/parse-workbook.js";
 
@@ -93,10 +93,6 @@ describe("pașii și pornirea", () => {
     expect(ecranStart({ destinatie: "rezidential", istoric: [intrare], stergeDe: "a", eroare: "" })).toContain("Sigur ștergi?");
   });
 
-  it("fără nicio poziție gata, oferta nu se poate deschide", () => {
-    expect(baraJos(0, 0)).toContain("disabled");
-    expect(baraJos(3, 10)).not.toContain("disabled");
-  });
 });
 
 describe("motivele se numără", () => {
