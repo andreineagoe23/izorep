@@ -9,7 +9,7 @@ import { adaugaSectiuni, type LinieCuSectiune } from "./sectiuni.js";
 import { aplicaContinuare } from "./continuare.js";
 import { extrageDeterminist } from "./extract-regex.js";
 import {
-  notatieContraziceMaterialul, valideazaExtragere,
+  diametruContrazisDeText, notatieContraziceMaterialul, valideazaExtragere,
   type Avertisment, type CodAvertisment,
 } from "./valideaza.js";
 import { grupeazaPeSablon, extindePeSablon, type LinieSursa } from "./sabloane.js";
@@ -339,6 +339,7 @@ function construiesteLinii(
         ? []
         : valideazaExtragere(r.extras, { text: b.text, ...(b.um ? { um: b.um } : {}) })),
       ...notatieContraziceMaterialul(r.extras, b.text),
+      ...diametruContrazisDeText(r.extras, b.text),
     ];
 
     // Increderea coboara la 0 cand ceva nu se verifica in text, la fel ca in

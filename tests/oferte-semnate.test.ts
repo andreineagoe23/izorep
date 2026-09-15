@@ -60,7 +60,7 @@ const CAZURI: Caz[] = [
   },
   {
     fisier: "oferta-118-nisal.xlsx",
-    semnat: 162585.99 + 7933.40, peOferta: 39, generat: 117484.07,
+    semnat: 162585.99 + 7933.40, peOferta: 41, generat: 119376.21,
     deCe: "Pe 13 sep 2026, două mișcări în sensuri opuse. SCĂZUT deliberat: pozițiile la ø90 și "
         + "ø160 (SPIRO, țeavă PEHD, „Enteisungssystem Regenwasserrohre”) au preț, dar stau la 1 mm "
         + "peste rândul de dedesubt, iar oferta semnată le-a tarifat și pe acela, și pe cel de sus — "
@@ -68,9 +68,12 @@ const CAZURI: Caz[] = [
         + "în țoli (Ø1/2\"…Ø2\") se citeau ca ø1…ø3 și ieșeau toate la 5,70 €; unsprezece poziții "
         + "„PEHD D40x3.0” nu aveau diametru; DN80 și DN100 elastomer + vată + tablă (44,35 și "
         + "57,82 €) ieșeau cu grosime ambiguă. Toate cele noi sunt exacte față de oferta semnată. "
-        + "Rămân: 3 peste maximul listei (întrebarea 4), grosimi inexistente, și DN20–DN40 de la "
-        + "rândurile 44–47, pe care oferta însăși le-a tarifat cu un rând mai jos decât aceleași "
-        + "țevi scrise în țoli.",
+        + "Pe 15 sep 2026, CRESCUT: rândurile 44–47 scriu „DN20” în germană și „Ø20mm” în română. "
+        + "Ø20 / 25 / 32 / 40 nu e DN-ul ăla pe nicio coloană a tabelului de conversie (ISO, DIN), "
+        + "e seria de PP-R, iar oferta semnată le-a tarifat pe Ø (5,79 / 5,99 / 6,15 / 8,29) — "
+        + "acum la fel, în loc de un rând mai sus. „Ø32mm” și „Ø50mm” lipite de unitate (rândurile "
+        + "76–77) nu se citeau deloc; acum ies exact. Rămân: 3 peste maximul listei (întrebarea 4) "
+        + "și grosimi inexistente.",
   },
   {
     fisier: "oferta-284-transavia-abur.xlsx",

@@ -115,6 +115,7 @@ export const MOTIV: Record<CodMotiv, string> = {
   material_conducta_lipsa: "Lipsește materialul conductei",
   gol_foc_in_matrice: "Închiderea de gol a fost citită greșit",
   notatie_contrazice_materialul: "Verifică diametrul",
+  diametru_contrazis: "Verifică diametrul: DN și Ø diferite",
   diametru_necitat: "Diametrul nu apare în text",
   grosime_necitata: "Grosimea nu apare în text",
   gol_necitat: "Dimensiunea golului nu apare în text",

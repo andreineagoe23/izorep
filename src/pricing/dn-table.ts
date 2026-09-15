@@ -15,6 +15,41 @@ export const DN_TO_OD: Readonly<Record<number, number>> = {
   200: 219.1, 250: 273.0, 300: 323.9, 350: 355.6, 400: 406.4,
 };
 
+/**
+ * DN -> diametru exterior pe coloana DIN a tabelului de conversie primit de la
+ * firma (`tabel-conversie-tevi.docx`, vezi `.claude/tevi.md`). La tarifare nu se
+ * foloseste — firma a bifat ISO si Toli. Sta aici ca sa fie RECUNOSCUTA.
+ *
+ * "Izolatie Armaflex 13 mm Ф 57 x 3,5 mm (Dn 2")" scrie aceeasi teava de doua
+ * ori: 57 e DN50 pe coloana DIN. Fara tabelul asta, Ø57 langa DN50 ar arata ca
+ * doua tevi diferite — vezi `esteConversiaDN`.
+ */
+export const DN_TO_OD_DIN: Readonly<Record<number, number>> = {
+  10: 14, 15: 20, 20: 25, 25: 30, 32: 38, 40: 44.5, 50: 57, 65: 76.1, 80: 88.9,
+  100: 108, 125: 133, 150: 159, 200: 216, 250: 267, 300: 318, 350: 368, 400: 419,
+};
+
+/**
+ * True daca `od` e diametrul exterior al tevii DN`dn` pe o coloana a tabelului
+ * de conversie (ISO sau DIN), la cel mult 1 mm — adica acelasi DN, scris a doua
+ * oara ca diametru: "Dn 50 (60,3x3,6)", "DN80 Ø89", "Ф 57 x 3,5 mm (Dn 2")".
+ *
+ * Cand NU e, diametrul scris e alta teava decat seria de otel a DN-ului, si el
+ * castiga. Masurat pe `oferta-118-nisal.xlsx`, randurile 44–47: coloana germana
+ * scrie "DN20", cea romana "Dimensiuni: Ø20mm". Ø20 / 25 / 32 / 40 e seria de
+ * PP-R si PE-Xa din `conversie-ml-mp-tevi-tubulaturi.xlsx`, iar la plastic firma
+ * nu converteste, rotunjeste in sus. Oferta semnata are 5,79 / 5,99 / 6,15 / 8,29,
+ * adica exact randurile 22 / 28 / 35 / 42 ale lui Ø20 / 25 / 32 / 40; pe seria
+ * ISO a DN-ului ar fi iesit 5,99 / 6,15 / 8,29 / 8,45 — patru din patru gresite.
+ *
+ * Toleranta de 1 mm acopera seria scrisa rotunjit (Ø89 pentru 88,9, Ø114 pentru
+ * 114,3). Pe randurile NISAL cea mai apropiata valoare din tabel e la 4,5 mm
+ * (Ø40 fata de DIN 44,5), deci nu se confunda.
+ */
+export function esteConversiaDN(dn: number, od: number, toleranta = 1): boolean {
+  return [DN_TO_OD[dn], DN_TO_OD_DIN[dn]].some((v) => v !== undefined && Math.abs(v - od) <= toleranta);
+}
+
 /** Conducte de plastic: dimensiunea nominala ESTE diametrul exterior. */
 export const PLASTIC_IS_OD = new Set(["PPR", "PP", "PEHD", "PEX", "PVC"]);
 

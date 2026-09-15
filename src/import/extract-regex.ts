@@ -1,4 +1,4 @@
-import { TOLI_DN } from "../pricing/dn-table.js";
+import { TOLI_DN, esteConversiaDN } from "../pricing/dn-table.js";
 import type { LinieExtrasa } from "./schema.js";
 
 /**
@@ -108,11 +108,31 @@ const LIVRARE_TUBULATURA =
  */
 const SEMN_IZOLATIE = /izola[țt]|izolatii|insulat|d[aä]mmung|jachet|jacket|armaflex|elastomer|vat[aă]\s+mineral|mineral\s+wool/i;
 
-const RE_DN = /\b(?:DN|Dn|dn)\s*\.?\s*(\d{1,3})\b/;
+/**
+ * Numarul se termina la prima non-cifra, nu la granita de cuvant: "flanse
+ * DN150din tabla inox 304" (`cerere-de-oferta-transavia-inox.xlsx`, randul 70)
+ * n-are granita intre 150 si "din", deci pozitia iesea fara diametru. La fel
+ * `RE_OD` pe "Dimensiuni: Ø20mm" (`oferta-118-nisal.xlsx`, randurile 44–47).
+ */
+const RE_DN = /\b(?:DN|Dn|dn)\s*\.?\s*(\d{1,3})(?!\d)/;
 /** Tubulatura spiro: acolo "DN" inseamna diametru exterior. */
 const RE_SPIRO = /\bspiro\b|wickelfalzrohr/i;
 const RE_DI = /\bDi\s*(\d{1,3})\b/;
-const RE_OD = /[øØ]\s*(\d{1,3})\b/;
+const RE_OD = /[øØ]\s*(\d{1,3})(?!\d)/;
+
+/**
+ * Toate diametrele scrise cu Ø pe rand, in mm. Fara toli (`Ø1/2"`, `Ø1 1/4"`)
+ * si fara fractii (`Ø 130/130` e dimensiunea golului, nu un diametru).
+ */
+export function diametreScrise(text: string): number[] {
+  const out: number[] = [];
+  for (const m of text.matchAll(/[øØΦФ]\s*(\d{1,3}(?:[.,]\d{1,2})?)(?!\d)/g)) {
+    const dupa = text.slice(m.index! + m[0].length).trimStart();
+    if (/^(?:\/|\d\s*\/\s*\d|"|”|“|''|′|″)/.test(dupa)) continue;
+    out.push(Number(m[1]!.replace(",", ".")));
+  }
+  return out;
+}
 /**
  * Teava de plastic: `PPR 20`, `PEHD 110`, `PEHD D40x3.0`.
  *
@@ -241,6 +261,21 @@ const GROSIMI_SISTEM: Partial<Record<Exclude<LinieExtrasa["sistem"], null>, Read
   vata_minerala: new Set([20, 30, 40, 50, 60, 80, 100]),
 };
 
+/**
+ * Grosimea JACHETEI, scrisa langa tabla: "protectie cu tabla de inox 0,5 mm".
+ *
+ * Zecimala si doar din lista materialului ei (aluminiu 0,6 / 0,8 / 1,0 · inox
+ * 0,4 / 0,5 / 0,6). Pana acum nu se citea deloc: inoxul iesea mereu "grosime
+ * ambigua" chiar cand clientul o scria, fiindca lista lui are toate trei
+ * grosimile la fiecare rand (intrebarea 15). Un intreg de langa tabla
+ * ("tabla ... 50 mm") e grosimea izolatiei, nu a jachetei, deci aici nu conteaza.
+ */
+const GROSIMI_JACHETA: Partial<Record<Exclude<LinieExtrasa["sistem"], null>, ReadonlySet<number>>> = {
+  tabla: new Set([0.6, 0.8, 1]),
+  tabla_inox: new Set([0.4, 0.5, 0.6]),
+};
+const RE_MM_ZECIMAL = /(?<![\d.,])(\d(?:[.,]\d{1,2})?)\s*mm\b/g;
+
 function grosimeLangaSistem(
   text: string, sistem: Exclude<LinieExtrasa["sistem"], null>,
 ): number | null {
@@ -248,6 +283,24 @@ function grosimeLangaSistem(
   if (!re) return null;
   const m = new RegExp(re.source, re.flags.includes("g") ? re.flags : `${re.flags}g`);
   const gasite = [...text.matchAll(m)];
+  const jacheta = GROSIMI_JACHETA[sistem];
+  if (jacheta) {
+    const zecimal = (s: string): number => Number(s.replace(",", "."));
+    for (const gasit of gasite) {
+      const capat = gasit.index! + gasit[0].length;
+      const fereastra = text.slice(capat, capat + FEREASTRA_GROSIME);
+      for (const nr of fereastra.matchAll(RE_MM_ZECIMAL)) {
+        // "a thickness of 0.6 – 0.8 mm" (`cerere-de-oferta-book15.xlsx`) e un
+        // interval, nu o grosime: alegerea ramane a omului.
+        if (/\d\s*[–-]\s*$/.test(fereastra.slice(0, nr.index))) continue;
+        if (jacheta.has(zecimal(nr[1]!))) return zecimal(nr[1]!);
+      }
+      const inainte = /(?<![\d.,])(\d(?:[.,]\d{1,2})?)\s*mm\s*$/i
+        .exec(text.slice(Math.max(0, gasit.index! - FEREASTRA_INAINTE), gasit.index!));
+      if (inainte && jacheta.has(zecimal(inainte[1]!))) return zecimal(inainte[1]!);
+    }
+    return null;
+  }
   for (const gasit of gasite) {
     const dupa = text.slice(gasit.index! + gasit[0].length, gasit.index! + gasit[0].length + FEREASTRA_GROSIME);
     for (const nr of dupa.matchAll(/(\d{1,3})\s*mm\b/g)) {
@@ -354,18 +407,36 @@ export function extrageDeterminist(
     diametru_valoare = Number(m[1]); diametru_tip = "interior";
   }
 
+  // Un DN (sau toli) langa un Ø care NU e conversia lui din tabel: Ø-ul e teava
+  // reala, citita ca diametru exterior. Dovada, pe oferta semnata, la
+  // `esteConversiaDN`. Cand macar un Ø de pe rand e chiar DN-ul ("Dn 80 (88,9 x 4)"),
+  // ramane DN-ul.
+  let notaDiametru = "";
+  if (diametru_tip === "DN" && diametru_valoare !== null) {
+    const dn = diametru_valoare;
+    const scrise = diametreScrise(text);
+    if (scrise.length > 0 && !scrise.some((v) => esteConversiaDN(dn, v))) {
+      diametru_valoare = scrise[0]!;
+      diametru_tip = "exterior";
+      notaDiametru = `; scrie DN${dn}, dar Ø${String(scrise[0]).replace(".", ",")} nu e DN${dn} `
+        + "in tabelul de conversie, deci se ia Ø";
+    }
+  }
+
   let grosime_mm: number | null = null;
   // Cand randul cumpara mai multe materiale, primul isi ia grosimea scrisa
   // langa NUMELE lui, nu ultima de pe rand: la "Elastomer 13mm + MW 40mm",
   // elastomerul are 13, nu 40. Pe un rand cu un singur material nu se schimba
   // nimic — acolo euristica generala e si mai buna, fiindca prinde si
-  // formularile in care grosimea sta inaintea materialului.
-  if (sistem !== null && toate.length > 1) {
+  // formularile in care grosimea sta inaintea materialului. Tabla e exceptia:
+  // grosimea ei e zecimala si se cauta doar langa ea (`GROSIMI_JACHETA`).
+  const esteJacheta = sistem !== null && GROSIMI_JACHETA[sistem] !== undefined;
+  if (sistem !== null && (toate.length > 1 || esteJacheta)) {
     grosime_mm = grosimeLangaSistem(text, sistem);
   }
-  const g = grosime_mm !== null ? null : (text.match(RE_GROSIME) ?? text.match(RE_GROSIME_COMPACT));
-  if (grosime_mm !== null) {
-    // deja gasita langa numele materialului
+  const g = grosime_mm !== null || esteJacheta ? null : (text.match(RE_GROSIME) ?? text.match(RE_GROSIME_COMPACT));
+  if (grosime_mm !== null || esteJacheta) {
+    // deja gasita langa numele materialului, sau tabla fara grosime scrisa
   } else if (g && GROSIMI_PLAUZIBILE.has(Number(g[1]))) {
     grosime_mm = Number(g[1]);
   } else {
@@ -405,7 +476,7 @@ export function extrageDeterminist(
       gol_latime_mm, gol_inaltime_mm, straturi_extra,
       incredere: complet ? 0.99 : 0.3,
       motiv: complet
-        ? `extras determinist din text${straturi_extra.length ? ` (${toate.join(" + ")})` : ""}`
+        ? `extras determinist din text${straturi_extra.length ? ` (${toate.join(" + ")})` : ""}${notaDiametru}`
         : "extragere determinista incompleta",
     },
     complet,

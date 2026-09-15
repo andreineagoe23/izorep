@@ -12,6 +12,7 @@
  */
 import { describe, it, expect } from "vitest";
 import { extrageDeterminist } from "../src/import/extract-regex.js";
+import { tarifeazaExtras } from "../src/import/nucleu.js";
 
 const extrage = (text: string, um?: string, cant?: number) =>
   extrageDeterminist(0, text, um, undefined, cant).linie;
@@ -187,5 +188,64 @@ describe("unitățile de climatizare sunt altă meserie", () => {
   it("„Air conditioning unit” nu devine poziție de elastomer", () => {
     expect(extrage("Air conditioning unit, direct expansion type, with wall-mounted indoor unit, including "
       + "copper refrigerant piping insulated with elastomeric foam", "pcs", 4).sistem).toBeNull();
+  });
+});
+
+describe("DN și Ø pe același rând: decide tabelul de conversie", () => {
+  // Oferta 27.04.2026 (NISAL), rândurile 44–47: coloana germană scrie DN-ul,
+  // cea română Ø-ul. Ø20 / 25 / 32 / 40 nu e DN20 / 25 / 32 / 40 pe nicio
+  // coloană a tabelului (la DN20: ISO 26,9, DIN 25), e seria de PP-R. Oferta
+  // semnată le-a tarifat pe Ø, toate patru; pe seria ISO ieșeau un rând mai sus.
+  const rand = (dn: number): string => `Wärmeisolierung aus expand. synthet. Kautschuk, d=9mm, DN${dn} | `
+    + "Izolatie termica din cauciuc sintetic expandat, cu grosime S=9 mm, material marunt, de etansare, "
+    + `de fixare; Dimensiuni: Ø${dn}mm`;
+
+  it.each([[20, 5.79], [25, 5.99], [32, 6.15], [40, 8.29]])("DN%i scris lângă Ø de aceeași cifră → %f €/ml, ca oferta semnată", (dn, semnat) => {
+    const l = extrage(rand(dn), "m", 10);
+    expect(l.diametru_tip).toBe("exterior");
+    expect(l.diametru_valoare).toBe(dn);
+    expect(tarifeazaExtras(l, 1).pret?.pret_unitar).toBe(semnat);
+  });
+
+  it.each([
+    ["Izolatie Armaflex 13 mm Dn 80 Ø88,9 x 4", 80],
+    ["Izolatie Armaflex 13 mm DN100 Ø114", 100],
+    ["Izolatie Armaflex 13 mm Ф 57 x 3,5 mm DN50", 50],
+  ])("un Ø care e chiar DN-ul, pe coloana ISO sau DIN, nu schimbă nimic: %s", (text, dn) => {
+    const l = extrage(text, "ml", 10);
+    expect(l.diametru_tip).toBe("DN");
+    expect(l.diametru_valoare).toBe(dn);
+  });
+
+  it("numărul lipit de cuvântul următor se citește", () => {
+    // Transavia inox, rândul 70, și NISAL, rândurile 76–77: ieșeau „fără diametru".
+    expect(extrage("Caseta izolatie armaturi cu flanse DN150din tabla inox 304 si vata minerala", "buc", 2)
+      .diametru_valoare).toBe(150);
+    expect(extrage("Wärmeiso. aus expand. synthet. Kautschuk, d=9mm, Ø32mm", "m", 10).diametru_valoare).toBe(32);
+  });
+});
+
+describe("grosimea tablei, scrisă lângă ea", () => {
+  const straturi = (text: string) => extrage(text, "ml", 10).straturi_extra;
+
+  it("inoxul își ia grosimea din text, deci nu mai e ambiguu", () => {
+    expect(straturi("Izolatii cu vata minerala 50 mm si protectie cu tabla de inox 0,5 mm DN80"))
+      .toEqual([{ sistem: "tabla_inox", grosime_mm: 0.5 }]);
+  });
+
+  it("aluminiul la fel, dar numai din grosimile listei lui", () => {
+    expect(straturi("Izolatie armaflex 19 mm, protejata cu tabla zincata de 0.8 mm Ø200"))
+      .toEqual([{ sistem: "tabla", grosime_mm: 0.8 }]);
+    // 0,5 nu e grosime de aluminiu: rămâne implicită, nu se inventează.
+    expect(straturi("Izolatie vata minerala 50 mm cu tabla de aluminiu 0,5 mm DN80"))
+      .toEqual([{ sistem: "tabla", grosime_mm: null }]);
+  });
+
+  it("un interval sau un întreg de lângă tablă nu e grosimea ei", () => {
+    // Book15: „a thickness of 0.6 – 0.8 mm". Alegerea rămâne a omului.
+    expect(extrage("Supply and installation of aluminum sheet jacketing with a thickness of 0.6 – 0.8 mm",
+      "m2", 5).grosime_mm).toBeNull();
+    expect(straturi("Izolatii cu vata minerala si protectie cu tabla de aluminiu 50 mm DN80"))
+      .toEqual([{ sistem: "tabla", grosime_mm: null }]);
   });
 });

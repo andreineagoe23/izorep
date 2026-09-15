@@ -7,7 +7,7 @@
  * sa-l mai citeasca — deci jumatate din teste verifica exact ca TACE.
  */
 import { describe, it, expect } from "vitest";
-import { valideazaExtragere, aplicaValidarea } from "../src/import/valideaza.js";
+import { valideazaExtragere, aplicaValidarea, diametruContrazisDeText } from "../src/import/valideaza.js";
 import type { LinieExtrasa } from "../src/import/schema.js";
 
 const linie = (p: Partial<LinieExtrasa> = {}): LinieExtrasa => ({
@@ -18,6 +18,26 @@ const linie = (p: Partial<LinieExtrasa> = {}): LinieExtrasa => ({
 
 const coduri = (l: LinieExtrasa, text: string, um?: string): string[] =>
   valideazaExtragere(l, um === undefined ? { text } : { text, um }).map((a) => a.cod);
+
+describe("DN citit, dar pe rând scrie alt Ø", () => {
+  const dn = (v: number) => linie({ sistem: "elastomer", diametru_valoare: v, diametru_tip: "DN", grosime_mm: 9 });
+
+  it("se aprinde când Ø-ul nu e DN-ul în tabelul de conversie", () => {
+    // NISAL, rândul 44: oferta semnată a luat Ø20, nu DN20 (ø26,9).
+    const av = diametruContrazisDeText(dn(20), "Kautschuk, d=9mm, DN20 | Dimensiuni: Ø20mm");
+    expect(av.map((a) => a.cod)).toEqual(["diametru_contrazis"]);
+    expect(av[0]!.mesaj).toContain("ISO 26.9");
+  });
+
+  it.each([
+    ["Dn 80 (Ø88,9 x 4 - 3'')", 80],
+    ["Izolatie Armaflex 13 mm Ф 57 x 3,5 mm (Dn 2\")", 50],
+    ["Armaflex DN100, fara niciun diametru scris", 100],
+    ["Armaflex Ø1/2\" (Dn 15mm)", 15],
+  ])("tace pe %s", (text, v) => {
+    expect(diametruContrazisDeText(dn(v), text)).toEqual([]);
+  });
+});
 
 describe("numere inventate", () => {
   it("prinde diametrul care nu apare in text", () => {

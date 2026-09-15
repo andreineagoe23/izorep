@@ -1,6 +1,7 @@
-import { DN_TO_OD, TOLI_DN } from "../pricing/dn-table.js";
+import { DN_TO_OD, DN_TO_OD_DIN, TOLI_DN, esteConversiaDN } from "../pricing/dn-table.js";
 import { lista } from "../pricing/lists.js";
 import type { SistemMatrice } from "../pricing/types.js";
+import { diametreScrise } from "./extract-regex.js";
 import type { LinieExtrasa } from "./schema.js";
 
 /**
@@ -26,7 +27,8 @@ export type CodAvertisment =
   | "dn_necunoscut"
   | "grosime_in_afara_listei"
   | "forma_contrazice_um"
-  | "notatie_contrazice_materialul";
+  | "notatie_contrazice_materialul"
+  | "diametru_contrazis";
 
 export interface Avertisment {
   cod: CodAvertisment;
@@ -225,6 +227,30 @@ export function notatieContraziceMaterialul(
     cod: "notatie_contrazice_materialul",
     mesaj: `textul spune "${m[0]}", material la care nominalul ESTE diametrul exterior, `
       + `dar diametrul e citit ca DN${l.diametru_valoare} si se converteste pe seria de otel`,
+  }];
+}
+
+/**
+ * Diametrul e citit ca DN, dar pe rand scrie un Ø care nu e acel DN pe nicio
+ * coloana a tabelului de conversie (`esteConversiaDN`).
+ *
+ * E aceeasi regula pe care `extract-regex.ts` o aplica singur, luand Ø-ul: pe
+ * `oferta-118-nisal.xlsx`, randurile 44–47, "DN20 ... Dimensiuni: Ø20mm" e teava
+ * de Ø20, iar oferta semnata a tarifat-o asa. Aici nu se corecteaza nimic — un
+ * model sau un sablon a ales DN-ul, deci linia merge la om, cu ambele valori in
+ * mesaj. Ruleaza, ca `notatieContraziceMaterialul`, indiferent de sursa.
+ */
+export function diametruContrazisDeText(l: LinieExtrasa, text: string): Avertisment[] {
+  if (l.diametru_tip !== "DN" || l.diametru_valoare === null) return [];
+  const dn = l.diametru_valoare;
+  const scrise = diametreScrise(text);
+  if (scrise.length === 0 || scrise.some((v) => esteConversiaDN(dn, v))) return [];
+  const tabel = [DN_TO_OD[dn] && `ISO ${DN_TO_OD[dn]}`, DN_TO_OD_DIN[dn] && `DIN ${DN_TO_OD_DIN[dn]}`]
+    .filter(Boolean).join(", ");
+  return [{
+    cod: "diametru_contrazis",
+    mesaj: `diametrul e citit ca DN${dn}, dar pe rand scrie Ø${scrise.join(", Ø")}, care nu e DN${dn} `
+      + `in tabelul de conversie${tabel ? ` (${tabel})` : ""}`,
   }];
 }
 
