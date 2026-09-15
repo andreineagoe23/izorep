@@ -87,6 +87,8 @@ export const ecran: Ecran = {
     let destinatie: Destinatie = "rezidential";
     /** Grosimile uzuale cerute in masa. Vezi `OptiuniNucleu.grosimiPropuse`. */
     let grosimiPropuse = new Map<number, number>();
+    /** Descrierile schimbate dupa verificare. Vezi `OptiuniNucleu.descrieriSchimbate`. */
+    let descrieriSchimbate = new Set<number>();
     let pas: Pas = 1;
     let sesiune: Sesiune | null = null;
     let istoric: IntrareIstoric[] = [];
@@ -114,7 +116,7 @@ export const ecran: Ecran = {
     let ceasMesaj: ReturnType<typeof setTimeout> | undefined;
     let ceasSalvare: ReturnType<typeof setTimeout> | undefined;
 
-    const optiuni = () => ({ stoc, mapari, prag, destinatie, grosimiPropuse });
+    const optiuni = () => ({ stoc, mapari, prag, destinatie, grosimiPropuse, descrieriSchimbate });
 
     gazda.innerHTML = `<div class="imp">
       <nav id="imp-pasi" aria-label="Pașii importului"></nav>
@@ -162,10 +164,13 @@ export const ecran: Ecran = {
           pozitii: s.rez.statistici.liniiIzolatie,
           tarifate: s.rez.statistici.tarifate,
           valoare: s.rez.statistici.valoareTotala,
-          extrase: [...s.rez.rezolvate].map(([index, r]) => ({ index, extras: r.extras, sursa: r.sursa })),
+          extrase: [...s.rez.rezolvate].map(([index, r]) => ({
+            index, extras: r.extras, sursa: r.sursa, ...(r.text !== undefined ? { text: r.text } : {}),
+          })),
           editari: s.editari,
           destinatie,
           grosimiPropuse: [...grosimiPropuse],
+          descrieriSchimbate: [...descrieriSchimbate],
         }).then(async () => { istoric = await listeaza(); });
       }, 400);
     }
@@ -347,8 +352,11 @@ export const ecran: Ecran = {
       }
       destinatie = s.destinatie ?? "rezidential";
       grosimiPropuse = new Map(s.grosimiPropuse ?? []);
+      descrieriSchimbate = new Set(s.descrieriSchimbate ?? []);
       const rez = await proceseazaRegistru(foi, optiuni());
-      for (const x of s.extrase) rez.rezolvate.set(x.index, { extras: x.extras, sursa: x.sursa });
+      for (const x of s.extrase) {
+        rez.rezolvate.set(x.index, { extras: x.extras, sursa: x.sursa, ...(x.text !== undefined ? { text: x.text } : {}) });
+      }
       reevalueaza(rez, optiuni());
       puneCurent(id);
       deschideSesiune({ foi, rez, meta: s, editari: [...s.editari], avertisment: "" });
@@ -401,6 +409,7 @@ export const ecran: Ecran = {
 
         // Propunerile tin de indecsii fisierului de dinainte.
         grosimiPropuse = new Map();
+        descrieriSchimbate = new Set();
         const rez = await proceseazaRegistru(foi, { ...optiuni(), ...(extractor ? { extrage: extractor } : {}) });
         deschideSesiune({
           foi, rez, editari: [],
@@ -635,6 +644,13 @@ export const ecran: Ecran = {
       if (!rand) return;
       const cel = Number(camp.dataset["cel"]);
       const vechi = rand.celule[cel];
+      const vVechi = vechi?.v ?? null;
+      // Pozitia verificata de om inainte de tasta asta. Daca tasta ii schimba
+      // descrierea, nucleul o reciteste si o trimite la „De verificat"; mesajul
+      // spune asta si da drumul inapoi, cu tot cu textul de dinainte.
+      const idxRand = rand.linie?.index;
+      const inainte = idxRand === undefined ? undefined : s.rez.rezolvate.get(idxRand);
+      const editareVeche = s.editari.find((x) => x.foaie === numeFoaie && x.rand === rand.rand && x.cel === cel);
       const text = camp.textContent ?? "";
       const nou = vechi && typeof vechi.v === "number" && text.trim() !== "" && !Number.isNaN(Number(text)) ? Number(text) : text;
       scrieCelula(rand, cel, nou);
@@ -643,6 +659,17 @@ export const ecran: Ecran = {
       const i = s.editari.findIndex((x) => x.foaie === editare.foaie && x.rand === editare.rand && x.cel === cel);
       if (i >= 0) s.editari[i] = editare; else s.editari.push(editare);
       retarifeaza();
+      if (idxRand !== undefined && inainte?.sursa === "om" && s.rez.rezolvate.get(idxRand)?.sursa !== "om") {
+        arataMesaj("Descrierea s-a schimbat: poziția e recitită și trece la „De verificat”.", () => {
+          scrieCelula(rand, cel, vVechi);
+          reconstruieste(rand);
+          const j = s.editari.findIndex((x) => x.foaie === numeFoaie && x.rand === rand.rand && x.cel === cel);
+          if (editareVeche) s.editari[j] = editareVeche; else if (j >= 0) s.editari.splice(j, 1);
+          s.rez.rezolvate.set(idxRand, inainte);
+          descrieriSchimbate.delete(idxRand);
+          retarifeaza();
+        });
+      }
       // Randul atins isi reface coloanele noastre pe loc, fara redesenarea
       // tabelului: cursorul ramane in celula in care scrie omul.
       const tr = camp.closest<HTMLTableRowElement>("tr");

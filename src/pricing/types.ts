@@ -117,7 +117,9 @@ export type MotivVerificare =
   /** Primul strat e la 1 mm peste un rand; ofertele au folosit ambele randuri. */
   | "rotunjire_neconfirmata"
   /** Grosimea e cea uzuala a firmei, nu scrisa de client. */
-  | "grosime_propusa";
+  | "grosime_propusa"
+  /** Descrierea s-a schimbat dupa ce omul verificase pozitia: e recitita din textul nou. */
+  | "descriere_schimbata";
 
 /**
  * De ce nu s-a putut tarifa o pozitie, ca valoare STABILA.

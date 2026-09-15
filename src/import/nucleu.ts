@@ -92,6 +92,16 @@ export interface OptiuniNucleu {
    * 24 de casete de pe cererea Abur plecau direct in oferta, fara validare.
    */
   grosimiPropuse?: ReadonlyMap<number, number>;
+  /**
+   * Liniile a caror descriere s-a schimbat dupa ce le verificase omul sau le
+   * citise modelul. `reevalueaza` le reciteste din textul nou si le ADAUGA aici;
+   * raman „de verificat" pana le confirma omul din nou, cand ies din set.
+   *
+   * E al apelantului, ca `grosimiPropuse`, si din acelasi motiv: dupa recitire
+   * linia nu mai e nici `om`, nici `model`, deci recalculul urmator n-ar mai
+   * avea de unde sti ca fusese verificata. Ecranul il salveaza in istoric.
+   */
+  descrieriSchimbate?: Set<number>;
   laProgres?: (p: Progres) => void;
 }
 
@@ -190,10 +200,27 @@ export interface Statistici {
   randuriManopera: number;
 }
 
+/**
+ * O linie rezolvata: extragerea, de unde vine, si textul din care a iesit.
+ *
+ * `text` e textul randului in momentul in care extragerea i-a fost data —
+ * citita de model, confirmata sau corectata de om. Fara el, o descriere
+ * schimbata dupa aceea nu se vedea: linia `om` nu se re-extragea, iar a
+ * modelului se pastra, deci pretul ramanea pe textul vechi, marcat „Gata".
+ * Verificat in browser pe 15 septembrie 2026: dupa „Modifică", scoasa tabla din
+ * descriere, pozitia ramanea la 45,24 €/ml. Lipsa lui inseamna „textul de acum",
+ * pe care nucleul il completeaza la prima trecere (`stampileazaText`).
+ */
+export interface Rezolvare {
+  extras: LinieExtrasa;
+  sursa: Sursa;
+  text?: string;
+}
+
 export interface Rezultat {
   foi: FoaieBruta[];
   brute: LinieCuSectiune[];
-  rezolvate: Map<number, { extras: LinieExtrasa; sursa: Sursa }>;
+  rezolvate: Map<number, Rezolvare>;
   linii: LinieProcesata[];
   statistici: Statistici;
 }
@@ -297,11 +324,23 @@ export function tarifeazaExtras(
  * memoria, nici sablonul, nici modelul nu i-au rezolvat.
  */
 function completeazaCuPartiale(
-  rezolvate: Map<number, { extras: LinieExtrasa; sursa: Sursa }>,
+  rezolvate: Map<number, Rezolvare>,
   partiale: Map<number, LinieExtrasa>,
 ): void {
   for (const [index, extras] of partiale) {
     if (!rezolvate.has(index)) rezolvate.set(index, { extras, sursa: "regex" });
+  }
+}
+
+/**
+ * Textul din care a iesit fiecare extragere care inca nu-l are — vezi
+ * `Rezolvare.text`. Obiect nou, nu mutatie: ecranul tine instantanee ale
+ * intrarilor vechi pentru „Anulează".
+ */
+function stampileazaText(brute: LinieCuSectiune[], rezolvate: Map<number, Rezolvare>): void {
+  for (const b of brute) {
+    const r = rezolvate.get(b.index);
+    if (r && r.text === undefined) rezolvate.set(b.index, { ...r, text: b.text });
   }
 }
 
@@ -313,10 +352,11 @@ function completeazaCuPartiale(
  */
 function construiesteLinii(
   brute: LinieCuSectiune[],
-  rezolvate: Map<number, { extras: LinieExtrasa; sursa: Sursa }>,
+  rezolvate: Map<number, Rezolvare>,
   prag: number,
   destinatie: Destinatie,
   grosimiPropuse?: ReadonlyMap<number, number>,
+  descrieriSchimbate?: ReadonlySet<number>,
 ): LinieProcesata[] {
   const linii: LinieProcesata[] = [];
   for (const b of brute) {
@@ -359,11 +399,16 @@ function construiesteLinii(
       && extras.sistem !== null && extras.sistem !== "goluri_foc";
     const deTarifat = cuPropunere ? { ...extras, grosime_mm: propusa } : extras;
 
+    // Descrierea schimbata dupa verificare: linia a fost recitita din textul
+    // nou, deci ce a vazut omul nu mai e ce se tarifeaza. Nu si pe "om": o noua
+    // confirmare e chiar raspunsul.
+    const schimbata = sursa !== "om" && (descrieriSchimbate?.has(b.index) ?? false);
+
     const proc: LinieProcesata = {
       bruta: b, extras: deTarifat, sursa,
       ...(avertismente.length ? { avertismente } : {}),
       necesitaValidare: sursa !== "om" && extras.sistem !== null
-        && (extras.incredere < prag || avertismente.length > 0 || cuPropunere),
+        && (extras.incredere < prag || avertismente.length > 0 || cuPropunere || schimbata),
     };
 
     const t = tarifeazaExtras(deTarifat, b.cantitate ?? 1, destinatie);
@@ -372,6 +417,12 @@ function construiesteLinii(
       t.pret.note = [...(t.pret.note ?? []), n];
       t.pret.noteDeVerificat = [...(t.pret.noteDeVerificat ?? []), n];
       t.pret.motiveDeVerificat = [...(t.pret.motiveDeVerificat ?? []), "grosime_propusa"];
+    }
+    if (t.pret && schimbata) {
+      const n = "descrierea s-a schimbat dupa ce pozitia fusese verificata; e recitita din textul nou";
+      t.pret.note = [...(t.pret.note ?? []), n];
+      t.pret.noteDeVerificat = [...(t.pret.noteDeVerificat ?? []), n];
+      t.pret.motiveDeVerificat = [...(t.pret.motiveDeVerificat ?? []), "descriere_schimbata"];
     }
     if (t.pret) proc.pret = t.pret;
     // Doar notele care CER ochi opresc linia la validare: pretul venit din
@@ -466,7 +517,7 @@ export async function proceseazaRegistru(foi: FoaieBruta[], o: OptiuniNucleu): P
   const brute = aplicaContinuare(adaugaSectiuni(liniile(foi)));
 
   // L2a - determinist
-  const rezolvate = new Map<number, { extras: LinieExtrasa; sursa: Sursa }>();
+  const rezolvate = new Map<number, Rezolvare>();
   const reziduale: LinieSursa[] = [];
   const partiale = new Map<number, LinieExtrasa>();
   for (const b of brute) {
@@ -531,7 +582,10 @@ export async function proceseazaRegistru(foi: FoaieBruta[], o: OptiuniNucleu): P
 
   // Guardrails + L3
   completeazaCuPartiale(rezolvate, partiale);
-  const linii = construiesteLinii(brute, rezolvate, prag, o.destinatie ?? "rezidential", o.grosimiPropuse);
+  stampileazaText(brute, rezolvate);
+  const linii = construiesteLinii(
+    brute, rezolvate, prag, o.destinatie ?? "rezidential", o.grosimiPropuse, o.descrieriSchimbate,
+  );
   o.laProgres?.({ faza: "tarifare", gata: linii.length, total: brute.length });
 
   const statistici: Statistici = {
@@ -558,9 +612,11 @@ export async function proceseazaRegistru(foi: FoaieBruta[], o: OptiuniNucleu): P
  * NU cheama modelul: e sincrona si O(n) — pe un fisier de 400 de randuri costa
  * milisecunde, deci se poate rula dupa fiecare tasta, nu doar la salvare.
  *
- * O linie cu `sursa: "om"` nu se re-extrage NICIODATA aici: corectia omului
- * bate orice strat, indiferent ce ar gasi determinismul sau memoria pe textul
- * (eventual schimbat de alte editari) al randului ei.
+ * O linie cu `sursa: "om"` nu se re-extrage aici cat timp textul ei e cel pe
+ * care l-a vazut omul: corectia lui bate orice strat. Daca descrierea s-a
+ * schimbat de atunci, corectia nu mai descrie randul — linia se reciteste ca
+ * oricare alta si intra in `descrieriSchimbate`. La fel extragerea modelului:
+ * pastrata doar pe textul pe care l-a citit.
  */
 export function reevalueaza(rez: Rezultat, o: OptiuniNucleu): void {
   const prag = o.prag ?? 0.85;
@@ -579,14 +635,24 @@ export function reevalueaza(rez: Rezultat, o: OptiuniNucleu): void {
   rez.brute = brute;
 
   const vechi = rez.rezolvate;
-  const rezolvate = new Map<number, { extras: LinieExtrasa; sursa: Sursa }>();
+  const rezolvate = new Map<number, Rezolvare>();
+  const schimbate = o.descrieriSchimbate ?? new Set<number>();
 
-  // Trecerea 1: liniile confirmate de om raman pe loc, neatinse, si nu intra
-  // in candidatii pentru determinist/memorie de mai jos.
+  // Trecerea 1: liniile confirmate de om raman pe loc si nu intra in
+  // candidatii pentru determinist/memorie de mai jos — cat timp textul lor e
+  // cel pe care l-a vazut omul. Altfel corectia lui nu mai descrie randul:
+  // linia se reciteste ca oricare alta si trece la „de verificat".
   const candidati: LinieCuSectiune[] = [];
   for (const b of brute) {
     const existent = vechi.get(b.index);
-    if (existent?.sursa === "om") { rezolvate.set(b.index, existent); continue; }
+    if (existent?.sursa === "om") {
+      if ((existent.text ?? b.text) === b.text) {
+        rezolvate.set(b.index, { ...existent, text: b.text });
+        schimbate.delete(b.index);
+        continue;
+      }
+      schimbate.add(b.index);
+    }
     candidati.push(b);
   }
 
@@ -608,17 +674,23 @@ export function reevalueaza(rez: Rezultat, o: OptiuniNucleu): void {
 
   // Ce nici memoria n-a rezolvat pastreaza extragerea veche, DOAR daca venea
   // de la model sau de la sablon — nu exista de unde s-o recitim fara sa
-  // rechemam modelul, iar `reevalueaza` n-are voie sa faca asta.
+  // rechemam modelul, iar `reevalueaza` n-are voie sa faca asta. Si doar pe
+  // textul pe care l-a citit modelul: pe o descriere schimbata ar tarifa
+  // descrierea veche, deci ramane ce se poate citi determinist, marcat.
   for (const l of dinMemorie.ramase) {
     const existent = vechi.get(l.index);
     if (existent && (existent.sursa === "model" || existent.sursa === "sablon")) {
-      rezolvate.set(l.index, existent);
+      if ((existent.text ?? l.text) === l.text) rezolvate.set(l.index, existent);
+      else schimbate.add(l.index);
     }
   }
 
   completeazaCuPartiale(rezolvate, partiale);
+  stampileazaText(brute, rezolvate);
   rez.rezolvate = rezolvate;
-  rez.linii = construiesteLinii(brute, rezolvate, prag, o.destinatie ?? "rezidential", o.grosimiPropuse);
+  rez.linii = construiesteLinii(
+    brute, rezolvate, prag, o.destinatie ?? "rezidential", o.grosimiPropuse, schimbate,
+  );
   rez.statistici = {
     ...statisticiDeterministe(rez.foi, foiMapate, brute, rez.linii),
     // Astea descriu apelul la model care a produs starea INITIALA a lui `rez`;

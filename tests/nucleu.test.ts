@@ -151,6 +151,19 @@ describe("guardrails pe drumul ecranului", () => {
     expect(linie!.necesitaValidare).toBe(true);
     expect(linie!.avertismente?.map((a) => a.cod)).toContain("diametru_necitat");
   });
+
+  it("un DN citit de model lângă un Ø care nu-i corespunde ajunge marcat", async () => {
+    // Același conflict ca NISAL 44–47, dar fără material în text, ca rândul să
+    // plece la model. Regex-ul ar fi luat Ø-ul; modelul a ales DN-ul.
+    const foi = await parseFoi(await registru([ANTET, [1, "Pozitie DN20, Dimensiuni: Ø20mm", "m", 10]]));
+    const extractor: Extractor = async (linii) => linii.map((l) => extrasa({
+      index: l.index, sistem: "elastomer", diametru_valoare: 20, diametru_tip: "DN", grosime_mm: 9,
+    }));
+    const rez = await proceseazaRegistru(foi, { stoc: stocInMemorie(), extrage: extractor });
+    const linie = rez.linii.find((l) => l.sursa === "model")!;
+    expect(linie.avertismente?.map((a) => a.cod)).toContain("diametru_contrazis");
+    expect(linie.necesitaValidare).toBe(true);
+  });
 });
 
 describe("reevalueaza", () => {
@@ -211,9 +224,87 @@ describe("reevalueaza", () => {
     expect(linie!.pret!.total).toBeCloseTo(tarifeazaSimplu("elastomer", 25, 13, "ml", 10).total, 2);
 
     // O a doua reevaluare (ex: dupa alta editare in alta parte a fisierului)
-    // nu se atinge de linia "om".
+    // nu se atinge de linia "om". Tine minte doar textul pe care l-a vazut omul.
     reevalueaza(rez, opt);
-    expect(rez.rezolvate.get(tinta.index)).toEqual({ extras: corectat, sursa: "om" });
+    expect(rez.rezolvate.get(tinta.index)).toEqual({ extras: corectat, sursa: "om", text: tinta.text });
+  });
+
+  const DN25 = "Izolatie elastomer 13 mm pe teava DN25 apa rece";
+
+  it("descrierea schimbata dupa confirmare se reciteste si trece la verificat", async () => {
+    // Verificat in browser pe 15 sep 2026: pozitia confirmata ramanea „Gata",
+    // cu pretul descrierii vechi, orice s-ar fi scris in celula.
+    const foi = await parseFoi(await registru([ANTET, [1, DN25, "ml", 100]]));
+    const schimbate = new Set<number>();
+    const opt = { stoc: stocInMemorie(), descrieriSchimbate: schimbate };
+    const rez = await proceseazaRegistru(foi, opt);
+    const idx = rez.linii.find((l) => l.bruta.text.includes("DN25"))!.extras.index;
+
+    // Exact ce face `confirma` din web/validare.ts.
+    rez.rezolvate.set(idx, { extras: rez.rezolvate.get(idx)!.extras, sursa: "om" });
+    reevalueaza(rez, opt);
+    expect(rez.linii.find((l) => l.extras.index === idx)!.necesitaValidare).toBe(false);
+
+    const rand = foi[0]!.randuri[1]!;
+    scrieCelula(rand, 1, DN25.replace("DN25", "DN50"));
+    reconstruieste(rand);
+    reevalueaza(rez, opt);
+
+    const dupa = rez.linii.find((l) => l.extras.index === idx)!;
+    expect(dupa.sursa).toBe("regex");
+    expect(dupa.extras.diametru_valoare).toBe(50);
+    expect(dupa.pret!.total).toBeCloseTo(tarifeazaSimplu("elastomer", 50, 13, "ml", 100).total, 2);
+    expect(dupa.necesitaValidare).toBe(true);
+    expect(dupa.pret!.motiveDeVerificat).toContain("descriere_schimbata");
+    expect(schimbate.has(idx)).toBe(true);
+
+    // O noua confirmare, pe textul nou, stinge marcajul.
+    rez.rezolvate.set(idx, { extras: dupa.extras, sursa: "om" });
+    reevalueaza(rez, opt);
+    expect(rez.linii.find((l) => l.extras.index === idx)!.necesitaValidare).toBe(false);
+    expect(schimbate.has(idx)).toBe(false);
+  });
+
+  it("o cantitate schimbata dupa confirmare nu pierde confirmarea", async () => {
+    // Cantitatea nu e descriere: pretul se reface, verificarea omului ramane.
+    const foi = await parseFoi(await registru([ANTET, [1, DN25, "ml", 100]]));
+    const opt = { stoc: stocInMemorie(), descrieriSchimbate: new Set<number>() };
+    const rez = await proceseazaRegistru(foi, opt);
+    const idx = rez.linii.find((l) => l.bruta.text.includes("DN25"))!.extras.index;
+    rez.rezolvate.set(idx, { extras: rez.rezolvate.get(idx)!.extras, sursa: "om" });
+    reevalueaza(rez, opt);
+
+    const rand = foi[0]!.randuri[1]!;
+    scrieCelula(rand, 3, 250);
+    reconstruieste(rand);
+    reevalueaza(rez, opt);
+
+    const dupa = rez.linii.find((l) => l.extras.index === idx)!;
+    expect(dupa.sursa).toBe("om");
+    expect(dupa.necesitaValidare).toBe(false);
+    expect(dupa.pret!.total).toBeCloseTo(tarifeazaSimplu("elastomer", 25, 13, "ml", 250).total, 2);
+  });
+
+  it("extragerea modelului nu se pastreaza peste o descriere schimbata", async () => {
+    const TEXT = "Izolatii cu vata minerala pentru teava Di60, fara alte detalii";
+    const foi = await parseFoi(await registru([ANTET, [1, TEXT, "ml", 5]]));
+    const extractor: Extractor = async (linii) => linii.map((l) => extrasa({
+      index: l.index, sistem: "vata_minerala", diametru_valoare: 60, diametru_tip: "interior", grosime_mm: 50,
+    }));
+    const schimbate = new Set<number>();
+    const rez = await proceseazaRegistru(foi, { stoc: stocInMemorie(), extrage: extractor, descrieriSchimbate: schimbate });
+    const idx = rez.linii.find((l) => l.sursa === "model")!.extras.index;
+
+    const rand = foi[0]!.randuri[1]!;
+    scrieCelula(rand, 1, TEXT.replace("Di60", "Di89"));
+    reconstruieste(rand);
+    reevalueaza(rez, { stoc: stocInMemorie(), descrieriSchimbate: schimbate });
+
+    const dupa = rez.linii.find((l) => l.extras.index === idx)!;
+    expect(dupa.sursa).not.toBe("model");
+    expect(dupa.extras.diametru_valoare).toBe(89);
+    expect(dupa.necesitaValidare).toBe(true);
+    expect(schimbate.has(idx)).toBe(true);
   });
 });
 

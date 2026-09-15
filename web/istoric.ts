@@ -56,10 +56,13 @@ export interface EditareCelula {
 
 export interface SesiuneImport extends IntrareIstoric {
   fisier: ArrayBuffer;
-  extrase: { index: number; extras: LinieExtrasa; sursa: Sursa }[];
+  /** `text` lipseste la sesiunile salvate inainte sa existe: nucleul il ia pe cel de acum. */
+  extrase: { index: number; extras: LinieExtrasa; sursa: Sursa; text?: string }[];
   editari: EditareCelula[];
   /** Grosimile uzuale cerute de om, `[index, mm]`. Vezi `OptiuniNucleu.grosimiPropuse`. */
   grosimiPropuse?: [number, number][];
+  /** Vezi `OptiuniNucleu.descrieriSchimbate`. */
+  descrieriSchimbate?: number[];
 }
 
 /**

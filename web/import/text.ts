@@ -124,6 +124,7 @@ export const MOTIV: Record<CodMotiv, string> = {
   segment_diferit: "Preț din lista celuilalt tip de ofertă",
   rotunjire_neconfirmata: "Diametru între două rânduri din listă",
   grosime_propusa: "Grosime propusă, nu scrisă de client",
+  descriere_schimbata: "Descrierea s-a schimbat după verificare",
   citit_nesigur: "Citit nesigur din text",
   pret_necunoscut: "Prețul nu s-a putut calcula",
 };
