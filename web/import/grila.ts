@@ -1,4 +1,5 @@
 import type { CelulaBruta, FoaieBruta } from "../../src/import/parse-workbook.js";
+import { campuriRand } from "../../src/import/editare.js";
 import type { LinieProcesata } from "../../src/import/nucleu.js";
 import { esc, eur } from "../ecrane/tip.js";
 import { inteles, stareLinie } from "./text.js";
@@ -164,7 +165,7 @@ export function grilaFoaie(f: FoaieBruta, linii: ReadonlyMap<number, LinieProces
     const rand = `<tr${l ? ` data-idx="${l.extras.index}" data-stare="${stareLinie(l)}"` : ""}><td class="gutter">${r.rand}</td>${
       celule}${umplutura(f.coloane - latime(r.celule))}${extrase}</tr>`;
     const editor = l && o.editIdx === l.extras.index
-      ? `<tr class="imp-grila-editor"><td colspan="${f.coloane + 5}">${editorPozitie(l)}</td></tr>`
+      ? `<tr class="imp-grila-editor"><td colspan="${f.coloane + 5}">${editorPozitie(l, { campuri: campuriRand(r, f.antet) })}</td></tr>`
       : "";
     return rand + editor;
   }).join("");

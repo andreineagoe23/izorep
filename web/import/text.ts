@@ -28,10 +28,16 @@ export const MATERIAL: Record<Sistem, string> = {
 /** Ordinea din lista de materiale a editorului: cele frecvente intai. */
 export const MATERIALE: Sistem[] = ["vata_minerala", "elastomer", "tabla", "tabla_inox", "pvc", "goluri_foc"];
 
-/** Grosimile ofertate, ca sugestii in editor. Tabla si PVC-ul n-au grosime de ales. */
+/**
+ * Grosimile ofertate, ca sugestii in editor. La tabla sunt zecimale si conteaza
+ * mai ales la inox, unde lista are toate trei la fiecare rand (intrebarea 15):
+ * fara ele, pozitia de inox nu se putea tarifa din ecran. PVC-ul n-are grosime.
+ */
 export const GROSIMI: Partial<Record<Sistem, number[]>> = {
   elastomer: [9, 13, 19, 25, 32],
   vata_minerala: [20, 30, 40, 50, 60, 80, 100],
+  tabla: [0.6, 0.8, 1],
+  tabla_inox: [0.4, 0.5, 0.6],
 };
 
 type Forma = NonNullable<LinieExtrasa["forma"]>;
@@ -42,6 +48,14 @@ const FORMA: Partial<Record<Forma, string>> = {
   compensator: "compensator", pompa: "pompă", filtru: "filtru",
   distribuitor: "distribuitor", schimbator: "schimbător",
 };
+
+/** Formele, in ordinea din editor: metrul liniar intai, apoi piesele frecvente. */
+export const FORME_EDITOR: [Forma, string][] = [
+  ["ml", "metru liniar"], ["mp", "m²"], ["cot", "cot"], ["teu", "teu"], ["reductie", "reducție"],
+  ["manseta", "manșetă"], ["flansa", "flanșă"], ["robinet", "robinet"], ["vana", "vană"],
+  ["contor", "contor"], ["compensator", "compensator"], ["pompa", "pompă"], ["filtru", "filtru"],
+  ["distribuitor", "distribuitor"], ["schimbator", "schimbător"],
+];
 
 /** `DN100`, `Ø160`, `Di60` — cum il scrie si clientul. */
 export function diametruText(e: Pick<LinieExtrasa, "diametru_valoare" | "diametru_tip">): string | null {

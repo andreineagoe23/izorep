@@ -88,3 +88,67 @@ export function reconstruieste(rand: RandBrut): void {
   if (noua.cantitate !== undefined) linie.cantitate = noua.cantitate;
   else delete linie.cantitate;
 }
+
+/** O celula pe care editorul de pozitie o arata ca atare. `cel` e indexul din `RandBrut.celule`. */
+export interface CelulaEditabila {
+  cel: number;
+  /** Capul coloanei din antetul foii, sau un nume generic cand foaia n-are antet. */
+  eticheta: string;
+  v: string | number;
+}
+
+export interface CampuriRand {
+  /** Celulele cu text: descrierea, intr-una sau mai multe coloane (Book15 o are in engleza si in romana). */
+  texte: CelulaEditabila[];
+  um?: CelulaEditabila;
+  cantitate?: CelulaEditabila;
+}
+
+/**
+ * Celulele unui rand pe care le corecteaza editorul de pozitie — descrierea,
+ * unitatea de masura si cantitatea — cu capul coloanei lor.
+ *
+ * UM-ul si cantitatea se cauta dupa VALOAREA pe care a citit-o linia
+ * (`linie.um`, `linie.cantitate`), nu dupa o coloana fixa: cu maparea de
+ * coloane (L1) cantitatea vine din coloana mapata, fara ea din euristica de
+ * langa UM, iar editorul trebuie sa scrie exact in celula din care s-a citit
+ * pretul. Cand valoarea nu e in nicio celula, campul lipseste: editorul nu
+ * ghiceste unde sa scrie.
+ */
+export function campuriRand(rand: RandBrut, antet?: RandBrut): CampuriRand {
+  const linie = rand.linie;
+  const eticheta = (cel: number, implicit: string): string => {
+    const col = offsetColoana(rand.celule, cel);
+    let offset = 0;
+    for (const c of antet?.celule ?? []) {
+      if (col < offset + c.span) {
+        const t = typeof c.v === "string" ? c.v.replace(/\s+/g, " ").trim() : "";
+        return t || implicit;
+      }
+      offset += c.span;
+    }
+    return implicit;
+  };
+
+  const texte: CelulaEditabila[] = [];
+  let um: CelulaEditabila | undefined;
+  const cuCantitatea: number[] = [];
+  rand.celule.forEach((c, cel) => {
+    if (typeof c.v === "string") {
+      if (!um && linie?.um !== undefined && c.v.trim() === linie.um) um = { cel, eticheta: eticheta(cel, "UM"), v: c.v };
+      else if (c.v.trim().length > 3) texte.push({ cel, eticheta: eticheta(cel, "Descriere"), v: c.v });
+    } else if (typeof c.v === "number" && c.v === linie?.cantitate) {
+      cuCantitatea.push(cel);
+    }
+  });
+
+  // Aceeasi valoare poate sta in doua celule — „Nr. 1 | ... | ml | 1". Cantitatea
+  // e cea mai apropiata de UM, iar la egalitate cea de dupa ea, ca in `rand.ts`.
+  const langa = um?.cel ?? rand.celule.length;
+  const cel = [...cuCantitatea].sort((a, b) => Math.abs(a - langa) - Math.abs(b - langa) || b - a)[0];
+  const cantitate: CelulaEditabila | undefined = cel === undefined
+    ? undefined
+    : { cel, eticheta: eticheta(cel, "Cantitate"), v: rand.celule[cel]!.v as number };
+
+  return { texte, ...(um ? { um } : {}), ...(cantitate ? { cantitate } : {}) };
+}

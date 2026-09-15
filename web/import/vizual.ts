@@ -2,9 +2,11 @@ import type { LinieProcesata } from "../../src/import/nucleu.js";
 import type { Destinatie } from "../../src/pricing/lists.js";
 import type { IntrareIstoric } from "../istoric.js";
 import { cate, dataScurta, esc, eur } from "../ecrane/tip.js";
+import type { CampuriRand } from "../../src/import/editare.js";
+import type { LinieExtrasa } from "../../src/import/schema.js";
 import {
-  GROSIMI, MATERIAL, MATERIALE, MOTIV, STARE,
-  inteles, motiveLinie, stareLinie, type CodMotiv, type Stare,
+  FORME_EDITOR, GROSIMI, MATERIAL, MATERIALE, MOTIV, STARE,
+  inteles, motiveLinie, stareLinie, type CodMotiv, type Sistem, type Stare,
 } from "./text.js";
 
 /**
@@ -201,6 +203,8 @@ export interface OptiuniCard {
   editeaza: boolean;
   /** Numele foii se scrie doar cand registrul are mai multe. */
   cuFoaie: boolean;
+  /** Celulele randului, pentru editorul deschis. Vezi `OptiuniEditor`. */
+  campuri?: CampuriRand;
 }
 
 /** Detaliul tehnic, pentru `title`: cine vrea sa stie exact de ce. */
@@ -258,26 +262,76 @@ export function cardPozitie(l: LinieProcesata, o: OptiuniCard): string {
       : `<strong class="imp-fara-pret">—</strong>`}</div>
     <div class="imp-poz-stare">${starePozitie(l)}</div>
     <div class="imp-poz-actiuni">${actiuniPozitie(l, o.propunere, o.editeaza)}</div>
-    ${o.editeaza ? editorPozitie(l) : ""}
+    ${o.editeaza ? editorPozitie(l, o.campuri ? { campuri: o.campuri } : {}) : ""}
   </article>`;
 }
 
+export interface OptiuniEditor {
+  /**
+   * Celulele randului pe care editorul le corecteaza direct: descrierea, UM-ul,
+   * cantitatea (`campuriRand`). Lipsa = doar campurile extrase.
+   */
+  campuri?: CampuriRand;
+}
+
+const MATERIALE_STRAT = MATERIALE.filter((s) => s !== "goluri_foc");
+const numarCamp = (v: number | null): string => (v === null ? "" : String(v));
+
+/** Un strat peste primul, in editor: materialul, grosimea si „Scoate". */
+export function randStrat(i: number, s: { sistem: Sistem; grosime_mm: number | null }): string {
+  return `<div class="imp-strat">
+    <select name="strat_sistem" aria-label="Materialul stratului">${MATERIALE_STRAT.map((m) =>
+      `<option value="${m}"${m === s.sistem ? " selected" : ""}>${MATERIAL[m]}</option>`).join("")}</select>
+    <input name="strat_grosime" type="number" inputmode="decimal" step="any" min="0" list="ed-g-${i}-${s.sistem}"
+      value="${numarCamp(s.grosime_mm)}" placeholder="mm" aria-label="Grosimea stratului, în mm" />
+    <button type="button" class="secundar" data-act="scoate-strat">Scoate</button>
+  </div>`;
+}
+
 /**
- * Corectura unei pozitii, deschisa sub card. Campurile sunt cele care decid
- * pretul, cu numele lor obisnuite. „Nu e izolație" scoate randul din lista.
+ * Corectura unei pozitii, deschisa sub card sau sub randul din foaie. Tot ce
+ * decide pretul, cu numele obisnuite: descrierea, materialul, diametrul,
+ * grosimea, forma, celelalte straturi (jacheta, cu grosimea ei), UM-ul si
+ * cantitatea. „Nu e izolație" scoate randul din lista.
+ *
+ * Straturile erau pana acum invizibile aici: o jacheta citita din text nu se
+ * putea scoate, una lipsa nu se putea adauga, iar la inox grosimea ei nu se
+ * putea pune deloc — deci pozitia ramanea fara pret orice ar fi facut omul.
  */
-export function editorPozitie(l: LinieProcesata): string {
+export function editorPozitie(l: LinieProcesata, o: OptiuniEditor = {}): string {
   const e = l.extras;
   const i = e.index;
   const gol = e.sistem === "goluri_foc";
   const optiuni = MATERIALE.map((s) => `<option value="${s}"${s === e.sistem ? " selected" : ""}>${MATERIAL[s]}</option>`).join("");
-  const grosimi = (GROSIMI[e.sistem ?? "vata_minerala"] ?? []).map((g) => `<option value="${g}"></option>`).join("");
-  const val = (v: number | null): string => (v === null ? "" : String(v));
+  const val = numarCamp;
+  const c = o.campuri;
+  const texte = c && c.texte.length > 0 ? `<div class="imp-editor-descriere">
+      ${c.texte.map((t) => `<label>${esc(t.eticheta.slice(0, 60))}
+        ${String(t.v).trim().length > 12
+          // Descrierea, pe mai multe randuri. O celula scurta („IZOLATII", un cod
+          // de articol) ramane editabila, dar pe un rand: ca caseta mare, parea
+          // inca o descriere.
+          ? `<textarea name="text" data-cel="${t.cel}" rows="${String(t.v).length > 120 ? 4 : 2}" spellcheck="false">${esc(String(t.v))}</textarea>`
+          : `<input name="text" data-cel="${t.cel}" value="${esc(String(t.v))}" spellcheck="false" />`}</label>`).join("")}
+      <button type="button" class="secundar" data-act="reciteste" data-idx="${i}">Citește din descriere</button>
+    </div>` : "";
+  const forme = FORME_EDITOR.map(([f, et]) =>
+    `<option value="${f}"${f === (e.forma ?? "ml") ? " selected" : ""}>${et}</option>`).join("");
+  const liste = MATERIALE_STRAT.filter((m) => GROSIMI[m]).map((m) =>
+    `<datalist id="ed-g-${i}-${m}">${GROSIMI[m]!.map((g) => `<option value="${g}"></option>`).join("")}</datalist>`).join("");
+  const cantitate = c?.um || c?.cantitate ? `<div class="imp-editor-cantitate">
+      ${c.cantitate ? `<label>${esc(c.cantitate.eticheta.slice(0, 30))}
+        <input name="cantitate" data-cel="${c.cantitate.cel}" type="number" inputmode="decimal" step="any" min="0" value="${c.cantitate.v}" /></label>` : ""}
+      ${c.um ? `<label>${esc(c.um.eticheta.slice(0, 30))}
+        <input name="um" data-cel="${c.um.cel}" value="${esc(String(c.um.v))}" list="ed-um-${i}" autocomplete="off" /></label>
+        <datalist id="ed-um-${i}"><option value="ml"></option><option value="buc"></option><option value="mp"></option></datalist>` : ""}
+    </div>` : "";
 
   return `<form class="imp-editor" data-idx="${i}">
+    ${texte}
     <label>Material
-      <select name="sistem">${optiuni}<option value="">Nu e izolație (scoate din listă)</option></select></label>
-    <div class="imp-editor-teava"${gol ? " hidden" : ""}>
+      <select name="sistem">${optiuni}<option value=""${e.sistem === null ? " selected" : ""}>Nu e izolație (scoate din listă)</option></select></label>
+    <div class="imp-editor-teava"${gol || e.sistem === null ? " hidden" : ""}>
       <div class="imp-camp">
         <span id="ed-d-${i}">Diametru</span>
         <div class="imp-rand-campuri">
@@ -290,18 +344,56 @@ export function editorPozitie(l: LinieProcesata): string {
         </div>
       </div>
       <label>Grosime (mm)
-        <input name="grosime" type="number" inputmode="decimal" step="any" min="0" list="ed-g-${i}" value="${val(e.grosime_mm)}" />
-        <datalist id="ed-g-${i}">${grosimi}</datalist></label>
+        <input name="grosime" type="number" inputmode="decimal" step="any" min="0" list="ed-g-${i}-${e.sistem ?? "vata_minerala"}" value="${val(e.grosime_mm)}" /></label>
+      <label>Formă
+        <select name="forma">${forme}</select></label>
+      <fieldset class="imp-straturi">
+        <legend>Alte straturi (jachetă, a doua izolație)</legend>
+        <div class="imp-straturi-lista">${e.straturi_extra.map((s) => randStrat(i, s)).join("")}</div>
+        <button type="button" class="secundar" data-act="adauga-strat" data-idx="${i}">Adaugă strat</button>
+      </fieldset>
     </div>
     <div class="imp-editor-gol"${gol ? "" : " hidden"}>
       <label>Lățime gol (mm)<input name="gol_latime" type="number" inputmode="numeric" min="0" value="${val(e.gol_latime_mm)}" /></label>
       <label>Înălțime gol (mm)<input name="gol_inaltime" type="number" inputmode="numeric" min="0" value="${val(e.gol_inaltime_mm)}" /></label>
     </div>
+    ${cantitate}
+    ${liste}
     <div class="imp-editor-butoane">
       <button type="submit" class="primar">Salvează</button>
       <button type="button" class="secundar" data-act="renunta">Renunță</button>
     </div>
   </form>`;
+}
+
+/**
+ * Campurile extrase din formularul editorului, ca `patch` peste linie. Pur, ca
+ * sa se poata testa: ecranul doar il aplica. Straturile vin in ordinea din
+ * formular; o grosime lasata goala ramane `null` (la aluminiu motorul o
+ * deduce, la inox pozitia ramane fara pret).
+ */
+export function patchDinFormular(date: FormData): Partial<LinieExtrasa> {
+  const nr = (v: FormDataEntryValue | null | undefined): number | null => {
+    const s = String(v ?? "").trim().replace(",", ".");
+    return s === "" || Number.isNaN(Number(s)) ? null : Number(s);
+  };
+  const sistem = (String(date.get("sistem") ?? "") || null) as LinieExtrasa["sistem"];
+  if (sistem === "goluri_foc") {
+    return { sistem, gol_latime_mm: nr(date.get("gol_latime")), gol_inaltime_mm: nr(date.get("gol_inaltime")) };
+  }
+  const grosimi = date.getAll("strat_grosime");
+  const diametru = nr(date.get("diametru"));
+  return {
+    sistem,
+    diametru_valoare: diametru,
+    diametru_tip: diametru === null ? null : String(date.get("diametru_tip")) as LinieExtrasa["diametru_tip"],
+    grosime_mm: nr(date.get("grosime")),
+    forma: (String(date.get("forma") ?? "") || null) as LinieExtrasa["forma"],
+    straturi_extra: date.getAll("strat_sistem").map((s, k) => ({
+      sistem: String(s) as Sistem,
+      grosime_mm: nr(grosimi[k]),
+    })),
+  };
 }
 
 export function toast(text: string, cuAnulare: boolean): string {

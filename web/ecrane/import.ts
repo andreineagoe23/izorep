@@ -1,5 +1,7 @@
-import { proceseazaRegistru, reevalueaza, type Extractor, type LinieProcesata, type Rezultat } from "../../src/import/nucleu.js";
-import { scrieCelula, reconstruieste } from "../../src/import/editare.js";
+import {
+  citesteText, proceseazaRegistru, reevalueaza, type Extractor, type LinieProcesata, type Rezultat,
+} from "../../src/import/nucleu.js";
+import { campuriRand, scrieCelula, reconstruieste, type CampuriRand } from "../../src/import/editare.js";
 import { invataDinCorectie } from "../../src/import/memorie.js";
 import { mapariStatice } from "../../src/import/mapari-statice.js";
 import type { LinieExtrasa } from "../../src/import/schema.js";
@@ -18,8 +20,8 @@ import {
   type EditareCelula, type IntrareIstoric, type SesiuneImport,
 } from "../istoric.js";
 import {
-  actiuniLista, antetVerificare, cardPozitie, comutaExcel, ecranOferta, ecranProgres, ecranStart,
-  filtreMotiv, filtreStare, numaraMotive, pasi, toast, type FiltruStare, type Pas,
+  actiuniLista, antetVerificare, cardPozitie, comutaExcel, ecranOferta, ecranProgres, ecranStart, editorPozitie,
+  filtreMotiv, filtreStare, numaraMotive, pasi, patchDinFormular, randStrat, toast, type FiltruStare, type Pas,
 } from "../import/vizual.js";
 import { celuleExtrase, grilaFoaie } from "../import/grila.js";
 import { motiveLinie, stareLinie, type CodMotiv } from "../import/text.js";
@@ -133,6 +135,13 @@ export const ecran: Ecran = {
       if (e.grosime_mm !== null || e.sistem === null || e.sistem === "goluri_foc") return null;
       if (e.diametru_valoare === null || !e.diametru_tip) return null;
       return grosimePropusa(e.sistem, e.diametru_valoare, e.diametru_tip);
+    };
+
+    /** Celulele din foaie ale unei pozitii, pentru editorul ei. */
+    const campuriLinie = (s: Sesiune, l: LinieProcesata): CampuriRand | undefined => {
+      const f = s.foi.find((x) => x.nume === l.bruta.foaie);
+      const r = f?.randuri.find((x) => x.rand === l.bruta.rand);
+      return f && r ? campuriRand(r, f.antet) : undefined;
     };
 
     /** Pozitiile de pe foaia aleasa, apoi sub filtrul de stare, apoi sub motiv. */
@@ -252,7 +261,11 @@ export const ecran: Ecran = {
           .join("") || gol;
       } else {
         corp = lista.length
-          ? lista.map((l) => cardPozitie(l, { propunere: propunere(l), editeaza: editIdx === l.extras.index, cuFoaie })).join("")
+          ? lista.map((l) => {
+              const editeaza = editIdx === l.extras.index;
+              const campuri = editeaza ? campuriLinie(s, l) : undefined;
+              return cardPozitie(l, { propunere: propunere(l), editeaza, cuFoaie, ...(campuri ? { campuri } : {}) });
+            }).join("")
           : gol;
       }
 
@@ -312,8 +325,10 @@ export const ecran: Ecran = {
      * Corectura omului pe o pozitie: devine a lui. Tiparul se invata doar din
      * corecturile din editor — grosimea uzuala pusa cu un clic n-a scris-o
      * clientul, deci n-are ce cauta in memoria care citeste fisierele viitoare.
+     * `laAnulare` pune inapoi ce a mai schimbat apelantul odata cu corectura
+     * (celulele scrise din editor).
      */
-    function corecteaza(idx: number, patch: Partial<LinieExtrasa>, invata = true): void {
+    function corecteaza(idx: number, patch: Partial<LinieExtrasa>, invata = true, laAnulare?: () => void): void {
       const s = sesiune;
       const l = s?.rez.linii.find((x) => x.extras.index === idx);
       if (!s || !l) return;
@@ -331,11 +346,114 @@ export const ecran: Ecran = {
       const noua = s.rez.linii.find((x) => x.extras.index === idx);
       editIdx = null;
       arataMesaj(extras.sistem === null ? "Rândul a fost scos din listă." : "Salvat.", () => {
+        laAnulare?.();
         if (vechi) s.rez.rezolvate.set(idx, vechi); else s.rez.rezolvate.delete(idx);
         if (propusa !== undefined) grosimiPropuse.set(idx, propusa);
         retarifeaza();
       });
       if (invata && noua && noua.extras.sistem !== null) deInvatat = { text: noua.bruta.text, extras: noua.extras };
+    }
+
+    /**
+     * „Salvează" din editorul de pozitie. Celulele schimbate — descriere, UM,
+     * cantitate — se scriu in fisier ca orice corectura din foaie. Apoi:
+     *  - campurile atinse de om (sau recitite cu „Citește din descriere") devin
+     *    corectura lui, pe textul nou;
+     *  - neatinse, cu descrierea schimbata: linia se reciteste din textul nou, ca
+     *    la editarea din foaie, iar daca fusese verificata trece la „De verificat".
+     * „Anulează" pune inapoi si celulele, nu doar extragerea.
+     */
+    function salveazaEditor(form: HTMLFormElement, idx: number): void {
+      const s = sesiune;
+      const l = s?.rez.linii.find((x) => x.extras.index === idx);
+      const f = s?.foi.find((x) => x.nume === l?.bruta.foaie);
+      const rand = f?.randuri.find((x) => x.rand === l?.bruta.rand);
+      if (!s || !l || !rand) return;
+
+      const celuleVechi = rand.celule.map((c) => c.v);
+      const editariVechi = [...s.editari];
+      let descriereNoua = false;
+      for (const camp of form.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>("[data-cel]")) {
+        const cel = Number(camp.dataset["cel"]);
+        const c = rand.celule[cel];
+        if (!c) continue;
+        const scris = camp.value.trim().replace(",", ".");
+        const nou = camp.name === "cantitate"
+          ? (scris === "" || Number.isNaN(Number(scris)) ? c.v : Number(scris))
+          : camp.value;
+        if (nou === c.v) continue;
+        if (camp.name === "text") descriereNoua = true;
+        scrieCelula(rand, cel, nou);
+        const editare: EditareCelula = { foaie: l.bruta.foaie, rand: rand.rand, cel, v: nou };
+        const i = s.editari.findIndex((x) => x.foaie === editare.foaie && x.rand === editare.rand && x.cel === cel);
+        if (i >= 0) s.editari[i] = editare; else s.editari.push(editare);
+      }
+      reconstruieste(rand);
+      const inapoi = (): void => {
+        celuleVechi.forEach((v, cel) => { if (rand.celule[cel]?.v !== v) scrieCelula(rand, cel, v); });
+        reconstruieste(rand);
+        s.editari.splice(0, s.editari.length, ...editariVechi);
+      };
+
+      if (form.dataset["atins"] === "da" || !descriereNoua) {
+        corecteaza(idx, patchDinFormular(new FormData(form)), true, inapoi);
+        return;
+      }
+      const vechi = s.rez.rezolvate.get(idx);
+      const marcataInainte = descrieriSchimbate.has(idx);
+      retarifeaza();
+      editIdx = null;
+      const dupa = s.rez.linii.find((x) => x.extras.index === idx);
+      arataMesaj(dupa?.necesitaValidare
+        ? "Descrierea a fost salvată: poziția e recitită și trece la „De verificat”."
+        : "Descrierea a fost salvată și poziția recitită.", () => {
+        inapoi();
+        if (vechi) s.rez.rezolvate.set(idx, vechi);
+        if (!marcataInainte) descrieriSchimbate.delete(idx);
+        retarifeaza();
+      });
+    }
+
+    /**
+     * „Citește din descriere": campurile editorului, recitite determinist din
+     * textul din formular, inainte de salvare — ca omul sa vada ce iese si sa
+     * completeze ce lipseste, de exemplu grosimea tablei de inox.
+     */
+    function reciteste(form: HTMLFormElement, idx: number): void {
+      const s = sesiune;
+      const l = s?.rez.linii.find((x) => x.extras.index === idx);
+      const campuri = s && l ? campuriLinie(s, l) : undefined;
+      if (!l || !campuri) return;
+      const valori = new Map([...form.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('[name="text"][data-cel]')]
+        .map((t) => [Number(t.dataset["cel"]), t.value] as const));
+      let text = l.bruta.text;
+      for (const c of campuri.texte) {
+        const vechi = String(c.v).trim();
+        const nou = (valori.get(c.cel) ?? String(c.v)).trim();
+        if (nou === vechi) continue;
+        text = vechi && text.includes(vechi) ? text.replace(vechi, nou) : `${text} | ${nou}`;
+      }
+      const um = form.querySelector<HTMLInputElement>('[name="um"]')?.value.trim() || l.bruta.um;
+      const cantitate = Number(form.querySelector<HTMLInputElement>('[name="cantitate"]')?.value.replace(",", "."));
+      const extras = citesteText(idx, text, um, (l.bruta as { sectiune?: string }).sectiune,
+        Number.isFinite(cantitate) && cantitate > 0 ? cantitate : l.bruta.cantitate);
+
+      const gazdaForm = document.createElement("div");
+      gazdaForm.innerHTML = editorPozitie({ ...l, extras }, {
+        campuri: { ...campuri, texte: campuri.texte.map((c) => ({ ...c, v: valori.get(c.cel) ?? c.v })) },
+      });
+      const nou = gazdaForm.firstElementChild as HTMLFormElement;
+      for (const nume of ["um", "cantitate"]) {
+        const vechiCamp = form.querySelector<HTMLInputElement>(`[name="${nume}"]`);
+        const nouCamp = nou.querySelector<HTMLInputElement>(`[name="${nume}"]`);
+        if (vechiCamp && nouCamp) nouCamp.value = vechiCamp.value;
+      }
+      nou.dataset["atins"] = "da";
+      form.replaceWith(nou);
+      nou.querySelector<HTMLElement>('[data-act="reciteste"]')?.focus();
+      arataMesaj(extras.sistem === null
+        ? "Din descriere nu reiese o poziție de izolație."
+        : "Câmpurile au fost recitite din descriere. Verifică-le și salvează.");
     }
 
     async function redeschide(id: string, restaurat: boolean): Promise<void> {
@@ -535,6 +653,29 @@ export const ecran: Ecran = {
           else focuseaza(idx);
           return;
         case "renunta": { const i = editIdx; editIdx = null; deseneaza(); focuseaza(i); return; }
+        case "adauga-strat": {
+          const form = b.closest<HTMLFormElement>(".imp-editor");
+          if (!form) return;
+          form.dataset["atins"] = "da";
+          form.querySelector(".imp-straturi-lista")?.insertAdjacentHTML("beforeend",
+            randStrat(Number(form.dataset["idx"]), { sistem: "tabla", grosime_mm: null }));
+          form.querySelector<HTMLElement>(".imp-strat:last-child select")?.focus();
+          return;
+        }
+        case "scoate-strat": {
+          const form = b.closest<HTMLFormElement>(".imp-editor");
+          b.closest(".imp-strat")?.remove();
+          if (form) {
+            form.dataset["atins"] = "da";
+            form.querySelector<HTMLElement>('[data-act="adauga-strat"]')?.focus();
+          }
+          return;
+        }
+        case "reciteste": {
+          const form = b.closest<HTMLFormElement>(".imp-editor");
+          if (form && idx !== null) reciteste(form, idx);
+          return;
+        }
         case "confirma": {
           if (idx === null) return;
           const urm = urmatorul(idx);
@@ -599,11 +740,19 @@ export const ecran: Ecran = {
         return;
       }
       if (t.dataset["act"] === "foaie") { foaie = t.value || null; motiv = null; editIdx = null; deseneaza(); return; }
-      if (t.name === "sistem" && t.closest(".imp-editor")) {
-        const form = t.closest<HTMLFormElement>(".imp-editor")!;
+      const form = t.closest<HTMLFormElement>(".imp-editor");
+      if (!form) return;
+      // Un camp extras atins face din salvare corectura omului. Descrierea,
+      // UM-ul si cantitatea nu: alea se recitesc (vezi `salveazaEditor`).
+      if (!["text", "um", "cantitate"].includes(t.name)) form.dataset["atins"] = "da";
+      if (t.name === "sistem") {
         const gol = t.value === "goluri_foc";
         form.querySelector<HTMLElement>(".imp-editor-teava")!.hidden = gol || t.value === "";
         form.querySelector<HTMLElement>(".imp-editor-gol")!.hidden = !gol;
+        form.querySelector('[name="grosime"]')?.setAttribute("list", `ed-g-${form.dataset["idx"]}-${t.value}`);
+      }
+      if (t.name === "strat_sistem") {
+        t.parentElement?.querySelector('[name="strat_grosime"]')?.setAttribute("list", `ed-g-${form.dataset["idx"]}-${t.value}`);
       }
     });
 
@@ -613,21 +762,7 @@ export const ecran: Ecran = {
       if (form.id === "antet-oferta") { void genereazaOferta(form); return; }
       if (!form.classList.contains("imp-editor")) return;
       const idx = Number(form.dataset["idx"]);
-      const date = new FormData(form);
-      const nr = (n: string): number | null => {
-        const v = String(date.get(n) ?? "").trim().replace(",", ".");
-        return v === "" || Number.isNaN(Number(v)) ? null : Number(v);
-      };
-      const sistem = (String(date.get("sistem") ?? "") || null) as LinieExtrasa["sistem"];
-      const patch: Partial<LinieExtrasa> = sistem === "goluri_foc"
-        ? { sistem, gol_latime_mm: nr("gol_latime"), gol_inaltime_mm: nr("gol_inaltime") }
-        : {
-            sistem,
-            diametru_valoare: nr("diametru"),
-            diametru_tip: nr("diametru") === null ? null : String(date.get("diametru_tip")) as LinieExtrasa["diametru_tip"],
-            grosime_mm: nr("grosime"),
-          };
-      corecteaza(idx, patch);
+      salveazaEditor(form, idx);
       deseneaza();
       focuseaza(idx);
     });
@@ -637,6 +772,11 @@ export const ecran: Ecran = {
     // doar bara de jos, care spune cat e gata.
     gazda.addEventListener("input", (e) => {
       const camp = e.target as HTMLElement;
+      const editor = camp.closest<HTMLFormElement>(".imp-editor");
+      if (editor) {
+        if (!["text", "um", "cantitate"].includes((camp as HTMLInputElement).name)) editor.dataset["atins"] = "da";
+        return;
+      }
       const s = sesiune;
       if (!s || !camp.matches(".camp[data-cel]")) return;
       const numeFoaie = camp.dataset["foaie"] ?? "";

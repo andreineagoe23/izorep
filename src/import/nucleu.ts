@@ -226,6 +226,19 @@ export interface Rezultat {
 }
 
 /**
+ * Ce citeste stratul determinist dintr-un text dat. Pentru editorul de pozitie,
+ * care arata campurile recitite dintr-o descriere inainte ca omul s-o salveze.
+ *
+ * Trece pe aici, nu direct prin `extract-regex.js`: e aceeasi regula ca la
+ * import, iar `tests/structura.test.ts` nu lasa ecranul sa aiba alta.
+ */
+export function citesteText(
+  index: number, text: string, um?: string, sectiune?: string, cantitate?: number,
+): LinieExtrasa {
+  return extrageDeterminist(index, text, um, sectiune, cantitate).linie;
+}
+
+/**
  * L3 pe o singura linie extrasa.
  *
  * Sta separat de bucla pentru ca acelasi drum e parcurs si de testul de golden

@@ -436,7 +436,7 @@ tbody tr.curent { background: var(--accent-slab); }
 
 /* --------------------------------------------------------- formulare */
 label { display: block; margin-bottom: 13px; font-size: 14px; color: var(--text); }
-input, select {
+input, select, textarea {
   width: 100%; margin-top: 5px; min-height: 40px; padding: 8px 11px; font: inherit; font-size: 15px;
   border: 1px solid var(--linie-tare); border-radius: 8px; background: var(--panou); color: var(--text);
 }
@@ -711,10 +711,29 @@ button.filtru[aria-pressed="true"], button.filtru.activ {
 .imp-editor-butoane { display: flex; flex-wrap: wrap; gap: 8px; }
 .imp-editor-butoane > * { flex: 1 1 140px; }
 @container imp (min-width: 620px) {
-  .imp-editor { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); align-items: end; }
+  /* Sus, nu jos: cu straturile, blocul tevii e inalt, iar „Material" cobora langa „Adaugă strat". */
+  .imp-editor { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); align-items: start; }
   .imp-editor-teava, .imp-editor-gol { grid-template-columns: 1fr 1fr; }
   .imp-editor-butoane { grid-column: 1 / -1; justify-content: flex-end; }
   .imp-editor-butoane > * { flex: 0 0 auto; }
+}
+/* Descrierea, celelalte straturi, UM-ul si cantitatea, in corectura. */
+.imp-editor textarea { margin-top: 6px; font-size: 16px; line-height: 1.4; color: var(--text); resize: vertical; }
+.imp-editor-descriere, .imp-editor-cantitate { display: grid; gap: 12px; }
+.imp-editor-descriere label, .imp-editor-cantitate label, .imp-editor-teava label { margin-bottom: 0; }
+.imp-editor-descriere > button, .imp-straturi > button { justify-self: start; }
+.imp-straturi { display: grid; gap: 8px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.imp-straturi legend { padding: 0; margin-bottom: 4px; font-size: 14px; color: var(--slab); }
+.imp-straturi-lista { display: grid; gap: 8px; }
+.imp-straturi-lista:empty { display: none; }
+.imp-strat { display: grid; grid-template-columns: minmax(0, 1fr) minmax(5.5em, 7em); gap: 8px; align-items: center; }
+.imp-strat select, .imp-strat input { margin-top: 0; min-width: 0; }
+.imp-strat button { grid-column: 1 / -1; justify-self: start; }
+@container imp (min-width: 620px) {
+  .imp-editor-descriere, .imp-editor-cantitate, .imp-editor-teava .imp-straturi { grid-column: 1 / -1; }
+  .imp-editor-cantitate { grid-template-columns: 1fr 1fr; }
+  .imp-strat { grid-template-columns: minmax(0, 1fr) 8em auto; }
+  .imp-strat button { grid-column: auto; }
 }
 
 /* ---- mesajul de dupa o actiune, cu „Anulează” */
