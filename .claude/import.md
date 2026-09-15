@@ -219,6 +219,7 @@ aprindă.
 | `grosime_in_afara_listei` | grosime pe care sistemul ăla nu o are ofertată |
 | `forma_contrazice_um` | `forma: "ml"` pe un rând cu UM `buc` |
 | `notatie_contrazice_materialul` | scrie `DN`, dar materialul din text dă diametrul exterior |
+| `diametru_contrazis` | scrie `DN`, dar pe rând e un Ø care nu e DN-ul ăla în tabelul de conversie (ISO, DIN); rulează, ca rândul de mai sus, pe orice sursă |
 
 Regula de citare vine din promptul propriu al stratului: *„nu inventa valori,
 dacă un câmp nu apare în text pune null"*. Aici doar se verifică dacă a
@@ -488,6 +489,19 @@ real acolo.
   (ø/DN) și ghilimeaua; `Dn 25 (1'')` rămâne DN25.
 - **`PEHD D40x3.0`** — grosimea peretelui lipită de diametru nu lăsa granița de
   cuvânt: 11 poziții de pe `Oferta 27.04.2026` ieșeau „fără diametru".
+- **DN lângă Ø, pe același rând** — `Oferta 27.04.2026`, rândurile 44–47:
+  „Kautschuk, d=9mm, DN20 | … Dimensiuni: Ø20mm". Ø20 nu e DN20 pe nicio
+  coloană a tabelului de conversie, e țeavă de plastic, iar oferta semnată a
+  luat Ø-ul. `esteConversiaDN` decide: un Ø care *este* DN-ul (ISO sau DIN,
+  ±1 mm) lasă DN-ul, altfel câștigă Ø-ul. Pe calea modelului, același conflict
+  aprinde `diametru_contrazis`. Vezi `tevi.md`.
+- **Numere lipite de text** — `DN150din tabla`, `Ø32mm`: fără graniță de cuvânt
+  după cifre, diametrul nu se citea. `RE_DN` și `RE_OD` cer acum doar ca
+  numărul să se termine.
+- **Grosimea tablei** — „protecție cu tablă de inox 0,5 mm". Se citește doar
+  zecimal și doar din grosimile listei (aluminiu 0,6 / 0,8 / 1,0, inox
+  0,4 / 0,5 / 0,6); un întreg de lângă tablă e grosimea izolației, iar un
+  interval („0.6 – 0.8 mm", Book15) rămâne decizia omului.
 - **Grosimea înaintea materialului** — „DN80 elastomer 13mm+40mm vata
   minerala": vata n-are număr după nume. `grosimeLangaSistem` caută și imediat
   înainte, doar o grosime a acelui sistem (elastomerul și vata n-au grosimi

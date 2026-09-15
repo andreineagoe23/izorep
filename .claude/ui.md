@@ -234,9 +234,13 @@ Principiul: ce trebuie făcut se vede din așezare, nu dintr-un text explicativ.
   50 mm", „+ Tablă aluminiu", „DN100", „flanșă"), prețul, starea cu motivul în
   cuvinte simple, și acțiunea care o rezolvă:
   gata → „Modifică"; de verificat → „Confirmă"; fără preț, cu grosime uzuală →
-  „Pune 100 mm". „Modifică" deschide corectura sub card: material, diametru
-  (DN / Ø / Di), grosime cu sugestiile listei sau dimensiunile golului; „Nu e
-  izolație" scoate rândul din listă.
+  „Pune 100 mm". „Modifică" deschide corectura sub card: descrierea (celulele cu
+  text ale rândului, cu „Citește din descriere"), material, diametru (DN / Ø /
+  Di), grosime cu sugestiile listei, formă, **celelalte straturi** — fiecare cu
+  material și grosime, cu „Adaugă strat" și „Scoate" — sau dimensiunile golului,
+  plus cantitatea și UM-ul; „Nu e izolație" scoate rândul din listă. Grosimea
+  tablei are sugestiile ei (aluminiu 0,6 / 0,8 / 1,0, inox 0,4 / 0,5 / 0,6):
+  fără ele, o poziție de inox nu se putea tarifa din ecran.
 - **Acțiunile în masă apar doar sub filtrul lor**: „Pune grosimea uzuală la N
   poziții" (le trimite la „De verificat", nu le confirmă) și „Confirmă toate
   cele N". Nu există confirmare pe tot fișierul.
@@ -244,6 +248,13 @@ Principiul: ce trebuie făcut se vede din așezare, nu dintr-un text explicativ.
   Tiparul unei corecturi se învață (L4) abia după ce anularea nu mai e
   posibilă — învățat pe loc, memoria ar fi pus rândul înapoi cum îl corectase
   omul. Grosimea uzuală pusă cu un clic nu se învață deloc: n-a scris-o clientul.
+- **Descrierea schimbată după verificare nu lasă prețul vechi** (15 septembrie
+  2026). Până atunci o poziție confirmată sau corectată nu se mai recitea:
+  scoasă tabla din descriere, rămânea „Gata" la 45,24 €/ml. Acum se recitește
+  din textul nou, trece la „De verificat", iar mesajul oferă „Anulează", care
+  pune înapoi și textul. În editor, „Salvează" cu descrierea schimbată și
+  câmpurile neatinse recitește la fel; cu câmpurile atinse sau recitite, e
+  corectura omului.
 - **Vederea implicită e foaia ca în Excel** (`web/import/grila.ts`, cerută pe
   13 septembrie 2026): aceleași rânduri, coloane și numere de rând ca în
   fișier, cu celulele editabile. După coloanele clientului: ce am înțeles,

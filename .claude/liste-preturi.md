@@ -55,7 +55,9 @@ Conversia **depinde de materialul țevii**, nu doar de cifră:
 Țolii nu sunt o notație separată în motor: `1/2"` *este* DN15. Extragerea
 deterministă îi citește când stau lângă prefixul lor și au ghilimea —
 `Ø1/2"`, `Ø1 1/4"`, `Dn 2 1/2"` — ca `1/2` dintr-un `130/130` să nu devină DN15.
-Lângă un DN scris (`Dn 50 (60,3x3,6 - 2'')`) câștigă DN-ul. Până pe 13
+Lângă un DN scris (`Dn 50 (60,3x3,6 - 2'')`) câștigă DN-ul. Lângă un Ø care
+**nu** e DN-ul ăla în tabelul de conversie (`DN20 … Ø20mm`, țeavă de plastic)
+câștigă Ø-ul, din 15 septembrie 2026 — vezi `tevi.md`. Până pe 13
 septembrie 2026 `Ø1/2"` se citea ca φ1 și ieșea pe primul rând al listei;
 pe `Oferta 27.04.2026` cele șase poziții în țoli ies acum exact ca oferta
 semnată.

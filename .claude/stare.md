@@ -1,7 +1,7 @@
 # Stare curentă
 
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
-> Ultima actualizare: 13 septembrie 2026.
+> Ultima actualizare: 15 septembrie 2026.
 
 ## Contextul proiectului
 
@@ -435,7 +435,7 @@ golden files, nu sweep-ul. Valoarea s-a schimbat și în minus pe unele fișiere
 (Oferta 284: 24.052 → 23.788 €) — corect: regula de serie mută Di49 de pe
 rândul 54 pe 48, care e mai ieftin și e cel din oferta semnată.
 
-## Acoperirea față de ofertele semnate (actualizat 13 septembrie 2026)
+## Acoperirea față de ofertele semnate (actualizat 15 septembrie 2026)
 
 Din cele 9 fișiere de client, **4 sunt oferte** cu rând de TOTAL — restul sunt
 cereri, n-au cu ce fi comparate. Măsurat pe `--fara-model`, comparând registrul
@@ -443,12 +443,12 @@ generat cu totalul semnat. `tests/oferte-semnate.test.ts` ține cifrele ca
 clichetă: dacă cresc, se actualizează; dacă scad, s-a stricat ceva — sau e o
 scădere deliberată, explicată în `deCe`.
 
-| Ofertă semnată | pe ofertă (7 sep → 13 sep) | generat | semnat | |
+| Ofertă semnată | pe ofertă (7 sep → 13 sep → 15 sep) | generat | semnat | |
 |---|---|---|---|---|
-| Matari (goluri foc) | 53 → 53 | 12.692,04 | 12.692,04 | **100%** |
-| Oferta 27.04.2026 | 29 → **39** | 117.484,07 | 170.519,39 | 69% |
-| Oferta 284 Transavia | 61 → **85** | 74.993,76 | 94.575,06 | 79% |
-| Anexa 1 / 06.12.2024 | 0 → 0 | 0,00 | 706,90 | **0%** |
+| Matari (goluri foc) | 53 → 53 → 53 | 12.692,04 | 12.692,04 | **100%** |
+| Oferta 27.04.2026 | 29 → 39 → **41** | 119.376,21 | 170.519,39 | 70% |
+| Oferta 284 Transavia | 61 → 85 → 85 | 74.993,76 | 94.575,06 | 79% |
+| Anexa 1 / 06.12.2024 | 0 → 0 → 0 | 0,00 | 706,90 | **0%** |
 
 Distincția care contează: **nu e o problemă de preț, e una de acoperire.**
 Prețurile pe liniile care ies sunt comparate linie cu linie cu oferta semnată:
@@ -457,11 +457,10 @@ Prețurile pe liniile care ies sunt comparate linie cu linie cu oferta semnată:
   sunt `Di169, g50 - COT` cu UM `ml` în fișierul clientului: UM-ul decide forma,
   deci iese prețul pe ml (51,44), oferta are cotul (102,88). E fișierul, nu
   motorul. Restul de 13 netarifate sunt grosimi inexistente în listă.
-- **Oferta 27.04.2026** — **37** de prețuri exacte (erau 20). Ce diferă e
-  marcat: ø90 și ø160 (rotunjire, întrebarea 3), 3 peste maximul listei
-  (întrebarea 4), grosimi inexistente. O singură diferență nemarcată, a
-  ofertei însăși: rândurile 44–47 (DN20–DN40) sunt tarifate cu un rând mai jos
-  decât aceleași țevi scrise în țoli pe rândurile 38–43 (întrebarea 17).
+- **Oferta 27.04.2026** — **43** de prețuri exacte (erau 20, apoi 37). Ce diferă
+  e marcat: ø90 și ø160 (rotunjire, întrebarea 3), 3 peste maximul listei
+  (întrebarea 4), grosimi inexistente. Rândurile 44–47 (DN20–DN40), care
+  păreau o inconsecvență a ofertei, ies acum exact — vezi „15 septembrie 2026".
 - **Anexa 1 — zero e răspunsul CORECT.** Vezi mai jos.
 
 **Anexa 1 e o ofertă de MANOPERĂ, și forțarea acoperirii ar fi cea mai scumpă
@@ -528,6 +527,51 @@ reîncărcare):
 Golden file-ul `izolatii-transavia.json` e **re-înregistrat** pe 13 septembrie
 2026 cu promptul care știe de `tabla_inox`; decalajul de mai sus nu mai există.
 
+## 15 septembrie 2026: DN lângă Ø, straturile în editor, descrierea după verificare
+
+Verificare cerută de Andrei: conversia DN → φ, editarea cu mai multe straturi,
+recalcularea după o descriere schimbată, și cererile față de oferte. A/B linie cu
+linie pe cele 10 fișiere de client, comparație cu prețurile semnate și test
+cap-coadă în browser, la 1440 și 390 px.
+
+**Conversia DN → φ e corectă.** Pe cele 231 de linii DN din fișiere, fiecare DN
+trece pe coloana ISO și pe rândul cel mai apropiat: DN15 → 22, DN20 → 28,
+DN25 → 35, DN32 → 42, DN40 → 48, DN50 → 60, DN65 → 76, DN80 → 89, DN100 → 114,
+DN125 → 140, DN150 → 168/169, DN200 → 219, DN250 → 273.
+
+| Problemă | Efect măsurat | Acum |
+|---|---|---|
+| „DN20" în germană, „Ø20mm" în română (NISAL 44–47) | tarifat pe ISO: 5,99 / 6,15 / 8,29 / 8,45, nemarcat | Ø-ul care nu e DN-ul în tabelul de conversie câștigă: 5,79 / 5,99 / 6,15 / 8,29, ca oferta |
+| `DN150din`, `Ø32mm`, `Ø50mm` lipite de text | fără diametru (Transavia inox r70, NISAL r76–77) | se citesc; NISAL r76–77 exacte |
+| „tablă de inox 0,5 mm" în descriere | grosimea ignorată, inoxul rămânea fără preț | citită, doar din grosimile listei; „0.6 – 0.8 mm" rămâne a omului |
+| DN citit de model lângă un Ø care nu-i corespunde | nemarcat | `diametru_contrazis`, la validare |
+| Descriere schimbată după „Modifică" sau „Confirmă" | prețul rămânea pe textul vechi, „Gata" (45,24 €/ml după scoaterea tablei) | recitită, „De verificat", cu „Anulează" |
+| Descriere schimbată pe o linie citită de model | extragerea veche se păstra | recitită determinist, marcată |
+| Editorul: un material, diametru, grosime | jacheta nu se putea scoate sau adăuga, grosimea inoxului nu se putea pune | straturi cu material și grosime, formă, descriere, UM, cantitate, „Citește din descriere" |
+
+**De unde regula DN / Ø.** Ø20 / 25 / 32 / 40 e seria de PP-R și PE-Xa din
+`conversie-ml-mp-tevi-tubulaturi.xlsx`, nu DN20–DN40 pe vreo coloană a tabelului
+(la DN20: ISO 26,9, DIN 25). La plastic firma nu convertește, rotunjește în sus —
+iar `tests/pricing.test.ts` avea deja exact prețurile astea pentru ø20 / 25 / 32 /
+40 cu elastomer 9 mm, din aceeași ofertă. Un Ø care *este* DN-ul în tabel
+(`Dn 80 (88,9 x 4)`, `Ф 57 (Dn 2")` — 57 pe coloana DIN) nu schimbă nimic. Pe
+Oferta 27.04.2026: **37 → 43** de prețuri exacte; restul fișierelor, aceleași
+prețuri.
+
+**Cererile față de ofertele semnate.** Singura pereche e Abur → Oferta 284. Pe
+cerere: 52 de prețuri exacte, 2 diferite (cotul Di169 cu UM `ml`), 33 fără preț,
+din care 24 fiindcă clientul n-a scris grosimea. Cu grosimea din oferta semnată
+pusă din editor, 11 din 11 verificabile ies exact; 6 rămân fără preț (vată 40 mm
+la DN15, întrebarea 18). „Pune grosimea uzuală" dă 3 exacte din 16 verificabile —
+normal, la TRANSAVIA grosimile au fost la cererea clientului. Celelalte cereri
+n-au ofertă pereche.
+
+**Descrierea după verificare.** Fiecare extragere ține minte textul din care a
+ieșit (`Rezolvare.text`). O linie `om` rămâne a omului cât timp textul e același;
+schimbat, se recitește și intră în `descrieriSchimbate` (salvat în istoric), cu
+motivul „Descrierea s-a schimbat după verificare". Cantitatea schimbată nu atinge
+verificarea: nu e descriere.
+
 ## Întrebări deschise către firmă
 
 Astea blochează arhitectura, nu doar implementarea:
@@ -583,10 +627,15 @@ Astea blochează arhitectura, nu doar implementarea:
 16. **Elastomer „până la ø60 → 13 mm": intră și DN50 (ø60,3)?** Rândul 60 din
     listă e chiar DN50, deci codul îi propune 13 mm; la fel DN200 (ø219,1) →
     19 mm. E interpretarea noastră, aliniată cu toleranța motorului.
-17. **Oferta 27.04.2026, rândurile 44–47.** DN20, DN25, DN32, DN40 sunt
-    tarifate 5,79 / 5,99 / 6,15 / 8,29 — adică prețul țevii cu o treaptă mai
-    mici. Aceeași ofertă tarifează aceleași țevi scrise în țoli (3/4", 1",
-    1 1/4", 1 1/2") pe rândul lor: 5,99 / 6,15 / 8,29 / 8,45. Care e corect?
+17. ~~**Oferta 27.04.2026, rândurile 44–47.**~~ **Lămurit din date, 15 septembrie
+    2026:** descrierea română scrie Ø20 / 25 / 32 / 40 mm, adică seria de PP-R,
+    nu DN-ul de oțel din coloana germană. Oferta a tarifat pe Ø, deci corect, iar
+    codul face la fel. De confirmat doar că regula „Ø-ul scris bate DN-ul care
+    nu-i corespunde" e a firmei.
+18. **Grosimi care nu sunt în listă, dar au preț în oferta semnată.** Oferta 284,
+    casetele de armături DN15 cu vată 40 mm: lista n-are celula 22|40, oferta are
+    47,41 €. Pe ce rând s-a tarifat? Pe oferta asta sunt 13 poziții netarifate
+    din motivul ăsta.
 
 ## Ce urmează
 
@@ -632,7 +681,7 @@ contract, stoc și facturare.
 ## Comenzi
 
 ```bash
-npm test                                       # 421 teste (motor, import, baza, ofertă)
+npm test                                       # 482 de teste (motor, import, baza, ofertă, editor)
 npm run typecheck
 npm run dev                                    # UI local, /izorep/
 npm run import -- ../attachments/clienti/cerere-de-oferta-spital.xlsx   # pipeline complet
