@@ -548,6 +548,7 @@ DN125 → 140, DN150 → 168/169, DN200 → 219, DN250 → 273.
 | Descriere schimbată după „Modifică" sau „Confirmă" | prețul rămânea pe textul vechi, „Gata" (45,24 €/ml după scoaterea tablei) | recitită, „De verificat", cu „Anulează" |
 | Descriere schimbată pe o linie citită de model | extragerea veche se păstra | recitită determinist, marcată |
 | Editorul: un material, diametru, grosime | jacheta nu se putea scoate sau adăuga, grosimea inoxului nu se putea pune | straturi cu material și grosime, formă, descriere, UM, cantitate, „Citește din descriere" |
+| φ nu se vedea nicăieri la import (16 sep) | „DN100" și „Ø100" arătau la fel pe ecran, deși unul caută ø114,3 și celălalt ø100 | eticheta scrie „DN100 = ø114,3", iar fiecare strat își poartă rândul din listă |
 
 **De unde regula DN / Ø.** Ø20 / 25 / 32 / 40 e seria de PP-R și PE-Xa din
 `conversie-ml-mp-tevi-tubulaturi.xlsx`, nu DN20–DN40 pe vreo coloană a tabelului

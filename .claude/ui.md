@@ -231,7 +231,8 @@ Principiul: ce trebuie făcut se vede din așezare, nu dintr-un text explicativ.
   rând, pe motiv („Lipsește grosimea 24").
 - **În listă, fiecare poziție e un card**: textul clientului (tăiat la trei rânduri, cu
   „Tot textul"), rândul din Excel, cantitatea, ce am înțeles („Vată minerală
-  50 mm", „+ Tablă aluminiu", „DN100", „flanșă"), prețul, starea cu motivul în
+  50 mm · rândul 114", „+ Tablă aluminiu · rândul 220", „DN100 = ø114,3",
+  „flanșă"), prețul, starea cu motivul în
   cuvinte simple, și acțiunea care o rezolvă:
   gata → „Modifică"; de verificat → „Confirmă"; fără preț, cu grosime uzuală →
   „Pune 100 mm". „Modifică" deschide corectura sub card: descrierea (celulele cu
@@ -240,7 +241,20 @@ Principiul: ce trebuie făcut se vede din așezare, nu dintr-un text explicativ.
   material și grosime, cu „Adaugă strat" și „Scoate" — sau dimensiunile golului,
   plus cantitatea și UM-ul; „Nu e izolație" scoate rândul din listă. Grosimea
   tablei are sugestiile ei (aluminiu 0,6 / 0,8 / 1,0, inox 0,4 / 0,5 / 0,6):
-  fără ele, o poziție de inox nu se putea tarifa din ecran.
+  fără ele, o poziție de inox nu se putea tarifa din ecran. Sub diametru scrie
+  în ce se traduce: „ø114,3 după tabelul de conversie · rândul 114 din listă".
+- **Conversia se vede, nu se presupune** (16 septembrie 2026). Ecranul scria
+  doar notația clientului, deci „DN100" și „Ø100" arătau la fel, deși unul
+  caută ø114,3 și celălalt ø100 — alt rând, alt preț. Acum eticheta e
+  „DN100 = ø114,3", iar fiecare strat își poartă rândul din listă pe care a
+  căzut prețul lui. La Ø și Di nu se adaugă nimic: acolo cifra scrisă *e*
+  diametrul căutat.
+- **Corectura e un panou, nu un formular lipit de rând** (16 septembrie 2026).
+  Câmpurile stau într-un singur flux care se așază după lățime — o coloană pe
+  telefon, patru pe ecran lat — în loc de două coloane fixe, care lăsau
+  „Material" singur în stânga cu un gol cât tot blocul de sub el. Celulele cu
+  text își iau numele coloanei din antet, sau litera ei („Coloana B") când
+  foaia n-are antet: două celule pe același rând arătau amândouă „Descriere".
 - **Acțiunile în masă apar doar sub filtrul lor**: „Pune grosimea uzuală la N
   poziții" (le trimite la „De verificat", nu le confirmă) și „Confirmă toate
   cele N". Nu există confirmare pe tot fișierul.
