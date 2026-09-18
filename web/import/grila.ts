@@ -115,7 +115,7 @@ export interface OptiuniGrila {
 /** Coloanele noastre de pe randul unei pozitii. Ecranul le reface pe loc dupa o corectura de celula. */
 export function celuleExtrase(l: LinieProcesata, o: Pick<OptiuniGrila, "editIdx" | "propunere">): string {
   const p = l.pret;
-  return `<td class="extras">${inteles(l.extras).map((e) => `<span class="imp-eticheta">${esc(e)}</span>`).join("")}</td>
+  return `<td class="extras">${inteles(l.extras, l.pret).map((e) => `<span class="imp-eticheta">${esc(e)}</span>`).join("")}</td>
     <td class="extras n">${p ? `<strong>${eur(p.total)}</strong><small>${eur(p.pret_unitar)} / ${esc(l.bruta.um ?? "buc")}</small>` : "—"}</td>
     <td class="extras imp-grila-stare">${starePozitie(l)}</td>
     <td class="extras imp-grila-actiuni">${actiuniPozitie(l, o.propunere(l), o.editIdx === l.extras.index)}</td>`;

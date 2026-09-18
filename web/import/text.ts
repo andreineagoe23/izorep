@@ -1,5 +1,6 @@
 import type { CodAvertisment, CodNetarifare, LinieProcesata } from "../../src/import/nucleu.js";
 import type { LinieExtrasa } from "../../src/import/schema.js";
+import { DN_TO_OD } from "../../src/pricing/dn-table.js";
 import type { MotivVerificare } from "../../src/pricing/types.js";
 import { potrivit } from "../validare.js";
 
@@ -57,35 +58,88 @@ export const FORME_EDITOR: [Forma, string][] = [
   ["distribuitor", "distribuitor"], ["schimbator", "schimbător"],
 ];
 
+/** Zecimale cu virgula, ca in Romania. */
+const numarRo = (v: number): string => String(v).replace(".", ",");
+
 /** `DN100`, `Ø160`, `Di60` — cum il scrie si clientul. */
 export function diametruText(e: Pick<LinieExtrasa, "diametru_valoare" | "diametru_tip">): string | null {
   if (e.diametru_valoare === null) return null;
-  const v = String(e.diametru_valoare).replace(".", ",");
+  const v = numarRo(e.diametru_valoare);
   if (e.diametru_tip === "DN") return `DN${v}`;
   if (e.diametru_tip === "interior") return `Di${v}`;
   return `Ø${v}`;
 }
 
+/**
+ * Diametrul exterior in care motorul traduce notatia clientului: DN100 → 114,3.
+ * `null` cand DN-ul nu e in tabelul de conversie (atunci pozitia oricum n-are
+ * pret, cu `dn_necunoscut`).
+ */
+export function diametruExterior(e: Pick<LinieExtrasa, "diametru_valoare" | "diametru_tip">): number | null {
+  if (e.diametru_valoare === null) return null;
+  if (e.diametru_tip !== "DN") return e.diametru_valoare;
+  return DN_TO_OD[e.diametru_valoare] ?? null;
+}
+
+/**
+ * `DN100 = ø114,3` — ce a scris clientul si ce cauta motorul cu asta.
+ *
+ * Ecranul arata pana acum doar notatia clientului, deci conversia nu se putea
+ * verifica din ochi: „DN100" si „Ø100" se citeau la fel de pe ecran, desi unul
+ * e ø114,3 si celalalt ø100, adica alt rand din lista si alt pret. La Ø si Di
+ * nu se adauga nimic — acolo cifra scrisa E diametrul cautat.
+ */
+export function diametruCuConversie(e: Pick<LinieExtrasa, "diametru_valoare" | "diametru_tip">): string | null {
+  const scris = diametruText(e);
+  if (scris === null || e.diametru_tip !== "DN") return scris;
+  const od = diametruExterior(e);
+  return od === null ? `${scris} — nu e în tabel` : `${scris} = ø${numarRo(od)}`;
+}
+
 const mm = (g: number | null): string => (g === null ? "" : ` ${String(g).replace(".", ",")} mm`);
 
 /**
- * Ce a inteles aplicatia din rand, ca etichete scurte:
- * „Vată minerală 50 mm", „+ Tablă aluminiu", „DN100", „flanșă".
+ * Ce a inteles aplicatia din rand, ca etichete scurte: „Vată minerală 50 mm ·
+ * rândul 114", „+ Tablă aluminiu · rândul 220", „DN100 = ø114,3", „flanșă".
+ *
+ * Randul din lista vine din pretul deja calculat, cate unul per strat, in
+ * aceeasi ordine. E singurul loc din care omul poate verifica unde a cazut
+ * conversia — intre DN100 si randul 114 stau doua reguli (tabelul de conversie
+ * si potrivirea pe rand), iar pana acum niciuna nu se vedea.
  */
-export function inteles(e: LinieExtrasa): string[] {
+export function inteles(e: LinieExtrasa, pret?: LinieProcesata["pret"]): string[] {
   if (e.sistem === null) return [];
   if (e.sistem === "goluri_foc") {
     return [MATERIAL.goluri_foc,
       ...(e.gol_latime_mm !== null && e.gol_inaltime_mm !== null ? [`gol ${e.gol_latime_mm}×${e.gol_inaltime_mm} mm`] : [])];
   }
-  const d = diametruText(e);
+  const d = diametruCuConversie(e);
   const forma = e.forma ? FORMA[e.forma] : undefined;
+  const straturi = pret && "straturi" in pret ? pret.straturi : [];
+  const peRand = (k: number): string => {
+    const s = straturi[k];
+    return s ? ` · rândul ${numarRo(s.rand_lista)}` : "";
+  };
   return [
-    `${MATERIAL[e.sistem]}${mm(e.grosime_mm)}`,
-    ...e.straturi_extra.map((s) => `+ ${MATERIAL[s.sistem]}${mm(s.grosime_mm)}`),
+    `${MATERIAL[e.sistem]}${mm(e.grosime_mm)}${peRand(0)}`,
+    ...e.straturi_extra.map((s, k) => `+ ${MATERIAL[s.sistem]}${mm(s.grosime_mm)}${peRand(k + 1)}`),
     ...(d ? [d] : []),
     ...(forma ? [forma] : []),
   ];
+}
+
+/**
+ * Rândul de sub câmpul de diametru din editor: în ce diametru exterior se
+ * traduce ce scrie acolo și pe ce rând din listă a căzut prețul.
+ */
+export function ajutorDiametru(l: LinieProcesata): string {
+  const e = l.extras;
+  if (e.sistem === "goluri_foc" || e.diametru_valoare === null) return "";
+  const od = diametruExterior(e);
+  if (od === null) return `DN${numarRo(e.diametru_valoare)} nu e în tabelul de conversie`;
+  const rand = l.pret && "straturi" in l.pret ? l.pret.straturi[0]?.rand_lista : undefined;
+  const conversie = e.diametru_tip === "DN" ? `ø${numarRo(od)} după tabelul de conversie` : `ø${numarRo(od)}`;
+  return rand === undefined ? conversie : `${conversie} · rândul ${numarRo(rand)} din listă`;
 }
 
 export type Stare = "gata" | "de_validat" | "netarifate";

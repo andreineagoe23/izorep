@@ -6,7 +6,7 @@ import type { CampuriRand } from "../../src/import/editare.js";
 import type { LinieExtrasa } from "../../src/import/schema.js";
 import {
   FORME_EDITOR, GROSIMI, MATERIAL, MATERIALE, MOTIV, STARE,
-  inteles, motiveLinie, stareLinie, type CodMotiv, type Sistem, type Stare,
+  ajutorDiametru, inteles, motiveLinie, stareLinie, type CodMotiv, type Sistem, type Stare,
 } from "./text.js";
 
 /**
@@ -256,7 +256,7 @@ export function cardPozitie(l: LinieProcesata, o: OptiuniCard): string {
       <p class="imp-poz-meta">Rândul ${l.bruta.rand}${o.cuFoaie ? ` · ${esc(l.bruta.foaie)}` : ""} · ${esc(numar(cantitate))} ${esc(um)}${
         l.sursa === "om" ? ` · <span class="imp-verificat">verificat</span>` : ""}</p>
     </div>
-    <ul class="imp-poz-inteles" aria-label="Ce am înțeles">${inteles(l.extras).map((e) => `<li>${esc(e)}</li>`).join("")}</ul>
+    <ul class="imp-poz-inteles" aria-label="Ce am înțeles">${inteles(l.extras, l.pret).map((e) => `<li>${esc(e)}</li>`).join("")}</ul>
     <div class="imp-poz-pret">${p
       ? `<strong>${eur(p.total)}</strong><span>${eur(p.pret_unitar)} / ${esc(um)}</span>`
       : `<strong class="imp-fara-pret">—</strong>`}</div>
@@ -277,14 +277,14 @@ export interface OptiuniEditor {
 const MATERIALE_STRAT = MATERIALE.filter((s) => s !== "goluri_foc");
 const numarCamp = (v: number | null): string => (v === null ? "" : String(v));
 
-/** Un strat peste primul, in editor: materialul, grosimea si „Scoate". */
+/** Un strat peste primul, in editor: materialul, grosimea lui si „×". */
 export function randStrat(i: number, s: { sistem: Sistem; grosime_mm: number | null }): string {
   return `<div class="imp-strat">
     <select name="strat_sistem" aria-label="Materialul stratului">${MATERIALE_STRAT.map((m) =>
       `<option value="${m}"${m === s.sistem ? " selected" : ""}>${MATERIAL[m]}</option>`).join("")}</select>
     <input name="strat_grosime" type="number" inputmode="decimal" step="any" min="0" list="ed-g-${i}-${s.sistem}"
       value="${numarCamp(s.grosime_mm)}" placeholder="mm" aria-label="Grosimea stratului, în mm" />
-    <button type="button" class="secundar" data-act="scoate-strat">Scoate</button>
+    <button type="button" class="imp-scoate" data-act="scoate-strat" title="Scoate stratul" aria-label="Scoate stratul">×</button>
   </div>`;
 }
 
@@ -305,59 +305,65 @@ export function editorPozitie(l: LinieProcesata, o: OptiuniEditor = {}): string 
   const optiuni = MATERIALE.map((s) => `<option value="${s}"${s === e.sistem ? " selected" : ""}>${MATERIAL[s]}</option>`).join("");
   const val = numarCamp;
   const c = o.campuri;
+  // Descrierea, pe mai multe randuri; celulele scurte („IZOLATII", un cod de
+  // articol) raman editabile, dar pe un rand si alaturi: ca niste casete mari,
+  // pareau fiecare inca o descriere.
+  const lungi = (c?.texte ?? []).filter((t) => String(t.v).trim().length > 12);
+  const scurte = (c?.texte ?? []).filter((t) => String(t.v).trim().length <= 12);
   const texte = c && c.texte.length > 0 ? `<div class="imp-editor-descriere">
-      ${c.texte.map((t) => `<label>${esc(t.eticheta.slice(0, 60))}
-        ${String(t.v).trim().length > 12
-          // Descrierea, pe mai multe randuri. O celula scurta („IZOLATII", un cod
-          // de articol) ramane editabila, dar pe un rand: ca caseta mare, parea
-          // inca o descriere.
-          ? `<textarea name="text" data-cel="${t.cel}" rows="${String(t.v).length > 120 ? 4 : 2}" spellcheck="false">${esc(String(t.v))}</textarea>`
-          : `<input name="text" data-cel="${t.cel}" value="${esc(String(t.v))}" spellcheck="false" />`}</label>`).join("")}
+      ${lungi.map((t) => `<label>${esc(t.eticheta.slice(0, 60))}
+        <textarea name="text" data-cel="${t.cel}" rows="${String(t.v).length > 120 ? 5 : String(t.v).length > 60 ? 3 : 2}" spellcheck="false">${esc(String(t.v))}</textarea></label>`).join("")}
+      ${scurte.length > 0 ? `<div class="imp-editor-scurte">${scurte.map((t) => `<label>${esc(t.eticheta.slice(0, 40))}
+        <input name="text" data-cel="${t.cel}" value="${esc(String(t.v))}" spellcheck="false" /></label>`).join("")}</div>` : ""}
       <button type="button" class="secundar" data-act="reciteste" data-idx="${i}">Citește din descriere</button>
     </div>` : "";
   const forme = FORME_EDITOR.map(([f, et]) =>
     `<option value="${f}"${f === (e.forma ?? "ml") ? " selected" : ""}>${et}</option>`).join("");
   const liste = MATERIALE_STRAT.filter((m) => GROSIMI[m]).map((m) =>
     `<datalist id="ed-g-${i}-${m}">${GROSIMI[m]!.map((g) => `<option value="${g}"></option>`).join("")}</datalist>`).join("");
-  const cantitate = c?.um || c?.cantitate ? `<div class="imp-editor-cantitate">
-      ${c.cantitate ? `<label>${esc(c.cantitate.eticheta.slice(0, 30))}
-        <input name="cantitate" data-cel="${c.cantitate.cel}" type="number" inputmode="decimal" step="any" min="0" value="${c.cantitate.v}" /></label>` : ""}
-      ${c.um ? `<label>${esc(c.um.eticheta.slice(0, 30))}
-        <input name="um" data-cel="${c.um.cel}" value="${esc(String(c.um.v))}" list="ed-um-${i}" autocomplete="off" /></label>
-        <datalist id="ed-um-${i}"><option value="ml"></option><option value="buc"></option><option value="mp"></option></datalist>` : ""}
-    </div>` : "";
+  const cantitate = `${c?.cantitate ? `<label>${esc(c.cantitate.eticheta.slice(0, 30))}
+      <input name="cantitate" data-cel="${c.cantitate.cel}" type="number" inputmode="decimal" step="any" min="0" value="${c.cantitate.v}" /></label>` : ""}
+    ${c?.um ? `<label>${esc(c.um.eticheta.slice(0, 30))}
+      <input name="um" data-cel="${c.um.cel}" value="${esc(String(c.um.v))}" list="ed-um-${i}" autocomplete="off" />
+      <datalist id="ed-um-${i}"><option value="ml"></option><option value="buc"></option><option value="mp"></option></datalist></label>` : ""}`;
+
+  const ajutor = ajutorDiametru(l);
 
   return `<form class="imp-editor" data-idx="${i}">
+    <p class="imp-editor-titlu">Corectează poziția · rândul ${l.bruta.rand} din fișier</p>
     ${texte}
-    <label>Material
-      <select name="sistem">${optiuni}<option value=""${e.sistem === null ? " selected" : ""}>Nu e izolație (scoate din listă)</option></select></label>
-    <div class="imp-editor-teava"${gol || e.sistem === null ? " hidden" : ""}>
-      <div class="imp-camp">
-        <span id="ed-d-${i}">Diametru</span>
-        <div class="imp-rand-campuri">
-          <select name="diametru_tip" aria-labelledby="ed-d-${i}">
-            <option value="DN"${e.diametru_tip === "DN" ? " selected" : ""}>DN</option>
-            <option value="exterior"${e.diametru_tip === "exterior" || e.diametru_tip === null ? " selected" : ""}>Ø</option>
-            <option value="interior"${e.diametru_tip === "interior" ? " selected" : ""}>Di</option>
-          </select>
-          <input name="diametru" type="number" inputmode="decimal" step="any" min="0" value="${val(e.diametru_valoare)}" aria-labelledby="ed-d-${i}" />
+    <div class="imp-editor-campuri">
+      <label>Material
+        <select name="sistem">${optiuni}<option value=""${e.sistem === null ? " selected" : ""}>Nu e izolație (scoate din listă)</option></select></label>
+      <div class="imp-editor-teava"${gol || e.sistem === null ? " hidden" : ""}>
+        <div class="imp-camp">
+          <span id="ed-d-${i}">Diametru</span>
+          <div class="imp-rand-campuri">
+            <select name="diametru_tip" aria-labelledby="ed-d-${i}">
+              <option value="DN"${e.diametru_tip === "DN" ? " selected" : ""}>DN</option>
+              <option value="exterior"${e.diametru_tip === "exterior" || e.diametru_tip === null ? " selected" : ""}>Ø</option>
+              <option value="interior"${e.diametru_tip === "interior" ? " selected" : ""}>Di</option>
+            </select>
+            <input name="diametru" type="number" inputmode="decimal" step="any" min="0" value="${val(e.diametru_valoare)}" aria-labelledby="ed-d-${i}" />
+          </div>
+          ${ajutor ? `<p class="imp-ajutor">${esc(ajutor)}</p>` : ""}
         </div>
+        <label>Grosime (mm)
+          <input name="grosime" type="number" inputmode="decimal" step="any" min="0" list="ed-g-${i}-${e.sistem ?? "vata_minerala"}" value="${val(e.grosime_mm)}" /></label>
+        <label>Formă
+          <select name="forma">${forme}</select></label>
+        <fieldset class="imp-straturi">
+          <legend>Straturi peste izolație</legend>
+          <div class="imp-straturi-lista">${e.straturi_extra.map((s) => randStrat(i, s)).join("")}</div>
+          <button type="button" class="secundar" data-act="adauga-strat" data-idx="${i}">Adaugă strat</button>
+        </fieldset>
       </div>
-      <label>Grosime (mm)
-        <input name="grosime" type="number" inputmode="decimal" step="any" min="0" list="ed-g-${i}-${e.sistem ?? "vata_minerala"}" value="${val(e.grosime_mm)}" /></label>
-      <label>Formă
-        <select name="forma">${forme}</select></label>
-      <fieldset class="imp-straturi">
-        <legend>Alte straturi (jachetă, a doua izolație)</legend>
-        <div class="imp-straturi-lista">${e.straturi_extra.map((s) => randStrat(i, s)).join("")}</div>
-        <button type="button" class="secundar" data-act="adauga-strat" data-idx="${i}">Adaugă strat</button>
-      </fieldset>
+      <div class="imp-editor-gol"${gol ? "" : " hidden"}>
+        <label>Lățime gol (mm)<input name="gol_latime" type="number" inputmode="numeric" min="0" value="${val(e.gol_latime_mm)}" /></label>
+        <label>Înălțime gol (mm)<input name="gol_inaltime" type="number" inputmode="numeric" min="0" value="${val(e.gol_inaltime_mm)}" /></label>
+      </div>
+      ${cantitate}
     </div>
-    <div class="imp-editor-gol"${gol ? "" : " hidden"}>
-      <label>Lățime gol (mm)<input name="gol_latime" type="number" inputmode="numeric" min="0" value="${val(e.gol_latime_mm)}" /></label>
-      <label>Înălțime gol (mm)<input name="gol_inaltime" type="number" inputmode="numeric" min="0" value="${val(e.gol_inaltime_mm)}" /></label>
-    </div>
-    ${cantitate}
     ${liste}
     <div class="imp-editor-butoane">
       <button type="submit" class="primar">Salvează</button>

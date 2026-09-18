@@ -46,6 +46,26 @@ describe("straturile în editor", () => {
   it("un strat nou nu poate fi închidere de gol: acolo prețul e aditiv, nu strat", () => {
     expect(randStrat(4, { sistem: "tabla", grosime_mm: null })).not.toContain("goluri_foc");
   });
+
+  it("butonul de scos stratul are nume citit de cititorul de ecran", () => {
+    expect(randStrat(4, { sistem: "tabla", grosime_mm: null }))
+      .toContain('data-act="scoate-strat" title="Scoate stratul" aria-label="Scoate stratul"');
+  });
+});
+
+describe("conversia diametrului, sub câmpul lui", () => {
+  it("DN-ul arată în ce diametru exterior se traduce", () => {
+    expect(editorPozitie(linie())).toContain("ø114,3 după tabelul de conversie");
+  });
+
+  it("iar când poziția are preț, și rândul din listă", () => {
+    const l = linie();
+    const cuPret = {
+      ...l,
+      pret: { pret_unitar: 1, cantitate: 1, total: 1, straturi: [{ rand_lista: 114 }] },
+    } as unknown as typeof l;
+    expect(editorPozitie(cuPret)).toContain("ø114,3 după tabelul de conversie · rândul 114 din listă");
+  });
 });
 
 describe("forma", () => {
@@ -94,6 +114,18 @@ describe("descrierea, UM-ul și cantitatea", () => {
     expect(c.um).toEqual({ cel: 2, eticheta: "UM", v: "ml" });
     // Nr. crt. e tot 1: cantitatea e cea de lângă UM, nu prima celulă cu valoarea ei.
     expect(c.cantitate).toEqual({ cel: 3, eticheta: "Cantitate", v: 1 });
+
+    // Fără antet, coloana se numește cu litera ei, ca în grilă: altfel două
+    // celule cu text de pe același rând arătau amândouă „Descriere".
+    const faraAntet = campuriRand({
+      rand: 2,
+      celule: [celula("IZOLATII"), celula("Izolatie elastomer 13 mm DN25"), celula("ml")],
+      linie: {
+        index: 1, foaie: "Lista", rand: 2, text: "IZOLATII | Izolatie elastomer 13 mm DN25", um: "ml",
+        celule: ["IZOLATII", "Izolatie elastomer 13 mm DN25", "ml"],
+      },
+    });
+    expect(faraAntet.texte.map((t) => t.eticheta)).toEqual(["Coloana A", "Coloana B"]);
   });
 });
 

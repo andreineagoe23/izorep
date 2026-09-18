@@ -700,40 +700,51 @@ button.filtru[aria-pressed="true"], button.filtru.activ {
   .imp-poz-actiuni { flex-wrap: nowrap; }
 }
 
-/* ---- corectura unei pozitii */
-.imp-editor { grid-area: editor; display: grid; gap: 12px; padding-top: var(--imp-gap); border-top: 1px solid var(--linie); }
-.imp-editor label, .imp-camp { font-size: 14px; color: var(--slab); }
-.imp-editor input, .imp-editor select { min-height: 44px; margin-top: 6px; font-size: 16px; color: var(--text); }
-.imp-editor-teava, .imp-editor-gol { display: grid; gap: 12px; }
+/* ---- corectura unei pozitii, ca panou propriu sub rand */
+.imp-editor {
+  grid-area: editor; display: grid; gap: var(--imp-gap); margin-top: var(--imp-gap);
+  padding: var(--imp-gap); border: 1px solid var(--linie-tare); border-radius: 12px; background: var(--panou);
+}
+.imp-editor-titlu { margin: 0; font-size: 13px; font-weight: 600; color: var(--slab); }
+.imp-editor label, .imp-camp { display: block; margin: 0; font-size: 14px; color: var(--slab); }
+.imp-editor input, .imp-editor select, .imp-editor textarea {
+  margin-top: 6px; min-height: 44px; font-size: 16px; color: var(--text);
+}
+.imp-editor textarea { line-height: 1.4; resize: vertical; }
+.imp-editor-descriere { display: grid; gap: 10px; }
+.imp-editor-descriere > button { justify-self: start; }
+.imp-editor-scurte { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+/*
+ * Un singur flux de campuri, asezat dupa latime: la 360 px iese o coloana, pe
+ * ecran lat patru. Varianta cu doua coloane fixe lasa „Material" singur in
+ * stanga, cu un gol cat tot blocul tevii sub el.
+ */
+.imp-editor-campuri { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); align-items: start; }
+/* Grupurile nu sunt casete, sunt doar comutatorul dintre teava si gol. */
+.imp-editor-teava, .imp-editor-gol { display: contents; }
+.imp-editor-teava[hidden], .imp-editor-gol[hidden] { display: none; }
 .imp-rand-campuri { display: flex; gap: 8px; margin-top: 6px; }
-.imp-rand-campuri select { flex: 0 0 5.2em; margin-top: 0; }
-.imp-rand-campuri input { flex: 1 1 auto; min-width: 0; margin-top: 0; }
+/* Notatia e scurta (DN/Ø/Di); cifra are nevoie de loc — altfel „114" iese „1". */
+.imp-rand-campuri select { flex: 0 0 4.4em; margin-top: 0; padding-inline: 6px; }
+.imp-rand-campuri input { flex: 1 1 auto; min-width: 4.5em; margin-top: 0; }
+.imp-ajutor { margin: 6px 0 0; font-size: 13px; color: var(--slab); font-variant-numeric: tabular-nums; }
+.imp-straturi { grid-column: 1 / -1; display: grid; gap: 8px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.imp-straturi legend { padding: 0; margin-bottom: 4px; font-size: 14px; color: var(--slab); }
+.imp-straturi > button { justify-self: start; }
+.imp-straturi-lista { display: grid; gap: 8px; }
+.imp-straturi-lista:empty { display: none; }
+.imp-strat { display: grid; grid-template-columns: minmax(0, 1fr) minmax(5.5em, 7em) 44px; gap: 8px; align-items: center; }
+.imp-strat select, .imp-strat input { margin-top: 0; min-width: 0; }
+.imp-scoate {
+  width: 44px; min-height: 44px; padding: 0; border: 1px solid var(--linie-tare); border-radius: 8px;
+  background: var(--panou); color: var(--text); font: inherit; font-size: 20px; line-height: 1; cursor: pointer;
+}
+.imp-scoate:hover { background: var(--accent-slab); }
 .imp-editor-butoane { display: flex; flex-wrap: wrap; gap: 8px; }
 .imp-editor-butoane > * { flex: 1 1 140px; }
 @container imp (min-width: 620px) {
-  /* Sus, nu jos: cu straturile, blocul tevii e inalt, iar „Material" cobora langa „Adaugă strat". */
-  .imp-editor { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); align-items: start; }
-  .imp-editor-teava, .imp-editor-gol { grid-template-columns: 1fr 1fr; }
-  .imp-editor-butoane { grid-column: 1 / -1; justify-content: flex-end; }
+  .imp-editor-butoane { justify-content: flex-end; }
   .imp-editor-butoane > * { flex: 0 0 auto; }
-}
-/* Descrierea, celelalte straturi, UM-ul si cantitatea, in corectura. */
-.imp-editor textarea { margin-top: 6px; font-size: 16px; line-height: 1.4; color: var(--text); resize: vertical; }
-.imp-editor-descriere, .imp-editor-cantitate { display: grid; gap: 12px; }
-.imp-editor-descriere label, .imp-editor-cantitate label, .imp-editor-teava label { margin-bottom: 0; }
-.imp-editor-descriere > button, .imp-straturi > button { justify-self: start; }
-.imp-straturi { display: grid; gap: 8px; min-width: 0; margin: 0; padding: 0; border: 0; }
-.imp-straturi legend { padding: 0; margin-bottom: 4px; font-size: 14px; color: var(--slab); }
-.imp-straturi-lista { display: grid; gap: 8px; }
-.imp-straturi-lista:empty { display: none; }
-.imp-strat { display: grid; grid-template-columns: minmax(0, 1fr) minmax(5.5em, 7em); gap: 8px; align-items: center; }
-.imp-strat select, .imp-strat input { margin-top: 0; min-width: 0; }
-.imp-strat button { grid-column: 1 / -1; justify-self: start; }
-@container imp (min-width: 620px) {
-  .imp-editor-descriere, .imp-editor-cantitate, .imp-editor-teava .imp-straturi { grid-column: 1 / -1; }
-  .imp-editor-cantitate { grid-template-columns: 1fr 1fr; }
-  .imp-strat { grid-template-columns: minmax(0, 1fr) 8em auto; }
-  .imp-strat button { grid-column: auto; }
 }
 
 /* ---- mesajul de dupa o actiune, cu „Anulează” */
@@ -796,12 +807,13 @@ button.filtru[aria-pressed="true"], button.filtru.activ {
 /* Corectura, pe un rand sub pozitie, lipita de marginea vizibila a tabelului. */
 .imp-grila-editor > td { padding: var(--imp-gap); background: var(--accent-slab); }
 .imp-grila-editor .imp-editor {
-  position: sticky; left: var(--imp-gap); width: min(760px, calc(100cqw - 4 * var(--imp-gap)));
-  padding-top: 0; border-top: 0;
+  position: sticky; left: var(--imp-gap); width: min(820px, calc(100cqw - 4 * var(--imp-gap)));
+  margin-top: 0;
 }
 .imp-grila-editor .imp-editor input, .imp-grila-editor .imp-editor select,
-.imp-grila-editor .imp-editor input[type="number"] { width: 100%; min-height: 44px; padding: 8px 11px; font-size: 16px; }
-.imp-grila-editor .imp-rand-campuri select { width: 5.2em; }
+.imp-grila-editor .imp-editor textarea { width: 100%; min-height: 44px; padding: 8px 11px; font-size: 16px; }
+.imp-grila-editor .imp-rand-campuri select { width: 4.4em; }
+.imp-grila-editor .imp-scoate { width: 44px; padding: 0; }
 
 .imp-detalii { font-size: 14px; color: var(--slab); }
 .imp-detalii summary { display: flex; align-items: center; min-height: 44px; cursor: pointer; }

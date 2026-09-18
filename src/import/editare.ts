@@ -115,6 +115,13 @@ export interface CampuriRand {
  * pretul. Cand valoarea nu e in nicio celula, campul lipseste: editorul nu
  * ghiceste unde sa scrie.
  */
+/** A, B, … Z, AA — capul coloanei cand foaia n-are antet, ca in grila. */
+function litera(i: number): string {
+  let s = "";
+  for (let n = i; n >= 0; n = Math.floor(n / 26) - 1) s = String.fromCharCode(65 + (n % 26)) + s;
+  return s;
+}
+
 export function campuriRand(rand: RandBrut, antet?: RandBrut): CampuriRand {
   const linie = rand.linie;
   const eticheta = (cel: number, implicit: string): string => {
@@ -136,7 +143,11 @@ export function campuriRand(rand: RandBrut, antet?: RandBrut): CampuriRand {
   rand.celule.forEach((c, cel) => {
     if (typeof c.v === "string") {
       if (!um && linie?.um !== undefined && c.v.trim() === linie.um) um = { cel, eticheta: eticheta(cel, "UM"), v: c.v };
-      else if (c.v.trim().length > 3) texte.push({ cel, eticheta: eticheta(cel, "Descriere"), v: c.v });
+      // Fara antet, numele coloanei e litera ei, ca in grila: doua celule cu
+      // text pe acelasi rand aratau amandoua „Descriere" si nu se deosebeau.
+      else if (c.v.trim().length > 3) {
+        texte.push({ cel, eticheta: eticheta(cel, `Coloana ${litera(offsetColoana(rand.celule, cel))}`), v: c.v });
+      }
     } else if (typeof c.v === "number" && c.v === linie?.cantitate) {
       cuCantitatea.push(cel);
     }
