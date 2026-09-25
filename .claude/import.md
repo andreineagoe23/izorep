@@ -463,8 +463,8 @@ real acolo.
 ## Capcane găsite în fișierele reale
 
 - **`cerere-de-oferta-book15.xlsx`** — rânduri de continuare `"Same - Ø125 mm"` care moștenesc
-  descrierea de deasupra. Fără carry-forward pierzi specificația. Încă nerezolvat:
-  de-asta ies doar 5 poziții din 412 rânduri.
+  descrierea de deasupra. Fără carry-forward pierzi specificația. Rezolvat de
+  `continuare.ts`: de la 5 la 24 de poziții, azi 28.
 - **`cerere-de-oferta-transavia-inox.xlsx`** — pivot pe 11 coloane de zone; tipul e codat în
   text: `"...Di89, g50 - COT"`.
 - **`Flower City`** — `cantitate/unitate × nr. unități = total`, plus `#REF!`.
@@ -531,5 +531,10 @@ real acolo.
   lângă „tubulatură / duct / Kanal”: altă lucrare, fără listă, indiferent de
   sursă (regulă în `tarifeazaExtras`, cu textul rândului).
 - **Cantitatea** — primul număr de pe rând e aproape întotdeauna *numărul curent*
-  al poziției, nu cantitatea. Euristica actuală o caută lângă unitatea de măsură;
-  dispare când apare maparea de coloane (L1).
+  al poziției, nu cantitatea. Pe foile cu mapare (L1) se citește din coloana
+  ei; euristica de lângă unitatea de măsură rămâne doar pentru foile fără mapare
+  acceptată (Izolații Transavia, Anexa 1).
+- **Coloanele diferă de la client la client** — de aceea registrul de ofertă
+  nu copiază coloanele clientului, ci le citește după rol: codul de rând
+  („IZOLATII”, „01.82.02.01A”) merge în Identificare_Norma, descrierea în
+  Denumire (`web/oferta.ts`, `codRand`).

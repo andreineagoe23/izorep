@@ -131,10 +131,10 @@ reproduce ofertele semnate și nu se poate emite cu ea.
 
 ## Peste ultimul rând din listă
 
-Azi: `PozitieNetarifata` — motorul nu extrapolează, poziția se marchează pentru
-om. Firma are însă o formulă pentru diametrele mai mari decât matricea, pe
-suprafață (`mp/ml = (φ + 2 × grosime) / 1000 × π`, cu π = 3,14). E în `tevi.md`,
-cu întrebarea dacă se automatizează sau rămâne decizie umană.
+Din 25 septembrie 2026 se aplică formula firmei pe suprafață
+(`mp/ml = (φ + 2 × grosime) / 1000 × 3,14`), dar poziția merge **la om**
+(`peste_lista`): pe singura ofertă semnată cu astfel de poziții, formula dă exact
+un caz din trei. Detaliile în `tevi.md` și `pricing.md`.
 
 ## Listele nu sunt una per sistem — sunt un cub
 

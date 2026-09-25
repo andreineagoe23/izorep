@@ -17,22 +17,25 @@ Excel de la client  →  parsare  →  extragere parametri  →  tarifare  →  
                        (fizică)     (regex + LLM)          (determinist)
 ```
 
-Pe lista de cantități reală a unui spital (258 rânduri):
+Verificat linie cu linie față de ofertele pe care firma le-a semnat deja:
 
 ```
-  pozitii de izolatie      191
-    rezolvate determinist  105  (55.0%)
-    rezolvate cu modelul    86  (45.0%)
-  TARIFATE automat         121  (63.4%)
-  de validat de om          21
-  netarifate                70
+  cererea TRANSAVIA importata  vs  Oferta 284 semnata
+    preturi calculate             98 / 98 exacte, 0 diferite
+    total (fara echipamentul
+    la comanda)                   92.278,36 EUR  = semnat
+  Oferta 27.04.2026 (NISAL)       48 de preturi exacte; cele diferite sunt marcate
+  Oferta Matari (goluri la foc)   53 / 53, total 12.692,04 EUR = semnat
 ```
+
+Ce nu se poate calcula sigur nu iese „gata”: merge la „De verificat” sau
+„Fără preț”, cu motivul scris.
 
 ## Motorul de prețuri
 
 Reprodus din listele de prețuri ale firmei și verificat pe oferte reale trimise
-clienților. **49 de teste, toate pe poziții facturate efectiv** — inclusiv
-poziții compuse din trei straturi:
+clienților, pe poziții facturate efectiv — inclusiv poziții compuse din trei
+straturi:
 
 ```
 DN80: elastomer 13mm + vată minerală 40mm + tablă
@@ -107,7 +110,7 @@ deocamdată. Când apare serverul, intră în `docker-compose.yml` și `npm star
 |---|---|
 | `npm start` | bază + migrări + interfață |
 | `npm run dev` | doar interfața |
-| `npm test` | 237 de teste (cele de bază se sar fără Docker) |
+| `npm test` | 523 de teste (cele de bază cer Postgres; fără fișierele firmei, cele pe oferte reale verifică doar forma) |
 | `npm run typecheck` | |
 | `npm run build:web` | build static în `dist-web/` |
 | `npm run db:up` / `db:down` | pornește / oprește Postgres |
@@ -147,7 +150,7 @@ python scripts/extract_conversii.py ../attachments
 | Cale | Ce e |
 |---|---|
 | `data/price-lists/` | listele rezidențiale, extrase din Excel-urile firmei |
-| `data/price-lists/industrial/` | listele industriale — doar în bază, nu în motor |
+| `data/price-lists/industrial/` | listele industriale — în motor când oferta e marcată industrială, și în bază |
 | `data/referinte/` | seriile de diametre pe material, secțiuni de tubulatură |
 | `src/pricing/` | motorul de prețuri — determinist, testat |
 | `src/import/` | pipeline de import Excel de la clienți |
@@ -176,7 +179,10 @@ Echipa: **Andrei Neagoe**, **Adrian Popescu**.
 
 ## Stadiu
 
-Făcut: motor de prețuri, extragere parametri, pipeline de import, teste.
+Făcut: motor de prețuri (rezidențial și industrial), import Excel cu reguli +
+model + memorie, ecranul de verificare în trei pași, registrul de ofertă `.xlsx`
+în formatul firmei, reproducerea ofertelor semnate ca teste.
 
-Urmează: fluxul complet al ecranului de validare, generare ofertă PDF, export în
-formatul Excel al clientului, apoi modulele de contract, stoc și facturare.
+Urmează: vezi „Ce urmează” în `.claude/stare.md` — seria de cupru, modelul pe
+cererile fără ofertă pereche, perechi noi de la firmă, apoi PDF, exportul în
+șablonul clientului și modulele de contract, stoc și facturare.

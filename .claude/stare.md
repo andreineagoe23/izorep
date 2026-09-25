@@ -3,6 +3,29 @@
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
 > Ultima actualizare: 25 septembrie 2026.
 
+## Unde am rămas (25 septembrie 2026)
+
+Totul e pe `main` (ultimul commit de cod: `5667f50`), CI verde, demo-ul live pe
+Pages. **523 de teste.** Nu există branch-uri deschise cu muncă nepusă.
+
+- **Calculele de import sunt verificate linie cu linie** față de ofertele
+  semnate, nu doar pe totaluri: cererea TRANSAVIA importată dă 98 / 98 prețuri
+  exacte față de Oferta 284 (singura pereche cerere ↔ ofertă), Oferta
+  27.04.2026 are 48 de prețuri exacte, Matari 53 / 53. Testele din
+  `tests/oferte-semnate.test.ts` țin cifrele ca clichetă.
+- **Stratul cu model** e legat de liniile trimise, primește secțiunea, nu mai
+  poate șterge o poziție cu `null`, iar jacheta e pusă mereu la exterior. Pe
+  fișierele verificate, rândurile le citesc regulile, nu modelul.
+- **Ecranul de import:** meniul se pliază la import, foaia încape fără
+  derulare laterală, registrele cu mai multe foi au taburi, antetul și bara
+  foilor sunt două carduri pe grila 70 / 30 (`ui.md`).
+- **Ce așteaptă de la firmă:** întrebările 3, 4, 8, 12–15, 18 (mai jos), plus
+  alte perechi cerere ↔ ofertă semnată — sunt singurul lucru care poate
+  confirma o regulă dedusă dintr-o singură ofertă.
+
+Detaliile fiecărei zile sunt în secțiunile datate de mai jos; ce urmează, la
+„Ce urmează”.
+
 ## Contextul proiectului
 
 Client: **SC RADOIA ISOLIRUNG SRL** (+ R&F ISORAD SYSTEM SRL), firmă de izolații
@@ -735,49 +758,45 @@ Astea blochează arhitectura, nu doar implementarea:
 
 ## Ce urmează
 
-Măsurătorile care fundamentează pașii de mai jos stau în **`plan-l1-l4.md`**:
-rândurile de antet reale din fiecare fișier, vocabularul de roluri de coloană,
-și stabilitatea șabloanelor.
+În ordinea în care ar trebui luate. Primele trei sunt riscuri de preț tăcut sau
+de acoperire, restul sunt produs.
 
-**Deduplicarea reziduului pe șablon — prima, fiindcă e cea mai ieftină.**
-Liniile trimise la model se repetă în același fișier: 697 de linii reziduale pe
-toate fișierele înseamnă doar 318 șabloane, deci **−54% tokeni** fără nicio
-memorie persistentă. Se poate face pentru că rolul e stabil pe șablon: măsurat
-pe cele 64 de șabloane care apar de cel puțin două ori, tripleta
-`(sistem, tip_diametru, formă)` e identică în 100% din cazuri. Se memorează
-rolul, nu valorile — numerele se citesc per linie, din poziția lor în șablon.
-
-**L1 — maparea de coloane per client.** Rezolvă simultan două lucruri:
-euristica de cantitate (azi ghicește coloana lângă unitatea de măsură) și
-`cerere-de-oferta-book15.xlsx`, unde din 412 rânduri ies doar 5 poziții, pentru că rândurile de
-continuare `"Same - Ø125 mm"` își pierd descrierea părinte.
-
-Rândul de antet e găsibil fizic pe 14 din 15 foi, dar nu pe poziție fixă
-(r1, r2, r5, r6, r9, r12, r14, r15). Cele două cazuri pe care regula fizică nu
-le prinde — o foaie fără antet și una unde detectorul ia un rând de coduri —
-sunt exact motivul pentru care modelul propune maparea, iar un validator
-determinist o acceptă sau o respinge.
-
-Contextul de secțiune (`sectiuni.ts`) rezolvă deja un nivel din problema asta:
-antetul îmbinat de deasupra dă sistemul liniilor care tac despre ele însele.
-L1 îl înlocuiește cu ceva care știe și ierarhii, și rânduri de continuare.
-
-**L4 — ecranul de validare cu învățare.** Fiecare corecție umană se salvează ca
-mapare `șablon → rol`. Cifra „90–95% la al doilea proiect" rămâne o ipoteză:
-fișierele pe care le avem vin de la clienți diferiți, deci reutilizarea între
-proiecte nu e măsurabilă (întrebarea 11 către firmă).
-
-~~Export în formatul firmei~~ — făcut, vezi „Ieșirea ofertei". Ce rămâne:
-generarea PDF cu print CSS, exportul în **șablonul clientului** (altceva decât
-al firmei), anexa cu tabelele de multiplicatori pe care ofertele reale o poartă
-la final, tabelele de ofertă în Postgres — azi registrul e artefact de client,
-iar `SesiuneImport.id` scris în subsolul lui e singura legătură — și modulele de
-contract, stoc și facturare.
+1. **Seria de cupru.** `dn-table.ts` aplică tabelul de oțel tuturor
+   materialelor: DN15 de cupru se caută pe rândul 22 în loc de 18, **nemarcat**.
+   Azi nu apare în niciun fișier, dar prima cerere cu cupru ar ieși greșit
+   tăcut. Minimul: o notă de verificat când textul spune cupru / inox pe o
+   țeavă dată în DN; apoi seria din `data/referinte/conversii-tevi.json`
+   (întrebarea 3 din `tevi.md`).
+2. **Modelul pe fișierele fără ofertă.** Pe cererea spitalului, 6 din 7 foi
+   n-au nicio poziție citită de reguli (materialul nu e în text); acolo lucrează
+   doar modelul. De rulat importul complet (cu cheia) pe spital, Book15 și
+   Flower City și de citit ce iese, linie cu linie — n-avem ofertă semnată pe
+   ele, deci verificarea e de om. `npm run golden -- <fisier>` pe cele care dau
+   bine, ca deriva să se vadă.
+3. **Confuzia între două numere din același rând** („inox 304 Di89”): niciun
+   validator n-o prinde. Un avertisment când valoarea citită e un număr care, în
+   text, stă lângă altceva decât notația de diametru.
+4. **Perechi noi de la firmă.** Fiecare cerere + ofertă semnată pe aceleași
+   rânduri devine un test ca cel TRANSAVIA
+   („cererea … reproduce Oferta 284 semnată”). E cea mai ieftină cale de a
+   confirma regulile deduse dintr-o singură ofertă (celula 22|40, formula peste
+   ø219, elastomer 20 → 19) și de a măsura L4 între proiecte (întrebarea 11).
+5. **Fișierele cu o singură foaie** au încă bara veche de filtre (butoane), în
+   afara unui card. De adus la aceeași așezare cu registrele cu mai multe foi,
+   dacă se dorește consecvență.
+6. **Distribuitorul de abur** și echipamentele la comandă (`g100 D=500,
+   L=4500`): n-au regulă în liste; de aflat de la firmă cum se calculează, sau
+   de lăsat explicit „manual”.
+7. **Produs:** PDF din registru (print CSS), exportul în șablonul clientului,
+   anexa cu tabelele de multiplicatori, ofertele în Postgres (azi registrul e
+   artefact de client, legat doar prin `SesiuneImport.id`), apoi contract, stoc
+   și facturare (întrebările 1–2 decid arhitectura lor).
+8. **Rafinăria și manopera** — liste care n-au venit (întrebările 5, 13).
 
 ## Comenzi
 
 ```bash
-npm test                                       # 520 de teste (motor, import, baza, ofertă, editor, meniu)
+npm test                                       # 523 de teste (motor, import, baza, ofertă, ecran, meniu)
 npm run typecheck
 npm run dev                                    # UI local, /izorep/
 npm run import -- ../attachments/clienti/cerere-de-oferta-spital.xlsx   # pipeline complet

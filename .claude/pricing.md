@@ -29,8 +29,12 @@ Cod determinist, fără AI, fără I/O în afară de citirea JSON-urilor din
    lui**. Nu-i trebuie celula `rând|grosime` — aia e informație de tarifare, și
    tocmai am hotărât că nu-l tarifăm — dar grosimea decide geometria straturilor
    de deasupra, deci trebuie să fie reală.
-6. Căutare pe coloana de grosime. Lipsa celulei → `PozitieNetarifata`.
-7. Rotunjire la 2 zecimale **pe fiecare strat**, apoi însumare.
+6. Căutare pe coloana de grosime. Lipsa celulei → `PozitieNetarifata`, cu o
+   excepție marcată: golul care se poate deduce din rândul imediat următor
+   (`celulaDedusa`, vezi „Reguli din ofertele semnate”).
+7. Rotunjire la 2 zecimale **pe fiecare strat**, apoi însumare. Totalul
+   documentului e altceva: suma valorilor exacte preț × cantitate, rotunjită o
+   singură dată (vezi mai jos).
 
 La egalitate între două rânduri se alege rândul **superior**. Nu e arbitrar:
 vezi cazul DN80 compus, unde ø195 cade exact între 190 și 200.
@@ -39,7 +43,8 @@ vezi cazul DN80 compus, unde ø195 cade exact între 190 și 200.
 rândurile sunt seria rotunjită la milimetru întreg, deci atâta poate fi eroarea
 de rotunjire. DN200 (ø219,1) cădea la 0,1 mm peste ultimul rând al elastomerului
 (219) — adică exact DN200 — și ieșea „peste maximul listei". DN250 (ø273, la
-54 mm peste) rămâne refuzat: 54 nu e eroare de rotunjire.
+54 mm peste) nu cade pe 219: 54 nu e eroare de rotunjire. De acolo se aplică
+formula firmei pe mp, marcată (`tarifeazaPesteLista`, mai jos).
 
 ### De unde vin regulile 2–5
 

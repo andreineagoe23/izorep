@@ -31,7 +31,10 @@ cerere client (Excel/poză) → deviz → ofertă → contract → lucrare
    referențiază — altfel o ofertă de acum doi ani nu mai e reproductibilă.
 
 4. **Rotunjirea se face pe fiecare strat, la 2 zecimale, nu la final.** Schimbă
-   totalul cu bani reali. Vezi `bani()` în `src/pricing/engine.ts`.
+   totalul cu bani reali. Vezi `bani()` în `src/pricing/engine.ts`. Totalul
+   **documentului** însă se face ca în Excel-ul firmei: suma valorilor exacte
+   preț × cantitate, rotunjită o singură dată (`totalOferta` în
+   `web/oferta.ts`) — rotunjit pe linie, Oferta 284 ieșea cu un ban peste.
 
 5. **Bani niciodată în float.** În JSON-ul de prețuri valorile au 6 zecimale
    pentru fidelitate față de sursă; la ieșire trec prin `bani()`. Când apare
@@ -85,7 +88,8 @@ python scripts/extract_conversii.py ../attachments     # regenerează seriile de
 - La ø90 și ø160 ofertele istorice tarifează inconsecvent. Vezi blocul
   „abateri cunoscute" din `tests/pricing.test.ts`.
 - Există listă de prețuri pentru elastomer peste ø219? Oferta 118 conține ø250
-  și ø315, care nu sunt în nicio listă primită.
+  și ø315, care nu sunt în nicio listă primită. Azi se aplică formula firmei pe
+  mp, marcat pentru om.
 - Lista de manoperă (2,20 / 2,30 / 3,00 €/ml) e scrisă undeva sau se negociază
   de fiecare dată? Are structură diferită de matricea completă: tarif plat pe
   sistem + grosime, nu matrice ø × grosime.

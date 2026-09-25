@@ -174,7 +174,10 @@ DN600 → 610 aici, 609,6 în docx. Nou față de cod: **DN6 = 10,2**.
 
 ## Tubulaturi
 
-- **Rectangulare** — mp sau ml, cu conversie (perimetru × lungime). Neimplementat.
+- **Rectangulare** — în **m²** se tarifează din coloana `per_mp` a fiecărui
+  strat (`tarifeazaPeMp`, 25 septembrie 2026; Oferta 27.04.2026, 79,73 exact).
+  În **ml**, conversia perimetru × lungime rămâne neimplementată
+  (`fara_diametru`).
 - **Circulare** — sunt direct în lista de prețuri. Unde celula e goală, nu se
   ofertează.
 
@@ -190,12 +193,11 @@ preț  = mp × prețul pe mp corespunzător grosimii
 Exemplu dat: elastomer φ324, grosime 9 mm → (324 + 18) / 1000 × 3,14 = 1,074 mp
 per metru liniar.
 
-Motorul **nu face asta azi**: peste ultimul rând aruncă `PozitieNetarifata`
-(decizie din `stare.md` — „motorul nu extrapolează", pentru că în ofertele reale
-ø250 și ø315 la elastomer fuseseră tarifate manual). Tabelele `per_mp` există
-deja în `data/price-lists/*.json` pe grosime, deci regula e implementabilă.
-De decis: rămâne poziția marcată pentru om, sau se calculează automat cu formula
-de mai sus.
+**Implementat pe 25 septembrie 2026** (`tarifeazaPesteLista`), cu 3,14 ca în
+notița firmei, strat cu strat — dar poziția iese **marcată** (`peste_lista`):
+pe Oferta 27.04.2026 formula dă exact DN250 / 19 mm (23,13), iar SPIRO ø250 /
+ø315 cu 9 mm au fost semnate cu 0,13 € peste ea. Fără preț pe mp (PVC peste
+ø710) poziția rămâne refuzată.
 
 ## Întrebări deschise
 
