@@ -3,25 +3,23 @@
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
 > Ultima actualizare: 25 septembrie 2026.
 
-## Unde am rămas (25 septembrie 2026)
+## Unde am rămas (25 septembrie 2026, seara)
 
-Totul e pe `main` (ultimul commit de cod: `5667f50`), CI verde, demo-ul live pe
-Pages. **523 de teste.** Nu există branch-uri deschise cu muncă nepusă.
+Muncă pe branch-ul `riscuri-pret-tacut` (5 commit-uri, **550 de teste**, build
+verde), nepusă pe `main`. Firma e indisponibilă până săptămâna viitoare; ținta
+a fost un produs cât mai corect până atunci și o listă scurtă de întrebări.
 
-- **Calculele de import sunt verificate linie cu linie** față de ofertele
-  semnate, nu doar pe totaluri: cererea TRANSAVIA importată dă 98 / 98 prețuri
-  exacte față de Oferta 284 (singura pereche cerere ↔ ofertă), Oferta
-  27.04.2026 are 48 de prețuri exacte, Matari 53 / 53. Testele din
-  `tests/oferte-semnate.test.ts` țin cifrele ca clichetă.
-- **Stratul cu model** e legat de liniile trimise, primește secțiunea, nu mai
-  poate șterge o poziție cu `null`, iar jacheta e pusă mereu la exterior. Pe
-  fișierele verificate, rândurile le citesc regulile, nu modelul.
-- **Ecranul de import:** meniul se pliază la import, foaia încape fără
-  derulare laterală, registrele cu mai multe foi au taburi, antetul și bara
-  foilor sunt două carduri pe grila 70 / 30 (`ui.md`).
-- **Ce așteaptă de la firmă:** întrebările 3, 4, 8, 12–15, 18 (mai jos), plus
-  alte perechi cerere ↔ ofertă semnată — sunt singurul lucru care poate
-  confirma o regulă dedusă dintr-o singură ofertă.
+- **Calculele de import, verificate linie cu linie** față de ofertele semnate:
+  TRANSAVIA 98 / 98, Oferta 27.04.2026 48 exacte, Matari 53 / 53. Cu prețul
+  pus de mână pe distribuitor, cererea TRANSAVIA dă **94.575,06 € = Oferta
+  284**, la ban.
+- **Cererile fără ofertă (spital, Book15, Flower City, Transavia inox) citite
+  poziție cu poziție**, determinist și cu modelul: 11 feluri de preț tăcut
+  greșit găsite și oprite (vezi „25 septembrie 2026 (2)”). Pe spital, nicio
+  poziție citită de model nu mai iese „Gata”; golden nou pe spital.
+- **Prețul pus de mână** pentru ce nu acoperă listele (`ui.md`).
+- **Ce așteaptă de la firmă:** „Pentru întâlnirea cu firma”, mai jos — două
+  documente și șapte întrebări, cu dovezile lor.
 
 Detaliile fiecărei zile sunt în secțiunile datate de mai jos; ce urmează, la
 „Ce urmează”.
@@ -738,6 +736,62 @@ distribuitorul la 2.296,70 și cele 13 celule deduse confirmate, dă **94.575,06
 € = Oferta 284**, la ban (test în `oferte-semnate.test.ts` și verificat în
 browser).
 
+## Pentru întâlnirea cu firma (25 septembrie 2026)
+
+Ordonate după cât deblochează pe cele 10 fișiere. Tot restul s-a dedus din
+date și e în cod, marcat unde dovada e subțire. Numerele din paranteză sunt cele
+din lista completă de mai jos (codul le citează).
+
+**Două documente, care închid mai multe întrebări deodată:**
+
+- **D1. Oferte semnate pe cereri pe care le avem** — mai ales pe
+  `cerere-de-oferta-transavia-inox.xlsx` (72 de poziții blocate), apoi spital,
+  Book15, Flower City. Fiecare pereche devine un test ca TRANSAVIA și confirmă
+  sau răstoarnă regulile deduse dintr-o singură ofertă (11, 15, 18). Ideal și
+  două cereri de la același client, din proiecte diferite (11).
+- **D2. Listele lipsă:** rafinărie (13), manopera dacă e scrisă (5), PVC și
+  închiderile la foc pe industrial (14).
+
+**Șapte întrebări:**
+
+1. **Tabla de inox: grosimea implicită, 0,4 / 0,5 / 0,6 mm?** (15) Clienții n-o
+   scriu; lista are toate trei. 72 de poziții Transavia inox; la r140: 40,25 /
+   45,57 / 50,89 €. Dacă vine D1, se citește din ofertă.
+2. **Tabla zincată ca protecție mecanică, pe mp.** Spitalul cere „tablă zincată
+   min 0,5 mm” (13 rânduri) și „0,6 mm” (6 rânduri), ~14.600 mp. Lista
+   rezidențială are pe mp doar aluminiu 0,8 (59,51 €), industrialul și 0,6
+   (45,00). Zincata se tarifează ca aluminiul? Ce preț pe mp la 0,6 pe
+   rezidențial?
+3. **„Țeavă + izolație” — livrarea țevii cu fitinguri, susțineri și izolația
+   inclusă** (spital, 4 foi, 58 de rânduri; NISAL r83). O ofertați, sau doar
+   izolația? NISAL r83 e semnat 20,09 €/m, iar vata 50 pe ø125 din listă dă
+   14,68 — ce mai intră? Azi: fără preț, cu preț pus de mână.
+4. **Protecția la foc a tubulaturii** (8) — EI60/120/180, torcret Parafoc
+   20–40 mm (spital, 28 de rânduri; Book15, 2.233 mp). O ofertați? De unde
+   48 €/m² la canalul EI60 din Oferta 27.04.2026?
+5. **Diametrele între rânduri și peste listă** (3, 4), 19 poziții:
+   a) la 1 mm peste un rând (ø90, ø160): rândul de jos sau de sus? În aceeași
+   ofertă, țeava ø160 a luat 169 (14,37), iar SPIRO 160 a luat 159 (14,16);
+   PEHD ø90 a luat 89.
+   b) peste ø219: formula voastră cu 3,14 dă exact DN250 / 19 mm (23,13), dar
+   SPIRO ø250 și ø315 cu 9 mm ies exact (16,36 și 20,30) doar cu π și φ + 20
+   mm, adică 10 mm pe parte. Care e calculul?
+6. **Confirmări da / nu** — reguli aplicate azi, cu poziția la „De validat”:
+   - vata 40 mm pe DN15 = 7,90 €/ml, proporțional din rândul următor (18);
+   - elastomer „20 mm” = prețul de 19 mm;
+   - țeava de cupru în DN pe seria cuprului: DN15 → ø18 (tevi.md, 3); și
+     țeava de inox?
+   - UM „buc” pe izolație dreaptă (spital, 750 buc.): bucata e tubul de 2 m
+     sau metrul?
+   - un Ø scris lângă un DN care nu-i corespunde bate DN-ul (17);
+   - elastomer „până la ø60 → 13 mm” include DN50 (16).
+7. **Segmentul** (12): Oferta 284 e industrială, dar tarifată pe lista
+   rezidențială. Se deduce din client sau din obiectiv, ori îl alege omul?
+
+**Pentru etapele următoare** (nu blochează ofertarea): stocul — aplicația sau
+Saga (1); cine emite și trimite factura în SPV (2); cele două firme (6);
+cursul la facturare (7).
+
 ## Întrebări deschise către firmă
 
 Astea blochează arhitectura, nu doar implementarea:
@@ -811,40 +865,22 @@ Astea blochează arhitectura, nu doar implementarea:
 
 ## Ce urmează
 
-În ordinea în care ar trebui luate. Primele trei sunt riscuri de preț tăcut sau
-de acoperire, restul sunt produs.
-
-1. **Seria de cupru.** `dn-table.ts` aplică tabelul de oțel tuturor
-   materialelor: DN15 de cupru se caută pe rândul 22 în loc de 18, **nemarcat**.
-   Azi nu apare în niciun fișier, dar prima cerere cu cupru ar ieși greșit
-   tăcut. Minimul: o notă de verificat când textul spune cupru / inox pe o
-   țeavă dată în DN; apoi seria din `data/referinte/conversii-tevi.json`
-   (întrebarea 3 din `tevi.md`).
-2. **Modelul pe fișierele fără ofertă.** Pe cererea spitalului, 6 din 7 foi
-   n-au nicio poziție citită de reguli (materialul nu e în text); acolo lucrează
-   doar modelul. De rulat importul complet (cu cheia) pe spital, Book15 și
-   Flower City și de citit ce iese, linie cu linie — n-avem ofertă semnată pe
-   ele, deci verificarea e de om. `npm run golden -- <fisier>` pe cele care dau
-   bine, ca deriva să se vadă.
-3. **Confuzia între două numere din același rând** („inox 304 Di89”): niciun
-   validator n-o prinde. Un avertisment când valoarea citită e un număr care, în
-   text, stă lângă altceva decât notația de diametru.
-4. **Perechi noi de la firmă.** Fiecare cerere + ofertă semnată pe aceleași
-   rânduri devine un test ca cel TRANSAVIA
-   („cererea … reproduce Oferta 284 semnată”). E cea mai ieftină cale de a
-   confirma regulile deduse dintr-o singură ofertă (celula 22|40, formula peste
-   ø219, elastomer 20 → 19) și de a măsura L4 între proiecte (întrebarea 11).
-5. **Fișierele cu o singură foaie** au încă bara veche de filtre (butoane), în
+1. **Întâlnirea cu firma** (săptămâna viitoare): lista de mai sus. Fiecare
+   pereche cerere + ofertă semnată care vine devine un test ca TRANSAVIA
+   („cererea … reproduce Oferta 284 semnată”).
+2. **Branch-ul `riscuri-pret-tacut`** — de pus pe `main` când cere Andrei.
+3. **Fișierele cu o singură foaie** au încă bara veche de filtre (butoane), în
    afara unui card. De adus la aceeași așezare cu registrele cu mai multe foi,
    dacă se dorește consecvență.
-6. **Distribuitorul de abur** și echipamentele la comandă (`g100 D=500,
-   L=4500`): n-au regulă în liste; de aflat de la firmă cum se calculează, sau
-   de lăsat explicit „manual”.
-7. **Produs:** PDF din registru (print CSS), exportul în șablonul clientului,
+4. **Produs:** PDF din registru (print CSS), exportul în șablonul clientului,
    anexa cu tabelele de multiplicatori, ofertele în Postgres (azi registrul e
    artefact de client, legat doar prin `SesiuneImport.id`), apoi contract, stoc
    și facturare (întrebările 1–2 decid arhitectura lor).
-8. **Rafinăria și manopera** — liste care n-au venit (întrebările 5, 13).
+5. **Rafinăria și manopera** — liste care n-au venit (D2).
+
+Făcute pe 25 septembrie 2026: seria de cupru, modelul pe fișierele fără
+ofertă, validatorul pentru alt număr citit ca diametru, prețul pus de mână
+(distribuitorul și echipamentele la comandă).
 
 ## Comenzi
 
