@@ -170,7 +170,7 @@ export function valideazaMapare(
 /**
  * Amprenta layoutului unei foi: etichetele de antet normalizate plus latimea.
  *
- * E cheia de cache. `Radoia.xlsx` are sapte foi cu antet identic — o mapare,
+ * E cheia de cache. `cerere-de-oferta-spital.xlsx` are sapte foi cu antet identic — o mapare,
  * sapte foi — iar a doua lista cu acelasi layout nu mai cheama modelul deloc.
  * Fara antet, amprenta e doar latimea plus numele foii: slaba, dar suficienta
  * ca sa nu se reintrebe modelul de doua ori in acelasi import.

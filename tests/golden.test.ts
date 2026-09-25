@@ -70,7 +70,7 @@ describe.runIf(fisiere.length > 0)("golden files", () => {
         // azi primeste pret in tacere e exact felul de schimbare pe care nu o
         // vede nimeni la timp.
         const acum = g.linii.map((l) => {
-          const t = tarifeazaExtras(l.extras, l.cantitate ?? 1);
+          const t = tarifeazaExtras(l.extras, l.cantitate ?? 1, "rezidential", l.text);
           return {
             index: l.index,
             pret_unitar: t.pret?.pret_unitar ?? null,

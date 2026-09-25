@@ -54,7 +54,8 @@ lista cea mai apropiata. Substitutia e decizia omului, nu a ta.
 
 FORMA: "ml" pentru metru liniar, "mp" pentru metru patrat (tubulatura), sau tipul
 elementului special: cot, teu, manseta, flansa, robinet, contor, filtru, pompa.
-Foloseste unitatea de masura din coloana UM daca exista.
+Foloseste unitatea de masura din coloana UM daca exista — cu O exceptie: forma scrisa
+explicit dupa liniuta in text ("Di169, g50 - COT") bate UM-ul, chiar daca UM e "ml".
 
 GOL_LATIME_MM / GOL_INALTIME_MM: doar la sistem="goluri_foc". Dimensiunile golului
 taiat in perete, scrise "130/130", "1400/600" intr-o coloana "dimensiune gol".
@@ -64,9 +65,17 @@ ele linia nu se poate tarifa. La orice alt sistem, null.
 STRATURI_EXTRA: pentru pozitii compuse, straturile de PESTE primul, in ordine.
 Ex: "DN80 elastomer 13mm + vata 40mm + tabla" -> sistem=elastomer, grosime=13,
 straturi_extra=[{vata_minerala,40},{tabla,null}].
+SISTEM e mereu izolatia de pe teava; jacheta (tabla, tabla_inox, pvc) merge in
+straturi_extra, chiar daca in text e scrisa prima ("caseta din tabla inox si vata
+minerala" -> sistem=vata_minerala, straturi_extra=[{tabla_inox,null}]).
 
 INCREDERE: 0..1. Pune sub 0.85 daca ghicesti orice camp. E mai bine sa trimiti
 linia la validare umana decat sa nimeresti gresit.
+
+SECTIUNE: unele linii au "(Sectiune: ...)" — antetul de deasupra randului din
+Excel, de ex. "Treceri prin pereti rezistenti la foc EI120". Foloseste-l DOAR ca
+sa afli SISTEMUL cand linia nu-l spune. Diametrul, grosimea, forma si
+dimensiunile golului se citesc NUMAI din linie, niciodata din sectiune.
 
 MOTIV: o propozitie scurta in romana, ce ai dedus si de ce.
 
@@ -152,14 +161,14 @@ export async function cuLimitaDeRata<T>(f: () => Promise<T>): Promise<T> {
 }
 
 export async function extrageCuModel(
-  linii: { index: number; text: string; um?: string }[],
+  linii: { index: number; text: string; um?: string; sectiune?: string }[],
   optiuni: OptiuniModel = {},
 ): Promise<LinieExtrasa[]> {
   if (linii.length === 0) return [];
 
   const { client, model } = clientSiModel(optiuni);
   // gpt-4.1, nu gpt-4o. Pe contul firmei gpt-4o are 90.000 de tokeni pe zi,
-  // adica doua fisiere ca Radoia.xlsx; gpt-4.1 are 900.000, la aceeasi limita
+  // adica doua fisiere ca cerere-de-oferta-spital.xlsx; gpt-4.1 are 900.000, la aceeasi limita
   // pe minut. Masurat pe doua fisiere reale, nicio diferenta de calitate.
   //
   // Familia gpt-5 are plafoane si mai mari, dar RESPINGE temperature 0 —
@@ -175,7 +184,7 @@ export async function extrageCuModel(
   // Lotul implicit e 25, nu 12, si motivul e bugetul de tokeni pe ZI.
   //
   // Fiecare apel cara ~1.177 tokeni ficsi — system prompt (~735) plus schema
-  // (~442) — retrimisi integral. Pe Radoia.xlsx pleaca 153 de linii la model:
+  // (~442) — retrimisi integral. Pe cerere-de-oferta-spital.xlsx pleaca 153 de linii la model:
   // in loturi de 12 sunt 13 apeluri, deci 15.300 de tokeni doar overhead; in
   // loturi de 25 sunt 7 apeluri si 8.200. La un plafon de 90.000 tokeni pe zi,
   // diferenta e intre doua fisiere pe zi si trei.
@@ -191,7 +200,9 @@ export async function extrageCuModel(
 
   async function proceseaza(bucata: typeof linii): Promise<LinieExtrasa[]> {
     const payload = bucata
-      .map((l) => `[${l.index}]${l.um ? ` (UM: ${l.um})` : ""} ${l.text.replace(/\s+/g, " ").slice(0, 900)}`)
+      .map((l) => `[${l.index}]${l.um ? ` (UM: ${l.um})` : ""}`
+        + `${l.sectiune ? ` (Sectiune: ${l.sectiune.replace(/\s+/g, " ").slice(0, 200)})` : ""}`
+        + ` ${l.text.replace(/\s+/g, " ").slice(0, 900)}`)
       .join("\n");
 
     const raspuns = await cuLimitaDeRata(() => client.chat.completions.create({

@@ -71,7 +71,7 @@ ghicește prima coloană numerică de lângă UM și poate lua factorul.
    text. Nu trece → maparea se respinge, se cade pe euristica de azi, foaia se
    marchează pentru om. Modelul propune, codul decide.
 3. Cache pe **amprentă de antet** (etichetele normalizate + numărul de coloane)
-   în `data/mapari/`. `Radoia.xlsx` are 7 foi cu antet identic: o mapare, șapte
+   în `data/mapari/`. `cerere-de-oferta-spital.xlsx` are 7 foi cu antet identic: o mapare, șapte
    foi. A doua listă cu același layout — zero apeluri.
 
 Efecte colaterale, toate măsurabile: dispare euristica de cantitate; textul
@@ -162,7 +162,7 @@ proiecte nu se poate nici măsura, nici promite.
    trece prin guardrails — dar **nu învață șabloane**: vezi `ui.md`.
 6. ~~**Rândurile de continuare**~~ — `continuare.ts`. `"Same - Ø125 mm"`
    moștenește descrierea poziției de deasupra. Măsurat pe cele 10 fișiere de
-   client: `Book15.xlsx` trece de la **5 la 24 de poziții** (1 → 6 tarifate),
+   client: `cerere-de-oferta-book15.xlsx` trece de la **5 la 24 de poziții** (1 → 6 tarifate),
    celelalte 9 rămân identice.
 
 Pe drum s-au reparat și două lucruri care nu erau în planul ăsta, dar îl

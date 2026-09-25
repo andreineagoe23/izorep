@@ -102,7 +102,30 @@ export interface RezultatTarifare {
    * validare. O regula confirmata nu mai e o presupunere.
    */
   noteDeVerificat?: string[];
+  /**
+   * Aceleasi note de verificat, ca valori pe care ecranul le poate numara si
+   * scrie in cuvinte simple. Textul din `noteDeVerificat` ramane pentru
+   * registru si pentru cine vrea detaliul.
+   */
+  motiveDeVerificat?: MotivVerificare[];
 }
+
+/** De ce o pozitie cu pret trebuie totusi vazuta de om. */
+export type MotivVerificare =
+  /** Un strat vine din lista altui segment decat cel ales la import. */
+  | "segment_diferit"
+  /** Primul strat e la 1 mm peste un rand; ofertele au folosit ambele randuri. */
+  | "rotunjire_neconfirmata"
+  /** Grosimea e cea uzuala a firmei, nu scrisa de client. */
+  | "grosime_propusa"
+  /** Descrierea s-a schimbat dupa ce omul verificase pozitia: e recitita din textul nou. */
+  | "descriere_schimbata"
+  /** UM-ul spune ml/mp, textul spune cot/teu/...; cele doua forme dau preturi diferite. */
+  | "forma_contrazisa"
+  /** Celula ø × grosime lipseste din lista; pretul e dedus proportional din randul urmator. */
+  | "celula_dedusa"
+  /** Diametru peste ultimul rand: pret din formula firmei pe mp, nu din matrice. */
+  | "peste_lista";
 
 /**
  * De ce nu s-a putut tarifa o pozitie, ca valoare STABILA.
@@ -138,7 +161,9 @@ export type CodNetarifare =
   /* --- sistemul e cunoscut, dar nu se poate cauta pe nimic --- */
   | "fara_diametru"
   /* --- din DiametruNecunoscut, mapat in tarifeazaExtras --- */
-  | "dn_necunoscut";
+  | "dn_necunoscut"
+  /* --- alta lucrare decat cea din liste --- */
+  | "protectie_foc_tubulatura";
 
 export class PozitieNetarifata extends Error {
   constructor(
@@ -154,7 +179,7 @@ export class PozitieNetarifata extends Error {
 /* ------------------------------------------------------------------ *
  * Inchideri goluri la foc
  *
- * Termenii sunt ai firmei, luati din "Oferta pret inchideri goluri la foc.xlsx"
+ * Termenii sunt ai firmei, luati din "pret-rezidential-goluri-foc.xlsx"
  * si din oferta 118.1: "inchideri goluri la foc", "goluri pana la 0,05 mp",
  * "banda WRAP", "conducta plastic" / "conducta otel", "colier de protectie
  * antifoc PROMASTOP UNICOLLAR", "urcare" / "orizontala".
@@ -205,6 +230,12 @@ export interface CerereGolFoc {
    */
   clasa_foc?: string;
   cantitate: number;
+  /**
+   * Segmentul ofertei. Inchiderile la foc au lista doar pe rezidential, deci
+   * pretul vine de acolo oricum; pe alt segment rezultatul poarta nota, ca la
+   * straturile din `tarifeaza` (intrebarea 14).
+   */
+  destinatie?: import("./lists.js").Destinatie;
 }
 
 export interface ComponentaGolFoc {
@@ -227,4 +258,8 @@ export interface RezultatGolFoc {
   cantitate: number;
   total: number;
   moneda: "EUR";
+  /** Aceeasi semnificatie ca pe `RezultatTarifare`. */
+  note?: string[];
+  noteDeVerificat?: string[];
+  motiveDeVerificat?: MotivVerificare[];
 }

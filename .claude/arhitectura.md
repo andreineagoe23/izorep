@@ -40,8 +40,8 @@ cerere client (Excel/poză) → deviz → ofertă → contract → lucrare
 ## Structura
 
 ```
-data/price-lists/    listele rezidențiale — cele pe care rulează motorul
-data/price-lists/industrial/   listele industriale — deocamdată doar în bază
+data/price-lists/    listele rezidențiale — implicite în motor
+data/price-lists/industrial/   listele industriale — în motor când oferta e industrială, și în bază
 data/referinte/      seriile de diametre pe material, secțiuni rectangulare
 scripts/             ETL one-off Excel → JSON (Python, .xls vechi)
 src/pricing/         motorul de prețuri — determinist, testat pe oferte reale

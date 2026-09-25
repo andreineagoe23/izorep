@@ -149,6 +149,7 @@ care nu o poți reproduce.
 - Autentificare, jurnal de audit, verificarea permisiunilor pe server.
 - Restul tabelelor: cerere, deviz, ofertă, contract, lucrare, stoc, factură.
 - Regula după care se alege destinația unei lucrări. Coloana există și e
-  populată; cine o setează, nu.
+  populată; în aplicație segmentul se alege manual la import, dar nu se
+  deduce de nicăieri și nu se scrie încă pe o lucrare din bază (întrebarea 12).
 - Motorul primește încă listele prin import static, nu ca argument. Pasul
   următor pentru ca serverul să tarifeze per tenant.

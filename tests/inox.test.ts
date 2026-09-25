@@ -1,7 +1,7 @@
 /**
  * Tabla de inox ca sistem de prima clasa.
  *
- * Sursa problemei: `Izolatii Transavia.xlsx` are 72 de randuri "tabla de inox
+ * Sursa problemei: `cerere-de-oferta-transavia-inox.xlsx` are 72 de randuri "tabla de inox
  * 304", dar promptul din extract-llm.ts mapa explicit inoxul pe sistemul
  * "tabla", care e lista de ALUMINIU. Cele 39 de pozitii tarifate din el
  * (6.039,90 EUR) au iesit pe lista gresita — la ø90 inoxul e 30,89 EUR
@@ -12,7 +12,7 @@
  * mereu din lista industriala, indiferent de restul pozitiei.
  */
 import { describe, it, expect } from "vitest";
-import { lista, diametre, SISTEME_FARA_REZIDENTIAL } from "../src/pricing/lists.js";
+import { lista, diametre, listaDe } from "../src/pricing/lists.js";
 import { tarifeaza } from "../src/pricing/engine.js";
 import { extrageDeterminist } from "../src/import/extract-regex.js";
 import { valideazaExtragere } from "../src/import/valideaza.js";
@@ -27,9 +27,9 @@ describe("lista de inox", () => {
     expect(l.grosimi_mm).toEqual([0.4, 0.5, 0.6]);
   });
 
-  it("e industriala, nu rezidentiala: SISTEME_FARA_REZIDENTIAL o contine", () => {
-    expect(SISTEME_FARA_REZIDENTIAL.has("tabla_inox")).toBe(true);
-    expect(SISTEME_FARA_REZIDENTIAL.has("tabla")).toBe(false);
+  it("e industriala, nu rezidentiala: pe rezidential cade pe lista industriala si o spune", () => {
+    expect(listaDe("tabla_inox", "rezidential").folosita).toBe("industrial");
+    expect(listaDe("tabla", "rezidential").folosita).toBe("rezidential");
   });
 
   it("ø80–ø710 din 10 in 10", () => {

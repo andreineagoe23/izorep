@@ -63,9 +63,9 @@ const CAZURI: { cod: CodNetarifare; de: string; f: () => unknown }[] = [
   },
   {
     cod: "grosime_inexistenta",
-    de: "Di21 g40 vata pe ml: 40 e grosime valida, dar celula 22|40 nu exista",
+    de: "o15 g40 vata pe ml: 40 e grosime valida, dar nici celula 15|40, nici 18|40 nu exista",
     f: () => tarifeaza({
-      diametru: { valoare: 21, tip: "interior" },
+      diametru: { valoare: 15, tip: "exterior" },
       straturi: [{ sistem: "vata_minerala", grosime_mm: 40 }],
       forma: "ml", cantitate: 1,
     }),
@@ -77,8 +77,10 @@ const CAZURI: { cod: CodNetarifare; de: string; f: () => unknown }[] = [
   },
   {
     cod: "peste_maximul_listei",
-    de: "elastomerul se opreste la o219; ofertele reale au o250 si o315",
-    f: () => tarifeazaSimplu("elastomer", 250, 9, "ml"),
+    de: "PVC-ul se opreste la o710 si n-are pret pe mp, deci nici formula firmei nu se aplica",
+    f: () => tarifeaza({
+      diametru: { valoare: 800, tip: "exterior" }, straturi: [{ sistem: "pvc" }], forma: "ml", cantitate: 1,
+    }),
   },
   {
     cod: "fara_coeficient_de_forma",
@@ -161,10 +163,21 @@ const CAZURI: { cod: CodNetarifare; de: string; f: () => unknown }[] = [
   },
   {
     cod: "fara_diametru",
-    de: "tubulatura rectangulara (`Luftleitg. eckig`, UM m²) chiar n-are diametru",
+    de: "tubulatura rectangulara pe ml (A × B): n-are diametru, iar pe ml nu exista pret fara el "
+      + "(pe m² se tarifeaza din `per_mp`, vezi „Luftleitg. eckig”)",
     f: () => {
       const r = tarifeazaExtras(
-        extrasa({ sistem: "vata_minerala", diametru_valoare: null, diametru_tip: null, forma: "mp" }), 1);
+        extrasa({ sistem: "vata_minerala", diametru_valoare: null, diametru_tip: null, forma: "ml" }), 1);
+      if (r.codEroare) throw new PozitieNetarifata(r.codEroare, r.eroare ?? "", {});
+      return r;
+    },
+  },
+  {
+    cod: "protectie_foc_tubulatura",
+    de: "canal de desfumare EI60 (Oferta 27.04.2026, semnat 48 €/m²): altă lucrare, fără listă (întrebarea 8)",
+    f: () => {
+      const r = tarifeazaExtras(extrasa({ sistem: "vata_minerala", diametru_valoare: null, diametru_tip: null,
+        grosime_mm: 60, forma: "mp" }), 1, "rezidential", "tubulatura rectangulara, izolare la foc EI60, vata 60mm");
       if (r.codEroare) throw new PozitieNetarifata(r.codEroare, r.eroare ?? "", {});
       return r;
     },
@@ -198,7 +211,7 @@ describe("fiecare cauza de netarifare are un cod stabil", () => {
       "pozitie_fara_straturi", "fara_pret_pe_mp", "gol_fara_dimensiuni",
       "gol_dimensiuni_invalide", "banda_wrap_inexistenta", "colier_inexistent",
       "diametru_conducta_lipsa", "material_conducta_lipsa", "gol_foc_in_matrice",
-      "fara_diametru", "dn_necunoscut",
+      "fara_diametru", "dn_necunoscut", "protectie_foc_tubulatura",
     ];
     const acoperite = new Set(CAZURI.map((c) => c.cod));
     expect(toate.filter((c) => !acoperite.has(c))).toEqual([]);
@@ -209,7 +222,7 @@ describe("fiecare cauza de netarifare are un cod stabil", () => {
     // mesajele cu codurile "ca sa fie consecvent", omul de la validare ar
     // pierde singurul text care ii spune CE anume lipseste din lista.
     try {
-      tarifeazaSimplu("elastomer", 250, 9, "ml");
+      tarifeaza({ diametru: { valoare: 800, tip: "exterior" }, straturi: [{ sistem: "pvc" }], forma: "ml", cantitate: 1 });
       expect.unreachable("trebuia sa arunce");
     } catch (e) {
       expect(e).toBeInstanceOf(PozitieNetarifata);
@@ -275,7 +288,7 @@ async function registru(randuri: (string | number | null)[][]): Promise<ArrayBuf
   return (await wb.xlsx.writeBuffer()) as ArrayBuffer;
 }
 
-/** Textul real din `Oferta 27.04.2026.xlsx`, foaia Ventilatie. */
+/** Textul real din `oferta-118-nisal.xlsx`, foaia Ventilatie. */
 const SPIRO_125 = "Zuluft Wickelfalzrohr starr SPIRO DN 125, Armaflex 9mm";
 
 describe("SPIRO se citeste ca diametru exterior", () => {

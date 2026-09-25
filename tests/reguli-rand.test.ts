@@ -24,8 +24,12 @@ describe("toleranta la capatul listei (TOLERANTA_CAPAT_LISTA)", () => {
     expect(r.pret_unitar).toBe(15.46);
   });
 
-  it("DN250 elastomer (od 273, la 54 mm de capatul de 219) ramane refuzat", () => {
-    expect(() => tarifeazaSimplu("elastomer", 250, 9, "ml")).toThrow(PozitieNetarifata);
+  it("DN250 elastomer (od 273, la 54 mm de capatul de 219) NU cade pe randul 219: merge pe formula pe mp, marcat", () => {
+    // Toleranta de capat ramane 0,5 mm; peste ea, regula firmei pe suprafata.
+    const r = tarifeazaSimplu("elastomer", 250, 19, "ml");
+    expect(r.straturi[0]!.rand_lista).toBe(0);
+    expect(r.pret_unitar).toBe(23.13); // Oferta 27.04.2026, „S=20mm, DN250", semnat 23,13
+    expect(r.motiveDeVerificat).toContain("peste_lista");
   });
 });
 
@@ -107,10 +111,33 @@ describe("Di49 / Di169 / Di273 pe ml — vata + tabla, ambele incluse (multiplic
 });
 
 describe("strat exclus: nu se mai cauta in matrice", () => {
-  it("Di21 g40 pe ml RAMANE netarifat: la ml vata are coeficient 1, deci intra in pret, iar celula 22|40 nu exista", () => {
-    expect(() => tarifeaza({
+  it("Di21 g40 pe ml: celula 22|40 lipseste, pretul e dedus din randul 28 ca in Oferta 284 si ramane de verificat", () => {
+    // Oferta 284: 25,68 € = vata 7,90 (7,9522 × 6,8157 / 6,8569) + tabla 17,78.
+    // Pana pe 25 septembrie 2026 pozitia ramanea netarifata.
+    const r = tarifeaza({
       diametru: { valoare: 21, tip: "interior" },
       straturi: [{ sistem: "vata_minerala", grosime_mm: 40 }, { sistem: "tabla" }],
+      forma: "ml", cantitate: 1,
+    });
+    expect(r.pret_unitar).toBe(25.68);
+    expect(r.motiveDeVerificat).toContain("celula_dedusa");
+  });
+
+  it("caseta DN15 g40 (flansa): aceeasi vata dedusa da exact pretul semnat, 47,41", () => {
+    const r = tarifeaza({
+      diametru: { valoare: 15, tip: "DN" },
+      straturi: [{ sistem: "vata_minerala", grosime_mm: 40 }, { sistem: "tabla" }],
+      forma: "flansa", cantitate: 1,
+    });
+    expect(r.pret_unitar).toBe(47.41);
+    expect(r.motiveDeVerificat).toContain("celula_dedusa");
+  });
+
+  it("golul care nu are randul imediat de deasupra plin ramane netarifat", () => {
+    // Vata 40 mm la o15: randul 18 n-are nici el 40, deci ar fi extrapolare.
+    expect(() => tarifeaza({
+      diametru: { valoare: 15, tip: "exterior" },
+      straturi: [{ sistem: "vata_minerala", grosime_mm: 40 }],
       forma: "ml", cantitate: 1,
     })).toThrow(PozitieNetarifata);
   });

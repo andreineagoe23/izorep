@@ -7,11 +7,11 @@ import goluri_foc from "../../data/price-lists/goluri_foc.json" with { type: "js
 // care exista e cea industriala, importata static aici la fel ca celelalte —
 // modulul trebuie sa ruleze identic in Node si in browser, deci nu se citeste
 // cu fs. Nu intra in `catalogDinFisiere()`/`Catalog.matrice`, care raman pe
-// destinatia rezidentiala; e disponibila doar prin `lista("tabla_inox")`.
+// destinatia rezidentiala.
 import tabla_inox from "../../data/price-lists/industrial/tabla_inox.json" with { type: "json" };
-// Celelalte trei liste industriale. Importate ca sa poata fi CITITE — ecranul
-// de liste le arata pe destinatii — nu ca sa fie aplicate: `lista()` si, prin
-// ea, `tarifeaza` raman pe rezidential. Vezi `PE_DESTINATIE`.
+// Celelalte trei liste industriale. `tarifeaza` le aplica atunci cand oferta e
+// industriala — segmentul il alege omul la import — prin `listaDe`. Vezi
+// `PE_DESTINATIE`.
 import elastomer_industrial from "../../data/price-lists/industrial/elastomer.json" with { type: "json" };
 import vata_minerala_industrial from "../../data/price-lists/industrial/vata_minerala.json" with { type: "json" };
 import tabla_industrial from "../../data/price-lists/industrial/tabla.json" with { type: "json" };
@@ -56,21 +56,14 @@ const LISTE = { elastomer, vata_minerala, tabla, pvc, tabla_inox } as unknown as
  *
  * `tabla_inox` merge prin acelasi accesor ca restul, desi lista lui e
  * industriala: cine cheama `lista()` cere un pret pe sistem, nu pe destinatie.
+ * Tarifarea NU trece pe aici, ci prin `listaDe`, care stie de segment si spune
+ * cand a cazut pe alta lista decat cea ceruta.
  */
 export function lista(sistem: SistemMatrice): ListaPreturi {
   const l = LISTE[sistem];
   if (!l) throw new Error(`lista de preturi lipseste: ${sistem}`);
   return l;
 }
-
-/**
- * Sistemele care NU au lista de preturi rezidentiala: pretul lor vine mereu
- * din lista industriala, indiferent de restul pozitiei. Azi doar tabla de
- * inox (intrebarea 15 din .claude/stare.md). Folosit ca sa se ataseze o nota
- * vizibila de destinatie mixta pe pozitiile care il folosesc — vezi
- * `tarifeazaExtras` din src/import/nucleu.ts.
- */
-export const SISTEME_FARA_REZIDENTIAL: ReadonlySet<string> = new Set(["tabla_inox"]);
 
 export interface PragGol {
   /** Limita SUPERIOARA a pragului, inclusiva: "Goluri pana la 0,05 mp". */
@@ -113,12 +106,12 @@ export type Destinatie = "rezidential" | "industrial" | "rafinarie";
 /**
  * Inventarul: ce lista EXISTA pe fiecare destinatie.
  *
- * E un inventar, nu un drum de tarifare. `tarifeaza` merge in continuare prin
- * `lista()`, adica pe rezidential (plus tabla de inox, care n-are alta
- * varianta). Cat timp regula dupa care se alege destinatia nu e raspunsa —
- * intrebarea 12 din `.claude/stare.md` — industrialele se pot CITI, nu si
- * aplica: un motor care ar alege singur segmentul ar ofert cu preturi de
- * industrial o lucrare rezidentiala, fara ca nimeni sa fi cerut asta.
+ * E si drumul de tarifare: `tarifeaza` cauta aici, prin `listaDe`, pe
+ * segmentul primit in `CerereTarifare.destinatie` (implicit rezidential).
+ * Motorul NU alege singur segmentul — il alege omul la import (intrebarea 12
+ * din `.claude/stare.md` ramane: regula dupa care s-ar putea deduce). Un motor
+ * care l-ar ghici ar oferta cu preturi de industrial o lucrare rezidentiala,
+ * fara ca nimeni sa fi cerut asta.
  *
  * Rafinaria e listata anume, goala: absenta ei e o informatie — s-a cerut si
  * nu a venit — nu un rand care lipseste din tabel.

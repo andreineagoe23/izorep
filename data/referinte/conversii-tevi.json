@@ -1,6 +1,6 @@
 {
-  "sursa": "Conversie_ml_in_mp_tevi_si_tubulaturi.xlsx",
-  "nota": "Transcriere generata (openpyxl), nu fisier scris de firma in Excel. Conflict cunoscut: DN150 apare aici ca 165,1 (EN 10255), iar in Tabel_Conversie_Tevi.docx si in dn-table.ts ca 168,3 (ISO 4200). Pentru tarifare conteaza 168,3 — randul din listele de preturi e 168.",
+  "sursa": "conversie-ml-mp-tevi-tubulaturi.xlsx",
+  "nota": "Transcriere generata (openpyxl), nu fisier scris de firma in Excel. Conflict cunoscut: DN150 apare aici ca 165,1 (EN 10255), iar in tabel-conversie-tevi.docx si in dn-table.ts ca 168,3 (ISO 4200). Pentru tarifare conteaza 168,3 — randul din listele de preturi e 168.",
   "formule": {
     "circular": "m2/ml = PI * (fi + 2 * izolatie) / 1000",
     "rectangular": "m2/ml = 2 * (A + B + 4 * izolatie) / 1000",

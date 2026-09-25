@@ -2,7 +2,10 @@ import { MENIU, ROLURI, VIITOR, setRol, rolActiv, type Rol } from "./nav.js";
 import { esc, type Ecran } from "./ecrane/tip.js";
 import { CURS_BNR } from "./date/seed.js";
 import { icoana } from "./icoane.js";
-import { citesteMeniu, scrieMeniu, inverseaza, type StareMeniu } from "./meniu-stare.js";
+import {
+  citesteMeniu, scrieMeniu, inverseaza, laCerere, stareEfectiva, EVENIMENT_SPATIU, FARA_CERERE,
+  type SpatiuCerut, type StareMeniu,
+} from "./meniu-stare.js";
 
 const ECRANE: Record<string, () => Promise<{ ecran: Ecran }>> = {
   tablou: () => import("./ecrane/tablou.js"),
@@ -69,6 +72,9 @@ function deseneazaMeniu(): void {
 
 async function navigheaza(mutaFocus = false): Promise<void> {
   inchideSertar();
+  // Cererea de spatiu e a ecranului care pleaca. Se retrage INAINTE de randare:
+  // importul isi redeschide singur sesiunea in `render` si o cere din nou.
+  renuntaLaSpatiu();
   const id = ruta();
   const incarca = ECRANE[id];
   const root = $("#ecran");
@@ -112,15 +118,17 @@ const radacina = document.documentElement;
 
 let stareBara: StareMeniu = citesteMeniu();
 let sertarDeschis = false;
+let spatiu: SpatiuCerut = FARA_CERERE;
 
 function aplicaBara(): void {
-  radacina.dataset["meniu"] = stareBara;
+  const efectiva = stareEfectiva(stareBara, spatiu);
+  radacina.dataset["meniu"] = efectiva;
   const sertar = MOBIL.matches && sertarDeschis;
   if (sertar) radacina.dataset["sertar"] = "deschis";
   else delete radacina.dataset["sertar"];
   $("#fundal-sertar").hidden = !sertar;
 
-  const deschisa = MOBIL.matches ? sertarDeschis : stareBara === "extins";
+  const deschisa = MOBIL.matches ? sertarDeschis : efectiva === "extins";
   const buton = $<HTMLButtonElement>("#pliaza");
   const eticheta = deschisa ? "Ascunde meniul" : "Arată meniul";
   buton.setAttribute("aria-expanded", String(deschisa));
@@ -137,6 +145,9 @@ function inchideSertar(): void {
 function comutaBara(): void {
   if (MOBIL.matches) {
     sertarDeschis = !sertarDeschis;
+  } else if (spatiu.pliatTemporar) {
+    // Pliata de ecran, nu de om: o redeschide fara sa-i schimbe preferinta.
+    spatiu = { ...spatiu, pliatTemporar: false };
   } else {
     stareBara = inverseaza(stareBara);
     scrieMeniu(stareBara);
@@ -150,6 +161,25 @@ function comutaBara(): void {
     $("#pliaza").focus();
   }
 }
+
+function renuntaLaSpatiu(): void {
+  if (spatiu === FARA_CERERE) return;
+  spatiu = FARA_CERERE;
+  aplicaBara();
+}
+
+// Importul cere toata latimea cand arata foaia clientului: bara se pliaza,
+// temporar. Vezi `laCerere` in meniu-stare.ts.
+document.addEventListener(EVENIMENT_SPATIU, (e) => {
+  const inainte = spatiu;
+  spatiu = laCerere(spatiu, (e as CustomEvent<boolean>).detail, stareBara, MOBIL.matches);
+  if (spatiu === inainte) return;
+  // Fara animatie: ecranul isi masoara latimea imediat dupa cerere.
+  radacina.dataset["faraTranzitie"] = "";
+  aplicaBara();
+  void radacina.offsetWidth;
+  requestAnimationFrame(() => delete radacina.dataset["faraTranzitie"]);
+});
 
 // Navigarea inchide sertarul prin `navigheaza`, dar un click pe ecranul curent
 // nu schimba hash-ul, deci nu ajunge acolo: sertarul ar ramane deschis peste

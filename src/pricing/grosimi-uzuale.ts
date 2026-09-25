@@ -1,4 +1,5 @@
-import { toOuterDiameter, type TipDiametru } from "./dn-table.js";
+import { DN_TO_OD, TOLERANTA_SERIE_OTEL, toOuterDiameter, type TipDiametru } from "./dn-table.js";
+import { TOLERANTA_CAPAT_LISTA } from "./engine.js";
 import type { SistemMatrice } from "./types.js";
 
 /**
@@ -73,11 +74,38 @@ export const PRAGURI_ELASTOMER: PragGrosime[] = [
 ];
 
 /**
+ * Diametrul exterior adus pe seria de teava de otel, cand cade la cel mult
+ * `TOLERANTA_SERIE_OTEL` de ea; altfel neschimbat.
+ *
+ * Clientii scriu seria de otel rotunjita la intreg — `Di34`, `Di49`, `Di89` in
+ * Oferta 284 — iar pragurile vatei sunt chiar valorile ISO (33,7 · 48,3 ·
+ * 88,9). Comparat direct, 34 iese din treapta lui DN25: Di34 primea 30 mm in
+ * loc de 20, Di49 50 in loc de 40, Di89 100 in loc de 80 — aceeasi teava, alta
+ * grosime, doar fiindca a fost scrisa altfel. E regula de SERIE din
+ * `randPentruTeava`, cu acelasi prag.
+ */
+function peSerie(od: number): number {
+  let best = od;
+  let bestD = Number.POSITIVE_INFINITY;
+  for (const v of Object.values(DN_TO_OD)) {
+    const d = Math.abs(v - od);
+    if (d <= TOLERANTA_SERIE_OTEL && d < bestD) { best = v; bestD = d; }
+  }
+  return best;
+}
+
+/**
  * Grosimea propusa pentru un diametru, sau `null` cand nu exista temei.
  *
  * Peste ultimul prag: vata ramane la 100 mm (spus de firma), elastomerul NU
  * primeste propunere — acolo intra 32 mm, care depinde de mediu, si nimeni nu
  * poate citi mediul dintr-un rand de Excel.
+ *
+ * Pragurile se compara cu toleranta `TOLERANTA_CAPAT_LISTA`. Pragurile
+ * elastomerului sunt RANDURI din lista (60, 219, 324), iar randul 60 e chiar
+ * DN50 (ø60,3), randul 219 chiar DN200 (ø219,1): fara toleranta, DN50 primea
+ * 19 mm in loc de 13 si DN200 25 in loc de 19. Motorul foloseste aceeasi
+ * toleranta, din acelasi motiv, la capatul listei de elastomer.
  *
  * Tabla si PVC-ul n-au propunere deloc: sunt jachete, grosimea lor se deduce
  * din randul deja gasit in lista (`grosimeEfectiva`), nu din diametru.
@@ -91,13 +119,14 @@ export function grosimePropusa(
 
   let od: number;
   try {
-    od = toOuterDiameter(diametru_valoare, diametru_tip);
+    od = peSerie(toOuterDiameter(diametru_valoare, diametru_tip));
   } catch {
     return null; // DN care nu exista in tabel: nu se propune pe o presupunere
   }
+  const inTreapta = (p: PragGrosime): boolean => od <= p.pana_la_od + TOLERANTA_CAPAT_LISTA;
 
   if (sistem === "elastomer") {
-    return PRAGURI_ELASTOMER.find((p) => od <= p.pana_la_od)?.grosime_mm ?? null;
+    return PRAGURI_ELASTOMER.find(inTreapta)?.grosime_mm ?? null;
   }
-  return PRAGURI_VATA.find((p) => od <= p.pana_la_od)?.grosime_mm ?? VATA_PESTE_ULTIMUL_PRAG;
+  return PRAGURI_VATA.find(inTreapta)?.grosime_mm ?? VATA_PESTE_ULTIMUL_PRAG;
 }

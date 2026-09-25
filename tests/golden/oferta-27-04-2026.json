@@ -28,9 +28,9 @@
         "motiv": "Textul mentioneaza saltele de vata minerala 50mm si jacketing de tabla, UM este mp, deci izolatie pe tubulatura."
       },
       "avertismente": [],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "pozitia n-are diametru, iar listele de preturi se cauta doar pe diametru exterior; tubulatura rectangulara se masoara A x B si nu are inca regula de conversie"
+      "pret_unitar": 79.73,
+      "total": 6356.87,
+      "eroare": null
     },
     {
       "index": 36,
@@ -292,9 +292,9 @@
         "motiv": "Izolatie Armaflex 9mm pentru tub PEHD D250x7.8, D250 este diametru exterior la PEHD."
       },
       "avertismente": [],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "diametru peste maximul listei de preturi"
+      "pret_unitar": 16.23,
+      "total": 265.52,
+      "eroare": null
     },
     {
       "index": 49,
@@ -722,7 +722,7 @@
       "avertismente": [],
       "pret_unitar": null,
       "total": null,
-      "eroare": "pozitia n-are diametru, iar listele de preturi se cauta doar pe diametru exterior; tubulatura rectangulara se masoara A x B si nu are inca regula de conversie"
+      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
     },
     {
       "index": 82,

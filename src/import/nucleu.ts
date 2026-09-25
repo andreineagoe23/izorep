@@ -7,21 +7,21 @@ import { amprentaFoaie, aplicaMapare } from "./mapare.js";
 import type { MapareSalvata } from "./cache-mapari.js";
 import { adaugaSectiuni, type LinieCuSectiune } from "./sectiuni.js";
 import { aplicaContinuare } from "./continuare.js";
-import { extrageDeterminist } from "./extract-regex.js";
+import { extrageDeterminist, formaElementDinText, formaExplicitaDinText } from "./extract-regex.js";
 import {
-  notatieContraziceMaterialul, valideazaExtragere,
+  diametruContrazisDeText, notatieContraziceMaterialul, valideazaExtragere,
   type Avertisment, type CodAvertisment,
 } from "./valideaza.js";
 import { grupeazaPeSablon, extindePeSablon, type LinieSursa } from "./sabloane.js";
 import { aplicaMemorie, type StocSabloane } from "./memorie.js";
 import type { LinieExtrasa, Sursa } from "./schema.js";
-import { tarifeaza } from "../pricing/engine.js";
+import { tarifeaza, tarifeazaPeMp } from "../pricing/engine.js";
 import { tarifeazaGolFoc } from "../pricing/goluri-foc.js";
 import {
   PozitieNetarifata,
   type CodNetarifare, type RezultatGolFoc, type RezultatTarifare,
 } from "../pricing/types.js";
-import { DiametruNecunoscut } from "../pricing/dn-table.js";
+import { DiametruNecunoscut, TOLERANTA_SERIE_OTEL, toOuterDiameter } from "../pricing/dn-table.js";
 
 /**
  * Nucleul comun de import, IZOMORF: fara `node:*`, fara DOM.
@@ -80,6 +80,28 @@ export interface OptiuniNucleu {
    * listele industriale, deci CLI-ul si testele nu-si schimba rezultatul.
    */
   destinatie?: Destinatie;
+  /**
+   * Grosimile uzuale ale firmei (`grosimi-uzuale.ts`) pe care omul a cerut sa
+   * fie puse, pe indexul liniei. Se aplica DOAR liniilor fara grosime extrasa
+   * si NU le confirma: o grosime propusa decide pretul, dar n-a scris-o
+   * clientul, deci linia ramane de validat pana o confirma omul.
+   *
+   * Sta separat de `rezolvate` fiindca `reevalueaza` re-extrage de la zero
+   * liniile care nu sunt "om", iar grosimea propusa nu vine din textul lor.
+   * Pana acum butonul punea `sursa: "om"`, adica o confirmare in masa ascunsa:
+   * 24 de casete de pe cererea Abur plecau direct in oferta, fara validare.
+   */
+  grosimiPropuse?: ReadonlyMap<number, number>;
+  /**
+   * Liniile a caror descriere s-a schimbat dupa ce le verificase omul sau le
+   * citise modelul. `reevalueaza` le reciteste din textul nou si le ADAUGA aici;
+   * raman „de verificat" pana le confirma omul din nou, cand ies din set.
+   *
+   * E al apelantului, ca `grosimiPropuse`, si din acelasi motiv: dupa recitire
+   * linia nu mai e nici `om`, nici `model`, deci recalculul urmator n-ar mai
+   * avea de unde sti ca fusese verificata. Ecranul il salveaza in istoric.
+   */
+  descrieriSchimbate?: Set<number>;
   laProgres?: (p: Progres) => void;
 }
 
@@ -178,12 +200,102 @@ export interface Statistici {
   randuriManopera: number;
 }
 
+/**
+ * O linie rezolvata: extragerea, de unde vine, si textul din care a iesit.
+ *
+ * `text` e textul randului in momentul in care extragerea i-a fost data —
+ * citita de model, confirmata sau corectata de om. Fara el, o descriere
+ * schimbata dupa aceea nu se vedea: linia `om` nu se re-extragea, iar a
+ * modelului se pastra, deci pretul ramanea pe textul vechi, marcat „Gata".
+ * Verificat in browser pe 15 septembrie 2026: dupa „Modifică", scoasa tabla din
+ * descriere, pozitia ramanea la 45,24 €/ml. Lipsa lui inseamna „textul de acum",
+ * pe care nucleul il completeaza la prima trecere (`stampileazaText`).
+ */
+export interface Rezolvare {
+  extras: LinieExtrasa;
+  sursa: Sursa;
+  text?: string;
+}
+
 export interface Rezultat {
   foi: FoaieBruta[];
   brute: LinieCuSectiune[];
-  rezolvate: Map<number, { extras: LinieExtrasa; sursa: Sursa }>;
+  rezolvate: Map<number, Rezolvare>;
   linii: LinieProcesata[];
   statistici: Statistici;
+}
+
+/**
+ * Ce citeste stratul determinist dintr-un text dat. Pentru editorul de pozitie,
+ * care arata campurile recitite dintr-o descriere inainte ca omul s-o salveze.
+ *
+ * Trece pe aici, nu direct prin `extract-regex.js`: e aceeasi regula ca la
+ * import, iar `tests/structura.test.ts` nu lasa ecranul sa aiba alta.
+ */
+export function citesteText(
+  index: number, text: string, um?: string, sectiune?: string, cantitate?: number,
+): LinieExtrasa {
+  return extrageDeterminist(index, text, um, sectiune, cantitate).linie;
+}
+
+const JACHETE = new Set<string>(["tabla", "tabla_inox", "pvc"]);
+
+/**
+ * Jacheta (tabla, inox, PVC) sta mereu PESTE izolatie, oricum ar fi fost
+ * scrisa ordinea in extragere.
+ *
+ * Motorul pune primul strat pe teava si creste geometria de acolo, deci o
+ * jacheta pusa prima muta toate randurile. Modelul face exact greseala asta,
+ * si nu constant: pe „Caseta izolatie armaturi ... din tabla inox 304 si vata
+ * minerala" (Izolatii Transavia), la `temperature 0`, o rulare a dat 14 linii
+ * cu `tabla_inox` ca sistem principal, urmatoarea niciuna. E fizica, nu
+ * interpretare, deci se repara aici, stabil — ordinea dintre izolatii si
+ * dintre jachete ramane cea scrisa.
+ */
+function jachetaLaExterior<T extends { sistem: string }>(straturi: T[]): T[] {
+  return [...straturi.filter((s) => !JACHETE.has(s.sistem)), ...straturi.filter((s) => JACHETE.has(s.sistem))];
+}
+
+/**
+ * Tubulatura cu CLASA DE FOC: protectia la foc a tubulaturii, alta lucrare
+ * decat izolatia termica din listele firmei (intrebarea 8).
+ *
+ * Oferta 27.04.2026, „Entrauchungskanal ... izolare termica la foc a
+ * tubulaturii pentru obtinerea clasificarii EI60min, cu vata minerala grosime
+ * 60mm": semnat 48 €/m². Din lista de vata pe mp ar fi iesit 22,22 — −54%, si
+ * exact asa iesea pe calea cu model. Book15 are acelasi fel de pozitie
+ * („fire-resistant", 1.944 m²), care iesea „Gata" la 22,22.
+ *
+ * Cere AMBELE: o tubulatura (nu o teava) si un semnal de clasa la foc. O teava
+ * izolata „rezistenta la temperatura" sau o inchidere de gol nu intra aici.
+ */
+const RE_TUBULATURA = /tubulatur|\bduct\b|luftleit|kanal\b|entrauchung/i;
+const RE_CLASA_FOC = /\bEI\s?\d{2,3}\b|\bE\d{3}\b|fire[- ]?resist|rezistent\w*\s+la\s+foc|izolare\s+(?:termica\s+)?la\s+foc|brandschutz/i;
+
+export function esteProtectieLaFocTubulatura(text: string): boolean {
+  return RE_TUBULATURA.test(text) && RE_CLASA_FOC.test(text);
+}
+
+/**
+ * Grosimi scrise de client care inseamna, in practica firmei, alta grosime din
+ * lista. Elastomerul nu se face in 20 mm (9 / 13 / 19 / 25 / 32), iar „S=20mm"
+ * din Oferta 27.04.2026 e tarifat de firma cu pretul de 19 mm: DN100 15,71,
+ * DN150 17,66, DN200 19,44 — 3 din 3, exact. Se aplica doar perechilor dovedite;
+ * restul (vata g48) raman netarifate, decizia omului.
+ */
+const ECHIVALENTE: Partial<Record<string, Record<number, number>>> = {
+  elastomer: { 20: 19 },
+};
+
+function cuEchivalente<T extends { sistem: string; grosime_mm?: number }>(straturi: T[]): { straturi: T[]; note: string[] } {
+  const note: string[] = [];
+  const out = straturi.map((s) => {
+    const g = s.grosime_mm === undefined ? undefined : ECHIVALENTE[s.sistem]?.[s.grosime_mm];
+    if (g === undefined) return s;
+    note.push(`${s.sistem} ${s.grosime_mm} mm nu exista in lista; tarifat ca ${g} mm, ca in Oferta 27.04.2026 (3 din 3)`);
+    return { ...s, grosime_mm: g };
+  });
+  return { straturi: out, note };
 }
 
 /**
@@ -199,7 +311,16 @@ export function tarifeazaExtras(
   extras: LinieExtrasa,
   cantitate: number,
   destinatie: Destinatie = "rezidential",
+  /** Textul randului, pentru regulile care depind de el; lipsa = nu se aplica. */
+  text?: string,
 ): { pret?: RezultatTarifare | RezultatGolFoc; eroare?: string; codEroare?: CodNetarifare } {
+  if (text !== undefined && extras.sistem !== null && extras.sistem !== "goluri_foc"
+      && esteProtectieLaFocTubulatura(text)) {
+    return {
+      eroare: "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi",
+      codEroare: "protectie_foc_tubulatura",
+    };
+  }
   try {
     if (extras.sistem === "goluri_foc") {
       if (extras.gol_latime_mm === null || extras.gol_inaltime_mm === null) {
@@ -213,22 +334,28 @@ export function tarifeazaExtras(
         pret: tarifeazaGolFoc({
           gol: { latime_mm: extras.gol_latime_mm, inaltime_mm: extras.gol_inaltime_mm },
           cantitate,
+          destinatie,
         }),
       };
     }
+    // Fara sistem linia nu e pozitie de izolatie: nimic de tarifat, nicio cauza.
+    if (extras.sistem === null) return {};
+    const { straturi, note: echivalente } = cuEchivalente(jachetaLaExterior([
+      { sistem: extras.sistem, ...(extras.grosime_mm !== null ? { grosime_mm: extras.grosime_mm } : {}) },
+      ...extras.straturi_extra.map((s) => ({
+        sistem: s.sistem, ...(s.grosime_mm !== null ? { grosime_mm: s.grosime_mm } : {}),
+      })),
+    ]));
+    const cuNote = <R extends { note?: string[] }>(r: R): R =>
+      (echivalente.length ? { ...r, note: [...echivalente, ...(r.note ?? [])] } : r);
     if (extras.sistem && extras.diametru_valoare !== null && extras.diametru_tip) {
-      const pret = tarifeaza({
+      const pret = cuNote(tarifeaza({
         diametru: { valoare: extras.diametru_valoare, tip: extras.diametru_tip },
-        straturi: [
-          { sistem: extras.sistem, ...(extras.grosime_mm !== null ? { grosime_mm: extras.grosime_mm } : {}) },
-          ...extras.straturi_extra.map((s) => ({
-            sistem: s.sistem, ...(s.grosime_mm !== null ? { grosime_mm: s.grosime_mm } : {}),
-          })),
-        ],
+        straturi,
         forma: extras.forma ?? "ml",
         cantitate,
         destinatie,
-      });
+      }));
       return { pret };
     }
 
@@ -238,11 +365,16 @@ export function tarifeazaExtras(
     // raportase incredere peste prag — fara sa fie nici macar marcata. Se vedea
     // exclusiv ca diferenta intre doua contoare.
     //
-    // Masurat pe golden files: doua pozitii din `Oferta 27.04.2026.xlsx`,
+    // Masurat pe golden files: doua pozitii din `oferta-118-nisal.xlsx`,
     // amandoua tubulatura RECTANGULARA (`Luftleitg. eckig`,
     // `Entrauchungskanal`, UM `m²`) — care chiar n-are diametru, ci A x B.
     // Conversia perimetrului e in `.claude/tevi.md` si nu e implementata.
     // Pana atunci pozitia se MARCHEAZA, ca oricare alta fara pret.
+    // Fara diametru, dar pe suprafata: tubulatura rectangulara in m² se
+    // tarifeaza din coloana `per_mp` a listei (Oferta 27.04.2026, 79,73 exact).
+    if (extras.sistem !== null && extras.forma === "mp") {
+      return { pret: cuNote(tarifeazaPeMp({ straturi, cantitate, destinatie })) };
+    }
     if (extras.sistem !== null) {
       throw new PozitieNetarifata(
         "fara_diametru",
@@ -284,12 +416,115 @@ export function tarifeazaExtras(
  * memoria, nici sablonul, nici modelul nu i-au rezolvat.
  */
 function completeazaCuPartiale(
-  rezolvate: Map<number, { extras: LinieExtrasa; sursa: Sursa }>,
+  rezolvate: Map<number, Rezolvare>,
   partiale: Map<number, LinieExtrasa>,
 ): void {
   for (const [index, extras] of partiale) {
     if (!rezolvate.has(index)) rezolvate.set(index, { extras, sursa: "regex" });
   }
+}
+
+/**
+ * Raspunsurile modelului, doar pe indecsii care i s-au trimis in apelul ASTA.
+ *
+ * Indexul e singura legatura dintre raspuns si rand, iar modelul il scrie
+ * singur. Un index strain ar suprascrie o linie rezolvata deja de reguli; unul
+ * intors de doua ori inseamna ca raspunsurile s-au decalat, deci nu stim care
+ * obiect e al liniei — amandoua se arunca, linia ramane fara raspuns
+ * (`modelFaraRaspuns`) si cade pe ce a citit determinismul, marcata.
+ */
+function doarLiniileTrimise(extrase: LinieExtrasa[], trimise: LinieSursa[]): LinieExtrasa[] {
+  const permise = new Set(trimise.map((l) => l.index));
+  const aparitii = new Map<number, number>();
+  for (const e of extrase) aparitii.set(e.index, (aparitii.get(e.index) ?? 0) + 1);
+  return extrase.filter((e) => permise.has(e.index) && aparitii.get(e.index) === 1);
+}
+
+/**
+ * Pune raspunsul modelului (sau proiectia lui pe sablon), cu o exceptie: un
+ * `sistem: null` nu sterge ce stia deja determinismul.
+ *
+ * `null` inseamna „nu e pozitie de izolatie", iar o linie asa dispare din
+ * lista. Dar regulile vad si antetul de sectiune, iar modelul vede doar randul:
+ * pe Oferta Matari, 12 randuri `Teava OL/OLZN DN15` isi iau sistemul numai din
+ * „Treceri prin pereti rezistenti la foc EI120" de deasupra. Un model care
+ * raspunde `null` le-ar fi scos din „Netarifate" fara nicio cauza. Ramane
+ * citirea partiala, cu increderea ei mica, deci la validare.
+ */
+function puneDinModel(
+  rezolvate: Map<number, Rezolvare>,
+  partiale: ReadonlyMap<number, LinieExtrasa>,
+  e: LinieExtrasa,
+  sursa: "model" | "sablon",
+): void {
+  if (e.sistem === null && partiale.get(e.index)?.sistem != null) return;
+  rezolvate.set(e.index, { extras: e, sursa });
+}
+
+/**
+ * Textul din care a iesit fiecare extragere care inca nu-l are — vezi
+ * `Rezolvare.text`. Obiect nou, nu mutatie: ecranul tine instantanee ale
+ * intrarilor vechi pentru „Anulează".
+ */
+function stampileazaText(brute: LinieCuSectiune[], rezolvate: Map<number, Rezolvare>): void {
+  for (const b of brute) {
+    const r = rezolvate.get(b.index);
+    if (r && r.text === undefined) rezolvate.set(b.index, { ...r, text: b.text });
+  }
+}
+
+/** Diametrul exterior al unei extrageri, ca sa se poata compara intre linii scrise diferit. */
+function diametruExterior(e: LinieExtrasa): number | null {
+  if (e.diametru_valoare === null || e.diametru_tip === null) return null;
+  try {
+    return toOuterDiameter(e.diametru_valoare, e.diametru_tip);
+  } catch {
+    return null;
+  }
+}
+
+interface GrosimeDeLaConducta { grosime: number; rand: number; foaie: string }
+
+/**
+ * Grosimea pe care clientul n-a scris-o, luata de la conducta de ACELASI
+ * diametru si ACELASI material din aceeasi lista.
+ *
+ * Cererea TRANSAVIA (abur) scrie „Caseta izolatie armaturi cu flanse DN100 din
+ * tabla aluminiu si vata minerala" fara grosime, dar aceeasi lista are
+ * conducta „Di114, g50". Oferta semnata a dat casetei exact grosimea conductei
+ * ei, la toate cele 11 diametre (DN15…DN250, 24 de casete): armatura se
+ * izoleaza ca teava pe care sta. E o citire din fisierul clientului, nu o
+ * presupunere a noastra — de-aia bate grosimea uzuala a firmei.
+ *
+ * Doar cand pe acel diametru lista are O SINGURA grosime pentru material: doua
+ * conducte DN100 cu 50 si 80 mm (tur si retur, alt agent) nu spun care e a
+ * armaturii, deci pozitia ramane fara grosime, ca inainte. Se compara
+ * diametrul exterior, cu toleranta seriei de otel: DN100 (ø114,3) si Di114
+ * sunt aceeasi teava.
+ */
+function grosimiDeLaConducte(
+  brute: LinieCuSectiune[], rezolvate: Map<number, Rezolvare>,
+): Map<number, GrosimeDeLaConducta> {
+  const surse: { sistem: string; od: number; grosime: number; rand: number; foaie: string }[] = [];
+  for (const b of brute) {
+    const e = rezolvate.get(b.index)?.extras;
+    if (!e || e.sistem === null || e.grosime_mm === null) continue;
+    const od = diametruExterior(e);
+    if (od !== null) surse.push({ sistem: e.sistem, od, grosime: e.grosime_mm, rand: b.rand, foaie: b.foaie });
+  }
+  const out = new Map<number, GrosimeDeLaConducta>();
+  for (const b of brute) {
+    const e = rezolvate.get(b.index)?.extras;
+    if (!e || e.grosime_mm !== null || (e.sistem !== "vata_minerala" && e.sistem !== "elastomer")) continue;
+    const od = diametruExterior(e);
+    if (od === null) continue;
+    const potrivite = surse.filter((s) => s.sistem === e.sistem && Math.abs(s.od - od) <= TOLERANTA_SERIE_OTEL);
+    const grosimi = new Set(potrivite.map((s) => s.grosime));
+    if (grosimi.size !== 1) continue;
+    const prima = potrivite[0]!;
+    out.set(b.index, { grosime: prima.grosime, rand: prima.rand, foaie: prima.foaie });
+  }
+  return out;
 }
 
 /**
@@ -300,11 +535,14 @@ function completeazaCuPartiale(
  */
 function construiesteLinii(
   brute: LinieCuSectiune[],
-  rezolvate: Map<number, { extras: LinieExtrasa; sursa: Sursa }>,
+  rezolvate: Map<number, Rezolvare>,
   prag: number,
   destinatie: Destinatie,
+  grosimiPropuse?: ReadonlyMap<number, number>,
+  descrieriSchimbate?: ReadonlySet<number>,
 ): LinieProcesata[] {
   const linii: LinieProcesata[] = [];
+  const deLaConducte = grosimiDeLaConducte(brute, rezolvate);
   for (const b of brute) {
     const r = rezolvate.get(b.index);
     if (!r) continue;
@@ -325,6 +563,7 @@ function construiesteLinii(
         ? []
         : valideazaExtragere(r.extras, { text: b.text, ...(b.um ? { um: b.um } : {}) })),
       ...notatieContraziceMaterialul(r.extras, b.text),
+      ...diametruContrazisDeText(r.extras, b.text),
     ];
 
     // Increderea coboara la 0 cand ceva nu se verifica in text, la fel ca in
@@ -335,22 +574,87 @@ function construiesteLinii(
     // cu increderea reprezentantului ei, nesuspecta. Idempotent pentru CLI:
     // acolo `extrageCuModel` a zerorizat-o deja, deci a doua zerorizare nu
     // schimba nimic.
-    const extras = avertismente.length > 0 ? { ...r.extras, incredere: 0 } : r.extras;
+    // Grosimea de la conducta de acelasi diametru completeaza o citire careia ii
+    // lipsea DOAR grosimea: pe o linie citita de reguli, linia devine completa.
+    const conducta = r.extras.grosime_mm === null ? deLaConducte.get(b.index) : undefined;
+    const completat = conducta
+      ? { ...r.extras, grosime_mm: conducta.grosime, ...(sursa === "regex" ? { incredere: 0.99 } : {}) }
+      : r.extras;
+    const extras = avertismente.length > 0 ? { ...completat, incredere: 0 } : completat;
+
+    // Grosimea propusa intra DUPA guardrails: nu vine din text, deci
+    // `grosime_necitata` s-ar aprinde pe o valoare pe care chiar omul a cerut-o.
+    const propusa = grosimiPropuse?.get(b.index);
+    const cuPropunere = propusa !== undefined && extras.grosime_mm === null
+      && extras.sistem !== null && extras.sistem !== "goluri_foc";
+    const deTarifat = cuPropunere ? { ...extras, grosime_mm: propusa } : extras;
+
+    // Descrierea schimbata dupa verificare: linia a fost recitita din textul
+    // nou, deci ce a vazut omul nu mai e ce se tarifeaza. Nu si pe "om": o noua
+    // confirmare e chiar raspunsul.
+    const schimbata = sursa !== "om" && (descrieriSchimbate?.has(b.index) ?? false);
 
     const proc: LinieProcesata = {
-      bruta: b, extras, sursa,
+      bruta: b, extras: deTarifat, sursa,
       ...(avertismente.length ? { avertismente } : {}),
       necesitaValidare: sursa !== "om" && extras.sistem !== null
-        && (extras.incredere < prag || avertismente.length > 0),
+        && (extras.incredere < prag || avertismente.length > 0 || cuPropunere || schimbata),
     };
 
-    const t = tarifeazaExtras(extras, b.cantitate ?? 1, destinatie);
+    // Textul intra doar cand nu e linia omului: el a decis ce e pozitia.
+    const t = tarifeazaExtras(deTarifat, b.cantitate ?? 1, destinatie, sursa === "om" ? undefined : b.text);
+    if (t.pret && conducta) {
+      t.pret.note = [...(t.pret.note ?? []),
+        `grosime ${conducta.grosime} mm luata de la conducta de acelasi diametru din lista (randul ${conducta.rand}); `
+        + "clientul n-a scris-o pe randul asta"];
+    }
+    // Forma scrisa explicit in text („- COT") a batut UM-ul: se spune pe pozitie.
+    if (t.pret && b.um && /^(ml|m|lm)$/i.test(b.um.trim()) && deTarifat.forma !== null
+        && deTarifat.forma === formaExplicitaDinText(b.text)) {
+      t.pret.note = [...(t.pret.note ?? []),
+        `UM-ul e "${b.um}", dar textul spune "${deTarifat.forma}": tarifat ca ${deTarifat.forma}, ca in Oferta 284`];
+    }
+    if (t.pret && cuPropunere) {
+      const n = `grosime ${propusa} mm propusa dupa diametru (grosimea uzuala a firmei), nu scrisa de client`;
+      t.pret.note = [...(t.pret.note ?? []), n];
+      t.pret.noteDeVerificat = [...(t.pret.noteDeVerificat ?? []), n];
+      t.pret.motiveDeVerificat = [...(t.pret.motiveDeVerificat ?? []), "grosime_propusa"];
+    }
+    if (t.pret && schimbata) {
+      const n = "descrierea s-a schimbat dupa ce pozitia fusese verificata; e recitita din textul nou";
+      t.pret.note = [...(t.pret.note ?? []), n];
+      t.pret.noteDeVerificat = [...(t.pret.noteDeVerificat ?? []), n];
+      t.pret.motiveDeVerificat = [...(t.pret.motiveDeVerificat ?? []), "descriere_schimbata"];
+    }
+    // Forma a venit din UM (ml/mp), dar textul numeste un element: Oferta 284,
+    // „Di169, g50 - COT" cu UM `ml` iesea 51,44 € „Gata", oferta semnata are
+    // cotul, 102,88 €. Nu stim care greseste, deci se pastreaza UM-ul si se
+    // marcheaza — dar numai daca cele doua forme chiar dau alt pret: la Di76
+    // cotul de vata are coeficient 1, iar un semnal fara efect nu mai e citit.
+    if (t.pret && sursa !== "om" && b.um && deTarifat.sistem !== "goluri_foc"
+        && (deTarifat.forma === "ml" || deTarifat.forma === "mp")) {
+      const dinText = formaElementDinText(b.text);
+      if (dinText) {
+        const alt = tarifeazaExtras({ ...deTarifat, forma: dinText }, b.cantitate ?? 1, destinatie);
+        if (alt.pret?.pret_unitar !== t.pret.pret_unitar) {
+          const n = `UM-ul "${b.um}" da ${t.pret.pret_unitar} €, dar textul spune "${dinText}", care `
+            + (alt.pret ? `da ${alt.pret.pret_unitar} €` : "nu se poate tarifa") + "; s-a pastrat UM-ul";
+          t.pret.note = [...(t.pret.note ?? []), n];
+          t.pret.noteDeVerificat = [...(t.pret.noteDeVerificat ?? []), n];
+          t.pret.motiveDeVerificat = [...(t.pret.motiveDeVerificat ?? []), "forma_contrazisa"];
+        }
+      }
+    }
     if (t.pret) proc.pret = t.pret;
-    // Doar notele care CER ochi opresc linia la validare — azi, pretul venit
-    // din lista altui segment. Regula "cot/teu de vata sub o60 nu intra in
-    // pret" era si ea aici pana cand firma a confirmat-o (11 sep 2026): nota
-    // ramane pe pozitie, fiindca explica pretul, dar nu mai cheama omul.
-    if (t.pret && "noteDeVerificat" in t.pret && t.pret.noteDeVerificat?.length) {
+    // Doar notele care CER ochi opresc linia la validare: pretul venit din
+    // lista altui segment, rotunjirea neconfirmata, grosimea propusa. Regula
+    // "cot/teu de vata sub o60 nu intra in pret" era si ea aici pana cand
+    // firma a confirmat-o (11 sep 2026): nota ramane, dar nu mai cheama omul.
+    //
+    // Nu si pe "om": confirmarea ESTE raspunsul la nota. Fara exceptia asta, o
+    // pozitie confirmata ramanea marcata la nesfarsit si nu ajungea niciodata
+    // pe foaia `Ofertă` — butonul de confirmare n-avea niciun efect pe ea.
+    if (sursa !== "om" && t.pret?.noteDeVerificat?.length) {
       proc.necesitaValidare = true;
     }
     if (t.eroare !== undefined) {
@@ -395,7 +699,10 @@ function statisticiDeterministe(
     // s-ar cauta doar in pozitii, exact fisierul care are nevoie de semnal ar
     // iesi cu zero.
     randuriManopera: brute.filter((b) => RE_MANOPERA.test(b.text)).length,
-    valoareTotala: Math.round(izolatie.reduce((s, l) => s + (l.pret?.total ?? 0), 0) * 100) / 100,
+    // Ca in ofertele firmei: suma valorilor exacte, rotunjita o data (vezi
+    // `totalOferta` din web/oferta.ts).
+    valoareTotala: Math.round(izolatie.reduce(
+      (s, l) => s + (l.pret ? l.pret.pret_unitar * l.pret.cantitate : 0), 0) * 100) / 100,
   };
 }
 
@@ -429,19 +736,21 @@ export async function proceseazaRegistru(foi: FoaieBruta[], o: OptiuniNucleu): P
   }
   o.laProgres?.({ faza: "mapare", gata: foiMapate, total: foi.length });
 
-  // L0b + randurile de continuare ("Same - O125 mm" din Book15.xlsx): fara ele,
+  // L0b + randurile de continuare ("Same - O125 mm" din cerere-de-oferta-book15.xlsx): fara ele,
   // 19 din cele 24 de pozitii ale fisierului ies neclasificate.
   const brute = aplicaContinuare(adaugaSectiuni(liniile(foi)));
 
   // L2a - determinist
-  const rezolvate = new Map<number, { extras: LinieExtrasa; sursa: Sursa }>();
+  const rezolvate = new Map<number, Rezolvare>();
   const reziduale: LinieSursa[] = [];
   const partiale = new Map<number, LinieExtrasa>();
   for (const b of brute) {
     const r = extrageDeterminist(b.index, b.text, b.um, b.sectiune, b.cantitate);
     if (r.complet) rezolvate.set(b.index, { extras: r.linie, sursa: "regex" });
     else {
-      reziduale.push({ index: b.index, text: b.text, ...(b.um ? { um: b.um } : {}) });
+      reziduale.push({
+        index: b.index, text: b.text, ...(b.um ? { um: b.um } : {}), ...(b.sectiune ? { sectiune: b.sectiune } : {}),
+      });
       if (r.linie.sistem !== null) partiale.set(b.index, r.linie);
     }
   }
@@ -470,36 +779,51 @@ export async function proceseazaRegistru(foi: FoaieBruta[], o: OptiuniNucleu): P
     trunchiat += reprezentanti.length - deTrimis1.length;
     buget -= deTrimis1.length;
 
-    const extrase = deTrimis1.length > 0 ? await o.extrage(deTrimis1, { faza: "reprezentanti" }) : [];
-    for (const e of extrase) rezolvate.set(e.index, { extras: e, sursa: "model" });
+    const raspunse = new Set<number>();
+    const extrase = deTrimis1.length > 0
+      ? doarLiniileTrimise(await o.extrage(deTrimis1, { faza: "reprezentanti" }), deTrimis1)
+      : [];
+    for (const e of extrase) {
+      raspunse.add(e.index);
+      puneDinModel(rezolvate, partiale, e, "model");
+    }
 
     const { proiectate, ramase } = extindePeSablon(grupuri, extrase);
-    for (const p of proiectate) rezolvate.set(p.index, { extras: p, sursa: "sablon" });
+    for (const p of proiectate) puneDinModel(rezolvate, partiale, p, "sablon");
 
     // Ce n-a putut fi proiectat merge la model ca orice alta linie, sub
     // ACELASI buget — nu unul nou.
     const deTrimis2 = ramase.slice(0, buget);
     trunchiat += ramase.length - deTrimis2.length;
 
-    const extrase2 = deTrimis2.length > 0 ? await o.extrage(deTrimis2, { faza: "ramase" }) : [];
-    for (const e of extrase2) rezolvate.set(e.index, { extras: e, sursa: "model" });
+    const extrase2 = deTrimis2.length > 0
+      ? doarLiniileTrimise(await o.extrage(deTrimis2, { faza: "ramase" }), deTrimis2)
+      : [];
+    for (const e of extrase2) {
+      raspunse.add(e.index);
+      puneDinModel(rezolvate, partiale, e, "model");
+    }
 
     trimise = deTrimis1.length + deTrimis2.length;
     // Contractul e "cate un obiect per linie, cu acelasi index". Modelul il
-    // incalca in tacere (bugul 2): masurat pe `Oferta 27.04.2026.xlsx`, 43 de
+    // incalca in tacere (bugul 2): masurat pe `oferta-118-nisal.xlsx`, 43 de
     // linii trimise, 35 intoarse — si disparitia lor nu se vedea nicaieri pe
     // ecran, doar in CLI. Se numara doar ce s-a TRIMIS efectiv, nu tot
     // reziduul: liniile netrimise din cauza plafonului sunt `trunchiat`, nu
-    // "fara raspuns".
+    // "fara raspuns". Se numara pe ce a RASPUNS modelul, nu pe `rezolvate`:
+    // un `null` refuzat de `puneDinModel` e tot un raspuns.
     const trimiseToate = [...deTrimis1, ...deTrimis2];
-    faraRaspuns = trimiseToate.filter((r) => !rezolvate.has(r.index)).length;
+    faraRaspuns = trimiseToate.filter((r) => !raspunse.has(r.index)).length;
 
     o.laProgres?.({ faza: "model", gata: trimise, total: trimise + trunchiat });
   }
 
   // Guardrails + L3
   completeazaCuPartiale(rezolvate, partiale);
-  const linii = construiesteLinii(brute, rezolvate, prag, o.destinatie ?? "rezidential");
+  stampileazaText(brute, rezolvate);
+  const linii = construiesteLinii(
+    brute, rezolvate, prag, o.destinatie ?? "rezidential", o.grosimiPropuse, o.descrieriSchimbate,
+  );
   o.laProgres?.({ faza: "tarifare", gata: linii.length, total: brute.length });
 
   const statistici: Statistici = {
@@ -526,9 +850,11 @@ export async function proceseazaRegistru(foi: FoaieBruta[], o: OptiuniNucleu): P
  * NU cheama modelul: e sincrona si O(n) — pe un fisier de 400 de randuri costa
  * milisecunde, deci se poate rula dupa fiecare tasta, nu doar la salvare.
  *
- * O linie cu `sursa: "om"` nu se re-extrage NICIODATA aici: corectia omului
- * bate orice strat, indiferent ce ar gasi determinismul sau memoria pe textul
- * (eventual schimbat de alte editari) al randului ei.
+ * O linie cu `sursa: "om"` nu se re-extrage aici cat timp textul ei e cel pe
+ * care l-a vazut omul: corectia lui bate orice strat. Daca descrierea s-a
+ * schimbat de atunci, corectia nu mai descrie randul — linia se reciteste ca
+ * oricare alta si intra in `descrieriSchimbate`. La fel extragerea modelului:
+ * pastrata doar pe textul pe care l-a citit.
  */
 export function reevalueaza(rez: Rezultat, o: OptiuniNucleu): void {
   const prag = o.prag ?? 0.85;
@@ -547,14 +873,24 @@ export function reevalueaza(rez: Rezultat, o: OptiuniNucleu): void {
   rez.brute = brute;
 
   const vechi = rez.rezolvate;
-  const rezolvate = new Map<number, { extras: LinieExtrasa; sursa: Sursa }>();
+  const rezolvate = new Map<number, Rezolvare>();
+  const schimbate = o.descrieriSchimbate ?? new Set<number>();
 
-  // Trecerea 1: liniile confirmate de om raman pe loc, neatinse, si nu intra
-  // in candidatii pentru determinist/memorie de mai jos.
+  // Trecerea 1: liniile confirmate de om raman pe loc si nu intra in
+  // candidatii pentru determinist/memorie de mai jos — cat timp textul lor e
+  // cel pe care l-a vazut omul. Altfel corectia lui nu mai descrie randul:
+  // linia se reciteste ca oricare alta si trece la „de verificat".
   const candidati: LinieCuSectiune[] = [];
   for (const b of brute) {
     const existent = vechi.get(b.index);
-    if (existent?.sursa === "om") { rezolvate.set(b.index, existent); continue; }
+    if (existent?.sursa === "om") {
+      if ((existent.text ?? b.text) === b.text) {
+        rezolvate.set(b.index, { ...existent, text: b.text });
+        schimbate.delete(b.index);
+        continue;
+      }
+      schimbate.add(b.index);
+    }
     candidati.push(b);
   }
 
@@ -565,7 +901,9 @@ export function reevalueaza(rez: Rezultat, o: OptiuniNucleu): void {
     const r = extrageDeterminist(b.index, b.text, b.um, b.sectiune, b.cantitate);
     if (r.complet) rezolvate.set(b.index, { extras: r.linie, sursa: "regex" });
     else {
-      reziduale.push({ index: b.index, text: b.text, ...(b.um ? { um: b.um } : {}) });
+      reziduale.push({
+        index: b.index, text: b.text, ...(b.um ? { um: b.um } : {}), ...(b.sectiune ? { sectiune: b.sectiune } : {}),
+      });
       if (r.linie.sistem !== null) partiale.set(b.index, r.linie);
     }
   }
@@ -576,17 +914,23 @@ export function reevalueaza(rez: Rezultat, o: OptiuniNucleu): void {
 
   // Ce nici memoria n-a rezolvat pastreaza extragerea veche, DOAR daca venea
   // de la model sau de la sablon — nu exista de unde s-o recitim fara sa
-  // rechemam modelul, iar `reevalueaza` n-are voie sa faca asta.
+  // rechemam modelul, iar `reevalueaza` n-are voie sa faca asta. Si doar pe
+  // textul pe care l-a citit modelul: pe o descriere schimbata ar tarifa
+  // descrierea veche, deci ramane ce se poate citi determinist, marcat.
   for (const l of dinMemorie.ramase) {
     const existent = vechi.get(l.index);
     if (existent && (existent.sursa === "model" || existent.sursa === "sablon")) {
-      rezolvate.set(l.index, existent);
+      if ((existent.text ?? l.text) === l.text) rezolvate.set(l.index, existent);
+      else schimbate.add(l.index);
     }
   }
 
   completeazaCuPartiale(rezolvate, partiale);
+  stampileazaText(brute, rezolvate);
   rez.rezolvate = rezolvate;
-  rez.linii = construiesteLinii(brute, rezolvate, prag, o.destinatie ?? "rezidential");
+  rez.linii = construiesteLinii(
+    brute, rezolvate, prag, o.destinatie ?? "rezidential", o.grosimiPropuse, schimbate,
+  );
   rez.statistici = {
     ...statisticiDeterministe(rez.foi, foiMapate, brute, rez.linii),
     // Astea descriu apelul la model care a produs starea INITIALA a lui `rez`;

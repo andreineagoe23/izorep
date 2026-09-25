@@ -2,7 +2,7 @@
  * L1: maparea de coloane.
  *
  * Fixtura `fixtures-foaie-oferta.json` e foaia "Termice+Sanitare" din
- * `Oferta 27.04.2026.xlsx`, parsata, plus maparea inregistrata pentru layoutul
+ * `oferta-118-nisal.xlsx`, parsata, plus maparea inregistrata pentru layoutul
  * ei. Fisierele clientilor nu sunt in repo, deci testul isi cara foaia cu el —
  * altfel s-ar sari in CI, iar o suita sarita arata exact ca una care trece.
  */

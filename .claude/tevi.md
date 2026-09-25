@@ -1,8 +1,8 @@
 # Țevi: conversii de diametru și tipuri
 
 > Surse, amândouă în `../attachments/referinte/`:
-> `Tabel_Conversie_Tevi.docx` (3 septembrie 2026) și
-> `Conversie_ml_in_mp_tevi_si_tubulaturi.xlsx` (4 septembrie 2026).
+> `tabel-conversie-tevi.docx` (3 septembrie 2026) și
+> `conversie-ml-mp-tevi-tubulaturi.xlsx` (4 septembrie 2026).
 > Context pentru `src/pricing/dn-table.ts` și pentru extragerea diametrului din
 > `src/import/`.
 >
@@ -51,6 +51,17 @@ tot intervalul DN10–DN400, valoare cu valoare — tabelul primit confirmă
 independent ce fusese dedus din listele de cantități ale clientului. Codul are
 în plus DN8 = 13,5 (nu apare în tabel) și se oprește la DN400; rândurile
 DN450–DN1000 sunt noi.
+
+**Coloana DIN e recunoscută, nu folosită.** `DN_TO_OD_DIN` o ține ca să nu pară
+conflict un rând care scrie aceeași țeavă de două ori — `Ф 57 x 3,5 mm (Dn 2")`,
+unde 57 e DN50 pe DIN. Tarifarea rămâne pe ISO.
+
+**Un Ø scris lângă DN, care nu e DN-ul ăla în tabel, câștigă** (15 septembrie
+2026). `Oferta 27.04.2026`, rândurile 44–47: „DN20" în coloana germană, „Ø20mm"
+în cea română. Ø20 / 25 / 32 / 40 e seria de PP-R și PE-Xa, iar țevile de plastic
+„nu se convertesc; se rotunjesc mereu în sus" — oferta semnată are exact
+rândurile 22 / 28 / 35 / 42. Pe ISO ar fi ieșit 28 / 35 / 42 / 48. Regula e în
+`esteConversiaDN`: un Ø la cel mult 1 mm de ISO sau DIN e același DN.
 
 Valorile din tabel sunt **exacte**; rândurile listelor de prețuri sunt
 rotunjite (33,7 → rândul 35). Vezi „Rotunjirea", mai jos.
@@ -106,7 +117,7 @@ fost scrisă.
 
 ## Suprafața: ml → mp
 
-`Conversie_ml_in_mp_tevi_si_tubulaturi.xlsx` e un registru de calcul cu trei
+`conversie-ml-mp-tevi-tubulaturi.xlsx` e un registru de calcul cu trei
 foi — Țevi, Tubulatură circulară, Tubulatură rectangulară — plus o foaie de
 instrucțiuni. Formulele:
 

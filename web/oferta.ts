@@ -1,6 +1,6 @@
 import type { LinieProcesata } from "../src/import/nucleu.js";
 import { bani } from "../src/pricing/engine.js";
-import { ETICHETE_BLOCAJ } from "./validare.js";
+import { ETICHETE_BLOCAJ, intrebareaPentru } from "./validare.js";
 
 /**
  * Registrul de ofertă: ce pleacă din aplicație către client.
@@ -21,7 +21,7 @@ import { ETICHETE_BLOCAJ } from "./validare.js";
  * **De ce e pur, fără DOM:** exact motivul pentru care motorul de prețuri e
  * izomorf. Un registru construit aici se poate scrie într-un buffer și reciti
  * cu ExcelJS într-un test din Node — vezi `tests/oferta.test.ts`, care verifică
- * pe `Oferta 27.04.2026 Matari.xlsx` că totalul iese **12.692,04 €**, adică
+ * pe `oferta-118-1-matari-goluri-foc.xlsx` că totalul iese **12.692,04 €**, adică
  * exact totalul ofertei semnate. Blob-ul și `<a download>` stau singure în
  * `web/descarca.ts`.
  */
@@ -71,7 +71,7 @@ export interface AntetOferta {
 export interface Provenienta {
   /** Momentul generării, ISO. */
   generatLa: string;
-  /** Destinația listelor pe care a rulat motorul. Azi mereu `rezidential`. */
+  /** Segmentul ales la import: listele din care s-au calculat chiar prețurile din registru. */
   destinatie: string;
   /** Snapshot-ul de model folosit la import, sau `null` pe calea deterministă. */
   model: string | null;
@@ -118,44 +118,100 @@ export function imparte(linii: LinieProcesata[]): ImpartireOferta {
 }
 
 /**
- * Totalul ofertei: suma coloanei de total a foii `Ofertă`, la bănuț.
+ * Valoarea unei linii ca în ofertele firmei: preț unitar × cantitate, EXACT,
+ * nerotunjit la bani. Oferta 284 are 5,6 ml × 25,68 = `143.808` în celulă,
+ * afișat 143,81 — iar totalul documentului e suma valorilor exacte.
  *
- * Se adună `l.pret.total`, care e deja trecut prin `bani()` în motor, iar suma
- * se rotunjește încă o dată. Fără asta, oferta 284 reală arată de ce contează:
- * conține `2323.0899999999997` într-o celulă, adică exact ce se întâmplă când
- * cineva adună float-uri și scrie rezultatul într-un document semnat.
+ * Plafonat la 4 zecimale: produsul unui preț cu 2 zecimale și al unei
+ * cantități cu cel mult 2 e exact acolo, iar restul e zgomot de float
+ * (`2323.0899999999997` din aceeași ofertă).
+ */
+export const valoareLinie = (l: LinieProcesata): number =>
+  l.pret ? Math.round(l.pret.pret_unitar * l.pret.cantitate * 10000) / 10000 : 0;
+
+/**
+ * Totalul ofertei, calculat cum îl calculează Excel-ul firmei: suma valorilor
+ * exacte ale liniilor, rotunjită O SINGURĂ DATĂ, la final.
+ *
+ * Rotunjit pe fiecare linie și apoi adunat, Oferta 284 ieșea 94.575,07 în loc
+ * de 94.575,06 semnat: șase linii au cantități cu zecimale (5,6 · 1,1 · 29,1 ·
+ * 15,3 · 28,4 · 2,8 ml), iar fiecare rotunjire mută un sfert de ban.
  */
 export const totalOferta = (linii: LinieProcesata[]): number =>
-  bani(linii.reduce((s, l) => s + (l.pret?.total ?? 0), 0));
+  bani(linii.reduce((s, l) => s + valoareLinie(l), 0));
 
 /** Cantitatea de pe rând. Lipsa ei înseamnă „o bucată", ca la tarifare. */
 const cantitatea = (l: LinieProcesata): number => l.bruta.cantitate ?? 1;
 
 /** Textul poziției, pe un singur rând: descrierile din fișiere sunt multi-linie. */
-const denumirea = (l: LinieProcesata): string => l.bruta.text.replace(/\s+/g, " ").trim();
+/** Textele de pe rând, în ordinea coloanelor (`LinieBruta.text` le leagă cu „ | "). */
+const segmente = (l: LinieProcesata): string[] =>
+  l.bruta.text.split(" | ").map((t) => t.replace(/\s+/g, " ").trim()).filter(Boolean);
+
+/**
+ * Codul sau categoria clientului, când rândul începe cu una: „IZOLATII” în
+ * cererea TRANSAVIA, „01.82.02.01A” în Oferta 27.04.2026. Doar majuscule,
+ * cifre și punctuație de cod, scurt, fără diametru — „Teava OL/OLZN DN15”
+ * (Matari) e descriere, nu cod.
+ */
+function codRand(l: LinieProcesata): string | null {
+  const s = segmente(l);
+  if (s.length < 2) return null;
+  const primul = s[0]!;
+  return primul.length <= 20 && /^[A-ZĂÂÎȘȚŞŢ0-9][A-ZĂÂÎȘȚŞŢ0-9 .\-_/]*$/.test(primul) && !/\bDN\s*\d|[øØ]/.test(primul)
+    ? primul : null;
+}
+
+/**
+ * Coloana „Denumire”: textul rândului, fără codul care a plecat în
+ * Identificare_Norma. Altfel, pe cererea TRANSAVIA, fiecare denumire ieșea
+ * „IZOLATII | Caseta izolatie…”, iar oferta semnată are doar „Caseta izolatie…”.
+ */
+const denumirea = (l: LinieProcesata): string => {
+  const text = (codRand(l) ? segmente(l).slice(1) : segmente(l)).join(" | ");
+  const g = l.extras.grosime_mm;
+  // Grosimea pe care clientul n-a scris-o (luată de la conductă, sau cea uzuală
+  // confirmată de om) trebuie să apară în ofertă: e ce se vinde. Oferta 284 a
+  // rescris exact așa denumirile casetelor — „… DN100 vata minerala gr. 50 mm …”.
+  if (g === null || l.extras.sistem === "goluri_foc" || scrieGrosimea(l.bruta.text, g)) return text;
+  return `${text}, gr. ${String(g).replace(".", ",")} mm`;
+};
+
+/** Grosimea apare deja în textul clientului: „g50”, „gr. 50 mm”, „50 mm”, „50mm”. */
+function scrieGrosimea(text: string, g: number): boolean {
+  const n = String(g).replace(".", "[.,]");
+  return new RegExp(`(?:\\bg|gr\\.?|grosime)\\s*${n}\\b|\\b${n}\\s*mm\\b`, "i").test(text);
+}
 
 /**
  * Coloana „Identificare_Norma" din oferta reală.
  *
- * În oferta 284 toate rândurile au `IZOLATII`. Ce punem noi e secțiunea din
- * care vine poziția, când fișierul clientului are una — e mai informativ decât
- * o constantă, și e chiar informația pe care omul o caută când se întoarce la
- * fișierul sursă. Fără secțiune, cade pe `IZOLATII`, ca în original.
+ * În oferta 284 toate rândurile au `IZOLATII`, copiat din cererea clientului.
+ * Ordinea: codul de pe rând (`codRand`), apoi secțiunea din care vine poziția —
+ * informația pe care omul o caută când se întoarce la fișierul sursă — și abia
+ * apoi constanta `IZOLATII`.
  */
 const norma = (l: LinieProcesata): string =>
-  (l.bruta as { sectiune?: string }).sectiune?.replace(/\s+/g, " ").trim() || "IZOLATII";
+  codRand(l) ?? ((l.bruta as { sectiune?: string }).sectiune?.replace(/\s+/g, " ").trim() || "IZOLATII");
 
 /** Eticheta umană a cauzei, plus întrebarea deschisă când există una. */
 function cauzaCitita(l: LinieProcesata): string {
   if (!l.codEroare) return l.eroare ?? "—";
-  const e = ETICHETE_BLOCAJ[l.codEroare];
-  return e.intrebare ? `${e.eticheta} (întrebarea ${e.intrebare} către firmă)` : e.eticheta;
+  const { eticheta } = ETICHETE_BLOCAJ[l.codEroare];
+  const intrebare = intrebareaPentru(l.codEroare, l);
+  return intrebare ? `${eticheta} (întrebarea ${intrebare} către firmă)` : eticheta;
 }
 
-/** Motivele pentru care o poziție cu preț e totuși marcată. */
+/**
+ * Motivele pentru care o poziție cu preț e totuși marcată.
+ *
+ * Doar notele care CER verificare: o notă informativă — regula de cot/teu
+ * confirmată de firmă — explică prețul, dar nu e motivul pentru care poziția
+ * stă în foaia asta, iar scrisă aici ar ascunde motivul adevărat.
+ */
 function motivulMarcarii(l: LinieProcesata): string {
   const av = (l.avertismente ?? []).map((a) => ETICHETE_BLOCAJ[a.cod].eticheta);
-  const note = l.pret && "note" in l.pret ? (l.pret.note ?? []) : [];
+  const note = l.pret?.noteDeVerificat ?? [];
   const tot = [...av, ...note.map((n) => n.replace(/\s+/g, " ").trim())];
   return tot.length > 0 ? tot.join(" · ") : `încredere ${l.extras.incredere} sub prag`;
 }
@@ -216,8 +272,9 @@ export async function registruOferta(c: CerereOferta): Promise<ArrayBuffer> {
   for (const l of oferta) {
     ws.getRow(r++).values = [
       norma(l), denumirea(l), l.bruta.um ?? "", cantitatea(l),
-      bani(l.pret!.pret_unitar), bani(l.pret!.total),
+      bani(l.pret!.pret_unitar), valoareLinie(l),
     ];
+    ws.getCell(`F${r - 1}`).numFmt = "#,##0.00";
   }
 
   const total = totalOferta(oferta);
@@ -324,11 +381,14 @@ export function clientPropus(numeFisier: string): string {
   const fara = numeFisier
     .replace(/\.(xlsx|xls)$/i, "")
     .replace(/\s*\(\d+\)\s*$/, "")
-    .replace(/\b(cerere\s+)?oferta\b/gi, " ")
     .replace(/\b\d{1,2}[.\-/]\d{1,2}[.\-/]\d{2,4}\b/g, " ")
     .replace(/[_-]+/g, " ")
+    // „cerere de oferta 2", „oferta 118 1": cuvantul si numarul documentului, nu clientul.
+    .replace(/\b(cerere\s+(de\s+)?)?oferta(\s+nr\.?)?(\s+\d+){0,2}\b/gi, " ")
     .replace(/\s+/g, " ")
     .trim();
+  // Numele scrise tot cu litere mici (`transavia-abur`) primesc majuscula la fiecare cuvant.
+  if (fara && fara === fara.toLowerCase()) return fara.replace(/(^|\s)\p{L}/gu, (c) => c.toUpperCase());
   return fara || numeFisier.replace(/\.(xlsx|xls)$/i, "");
 }
 

@@ -5,7 +5,7 @@ import type { FoaieBruta } from "./parse-workbook.js";
 /**
  * L1, partea care intreaba modelul: ce rol are fiecare coloana a unei foi.
  *
- * Un apel per LAYOUT, nu per foaie si nici pe departe per linie. `Radoia.xlsx`
+ * Un apel per LAYOUT, nu per foaie si nici pe departe per linie. `cerere-de-oferta-spital.xlsx`
  * are sapte foi cu acelasi antet: un apel. Intrarea e blocul de la inceputul
  * foii, cateva randuri, nu fisierul.
  *

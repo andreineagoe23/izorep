@@ -178,12 +178,16 @@ describe("notele de la finalul ofertei nu sunt pozitii", () => {
 });
 
 describe("tubulatura spiro se citeste ca diametru exterior", () => {
-  it("SPIRO DN160 se tarifeaza singur, dupa raspunsul firmei", async () => {
+  it("SPIRO DN160 are pret, dar rotunjirea lui ramane la om", async () => {
     // Testul asta a cerut exact opusul pana pe 11 septembrie 2026: pozitia
     // trebuia sa ramana NETARIFATA, fiindca nu stiam daca "DN 160" pe spiro e
-    // DN de otel sau diametru exterior, iar un pret gresit tacut e mai scump
-    // decat o pozitie marcata. Firma a raspuns — "la spiro este doar diametru
-    // exterior" — deci nu mai e nimic de ghicit si linia trece singura.
+    // DN de otel sau diametru exterior. Firma a raspuns — "la spiro este doar
+    // diametru exterior" — deci diametrul nu mai e de ghicit.
+    //
+    // Randul, insa, inca este: ø160 sta la 1 mm peste randul 159, iar oferta
+    // semnata a luat 159 (14,16) unde regula in sus da 169 (14,37). Aceeasi
+    // oferta tarifeaza ø160 PEHD pe 169. Pana raspunde firma la intrebarea 3,
+    // pozitia iese cu pret si cu nota, dar nu pleaca singura in oferta.
     const raport = await importaFisier(await registru([
       RANDURI[0]!,
       [1, "Zuluft Wickelfalzrohr starr SPIRO DN 160, Armaflex 9mm", "ml", 12],
@@ -194,6 +198,8 @@ describe("tubulatura spiro se citeste ca diametru exterior", () => {
     expect(l.extras.diametru_tip).toBe("exterior");
     expect(l.extras.diametru_valoare).toBe(160);
     expect(l.eroare).toBeUndefined();
-    expect(l.necesitaValidare).toBe(false);
+    expect(l.pret!.pret_unitar).toBe(14.37);
+    expect(l.necesitaValidare).toBe(true);
+    expect((l.pret as { noteDeVerificat?: string[] }).noteDeVerificat?.join(" ")).toContain("intrebarea 3");
   });
 });

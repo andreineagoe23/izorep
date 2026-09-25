@@ -23,7 +23,7 @@ SRC = Path(sys.argv[1] if len(sys.argv) > 1 else "../attachments")
 OUT = Path(__file__).resolve().parent.parent / "data" / "referinte"
 OUT.mkdir(parents=True, exist_ok=True)
 
-NUME = "Conversie_ml_in_mp_tevi_si_tubulaturi.xlsx"
+NUME = "conversie-ml-mp-tevi-tubulaturi.xlsx"
 
 # Antetul de sectiune -> cheia de material. Norma se citeste din paranteza
 # antetului, cand exista; pentru otel nu e scrisa acolo, ci in foaia de
@@ -102,7 +102,7 @@ referinte = {
     "nota": (
         "Transcriere generata (openpyxl), nu fisier scris de firma in Excel. "
         "Conflict cunoscut: DN150 apare aici ca 165,1 (EN 10255), iar in "
-        "Tabel_Conversie_Tevi.docx si in dn-table.ts ca 168,3 (ISO 4200). "
+        "tabel-conversie-tevi.docx si in dn-table.ts ca 168,3 (ISO 4200). "
         "Pentru tarifare conteaza 168,3 — randul din listele de preturi e 168."
     ),
     "formule": {

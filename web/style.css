@@ -260,6 +260,13 @@ main { padding: 26px 28px 56px; max-width: 1400px; }
 @media (prefers-reduced-motion: reduce) {
   .aplicatie, aside, .eticheta-item { transition: none; }
 }
+/*
+ * Plierea ceruta de un ecran (importul, la deschiderea fisierului) e
+ * instantanee: ecranul isi masoara latimea imediat dupa, ca sa aleaga intre
+ * foaia ca in Excel si lista. Animata, masura ar prinde bara pe jumatate.
+ */
+:root[data-fara-tranzitie] .aplicatie, :root[data-fara-tranzitie] aside,
+:root[data-fara-tranzitie] .eticheta-item { transition: none; }
 
 /* ---------------------------------------------------------- componente */
 .card {
@@ -436,7 +443,7 @@ tbody tr.curent { background: var(--accent-slab); }
 
 /* --------------------------------------------------------- formulare */
 label { display: block; margin-bottom: 13px; font-size: 14px; color: var(--text); }
-input, select {
+input, select, textarea {
   width: 100%; margin-top: 5px; min-height: 40px; padding: 8px 11px; font: inherit; font-size: 15px;
   border: 1px solid var(--linie-tare); border-radius: 8px; background: var(--panou); color: var(--text);
 }
@@ -480,3 +487,368 @@ button.filtru[aria-pressed="true"], button.filtru.activ {
 .drop strong { font-size: 17px; }
 .drop span { color: var(--slab); font-size: 14.5px; }
 .drop .hint { max-width: 60ch; margin: 14px 0 0; }
+
+/* ======================================================== ecranul de import */
+/*
+ * Gandit intai pentru telefon: o coloana, tinte de minimum 44 px, actiunea
+ * principala lipita jos. Pragurile sunt pe LATIMEA ECRANULUI DE IMPORT
+ * (container queries), nu a ferestrei: cu bara laterala deschisa sau pliata,
+ * aceeasi fereastra lasa loc foarte diferit continutului.
+ */
+.primar {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 44px; padding: 10px 20px; border: 1px solid var(--accent-fill); border-radius: 10px;
+  background: var(--accent-fill); color: var(--pe-accent); cursor: pointer;
+  font: inherit; font-size: 15px; font-weight: 600; text-align: center;
+}
+.primar:hover { filter: brightness(1.1); }
+.primar:disabled { opacity: .45; cursor: not-allowed; filter: none; }
+.legatura {
+  min-height: 44px; padding: 8px 4px; border: 0; background: none; cursor: pointer;
+  font: inherit; font-size: 15px; color: var(--accent);
+  text-decoration: underline; text-underline-offset: 3px;
+}
+.legatura.pericol { color: var(--rosu); font-weight: 600; }
+
+/*
+ * Un singur pas de spatiere intre containere, peste tot in ecran: intre
+ * blocurile paginii, intre carduri si in interiorul lor. Spatii diferite de la
+ * un bloc la altul se citesc ca grupari care nu exista.
+ */
+.imp { --imp-gap: 16px; container: imp / inline-size; display: flex; flex-direction: column; gap: var(--imp-gap); }
+.imp-pagina { display: grid; gap: var(--imp-gap); min-width: 0; }
+.imp .alerta { margin: 0; }
+.imp [hidden] { display: none !important; }
+.imp .secundar { min-height: 44px; padding: 10px 18px; border-radius: 10px; font-size: 15px; }
+.imp label { margin: 0; }
+.imp-card {
+  background: var(--panou); border: 1px solid var(--linie); border-radius: 14px;
+  padding: var(--imp-gap); box-shadow: var(--umbra); min-width: 0;
+}
+.imp-card h2 { margin: 0 0 var(--imp-gap); font-size: 17px; }
+
+/* ---- pasii */
+.imp-pasi { display: flex; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.imp-pas { flex: 1 1 0; min-width: 0; }
+.imp-pas > span, .imp-pas > button {
+  display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 6px 4px;
+  border: 0; border-bottom: 3px solid var(--linie); background: none;
+  font: inherit; color: var(--slab); text-align: left;
+}
+.imp-pas > button { cursor: pointer; }
+.imp-pas > button:hover .imp-pas-titlu { color: var(--accent); text-decoration: underline; }
+.imp-pas-nr {
+  flex: 0 0 auto; display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 50%;
+  background: var(--panou-2); font-weight: 700; font-size: 14px;
+}
+.imp-pas-titlu { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.imp-pas[data-stare="activ"] > * { border-bottom-color: var(--accent-fill); color: var(--text); }
+.imp-pas[data-stare="activ"] .imp-pas-nr { background: var(--accent-fill); color: var(--pe-accent); }
+.imp-pas[data-stare="facut"] > * { border-bottom-color: var(--ok); }
+.imp-pas[data-stare="facut"] .imp-pas-nr { background: color-mix(in srgb, var(--ok) 16%, var(--panou)); color: var(--ok); }
+@container imp (max-width: 400px) {
+  /* Pe telefon ingust ramane scris doar pasul curent; celelalte au numarul. */
+  .imp-pas:not([data-stare="activ"]) { flex: 0 0 auto; }
+  .imp-pas:not([data-stare="activ"]) .imp-pas-titlu {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+  }
+}
+
+/* ---- tipul ofertei */
+.imp-segment { margin: 0; padding: 0; border: 0; min-width: 0; }
+.imp-segment legend { padding: 0; margin-bottom: 6px; font-size: 14px; color: var(--slab); }
+.imp-segment > div { display: flex; flex-wrap: wrap; gap: 8px; }
+.imp-segment label { position: relative; }
+.imp-segment input {
+  position: absolute; inset: 0; width: 100%; height: 100%; min-height: 0; margin: 0; opacity: 0; cursor: pointer;
+}
+.imp-segment span {
+  display: inline-flex; align-items: center; min-height: 44px; padding: 8px 18px;
+  border: 1px solid var(--linie-tare); border-radius: 999px; background: var(--panou); font-size: 15px;
+}
+.imp-segment input:checked + span {
+  background: var(--accent-fill); border-color: var(--accent-fill); color: var(--pe-accent); font-weight: 600;
+}
+.imp-segment input:focus-visible + span { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+/* ---- pasul 1 */
+.imp-start { display: grid; gap: var(--imp-gap); }
+@container imp (min-width: 900px) {
+  .imp-start.cu-istoric { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); align-items: start; }
+}
+.imp-incarca { display: grid; gap: var(--imp-gap); }
+.imp-drop {
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  min-height: 220px; padding: 28px 16px; border: 2px dashed var(--linie-tare); border-radius: 14px;
+  background: var(--panou-2); color: var(--slab); text-align: center; cursor: pointer;
+}
+.imp-drop:hover, .imp-drop.peste { border-color: var(--accent); background: var(--accent-slab); color: var(--accent); }
+.imp-drop:focus-within { outline: 3px solid var(--focus); outline-offset: 2px; }
+.imp-drop input { position: absolute; width: 1px; height: 1px; min-height: 0; margin: 0; opacity: 0; }
+.imp-drop-buton {
+  display: inline-flex; align-items: center; min-height: 52px; padding: 12px 24px; border-radius: 12px;
+  background: var(--accent-fill); color: var(--pe-accent); font-weight: 600; font-size: 17px;
+}
+.imp-drop-sub { font-size: 14px; }
+/* Pe ecranele doar tactile nu se trag fisiere: textul ar promite ceva imposibil. */
+@media (hover: none) { .imp-drop-sub { display: none; } .imp-drop { min-height: 170px; } }
+
+.imp-istoric ul { list-style: none; margin: 0; padding: 0; }
+.imp-istoric li {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px;
+  padding: 12px 0; border-top: 1px solid var(--linie);
+}
+.imp-istoric li:first-child { border-top: 0; padding-top: 0; }
+.imp-istoric-info { flex: 1 1 200px; min-width: 0; }
+.imp-istoric-info strong { display: block; overflow-wrap: anywhere; }
+.imp-istoric-info span { font-size: 14px; color: var(--slab); }
+.imp-istoric-actiuni { display: flex; align-items: center; gap: 6px; }
+
+.imp-progres p { margin: 0 0 12px; }
+.imp-progres-bara { height: 10px; overflow: hidden; border-radius: 999px; background: var(--panou-2); }
+.imp-progres-bara i { display: block; height: 100%; border-radius: 999px; background: var(--accent-fill); transition: width .2s; }
+.imp-progres-bara[data-nedefinit] i { animation: imp-nedefinit 1.2s ease-in-out infinite; }
+@keyframes imp-nedefinit { from { margin-left: -35%; } to { margin-left: 100%; } }
+@media (prefers-reduced-motion: reduce) {
+  .imp-progres-bara[data-nedefinit] i { animation: none; width: 100% !important; opacity: .45; }
+}
+
+/* ---- pasul 2: antet, filtre, actiuni */
+.imp-antet { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; }
+.imp-antet-fisier { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 12px; min-width: 0; }
+.imp-antet-fisier svg { flex: 0 0 auto; color: var(--ok); }
+.imp-antet-fisier > div { min-width: 0; }
+.imp-antet-fisier strong { display: block; font-size: 17px; overflow-wrap: anywhere; }
+.imp-antet-fisier span { font-size: 14px; color: var(--slab); }
+.imp-antet-optiuni { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 20px; }
+.imp-foaie { font-size: 14px; color: var(--slab); }
+.imp-foaie select { width: auto; max-width: 100%; min-height: 44px; margin-top: 6px; color: var(--text); }
+
+/*
+ * Filtrele trec pe randul urmator cand nu incap, nu se deruleaza lateral: un
+ * buton taiat la margine („De verific…") nu spune ca mai e ceva in dreapta.
+ */
+.imp-bara-lista { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
+.imp-filtre, .imp-motive { display: flex; flex-wrap: wrap; gap: 8px; }
+@container imp (max-width: 619px) {
+  .imp-filtre { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
+  .imp-filtru { justify-content: center; }
+}
+.imp-filtru, .imp-motiv {
+  flex: 0 0 auto; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 16px;
+  border: 1px solid var(--linie-tare); border-radius: 999px; background: var(--panou); color: var(--text);
+  font: inherit; font-size: 15px; white-space: nowrap; cursor: pointer;
+}
+.imp-filtru b, .imp-motiv b { font-variant-numeric: tabular-nums; }
+.imp-filtru[data-stare]::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--c); }
+.imp-filtru[aria-pressed="true"], .imp-motiv[aria-pressed="true"] {
+  border-color: var(--accent-fill); background: var(--accent-slab); box-shadow: inset 0 0 0 1px var(--accent-fill); font-weight: 600;
+}
+.imp-motiv { min-height: 40px; padding: 6px 14px; font-size: 14px; border-color: var(--linie); background: var(--panou-2); }
+.imp [data-stare="gata"] { --c: var(--ok); }
+.imp [data-stare="de_validat"] { --c: var(--atentie); }
+.imp [data-stare="netarifate"] { --c: var(--rosu); }
+
+.imp-actiuni { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.imp-actiuni .secundar { flex: 1 1 auto; }
+.imp-comuta-excel { margin-left: auto; }
+@container imp (min-width: 620px) { .imp-actiuni .secundar { flex: 0 0 auto; } }
+
+/* ---- lista de pozitii */
+.imp-lista { display: grid; gap: var(--imp-gap); }
+.imp-gol { margin: 0; padding: 32px 16px; text-align: center; color: var(--slab); }
+.imp-poz {
+  position: relative; display: grid; gap: 10px 16px; min-width: 0;
+  padding: var(--imp-gap) var(--imp-gap) var(--imp-gap) calc(var(--imp-gap) + 4px); border: 1px solid var(--linie); border-radius: 12px;
+  background: var(--panou); box-shadow: var(--umbra);
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "text text" "inteles inteles" "stare pret" "actiuni actiuni" "editor editor";
+}
+.imp-poz::before {
+  content: ""; position: absolute; left: 0; top: 12px; bottom: 12px; width: 5px;
+  border-radius: 0 5px 5px 0; background: var(--c);
+}
+.imp-poz-text { grid-area: text; min-width: 0; }
+.imp-poz-descriere { margin: 0; font-weight: 500; overflow-wrap: anywhere; }
+.imp-poz-descriere.lung:not(.deschis) {
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden;
+}
+.imp-poz-tot { min-height: 36px; padding: 4px 0; font-size: 14px; }
+.imp-poz-meta { margin: 4px 0 0; font-size: 14px; color: var(--slab); }
+.imp-verificat { color: var(--ok); font-weight: 600; }
+.imp-poz-inteles { grid-area: inteles; display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.imp-poz-inteles li { padding: 3px 10px; border-radius: 999px; background: var(--panou-2); font-size: 14px; }
+.imp-poz-pret { grid-area: pret; align-self: center; text-align: right; }
+.imp-poz-pret strong { display: block; font-size: 18px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.imp-poz-pret span { font-size: 13.5px; color: var(--slab); white-space: nowrap; }
+.imp-fara-pret { color: var(--slab); }
+.imp-poz-stare { grid-area: stare; align-self: center; display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; min-width: 0; }
+.imp-stare { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 700; color: var(--c); white-space: nowrap; }
+.imp-stare::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--c); }
+.imp-poz-motiv { font-size: 14px; }
+.imp-poz-actiuni { grid-area: actiuni; display: flex; flex-wrap: wrap; gap: 8px; }
+.imp-poz-actiuni > * { flex: 1 1 120px; }
+
+@container imp (min-width: 620px) {
+  .imp-poz {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "text pret" "inteles inteles" "stare actiuni" "editor editor";
+  }
+  .imp-poz-actiuni { justify-content: flex-end; }
+  .imp-poz-actiuni > * { flex: 0 0 auto; }
+}
+@container imp (min-width: 1000px) {
+  .imp-poz {
+    align-items: center;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr) minmax(130px, 180px) 110px auto;
+    grid-template-areas: "text inteles stare pret actiuni" "editor editor editor editor editor";
+  }
+  .imp-poz-stare { flex-direction: column; align-items: flex-start; }
+  .imp-poz-actiuni { flex-wrap: nowrap; }
+}
+
+/* ---- corectura unei pozitii, ca panou propriu sub rand */
+.imp-editor {
+  grid-area: editor; display: grid; gap: var(--imp-gap); margin-top: var(--imp-gap);
+  padding: var(--imp-gap); border: 1px solid var(--linie-tare); border-radius: 12px; background: var(--panou);
+}
+.imp-editor-titlu { margin: 0; font-size: 13px; font-weight: 600; color: var(--slab); }
+.imp-editor label, .imp-camp { display: block; margin: 0; font-size: 14px; color: var(--slab); }
+.imp-editor input, .imp-editor select, .imp-editor textarea {
+  margin-top: 6px; min-height: 44px; font-size: 16px; color: var(--text);
+}
+.imp-editor textarea { line-height: 1.4; resize: vertical; }
+.imp-editor-descriere { display: grid; gap: 10px; }
+.imp-editor-descriere > button { justify-self: start; }
+.imp-editor-scurte { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+/*
+ * Un singur flux de campuri, asezat dupa latime: la 360 px iese o coloana, pe
+ * ecran lat patru. Varianta cu doua coloane fixe lasa „Material" singur in
+ * stanga, cu un gol cat tot blocul tevii sub el.
+ */
+.imp-editor-campuri { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); align-items: start; }
+/* Grupurile nu sunt casete, sunt doar comutatorul dintre teava si gol. */
+.imp-editor-teava, .imp-editor-gol { display: contents; }
+.imp-editor-teava[hidden], .imp-editor-gol[hidden] { display: none; }
+.imp-rand-campuri { display: flex; gap: 8px; margin-top: 6px; }
+/* Notatia e scurta (DN/Ø/Di); cifra are nevoie de loc — altfel „114" iese „1". */
+.imp-rand-campuri select { flex: 0 0 4.4em; margin-top: 0; padding-inline: 6px; }
+.imp-rand-campuri input { flex: 1 1 auto; min-width: 4.5em; margin-top: 0; }
+.imp-ajutor { margin: 6px 0 0; font-size: 13px; color: var(--slab); font-variant-numeric: tabular-nums; }
+.imp-straturi { grid-column: 1 / -1; display: grid; gap: 8px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.imp-straturi legend { padding: 0; margin-bottom: 4px; font-size: 14px; color: var(--slab); }
+.imp-straturi > button { justify-self: start; }
+.imp-straturi-lista { display: grid; gap: 8px; }
+.imp-straturi-lista:empty { display: none; }
+.imp-strat { display: grid; grid-template-columns: minmax(0, 1fr) minmax(5.5em, 7em) 44px; gap: 8px; align-items: center; }
+.imp-strat select, .imp-strat input { margin-top: 0; min-width: 0; }
+.imp-scoate {
+  width: 44px; min-height: 44px; padding: 0; border: 1px solid var(--linie-tare); border-radius: 8px;
+  background: var(--panou); color: var(--text); font: inherit; font-size: 20px; line-height: 1; cursor: pointer;
+}
+.imp-scoate:hover { background: var(--accent-slab); }
+.imp-editor-butoane { display: flex; flex-wrap: wrap; gap: 8px; }
+.imp-editor-butoane > * { flex: 1 1 140px; }
+@container imp (min-width: 620px) {
+  .imp-editor-butoane { justify-content: flex-end; }
+  .imp-editor-butoane > * { flex: 0 0 auto; }
+}
+
+/* ---- mesajul de dupa o actiune, cu „Anulează” */
+.imp-toast {
+  position: fixed; left: 50%; bottom: max(24px, env(safe-area-inset-bottom)); z-index: 40; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 10px; max-width: calc(100vw - 32px);
+  padding: 6px 8px 6px 16px; border-radius: 12px; background: var(--text); color: var(--bg);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, .25);
+}
+.imp-toast .legatura { color: inherit; font-weight: 700; }
+
+/* ---- vederea ca in Excel */
+.imp-excel { display: grid; gap: var(--imp-gap); }
+
+/*
+ * Antetul documentului: randurile de deasupra tabelului. Nu sase randuri
+ * lipite una sub alta, ci un antet — titlul, o linie de detalii si perechile
+ * eticheta–valoare aliniate in grila, cu acelasi spatiu intre toate.
+ */
+.imp-doc { display: grid; gap: 8px; min-width: 0; }
+.imp-doc-foaie { margin: 0; font-size: 13.5px; color: var(--slab); }
+.imp-doc-titlu { margin: 0; font-size: 19px; line-height: 1.3; letter-spacing: -.01em; overflow-wrap: anywhere; }
+.imp-doc-linii { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0; font-size: 15px; color: var(--slab); }
+.imp-doc-date {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); gap: 8px; margin: 0;
+}
+.imp-doc-date > div { min-width: 0; padding: 8px 12px; border-radius: 10px; background: var(--panou-2); }
+.imp-doc-date dt { font-size: 13px; color: var(--slab); }
+.imp-doc-date dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+
+/*
+ * `position: relative` nu e decor: fara el, eticheta ascunsa „Acțiuni" din
+ * antet (pozitionata absolut) iesea din zona care se deruleaza si latea
+ * documentul la 809 px pe un telefon de 360 — browserul micsora toata pagina.
+ */
+.imp-excel .tabelwrap { position: relative; margin: 0; padding: 0; border: 0; border-radius: 8px; background: none; }
+/*
+ * Foaia incape pe latimea ecranului, fara derulare laterala (cerut pe 25
+ * septembrie 2026). `table-layout: fixed` ia latimile din `<colgroup>`, in
+ * procente calculate de `grilaFoaie` dupa continut, deci un text lung nu mai
+ * poate lati tabelul: se rupe pe randuri in coloana lui. Coloanele goale nu se
+ * deseneaza, iar coloanele noastre sunt doua, nu patru.
+ */
+.imp-excel table { table-layout: fixed; width: 100%; }
+.imp-excel td { padding: 8px 8px 8px 0; }
+.imp-excel .camp { max-width: none; overflow-wrap: anywhere; }
+/* Un numar nu se rupe pe cifre: 1550 pe doua randuri se citeste 15 si 50. */
+.imp-excel .camp.nr { overflow-wrap: normal; }
+/*
+ * Capetele se rup pe randuri. Pe un singur rand, „Pret unitar Euro /elem Vata
+ * + Tabla aluminiu" lua 287 px, iar coloana cu descrierea ramanea cu 108 —
+ * adica opt randuri de cate doua cuvinte pe fiecare pozitie.
+ */
+.imp-excel th { padding: 8px 8px 8px 0; white-space: normal; vertical-align: bottom; overflow-wrap: break-word; }
+.imp-excel td.gutter, .imp-excel th.gutter { padding-left: 6px; padding-right: 8px; }
+.imp-excel tr[data-stare] td.gutter { box-shadow: inset 4px 0 0 var(--c); }
+.imp-excel td.extras, .imp-excel th.extras { padding-left: 12px; }
+.imp-grila-pret { display: block; margin-top: 2px; }
+.imp-grila-pret strong { display: block; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.imp-grila-pret small { display: block; font-size: 13px; color: var(--slab); white-space: nowrap; }
+.imp-excel .imp-eticheta { white-space: normal; overflow-wrap: anywhere; }
+.imp-eticheta {
+  display: inline-block; margin: 0 4px 4px 0; padding: 2px 8px; border-radius: 999px;
+  background: var(--panou); font-size: 13px; white-space: nowrap;
+}
+.imp-grila-stare .imp-poz-motiv { display: block; margin-top: 2px; font-size: 13.5px; }
+.imp-grila-actiuni { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.imp-grila-actiuni:empty { display: none; }
+.imp .imp-grila-actiuni button { min-height: 40px; max-width: 100%; padding: 8px 10px; font-size: 14px; }
+/* Corectura, pe un rand sub pozitie, lipita de marginea vizibila a tabelului. */
+.imp-grila-editor > td { padding: var(--imp-gap); background: var(--accent-slab); }
+.imp-grila-editor .imp-editor { max-width: 820px; margin-top: 0; }
+.imp-grila-editor .imp-editor input, .imp-grila-editor .imp-editor select,
+.imp-grila-editor .imp-editor textarea { width: 100%; min-height: 44px; padding: 8px 11px; font-size: 16px; }
+.imp-grila-editor .imp-rand-campuri select { width: 4.4em; }
+.imp-grila-editor .imp-scoate { width: 44px; padding: 0; }
+
+.imp-detalii { font-size: 14px; color: var(--slab); }
+.imp-detalii summary { display: flex; align-items: center; min-height: 44px; cursor: pointer; }
+.imp-detalii ul { margin: 0; padding-left: 18px; line-height: 1.8; }
+.imp-detalii strong { color: var(--text); font-variant-numeric: tabular-nums; }
+
+/* ---- pasul 3 */
+.imp-oferta { display: grid; gap: var(--imp-gap); }
+@container imp (min-width: 900px) {
+  .imp-oferta { grid-template-columns: minmax(240px, 1fr) minmax(0, 2fr); align-items: start; }
+  .imp-oferta-rezumat { position: sticky; top: 16px; }
+}
+.imp-oferta-suma { display: grid; gap: 2px; margin: 0; }
+.imp-oferta-suma span { font-size: 15px; color: var(--slab); }
+.imp-oferta-suma strong { font-size: 30px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.imp-oferta-afara { margin: var(--imp-gap) 0 0; padding-top: var(--imp-gap); border-top: 1px solid var(--linie); font-size: 15px; }
+.imp-campuri { display: grid; gap: 14px 16px; }
+@container imp (min-width: 620px) { .imp-campuri { grid-template-columns: 1fr 1fr; } }
+.imp-campuri label { font-size: 14px; color: var(--slab); }
+.imp-campuri input, .imp-campuri select { min-height: 48px; margin-top: 6px; font-size: 16px; color: var(--text); }
+.imp-formular .alerta { margin: var(--imp-gap) 0 0; }
+.imp-formular-butoane { display: flex; margin-top: var(--imp-gap); }
+.imp-formular-butoane .primar { flex: 1 1 auto; min-height: 52px; font-size: 16px; }
+@container imp (min-width: 620px) { .imp-formular-butoane .primar { flex: 0 0 auto; } }

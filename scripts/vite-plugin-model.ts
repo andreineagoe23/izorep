@@ -23,7 +23,7 @@ const RUTA = "/api/extrage";
 const MAX_LINII = 400;
 const MAX_CORP = 4 * 1024 * 1024;
 
-interface LinieCerere { index: number; text: string; um?: string }
+interface LinieCerere { index: number; text: string; um?: string; sectiune?: string }
 
 const esteLocal = (req: IncomingMessage): boolean => {
   const ip = req.socket.remoteAddress ?? "";

@@ -30,7 +30,7 @@ const antet = (index: number, foaie: string, rand: number, text: string): LinieC
 
 describe("esteContinuare", () => {
   it("recunoaste 'Same' dupa coloana de cod, nu doar la inceputul absolut al textului", () => {
-    // Forma reala din Book15.xlsx: `LinieBruta.text` e mai multe celule
+    // Forma reala din cerere-de-oferta-book15.xlsx: `LinieBruta.text` e mai multe celule
     // alaturate cu " | " (parse-workbook.ts), iar coloana de cod ("E3.1.1.2")
     // vine INAINTEA descrierii. O ancorare stricta la text[0] n-ar prinde
     // niciodata marcajul.
@@ -38,14 +38,14 @@ describe("esteContinuare", () => {
   });
 
   it("nu recunoaste 'idem' la finalul liniei, cand nu e semnal de continuare", () => {
-    // Radoia.xlsx: "Dn 20 (3/4'') | CIRCUIT RACIRE / idem" — randul are deja
+    // cerere-de-oferta-spital.xlsx: "Dn 20 (3/4'') | CIRCUIT RACIRE / idem" — randul are deja
     // descrierea completa (elastomer, Dn), "idem" se refera la circuit, nu
     // la lipsa descrierii. Ancorarea la inceputul unei celule exclude cazul.
     expect(esteContinuare("Dn 20 (3/4'') | CIRCUIT RACIRE / idem")).toBe(false);
   });
 
   it("nu recunoaste 'același' cand randul are descriere proprie completa", () => {
-    // Book15.xlsx are randuri unde coloana romana rezuma cu "Același difuzor
+    // cerere-de-oferta-book15.xlsx are randuri unde coloana romana rezuma cu "Același difuzor
     // – 600 x 600 mm" langa un text englezesc complet, cu toate
     // specificatiile — nu e o continuare, deci "același" nu e in lista de
     // marcaje (vezi comentariul din continuare.ts).
@@ -55,7 +55,7 @@ describe("esteContinuare", () => {
 
 describe("aplicaContinuare", () => {
   it("cazul 1: 'Same - Ø125 mm' mosteneste sistemul si iese cu diametrul PROPRIU, nu al parintelui", () => {
-    // Parintele are si el un diametru (Ø100 mm) — exact ca in Book15.xlsx,
+    // Parintele are si el un diametru (Ø100 mm) — exact ca in cerere-de-oferta-book15.xlsx,
     // rand 13. Daca ordinea de concatenare ar fi gresita, extrageDeterminist
     // ar lua Ø100 (primul O/DN/Di gasit de `.match()` fara flag `g`) in loc
     // de Ø125, care e valoarea REALA a acestei pozitii (74 ml, nu 6 ml).

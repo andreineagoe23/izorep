@@ -8,7 +8,7 @@ import { MapareFoaie } from "./mapare.js";
  *
  * Cheia e amprenta layoutului (etichetele de antet + latimea), nu numele
  * fisierului: acelasi client trimite acelasi sablon de Excel la fiecare
- * proiect, iar `Radoia.xlsx` are sapte foi cu antet identic. O mapare, sapte
+ * proiect, iar `cerere-de-oferta-spital.xlsx` are sapte foi cu antet identic. O mapare, sapte
  * foi, si zero apeluri la al doilea fisier cu acelasi layout.
  *
  * Modul de Node, DELIBERAT separat de `mapare.ts`: acela e izomorf si se

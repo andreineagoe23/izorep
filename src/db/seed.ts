@@ -116,7 +116,7 @@ async function main(): Promise<void> {
 
       await tx.insert(client).values([
         { tenantId, denumire: "NISAL SRL", categorie: "industrial", sursa: "Oferta 118 / 27.04.2026" },
-        { tenantId, denumire: "Transavia", categorie: "industrial", sursa: "Izolatii Transavia.xlsx" },
+        { tenantId, denumire: "Transavia", categorie: "industrial", sursa: "cerere-de-oferta-transavia-inox.xlsx" },
       ]);
 
       const catalog = catalogDinFisiere();

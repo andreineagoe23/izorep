@@ -177,7 +177,7 @@ export const listaPreturi = pgTable("lista_preturi", {
  * diferite pentru aceeasi teava, ceea ce nu se poate. De aceea nu are nici
  * politica de RLS — nu e nimic de izolat.
  *
- * Sursa: `attachments/referinte/Conversie_ml_in_mp_tevi_si_tubulaturi.xlsx`.
+ * Sursa: `attachments/referinte/conversie-ml-mp-tevi-tubulaturi.xlsx`.
  */
 export const serieDiametre = pgTable("serie_diametre", {
   id: uuid("id").primaryKey().defaultRandom(),

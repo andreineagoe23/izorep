@@ -34,7 +34,12 @@ export const ecran: Ecran = {
 
 Router-ul îl încarcă leneș (`import()`), desenează titlul, apoi apelează
 `render` cu un container gol. Ecranele nu ating nimic din afara containerului
-lor și nu manipulează meniul.
+lor și nu manipulează meniul. Un ecran care are nevoie de toată lățimea o
+**cere** (`ceriSpatiu` din `web/meniu-stare.ts`), iar `main.ts` pliază bara —
+temporar, fără să scrie preferința, doar la trecerea de la „nu cere” la
+„cere” (dacă omul redeschide meniul, o redesenare nu i-l închide din nou) și
+până la schimbarea ecranului. Importul o cere cât timp e un fișier deschis
+(25 septembrie 2026).
 
 Ecran nou: creezi fișierul în `web/ecrane/`, îl adaugi în `ECRANE` din `main.ts`
 și pui itemul în `MENIU` din `nav.ts`.
@@ -209,76 +214,133 @@ Tot ce ține de depozit e best-effort. În fereastră privată sau cu stocarea
 blocată, fiecare apel eșuează tăcut și ecranul se poartă ca înainte. Istoricul e
 o comoditate; documentele adevărate vor sta în bază.
 
-## Fluxul de validare
+## Ecranul de import: trei pași
 
-Indicatorul „N de validat de om" spunea *câte* sunt, nu *unde*. Pe `Radoia.xlsx`
-— 105 poziții pe 7 foi — găsirea lor însemna derulare manuală după marcajul
-chihlimbariu. Deasupra grilei stau acum trei lucruri:
-
-- **Lentilele**: `Toate` · `De validat (n)` · `Netarifate (n)`. Ascund rândurile
-  care nu se potrivesc, dar **numărul din marginea stângă rămâne cel din
-  Excel** — ancora 1:1 cu fișierul nu se pierde, rândurile lipsă se văd ca
-  salturi în numerotare. Filtrul nu e o preferință persistentă: se resetează la
-  fiecare fișier, fiindcă „de validat" înseamnă altceva de la un fișier la
-  altul.
-- **Contorul pe fila fiecărei foi**, ca să se vadă pe care foaie mai e treabă
-  fără să fie deschise pe rând.
-- **„Următoarea de validat"**, ciclic, cu derulare în vizor și focus pe primul
-  control din coloanele extrase — poziția se corectează de la tastatură, fără
-  mouse.
-
-### „Ce blochează N poziții" — cauze, nu simptome
-
-Indicatoarele spuneau *câte* poziții n-au preț. Niciodată **de ce**: `eroare`
-era text liber, iar lentila „Netarifate" dădea o listă, nu un diagnostic.
-Măsurat pe cele 10 fișiere reale, cele 130 de poziții netarifate au **patru
-cauze**, iar 64 din 130 sunt același răspuns neprimit de la firmă:
+Refăcut pe 13 septembrie 2026 pentru oamenii care îl folosesc — birou și
+șantier, nu IT — după ce varianta cu grila 1:1 a fost găsită „prea încărcată".
+Principiul: ce trebuie făcut se vede din așezare, nu dintr-un text explicativ.
 
 ```
-Ce blochează 130 de poziții
-  64  niciun strat n-are coeficient pe banda lui   → întrebarea 9    [arată]
-  43  grosime care nu există în listă                                [arată]
-  15  diametru peste maximul listei                 → întrebarea 4   [arată]
-   8  DN inexistent în seria de oțel                → întrebarea 10  [arată]
+① Fișierul        ② Verificare        ③ Oferta
 ```
 
-Diferența nu e cosmetică: omul care vede „130 netarifate" crede că are 130 de
-probleme, când are patru, dintre care una jumătate — și pe care o rezolvă un
-telefon, nu o zi de lucru.
+- **Pasul 1 — Fișierul.** Tipul ofertei (Rezidențială / Industrială, radio
+  adevărat) și un singur buton mare, „Alege fișierul Excel", care e și zona de
+  drag&drop; pe ecranele doar tactile „sau trage-l aici" nu apare. Importurile
+  recente stau alături pe ecran lat, dedesubt pe telefon, cu „Deschide" și
+  „Șterge"; ștergerea cere a doua apăsare („Sigur ștergi?").
+- **Pasul 2 — Verificare.** Fișierul (cu „Schimbă fișierul"), tipul ofertei,
+  foaia (doar la registrele cu mai multe foi), apoi patru filtre: Toate · Gata ·
+  De verificat · Fără preț. Grupurile sunt disjuncte și sunt exact foile
+  registrului (`imparte`). Sub „De verificat" și „Fără preț" apare al doilea
+  rând, pe motiv („Lipsește grosimea 24").
+- **În listă, fiecare poziție e un card**: textul clientului (tăiat la trei rânduri, cu
+  „Tot textul"), rândul din Excel, cantitatea, ce am înțeles („Vată minerală
+  50 mm · rândul 114", „+ Tablă aluminiu · rândul 220", „DN100 = ø114,3",
+  „flanșă"), prețul, starea cu motivul în
+  cuvinte simple, și acțiunea care o rezolvă:
+  gata → „Modifică"; de verificat → „Confirmă"; fără preț, cu grosime uzuală →
+  „Pune 100 mm". „Modifică" deschide corectura sub card: descrierea (celulele cu
+  text ale rândului, cu „Citește din descriere"), material, diametru (DN / Ø /
+  Di), grosime cu sugestiile listei, formă, **celelalte straturi** — fiecare cu
+  material și grosime, cu „Adaugă strat" și „Scoate" — sau dimensiunile golului,
+  plus cantitatea și UM-ul; „Nu e izolație" scoate rândul din listă. Grosimea
+  tablei are sugestiile ei (aluminiu 0,6 / 0,8 / 1,0, inox 0,4 / 0,5 / 0,6):
+  fără ele, o poziție de inox nu se putea tarifa din ecran. Sub diametru scrie
+  în ce se traduce: „ø114,3 după tabelul de conversie · rândul 114 din listă".
+- **Conversia se vede, nu se presupune** (16 septembrie 2026). Ecranul scria
+  doar notația clientului, deci „DN100" și „Ø100" arătau la fel, deși unul
+  caută ø114,3 și celălalt ø100 — alt rând, alt preț. Acum eticheta e
+  „DN100 = ø114,3", iar fiecare strat își poartă rândul din listă pe care a
+  căzut prețul lui. La Ø și Di nu se adaugă nimic: acolo cifra scrisă *e*
+  diametrul căutat.
+- **Corectura e un panou, nu un formular lipit de rând** (16 septembrie 2026).
+  Câmpurile stau într-un singur flux care se așază după lățime — o coloană pe
+  telefon, patru pe ecran lat — în loc de două coloane fixe, care lăsau
+  „Material" singur în stânga cu un gol cât tot blocul de sub el. Celulele cu
+  text își iau numele coloanei din antet, sau litera ei („Coloana B") când
+  foaia n-are antet: două celule pe același rând arătau amândouă „Descriere".
+- **Acțiunile în masă apar doar sub filtrul lor**: „Pune grosimea uzuală la N
+  poziții" (le trimite la „De verificat", nu le confirmă) și „Confirmă toate
+  cele N". Nu există confirmare pe tot fișierul.
+- **Orice acțiune se poate anula**: un mesaj jos, șapte secunde, cu „Anulează".
+  Tiparul unei corecturi se învață (L4) abia după ce anularea nu mai e
+  posibilă — învățat pe loc, memoria ar fi pus rândul înapoi cum îl corectase
+  omul. Grosimea uzuală pusă cu un clic nu se învață deloc: n-a scris-o clientul.
+- **Descrierea schimbată după verificare nu lasă prețul vechi** (15 septembrie
+  2026). Până atunci o poziție confirmată sau corectată nu se mai recitea:
+  scoasă tabla din descriere, rămânea „Gata" la 45,24 €/ml. Acum se recitește
+  din textul nou, trece la „De verificat", iar mesajul oferă „Anulează", care
+  pune înapoi și textul. În editor, „Salvează" cu descrierea schimbată și
+  câmpurile neatinse recitește la fel; cu câmpurile atinse sau recitite, e
+  corectura omului.
+- **Vederea implicită e foaia ca în Excel** (`web/import/grila.ts`, cerută pe
+  13 septembrie 2026): aceleași rânduri, coloane și numere de rând ca în
+  fișier, cu celulele editabile. După coloanele clientului: ce am înțeles,
+  prețul, starea și butonul care rezolvă rândul; corectura se deschide pe un
+  rând sub poziție. Filtrele ascund rândurile fără să schimbe numerotarea.
+  „Arată ca listă" trece pe carduri, mai ușor de citit pe telefon.
+- **Antetul documentului** — rândurile de deasupra tabelului: titlul ofertei,
+  numărul, beneficiarul — nu mai stă ca rânduri lipite una sub alta
+  (`antetDocument`). Cea mai lungă linie scrisă cu majuscule e titlul;
+  perechile „Etichetă : valoare", sau două celule pe rând, devin plăcuțe
+  aliniate în grilă; restul, o linie de detalii.
+- **„Detalii despre citire"**, pliat la final: foi cu coloane recunoscute,
+  rânduri cu text, titluri, cât s-a citit din reguli, automat sau din corecturi.
+- **Pasul 3 — Oferta**, deschis din pașii de sus (fără bară lipită jos: dubla
+  butonul de pas și acoperea ultimul rând). Ce intră (valoare, poziții, tip) și ce rămâne afară, cu
+  drum înapoi la verificare; datele ofertei pe două coloane; „Descarcă oferta".
 
-Gruparea se sprijină pe `CodNetarifare`, un cod stabil pe care `PozitieNetarifata`
-îl poartă alături de mesaj (`src/pricing/types.ts`). Mesajul rămâne proza citită
-de om; codul e contractul pe care se numără. Harta `cod → { etichetă, întrebare }`
-stă în `web/validare.ts`, lângă restul logicii de filtrare.
+Ecranul **nu mai spune cu ce model** citește rândurile nerecunoscute — cerut
+explicit pe 13 septembrie 2026. Modelul rămâne scris în importul salvat
+(`SesiuneImport.model`) și în proveniența registrului de ofertă.
 
-`[arată]` extinde lentila existentă: `Lentila` primește o variantă `{ cod }`, iar
-`potrivit()` filtrează pe ea. Mecanismul de lentile, contoarele pe filă și
-„Următoarea de validat" rămân neatinse. Blocul se recalculează pe **tot
-registrul**, nu pe foaia activă — cauza nu ține de foaie, iar `Radoia.xlsx` are
-șapte.
+### Așezarea, pe orice ecran
 
-O poziție poate apărea la două cauze (SPIRO ø160 n-are preț **și** e marcată),
-deci suma coloanei poate depăși numărul din titlu, care numără poziții
-distincte. Titlul ar minți dacă ar aduna coloana.
+- **Un singur marcaj, gândit întâi pentru telefon.** Lățimile se decid pe
+  lățimea ecranului de import (container queries), nu a ferestrei: cu bara
+  laterală deschisă sau pliată, aceeași fereastră lasă loc foarte diferit.
+  Praguri: 620 px (cardul pe două coloane, butoanele în dreapta, filtrele pe un
+  rând) și 1000 px (cardul devine rând: text · înțeles · stare · preț · acțiuni).
+- **Un singur spațiu între containere**, `--imp-gap` (16 px): între blocuri,
+  între carduri și în interiorul lor. Un rând fără butoane nu se randează, ca
+  să nu lase un gol mai mare decât celelalte.
+- **Filtrele trec pe rândul următor**, nu se derulează lateral: un buton tăiat
+  la margine nu spune că mai e ceva în dreapta. Pe telefon stau două câte două.
+- Ținte de minimum 44 px; câmpuri de 16 px, ca iOS să nu mărească pagina la
+  focus.
+- **Foaia încape pe lățimea ecranului, fără derulare laterală** (25 septembrie
+  2026). `table-layout: fixed`, cu lățimile din `<colgroup>` calculate de
+  `grilaFoaie`: numărul rândului, „Am înțeles · preț” și „Stare” (cu butoanele
+  pe un rând) au procente fixe; restul se împarte coloanelor clientului după
+  mediana lungimii pe rândurile de poziție, iar descrierea e plafonată — ea se
+  rupe pe rânduri, prețul și butoanele nu. Coloanele goale pe toată foaia nu se
+  desenează (Flower City: 7 din 16). Sub 1000 px lățime de ecran de import,
+  fișierul se deschide ca listă de carduri. Verificat cu Playwright pe cele 10
+  fișiere de client la 390, 1024, 1280, 1440 și 1920 px: zero derulare laterală,
+  butoanele pe un rând de la 1280 în sus.
+- Verificat în browser la 360, 390, 768, 1024, 1440 și 1920 px, în temă
+  deschisă și închisă: fără derulare orizontală, fără ținte sub 40 px, fără
+  erori în pagină, fluxul complet până la registrul descărcat.
 
-### Ecranul nu explică, arată
+### Cuvintele
 
-Notele explicative de pe ecranul de import au fost **șterse** — erau ~250 de
-cuvinte de proză permanentă, utile o dată și zgomot la fiecare fișier. Regulile
-de business pe care le spuneau (unde stă cheia API, cum se citește grila, de ce
-suma cauzelor poate depăși titlul, cum se tarifează golurile la foc) stau în
-`.claude/`, unde le caută cine are nevoie de ele.
+`web/import/text.ts` traduce codurile interne: niciun `grosime_ambigua`,
+„sistem" sau „ø" fără unitate pe ecran. Motivele de verificare vin ca valori
+(`motiveDeVerificat` pe rezultatul tarifării: segment diferit, rotunjire
+neconfirmată, grosime propusă), nu citite din textul notelor. Registrul de
+ofertă păstrează etichetele lungi din `web/validare.ts`, cu întrebările către
+firmă.
 
-Ce a rămas pe ecran e **stare sau cifre**, nu explicație: ce foaie e goală, ce
-import e redeschis, câte linii n-au plecat la model, și alerta de ofertă de
-manoperă. Regula de fond: dacă un text nu se schimbă de la un fișier la altul,
-n-are ce căuta în interfață.
+Tot marcajul stă în funcții pure (`web/import/vizual.ts`), testate în Node
+(`tests/import-vizual.test.ts`, `tests/import-text.test.ts`): textul clientului
+nu poate injecta HTML, fiecare stare are acțiunea ei, starea e aceeași cu foaia
+registrului în care pleacă poziția.
 
 ### Ieșirea: registrul de ofertă
 
 Până acum nu ieșea **nimic** din aplicație — importul se oprea într-o grilă, iar
-munca de validare rămânea în browser. Butonul „Generează oferta" din bara de
-validare deschide un formular de antet (firmă emitentă, număr, dată, beneficiar,
+munca de validare rămânea în browser. Pasul 3, „Oferta", are un formular de antet (firmă emitentă, număr, dată, beneficiar,
 obiectiv, persoană) și descarcă un `.xlsx` cu **trei foi**:
 
 - **`Ofertă`** — doar pozițiile cu preț **și** nemarcate. Totalul e doar aici.
@@ -297,7 +359,7 @@ dependență și rulează deja în browser la citire, iar scrierea trece prin ac
 
 Împărțirea pe îndelete: `web/oferta.ts` e **pur, fără DOM** — primește linii,
 întoarce un `ArrayBuffer` — exact ca motorul, și din același motiv: se testează
-în Node. `tests/oferta.test.ts` verifică pe `Oferta 27.04.2026 Matari.xlsx` că
+în Node. `tests/oferta.test.ts` verifică pe `oferta-118-1-matari-goluri-foc.xlsx` că
 totalul iese **12.692,04 €**, adică exact totalul ofertei semnate. `Blob`,
 `createObjectURL` și `<a download>` stau singure în `web/descarca.ts`, un singur
 loc, ca să nu se împrăștie o secvență în care se uită ușor `revokeObjectURL`.
@@ -314,10 +376,11 @@ import. Regula 3 din `arhitectura.md` — prețul se copiază în document, nu s
 referențiază — aplicată la ce avem: peste un an, întrebarea „de unde a ieșit
 13,74 pe rândul ăla?" trebuie să aibă răspuns în fișierul însuși.
 
-**Confirmarea în masă acționează pe exact ce e vizibil** sub filtrul curent, pe
-foaia activă, iar butonul spune asta („Confirmă cele 12 poziții marcate din
-foaia asta"). Un buton „confirmă tot" ar bifa și poziții pe care omul nu le-a
-avut niciodată pe ecran.
+**Confirmarea acționează pe pozițiile cu preț și marcate care se văd** sub
+filtrul curent, pe foaia activă, iar butonul spune asta („Confirmă cele 24 de
+poziții de mai jos"). Apare doar sub un filtru: nu există „confirmă tot
+fișierul", care ar bifa poziții pe care omul nu le-a avut pe ecran. O poziție
+fără preț nu se confirmă — ar rămâne fără preț, doar fără marcaj.
 
 **Confirmarea nu învață șabloane.** `invataDinCorectie` intră în memoria care
 rezolvă importurile viitoare; o confirmare în masă spune doar „am văzut și e
@@ -348,9 +411,9 @@ Motorul de prețuri și extragerea deterministă rulează integral în browser:
 listele de prețuri sunt importate static, iar parsarea Excel are o variantă
 care pornește de la conținutul fișierului. Același cod rulează în teste.
 
-Ecranul spune **cu ce model** lucrează — în bara de stare de sus și în textul de
-progres, cât timp extrage. Nu e cosmetic: e singurul loc din aplicație unde
-datele clientului pleacă la un terț, iar omul trebuie să vadă asta fără să caute.
+Ecranul **nu** afișează modelul (cerut pe 13 septembrie 2026); importul salvat
+și registrul de ofertă îl păstrează, pentru cine trebuie să afle de unde a
+ieșit o poziție.
 
 Stratul cu model **nu** rulează în browser, dar ecranul de import îl folosește
 când e disponibil: `scripts/vite-plugin-model.ts` expune `POST /api/extrage`

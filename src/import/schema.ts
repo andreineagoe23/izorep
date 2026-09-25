@@ -15,7 +15,8 @@ import { z } from "zod";
  * `om` inseamna corectat sau confirmat direct de om, in ecranul de import —
  * nu prin `invataDinCorectie` (aia ramane `memorie` la urmatorul fisier), ci
  * chiar linia pe care a atins-o. Doua reguli, in `nucleu.ts`: o linie `om` nu
- * se mai re-extrage niciodata in `reevalueaza`, si nu trece prin guardrails —
+ * se re-extrage in `reevalueaza` cat timp textul ei e cel pe care l-a vazut omul
+ * (`Rezolvare.text`), si nu trece prin guardrails —
  * `valideaza.ts` exista ca sa verifice MODELUL, nu pe omul care se uita direct
  * la fisierul sursa.
  */

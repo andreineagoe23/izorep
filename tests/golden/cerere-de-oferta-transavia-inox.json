@@ -1,29 +1,8 @@
 {
-  "fisier": "Izolatii Transavia.xlsx",
+  "fisier": "cerere-de-oferta-transavia-inox.xlsx",
   "model": "gpt-4.1-2025-04-14",
-  "generat": "2026-09-03T15:19:13.549Z",
+  "generat": "2026-09-25T18:49:35.593Z",
   "linii": [
-    {
-      "index": 21,
-      "text": "Rampe de reducere abur",
-      "extras": {
-        "index": 21,
-        "sistem": null,
-        "diametru_valoare": null,
-        "diametru_tip": null,
-        "grosime_mm": null,
-        "forma": null,
-        "gol_latime_mm": null,
-        "gol_inaltime_mm": null,
-        "straturi_extra": [],
-        "incredere": 1,
-        "motiv": "Linia este un antet sau descriere generala, nu o pozitie de izolatie."
-      },
-      "avertismente": [],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": null
-    },
     {
       "index": 27,
       "text": "IZOLATII | Izolatii cu vata minerala si protectie cu tabla de inox 304 Di60, g48 - COT",
@@ -40,12 +19,12 @@
         "gol_inaltime_mm": null,
         "straturi_extra": [
           {
-            "sistem": "tabla",
+            "sistem": "tabla_inox",
             "grosime_mm": null
           }
         ],
         "incredere": 0,
-        "motiv": "Izolatie cot cu vata minerala 48mm, diametru interior 60mm, protectie tabla inox. | NEVERIFICAT: vata_minerala nu se oferteaza in grosimea 48 mm (lista: 20, 30, 40, 50, 60, 80, 100)"
+        "motiv": "Textul mentioneaza clar vata minerala g48, Di60 si protectie cu tabla inox 304, forma cot. | NEVERIFICAT: vata_minerala nu se oferteaza in grosimea 48 mm (lista: 20, 30, 40, 50, 60, 80, 100)"
       },
       "avertismente": [
         "grosime_in_afara_listei"
@@ -70,12 +49,12 @@
         "gol_inaltime_mm": null,
         "straturi_extra": [
           {
-            "sistem": "tabla",
+            "sistem": "tabla_inox",
             "grosime_mm": null
           }
         ],
         "incredere": 0,
-        "motiv": "Izolatie cot cu vata minerala 48mm, diametru interior 76mm, protectie tabla inox. | NEVERIFICAT: vata_minerala nu se oferteaza in grosimea 48 mm (lista: 20, 30, 40, 50, 60, 80, 100)"
+        "motiv": "Textul mentioneaza clar vata minerala g48, Di76 si protectie cu tabla inox 304, forma cot. | NEVERIFICAT: vata_minerala nu se oferteaza in grosimea 48 mm (lista: 20, 30, 40, 50, 60, 80, 100)"
       },
       "avertismente": [
         "grosime_in_afara_listei"
@@ -100,12 +79,12 @@
         "gol_inaltime_mm": null,
         "straturi_extra": [
           {
-            "sistem": "tabla",
+            "sistem": "tabla_inox",
             "grosime_mm": null
           }
         ],
         "incredere": 0.9,
-        "motiv": "Caseta izolatie armaturi cu flanse DN15, vata minerala si tabla inox. Grosimea nu este specificata."
+        "motiv": "Textul mentioneaza caseta izolatie armaturi cu flanse DN15, vata minerala si tabla inox 304. Grosimea vatei nu este specificata."
       },
       "avertismente": [],
       "pret_unitar": null,
@@ -128,12 +107,12 @@
         "gol_inaltime_mm": null,
         "straturi_extra": [
           {
-            "sistem": "tabla",
+            "sistem": "tabla_inox",
             "grosime_mm": null
           }
         ],
         "incredere": 0.9,
-        "motiv": "Caseta izolatie armaturi cu flanse DN25, vata minerala si tabla inox. Grosimea nu este specificata."
+        "motiv": "Textul mentioneaza caseta izolatie armaturi cu flanse DN25, vata minerala si tabla inox 304. Grosimea vatei nu este specificata."
       },
       "avertismente": [],
       "pret_unitar": null,
@@ -156,12 +135,12 @@
         "gol_inaltime_mm": null,
         "straturi_extra": [
           {
-            "sistem": "tabla",
+            "sistem": "tabla_inox",
             "grosime_mm": null
           }
         ],
         "incredere": 0.9,
-        "motiv": "Caseta izolatie armaturi cu flanse DN40, vata minerala si tabla inox. Grosimea nu este specificata."
+        "motiv": "Textul mentioneaza caseta izolatie armaturi cu flanse DN40, vata minerala si tabla inox 304. Grosimea vatei nu este specificata."
       },
       "avertismente": [],
       "pret_unitar": null,
@@ -184,12 +163,12 @@
         "gol_inaltime_mm": null,
         "straturi_extra": [
           {
-            "sistem": "tabla",
+            "sistem": "tabla_inox",
             "grosime_mm": null
           }
         ],
         "incredere": 0.9,
-        "motiv": "Caseta izolatie armaturi cu flanse DN80, vata minerala si tabla inox. Grosimea nu este specificata."
+        "motiv": "Textul mentioneaza caseta izolatie armaturi cu flanse DN80, vata minerala si tabla inox 304. Grosimea vatei nu este specificata."
       },
       "avertismente": [],
       "pret_unitar": null,
@@ -212,12 +191,12 @@
         "gol_inaltime_mm": null,
         "straturi_extra": [
           {
-            "sistem": "tabla",
+            "sistem": "tabla_inox",
             "grosime_mm": null
           }
         ],
         "incredere": 0.9,
-        "motiv": "Caseta izolatie armaturi cu flanse DN100, vata minerala si tabla inox. Grosimea nu este specificata."
+        "motiv": "Textul mentioneaza caseta izolatie armaturi cu flanse DN100, vata minerala si tabla inox 304. Grosimea vatei nu este specificata."
       },
       "avertismente": [],
       "pret_unitar": null,
@@ -240,38 +219,17 @@
         "gol_inaltime_mm": null,
         "straturi_extra": [
           {
-            "sistem": "tabla",
+            "sistem": "tabla_inox",
             "grosime_mm": null
           }
         ],
         "incredere": 0.9,
-        "motiv": "Caseta izolatie armaturi cu flanse DN125, vata minerala si tabla inox. Grosimea nu este specificata."
+        "motiv": "Textul mentioneaza caseta izolatie armaturi cu flanse DN125, vata minerala si tabla inox 304. Grosimea vatei nu este specificata."
       },
       "avertismente": [],
       "pret_unitar": null,
       "total": null,
       "eroare": "grosime nespecificata si ambigua"
-    },
-    {
-      "index": 54,
-      "text": "Completari abur (legaturi rezervoare , etc )",
-      "extras": {
-        "index": 54,
-        "sistem": null,
-        "diametru_valoare": null,
-        "diametru_tip": null,
-        "grosime_mm": null,
-        "forma": null,
-        "gol_latime_mm": null,
-        "gol_inaltime_mm": null,
-        "straturi_extra": [],
-        "incredere": 1,
-        "motiv": "Linia este o descriere generala, nu o pozitie de izolatie."
-      },
-      "avertismente": [],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": null
     },
     {
       "index": 61,
@@ -289,12 +247,12 @@
         "gol_inaltime_mm": null,
         "straturi_extra": [
           {
-            "sistem": "tabla",
+            "sistem": "tabla_inox",
             "grosime_mm": null
           }
         ],
         "incredere": 0.9,
-        "motiv": "Caseta izolatie armaturi cu flanse DN15, vata minerala si tabla inox. Grosimea nu este specificata."
+        "motiv": "Textul mentioneaza caseta izolatie armaturi cu flanse DN15, vata minerala si tabla inox 304. Grosimea vatei nu este specificata."
       },
       "avertismente": [],
       "pret_unitar": null,
@@ -317,12 +275,12 @@
         "gol_inaltime_mm": null,
         "straturi_extra": [
           {
-            "sistem": "tabla",
+            "sistem": "tabla_inox",
             "grosime_mm": null
           }
         ],
         "incredere": 0.9,
-        "motiv": "Caseta izolatie armaturi cu flanse DN40, vata minerala si tabla inox. Grosimea nu este specificata."
+        "motiv": "Textul mentioneaza caseta izolatie armaturi cu flanse DN40, vata minerala si tabla inox 304. Grosimea vatei nu este specificata."
       },
       "avertismente": [],
       "pret_unitar": null,
@@ -345,12 +303,12 @@
         "gol_inaltime_mm": null,
         "straturi_extra": [
           {
-            "sistem": "tabla",
+            "sistem": "tabla_inox",
             "grosime_mm": null
           }
         ],
         "incredere": 0.9,
-        "motiv": "Caseta izolatie armaturi cu flanse DN50, vata minerala si tabla inox. Grosimea nu este specificata."
+        "motiv": "Textul mentioneaza caseta izolatie armaturi cu flanse DN50, vata minerala si tabla inox 304. Grosimea vatei nu este specificata."
       },
       "avertismente": [],
       "pret_unitar": null,
@@ -373,12 +331,12 @@
         "gol_inaltime_mm": null,
         "straturi_extra": [
           {
-            "sistem": "tabla",
+            "sistem": "tabla_inox",
             "grosime_mm": null
           }
         ],
         "incredere": 0.9,
-        "motiv": "Caseta izolatie armaturi cu flanse DN65, vata minerala si tabla inox. Grosimea nu este specificata."
+        "motiv": "Textul mentioneaza caseta izolatie armaturi cu flanse DN65, vata minerala si tabla inox 304. Grosimea vatei nu este specificata."
       },
       "avertismente": [],
       "pret_unitar": null,
@@ -401,12 +359,12 @@
         "gol_inaltime_mm": null,
         "straturi_extra": [
           {
-            "sistem": "tabla",
+            "sistem": "tabla_inox",
             "grosime_mm": null
           }
         ],
         "incredere": 0.9,
-        "motiv": "Caseta izolatie armaturi cu flanse DN80, vata minerala si tabla inox. Grosimea nu este specificata."
+        "motiv": "Textul mentioneaza caseta izolatie armaturi cu flanse DN80, vata minerala si tabla inox 304. Grosimea vatei nu este specificata."
       },
       "avertismente": [],
       "pret_unitar": null,
@@ -429,12 +387,12 @@
         "gol_inaltime_mm": null,
         "straturi_extra": [
           {
-            "sistem": "tabla",
+            "sistem": "tabla_inox",
             "grosime_mm": null
           }
         ],
         "incredere": 0.9,
-        "motiv": "Caseta izolatie armaturi cu flanse DN100, vata minerala si tabla inox. Grosimea nu este specificata."
+        "motiv": "Textul mentioneaza caseta izolatie armaturi cu flanse DN100, vata minerala si tabla inox 304. Grosimea vatei nu este specificata."
       },
       "avertismente": [],
       "pret_unitar": null,
@@ -457,12 +415,12 @@
         "gol_inaltime_mm": null,
         "straturi_extra": [
           {
-            "sistem": "tabla",
+            "sistem": "tabla_inox",
             "grosime_mm": null
           }
         ],
         "incredere": 0.9,
-        "motiv": "Caseta izolatie armaturi cu flanse DN125, vata minerala si tabla inox. Grosimea nu este specificata."
+        "motiv": "Textul mentioneaza caseta izolatie armaturi cu flanse DN125, vata minerala si tabla inox 304. Grosimea vatei nu este specificata."
       },
       "avertismente": [],
       "pret_unitar": null,
@@ -485,12 +443,12 @@
         "gol_inaltime_mm": null,
         "straturi_extra": [
           {
-            "sistem": "tabla",
+            "sistem": "tabla_inox",
             "grosime_mm": null
           }
         ],
         "incredere": 0.9,
-        "motiv": "Caseta izolatie armaturi cu flanse DN150, vata minerala si tabla inox. Grosimea nu este specificata."
+        "motiv": "Textul mentioneaza caseta izolatie armaturi cu flanse DN150, vata minerala si tabla inox 304. Grosimea vatei nu este specificata."
       },
       "avertismente": [],
       "pret_unitar": null,

@@ -4,7 +4,7 @@ import { extrageDeterminist } from "./extract-regex.js";
 /**
  * Randuri de continuare: mostenesc descrierea pozitiei de deasupra.
  *
- * `Book15.xlsx` (412 randuri) scoate azi doar 5 pozitii, pentru ca fisierul
+ * `cerere-de-oferta-book15.xlsx` (412 randuri) scoate azi doar 5 pozitii, pentru ca fisierul
  * foloseste in masa randuri de tip "E3.1.1.2 | Same - Ø125 mm | Same - Ø125 mm":
  * cantitate si UM sunt pe rand, dar textul lui nu spune NIMIC despre sistem —
  * fraza "Same" trimite cititorul la randul de deasupra, care are descrierea
@@ -21,7 +21,7 @@ import { extrageDeterminist } from "./extract-regex.js";
  *
  * | Fisier                          | Pozitii inainte -> dupa | Tarifate inainte -> dupa |
  * |----------------------------------|------------------------|--------------------------|
- * | Book15.xlsx                      | 5 -> 24                 | 1 -> 6                   |
+ * | cerere-de-oferta-book15.xlsx                      | 5 -> 24                 | 1 -> 6                   |
  * | celelalte 9 fisiere               | neschimbat              | neschimbat               |
  *
  * Singurul fisier care foloseste marcajul e Book15: 90 de randuri "Same" din
@@ -37,14 +37,14 @@ import { extrageDeterminist } from "./extract-regex.js";
  *
  * Forme de marcaj GASITE EFECTIV in cele 10 fisiere (verificat cu un scanner
  * peste tot textul brut al randurilor): doar "Same" — de 90 de ori in
- * Book15.xlsx, in variantele "Same - X", "Same: X", "Same," si "Same" urmat
+ * cerere-de-oferta-book15.xlsx, in variantele "Same - X", "Same: X", "Same," si "Same" urmat
  * de spatiu direct. Niciuna din celelalte forme cerute de specificatie
  * (idem, ditto, as above, ca mai sus, -||-, ,,-,,) nu apare in datele reale;
  * raman codificate mai jos pentru robustete pe fisiere viitoare, dar
  * NEMASURATE — daca vreodata apar, testul de continuare.test.ts le acopera
  * cu date construite, nu cu fisiere reale.
  *
- * Am gasit si "idem" in Radoia.xlsx, dar NU ca marcaj de continuare: apare la
+ * Am gasit si "idem" in cerere-de-oferta-spital.xlsx, dar NU ca marcaj de continuare: apare la
  * SFARSITUL liniei ("Dn 20 (3/4'') | CIRCUIT RACIRE / idem"), unde randul are
  * deja descrierea completa (elastomer, Dn, grosime) — "idem" se refera la
  * circuitul de racire, nu la lipsa descrierii. Ancorarea la INCEPUTUL unei

@@ -148,8 +148,12 @@ export function proiecteaza(
   return rezultat;
 }
 
-/** O linie asa cum pleaca spre model. */
-export interface LinieSursa { index: number; text: string; um?: string }
+/**
+ * O linie asa cum pleaca spre model. `sectiune` e antetul de deasupra
+ * randului: regulile il folosesc ca sa afle sistemul cand randul tace despre
+ * el, iar fara el modelul raspundea `null` exact pe liniile alea.
+ */
+export interface LinieSursa { index: number; text: string; um?: string; sectiune?: string }
 
 export interface GrupSablon {
   /** Tiparul plus unitatea de masura: aceeasi fraza cu alt UM e alta forma. */
@@ -165,7 +169,10 @@ export interface GrupSablon {
 export function grupeazaPeSablon(linii: LinieSursa[]): GrupSablon[] {
   const grupuri = new Map<string, LinieSursa[]>();
   for (const l of linii) {
-    const cheie = `${sablonul(l.text).tipar}||${l.um ?? ""}`;
+    // Sectiunea intra in cheie, cu numerele mascate: acelasi rand sub alt
+    // antet poate fi alt sistem, dar „EI30" si „EI120" sunt acelasi antet.
+    const sectiune = l.sectiune ? sablonul(l.sectiune).tipar : "";
+    const cheie = `${sablonul(l.text).tipar}||${l.um ?? ""}||${sectiune}`;
     const g = grupuri.get(cheie);
     if (g) g.push(l);
     else grupuri.set(cheie, [l]);

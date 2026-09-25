@@ -14,12 +14,19 @@ import type { LinieExtrasa, Sursa } from "../src/import/schema.js";
  */
 
 /**
- * Cele trei filtre ale gutter-ului de validare.
+ * Filtrele grilei: tot fisierul, sau una dintre cele trei gramezi in care se
+ * imparte importul la iesire (`imparte` din `web/oferta.ts`).
+ *
+ * Gramezile sunt DISJUNCTE, exact ca foile registrului: gata de oferta (pret,
+ * fara marcaj), de validat (pret, dar marcat), fara pret. Varianta dinainte
+ * avea „de validat" = orice linie marcata, deci si cele fara pret: pe cererea
+ * Abur bara spunea „De validat (33) · Netarifate (33)" despre ACELEASI 33 de
+ * linii, iar confirmarea lor nu le ducea nicaieri — ramaneau fara pret.
  *
  * `toate` e implicit la fiecare fisier nou incarcat — filtrul nu e o
  * preferinta persistenta, e o lentila temporara peste fisierul curent.
  */
-export type Filtru = "toate" | "de_validat" | "netarifate";
+export type Filtru = "toate" | "gata" | "de_validat" | "netarifate";
 
 /**
  * Cauza unui blocaj, oricare din cele doua feluri.
@@ -58,7 +65,8 @@ export const ETICHETE_BLOCAJ: Record<CodBlocaj, { eticheta: string; intrebare?: 
   grosime_inexistenta: { eticheta: "grosime care nu există în listă" },
   peste_maximul_listei: { eticheta: "diametru peste maximul listei", intrebare: 4 },
   dn_necunoscut: { eticheta: "DN inexistent în seria de oțel", intrebare: 10 },
-  grosime_ambigua: { eticheta: "grosimea nu e scrisă, iar sistemul are mai multe la rândul ăla", intrebare: 15 },
+  // Fara intrebare fixa: vezi `intrebareaPentru`.
+  grosime_ambigua: { eticheta: "grosimea nu e scrisă, iar sistemul are mai multe la rândul ăla" },
   banda_inexistenta: { eticheta: "diametrul nu cade în nicio bandă de multiplicatori" },
   lista_goala: { eticheta: "lista de prețuri e goală" },
   pozitie_fara_straturi: { eticheta: "poziție fără niciun strat" },
@@ -71,14 +79,35 @@ export const ETICHETE_BLOCAJ: Record<CodBlocaj, { eticheta: string; intrebare?: 
   material_conducta_lipsa: { eticheta: "lipsește materialul conductei (oțel sau plastic)" },
   gol_foc_in_matrice: { eticheta: "închidere de gol la foc trimisă pe matricea ø × grosime" },
   fara_diametru: { eticheta: "poziția n-are diametru (tubulatură rectangulară?): listele se caută doar pe ø" },
+  protectie_foc_tubulatura: { eticheta: "protecție la foc a tubulaturii: altă lucrare, fără listă de prețuri", intrebare: 8 },
   /* --- au pret, dar sunt marcate (CodAvertisment) --- */
   notatie_contrazice_materialul: { eticheta: "scrie DN, dar materialul dă diametrul exterior", intrebare: 10 },
+  diametru_contrazis: { eticheta: "scrie DN, dar Ø-ul de pe rând nu e DN-ul ăla în tabelul de conversie" },
   diametru_necitat: { eticheta: "diametrul nu apare în textul sursă" },
   grosime_necitata: { eticheta: "grosimea nu apare în textul sursă" },
   gol_necitat: { eticheta: "dimensiunea golului nu apare în textul sursă" },
   grosime_in_afara_listei: { eticheta: "grosime pe care sistemul ăla nu o ofertează" },
   forma_contrazice_um: { eticheta: "forma contrazice unitatea de măsură" },
 };
+
+/**
+ * Intrebarea deschisa catre firma care deblocheaza linia, pentru cauza data.
+ *
+ * Aproape mereu e cea din `ETICHETE_BLOCAJ`. Exceptia e `grosime_ambigua`, cu
+ * doua situatii diferite sub acelasi cod: la tabla de inox lista are trei
+ * grosimi la fiecare rand, iar clientul nu scrie niciodata care — intrebarea
+ * 15; la vata sau elastomer grosimea lipsa se completeaza cu cea uzuala a
+ * firmei, deci nu asteapta pe nimeni. Cu intrebarea fixa, cele 24 de casete de
+ * vata de pe cererea Abur trimiteau la o intrebare despre inox.
+ */
+export function intrebareaPentru(cod: CodBlocaj, l: LinieProcesata): number | undefined {
+  if (cod === "grosime_ambigua") {
+    const cuInox = l.extras.sistem === "tabla_inox"
+      || l.extras.straturi_extra.some((s) => s.sistem === "tabla_inox");
+    return cuInox ? 15 : undefined;
+  }
+  return ETICHETE_BLOCAJ[cod].intrebare;
+}
 
 export interface Blocaj {
   cod: CodBlocaj;
@@ -107,16 +136,24 @@ export interface Blocaj {
  */
 export function blocaje(linii: LinieProcesata[]): Blocaj[] {
   const contor = new Map<CodBlocaj, number>();
-  const adauga = (c: CodBlocaj): void => { contor.set(c, (contor.get(c) ?? 0) + 1); };
+  const intrebari = new Map<CodBlocaj, number>();
+  const adauga = (c: CodBlocaj, l: LinieProcesata): void => {
+    contor.set(c, (contor.get(c) ?? 0) + 1);
+    const q = intrebareaPentru(c, l);
+    if (q !== undefined) intrebari.set(c, q);
+  };
 
   for (const l of linii) {
     if (l.extras.sistem === null) continue;   // antet, nota, total: nu e pozitie
-    if (!l.pret && l.codEroare) adauga(l.codEroare);
-    for (const a of l.avertismente ?? []) adauga(a.cod);
+    if (!l.pret && l.codEroare) adauga(l.codEroare, l);
+    for (const a of l.avertismente ?? []) adauga(a.cod, l);
   }
 
   return [...contor]
-    .map(([cod, n]) => ({ cod, n, ...ETICHETE_BLOCAJ[cod] }))
+    .map(([cod, n]) => {
+      const intrebare = intrebari.get(cod);
+      return { cod, n, eticheta: ETICHETE_BLOCAJ[cod].eticheta, ...(intrebare !== undefined ? { intrebare } : {}) };
+    })
     .sort((a, b) => b.n - a.n || a.cod.localeCompare(b.cod));
 }
 
@@ -130,12 +167,12 @@ export function nrBlocate(linii: LinieProcesata[]): number {
 /**
  * Daca linia intra in filtrul dat.
  *
- * `netarifate` cere explicit `sistem !== null`: o linie care nu e pozitie de
- * izolatie (antet, total, nota) nu are pret nici n-o sa aiba, deci n-are ce
- * cauta la "netarifate" — n-ar fi o problema de rezolvat, ar fi zgomot.
- * `de_validat` citeste direct `necesitaValidare`, calculat deja in nucleu
- * (incredere sub prag, avertisment, sau eroare de tarifare pe o linie care nu
- * vine de la om) — filtrul nu recalculeaza nimic, doar selecteaza.
+ * Gramezile cer toate `sistem !== null`: o linie care nu e pozitie de izolatie
+ * (antet, total, nota) nu are pret nici n-o sa aiba, deci n-are ce cauta in
+ * ele — n-ar fi o problema de rezolvat, ar fi zgomot. Marcajul vine direct din
+ * `necesitaValidare`, calculat deja in nucleu; filtrul nu recalculeaza nimic,
+ * doar selecteaza. Regula e aceeasi cu `imparte`, iar un test tine cele doua
+ * aliniate.
  */
 export function potrivit(l: LinieProcesata, f: Lentila): boolean {
   if (typeof f === "object") {
@@ -147,7 +184,8 @@ export function potrivit(l: LinieProcesata, f: Lentila): boolean {
   }
   switch (f) {
     case "toate": return true;
-    case "de_validat": return l.necesitaValidare;
+    case "gata": return l.extras.sistem !== null && l.pret !== undefined && !l.necesitaValidare;
+    case "de_validat": return l.extras.sistem !== null && l.pret !== undefined && l.necesitaValidare;
     case "netarifate": return l.extras.sistem !== null && !l.pret;
   }
 }

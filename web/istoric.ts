@@ -1,4 +1,5 @@
 import type { LinieExtrasa, Sursa } from "../src/import/schema.js";
+import type { Destinatie } from "../src/pricing/lists.js";
 
 /**
  * Istoricul importurilor si importul curent, in IndexedDB.
@@ -36,6 +37,13 @@ export interface IntrareIstoric {
   pozitii: number;
   tarifate: number;
   valoare: number;
+  /**
+   * Segmentul pe care a fost tarifat importul. Lipseste la sesiunile salvate
+   * inainte sa existe, care au fost toate rezidentiale. Fara el, un import
+   * lucrat pe industrial se redeschidea pe rezidential, cu alte preturi si cu
+   * butonul aratand altceva decat ce vazuse omul.
+   */
+  destinatie?: Destinatie;
 }
 
 /** O corectie facuta de om intr-o celula a fisierului. */
@@ -48,8 +56,13 @@ export interface EditareCelula {
 
 export interface SesiuneImport extends IntrareIstoric {
   fisier: ArrayBuffer;
-  extrase: { index: number; extras: LinieExtrasa; sursa: Sursa }[];
+  /** `text` lipseste la sesiunile salvate inainte sa existe: nucleul il ia pe cel de acum. */
+  extrase: { index: number; extras: LinieExtrasa; sursa: Sursa; text?: string }[];
   editari: EditareCelula[];
+  /** Grosimile uzuale cerute de om, `[index, mm]`. Vezi `OptiuniNucleu.grosimiPropuse`. */
+  grosimiPropuse?: [number, number][];
+  /** Vezi `OptiuniNucleu.descrieriSchimbate`. */
+  descrieriSchimbate?: number[];
 }
 
 /**
@@ -98,6 +111,7 @@ const cerere = <T>(r: IDBRequest<T>): Promise<T> =>
 const metaDin = (s: SesiuneImport): IntrareIstoric => ({
   id: s.id, nume: s.nume, marime: s.marime, cand: s.cand,
   model: s.model, pozitii: s.pozitii, tarifate: s.tarifate, valoare: s.valoare,
+  ...(s.destinatie ? { destinatie: s.destinatie } : {}),
 });
 
 /** Id-ul importului deschis acum, ca reincarcarea paginii sa il regaseasca. */

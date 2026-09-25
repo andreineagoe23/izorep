@@ -1,6 +1,7 @@
-import { DN_TO_OD } from "../pricing/dn-table.js";
+import { DN_TO_OD, DN_TO_OD_DIN, TOLI_DN, esteConversiaDN } from "../pricing/dn-table.js";
 import { lista } from "../pricing/lists.js";
 import type { SistemMatrice } from "../pricing/types.js";
+import { diametreScrise, formaExplicitaDinText } from "./extract-regex.js";
 import type { LinieExtrasa } from "./schema.js";
 
 /**
@@ -8,7 +9,7 @@ import type { LinieExtrasa } from "./schema.js";
  *
  * Zod verifica FORMA raspunsului: tipuri, enum-uri, campuri obligatorii. Nu
  * verifica SENSUL. `diametru_valoare: 76` trece perfect si cand in linia sursa
- * scria `Di60` — masurat pe `Izolatii Transavia.xlsx` cu gpt-4.1-mini. Un
+ * scria `Di60` — masurat pe `cerere-de-oferta-transavia-inox.xlsx` cu gpt-4.1-mini. Un
  * diametru gresit inseamna alt rand in matricea de preturi, deci alt pret, si
  * nu se vede nicaieri: modelul e sigur pe el, incredere 0,95.
  *
@@ -26,27 +27,21 @@ export type CodAvertisment =
   | "dn_necunoscut"
   | "grosime_in_afara_listei"
   | "forma_contrazice_um"
-  | "notatie_contrazice_materialul";
+  | "notatie_contrazice_materialul"
+  | "diametru_contrazis";
 
 export interface Avertisment {
   cod: CodAvertisment;
   mesaj: string;
 }
 
-/**
- * Tolii, din tabelul de conversie primit de la firma (vezi `.claude/tevi.md`).
- *
- * Exista aici ca sa NU dea alarma falsa: linia "Dn 2''" e o citare corecta a
- * lui DN50, chiar daca cifra 50 nu apare nicaieri in text. Fara tabelul asta,
- * fiecare pozitie scrisa in toli ar fi marcata pentru validare degeaba — iar un
- * avertisment care se aprinde mereu nu mai e citit de nimeni.
+/*
+ * Tolii (`TOLI_DN`, din `dn-table.ts`) exista aici ca sa NU dea alarma falsa:
+ * linia "Dn 2''" e o citare corecta a lui DN50, chiar daca cifra 50 nu apare
+ * nicaieri in text. Fara tabelul ala, fiecare pozitie scrisa in toli ar fi
+ * marcata pentru validare degeaba — iar un avertisment care se aprinde mereu
+ * nu mai e citit de nimeni.
  */
-const TOLI_DN: Readonly<Record<string, number>> = {
-  "3/8": 10, "1/2": 15, "3/4": 20, "1": 25, "1 1/4": 32, "1 1/2": 40,
-  "2": 50, "2 1/2": 65, "3": 80, "4": 100, "5": 125, "6": 150, "8": 200,
-  "10": 250, "12": 300, "14": 350, "16": 400, "18": 450, "20": 500,
-  "24": 600, "28": 700, "32": 800, "36": 900, "40": 1000,
-};
 
 /** `2 1/2"`, `1 1/4”`, `3/4''`, `2 toli`. Ghilimeaua e obligatorie: fara ea,
  *  "1/2" din "130/130" ar deveni DN15. */
@@ -167,7 +162,9 @@ export function valideazaExtragere(
     }
   }
 
-  if (sursa.um && l.forma && umContrazice(sursa.um, l.forma)) {
+  // „Di169, g50 - COT" cu UM ml: forma scrisa explicit bate UM-ul, cum a
+  // tarifat firma in Oferta 284 — nu e o contradictie a modelului.
+  if (sursa.um && l.forma && umContrazice(sursa.um, l.forma) && l.forma !== formaExplicitaDinText(sursa.text)) {
     av.push({
       cod: "forma_contrazice_um",
       mesaj: `forma "${l.forma}" contrazice unitatea de masura "${sursa.um}"`,
@@ -217,8 +214,9 @@ const RE_NOMINAL_E_EXTERIOR =
  * INDIFERENT de sursa, ceea ce inseamna alt punct de apel — deci alta functie.
  *
  * NU schimba niciun pret. Pozitia primeste avertisment, `incredere = 0` prin
- * mecanismul existent, si merge la om. Care e pretul corect al lui o160 ramane
- * intrebarea 10 catre firma; ce se repara aici e VIZIBILITATEA lui o125.
+ * mecanismul existent, si merge la om. Din 11 septembrie 2026 regex-ul citeste
+ * singur SPIRO ca diametru exterior (raspunsul firmei), deci verificarea
+ * ramane utila pe iesirea modelului si pe tevile de plastic scrise cu DN.
  */
 export function notatieContraziceMaterialul(
   l: LinieExtrasa,
@@ -231,6 +229,30 @@ export function notatieContraziceMaterialul(
     cod: "notatie_contrazice_materialul",
     mesaj: `textul spune "${m[0]}", material la care nominalul ESTE diametrul exterior, `
       + `dar diametrul e citit ca DN${l.diametru_valoare} si se converteste pe seria de otel`,
+  }];
+}
+
+/**
+ * Diametrul e citit ca DN, dar pe rand scrie un Ø care nu e acel DN pe nicio
+ * coloana a tabelului de conversie (`esteConversiaDN`).
+ *
+ * E aceeasi regula pe care `extract-regex.ts` o aplica singur, luand Ø-ul: pe
+ * `oferta-118-nisal.xlsx`, randurile 44–47, "DN20 ... Dimensiuni: Ø20mm" e teava
+ * de Ø20, iar oferta semnata a tarifat-o asa. Aici nu se corecteaza nimic — un
+ * model sau un sablon a ales DN-ul, deci linia merge la om, cu ambele valori in
+ * mesaj. Ruleaza, ca `notatieContraziceMaterialul`, indiferent de sursa.
+ */
+export function diametruContrazisDeText(l: LinieExtrasa, text: string): Avertisment[] {
+  if (l.diametru_tip !== "DN" || l.diametru_valoare === null) return [];
+  const dn = l.diametru_valoare;
+  const scrise = diametreScrise(text);
+  if (scrise.length === 0 || scrise.some((v) => esteConversiaDN(dn, v))) return [];
+  const tabel = [DN_TO_OD[dn] && `ISO ${DN_TO_OD[dn]}`, DN_TO_OD_DIN[dn] && `DIN ${DN_TO_OD_DIN[dn]}`]
+    .filter(Boolean).join(", ");
+  return [{
+    cod: "diametru_contrazis",
+    mesaj: `diametrul e citit ca DN${dn}, dar pe rand scrie Ø${scrise.join(", Ø")}, care nu e DN${dn} `
+      + `in tabelul de conversie${tabel ? ` (${tabel})` : ""}`,
   }];
 }
 

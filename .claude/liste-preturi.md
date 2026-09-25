@@ -50,13 +50,17 @@ Conversia **depinde de materialul țevii**, nu doar de cifră:
 |---|---|
 | φ | `tip: "exterior"` — merge |
 | DN | `tip: "DN"` → `DN_TO_OD` — merge, DN8–DN400 |
-| **țoli** | **nu există** — `TipDiametru` are doar `"DN" \| "exterior" \| "interior"` |
+| țoli | convertiți la DN **la extragere** (`TOLI_DN` din `dn-table.ts`), apoi `tip: "DN"` |
 
-Țolii apar azi în fișiere doar ca notație secundară, lângă DN
-(`Dn 50 (60,3x3,6 - 2'')`), și extragerea îi ignoră deliberat, ca `1/2` să nu
-fie citit ca dimensiune de gol. Dacă vin **singuri** pe linie, poziția rămâne
-netarifată. E de adăugat: un tip `"toli"` plus tabelul Toli → DN → φ, cu
-fracțiile scrise în toate felurile (`3/4"`, `3/4''`, `3/4”`).
+Țolii nu sunt o notație separată în motor: `1/2"` *este* DN15. Extragerea
+deterministă îi citește când stau lângă prefixul lor și au ghilimea —
+`Ø1/2"`, `Ø1 1/4"`, `Dn 2 1/2"` — ca `1/2` dintr-un `130/130` să nu devină DN15.
+Lângă un DN scris (`Dn 50 (60,3x3,6 - 2'')`) câștigă DN-ul. Lângă un Ø care
+**nu** e DN-ul ăla în tabelul de conversie (`DN20 … Ø20mm`, țeavă de plastic)
+câștigă Ø-ul, din 15 septembrie 2026 — vezi `tevi.md`. Până pe 13
+septembrie 2026 `Ø1/2"` se citea ca φ1 și ieșea pe primul rând al listei;
+pe `Oferta 27.04.2026` cele șase poziții în țoli ies acum exact ca oferta
+semnată.
 
 Notația `"interior"` trece azi neschimbată prin conversie, adică e tratată ca
 φ exterior. Pentru izolație contează exteriorul; un Di dat de client cere
@@ -217,14 +221,13 @@ rând în jurul lui ×1,10–1,11. De aceea sunt documente separate, nu un câmp
 | | Rezidențial | Industrial |
 |---|---|---|
 | Fișiere | `data/price-lists/*.json` | `data/price-lists/industrial/*.json` |
-| Motor | import static, `lists.ts` | **nu** — nimic din `src/pricing/` nu le vede |
+| Motor | import static, `lists.ts`, implicit | import static, `lists.ts`, când oferta e marcată industrială la import |
 | Bază | `lista_preturi`, destinație `rezidential` | idem, destinație `industrial` |
 
-Asimetria e deliberată: rezidențialul stă plat pentru că acolo îl caută
-importul static al motorului, care trebuie să ruleze identic în browser.
-Industrialul există deocamdată **numai ca date**. `catalogDinBaza` cere
-destinația explicit, implicit rezidențial — vezi `backend.md`, „Destinația e în
-`where`, nu în `order by`".
+Din 12 septembrie 2026 motorul le vede pe amândouă prin `PE_DESTINATIE` /
+`listaDe`, iar segmentul îl alege omul în ecranul de import. `catalogDinBaza`
+cere destinația explicit, implicit rezidențial — vezi `backend.md`, „Destinația
+e în `where`, nu în `order by`".
 
 ## Întrebări deschise
 
@@ -245,7 +248,7 @@ destinația explicit, implicit rezidențial — vezi `backend.md`, „Destinați
 6. **Țolii vin vreodată singuri** pe linie, fără DN alături? De asta depinde
    dacă tabelul Toli e obligatoriu la extragere sau doar de siguranță.
 7. **Ce e cu tabla de inox?** A venit doar pe industrial, fără corespondent
-   rezidențial, deși `Izolatii Transavia.xlsx` — 72 de rânduri de inox — e o
+   rezidențial, deși `cerere-de-oferta-transavia-inox.xlsx` — 72 de rânduri de inox — e o
    lucrare pe care firma a ofertat-o deja. Se ofertează inox și pe rezidențial?
 8. **PVC și goluri la foc pe industrial** — nu se ofertează acolo, sau se
    folosesc listele rezidențiale?

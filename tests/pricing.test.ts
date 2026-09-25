@@ -158,14 +158,26 @@ describe("pozitii care NU se pot tarifa - se semnaleaza, nu se ghicesc", () => {
     })).toThrow(PozitieNetarifata);
   });
 
-  it("diametru peste lista (ø250, ø315 din oferta 118)", () => {
-    for (const od of [250, 315]) {
-      expect(() => tarifeaza({
-        diametru: { valoare: od, tip: "exterior" },
-        straturi: [{ sistem: "elastomer", grosime_mm: 9 }],
-        forma: "ml", cantitate: 1,
-      })).toThrow(PozitieNetarifata);
-    }
+  it("diametru peste lista (ø250, ø315 din oferta 118): formula firmei, dar marcat", () => {
+    // Pana pe 25 septembrie 2026 aruncau. Firma a dat regula scrisa pe mp:
+    // (φ + 2g) / 1000 × 3,14 × pret/mp. Oferta semnata are 16,36 si 20,30 —
+    // 0,13 € peste formula ei, deci pretul nu e sigur si pozitia merge la om.
+    const pret = (od: number) => tarifeaza({
+      diametru: { valoare: od, tip: "exterior" },
+      straturi: [{ sistem: "elastomer", grosime_mm: 9 }],
+      forma: "ml", cantitate: 1,
+    });
+    expect(pret(250).pret_unitar).toBe(16.23);
+    expect(pret(315).pret_unitar).toBe(20.17);
+    expect(pret(250).motiveDeVerificat).toContain("peste_lista");
+  });
+
+  it("peste lista, fara pret pe mp (PVC peste o710): ramane refuzat", () => {
+    expect(() => tarifeaza({
+      diametru: { valoare: 800, tip: "exterior" },
+      straturi: [{ sistem: "pvc" }],
+      forma: "ml", cantitate: 1,
+    })).toThrow(PozitieNetarifata);
   });
 
   it("DN inexistent in tabelul de conversie", () => {
@@ -203,6 +215,25 @@ describe("abateri cunoscute fata de ofertele istorice", () => {
     expect(r.pret_unitar).toBe(11.12);   // rand 114
     const inOferta = 10.57;              // rand 89
     expect(r.pret_unitar - inOferta).toBeCloseTo(0.55, 2);
+    // Pretul ramane cel dat de regula, dar pozitia nu mai pleaca tacut:
+    // randul 89 e la 1 mm dedesubt, exact varianta aleasa de oferta.
+    expect(r.noteDeVerificat?.join(" ")).toContain("intrebarea 3");
+  });
+
+  it("nota de rotunjire apare doar langa un rand la cel mult 1 mm dedesubt", () => {
+    const note = (od: number) => tarifeaza({
+      diametru: { valoare: od, tip: "exterior" },
+      straturi: [{ sistem: "elastomer", grosime_mm: 9 }], forma: "ml", cantitate: 1,
+    }).noteDeVerificat;
+    expect(note(125)).toBeUndefined();   // cade fix pe rand
+    expect(note(200)).toBeUndefined();   // idem
+    expect(note(20)).toBeUndefined();    // 2 mm peste 18: nicio oferta n-a coborat
+    expect(note(110)).toBeUndefined();
+    // Seria de otel nu e rotunjita in sus, deci nu are ce sa fie ambiguu.
+    expect(tarifeaza({
+      diametru: { valoare: 89, tip: "interior" },
+      straturi: [{ sistem: "elastomer", grosime_mm: 9 }], forma: "ml", cantitate: 1,
+    }).noteDeVerificat).toBeUndefined();
   });
 
   it("ø160: tarifat 14.37 ca teava PEHD si 14.16 ca tubulatura SPIRO, in aceeasi oferta", () => {
@@ -213,5 +244,6 @@ describe("abateri cunoscute fata de ofertele istorice", () => {
     expect(caPEHD.pret_unitar).toBe(14.37); // rand 169, ca in oferta la PEHD
     // Aceeasi oferta tarifeaza SPIRO DN160 la 14.16 (randul 159). Regula
     // determinista alege 14.37 pentru ambele; diferenta e de 0.21 EUR/ml.
+    expect(caPEHD.noteDeVerificat?.join(" ")).toContain("randul 159");
   });
 });
