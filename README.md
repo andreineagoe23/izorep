@@ -110,7 +110,7 @@ deocamdată. Când apare serverul, intră în `docker-compose.yml` și `npm star
 |---|---|
 | `npm start` | bază + migrări + interfață |
 | `npm run dev` | doar interfața |
-| `npm test` | 523 de teste (cele de bază cer Postgres; fără fișierele firmei, cele pe oferte reale verifică doar forma) |
+| `npm test` | 538 de teste (cele de bază cer Postgres; fără fișierele firmei, cele pe oferte reale verifică doar forma) |
 | `npm run typecheck` | |
 | `npm run build:web` | build static în `dist-web/` |
 | `npm run db:up` / `db:down` | pornește / oprește Postgres |

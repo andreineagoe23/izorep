@@ -241,6 +241,11 @@ describe("grosimea tablei, scrisă lângă ea", () => {
       .toEqual([{ sistem: "tabla", grosime_mm: null }]);
   });
 
+  it("„0. 6 mm”, cu spațiu după punct, e tot 0,6 (spital, rândul 137)", () => {
+    expect(straturi("Izolatie tubulatura rectangulara montata la interior cu armaflex de 20 mm, "
+      + "protejata cu tabla zincata de 0. 6 mm")).toEqual([{ sistem: "tabla", grosime_mm: 0.6 }]);
+  });
+
   it("un interval sau un întreg de lângă tablă nu e grosimea ei", () => {
     // Book15: „a thickness of 0.6 – 0.8 mm". Alegerea rămâne a omului.
     expect(extrage("Supply and installation of aluminum sheet jacketing with a thickness of 0.6 – 0.8 mm",

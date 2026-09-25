@@ -80,6 +80,7 @@ export const ETICHETE_BLOCAJ: Record<CodBlocaj, { eticheta: string; intrebare?: 
   gol_foc_in_matrice: { eticheta: "închidere de gol la foc trimisă pe matricea ø × grosime" },
   fara_diametru: { eticheta: "poziția n-are diametru (tubulatură rectangulară?): listele se caută doar pe ø" },
   protectie_foc_tubulatura: { eticheta: "protecție la foc a tubulaturii: altă lucrare, fără listă de prețuri", intrebare: 8 },
+  livrare_teava: { eticheta: "livrare de țeavă cu izolația inclusă: prețul țevii nu e în listele de izolație" },
   /* --- au pret, dar sunt marcate (CodAvertisment) --- */
   notatie_contrazice_materialul: { eticheta: "scrie DN, dar materialul dă diametrul exterior", intrebare: 10 },
   diametru_contrazis: { eticheta: "scrie DN, dar Ø-ul de pe rând nu e DN-ul ăla în tabelul de conversie" },
@@ -88,6 +89,7 @@ export const ETICHETE_BLOCAJ: Record<CodBlocaj, { eticheta: string; intrebare?: 
   gol_necitat: { eticheta: "dimensiunea golului nu apare în textul sursă" },
   grosime_in_afara_listei: { eticheta: "grosime pe care sistemul ăla nu o ofertează" },
   forma_contrazice_um: { eticheta: "forma contrazice unitatea de măsură" },
+  diametru_nenotat: { eticheta: "diametrul citit e alt număr de pe rând, nu cel scris ca diametru" },
 };
 
 /**

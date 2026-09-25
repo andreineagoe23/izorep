@@ -1,7 +1,7 @@
 import { DN_TO_OD, DN_TO_OD_DIN, TOLI_DN, esteConversiaDN } from "../pricing/dn-table.js";
 import { lista } from "../pricing/lists.js";
 import type { SistemMatrice } from "../pricing/types.js";
-import { diametreScrise, formaExplicitaDinText } from "./extract-regex.js";
+import { diametreNotate, diametreScrise, formaExplicitaDinText, type DiametreNotate } from "./extract-regex.js";
 import type { LinieExtrasa } from "./schema.js";
 
 /**
@@ -28,7 +28,8 @@ export type CodAvertisment =
   | "grosime_in_afara_listei"
   | "forma_contrazice_um"
   | "notatie_contrazice_materialul"
-  | "diametru_contrazis";
+  | "diametru_contrazis"
+  | "diametru_nenotat";
 
 export interface Avertisment {
   cod: CodAvertisment;
@@ -84,6 +85,18 @@ function citat(valoare: number, numere: Set<number>, dnImplicit: Set<number>): b
   return od !== undefined && numere.has(od);
 }
 
+/**
+ * Valoarea citita e unul dintre diametrele SCRISE ca diametru pe rand — direct,
+ * sau prin conversia DN ↔ diametru exterior (ISO sau DIN, ±1 mm). Un DN notat
+ * citit ca exterior e si el acceptat: la SPIRO „DN 160" e chiar ø160.
+ */
+function peNotatie(v: number, tip: LinieExtrasa["diametru_tip"], n: DiametreNotate): boolean {
+  const aproape = (a: number, b: number, t: number) => Math.abs(a - b) <= t;
+  if (n.dn.includes(v) || n.exterior.some((x) => aproape(x, v, 0.5))) return true;
+  if (tip === "DN") return n.exterior.some((x) => esteConversiaDN(v, x));
+  return n.dn.some((d) => [DN_TO_OD[d], DN_TO_OD_DIN[d]].some((od) => od !== undefined && aproape(od, v, 1)));
+}
+
 /** Ce forme sunt compatibile cu unitatea de masura de pe rand. */
 const FORME_ELEMENT = new Set<LinieExtrasa["forma"]>([
   "manseta", "cot", "teu", "reductie", "robinet", "vana", "flansa", "contor",
@@ -104,8 +117,9 @@ const MATRICE = new Set<string>(["elastomer", "vata_minerala", "tabla", "tabla_i
  * Verifica o linie extrasa fata de textul din care a fost extrasa.
  *
  * Lista goala inseamna "nimic suspect", nu "corect": validatorul prinde
- * inventarea si imposibilul, nu confuzia intre doua valori care apar amandoua
- * in text. Aia ramane treaba omului de la validare.
+ * inventarea, imposibilul si diametrul luat dintr-un numar care nu e scris ca
+ * diametru. Confuzia intre doua diametre notate amandoua (DN80 si Ø89 pe
+ * acelasi rand) ramane treaba omului de la validare.
  */
 export function valideazaExtragere(
   l: LinieExtrasa,
@@ -119,6 +133,22 @@ export function valideazaExtragere(
     av.push({
       cod: "diametru_necitat",
       mesaj: `diametrul ${l.diametru_valoare} nu apare in textul sursa`,
+    });
+  }
+
+  // Confuzia intre doua numere care apar amandoua in text: „inox 304 Di89"
+  // citit 304, „EN 14304 ... Dn 100" citit 14304 sau 304. `diametru_necitat`
+  // tace — numarul chiar e acolo. Cand randul scrie un diametru CU notatia lui
+  // si valoarea citita nu e niciunul dintre ele, e alt numar de pe rand.
+  const notate = diametreNotate(sursa.text);
+  if (l.diametru_valoare !== null && citat(l.diametru_valoare, numere, dnImplicit)
+      && notate.dn.length + notate.exterior.length > 0
+      && !peNotatie(l.diametru_valoare, l.diametru_tip, notate)) {
+    const scrise = [...notate.dn.map((d) => `DN${d}`), ...notate.exterior.map((x) => `ø${x}`)];
+    av.push({
+      cod: "diametru_nenotat",
+      mesaj: `diametrul ${l.diametru_valoare} apare in text, dar nu ca diametru; pe rand diametrul e scris `
+        + [...new Set(scrise)].join(", "),
     });
   }
 

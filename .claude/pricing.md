@@ -248,10 +248,13 @@ Fiecare dedusă din Oferta 284 sau Oferta 27.04.2026, cu dovada lângă ea în c
   deliberată: inoxul e **singurul sistem fără listă rezidențială**. Pe o ofertă
   rezidențială prețul lui vine din lista industrială, cu notă de verificat.
   Care e grosimea implicită a jachetei rămâne întrebarea 15.
-- **Seriile de diametre pe material.** `dn-table.ts` are un singur tabel, cel
-  de oțel, și îl aplică tuturor. Datele pentru cupru, PP-R, PE-HD, PE-Xa, PVC
-  și spiro sunt în `data/referinte/conversii-tevi.json` și în bază, dar motorul
-  nu le citește: o poziție DN15 de cupru se caută pe rândul 22 în loc de 18.
+- **Seriile de diametre pe material.** Din 25 septembrie 2026 cuprul are seria
+  lui (`DN_TO_OD_CUPRU`, din registrul de conversie al firmei, ținută egală cu
+  `conversii-tevi.json` de un test): când rândul spune „cupru / copper /
+  Kupfer” și e dat în DN, `serieDupaMaterial` din `nucleu.ts` trece DN-ul pe ø
+  de cupru (DN15 → ø18), marcat `serie_cupru`. Țeava de inox în DN rămâne pe
+  ISO, marcată `serie_inox` — datele firmei n-au seria inoxului. PP-R, PE-HD și
+  restul vin deja în ø.
 - Lista de manoperă separată (structură diferită: tarif plat, nu matrice).
 - Coeficienți (înălțime, urgență, weekend) peste prețul de bază.
 - Versionarea listelor de prețuri și snapshot-ul pe linia de deviz.

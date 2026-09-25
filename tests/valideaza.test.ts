@@ -137,3 +137,30 @@ describe("aplicaValidarea", () => {
     expect(aplicaValidarea([l], sursa)[0]).toBe(l);
   });
 });
+
+describe("alt număr de pe rând citit ca diametru", () => {
+  const INOX = "Izolatii cu vata minerala si protectie cu tabla de inox 304 Di89, g50 - ML";
+
+  it("„inox 304 Di89” citit 304: numărul e în text, dar nu ca diametru", () => {
+    expect(coduri(linie({ diametru_valoare: 304, diametru_tip: "interior", grosime_mm: 50 }), INOX))
+      .toContain("diametru_nenotat");
+  });
+
+  it("Di89 citit 89 nu aprinde nimic", () => {
+    expect(coduri(linie({ diametru_valoare: 89, diametru_tip: "interior", grosime_mm: 50 }), INOX))
+      .not.toContain("diametru_nenotat");
+  });
+
+  it("conversiile legitime tac: Dn 100 (114,3 x 4,5) citit ø114,3 sau DN100", () => {
+    const t = "Izolatie elastomer 19 mm Dn 100 (114,3 x 4,5 - 4”)";
+    expect(coduri(linie({ diametru_valoare: 114.3, diametru_tip: "exterior", grosime_mm: 19 }), t))
+      .not.toContain("diametru_nenotat");
+    expect(coduri(linie({ diametru_valoare: 100, diametru_tip: "DN", grosime_mm: 19 }), t))
+      .not.toContain("diametru_nenotat");
+  });
+
+  it("fără niciun diametru notat pe rând, tace", () => {
+    expect(coduri(linie({ diametru_valoare: 89, diametru_tip: "exterior", grosime_mm: 50 }),
+      "Izolatie vata minerala 50 mm conducta 89")).not.toContain("diametru_nenotat");
+  });
+});

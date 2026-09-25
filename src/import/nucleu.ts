@@ -7,7 +7,7 @@ import { amprentaFoaie, aplicaMapare } from "./mapare.js";
 import type { MapareSalvata } from "./cache-mapari.js";
 import { adaugaSectiuni, type LinieCuSectiune } from "./sectiuni.js";
 import { aplicaContinuare } from "./continuare.js";
-import { extrageDeterminist, formaElementDinText, formaExplicitaDinText } from "./extract-regex.js";
+import { extrageDeterminist, formaElementDinText, formaExplicitaDinText, esteTeavaDeInox, scrieGrosime } from "./extract-regex.js";
 import {
   diametruContrazisDeText, notatieContraziceMaterialul, valideazaExtragere,
   type Avertisment, type CodAvertisment,
@@ -21,7 +21,7 @@ import {
   PozitieNetarifata,
   type CodNetarifare, type RezultatGolFoc, type RezultatTarifare,
 } from "../pricing/types.js";
-import { DiametruNecunoscut, TOLERANTA_SERIE_OTEL, toOuterDiameter } from "../pricing/dn-table.js";
+import { DN_TO_OD, DN_TO_OD_CUPRU, DiametruNecunoscut, TOLERANTA_SERIE_OTEL, toOuterDiameter } from "../pricing/dn-table.js";
 
 /**
  * Nucleul comun de import, IZOMORF: fara `node:*`, fara DOM.
@@ -277,6 +277,27 @@ export function esteProtectieLaFocTubulatura(text: string): boolean {
 }
 
 /**
+ * Livrarea unei TEVI, cu izolatia doar „inclusiv": clientul cumpara teava.
+ *
+ * `oferta-118-nisal.xlsx`, randul 83: „Edelstahlrohr für Abgas von
+ * Dieselpumpen | Teava de inox pentru evacuarea gazelor arse ...; inclusiv
+ * izolatie termica avand grosimea de vata minerala 50 mm ...; inclusiv
+ * confectionare pipa ... vopsire". Semnat 20,09 €/m; vata 50 pe ø125 da 14,68,
+ * si nicio combinatie din liste nu da 20,09 — pretul e al tevii, al pipei si
+ * al vopsirii, facut de om. Ca la protectia la foc a tubulaturii: alta lucrare,
+ * fara lista.
+ *
+ * Cere AMBELE: randul incepe cu teava (sau o coloana a lui incepe cu ea) si
+ * izolatia e „inclusiv". „Izolatie ... pe teava DN50" nu intra aici.
+ */
+const RE_TEAVA_LIVRATA = /(?:^|\|)\s*(?:[a-zäöü]*rohr\b|teav[aă]\b|țeav[aă]\b|tevi\b|țevi\b|pipe\b)/i;
+const RE_IZOLATIE_INCLUSA = /inclusiv\s+izola|including\s+(?:thermal\s+)?insulation|inkl\.?\s+(?:w[aä]rme)?d[aä]mm/i;
+
+export function esteLivrareDeTeava(text: string): boolean {
+  return RE_TEAVA_LIVRATA.test(text) && RE_IZOLATIE_INCLUSA.test(text);
+}
+
+/**
  * Grosimi scrise de client care inseamna, in practica firmei, alta grosime din
  * lista. Elastomerul nu se face in 20 mm (9 / 13 / 19 / 25 / 32), iar „S=20mm"
  * din Oferta 27.04.2026 e tarifat de firma cu pretul de 19 mm: DN100 15,71,
@@ -319,6 +340,13 @@ export function tarifeazaExtras(
     return {
       eroare: "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi",
       codEroare: "protectie_foc_tubulatura",
+    };
+  }
+  if (text !== undefined && extras.sistem !== null && extras.sistem !== "goluri_foc"
+      && esteLivrareDeTeava(text)) {
+    return {
+      eroare: "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie",
+      codEroare: "livrare_teava",
     };
   }
   try {
@@ -486,6 +514,59 @@ function diametruExterior(e: LinieExtrasa): number | null {
 interface GrosimeDeLaConducta { grosime: number; rand: number; foaie: string }
 
 /**
+ * Teava de cupru, numita explicit. NU „Cu": in romana e prepozitia din „cu
+ * vata minerala".
+ */
+const RE_CUPRU = /\bcupru\b|\bcopper\b|kupfer/i;
+
+interface SeriePeMaterial {
+  extras: LinieExtrasa;
+  nota: string;
+  motiv: "serie_cupru" | "serie_inox";
+}
+
+/**
+ * Diametrul unei tevi date in DN, dupa materialul ei.
+ *
+ * `DN_TO_OD` e seria de OTEL, iar firma a spus-o scris: cuprul si inoxul „se
+ * dau in DN, dar nu se convertesc pe coloana ISO". Pentru cupru seria e in
+ * registrul ei de conversie (`DN_TO_OD_CUPRU`): DN15 → ø18, nu ø21,3. Pozitia
+ * se tarifeaza pe ø-ul de cupru, rotunjit in sus ca orice ø, dar merge la om —
+ * nicio oferta semnata n-are inca teava de cupru.
+ *
+ * Pentru inox nu exista serie in datele firmei (inoxul presat merge pe seria
+ * cuprului, cel sudat pe ISO), deci pretul ramane pe ISO si pozitia e marcata.
+ * Un Ø scris pe rand bate oricum DN-ul, din `extract-regex.ts`; aici ajung
+ * doar DN-urile singure.
+ */
+function serieDupaMaterial(e: LinieExtrasa, text: string): SeriePeMaterial | null {
+  if (e.diametru_tip !== "DN" || e.diametru_valoare === null || e.sistem === "goluri_foc") return null;
+  const dn = e.diametru_valoare;
+  if (RE_CUPRU.test(text)) {
+    const od = DN_TO_OD_CUPRU[dn];
+    if (od === undefined || od === DN_TO_OD[dn]) return null;
+    return {
+      extras: { ...e, diametru_valoare: od, diametru_tip: "exterior" },
+      nota: `teava de cupru: DN${dn} = ø${String(od).replace(".", ",")} pe seria cuprului `
+        + `(registrul de conversie al firmei), nu ø${String(DN_TO_OD[dn] ?? "?").replace(".", ",")} ca la otel`,
+      motiv: "serie_cupru",
+    };
+  }
+  if (esteTeavaDeInox(text)) {
+    return {
+      extras: e,
+      nota: `teava de inox: DN${dn} tarifat pe seria de otel (ISO); la inoxul presat seria e alta `
+        + "(DN15 = ø18), iar lista firmei n-o spune",
+      motiv: "serie_inox",
+    };
+  }
+  return null;
+}
+
+/** Unitati de masura care numara bucati: „buc", „buc.", „pcs", „Stk". */
+const RE_UM_BUCATA = /^(buc|bucati|bucăți|pcs|pc|stk|st)\.?$/i;
+
+/**
  * Grosimea pe care clientul n-a scris-o, luata de la conducta de ACELASI
  * diametru si ACELASI material din aceeasi lista.
  *
@@ -501,6 +582,11 @@ interface GrosimeDeLaConducta { grosime: number; rand: number; foaie: string }
  * armaturii, deci pozitia ramane fara grosime, ca inainte. Se compara
  * diametrul exterior, cu toleranta seriei de otel: DN100 (ø114,3) si Di114
  * sunt aceeasi teava.
+ *
+ * Nu si cand randul SCRIE o grosime pe care extragerea a respins-o: pe
+ * `cerere-de-oferta-transavia-inox.xlsx`, „Di76, g48 - COT" (48 nu e grosime
+ * de vata) primea 50 mm de la conducta „Di76, g50 - ML", cu incredere 0,99.
+ * Clientul a scris ceva; ce a vrut sa scrie e al omului, nu al conductei.
  */
 function grosimiDeLaConducte(
   brute: LinieCuSectiune[], rezolvate: Map<number, Rezolvare>,
@@ -516,6 +602,7 @@ function grosimiDeLaConducte(
   for (const b of brute) {
     const e = rezolvate.get(b.index)?.extras;
     if (!e || e.grosime_mm !== null || (e.sistem !== "vata_minerala" && e.sistem !== "elastomer")) continue;
+    if (scrieGrosime(b.text)) continue;
     const od = diametruExterior(e);
     if (od === null) continue;
     const potrivite = surse.filter((s) => s.sistem === e.sistem && Math.abs(s.od - od) <= TOLERANTA_SERIE_OTEL);
@@ -587,7 +674,11 @@ function construiesteLinii(
     const propusa = grosimiPropuse?.get(b.index);
     const cuPropunere = propusa !== undefined && extras.grosime_mm === null
       && extras.sistem !== null && extras.sistem !== "goluri_foc";
-    const deTarifat = cuPropunere ? { ...extras, grosime_mm: propusa } : extras;
+    const cuGrosime = cuPropunere ? { ...extras, grosime_mm: propusa } : extras;
+    // Seria tevii dupa material (cupru, inox), doar cand textul o spune. Nu si
+    // pe "om": acolo diametrul e cel pe care l-a pus omul.
+    const serie = sursa === "om" ? null : serieDupaMaterial(cuGrosime, b.text);
+    const deTarifat = serie?.extras ?? cuGrosime;
 
     // Descrierea schimbata dupa verificare: linia a fost recitita din textul
     // nou, deci ce a vazut omul nu mai e ce se tarifeaza. Nu si pe "om": o noua
@@ -613,6 +704,11 @@ function construiesteLinii(
         && deTarifat.forma === formaExplicitaDinText(b.text)) {
       t.pret.note = [...(t.pret.note ?? []),
         `UM-ul e "${b.um}", dar textul spune "${deTarifat.forma}": tarifat ca ${deTarifat.forma}, ca in Oferta 284`];
+    }
+    if (t.pret && serie) {
+      t.pret.note = [...(t.pret.note ?? []), serie.nota];
+      t.pret.noteDeVerificat = [...(t.pret.noteDeVerificat ?? []), serie.nota];
+      t.pret.motiveDeVerificat = [...(t.pret.motiveDeVerificat ?? []), serie.motiv];
     }
     if (t.pret && cuPropunere) {
       const n = `grosime ${propusa} mm propusa dupa diametru (grosimea uzuala a firmei), nu scrisa de client`;
@@ -644,6 +740,20 @@ function construiesteLinii(
           t.pret.motiveDeVerificat = [...(t.pret.motiveDeVerificat ?? []), "forma_contrazisa"];
         }
       }
+    }
+    // UM-ul e bucata, dar textul nu numeste nicio piesa (cot, teu, flansa ...):
+    // forma cade pe ml, deci cantitatea in bucati se inmulteste cu un pret pe
+    // metru. Pe `cerere-de-oferta-spital.xlsx`, randurile 26–28 („Izolatie din
+    // spuma elastomerica ... Dn 100", 750 buc.) ieseau „Gata". Daca bucata e
+    // tubul de 2 m, pretul e jumatate. Nicio oferta semnata n-are izolatie
+    // dreapta in bucati, deci nu exista regula de dedus: pretul ramane pe ml,
+    // dar pozitia merge la om.
+    if (t.pret && sursa !== "om" && extras.forma === null && deTarifat.sistem !== "goluri_foc"
+        && b.um && RE_UM_BUCATA.test(b.um.trim())) {
+      const n = `UM-ul e "${b.um.trim()}", dar textul nu numeste nicio piesa: pretul e pe metru liniar`;
+      t.pret.note = [...(t.pret.note ?? []), n];
+      t.pret.noteDeVerificat = [...(t.pret.noteDeVerificat ?? []), n];
+      t.pret.motiveDeVerificat = [...(t.pret.motiveDeVerificat ?? []), "um_bucata"];
     }
     if (t.pret) proc.pret = t.pret;
     // Doar notele care CER ochi opresc linia la validare: pretul venit din

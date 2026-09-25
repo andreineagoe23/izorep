@@ -50,6 +50,23 @@ export function esteConversiaDN(dn: number, od: number, toleranta = 1): boolean 
   return [DN_TO_OD[dn], DN_TO_OD_DIN[dn]].some((v) => v !== undefined && Math.abs(v - od) <= toleranta);
 }
 
+/**
+ * DN -> diametru exterior, teava de CUPRU (EN 1057).
+ *
+ * Sursa e registrul firmei `conversie-ml-mp-tevi-tubulaturi.xlsx` (seria
+ * `cupru` din `data/referinte/conversii-tevi.json`; testul le tine egale), iar
+ * notita din `tabel-conversie-tevi.docx` spune acelasi lucru: cuprul se da in
+ * DN, dar NU se converteste pe coloana ISO. Pe ISO, DN15 de cupru cadea pe
+ * randul 22 in loc de 18 — alt rand, alt pret, tacut.
+ *
+ * La DN65 si DN80 seria de cupru e chiar ISO (76,1 · 88,9): acolo nu se
+ * schimba nimic.
+ */
+export const DN_TO_OD_CUPRU: Readonly<Record<number, number>> = {
+  10: 12, 12: 15, 15: 18, 20: 22, 25: 28, 32: 35, 40: 42, 50: 54,
+  65: 76.1, 80: 88.9, 100: 108, 125: 133, 150: 159,
+};
+
 /** Conducte de plastic: dimensiunea nominala ESTE diametrul exterior. */
 export const PLASTIC_IS_OD = new Set(["PPR", "PP", "PEHD", "PEX", "PVC"]);
 

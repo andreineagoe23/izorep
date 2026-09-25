@@ -206,10 +206,12 @@ pe Oferta 27.04.2026 formula dă exact DN250 / 19 mm (23,13), iar SPIRO ø250 /
 2. **DN10 = 1 3/8"** e aproape sigur o scăpare de tastare pentru **3/8"**
    (17,2 mm = 3/8" în serie gaz). De confirmat înainte de a folosi coloana Toli
    la extragere.
-3. Cupru/inox: coloana Metric e tabelul lor de conversie? Dacă da, o poziție
-   DN15 de cupru trebuie tarifată pe rândul 18, nu pe 22 ca la oțel — azi codul
-   aplică tuturor tabelul de oțel. **Lista de tablă de inox primită pe 4
-   septembrie 2026 nu răspunde la asta**: e jachetare (protecție mecanică),
+3. Cupru/inox: coloana Metric e tabelul lor de conversie? **Pentru cupru, aplicat
+   din 25 septembrie 2026**: seria din registrul de conversie (DN15 → ø18, care e
+   și coloana Metric), poziția marcată `serie_cupru` până la confirmare. Pentru
+   inox nu există serie în datele firmei; rămâne pe ISO, marcat `serie_inox`.
+   **Lista de tablă de inox primită pe 4 septembrie 2026 nu răspunde la
+   asta**: e jachetare (protecție mecanică),
    indexată pe diametrul exterior al izolației, ø80–ø710 din 10 în 10, exact ca
    lista de aluminiu. Țeava de inox e altceva și rămâne fără conversie.
 4. π: se folosește **3,14** (ca în notița firmei) sau `Math.PI`? Registrul de

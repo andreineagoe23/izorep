@@ -125,7 +125,13 @@ export type MotivVerificare =
   /** Celula ø × grosime lipseste din lista; pretul e dedus proportional din randul urmator. */
   | "celula_dedusa"
   /** Diametru peste ultimul rand: pret din formula firmei pe mp, nu din matrice. */
-  | "peste_lista";
+  | "peste_lista"
+  /** UM-ul e bucata, dar textul nu numeste nicio piesa: pretul e pe metru liniar. */
+  | "um_bucata"
+  /** Teava de cupru data in DN: diametrul e luat de pe seria de cupru, nu de pe ISO. */
+  | "serie_cupru"
+  /** Teava de inox data in DN: seria (ISO sau cea de presare) nu e in datele firmei. */
+  | "serie_inox";
 
 /**
  * De ce nu s-a putut tarifa o pozitie, ca valoare STABILA.
@@ -163,7 +169,8 @@ export type CodNetarifare =
   /* --- din DiametruNecunoscut, mapat in tarifeazaExtras --- */
   | "dn_necunoscut"
   /* --- alta lucrare decat cea din liste --- */
-  | "protectie_foc_tubulatura";
+  | "protectie_foc_tubulatura"
+  | "livrare_teava";            // livrarea tevii, cu izolatia „inclusiv"
 
 export class PozitieNetarifata extends Error {
   constructor(

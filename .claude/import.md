@@ -230,6 +230,7 @@ aprindă.
 | `forma_contrazice_um` | `forma: "ml"` pe un rând cu UM `buc` |
 | `notatie_contrazice_materialul` | scrie `DN`, dar materialul din text dă diametrul exterior |
 | `diametru_contrazis` | scrie `DN`, dar pe rând e un Ø care nu e DN-ul ăla în tabelul de conversie (ISO, DIN); rulează, ca rândul de mai sus, pe orice sursă |
+| `diametru_nenotat` | numărul citit e în text, dar nu e scris ca diametru, iar rândul are un diametru notat (DN, Di, Ø, țoli, `114,3 x 4,5`) cu altă valoare: „inox 304 Di89” citit 304 |
 
 Regula de citare vine din promptul propriu al stratului: *„nu inventa valori,
 dacă un câmp nu apare în text pune null"*. Aici doar se verifică dacă a
@@ -283,8 +284,11 @@ trec toate căile — CLI, ruta din `vite`, scriptul de comparare — deci un
 apelant nou nu are cum să o sară. Pipeline-ul recalculează aceleași reguli
 pentru forma structurată din raport; funcția e pură, a doua trecere nu costă.
 
-**Ce nu prinde:** confuzia între două valori care apar amândouă în text. Aia
-rămâne treaba omului de la validare.
+**Ce nu prinde:** confuzia între două valori scrise **amândouă ca diametru**
+(DN80 și Ø89 pe același rând). Confuzia cu un număr care nu e diametru („inox
+304 Di89”, „EN 14304”) o prinde `diametru_nenotat` din 25 septembrie 2026 —
+calibrat pe cele 575 de linii cu diametru citite de reguli din cele 10
+fișiere: zero avertismente. Restul rămâne treaba omului de la validare.
 
 ### Ce știe promptul, și ce verifică codul în locul lui
 
@@ -534,6 +538,28 @@ real acolo.
   al poziției, nu cantitatea. Pe foile cu mapare (L1) se citește din coloana
   ei; euristica de lângă unitatea de măsură rămâne doar pentru foile fără mapare
   acceptată (Izolații Transavia, Anexa 1).
+- **„0. 6 mm”** — spațiu după punct (spital, r137): grosimea tablei nu se citea,
+  poziția lua singura grosime pe mp a listei (0,8), „Gata”, 213 k€. Rândul
+  136, identic cu „0.6”, era refuzat corect. Acum amândouă refuzate
+  (`fara_pret_pe_mp`: rezidențialul n-are tablă 0,6 pe mp).
+- **UM „buc.” pe izolație dreaptă** (spital, r26–28, 750 buc.) — forma cădea
+  pe ml, deci bucăți × preț pe metru, „Gata”. Nicio ofertă semnată n-are
+  izolație dreaptă în bucăți: prețul rămâne pe ml, poziția merge la om
+  (`um_bucata`).
+- **„g48” completat cu 50** — `grosimiDeLaConducte` punea grosimea conductei
+  de același diametru și peste o grosime **scrisă** și respinsă („Di76, g48 -
+  COT”, Transavia inox r30). Acum completează doar unde clientul n-a scris nimic
+  (`scrieGrosime`).
+- **„țeavă din inox”** — prindea sistemul `tabla_inox`, deci poziția primea o
+  jachetă de inox necerută. Inoxul e jachetă doar lângă „tablă”, „casetă”,
+  „jacket” (`INOX_E_JACHETA`).
+- **Livrarea de țeavă cu izolația „inclusiv”** — NISAL r83, „Edelstahlrohr …
+  inclusiv izolație … vată 50 mm … pipă, vopsire”: semnat 20,09 €/m, din liste
+  14,68, nicio combinație nu dă 20,09. Refuzată ca altă lucrare
+  (`livrare_teava`).
+- **Țeavă de cupru în DN** — pe seria de oțel DN15 cădea pe rândul 22.
+  Convertită pe seria de cupru din registrul firmei (DN15 → ø18), marcată
+  (`serie_cupru`). Țeava de inox în DN rămâne pe ISO, marcată (`serie_inox`).
 - **Coloanele diferă de la client la client** — de aceea registrul de ofertă
   nu copiază coloanele clientului, ci le citește după rol: codul de rând
   („IZOLATII”, „01.82.02.01A”) merge în Identificare_Norma, descrierea în

@@ -80,6 +80,22 @@ const TABLA_E_TUBULATURA =
 const TABLA_E_JACHETA =
   /jachet|jacket|cladding|caset[aăe]|protec[țt]i\w*\s+(?:cu\s+tabl|mecanic)|protejat\w*\s+(?:la\s+exterior\s+)?cu\s+tabl/i;
 
+/**
+ * Inoxul e TEAVA, nu jacheta: „izolatie ... pe teava din inox DN15". Fara
+ * regula asta, `tabla_inox` intra ca strat peste izolatie si pozitia ramanea
+ * fara pret (grosimea jachetei de inox e intrebarea 15) — pentru o jacheta pe
+ * care clientul n-a cerut-o. Ramane jacheta cand randul o spune si pe ea.
+ */
+const INOX_E_TEAVA =
+  /\b(?:teav[aă]|țeav[aă]|tevi|țevi|conduct\w*)\s+(?:din\s+|de\s+)?inox|stainless\s+steel\s+(?:pipe|tube)|edelstahlrohr/i;
+const INOX_E_JACHETA =
+  /tabl[aă]\s+(?:de\s*)?inox|inox\s+sheet|stainless\s+steel\s+(?:sheet|cladding|jacket)|edelstahl(?:blech|mantel)|jachet|jacket|cladding|caset[aăe]/i;
+
+/** True daca randul vorbeste de teava de inox (materialul tevii, nu jacheta). */
+export function esteTeavaDeInox(text: string): boolean {
+  return INOX_E_TEAVA.test(text);
+}
+
 /** Alte meserii din caietul de sarcini: se resping explicit, nu se ghicesc. */
 const ALTE_MESERII =
   /gril[aă]|difuzor|clapet[aă]|demont|dismant|relocare|relocation|ventilator|cazan|boiler|chiller|\bAHU\b|centrala de tratare|vas de expansiune|grundu|priming|swirl|anemostat|plenum|recuperator|air\s+conditioning\s+unit/i;
@@ -135,6 +151,29 @@ export function diametreScrise(text: string): number[] {
   }
   return out;
 }
+/** Diametrele scrise pe rand CU notatia lor, separat pe DN si pe diametru. */
+export interface DiametreNotate { dn: number[]; exterior: number[] }
+
+/**
+ * Toate numerele de pe rand care sunt scrise CA DIAMETRU: dupa DN, Di, Ø,
+ * dupa tipul tevii de plastic, in toli, sau ca „114,3 x 4,5" (exterior ×
+ * perete). Validatorul le foloseste ca sa deosebeasca diametrul de un alt
+ * numar de pe acelasi rand — „inox 304 Di89", „EN 14304 ... Dn 100".
+ */
+export function diametreNotate(text: string): DiametreNotate {
+  const dn: number[] = [];
+  const exterior: number[] = [...diametreScrise(text)];
+  for (const m of text.matchAll(new RegExp(RE_DN.source, "g"))) dn.push(Number(m[1]));
+  for (const m of text.matchAll(new RegExp(RE_TOLI.source, "g"))) {
+    const v = TOLI_DN[m[1]!.replace(/\s+/g, " ")];
+    if (v !== undefined) dn.push(v);
+  }
+  for (const m of text.matchAll(/\bDi\s*(\d{1,3}(?:[.,]\d{1,2})?)(?!\d)/g)) exterior.push(Number(m[1]!.replace(",", ".")));
+  for (const m of text.matchAll(new RegExp(RE_PLASTIC.source, "g"))) exterior.push(Number(m[1]));
+  for (const m of text.matchAll(/(?<![\d.,])(\d{2,3}[.,]\d)\s*x\s*\d/g)) exterior.push(Number(m[1]!.replace(",", ".")));
+  return { dn, exterior };
+}
+
 /**
  * Teava de plastic: `PPR 20`, `PEHD 110`, `PEHD D40x3.0`.
  *
@@ -160,6 +199,16 @@ const RE_PLASTIC = /\b(?:PPR|PP|PEHD|PEX)\s*[D]?\s*(\d{1,3})(?:\b|(?=x\d))/;
 const RE_TOLI = /(?:\b(?:DN|Dn|dn)\s*\.?\s*|[øØФ]\s*)(\d{1,2}\s+\d\/\d|\d\/\d|\d{1,2})\s*(?:"|”|“|''|′′|″)/;
 const RE_GROSIME = /(?:g\s*[=.]?\s*|gr\.?\s*|S\s*=\s*|grosime[a]?\s+de\s+|[-–]\s*)(\d{1,3})\s*mm/i;
 const RE_GROSIME_COMPACT = /\bg\s?(\d{2,3})\b/;
+
+/**
+ * True daca randul scrie o grosime de izolatie („g48", „gr. 50 mm",
+ * „grosimea de 30 mm"), chiar una pe care extragerea a respins-o fiindcă nu
+ * e in lista. Deosebeste „n-a scris grosimea" de „a scris una pe care n-o
+ * avem" — la a doua, nimic nu are voie sa completeze in locul clientului.
+ */
+export function scrieGrosime(text: string): boolean {
+  return RE_GROSIME.test(text) || RE_GROSIME_COMPACT.test(text);
+}
 const RE_MM = /(\d{1,3})\s*mm\b/g;
 /**
  * Dimensiunea golului la inchiderile goluri la foc: "130/130", "1400/600".
@@ -322,7 +371,13 @@ const GROSIMI_JACHETA: Partial<Record<Exclude<LinieExtrasa["sistem"], null>, Rea
   tabla: new Set([0.6, 0.8, 1]),
   tabla_inox: new Set([0.4, 0.5, 0.6]),
 };
-const RE_MM_ZECIMAL = /(?<![\d.,])(\d(?:[.,]\d{1,2})?)\s*mm\b/g;
+/**
+ * Spatiul dupa virgula e tolerat: „tabla zincata de 0. 6 mm"
+ * (`cerere-de-oferta-spital.xlsx`, randul 137) nu se citea, iar pozitia lua
+ * singura grosime pe mp a listei (0,8), „Gata" — randul 136, identic dar cu
+ * „0.6", era corect refuzat.
+ */
+const RE_MM_ZECIMAL = /(?<![\d.,])(\d(?:[.,] ?\d{1,2})?)\s*mm\b/g;
 
 function grosimeLangaSistem(
   text: string, sistem: Exclude<LinieExtrasa["sistem"], null>,
@@ -333,7 +388,7 @@ function grosimeLangaSistem(
   const gasite = [...text.matchAll(m)];
   const jacheta = GROSIMI_JACHETA[sistem];
   if (jacheta) {
-    const zecimal = (s: string): number => Number(s.replace(",", "."));
+    const zecimal = (s: string): number => Number(s.replace(",", ".").replace(" ", ""));
     for (const gasit of gasite) {
       const capat = gasit.index! + gasit[0].length;
       const fereastra = text.slice(capat, capat + FEREASTRA_GROSIME);
@@ -343,7 +398,7 @@ function grosimeLangaSistem(
         if (/\d\s*[–-]\s*$/.test(fereastra.slice(0, nr.index))) continue;
         if (jacheta.has(zecimal(nr[1]!))) return zecimal(nr[1]!);
       }
-      const inainte = /(?<![\d.,])(\d(?:[.,]\d{1,2})?)\s*mm\s*$/i
+      const inainte = /(?<![\d.,])(\d(?:[.,] ?\d{1,2})?)\s*mm\s*$/i
         .exec(text.slice(Math.max(0, gasit.index! - FEREASTRA_INAINTE), gasit.index!));
       if (inainte && jacheta.has(zecimal(inainte[1]!))) return zecimal(inainte[1]!);
     }
@@ -372,9 +427,12 @@ function sistemeDinText(text: string): Exclude<LinieExtrasa["sistem"], null>[] {
   const potrivite = SISTEM.filter(([, re]) => re.test(text)).map(([s]) => s!);
   if (TRECERI_PRIN_PERETI.test(text) && CONTEXT_FOC.test(text)) potrivite.push("goluri_foc");
   if (potrivite.includes("goluri_foc")) return ["goluri_foc"];
-  const straturi = TABLA_E_TUBULATURA.test(text) && !TABLA_E_JACHETA.test(text)
+  const faraTabla = TABLA_E_TUBULATURA.test(text) && !TABLA_E_JACHETA.test(text)
     ? potrivite.filter((s) => s !== "tabla")
     : potrivite;
+  const straturi = INOX_E_TEAVA.test(text) && !INOX_E_JACHETA.test(text)
+    ? faraTabla.filter((s) => s !== "tabla_inox")
+    : faraTabla;
   return ORDINE_STRATURI.filter((s) => straturi.includes(s));
 }
 

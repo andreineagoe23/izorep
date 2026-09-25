@@ -412,9 +412,9 @@
         "motiv": "Izolatie vata minerala 50mm pe teava inox Ø125mm, diametrul este exterior la astfel de pozitii."
       },
       "avertismente": [],
-      "pret_unitar": 14.68,
-      "total": 294.92,
-      "eroare": null
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
     },
     {
       "index": 60,

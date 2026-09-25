@@ -10,7 +10,7 @@
  * functie falsa, definita local.
  */
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import ExcelJS from "exceljs";
@@ -20,7 +20,9 @@ import {
   esteProtectieLaFocTubulatura, proceseazaRegistru, reevalueaza, tarifeazaExtras, type Extractor, type Rezultat,
 } from "../src/import/nucleu.js";
 import { stocInMemorie } from "../src/import/memorie.js";
-import { tarifeazaSimplu } from "../src/pricing/engine.js";
+import { tarifeaza, tarifeazaSimplu } from "../src/pricing/engine.js";
+import { DN_TO_OD_CUPRU } from "../src/pricing/dn-table.js";
+import type { RezultatTarifare } from "../src/pricing/types.js";
 import type { LinieExtrasa } from "../src/import/schema.js";
 
 let dir: string;
@@ -591,5 +593,85 @@ describe("protecția la foc a tubulaturii nu se tarifează din listele de izola�
 
   it("o țeavă izolată la temperatură înaltă nu e tubulatură", () => {
     expect(esteProtectieLaFocTubulatura("Teava de inox, izolatie vata 50 mm rezistenta la temperatura de peste 600°C")).toBe(false);
+  });
+});
+
+describe("seria tevii dupa material", () => {
+  const pe = async (text: string, um = "ml") => (await proceseazaRegistru(await parseFoi(await registru([
+    ANTET, [1, text, um, 10],
+  ])), { stoc: stocInMemorie() })).linii.find((x) => x.bruta.text.includes(text))!;
+
+  it("seria de cupru e cea din registrul de conversie al firmei", () => {
+    const json = JSON.parse(readFileSync("data/referinte/conversii-tevi.json", "utf8")) as {
+      serii_diametre: { material: string; dn: number | null; diametru_exterior: number }[];
+    };
+    const cupru = Object.fromEntries(json.serii_diametre
+      .filter((s) => s.material === "cupru").map((s) => [s.dn, s.diametru_exterior]));
+    expect(DN_TO_OD_CUPRU).toEqual(cupru);
+  });
+
+  it("DN15 de cupru se cauta pe randul 18, nu pe 22, si merge la om", async () => {
+    const l = await pe("Izolatie elastomer 13 mm pe teava de cupru DN15");
+    const rand18 = tarifeaza({ diametru: { valoare: 18, tip: "exterior" }, straturi: [{ sistem: "elastomer", grosime_mm: 13 }], forma: "ml", cantitate: 1 });
+    expect((l.pret as RezultatTarifare).straturi[0]!.rand_lista).toBe(18);
+    expect(l.pret!.pret_unitar).toBe(rand18.pret_unitar);
+    expect(l.pret!.motiveDeVerificat).toContain("serie_cupru");
+    expect(l.necesitaValidare).toBe(true);
+  });
+
+  it("la DN80 seria cuprului e chiar ISO: nimic de schimbat, nimic de marcat", async () => {
+    const l = await pe("Izolatie elastomer 19 mm pe teava de cupru DN80");
+    expect((l.pret as RezultatTarifare).straturi[0]!.rand_lista).toBe(89);
+    expect(l.necesitaValidare).toBe(false);
+  });
+
+  it("„cu vata minerala” nu e cupru", async () => {
+    const l = await pe("Izolatie cu vata minerala 30 mm Cu folie DN15");
+    expect((l.pret as RezultatTarifare).straturi[0]!.rand_lista).toBe(22);
+    expect(l.pret!.motiveDeVerificat ?? []).not.toContain("serie_cupru");
+  });
+
+  it("teava de inox in DN ramane pe ISO, dar e marcata", async () => {
+    const l = await pe("Izolatie elastomer 13 mm pe teava din inox DN15");
+    expect((l.pret as RezultatTarifare).straturi[0]!.rand_lista).toBe(22);
+    expect(l.pret!.motiveDeVerificat).toContain("serie_inox");
+  });
+
+  it("tabla de inox (jacheta) nu e teava de inox", async () => {
+    const l = await pe("Izolatii cu vata minerala si protectie cu tabla de inox 0,5 mm DN50, g40 - ML");
+    expect(l.pret!.motiveDeVerificat ?? []).not.toContain("serie_inox");
+  });
+});
+
+describe("UM in bucati pe izolatie dreapta", () => {
+  it("pretul ramane pe ml, dar pozitia merge la om (spital, randurile 26–28)", async () => {
+    const rez = await proceseazaRegistru(await parseFoi(await registru([
+      ANTET, [1, "Izolatie elastomer 19 mm Dn 100 (114,3 x 4,5)", "buc.", 750],
+    ])), { stoc: stocInMemorie() });
+    const l = rez.linii.find((x) => x.extras.sistem !== null)!;
+    expect(l.pret!.pret_unitar).toBe(tarifeazaSimplu("elastomer", 100, 19, "ml").pret_unitar);
+    expect(l.pret!.motiveDeVerificat).toContain("um_bucata");
+    expect(l.necesitaValidare).toBe(true);
+  });
+
+  it("un cot in bucati e o piesa: nimic de marcat", async () => {
+    const rez = await proceseazaRegistru(await parseFoi(await registru([
+      ANTET, [1, "Izolatii cu vata minerala si protectie cu tabla de aluminiu Di114, g50 - COT", "buc", 9],
+    ])), { stoc: stocInMemorie() });
+    const l = rez.linii.find((x) => x.extras.sistem !== null)!;
+    expect(l.pret!.motiveDeVerificat ?? []).not.toContain("um_bucata");
+  });
+});
+
+describe("grosimea scrisa de client nu se completeaza de la conducta", () => {
+  it("„Di76, g48 - COT” nu primeste 50 mm de la „Di76, g50 - ML”", async () => {
+    const rez = await proceseazaRegistru(await parseFoi(await registru([
+      ANTET,
+      [1, "Izolatii cu vata minerala si protectie cu tabla de aluminiu Di76, g48 - COT", "buc", 1],
+      [2, "Izolatii cu vata minerala si protectie cu tabla de aluminiu Di76, g50 - ML", "ml", 20],
+    ])), { stoc: stocInMemorie() });
+    const cot = rez.linii.find((x) => x.bruta.text.includes("g48"))!;
+    expect(cot.extras.grosime_mm).toBeNull();
+    expect(cot.pret).toBeUndefined();
   });
 });

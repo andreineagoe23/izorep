@@ -685,6 +685,29 @@ nemarcat (DN15 → rândul 22 în loc de 18) — azi nu apare în niciun fișier
 prima cerere cu cupru ar ieși greșit tăcut. Și confuzia între două numere care
 apar amândouă în text („inox 304 Di89”) nu o prinde niciun validator.
 
+## 25 septembrie 2026 (2): cererile fără ofertă, citite linie cu linie
+
+Firma nu e disponibilă până săptămâna viitoare; scopul e un produs cât mai
+corect până atunci, ca întrebările să fie puține. Pe cererile fără ofertă
+semnată (spital, Book15, Flower City, Transavia inox) am citit fiecare poziție
+„Gata” și am căutat prețuri care ies tăcut greșit. A/B pe cele 10 fișiere după
+fiecare reparație: s-au mișcat doar rândurile de mai jos.
+
+| Problemă | Efect măsurat | Acum |
+|---|---|---|
+| „tabla zincata de 0. 6 mm” (spațiu după punct), spital r137 | 83,19 €/mp „Gata” pe 2.564 mp (213 k€), cu tabla la 0,8; r136, identic cu „0.6”, era refuzat | citit 0,6, refuzat ca r136 (`fara_pret_pe_mp`) |
+| Elastomer cu UM „buc.”, fără piesă, spital r26–28 | 750 buc. × preț pe ml, „Gata” | preț pe ml, „De verificat” (`um_bucata`) |
+| „Di76, g48 - COT”, Transavia inox r30 | primea 50 mm de la conductă, încredere 0,99 (azi blocat de inox, după întrebarea 15 ar fi ieșit tăcut) | grosimea scrisă nu se completează |
+| „țeavă din inox” | adăuga o jachetă de inox necerută | inoxul e jachetă doar lângă tablă / casetă / jacket |
+| NISAL r83, livrare de țeavă de inox cu izolația „inclusiv” | din liste 14,68, semnat 20,09; nicio combinație nu dă 20,09 | refuzat, `livrare_teava` |
+| Țeavă de cupru în DN | DN15 pe rândul 22, nemarcat | seria de cupru a firmei (DN15 → ø18), `serie_cupru` |
+| Țeavă de inox în DN | ISO, nemarcat | ISO, `serie_inox` |
+| Model: „inox 304 Di89” citit 304 | niciun validator | `diametru_nenotat`; 0 alarme pe 575 de linii citite de reguli |
+
+Spitalul, pe stratul determinist: 1.454.100 → 1.240.778 € tarifat, 3 poziții
+în plus la „De verificat”, una în plus fără preț. Celelalte fișiere: aceleași
+prețuri; NISAL r83 rămâne fără preț, cu cauza corectă.
+
 ## Întrebări deschise către firmă
 
 Astea blochează arhitectura, nu doar implementarea:
@@ -796,7 +819,7 @@ de acoperire, restul sunt produs.
 ## Comenzi
 
 ```bash
-npm test                                       # 523 de teste (motor, import, baza, ofertă, ecran, meniu)
+npm test                                       # 538 de teste (motor, import, baza, ofertă, ecran, meniu)
 npm run typecheck
 npm run dev                                    # UI local, /izorep/
 npm run import -- ../attachments/clienti/cerere-de-oferta-spital.xlsx   # pipeline complet

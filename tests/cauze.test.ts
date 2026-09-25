@@ -183,6 +183,18 @@ const CAZURI: { cod: CodNetarifare; de: string; f: () => unknown }[] = [
     },
   },
   {
+    cod: "livrare_teava",
+    de: "țeavă de inox cu izolația „inclusiv” (Oferta 27.04.2026, rândul 83, semnat 20,09 €/m; din liste 14,68)",
+    f: () => {
+      const r = tarifeazaExtras(extrasa({ sistem: "vata_minerala", diametru_valoare: 125, diametru_tip: "exterior",
+        grosime_mm: 50, forma: "ml" }), 1, "rezidential",
+        "Edelstahlrohr für Abgas | Teava de inox pentru evacuarea gazelor arse; inclusiv izolatie termica "
+          + "avand grosimea de vata minerala 50 mm; Dimensiuni: Ø125x 3.0 mm");
+      if (r.codEroare) throw new PozitieNetarifata(r.codEroare, r.eroare ?? "", {});
+      return r;
+    },
+  },
+  {
     cod: "dn_necunoscut",
     de: "DN160 (care nu exista in seria de otel): `DiametruNecunoscut`, mapat la granita in `tarifeazaExtras`",
     f: () => {
@@ -211,7 +223,7 @@ describe("fiecare cauza de netarifare are un cod stabil", () => {
       "pozitie_fara_straturi", "fara_pret_pe_mp", "gol_fara_dimensiuni",
       "gol_dimensiuni_invalide", "banda_wrap_inexistenta", "colier_inexistent",
       "diametru_conducta_lipsa", "material_conducta_lipsa", "gol_foc_in_matrice",
-      "fara_diametru", "dn_necunoscut", "protectie_foc_tubulatura",
+      "fara_diametru", "dn_necunoscut", "protectie_foc_tubulatura", "livrare_teava",
     ];
     const acoperite = new Set(CAZURI.map((c) => c.cod));
     expect(toate.filter((c) => !acoperite.has(c))).toEqual([]);
