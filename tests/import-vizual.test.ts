@@ -9,7 +9,7 @@
 import { describe, it, expect } from "vitest";
 import type { LinieProcesata } from "../src/import/nucleu.js";
 import type { LinieExtrasa } from "../src/import/schema.js";
-import { cardPozitie, ecranStart, editorPozitie, numaraMotive, pasi } from "../web/import/vizual.js";
+import { baraFoi, cardPozitie, ecranStart, editorPozitie, numaraMotive, pasi } from "../web/import/vizual.js";
 import { antetDocument, grilaFoaie } from "../web/import/grila.js";
 import type { FoaieBruta } from "../src/import/parse-workbook.js";
 
@@ -230,5 +230,34 @@ describe("foaia ca în Excel", () => {
     const html = grilaFoaie(f, harta, { ...opt, vizibile: null });
     expect(html).toContain("Capitol 2");
     expect(html).toContain('colspan="3"');
+  });
+});
+
+describe("foile ca taburi", () => {
+  const numere = { toate: 99, gata: 85, de_validat: 14, netarifate: 0 };
+  const foi = [{ nume: "Termice+Sanitare", deRezolvat: 12 }, { nume: "Ventilatie <b>", deRezolvat: 0 }];
+
+  it("un tab per foaie, cea activă apăsată, numele escapat", () => {
+    const html = baraFoi(foi, "Termice+Sanitare", numere, "toate", true);
+    expect(html.match(/data-act="foaie-tab"/g)).toHaveLength(2);
+    expect(html).toMatch(/data-foaie="Termice\+Sanitare"\s+aria-pressed="true"/);
+    expect(html).toContain("Ventilatie &lt;b&gt;");
+    expect(html).not.toContain("Ventilatie <b>");
+  });
+
+  it("tabul arată câte poziții cer atenție, doar când sunt", () => {
+    const html = baraFoi(foi, "Termice+Sanitare", numere, "toate", true);
+    expect(html).toContain("<b title=");
+    expect(html.match(/<b title=/g)).toHaveLength(1);
+  });
+
+  it("starea e un dropdown cu numerele, iar vederea un buton", () => {
+    const html = baraFoi(foi, "Termice+Sanitare", numere, "de_validat", true);
+    expect(html).toContain('<select data-act="filtru">');
+    expect(html).toContain('<option value="de_validat" selected>');
+    expect(html).toContain("De verificat · 14");
+    expect(html).toContain('class="secundar imp-comuta-excel"');
+    expect(html).toContain("Arată ca listă");
+    expect(html).not.toContain('data-filtru="');
   });
 });

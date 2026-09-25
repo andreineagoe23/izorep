@@ -126,23 +126,18 @@ export interface OptiuniAntet {
   nume: string;
   cand: string;
   destinatie: Destinatie;
-  foi: string[];
-  foaie: string | null;
 }
 
 export function antetVerificare(o: OptiuniAntet): string {
-  const foi = o.foi.length < 2 ? "" : `<label class="imp-foaie">Foaia
-      <select data-act="foaie">
-        <option value="">Toate foile</option>
-        ${o.foi.map((f) => `<option value="${esc(f)}"${f === o.foaie ? " selected" : ""}>${esc(f)}</option>`).join("")}
-      </select></label>`;
   return `<div class="imp-antet">
     <div class="imp-antet-fisier">
       ${ICOANA.fisier}
-      <div><strong>${esc(o.nume)}</strong><span>${esc(dataScurta(o.cand))}</span></div>
-      <button type="button" class="legatura" data-act="schimba-fisier">Schimbă fișierul</button>
+      <div>
+        <strong>${esc(o.nume)}</strong>
+        <span>${esc(dataScurta(o.cand))} · <button type="button" class="legatura" data-act="schimba-fisier">Schimbă fișierul</button></span>
+      </div>
     </div>
-    <div class="imp-antet-optiuni">${alegereSegment(o.destinatie)}${foi}</div>
+    <div class="imp-antet-optiuni">${alegereSegment(o.destinatie)}</div>
   </div>`;
 }
 
@@ -153,6 +148,52 @@ export function filtreStare(numere: Record<FiltruStare, number>, activ: FiltruSt
   return `<div class="imp-filtre" role="group" aria-label="Arată pozițiile">
     ${buton("toate", "Toate")}${buton("gata", STARE.gata)}${buton("de_validat", STARE.de_validat)}${buton("netarifate", STARE.netarifate)}
   </div>`;
+}
+
+/** O foaie a registrului, ca tab: numele si cate pozitii cer atentie pe ea. */
+export interface TabFoaie { nume: string; deRezolvat: number }
+
+const ETICHETE_FILTRU: [FiltruStare, string][] = [
+  ["toate", "Toate"], ["gata", STARE.gata], ["de_validat", STARE.de_validat], ["netarifate", STARE.netarifate],
+];
+
+/**
+ * Bara de deasupra pozitiilor cand registrul are MAI MULTE foi: foile ca
+ * taburi, ca jos in Excel, iar in dreapta starea (un dropdown) si comutatorul
+ * de vedere. Cu o singura foaie ramane bara cu butoanele de stare.
+ *
+ * Tabul arata cate pozitii cer atentie pe foaia lui (de verificat + fara pret):
+ * o singura foaie e pe ecran, iar ce e de facut pe celelalte nu are voie sa
+ * dispara din vedere.
+ */
+export function baraFoi(
+  foi: TabFoaie[], activa: string | null, numere: Record<FiltruStare, number>, filtru: FiltruStare, excel: boolean,
+): string {
+  const taburi = foi.map((f) =>
+    `<button type="button" class="imp-tab" data-act="foaie-tab" data-foaie="${esc(f.nume)}"
+      aria-pressed="${f.nume === activa}">${esc(f.nume)}${
+      f.deRezolvat > 0 ? ` <b title="${esc(pozitii(f.deRezolvat))} de rezolvat">${f.deRezolvat}</b>` : ""}</button>`).join("");
+  const optiuni = ETICHETE_FILTRU.map(([f, e]) =>
+    `<option value="${f}"${f === filtru ? " selected" : ""}>${esc(e)} · ${numere[f]}</option>`).join("");
+  // Fiecare control isi spune rostul deasupra lui: omul care verifica o
+  // oferta nu trebuie sa ghiceasca ce face un tab sau un dropdown.
+  return `<section class="imp-card imp-bara-foi">
+    <div class="imp-bara-stanga">
+      <p class="imp-eticheta-control" id="eticheta-foi">Foile din fișier
+        <span>· cifra arată câte poziții cer atenție pe foaie</span></p>
+      <div class="imp-taburi" role="group" aria-labelledby="eticheta-foi">${taburi}</div>
+    </div>
+    <div class="imp-bara-dreapta">
+      <label class="imp-control">
+        <span class="imp-eticheta-control">Arată pozițiile</span>
+        <span class="imp-filtru-select"><select data-act="filtru">${optiuni}</select></span>
+      </label>
+      <div class="imp-control">
+        <span class="imp-eticheta-control" id="eticheta-vedere">Mod de afișare</span>
+        ${comutaExcel(excel, "secundar").replace("<button ", '<button aria-describedby="eticheta-vedere" ')}
+      </div>
+    </div>
+  </section>`;
 }
 
 /** Cate pozitii are fiecare motiv, descrescator. */
@@ -193,8 +234,8 @@ export function actiuniLista(o: OptiuniActiuni): string {
  * toti cei care primesc liste de cantitati) si lista de carduri, mai usor de
  * citit pe telefon.
  */
-export const comutaExcel = (excel: boolean): string =>
-  `<button type="button" class="legatura imp-comuta-excel" data-act="excel" data-excel="${excel ? "da" : "nu"}">${
+export const comutaExcel = (excel: boolean, stil: "legatura" | "secundar" = "legatura"): string =>
+  `<button type="button" class="${stil} imp-comuta-excel" data-act="excel" data-excel="${excel ? "da" : "nu"}">${
     excel ? "Arată ca listă" : "Arată ca în Excel"}</button>`;
 
 export interface OptiuniCard {

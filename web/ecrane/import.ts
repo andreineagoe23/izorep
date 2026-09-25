@@ -22,7 +22,8 @@ import {
 } from "../istoric.js";
 import {
   actiuniLista, antetVerificare, cardPozitie, comutaExcel, ecranOferta, ecranProgres, ecranStart, editorPozitie,
-  filtreMotiv, filtreStare, numaraMotive, pasi, patchDinFormular, randStrat, toast, type FiltruStare, type Pas,
+  baraFoi, filtreMotiv, filtreStare, numaraMotive, pasi, patchDinFormular, randStrat, toast,
+  type FiltruStare, type Pas, type TabFoaie,
 } from "../import/vizual.js";
 import { celuleExtrase, grilaFoaie } from "../import/grila.js";
 import { motiveLinie, stareLinie, type CodMotiv } from "../import/text.js";
@@ -249,6 +250,22 @@ export const ecran: Ecran = {
       </details>`;
     }
 
+    /** Foile registrului, cu cate pozitii cer atentie pe fiecare. */
+    function taburi(s: Sesiune): TabFoaie[] {
+      return s.foi.map((f) => ({
+        nume: f.nume,
+        deRezolvat: s.rez.linii.filter((l) => l.bruta.foaie === f.nume && l.extras.sistem !== null
+          && (potrivit(l, "de_validat") || potrivit(l, "netarifate"))).length,
+      }));
+    }
+
+    /** Foaia deschisa la inceput: prima cu pozitii, ca in Excel. `null` = registru cu o foaie. */
+    function foaieInitiala(s: Sesiune): string | null {
+      if (s.foi.length < 2) return null;
+      const cuPozitii = s.foi.find((f) => s.rez.linii.some((l) => l.bruta.foaie === f.nume && l.extras.sistem !== null));
+      return (cuPozitii ?? s.foi[0]!).nume;
+    }
+
     function paginaVerificare(s: Sesiune): string {
       const { peFoaie, peStare, lista } = vizibile(s);
       const numere: Record<FiltruStare, number> = {
@@ -259,6 +276,9 @@ export const ecran: Ecran = {
       };
       const motive = filtru === "de_validat" || filtru === "netarifate" ? numaraMotive(peStare) : [];
       const cuFoaie = s.foi.length > 1;
+      // Cu taburi, foaia activa se vede deja in bara: numele ei pe fiecare card
+      // sau deasupra tabelului ar repeta acelasi lucru.
+      const numeFoaie = cuFoaie && foaie === null;
 
       const gol = `<p class="imp-gol">Nicio poziție aici.</p>`;
       let corp: string;
@@ -267,23 +287,23 @@ export const ecran: Ecran = {
         const vizibileIdx = filtru === "toate" && motiv === null ? null : new Set(lista.map((l) => l.extras.index));
         const harta = new Map(s.rez.linii.map((l) => [l.extras.index, l]));
         corp = s.foi.filter((f) => !foaie || f.nume === foaie)
-          .map((f) => grilaFoaie(f, harta, { vizibile: vizibileIdx, editIdx, propunere, cuNumeFoaie: cuFoaie }))
+          .map((f) => grilaFoaie(f, harta, { vizibile: vizibileIdx, editIdx, propunere, cuNumeFoaie: numeFoaie }))
           .join("") || gol;
       } else {
         corp = lista.length
           ? lista.map((l) => {
               const editeaza = editIdx === l.extras.index;
               const campuri = editeaza ? campuriLinie(s, l) : undefined;
-              return cardPozitie(l, { propunere: propunere(l), editeaza, cuFoaie, ...(campuri ? { campuri } : {}) });
+              return cardPozitie(l, { propunere: propunere(l), editeaza, cuFoaie: numeFoaie, ...(campuri ? { campuri } : {}) });
             }).join("")
           : gol;
       }
 
       return `${alerte(s)}
-        <section class="imp-card">${antetVerificare({
-          nume: s.meta.nume, cand: s.meta.cand, destinatie, foi: s.foi.map((f) => f.nume), foaie,
-        })}</section>
-        <div class="imp-bara-lista">${filtreStare(numere, filtru)}${comutaExcel(excel)}</div>
+        <section class="imp-card">${antetVerificare({ nume: s.meta.nume, cand: s.meta.cand, destinatie })}</section>
+        ${cuFoaie
+          ? baraFoi(taburi(s), foaie, numere, filtru, excel)
+          : `<div class="imp-bara-lista">${filtreStare(numere, filtru)}${comutaExcel(excel)}</div>`}
         ${filtreMotiv(motive, motiv)}
         ${actiuniLista({
           deConfirmat: filtru === "de_validat" ? lista.length : 0,
@@ -312,7 +332,7 @@ export const ecran: Ecran = {
     /* ------------------------------------------------------------- actiuni */
     function deschideSesiune(s: Sesiune): void {
       sesiune = s;
-      pas = 2; filtru = "toate"; motiv = null; foaie = null; editIdx = null;
+      pas = 2; filtru = "toate"; motiv = null; foaie = foaieInitiala(s); editIdx = null;
       // Latimea se masoara DUPA plierea barei, altfel ar decide pe locul pe
       // care il ocupa inca meniul. Sub prag, foaia 1:1 n-ar incapea fara
       // derulare laterala decat cu coloane de cateva litere: se deschide ca
@@ -632,6 +652,8 @@ export const ecran: Ecran = {
 
       const bFiltru = t.closest<HTMLButtonElement>("[data-filtru]");
       if (bFiltru) { filtru = bFiltru.dataset["filtru"] as FiltruStare; motiv = null; editIdx = null; deseneaza(); return; }
+      const bTab = t.closest<HTMLButtonElement>('[data-act="foaie-tab"]');
+      if (bTab) { foaie = bTab.dataset["foaie"] ?? null; motiv = null; editIdx = null; deseneaza(); return; }
 
       const bMotiv = t.closest<HTMLButtonElement>("[data-motiv]");
       if (bMotiv) { const m = bMotiv.dataset["motiv"] as CodMotiv; motiv = motiv === m ? null : m; deseneaza(); return; }
@@ -755,7 +777,7 @@ export const ecran: Ecran = {
         if (pas !== 1) deseneaza();
         return;
       }
-      if (t.dataset["act"] === "foaie") { foaie = t.value || null; motiv = null; editIdx = null; deseneaza(); return; }
+      if (t.dataset["act"] === "filtru") { filtru = t.value as FiltruStare; motiv = null; editIdx = null; deseneaza(); return; }
       const form = t.closest<HTMLFormElement>(".imp-editor");
       if (!form) return;
       // Un camp extras atins face din salvare corectura omului. Descrierea,

@@ -229,11 +229,32 @@ Principiul: ce trebuie făcut se vede din așezare, nu dintr-un text explicativ.
   drag&drop; pe ecranele doar tactile „sau trage-l aici" nu apare. Importurile
   recente stau alături pe ecran lat, dedesubt pe telefon, cu „Deschide" și
   „Șterge"; ștergerea cere a doua apăsare („Sigur ștergi?").
-- **Pasul 2 — Verificare.** Fișierul (cu „Schimbă fișierul"), tipul ofertei,
-  foaia (doar la registrele cu mai multe foi), apoi patru filtre: Toate · Gata ·
-  De verificat · Fără preț. Grupurile sunt disjuncte și sunt exact foile
-  registrului (`imparte`). Sub „De verificat" și „Fără preț" apare al doilea
-  rând, pe motiv („Lipsește grosimea 24").
+- **Pasul 2 — Verificare.** Fișierul (cu „Schimbă fișierul") și tipul ofertei,
+  apoi patru filtre: Toate · Gata · De verificat · Fără preț. Grupurile sunt
+  disjuncte și sunt exact foile registrului (`imparte`). Sub „De verificat" și
+  „Fără preț" apare al doilea rând, pe motiv („Lipsește grosimea 24").
+- **Registrul cu mai multe foi** (25 septembrie 2026, `baraFoi`): foile stau
+  ca taburi, ca jos în Excel, în locul butoanelor de stare. Starea devine un
+  dropdown în dreapta („De verificat · 14"), lângă butonul „Arată ca listă".
+  Se deschide prima foaie cu poziții. Fiecare tab poartă câte poziții cer
+  atenție pe foaia lui — pe ecran e o singură foaie, iar ce e de făcut pe
+  celelalte nu are voie să dispară din vedere. Numele foii nu se mai repetă pe
+  carduri și deasupra tabelului: e deja în tab. Cu o singură foaie rămân
+  butoanele de stare. Așezarea e o grilă ~70 / 30: taburile curg pe câte rânduri
+  e nevoie în stânga, controalele stau în dreapta, aliniate cu primul rând; când
+  30% nu mai ajunge pentru amândouă, butonul coboară sub dropdown. Sub 620 px de
+  ecran de import, o singură coloană. Dropdown-ul și butonul sunt o pereche de
+  aceeași mărime (`--imp-control`, 11rem × 44 px); săgeata dropdown-ului e
+  desenată de noi, fiindcă cea nativă nu stătea la margine.
+- **Antetul verificării și bara foilor sunt două carduri** pe aceeași grilă
+  (`--imp-coloane`: ~70 / 30, cu coloana din dreapta niciodată mai îngustă
+  decât o pereche de controale). Antetul: fișierul, cu data și „Schimbă
+  fișierul” sub nume; în dreapta „Tip ofertă”, două butoane de mărimea
+  perechii de dedesubt. Bara foilor: „Foile din fișier · cifra arată câte
+  poziții cer atenție pe foaie” deasupra taburilor, „Arată pozițiile” deasupra
+  dropdown-ului, „Mod de afișare” deasupra butonului. Butoanele din dreapta ale
+  celor două carduri cad unul sub altul, la pixel. Pe ecranul de start tipul
+  ofertei rămâne cu pastile.
 - **În listă, fiecare poziție e un card**: textul clientului (tăiat la trei rânduri, cu
   „Tot textul"), rândul din Excel, cantitatea, ce am înțeles („Vată minerală
   50 mm · rândul 114", „+ Tablă aluminiu · rândul 220", „DN100 = ø114,3",

@@ -515,7 +515,12 @@ button.filtru[aria-pressed="true"], button.filtru.activ {
  * blocurile paginii, intre carduri si in interiorul lor. Spatii diferite de la
  * un bloc la altul se citesc ca grupari care nu exista.
  */
-.imp { --imp-gap: 16px; container: imp / inline-size; display: flex; flex-direction: column; gap: var(--imp-gap); }
+.imp {
+  --imp-gap: 16px; --imp-control: 11rem;
+  /* ~70 / 30, dar coloana din dreapta nu scade sub o pereche de controale: la
+     1024 px, 30% nu ajungea si perechile se rupeau diferit in cele doua carduri. */
+  --imp-coloane: minmax(0, 7fr) minmax(calc(2 * var(--imp-control) + 8px), 3fr);
+  container: imp / inline-size; display: flex; flex-direction: column; gap: var(--imp-gap); }
 .imp-pagina { display: grid; gap: var(--imp-gap); min-width: 0; }
 .imp .alerta { margin: 0; }
 .imp [hidden] { display: none !important; }
@@ -614,15 +619,33 @@ button.filtru[aria-pressed="true"], button.filtru.activ {
 }
 
 /* ---- pasul 2: antet, filtre, actiuni */
-.imp-antet { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; }
-.imp-antet-fisier { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 12px; min-width: 0; }
+/*
+ * Antetul verificarii, pe aceeasi grila ~70 / 30 ca bara foilor de dedesubt:
+ * fisierul in stanga, tipul ofertei in dreapta, exact cat perechea dropdown +
+ * „Arată ca listă", ca cele doua randuri sa se alinieze pe verticala.
+ */
+.imp-antet {
+  display: grid; grid-template-columns: var(--imp-coloane); align-items: center; gap: 12px 16px;
+}
+.imp-antet-fisier { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .imp-antet-fisier svg { flex: 0 0 auto; color: var(--ok); }
 .imp-antet-fisier > div { min-width: 0; }
 .imp-antet-fisier strong { display: block; font-size: 17px; overflow-wrap: anywhere; }
-.imp-antet-fisier span { font-size: 14px; color: var(--slab); }
-.imp-antet-optiuni { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 20px; }
-.imp-foaie { font-size: 14px; color: var(--slab); }
-.imp-foaie select { width: auto; max-width: 100%; min-height: 44px; margin-top: 6px; color: var(--text); }
+.imp-antet-fisier span { display: flex; flex-wrap: wrap; align-items: center; gap: 0 6px; font-size: 14px; color: var(--slab); }
+.imp-antet-fisier .legatura { min-height: 32px; padding: 4px 0; font-size: 14px; }
+.imp-antet-optiuni { display: flex; justify-content: flex-end; min-width: 0; }
+/* Tipul ofertei, in antet: doua butoane cat perechea din bara foilor
+   (`--imp-control` × 44 px, 8 px intre ele), ca cele doua carduri sa se alinieze. */
+.imp-antet .imp-segment { width: min(100%, calc(2 * var(--imp-control) + 8px)); }
+.imp-antet .imp-segment legend { margin-bottom: 8px; font-size: 13px; font-weight: 600; }
+.imp-antet .imp-segment > div { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.imp-antet .imp-segment span {
+  justify-content: center; width: 100%; height: 44px; min-height: 0; padding: 0 12px; border-radius: 10px;
+}
+@container imp (max-width: 619px) {
+  .imp-antet { grid-template-columns: minmax(0, 1fr); }
+  .imp-antet .imp-segment { width: 100%; }
+}
 
 /*
  * Filtrele trec pe randul urmator cand nu incap, nu se deruleaza lateral: un
@@ -648,6 +671,63 @@ button.filtru[aria-pressed="true"], button.filtru.activ {
 .imp [data-stare="gata"] { --c: var(--ok); }
 .imp [data-stare="de_validat"] { --c: var(--atentie); }
 .imp [data-stare="netarifate"] { --c: var(--rosu); }
+
+/*
+ * Registru cu mai multe foi: foile ca taburi, ca jos in Excel, iar starea si
+ * vederea in dreapta, compacte. Taburile trec pe randul urmator cand nu incap
+ * (aceeasi regula ca la filtre); pe ecran ingust, dropdown-ul si butonul coboara
+ * sub ele, pe toata latimea.
+ */
+/* Doua coloane, ~70 / 30, intr-un card, ca antetul de deasupra: taburile au
+   loc sa curga pe mai multe randuri, controalele raman adunate in dreapta. */
+.imp-bara-foi {
+  display: grid; grid-template-columns: var(--imp-coloane); align-items: start; gap: 12px 16px;
+}
+.imp-bara-stanga { display: grid; gap: 8px; min-width: 0; }
+/* Eticheta de deasupra fiecarui control: ce face el, intr-o linie. */
+.imp-eticheta-control { display: block; margin: 0; font-size: 13px; font-weight: 600; color: var(--slab); }
+.imp-eticheta-control span { font-weight: 400; }
+.imp-taburi { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.imp-tab {
+  display: inline-flex; align-items: center; gap: 8px; max-width: 100%; min-height: 44px; padding: 8px 16px;
+  border: 1px solid var(--linie-tare); border-radius: 10px; background: var(--panou); color: var(--text);
+  font: inherit; font-size: 15px; cursor: pointer; overflow-wrap: anywhere; text-align: left;
+}
+.imp-tab:hover { background: var(--accent-slab); }
+.imp-tab[aria-pressed="true"] {
+  border-color: var(--accent-fill); background: var(--accent-slab); font-weight: 600;
+  box-shadow: inset 0 -3px 0 var(--accent-fill);
+}
+/* Cate pozitii cer atentie pe foaie: chihlimbarul starii „de verificat". */
+.imp-tab b {
+  min-width: 24px; padding: 1px 7px; border-radius: 999px; font-size: 13px; text-align: center;
+  font-variant-numeric: tabular-nums; border: 1px solid var(--atentie); color: var(--text);
+}
+/* Controalele din dreapta — si tipul ofertei din antet — sunt perechi de
+   aceeasi marime (`--imp-control` × 44 px). */
+.imp-bara-dreapta { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 12px 8px; min-width: 0; }
+.imp-control { display: grid; gap: 8px; flex: 0 0 var(--imp-control); max-width: 100%; min-width: 0; margin: 0; }
+.imp-filtru-select { position: relative; display: block; }
+/* Sageata e a noastra: cea nativa sta unde vrea browserul, iar cu inaltimea si
+   padding-ul fixate ajungea lipita de text in loc de marginea din dreapta. */
+.imp-filtru-select select {
+  appearance: none; -webkit-appearance: none;
+  width: 100%; height: 44px; min-height: 0; margin: 0; padding: 0 36px 0 14px;
+  border-radius: 10px; font-size: 15px; background: var(--panou); color: var(--text); cursor: pointer;
+}
+.imp-filtru-select::after {
+  content: ""; position: absolute; top: 50%; right: 15px; width: 7px; height: 7px; pointer-events: none;
+  border-right: 2px solid var(--slab); border-bottom: 2px solid var(--slab);
+  transform: translateY(-70%) rotate(45deg);
+}
+.imp-control .imp-comuta-excel {
+  width: 100%; height: 44px; min-height: 0; margin-left: 0; padding: 0 12px; white-space: nowrap;
+}
+@container imp (max-width: 619px) {
+  .imp-bara-foi { grid-template-columns: minmax(0, 1fr); }
+  .imp-bara-dreapta { flex-wrap: nowrap; }
+  .imp-control { flex: 0 0 calc(50% - 4px); }
+}
 
 .imp-actiuni { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .imp-actiuni .secundar { flex: 1 1 auto; }
