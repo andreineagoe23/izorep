@@ -725,6 +725,11 @@ citite de model mai ies „Gata”. Cele trei avertismente noi, puse pe cele 617
 poziții citite de reguli din cele 10 fișiere: 2 aprinderi, amândouă rândurile
 cu interval din Book15.
 
+Golden nou: `tests/golden/cerere-de-oferta-spital.json` (101 linii ale
+modelului; niciuna cu preț „Gata”). `scripts/golden.ts` tarifa la înregistrare
+fără textul rândului, iar testul rejoacă cu el: un golden proaspăt pica pe
+regulile care depind de text. Acum amândouă îl folosesc.
+
 ## Întrebări deschise către firmă
 
 Astea blochează arhitectura, nu doar implementarea:
@@ -836,7 +841,7 @@ de acoperire, restul sunt produs.
 ## Comenzi
 
 ```bash
-npm test                                       # 544 de teste (motor, import, baza, ofertă, ecran, meniu)
+npm test                                       # 547 de teste (motor, import, baza, ofertă, ecran, meniu)
 npm run typecheck
 npm run dev                                    # UI local, /izorep/
 npm run import -- ../attachments/clienti/cerere-de-oferta-spital.xlsx   # pipeline complet

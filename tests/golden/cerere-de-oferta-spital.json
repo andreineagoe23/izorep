@@ -1,0 +1,2772 @@
+{
+  "fisier": "cerere-de-oferta-spital.xlsx",
+  "model": "gpt-4.1-2025-04-14",
+  "generat": "2026-09-25T22:51:34.437Z",
+  "linii": [
+    {
+      "index": 15,
+      "text": "Sistem complet de protectie mecanica a izolatiilor aplicate pentru conductele de agent termic din tabla zincata cu grosimea de min 0,5 mm si o grosime a stratului de zinc de minim 120 g/mp. | CIRCUIT INCALZIRE /",
+      "um": "mp",
+      "cantitate": 290,
+      "extras": {
+        "index": 15,
+        "sistem": "tabla",
+        "diametru_valoare": null,
+        "diametru_tip": null,
+        "grosime_mm": 0.5,
+        "forma": "mp",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0,
+        "motiv": "Textul specifica tabla zincata cu grosime minima 0,5 mm, fara alte detalii despre diametru sau izolatie. | NEVERIFICAT: tabla nu se oferteaza in grosimea 0.5 mm (lista: 0.6, 0.8, 1)"
+      },
+      "avertismente": [
+        "grosime_in_afara_listei"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "nu exista pret pe mp pentru grosimea ceruta"
+    },
+    {
+      "index": 26,
+      "text": "Sistem complet de protectie mecanica a izolatiilor aplicate pentru conductele de agent termic din tabla zincata cu grosimea de min 0,5 mm si o grosime a stratului de zinc de minim 120 g/mp. | CIRCUIT RACIRE /",
+      "um": "mp",
+      "cantitate": 741.9710560000001,
+      "extras": {
+        "index": 26,
+        "sistem": "tabla",
+        "diametru_valoare": null,
+        "diametru_tip": null,
+        "grosime_mm": 0.5,
+        "forma": "mp",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0,
+        "motiv": "Identic cu linia 15, sistem tabla zincata 0,5 mm, fara alte detalii. | NEVERIFICAT: tabla nu se oferteaza in grosimea 0.5 mm (lista: 0.6, 0.8, 1)"
+      },
+      "avertismente": [
+        "grosime_in_afara_listei"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "nu exista pret pe mp pentru grosimea ceruta"
+    },
+    {
+      "index": 34,
+      "text": "Sistem complet de protectie mecanica a izolatiilor aplicate pentru conductele de agent termic din tabla zincata cu grosimea de min 0,5 mm si o grosime a stratului de zinc de minim 120 g/mp. | CENTRALA TERMICA\nCONDUCTE SI ARMATURI / idem",
+      "um": "mp",
+      "cantitate": 145,
+      "extras": {
+        "index": 34,
+        "sistem": "tabla",
+        "diametru_valoare": null,
+        "diametru_tip": null,
+        "grosime_mm": 0.5,
+        "forma": "mp",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0,
+        "motiv": "Identic cu linia 15, sistem tabla zincata 0,5 mm, fara alte detalii. | NEVERIFICAT: tabla nu se oferteaza in grosimea 0.5 mm (lista: 0.6, 0.8, 1)"
+      },
+      "avertismente": [
+        "grosime_in_afara_listei"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "nu exista pret pe mp pentru grosimea ceruta"
+    },
+    {
+      "index": 40,
+      "text": "Sistem complet de protectie mecanica a izolatiilor aplicate pentru conductele de agent termic din tabla zincata cu grosimea de min 0,5 mm si o grosime a stratului de zinc de minim 120 g/mp. | PUNCT TERMIC SUBSOL 1\nCONDUCTE SI ARMATURI / idem",
+      "um": "mp",
+      "cantitate": 168,
+      "extras": {
+        "index": 40,
+        "sistem": "tabla",
+        "diametru_valoare": null,
+        "diametru_tip": null,
+        "grosime_mm": 0.5,
+        "forma": "mp",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0,
+        "motiv": "Identic cu linia 15, sistem tabla zincata 0,5 mm, fara alte detalii. | NEVERIFICAT: tabla nu se oferteaza in grosimea 0.5 mm (lista: 0.6, 0.8, 1)"
+      },
+      "avertismente": [
+        "grosime_in_afara_listei"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "nu exista pret pe mp pentru grosimea ceruta"
+    },
+    {
+      "index": 47,
+      "text": "Sistem complet de protectie mecanica a izolatiilor aplicate pentru conductele de agent termic din tabla zincata cu grosimea de min 0,5 mm si o grosime a stratului de zinc de minim 120 g/mp. | buc. | PUNCT TERMIC INTERMEDIAR \nCONDUCTE SI ARMATURI /",
+      "um": "buc.",
+      "cantitate": 56,
+      "extras": {
+        "index": 47,
+        "sistem": "tabla",
+        "diametru_valoare": null,
+        "diametru_tip": null,
+        "grosime_mm": 0.5,
+        "forma": "mp",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0,
+        "motiv": "UM este buc, dar descrierea e identica cu celelalte pozitii de tabla zincata. Forma mp, conform descrierii. | NEVERIFICAT: tabla nu se oferteaza in grosimea 0.5 mm (lista: 0.6, 0.8, 1); forma \"mp\" contrazice unitatea de masura \"buc.\""
+      },
+      "avertismente": [
+        "grosime_in_afara_listei",
+        "forma_contrazice_um"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "nu exista pret pe mp pentru grosimea ceruta"
+    },
+    {
+      "index": 52,
+      "text": "Sistem complet de protectie mecanica a izolatiilor aplicate pentru conductele de agent termic din tabla zincata cu grosimea de min 0,5 mm si o grosime a stratului de zinc de minim 120 g/mp. | buc. | PUNCT TERMIC TERASA\nCONDUCTE SI ARMATURI /",
+      "um": "buc.",
+      "cantitate": 22,
+      "extras": {
+        "index": 52,
+        "sistem": "tabla",
+        "diametru_valoare": null,
+        "diametru_tip": null,
+        "grosime_mm": 0.5,
+        "forma": "mp",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0,
+        "motiv": "UM este buc, dar descrierea e identica cu celelalte pozitii de tabla zincata. Forma mp, conform descrierii. | NEVERIFICAT: tabla nu se oferteaza in grosimea 0.5 mm (lista: 0.6, 0.8, 1); forma \"mp\" contrazice unitatea de masura \"buc.\""
+      },
+      "avertismente": [
+        "grosime_in_afara_listei",
+        "forma_contrazice_um"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "nu exista pret pe mp pentru grosimea ceruta"
+    },
+    {
+      "index": 59,
+      "text": "Sistem complet de protectie mecanica a izolatiilor aplicate pentru conductele de agent termic din tabla zincata cu grosimea de min 0,5 mm si o grosime a stratului de zinc de minim 120 g/mp. | STATIE FRIG NR. 1_AT_SM\nCONDUCTE SI ARMATURI /",
+      "um": "mp",
+      "cantitate": 168.8,
+      "extras": {
+        "index": 59,
+        "sistem": "tabla",
+        "diametru_valoare": null,
+        "diametru_tip": null,
+        "grosime_mm": 0.5,
+        "forma": "mp",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0,
+        "motiv": "Identic cu linia 15, sistem tabla zincata 0,5 mm, fara alte detalii. | NEVERIFICAT: tabla nu se oferteaza in grosimea 0.5 mm (lista: 0.6, 0.8, 1)"
+      },
+      "avertismente": [
+        "grosime_in_afara_listei"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "nu exista pret pe mp pentru grosimea ceruta"
+    },
+    {
+      "index": 63,
+      "text": "Sistem complet de protectie mecanica a izolatiilor aplicate pentru conductele de agent termic din tabla zincata cu grosimea de min 0,5 mm si o grosime a stratului de zinc de minim 120 g/mp. | STATIE FRIG NR. 1\nBuncare si radiodiagnostic\nCONDUCTE SI ARMATURI /",
+      "um": "mp",
+      "cantitate": 43.35083999999999,
+      "extras": {
+        "index": 63,
+        "sistem": "tabla",
+        "diametru_valoare": null,
+        "diametru_tip": null,
+        "grosime_mm": 0.5,
+        "forma": "mp",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0,
+        "motiv": "Identic cu linia 15, sistem tabla zincata 0,5 mm, fara alte detalii. | NEVERIFICAT: tabla nu se oferteaza in grosimea 0.5 mm (lista: 0.6, 0.8, 1)"
+      },
+      "avertismente": [
+        "grosime_in_afara_listei"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "nu exista pret pe mp pentru grosimea ceruta"
+    },
+    {
+      "index": 70,
+      "text": "Sistem complet de protectie mecanica a izolatiilor aplicate pentru conductele de agent termic din tabla zincata cu grosimea de min 0,5 mm si o grosime a stratului de zinc de minim 120 g/mp. | STATIE FRIG NR. 1 BLOC OPERATOR\nCONDUCTE SI ARMATURI /",
+      "um": "mp",
+      "cantitate": 125.2,
+      "extras": {
+        "index": 70,
+        "sistem": "tabla",
+        "diametru_valoare": null,
+        "diametru_tip": null,
+        "grosime_mm": 0.5,
+        "forma": "mp",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0,
+        "motiv": "Identic cu linia 15, sistem tabla zincata 0,5 mm, fara alte detalii. | NEVERIFICAT: tabla nu se oferteaza in grosimea 0.5 mm (lista: 0.6, 0.8, 1)"
+      },
+      "avertismente": [
+        "grosime_in_afara_listei"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "nu exista pret pe mp pentru grosimea ceruta"
+    },
+    {
+      "index": 72,
+      "text": "Sistem complet de protectie mecanica a izolatiilor aplicate pentru conductele de agent termic din tabla zincata cu grosimea de min 0,5 mm si o grosime a stratului de zinc de minim 120 g/mp. | STATIE FRIG NR. 1 BLOC OPERATOR\nCONDUCTE SI ARMATURI\nRECUPERARE  /",
+      "um": "mp",
+      "cantitate": 158,
+      "extras": {
+        "index": 72,
+        "sistem": "tabla",
+        "diametru_valoare": null,
+        "diametru_tip": null,
+        "grosime_mm": 0.5,
+        "forma": "mp",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0,
+        "motiv": "Identic cu linia 15, sistem tabla zincata 0,5 mm, fara alte detalii. | NEVERIFICAT: tabla nu se oferteaza in grosimea 0.5 mm (lista: 0.6, 0.8, 1)"
+      },
+      "avertismente": [
+        "grosime_in_afara_listei"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "nu exista pret pe mp pentru grosimea ceruta"
+    },
+    {
+      "index": 78,
+      "text": "Sistem complet de protectie mecanica a izolatiilor aplicate pentru conductele de agent termic din tabla zincata cu grosimea de min 0,5 mm si o grosime a stratului de zinc de minim 120 g/mp. | STATIE FRIG NR. 2\nCONDUCTE SI ARMATURI /",
+      "um": "mp",
+      "cantitate": 300,
+      "extras": {
+        "index": 78,
+        "sistem": "tabla",
+        "diametru_valoare": null,
+        "diametru_tip": null,
+        "grosime_mm": 0.5,
+        "forma": "mp",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0,
+        "motiv": "Identic cu linia 15, sistem tabla zincata 0,5 mm, fara alte detalii. | NEVERIFICAT: tabla nu se oferteaza in grosimea 0.5 mm (lista: 0.6, 0.8, 1)"
+      },
+      "avertismente": [
+        "grosime_in_afara_listei"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "nu exista pret pe mp pentru grosimea ceruta"
+    },
+    {
+      "index": 87,
+      "text": "Sistem complet de protectie mecanica a izolatiilor aplicate pentru conductele de agent termic din tabla zincata cu grosimea de min 0,5 mm si o grosime a stratului de zinc de minim 120 g/mp. | INSTALATII INCALZIRE AFERENTE BATERII INCALZIRE AGREGATE TRATARE DE LA CAMERA CENTRALEI TERMICE LA SCHIMBATOARELE DE CALDURA MONTATE IN CAMERELE TEHNICE TERASA SI ETAJ TEHNIC /",
+      "um": "mp",
+      "cantitate": 340,
+      "extras": {
+        "index": 87,
+        "sistem": "tabla",
+        "diametru_valoare": null,
+        "diametru_tip": null,
+        "grosime_mm": 0.5,
+        "forma": "mp",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0,
+        "motiv": "Identic cu linia 15, sistem tabla zincata 0,5 mm, fara alte detalii. | NEVERIFICAT: tabla nu se oferteaza in grosimea 0.5 mm (lista: 0.6, 0.8, 1)"
+      },
+      "avertismente": [
+        "grosime_in_afara_listei"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "nu exista pret pe mp pentru grosimea ceruta"
+    },
+    {
+      "index": 97,
+      "text": "Sistem complet de protectie mecanica a izolatiilor aplicate pentru conductele de agent termic din tabla zincata cu grosimea de min 0,5 mm si o grosime a stratului de zinc de minim 120 g/mp. | INSTALATII ALIMENTARE CU APA CALDA BATERII INCALZIRE AGREGATE DE TRATARE AER /",
+      "um": "mp",
+      "cantitate": 1363,
+      "extras": {
+        "index": 97,
+        "sistem": "tabla",
+        "diametru_valoare": null,
+        "diametru_tip": null,
+        "grosime_mm": 0.5,
+        "forma": "mp",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0,
+        "motiv": "Identic cu linia 15, sistem tabla zincata 0,5 mm, fara alte detalii. | NEVERIFICAT: tabla nu se oferteaza in grosimea 0.5 mm (lista: 0.6, 0.8, 1)"
+      },
+      "avertismente": [
+        "grosime_in_afara_listei"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "nu exista pret pe mp pentru grosimea ceruta"
+    },
+    {
+      "index": 114,
+      "text": "Sistem complet de protectie mecanica a izolatiilor aplicate pentru conductele de agent termic din tabla zincata cu grosimea de min 0,5 mm si o grosime a stratului de zinc de minim 120 g/mp. | INSTALATII ALIMENTARE CU APA RACITA BATERII RACIRE AGREGATE DE TRATARE AER /",
+      "um": "mp",
+      "cantitate": 2032.34616,
+      "extras": {
+        "index": 114,
+        "sistem": "tabla",
+        "diametru_valoare": null,
+        "diametru_tip": null,
+        "grosime_mm": 0.5,
+        "forma": "mp",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0,
+        "motiv": "Identic cu linia 15, sistem tabla zincata 0,5 mm, fara alte detalii. | NEVERIFICAT: tabla nu se oferteaza in grosimea 0.5 mm (lista: 0.6, 0.8, 1)"
+      },
+      "avertismente": [
+        "grosime_in_afara_listei"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "nu exista pret pe mp pentru grosimea ceruta"
+    },
+    {
+      "index": 125,
+      "text": "Sistem complet de protectie mecanica a izolatiilor aplicate pentru conductele de agent termic din tabla zincata cu grosimea de min 0,5 mm si o grosime a stratului de zinc de minim 120 g/mp. | INSTALATII BATERII CU LICHID INTERMEDIAR AGREGATE DE TRATARE AER /",
+      "um": "mp",
+      "cantitate": 184.98996,
+      "extras": {
+        "index": 125,
+        "sistem": "tabla",
+        "diametru_valoare": null,
+        "diametru_tip": null,
+        "grosime_mm": 0.5,
+        "forma": "mp",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0,
+        "motiv": "Identic cu linia 15, sistem tabla zincata 0,5 mm, fara alte detalii. | NEVERIFICAT: tabla nu se oferteaza in grosimea 0.5 mm (lista: 0.6, 0.8, 1)"
+      },
+      "avertismente": [
+        "grosime_in_afara_listei"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "nu exista pret pe mp pentru grosimea ceruta"
+    },
+    {
+      "index": 135,
+      "text": "Izolatii armaturi banda autoadeziva  | GOSPODARIE APA POTABILA  /  / Armacell, Kaiflex, K-flex",
+      "um": "m",
+      "cantitate": 45,
+      "extras": {
+        "index": 135,
+        "sistem": "elastomer",
+        "diametru_valoare": null,
+        "diametru_tip": null,
+        "grosime_mm": null,
+        "forma": null,
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0.7,
+        "motiv": "Textul mentioneaza 'Izolatii armaturi banda autoadeziva' si marci de elastomer, dar nu specifica diametru, grosime sau forma. Lipsesc detalii."
+      },
+      "avertismente": [],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "pozitia n-are diametru, iar listele de preturi se cauta doar pe diametru exterior; tubulatura rectangulara se masoara A x B si nu are inca regula de conversie"
+    },
+    {
+      "index": 142,
+      "text": "Protectie la foc EI 60 pentru tubulaturile din tabla zincata - torcret Parafoc 20 mm ( sau se pot utiliza alte soluții pentru care există documente legale de comercializare conform HGR nr. 668/2017 care să ateste performanța la foc specificată) | Tubulatura, piese, clapete de reglaj ventilatii - Clasa de curatenie III /",
+      "um": "mp",
+      "cantitate": 1177,
+      "extras": {
+        "index": 142,
+        "sistem": "goluri_foc",
+        "diametru_valoare": null,
+        "diametru_tip": null,
+        "grosime_mm": 20,
+        "forma": "mp",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0.9,
+        "motiv": "Protectie la foc EI60, torcret Parafoc 20 mm, pentru tubulatura. Sistem goluri_foc, grosime 20 mm, forma mp."
+      },
+      "avertismente": [],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "inchidere gol la foc fara dimensiunea golului; pretul vine din suprafata lui"
+    },
+    {
+      "index": 143,
+      "text": "Protectie la foc EI 120 pentru tubulaturile din tabla zincata - torcret Parafoc 25 mm ( sau se pot utiliza alte soluții pentru care există documente legale de comercializare conform HGR nr. 668/2017 care să ateste performanța la foc specificată) | Tubulatura, piese, clapete de reglaj ventilatii - Clasa de curatenie III /",
+      "um": "mp",
+      "cantitate": 360,
+      "extras": {
+        "index": 143,
+        "sistem": "goluri_foc",
+        "diametru_valoare": null,
+        "diametru_tip": null,
+        "grosime_mm": 25,
+        "forma": "mp",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0.9,
+        "motiv": "Protectie la foc EI120, torcret Parafoc 25 mm, pentru tubulatura. Sistem goluri_foc, grosime 25 mm, forma mp."
+      },
+      "avertismente": [],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "inchidere gol la foc fara dimensiunea golului; pretul vine din suprafata lui"
+    },
+    {
+      "index": 144,
+      "text": "Protectie la foc EI 180 pentru tubulaturile din tabla zincata - torcret Parafoc 35 mm ( sau se pot utiliza alte soluții pentru care există documente legale de comercializare conform HGR nr. 668/2017 care să ateste performanța la foc specificată) | Tubulatura, piese, clapete de reglaj ventilatii - Clasa de curatenie III /",
+      "um": "mp",
+      "cantitate": 300,
+      "extras": {
+        "index": 144,
+        "sistem": "goluri_foc",
+        "diametru_valoare": null,
+        "diametru_tip": null,
+        "grosime_mm": 35,
+        "forma": "mp",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0.9,
+        "motiv": "Protectie la foc EI180, torcret Parafoc 35 mm, pentru tubulatura. Sistem goluri_foc, grosime 35 mm, forma mp."
+      },
+      "avertismente": [],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "inchidere gol la foc fara dimensiunea golului; pretul vine din suprafata lui"
+    },
+    {
+      "index": 151,
+      "text": "Teava din otel zincata serie medie, imbinata prin cuplaje rapide,inclusiv fitinguri, treceri prin pereti si plansee cu teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge - dupa caz), sistem complet de sustinere inclusiv antisesimic,  izolatie in grosime de 20 mm protejata cu folie de aluminiu\nIdem, avand Dn 1/2\" | GOSPODARIE APA POTABILA  /  / Mairon, Silcotub",
+      "um": "m",
+      "cantitate": 2,
+      "extras": {
+        "index": 151,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 15,
+        "diametru_tip": "DN",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20 mm protejata cu folie de aluminiu, DN 1/2\" (DN15), sistem vata minerala, strat extra tabla (folie aluminiu). | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 152,
+      "text": "Teava din otel zincata serie medie, imbinata prin cuplaje rapide,inclusiv fitinguri, treceri prin pereti si plansee cu teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge - dupa caz), sistem complet de sustinere inclusiv antisesimic,  izolatie in grosime de 20 mm protejata cu folie de aluminiu\nIdem, avand Dn 1\" | GOSPODARIE APA POTABILA  /  / idem",
+      "um": "m",
+      "cantitate": 32,
+      "extras": {
+        "index": 152,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 25,
+        "diametru_tip": "DN",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20 mm protejata cu folie de aluminiu, DN 1\" (DN25), sistem vata minerala, strat extra tabla (folie aluminiu). | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 153,
+      "text": "Teava din otel zincata serie medie, imbinata prin cuplaje rapide,inclusiv fitinguri, treceri prin pereti si plansee cu teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge - dupa caz), sistem complet de sustinere inclusiv antisesimic,  izolatie in grosime de 20 mm protejata cu folie de aluminiu\nIdem, avand Dn 2  1/2\" | GOSPODARIE APA POTABILA  /  / idem",
+      "um": "m",
+      "cantitate": 15,
+      "extras": {
+        "index": 153,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 65,
+        "diametru_tip": "DN",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20 mm protejata cu folie de aluminiu, DN 2 1/2\" (DN65), sistem vata minerala, strat extra tabla (folie aluminiu). | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 154,
+      "text": "Teava din otel zincata serie medie, imbinata prin cuplaje rapide,inclusiv fitinguri, treceri prin pereti si plansee cu teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge - dupa caz), sistem complet de sustinere inclusiv antisesimic,  izolatie in grosime de 20 mm protejata cu folie de aluminiu\nIdem, avand Dn 4\" | GOSPODARIE APA POTABILA  /  / idem",
+      "um": "m",
+      "cantitate": 18,
+      "extras": {
+        "index": 154,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 100,
+        "diametru_tip": "DN",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20 mm protejata cu folie de aluminiu, DN 4\" (DN100), sistem vata minerala, strat extra tabla (folie aluminiu). | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 155,
+      "text": "Teava din otel zincata serie medie, imbinata prin cuplaje rapide,inclusiv fitinguri, treceri prin pereti si plansee cu teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge - dupa caz), sistem complet de sustinere inclusiv antisesimic,  izolatie in grosime de 20 mm protejata cu folie de aluminiu\nIdem, avand Dn 5\" | GOSPODARIE APA POTABILA  /  / idem",
+      "um": "m",
+      "cantitate": 96,
+      "extras": {
+        "index": 155,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 125,
+        "diametru_tip": "DN",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20 mm protejata cu folie de aluminiu, DN 5\" (DN125), sistem vata minerala, strat extra tabla (folie aluminiu). | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 156,
+      "text": "Teava din otel zincata serie medie, Dn 1/2\", imbinata prin cuplaje rapide,inclusiv fitinguri, treceri prin pereti si plansee cu teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge), sistem complet de sustinere inclusiv antisesimic, izolatie in grosime de 20 mm protejata cu folie de aluminiu | GOSPODARIE DE PREPARARE APA CALDA DE CONSUM /  / Mairon, Silcotub",
+      "um": "m",
+      "cantitate": 8,
+      "extras": {
+        "index": 156,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 15,
+        "diametru_tip": "DN",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20 mm protejata cu folie de aluminiu, DN 1/2\" (DN15), sistem vata minerala, strat extra tabla (folie aluminiu). | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 157,
+      "text": "Teava din otel zincata serie medie, Dn 1\", imbinata prin cuplaje rapide,inclusiv fitinguri, treceri prin pereti si plansee cu teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge), sistem complet de sustinere inclusiv antisesimic, izolatie in grosime de 20 mm protejata cu folie de aluminiu | GOSPODARIE DE PREPARARE APA CALDA DE CONSUM /  / idem",
+      "um": "m",
+      "cantitate": 1,
+      "extras": {
+        "index": 157,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 25,
+        "diametru_tip": "DN",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20mm, DN 1\" (DN25), folie aluminiu = vata minerala + tabla. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 158,
+      "text": "Teava din otel zincata serie medie, Dn 2  1/2\", imbinata prin cuplaje rapide,inclusiv fitinguri, treceri prin pereti si plansee cu teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge), sistem complet de sustinere inclusiv antisesimic, izolatie in grosime de 20 mm protejata cu folie de aluminiu | GOSPODARIE DE PREPARARE APA CALDA DE CONSUM /  / idem",
+      "um": "m",
+      "cantitate": 18,
+      "extras": {
+        "index": 158,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 65,
+        "diametru_tip": "DN",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20mm, DN 2 1/2\" (DN65), folie aluminiu = vata minerala + tabla. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 159,
+      "text": "Teava din otel zincata serie medie, Dn 4\", imbinata prin cuplaje rapide,inclusiv fitinguri, treceri prin pereti si plansee cu teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge), sistem complet de sustinere inclusiv antisesimic, izolatie in grosime de 20 mm protejata cu folie de aluminiu | GOSPODARIE DE PREPARARE APA CALDA DE CONSUM /  / idem",
+      "um": "m",
+      "cantitate": 67,
+      "extras": {
+        "index": 159,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 100,
+        "diametru_tip": "DN",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20mm, DN 4\" (DN100), folie aluminiu = vata minerala + tabla. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 160,
+      "text": "Teava din otel zincata serie medie, Dn 5\", imbinata prin cuplaje rapide,inclusiv fitinguri, treceri prin pereti si plansee cu teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge), sistem complet de sustinere inclusiv antisesimic, izolatie in grosime de 20 mm protejata cu folie de aluminiu | GOSPODARIE DE PREPARARE APA CALDA DE CONSUM /  / idem",
+      "um": "m",
+      "cantitate": 214,
+      "extras": {
+        "index": 160,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 125,
+        "diametru_tip": "DN",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20mm, DN 5\" (DN125), folie aluminiu = vata minerala + tabla. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 161,
+      "text": "Teava din otel zincata serie medie Dn 4\", imbinata prin cuplaje rapide,inclusiv fitinguri, treceri prin pereti si plansee cu teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge - dupa caz), sistem complet de sustinere inclusiv antisesimic,  kit complet de degivrare, izolatie in grosime de 20 mm protejata cu folie de aluminiu (de la bransament) | INSTALATII DE ALIMENTARE CU APA RECE, APA CALDA DE CONSUM SI RECIRCULARE APA CALDA DE CONSUM /  / Mairon, Silcotub",
+      "um": "m",
+      "cantitate": 389,
+      "extras": {
+        "index": 161,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 100,
+        "diametru_tip": "DN",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20mm, DN 4\" (DN100), folie aluminiu = vata minerala + tabla. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 162,
+      "text": "Teava din otel zincat serie medie imbinata prin cuplaje rapide,  inclusiv:\n-  fitinguri;\n- conectoare de trecere de la conducta otel zincat la conducta din material plastic;\n-  treceri prin pereti si plansee in teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge);\n- sistem complet de sustinere (bratari cu garnitura de cauciuc, tije filetate de sustinere etc), inclusiv seismic; \n- izolatie in grosime de 20 mm protejata mecanic \nteava avand diametrul Dn 1/2\" | INSTALATII DE ALIMENTARE CU APA RECE, APA CALDA DE CONSUM SI RECIRCULARE APA CALDA DE CONSUM /  / Mairon, Silcotub",
+      "um": "m",
+      "cantitate": 28,
+      "extras": {
+        "index": 162,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 15,
+        "diametru_tip": "DN",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20mm, DN 1/2\" (DN15), protejata mecanic = vata minerala + tabla. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 163,
+      "text": "Teava din otel zincat serie medie imbinata prin cuplaje rapide,  inclusiv:\n-  fitinguri;\n- conectoare de trecere de la conducta otel zincat la conducta din material plastic;\n-  treceri prin pereti si plansee in teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge);\n- sistem complet de sustinere (bratari cu garnitura de cauciuc, tije filetate de sustinere etc), inclusiv seismic; \n- izolatie in grosime de 20 mm protejata mecanic \nIdem, teava avand diametrul Dn 3/4\" | INSTALATII DE ALIMENTARE CU APA RECE, APA CALDA DE CONSUM SI RECIRCULARE APA CALDA DE CONSUM /  / idem",
+      "um": "m",
+      "cantitate": 62,
+      "extras": {
+        "index": 163,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 20,
+        "diametru_tip": "DN",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20mm, DN 3/4\" (DN20), protejata mecanic = vata minerala + tabla. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 164,
+      "text": "Teava din otel zincat serie medie imbinata prin cuplaje rapide,  inclusiv:\n-  fitinguri;\n- conectoare de trecere de la conducta otel zincat la conducta din material plastic;\n-  treceri prin pereti si plansee in teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge);\n- sistem complet de sustinere (bratari cu garnitura de cauciuc, tije filetate de sustinere etc), inclusiv seismic; \n- izolatie in grosime de 20 mm protejata mecanic \nIdem, teava avand diametrul Dn 1\" | INSTALATII DE ALIMENTARE CU APA RECE, APA CALDA DE CONSUM SI RECIRCULARE APA CALDA DE CONSUM /  / idem",
+      "um": "m",
+      "cantitate": 127,
+      "extras": {
+        "index": 164,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 25,
+        "diametru_tip": "DN",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20mm, DN 1\" (DN25), protejata mecanic = vata minerala + tabla. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 165,
+      "text": "Teava din otel zincat serie medie imbinata prin cuplaje rapide,  inclusiv:\n-  fitinguri;\n- conectoare de trecere de la conducta otel zincat la conducta din material plastic;\n-  treceri prin pereti si plansee in teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge);\n- sistem complet de sustinere (bratari cu garnitura de cauciuc, tije filetate de sustinere etc), inclusiv seismic; \n- izolatie in grosime de 20 mm protejata mecanic \nIdem, teava avand diametrul Dn 1 1/4\" | INSTALATII DE ALIMENTARE CU APA RECE, APA CALDA DE CONSUM SI RECIRCULARE APA CALDA DE CONSUM /  / idem",
+      "um": "m",
+      "cantitate": 20,
+      "extras": {
+        "index": 165,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 32,
+        "diametru_tip": "DN",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20mm, DN 1 1/4\" (DN32), protejata mecanic = vata minerala + tabla. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 166,
+      "text": "Teava din otel zincat serie medie imbinata prin cuplaje rapide,  inclusiv:\n-  fitinguri;\n- conectoare de trecere de la conducta otel zincat la conducta din material plastic;\n-  treceri prin pereti si plansee in teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge);\n- sistem complet de sustinere (bratari cu garnitura de cauciuc, tije filetate de sustinere etc), inclusiv seismic; \n- izolatie in grosime de 20 mm protejata mecanic \nIdem, teava avand diametrul Dn 1 1/2\" | INSTALATII DE ALIMENTARE CU APA RECE, APA CALDA DE CONSUM SI RECIRCULARE APA CALDA DE CONSUM /  / idem",
+      "um": "m",
+      "cantitate": 137,
+      "extras": {
+        "index": 166,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 40,
+        "diametru_tip": "DN",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20mm, DN 1 1/2\" (DN40), protejata mecanic = vata minerala + tabla. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 167,
+      "text": "Teava din otel zincat serie medie imbinata prin cuplaje rapide,  inclusiv:\n-  fitinguri;\n- conectoare de trecere de la conducta otel zincat la conducta din material plastic;\n-  treceri prin pereti si plansee in teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge);\n- sistem complet de sustinere (bratari cu garnitura de cauciuc, tije filetate de sustinere etc), inclusiv seismic; \n- izolatie in grosime de 20 mm protejata mecanic \nIdem, teava avand diametrul Dn 2\" | INSTALATII DE ALIMENTARE CU APA RECE, APA CALDA DE CONSUM SI RECIRCULARE APA CALDA DE CONSUM /  / idem",
+      "um": "m",
+      "cantitate": 513,
+      "extras": {
+        "index": 167,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 50,
+        "diametru_tip": "DN",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20mm, DN 2\" (DN50), protejata mecanic = vata minerala + tabla. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 168,
+      "text": "Teava din otel zincat serie medie imbinata prin cuplaje rapide,  inclusiv:\n-  fitinguri;\n- conectoare de trecere de la conducta otel zincat la conducta din material plastic;\n-  treceri prin pereti si plansee in teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge);\n- sistem complet de sustinere (bratari cu garnitura de cauciuc, tije filetate de sustinere etc), inclusiv seismic; \n- izolatie in grosime de 20 mm protejata mecanic \nIdem, teava avand diametrul Dn 2 1/2\" | INSTALATII DE ALIMENTARE CU APA RECE, APA CALDA DE CONSUM SI RECIRCULARE APA CALDA DE CONSUM /  / idem",
+      "um": "m",
+      "cantitate": 22,
+      "extras": {
+        "index": 168,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 65,
+        "diametru_tip": "DN",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20mm, DN 2 1/2\" (DN65), protejata mecanic = vata minerala + tabla. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 169,
+      "text": "Teava din otel zincat serie medie imbinata prin cuplaje rapide,  inclusiv:\n-  fitinguri;\n- conectoare de trecere de la conducta otel zincat la conducta din material plastic;\n-  treceri prin pereti si plansee in teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge);\n- sistem complet de sustinere (bratari cu garnitura de cauciuc, tije filetate de sustinere etc), inclusiv seismic; \n- izolatie in grosime de 20 mm protejata mecanic \nIdem, teava avand diametrul Dn 3\" | INSTALATII DE ALIMENTARE CU APA RECE, APA CALDA DE CONSUM SI RECIRCULARE APA CALDA DE CONSUM /  / idem",
+      "um": "m",
+      "cantitate": 740,
+      "extras": {
+        "index": 169,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 80,
+        "diametru_tip": "DN",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20mm, DN 3\" (DN80), protejata mecanic = vata minerala + tabla. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 170,
+      "text": "Teava din otel zincat serie medie imbinata prin cuplaje rapide,  inclusiv:\n-  fitinguri;\n- conectoare de trecere de la conducta otel zincat la conducta din material plastic;\n-  treceri prin pereti si plansee in teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge);\n- sistem complet de sustinere (bratari cu garnitura de cauciuc, tije filetate de sustinere etc), inclusiv seismic; \n- izolatie in grosime de 20 mm protejata mecanic \nIdem, teava avand diametrul Dn 4\" | INSTALATII DE ALIMENTARE CU APA RECE, APA CALDA DE CONSUM SI RECIRCULARE APA CALDA DE CONSUM /  / idem",
+      "um": "m",
+      "cantitate": 447,
+      "extras": {
+        "index": 170,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 100,
+        "diametru_tip": "DN",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20mm, DN 4\" (DN100), protejata mecanic = vata minerala + tabla. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 171,
+      "text": "Teava din otel zincat serie medie imbinata prin cuplaje rapide,  inclusiv:\n-  fitinguri;\n- conectoare de trecere de la conducta otel zincat la conducta din material plastic;\n-  treceri prin pereti si plansee in teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge);\n- sistem complet de sustinere (bratari cu garnitura de cauciuc, tije filetate de sustinere etc), inclusiv seismic; \n- izolatie in grosime de 20 mm protejata mecanic \nIdem, teava avand diametrul Dn 5\" | INSTALATII DE ALIMENTARE CU APA RECE, APA CALDA DE CONSUM SI RECIRCULARE APA CALDA DE CONSUM /  / idem",
+      "um": "m",
+      "cantitate": 968,
+      "extras": {
+        "index": 171,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 125,
+        "diametru_tip": "DN",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20mm, DN 5\" (DN125), protejata mecanic = vata minerala + tabla. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 172,
+      "text": "Teava din otel zincata serie medie Dn 4\", imbinata prin cuplaje rapide,inclusiv fitinguri, treceri prin pereti si plansee cu teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge - dupa caz), izolatie in grosime de 20 mm protejata cu folie de aluminiu  | GOSPODARIE APA PENTRU STINGERE INCENDIU /  / Mairon, Silcotub",
+      "um": "m",
+      "cantitate": 56,
+      "extras": {
+        "index": 172,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 100,
+        "diametru_tip": "DN",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20mm, DN 4\" (DN100), folie aluminiu = vata minerala + tabla. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 179,
+      "text": "Teava din polietilena reticulata PE-Xa sau echivalent pentru utilizarea in instalatiile sanitare, imbinata cu manson alunecator, inclusiv:\n'- fitinguri;\n- conectoare de trecere la otel zincat;\n- treceri prin pereti si plansee in teava de protectie si etansari corespunzatoare conform elementului de constructie strapuns ;\n- sistem complet de sustinere (bratari cu garnitura de cauciuc, tije filetate de sustinere etc), inclusiv seismic;\n-piese de dilatare si puncte fixe conform specificatii producator;\n- izolatie in grosime de 20 mm protejata mecanic \nteava avand diametrul exterior 20x 1.9 mm | INSTALATII DE ALIMENTARE CU APA RECE, APA CALDA DE CONSUM SI RECIRCULARE APA CALDA DE CONSUM /  / Rehau, Valrom, Uponor",
+      "um": "m",
+      "cantitate": 8256,
+      "extras": {
+        "index": 179,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 20,
+        "diametru_tip": "exterior",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Teava PE-Xa, diametru exterior 20mm, izolatie 20mm, protejata mecanic = vata minerala + tabla. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 180,
+      "text": "Teava din polietilena reticulata PE-Xa sau echivalent pentru utilizarea in instalatiile sanitare, imbinata cu manson alunecator, inclusiv:\n'- fitinguri;\n- conectoare de trecere la otel zincat;\n- treceri prin pereti si plansee in teava de protectie si etansari corespunzatoare conform elementului de constructie strapuns ;\n- sistem complet de sustinere (bratari cu garnitura de cauciuc, tije filetate de sustinere etc), inclusiv seismic;\n-piese de dilatare si puncte fixe conform specificatii producator;\n- izolatie in grosime de 20 mm protejata mecanic \nIdem, teava avand diametrul exterior 25x 2,3 mm | INSTALATII DE ALIMENTARE CU APA RECE, APA CALDA DE CONSUM SI RECIRCULARE APA CALDA DE CONSUM /  / idem",
+      "um": "m",
+      "cantitate": 2125,
+      "extras": {
+        "index": 180,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 25,
+        "diametru_tip": "exterior",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Teava PE-Xa, diametru exterior 25mm, izolatie 20mm, protejata mecanic = vata minerala + tabla. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 181,
+      "text": "Teava din polietilena reticulata PE-Xa sau echivalent pentru utilizarea in instalatiile sanitare, imbinata cu manson alunecator, inclusiv:\n'- fitinguri;\n- conectoare de trecere la otel zincat;\n- treceri prin pereti si plansee in teava de protectie si etansari corespunzatoare conform elementului de constructie strapuns ;\n- sistem complet de sustinere (bratari cu garnitura de cauciuc, tije filetate de sustinere etc), inclusiv seismic;\n-piese de dilatare si puncte fixe conform specificatii producator;\n- izolatie in grosime de 20 mm protejata mecanic \nIdem, teava avand diametrul exterior 32x 2,9 mm | INSTALATII DE ALIMENTARE CU APA RECE, APA CALDA DE CONSUM SI RECIRCULARE APA CALDA DE CONSUM /  / idem",
+      "um": "m",
+      "cantitate": 1651,
+      "extras": {
+        "index": 181,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 32,
+        "diametru_tip": "exterior",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Teava PE-Xa, diametru exterior 32mm, izolatie 20mm, protejata mecanic = vata minerala + tabla. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 182,
+      "text": "Teava din polietilena reticulata PE-Xa sau echivalent pentru utilizarea in instalatiile sanitare, imbinata cu manson alunecator, inclusiv:\n'- fitinguri;\n- conectoare de trecere la otel zincat;\n- treceri prin pereti si plansee in teava de protectie si etansari corespunzatoare conform elementului de constructie strapuns ;\n- sistem complet de sustinere (bratari cu garnitura de cauciuc, tije filetate de sustinere etc), inclusiv seismic;\n-piese de dilatare si puncte fixe conform specificatii producator;\n- izolatie in grosime de 20 mm protejata mecanic \nIdem, teava avand diametrul exterior 40x 3,7 mm | INSTALATII DE ALIMENTARE CU APA RECE, APA CALDA DE CONSUM SI RECIRCULARE APA CALDA DE CONSUM /  / idem",
+      "um": "m",
+      "cantitate": 2004,
+      "extras": {
+        "index": 182,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 40,
+        "diametru_tip": "exterior",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Teava PE-Xa, diametru exterior 40mm, izolatie 20mm, protejata mecanic = vata minerala + tabla. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 183,
+      "text": "Teava din polietilena reticulata PE-Xa sau echivalent pentru utilizarea in instalatiile sanitare, imbinata cu manson alunecator, inclusiv:\n'- fitinguri;\n- conectoare de trecere la otel zincat;\n- treceri prin pereti si plansee in teava de protectie si etansari corespunzatoare conform elementului de constructie strapuns ;\n- sistem complet de sustinere (bratari cu garnitura de cauciuc, tije filetate de sustinere etc), inclusiv seismic;\n-piese de dilatare si puncte fixe conform specificatii producator;\n- izolatie in grosime de 20 mm protejata mecanic \nIdem, teava avand diametrul exterior 50x 4,6 mm | INSTALATII DE ALIMENTARE CU APA RECE, APA CALDA DE CONSUM SI RECIRCULARE APA CALDA DE CONSUM /  / idem",
+      "um": "m",
+      "cantitate": 1827,
+      "extras": {
+        "index": 183,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 50,
+        "diametru_tip": "exterior",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Teava PE-Xa, diametru exterior 50mm, izolatie 20mm, protejata mecanic = vata minerala + tabla. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 184,
+      "text": "Teava din polietilena reticulata PE-Xa sau echivalent pentru utilizarea in instalatiile sanitare, imbinata cu manson alunecator, inclusiv:\n'- fitinguri;\n- conectoare de trecere la otel zincat;\n- treceri prin pereti si plansee in teava de protectie si etansari corespunzatoare conform elementului de constructie strapuns ;\n- sistem complet de sustinere (bratari cu garnitura de cauciuc, tije filetate de sustinere etc), inclusiv seismic;\n-piese de dilatare si puncte fixe conform specificatii producator;\n- izolatie in grosime de 20 mm protejata mecanic \nIdem, teava avand diametrul exterior 63x 5,9 mm | INSTALATII DE ALIMENTARE CU APA RECE, APA CALDA DE CONSUM SI RECIRCULARE APA CALDA DE CONSUM /  / idem",
+      "um": "m",
+      "cantitate": 1858,
+      "extras": {
+        "index": 184,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 63,
+        "diametru_tip": "exterior",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Teava PE-Xa, diametru exterior 63mm, izolatie 20mm, protejata mecanic = vata minerala + tabla. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 191,
+      "text": "Teava din otel serie medie avand, imbinata prin cuplaje rapide, inclusiv fitinguri, treceri prin pereti si plansee cu teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge - dupa caz), sistem complet de sustinere inclusiv antisesimic,  cu kit complet de degivrare, protejata anticoroziv, izolatie in grosime de 20 mm protejata cu folie de aluminiu (alimentare distribuitor de la statia de pompe incendiu)\nDn 3/4\" (la turbina cu clopot de alarma ACS) | CAMERA ACS SUBSOL 3 - B3_TEH_12  (ax 3-4/G-H) /  / Mairon, Silcotub",
+      "um": "m",
+      "cantitate": 175,
+      "extras": {
+        "index": 191,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 20,
+        "diametru_tip": "DN",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20mm, DN 3/4\" (DN20), folie aluminiu = vata minerala + tabla. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 192,
+      "text": "Teava din otel serie medie avand, imbinata prin cuplaje rapide, inclusiv fitinguri, treceri prin pereti si plansee cu teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge - dupa caz), sistem complet de sustinere inclusiv antisesimic,  cu kit complet de degivrare, protejata anticoroziv, izolatie in grosime de 20 mm protejata cu folie de aluminiu (alimentare distribuitor de la statia de pompe incendiu)\nDn 1\"  (de la turbina cu clopot de alarma ACS) | CAMERA ACS SUBSOL 3 - B3_TEH_12  (ax 3-4/G-H) /  / idem",
+      "um": "m",
+      "cantitate": 175,
+      "extras": {
+        "index": 192,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 25,
+        "diametru_tip": "DN",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20mm, DN 1\" (DN25), folie aluminiu = vata minerala + tabla. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 193,
+      "text": "Teava din otel serie medie avand, imbinata prin cuplaje rapide, inclusiv fitinguri, treceri prin pereti si plansee cu teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge - dupa caz), sistem complet de sustinere inclusiv antisesimic,  cu kit complet de degivrare, protejata anticoroziv, izolatie in grosime de 20 mm protejata cu folie de aluminiu (alimentare distribuitor de la statia de pompe incendiu)\nDn 150 mm (Ф 168 x 6 mm)  | CAMERA ACS SUBSOL 3 - B3_TEH_12  (ax 3-4/G-H) /  / idem",
+      "um": "m",
+      "cantitate": 138,
+      "extras": {
+        "index": 193,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 150,
+        "diametru_tip": "DN",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20mm, DN 150mm, folie aluminiu = vata minerala + tabla. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 194,
+      "text": "Teava din otel serie medie imbinata prin cuplaje rapide, inclusiv fitinguri, treceri prin pereti si plansee cu teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge - dupa caz), sistem complet de sustinere inclusiv antisesimic,  cu kit complet de degivrare, protejata anticoroziv, izolatie in grosime de 20 mm protejata cu folie de aluminiu (alim distribuitor de la statia de pompe incedniu)\nDn 3/4\" (la turbina cu clopot de alarma ACS) | CAMERA ACS SUBSOL 2 : B2_TEH_15  (ax 4-5/B) /  / Mairon, Silcotub",
+      "um": "m",
+      "cantitate": 35,
+      "extras": {
+        "index": 194,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 20,
+        "diametru_tip": "DN",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20mm, folie aluminiu = vata minerala + tabla, DN 3/4\" = DN20, UM m = ml. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 195,
+      "text": "Teava din otel serie medie imbinata prin cuplaje rapide, inclusiv fitinguri, treceri prin pereti si plansee cu teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge - dupa caz), sistem complet de sustinere inclusiv antisesimic,  cu kit complet de degivrare, protejata anticoroziv, izolatie in grosime de 20 mm protejata cu folie de aluminiu (alim distribuitor de la statia de pompe incedniu)\nDn 1\"  (de la turbina cu clopot de alarma ACS) | CAMERA ACS SUBSOL 2 : B2_TEH_15  (ax 4-5/B) /  / idem",
+      "um": "m",
+      "cantitate": 35,
+      "extras": {
+        "index": 195,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 25,
+        "diametru_tip": "DN",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20mm, folie aluminiu = vata minerala + tabla, DN 1\" = DN25, UM m = ml. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 196,
+      "text": "Teava din otel serie medie imbinata prin cuplaje rapide, inclusiv fitinguri, treceri prin pereti si plansee cu teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge - dupa caz), sistem complet de sustinere inclusiv antisesimic,  cu kit complet de degivrare, protejata anticoroziv, izolatie in grosime de 20 mm protejata cu folie de aluminiu (alim distribuitor de la statia de pompe incedniu)\nDn 150 mm (Ф 168 x 6 mm) | CAMERA ACS SUBSOL 2 : B2_TEH_15  (ax 4-5/B) /  / idem",
+      "um": "m",
+      "cantitate": 6,
+      "extras": {
+        "index": 196,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 150,
+        "diametru_tip": "DN",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20mm, folie aluminiu = vata minerala + tabla, DN 150 mm, UM m = ml. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 203,
+      "text": "Teava din otel serie medie , imbinata prin cuplaje rapide, inclusiv fitinguri, treceri prin pereti si plansee cu teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge - dupa caz), protejata anticoroziv, izolatie in grosime de 20 mm protejata cu folie de aluminiu\nDn 1/2\" | GOSPODARIE APA PENTRU STINGERE INCENDIU /  / Mairon, Silcotub",
+      "um": "m",
+      "cantitate": 2,
+      "extras": {
+        "index": 203,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 15,
+        "diametru_tip": "DN",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20mm, folie aluminiu = vata minerala + tabla, DN 1/2\" = DN15, UM m = ml. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 204,
+      "text": "Teava din otel serie medie , imbinata prin cuplaje rapide, inclusiv fitinguri, treceri prin pereti si plansee cu teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge - dupa caz), protejata anticoroziv, izolatie in grosime de 20 mm protejata cu folie de aluminiu\nDn 3/4\" | GOSPODARIE APA PENTRU STINGERE INCENDIU /  / idem",
+      "um": "m",
+      "cantitate": 42,
+      "extras": {
+        "index": 204,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 20,
+        "diametru_tip": "DN",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20mm, folie aluminiu = vata minerala + tabla, DN 3/4\" = DN20, UM m = ml. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 205,
+      "text": "Teava din otel serie medie , imbinata prin cuplaje rapide, inclusiv fitinguri, treceri prin pereti si plansee cu teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge - dupa caz), protejata anticoroziv, izolatie in grosime de 20 mm protejata cu folie de aluminiu\nDn 1\" | GOSPODARIE APA PENTRU STINGERE INCENDIU /  / idem",
+      "um": "m",
+      "cantitate": 50,
+      "extras": {
+        "index": 205,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 25,
+        "diametru_tip": "DN",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20mm, folie aluminiu = vata minerala + tabla, DN 1\" = DN25, UM m = ml. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 206,
+      "text": "Teava din otel serie medie , imbinata prin cuplaje rapide, inclusiv fitinguri, treceri prin pereti si plansee cu teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge - dupa caz), protejata anticoroziv, izolatie in grosime de 20 mm protejata cu folie de aluminiu\nDn 1 1/4\" | GOSPODARIE APA PENTRU STINGERE INCENDIU /  / idem",
+      "um": "m",
+      "cantitate": 7,
+      "extras": {
+        "index": 206,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 32,
+        "diametru_tip": "DN",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20mm, folie aluminiu = vata minerala + tabla, DN 1 1/4\" = DN32, UM m = ml. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 207,
+      "text": "Teava din otel serie medie , imbinata prin cuplaje rapide, inclusiv fitinguri, treceri prin pereti si plansee cu teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge - dupa caz), protejata anticoroziv, izolatie in grosime de 20 mm protejata cu folie de aluminiu\nDn 1 1/2\" | GOSPODARIE APA PENTRU STINGERE INCENDIU /  / idem",
+      "um": "m",
+      "cantitate": 4,
+      "extras": {
+        "index": 207,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 40,
+        "diametru_tip": "DN",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20mm, folie aluminiu = vata minerala + tabla, DN 1 1/2\" = DN40, UM m = ml. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 208,
+      "text": "Teava din otel serie medie , imbinata prin cuplaje rapide, inclusiv fitinguri, treceri prin pereti si plansee cu teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge - dupa caz), protejata anticoroziv, izolatie in grosime de 20 mm protejata cu folie de aluminiu\nФ 57 x 3,5 mm  (Dn 2\") | GOSPODARIE APA PENTRU STINGERE INCENDIU /  / idem",
+      "um": "m",
+      "cantitate": 8,
+      "extras": {
+        "index": 208,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 57,
+        "diametru_tip": "exterior",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20mm, folie aluminiu = vata minerala + tabla, Ф 57 x 3,5 mm, diametru exterior, UM m = ml. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 209,
+      "text": "Teava din otel serie medie , imbinata prin cuplaje rapide, inclusiv fitinguri, treceri prin pereti si plansee cu teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge - dupa caz), protejata anticoroziv, izolatie in grosime de 20 mm protejata cu folie de aluminiu\nФ 76 x 3,5 mm  (Dn 65 mm) | GOSPODARIE APA PENTRU STINGERE INCENDIU /  / idem",
+      "um": "m",
+      "cantitate": 52,
+      "extras": {
+        "index": 209,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 76,
+        "diametru_tip": "exterior",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20mm, folie aluminiu = vata minerala + tabla, Ф 76 x 3,5 mm, diametru exterior, UM m = ml. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 210,
+      "text": "Teava din otel serie medie , imbinata prin cuplaje rapide, inclusiv fitinguri, treceri prin pereti si plansee cu teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge - dupa caz), protejata anticoroziv, izolatie in grosime de 20 mm protejata cu folie de aluminiu\nФ 89 x 3,5 mm  (Dn 80 mm) | GOSPODARIE APA PENTRU STINGERE INCENDIU /  / idem",
+      "um": "m",
+      "cantitate": 16,
+      "extras": {
+        "index": 210,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 89,
+        "diametru_tip": "exterior",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20mm, folie aluminiu = vata minerala + tabla, Ф 89 x 3,5 mm, diametru exterior, UM m = ml. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 211,
+      "text": "Teava din otel serie medie , imbinata prin cuplaje rapide, inclusiv fitinguri, treceri prin pereti si plansee cu teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge - dupa caz), protejata anticoroziv, izolatie in grosime de 20 mm protejata cu folie de aluminiu\nФ 108 x 4 mm  (Dn 100 mm) | GOSPODARIE APA PENTRU STINGERE INCENDIU /  / idem",
+      "um": "m",
+      "cantitate": 18,
+      "extras": {
+        "index": 211,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 108,
+        "diametru_tip": "exterior",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20mm, folie aluminiu = vata minerala + tabla, Ф 108 x 4 mm, diametru exterior, UM m = ml. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 212,
+      "text": "Teava din otel serie medie , imbinata prin cuplaje rapide, inclusiv fitinguri, treceri prin pereti si plansee cu teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge - dupa caz), protejata anticoroziv, izolatie in grosime de 20 mm protejata cu folie de aluminiu\nФ 168 x 6 mm  (Dn 150 mm) | GOSPODARIE APA PENTRU STINGERE INCENDIU /  / idem",
+      "um": "m",
+      "cantitate": 45,
+      "extras": {
+        "index": 212,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 168,
+        "diametru_tip": "exterior",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20mm, folie aluminiu = vata minerala + tabla, Ф 168 x 6 mm, diametru exterior, UM m = ml. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 213,
+      "text": "Teava din otel serie medie , imbinata prin cuplaje rapide, inclusiv fitinguri, treceri prin pereti si plansee cu teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge - dupa caz), protejata anticoroziv, izolatie in grosime de 20 mm protejata cu folie de aluminiu\nФ 219 x 6 mm  (Dn 200 mm) | GOSPODARIE APA PENTRU STINGERE INCENDIU /  / idem",
+      "um": "m",
+      "cantitate": 45,
+      "extras": {
+        "index": 213,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 219,
+        "diametru_tip": "exterior",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20mm, folie aluminiu = vata minerala + tabla, Ф 219 x 6 mm, diametru exterior, UM m = ml. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 214,
+      "text": "Teava din otel serie medie imbinata prin cuplaje rapide, inclusiv fitinguri, treceri prin pereti si plansee cu teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge - dupa caz), sistem complet de sustinere inclusiv antisesimic, protejata anticoroziv, izolatie in grosime de 20 mm protejata cu folie de aluminiu\nФ 89 x 3,5 mm (Dn 80 mm) | CAMERA ACS SUBSOL 3 - B3_TEH_12  (ax 3-4/G-H) /  / Mairon, Silcotub",
+      "um": "m",
+      "cantitate": 4,
+      "extras": {
+        "index": 214,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 89,
+        "diametru_tip": "exterior",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20mm, folie aluminiu = vata minerala + tabla, Ф 89 x 3,5 mm, diametru exterior, UM m = ml. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 215,
+      "text": "Teava din otel serie medie imbinata prin cuplaje rapide, inclusiv fitinguri, treceri prin pereti si plansee cu teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge - dupa caz), sistem complet de sustinere inclusiv antisesimic, protejata anticoroziv, izolatie in grosime de 20 mm protejata cu folie de aluminiu\nФ 108 x 4 mm (Dn 100 mm) | CAMERA ACS SUBSOL 3 - B3_TEH_12  (ax 3-4/G-H) /  / idem",
+      "um": "m",
+      "cantitate": 4,
+      "extras": {
+        "index": 215,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 108,
+        "diametru_tip": "exterior",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20mm, folie aluminiu = vata minerala + tabla, Ф 108 x 4 mm, diametru exterior, UM m = ml. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 216,
+      "text": "Teava din otel serie medie avand Ф 108 x 4 mm  (Dn 100 mm), imbinata prin cuplaje rapide, inclusiv fitinguri, treceri prin pereti si plansee cu teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge - dupa caz), sistem complet de sustinere inclusiv antisesimic, protejata anticoroziv, izolatie in grosime de 20 mm protejata cu folie de aluminiu | CAMERA ACS SUBSOL 2 : B2_TEH_15  (ax 4-5/B) /  / Mairon, Silcotub",
+      "um": "m",
+      "cantitate": 12,
+      "extras": {
+        "index": 216,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 108,
+        "diametru_tip": "exterior",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20mm, folie aluminiu = vata minerala + tabla, Ф 108 x 4 mm, diametru exterior, UM m = ml. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 217,
+      "text": "Teava din otel serie medie, imbinata prin cuplaje rapide, inclusiv fitinguri, treceri prin pereti si plansee cu teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge - dupa caz), sistem complet de sustinere inclusiv antisesimic,  protejata anticoroziv, izolatie in grosime de 20 mm protejata cu folie de aluminiu\nФ 76 x 3,5 mm  (Dn 65 mm)  | CAMERA DISTRIBUITOARE SPRINKLERE DESCHISE (DRENCERE DE PERDEA): SUBSOL 3 - B3_TEH_18  \n(axe12-13/F-G) /  / Mairon, Silcotub",
+      "um": "m",
+      "cantitate": 12,
+      "extras": {
+        "index": 217,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 76,
+        "diametru_tip": "exterior",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20mm, folie aluminiu = vata minerala + tabla, Ф 76 x 3,5 mm, diametru exterior, UM m = ml. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 218,
+      "text": "Teava din otel serie medie, imbinata prin cuplaje rapide, inclusiv fitinguri, treceri prin pereti si plansee cu teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge - dupa caz), sistem complet de sustinere inclusiv antisesimic,  protejata anticoroziv, izolatie in grosime de 20 mm protejata cu folie de aluminiu\nФ 89 x 3,5 mm  (Dn 80 mm) | CAMERA DISTRIBUITOARE SPRINKLERE DESCHISE (DRENCERE DE PERDEA): SUBSOL 3 - B3_TEH_18  \n(axe12-13/F-G) /  / idem",
+      "um": "m",
+      "cantitate": 10,
+      "extras": {
+        "index": 218,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 89,
+        "diametru_tip": "exterior",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20mm, folie aluminiu = vata minerala + tabla, Ф 89 x 3,5 mm, diametru exterior, UM m = ml. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 219,
+      "text": "Teava din otel serie medie, imbinata prin cuplaje rapide, inclusiv fitinguri, treceri prin pereti si plansee cu teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge - dupa caz), sistem complet de sustinere inclusiv antisesimic,  protejata anticoroziv, izolatie in grosime de 20 mm protejata cu folie de aluminiu\nФ 108 x 4 mm  (Dn 100 mm) | CAMERA DISTRIBUITOARE SPRINKLERE DESCHISE (DRENCERE DE PERDEA): SUBSOL 3 - B3_TEH_18  \n(axe12-13/F-G) /  / idem",
+      "um": "m",
+      "cantitate": 18,
+      "extras": {
+        "index": 219,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 108,
+        "diametru_tip": "exterior",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20mm, folie aluminiu = vata minerala + tabla, Ф 108 x 4 mm, diametru exterior, UM m = ml. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 220,
+      "text": "Teava din otel serie medie avand Ф 168 x 6 mm (Dn 150 mm), imbinata prin cuplaje rapide,inclusiv fitinguri, treceri prin pereti si plansee cu teava  de protectie si etansari corespunzatoare (hidrofuge sau ignifuge - dupa caz), sistem complet de sustinere inclusiv antisesimic,  cu kit complet de degivrare, protejata anticoroziv, izolatie in grosime de 20 mm protejata cu folie de aluminiu (alim distribuitoare de la statia de pompe incendiu) | CAMERA DISTRIBUITOARE SPRINKLERE DESCHISE (DRENCERE DE PERDEA): SUBSOL 3 - B3_TEH_18  \n(axe12-13/F-G) /  / Mairon, Silcotub",
+      "um": "m",
+      "cantitate": 125,
+      "extras": {
+        "index": 220,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 168,
+        "diametru_tip": "exterior",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [
+          {
+            "sistem": "tabla",
+            "grosime_mm": null
+          }
+        ],
+        "incredere": 0,
+        "motiv": "Izolatie 20mm, folie aluminiu = vata minerala + tabla, Ф 168 x 6 mm, diametru exterior, UM m = ml. | NEVERIFICAT: stratul tabla nu e numit in textul sursa"
+      },
+      "avertismente": [
+        "strat_necitat"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 221,
+      "text": "Teava din otel serie medie imbinata prin cuplaje rapide, inclusiv:\n-  fitinguri;\n-  treceri prin pereti si plansee cu etansari corespunzatoare (hidrofuge sau ignifuge);\n- sistem complet de sustinere (bratari cu garnitura de cauciuc, tije filetate de sustinere etc), inclusiv antiseismic; \n- protejata anticoroziv si vopsita cu vopsea de ulei conform standarde in vigoare;\n- izolatie in grosime de 20 mm protejata mecanic \nDn 1/2\" | Instalatie cu sprinklere deschise (drencere) de perdea /  / Mairon, Silcotub",
+      "um": "m",
+      "cantitate": 3,
+      "extras": {
+        "index": 221,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 15,
+        "diametru_tip": "DN",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0.9,
+        "motiv": "Izolatie 20mm, protejata mecanic (nu specifica tabla), DN 1/2\" = DN15, UM m = ml."
+      },
+      "avertismente": [],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 222,
+      "text": "Teava din otel serie medie imbinata prin cuplaje rapide, inclusiv:\n-  fitinguri;\n-  treceri prin pereti si plansee cu etansari corespunzatoare (hidrofuge sau ignifuge);\n- sistem complet de sustinere (bratari cu garnitura de cauciuc, tije filetate de sustinere etc), inclusiv antiseismic; \n- protejata anticoroziv si vopsita cu vopsea de ulei conform standarde in vigoare;\n- izolatie in grosime de 20 mm protejata mecanic \nDn 25 mm | Instalatie cu sprinklere deschise (drencere) de perdea /  / idem",
+      "um": "m",
+      "cantitate": 47,
+      "extras": {
+        "index": 222,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 25,
+        "diametru_tip": "DN",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0.9,
+        "motiv": "Izolatie 20mm, protejata mecanic (nu specifica tabla), DN 25 mm, UM m = ml."
+      },
+      "avertismente": [],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 223,
+      "text": "Teava din otel serie medie imbinata prin cuplaje rapide, inclusiv:\n-  fitinguri;\n-  treceri prin pereti si plansee cu etansari corespunzatoare (hidrofuge sau ignifuge);\n- sistem complet de sustinere (bratari cu garnitura de cauciuc, tije filetate de sustinere etc), inclusiv antiseismic; \n- protejata anticoroziv si vopsita cu vopsea de ulei conform standarde in vigoare;\n- izolatie in grosime de 20 mm protejata mecanic \nDn 32 mm | Instalatie cu sprinklere deschise (drencere) de perdea /  / idem",
+      "um": "m",
+      "cantitate": 35,
+      "extras": {
+        "index": 223,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 32,
+        "diametru_tip": "DN",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0.9,
+        "motiv": "Izolatie 20mm, protejata mecanic (nu specifica tabla), DN 32 mm, UM m = ml."
+      },
+      "avertismente": [],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 224,
+      "text": "Teava din otel serie medie imbinata prin cuplaje rapide, inclusiv:\n-  fitinguri;\n-  treceri prin pereti si plansee cu etansari corespunzatoare (hidrofuge sau ignifuge);\n- sistem complet de sustinere (bratari cu garnitura de cauciuc, tije filetate de sustinere etc), inclusiv antiseismic; \n- protejata anticoroziv si vopsita cu vopsea de ulei conform standarde in vigoare;\n- izolatie in grosime de 20 mm protejata mecanic \nDn 40 mm | Instalatie cu sprinklere deschise (drencere) de perdea /  / idem",
+      "um": "m",
+      "cantitate": 398,
+      "extras": {
+        "index": 224,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 40,
+        "diametru_tip": "DN",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0.9,
+        "motiv": "Izolatie 20mm, protejata mecanic (nu specifica tabla), DN 40 mm, UM m = ml."
+      },
+      "avertismente": [],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 225,
+      "text": "Teava din otel serie medie imbinata prin cuplaje rapide, inclusiv:\n-  fitinguri;\n-  treceri prin pereti si plansee cu etansari corespunzatoare (hidrofuge sau ignifuge);\n- sistem complet de sustinere (bratari cu garnitura de cauciuc, tije filetate de sustinere etc), inclusiv antiseismic; \n- protejata anticoroziv si vopsita cu vopsea de ulei conform standarde in vigoare;\n- izolatie in grosime de 20 mm protejata mecanic \nDn 50 mm | Instalatie cu sprinklere deschise (drencere) de perdea /  / idem",
+      "um": "m",
+      "cantitate": 64,
+      "extras": {
+        "index": 225,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 50,
+        "diametru_tip": "DN",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0.95,
+        "motiv": "Izolatie 20 mm pe teava DN50, nu se specifica alt sistem, deci vata minerala e uzual pentru protectie mecanica."
+      },
+      "avertismente": [],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 226,
+      "text": "Teava din otel serie medie imbinata prin cuplaje rapide, inclusiv:\n-  fitinguri;\n-  treceri prin pereti si plansee cu etansari corespunzatoare (hidrofuge sau ignifuge);\n- sistem complet de sustinere (bratari cu garnitura de cauciuc, tije filetate de sustinere etc), inclusiv antiseismic; \n- protejata anticoroziv si vopsita cu vopsea de ulei conform standarde in vigoare;\n- izolatie in grosime de 20 mm protejata mecanic \nDn 65 mm | Instalatie cu sprinklere deschise (drencere) de perdea /  / idem",
+      "um": "m",
+      "cantitate": 257,
+      "extras": {
+        "index": 226,
+        "sistem": "vata_minerala",
+        "diametru_valoare": 65,
+        "diametru_tip": "DN",
+        "grosime_mm": 20,
+        "forma": "ml",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0.95,
+        "motiv": "Izolatie 20 mm pe teava DN65, nu se specifica alt sistem, deci vata minerala e uzual pentru protectie mecanica."
+      },
+      "avertismente": [],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+    },
+    {
+      "index": 233,
+      "text": "Tubulatura rectangulara de admisie aer orizontala din material din clasa de reactie la foc minimum A2-s1. d0 si rezistenta la foc EI 60 (ho) (protejata cu torcret Parafoc 20 mm) sau se pot utiliza alte soluții pentru care există documente legale de comercializare conform HGR nr. 668/2017 care să ateste performanța la foc specificată.\nperimetrul intre 700-1600 mm | Tubulaturi rectangulare / Lindab, Temko, Aiva",
+      "um": "mp",
+      "cantitate": 1186,
+      "extras": {
+        "index": 233,
+        "sistem": "vata_minerala",
+        "diametru_valoare": null,
+        "diametru_tip": null,
+        "grosime_mm": 20,
+        "forma": "mp",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0.95,
+        "motiv": "Torcret Parafoc 20 mm este un strat de vata minerala aplicat pe tubulatura rectangulara, forma mp."
+      },
+      "avertismente": [],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+    },
+    {
+      "index": 234,
+      "text": "Tubulatura rectangulara de admisie aer orizontala din material din clasa de reactie la foc minimum A2-s1. d0 si rezistenta la foc EI 60 (ho) (protejata cu torcret Parafoc 20 mm) sau se pot utiliza alte soluții pentru care există documente legale de comercializare conform HGR nr. 668/2017 care să ateste performanța la foc specificată.\nperimetrul intre 1600-2500 mm | Tubulaturi rectangulare / idem",
+      "um": "mp",
+      "cantitate": 2187,
+      "extras": {
+        "index": 234,
+        "sistem": "vata_minerala",
+        "diametru_valoare": null,
+        "diametru_tip": null,
+        "grosime_mm": 20,
+        "forma": "mp",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0.95,
+        "motiv": "Torcret Parafoc 20 mm este un strat de vata minerala aplicat pe tubulatura rectangulara, forma mp."
+      },
+      "avertismente": [],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+    },
+    {
+      "index": 235,
+      "text": "Tubulatura rectangulara de admisie aer orizontala din material din clasa de reactie la foc minimum A2-s1. d0 si rezistenta la foc EI 60 (ho) (protejata cu torcret Parafoc 20 mm) sau se pot utiliza alte soluții pentru care există documente legale de comercializare conform HGR nr. 668/2017 care să ateste performanța la foc specificată.\nperimetrul intre 1600-2500 mm | Tubulaturi rectangulare / idem",
+      "um": "mp",
+      "cantitate": 838,
+      "extras": {
+        "index": 235,
+        "sistem": "vata_minerala",
+        "diametru_valoare": null,
+        "diametru_tip": null,
+        "grosime_mm": 20,
+        "forma": "mp",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0.95,
+        "motiv": "Torcret Parafoc 20 mm este un strat de vata minerala aplicat pe tubulatura rectangulara, forma mp."
+      },
+      "avertismente": [],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+    },
+    {
+      "index": 237,
+      "text": "Tubulatura rectangulara de admisie aer verticala montata in interiorul aceluiasi nivel din material din clasa de reactie la foc minimum A2-s1.d0 si rezistenta la foc EI 120 ve, (protejata cu torcret Parafoc 25 mm) sau se pot utiliza alte soluții pentru care există documente legale de comercializare conform HGR nr. 668/2017 care să ateste performanța la foc specificată.\nperimetrul intre 700-1600 mm | Tubulaturi rectangulare / Lindab, Temko, Aiva",
+      "um": "mp",
+      "cantitate": 25,
+      "extras": {
+        "index": 237,
+        "sistem": "vata_minerala",
+        "diametru_valoare": null,
+        "diametru_tip": null,
+        "grosime_mm": 25,
+        "forma": "mp",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0,
+        "motiv": "Torcret Parafoc 25 mm este un strat de vata minerala aplicat pe tubulatura rectangulara, forma mp. | NEVERIFICAT: vata_minerala nu se oferteaza in grosimea 25 mm (lista: 20, 30, 40, 50, 60, 80, 100)"
+      },
+      "avertismente": [
+        "grosime_in_afara_listei"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+    },
+    {
+      "index": 238,
+      "text": "Tubulatura rectangulara de admisie aer verticala montata in interiorul aceluiasi nivel din material din clasa de reactie la foc minimum A2-s1.d0 si rezistenta la foc EI 120 ve, (protejata cu torcret Parafoc 25 mm) sau se pot utiliza alte soluții pentru care există documente legale de comercializare conform HGR nr. 668/2017 care să ateste performanța la foc specificată.\nperimetrul intre 1600-2500 mm | Tubulaturi rectangulare / idem",
+      "um": "mp",
+      "cantitate": 8,
+      "extras": {
+        "index": 238,
+        "sistem": "vata_minerala",
+        "diametru_valoare": null,
+        "diametru_tip": null,
+        "grosime_mm": 25,
+        "forma": "mp",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0,
+        "motiv": "Torcret Parafoc 25 mm este un strat de vata minerala aplicat pe tubulatura rectangulara, forma mp. | NEVERIFICAT: vata_minerala nu se oferteaza in grosimea 25 mm (lista: 20, 30, 40, 50, 60, 80, 100)"
+      },
+      "avertismente": [
+        "grosime_in_afara_listei"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+    },
+    {
+      "index": 239,
+      "text": "Tubulatura rectangulara de admisie aer verticala care strabate mai multe niveluri ale cladirii din clasa de reactie la foc minimum A2-s1.d0 si rezistenta la foc EI 180 ve, (protejata cu torcret Parafoc 35 mm) sau se pot utiliza alte soluții pentru care există documente legale de comercializare conform HGR nr. 668/2017 care să ateste performanța la foc specificată.\nperimetrul intre 700-1600 mm | Tubulaturi rectangulare / Lindab, Temko, Aiva",
+      "um": "mp",
+      "cantitate": 87,
+      "extras": {
+        "index": 239,
+        "sistem": "vata_minerala",
+        "diametru_valoare": null,
+        "diametru_tip": null,
+        "grosime_mm": 35,
+        "forma": "mp",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0,
+        "motiv": "Torcret Parafoc 35 mm este un strat de vata minerala aplicat pe tubulatura rectangulara, forma mp. | NEVERIFICAT: vata_minerala nu se oferteaza in grosimea 35 mm (lista: 20, 30, 40, 50, 60, 80, 100)"
+      },
+      "avertismente": [
+        "grosime_in_afara_listei"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+    },
+    {
+      "index": 240,
+      "text": "Tubulatura rectangulara de admisie aer verticala care strabate mai multe niveluri ale cladirii din clasa de reactie la foc minimum A2-s1.d0 si rezistenta la foc EI 180 ve, (protejata cu torcret Parafoc 35 mm) sau se pot utiliza alte soluții pentru care există documente legale de comercializare conform HGR nr. 668/2017 care să ateste performanța la foc specificată.\nperimetrul intre 1600-2500 mm | Tubulaturi rectangulare / idem",
+      "um": "mp",
+      "cantitate": 884,
+      "extras": {
+        "index": 240,
+        "sistem": "vata_minerala",
+        "diametru_valoare": null,
+        "diametru_tip": null,
+        "grosime_mm": 35,
+        "forma": "mp",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0,
+        "motiv": "Torcret Parafoc 35 mm este un strat de vata minerala aplicat pe tubulatura rectangulara, forma mp. | NEVERIFICAT: vata_minerala nu se oferteaza in grosimea 35 mm (lista: 20, 30, 40, 50, 60, 80, 100)"
+      },
+      "avertismente": [
+        "grosime_in_afara_listei"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+    },
+    {
+      "index": 241,
+      "text": "Tubulatura rectangulara de admisie aer verticala care strabate mai multe niveluri ale cladirii din clasa de reactie la foc minimum A2-s1.d0 si rezistenta la foc EI 180 ve, (protejata cu torcret Parafoc 35 mm) sau se pot utiliza alte soluții pentru care există documente legale de comercializare conform HGR nr. 668/2017 care să ateste performanța la foc specificată.\nperimetrul intre 1600-2500 mm | Tubulaturi rectangulare / idem",
+      "um": "mp",
+      "cantitate": 93,
+      "extras": {
+        "index": 241,
+        "sistem": "vata_minerala",
+        "diametru_valoare": null,
+        "diametru_tip": null,
+        "grosime_mm": 35,
+        "forma": "mp",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0,
+        "motiv": "Torcret Parafoc 35 mm este un strat de vata minerala aplicat pe tubulatura rectangulara, forma mp. | NEVERIFICAT: vata_minerala nu se oferteaza in grosimea 35 mm (lista: 20, 30, 40, 50, 60, 80, 100)"
+      },
+      "avertismente": [
+        "grosime_in_afara_listei"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+    },
+    {
+      "index": 242,
+      "text": "Tubulatura rectangulara de admisie aer verticala care strabate mai multe niveluri ale cladirii din clasa de reactie la foc minimum A2-s1.d0 si rezistenta la foc EI 180 ve, (protejata cu torcret Parafoc 35 mm) sau se pot utiliza alte soluții pentru care există documente legale de comercializare conform HGR nr. 668/2017 care să ateste performanța la foc specificată.\nperimetrul <4000 mm | Tubulaturi rectangulare / idem",
+      "um": "mp",
+      "cantitate": 192,
+      "extras": {
+        "index": 242,
+        "sistem": "vata_minerala",
+        "diametru_valoare": null,
+        "diametru_tip": null,
+        "grosime_mm": 35,
+        "forma": "mp",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0,
+        "motiv": "Torcret Parafoc 35 mm este un strat de vata minerala aplicat pe tubulatura rectangulara, forma mp. | NEVERIFICAT: vata_minerala nu se oferteaza in grosimea 35 mm (lista: 20, 30, 40, 50, 60, 80, 100)"
+      },
+      "avertismente": [
+        "grosime_in_afara_listei"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+    },
+    {
+      "index": 243,
+      "text": "Tubulatura rectangulara de evacuare a fumului din interiorul compartimentului de parcare montate orizontal din material din clasa de reactie la foc minimum A2-s1, d0 si rezistente la foc EI 60 ho (protejate cu torcret Parafoc 40 mm) sau se pot utiliza alte soluții pentru care există documente legale de comercializare conform HGR nr. 668/2017 care să ateste performanța la foc specificată.\nperimetrul intre 700-1600 mm | buc. | Tubulaturi / Lindab, Temko, Aiva",
+      "um": "buc.",
+      "cantitate": 657,
+      "extras": {
+        "index": 243,
+        "sistem": "vata_minerala",
+        "diametru_valoare": null,
+        "diametru_tip": null,
+        "grosime_mm": 40,
+        "forma": "mp",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0,
+        "motiv": "Torcret Parafoc 40 mm este un strat de vata minerala aplicat pe tubulatura rectangulara, forma mp. UM este buc, dar izolatia se tarifeaza la mp. | NEVERIFICAT: forma \"mp\" contrazice unitatea de masura \"buc.\""
+      },
+      "avertismente": [
+        "forma_contrazice_um"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+    },
+    {
+      "index": 244,
+      "text": "Tubulatura rectangulara de evacuare a fumului din interiorul compartimentului de parcare montate orizontal din material din clasa de reactie la foc minimum A2-s1, d0 si rezistente la foc EI 60 ho (protejate cu torcret Parafoc 40 mm) sau se pot utiliza alte soluții pentru care există documente legale de comercializare conform HGR nr. 668/2017 care să ateste performanța la foc specificată.\nperimetrul intre 1600-2500 mm | buc. | Tubulaturi / idem",
+      "um": "buc.",
+      "cantitate": 556,
+      "extras": {
+        "index": 244,
+        "sistem": "vata_minerala",
+        "diametru_valoare": null,
+        "diametru_tip": null,
+        "grosime_mm": 40,
+        "forma": "mp",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0,
+        "motiv": "Torcret Parafoc 40 mm este un strat de vata minerala aplicat pe tubulatura rectangulara, forma mp. UM este buc, dar izolatia se tarifeaza la mp. | NEVERIFICAT: forma \"mp\" contrazice unitatea de masura \"buc.\""
+      },
+      "avertismente": [
+        "forma_contrazice_um"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+    },
+    {
+      "index": 245,
+      "text": "Tubulatura rectangulara de evacuare a fumului din interiorul compartimentului de parcare montate orizontal din material din clasa de reactie la foc minimum A2-s1, d0 si rezistente la foc EI 60 ho (protejate cu torcret Parafoc 40 mm) sau se pot utiliza alte soluții pentru care există documente legale de comercializare conform HGR nr. 668/2017 care să ateste performanța la foc specificată.\nperimetrul intre 1600-2500 mm | buc. | Tubulaturi / idem",
+      "um": "buc.",
+      "cantitate": 1073,
+      "extras": {
+        "index": 245,
+        "sistem": "vata_minerala",
+        "diametru_valoare": null,
+        "diametru_tip": null,
+        "grosime_mm": 40,
+        "forma": "mp",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0,
+        "motiv": "Torcret Parafoc 40 mm este un strat de vata minerala aplicat pe tubulatura rectangulara, forma mp. UM este buc, dar izolatia se tarifeaza la mp. | NEVERIFICAT: forma \"mp\" contrazice unitatea de masura \"buc.\""
+      },
+      "avertismente": [
+        "forma_contrazice_um"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+    },
+    {
+      "index": 246,
+      "text": "Tubulatura rectangulara de evacuare a fumului din interiorul compartimentului de parcare montate orizontal din material din clasa de reactie la foc minimum A2-s1, d0 si rezistente la foc EI 60 ho (protejate cu torcret Parafoc 40 mm) sau se pot utiliza alte soluții pentru care există documente legale de comercializare conform HGR nr. 668/2017 care să ateste performanța la foc specificată.\nperimetrul <4000 mm | buc. | Tubulaturi / idem",
+      "um": "buc.",
+      "cantitate": 330,
+      "extras": {
+        "index": 246,
+        "sistem": "vata_minerala",
+        "diametru_valoare": null,
+        "diametru_tip": null,
+        "grosime_mm": 40,
+        "forma": "mp",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0,
+        "motiv": "Torcret Parafoc 40 mm este un strat de vata minerala aplicat pe tubulatura rectangulara, forma mp. UM este buc, dar izolatia se tarifeaza la mp. | NEVERIFICAT: forma \"mp\" contrazice unitatea de masura \"buc.\""
+      },
+      "avertismente": [
+        "forma_contrazice_um"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+    },
+    {
+      "index": 247,
+      "text": "Tubulatura rectangulara de admisie aer orizontala din material din clasa de reactie la foc minimum A2-s1. d0 si rezistenta la foc EI 60 (ho) (protejata cu torcret Parafoc 20 mm) sau se pot utiliza alte soluții pentru care există documente legale de comercializare conform HGR nr. 668/2017 care să ateste performanța la foc specificată.\nperimetrul intre 700-1600 mm | buc. | Tubulaturi / Lindab, Temko, Aiva",
+      "um": "buc.",
+      "cantitate": 372,
+      "extras": {
+        "index": 247,
+        "sistem": "vata_minerala",
+        "diametru_valoare": null,
+        "diametru_tip": null,
+        "grosime_mm": 20,
+        "forma": "mp",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0,
+        "motiv": "Torcret Parafoc 20 mm este un strat de vata minerala aplicat pe tubulatura rectangulara, forma mp. UM este buc, dar izolatia se tarifeaza la mp. | NEVERIFICAT: forma \"mp\" contrazice unitatea de masura \"buc.\""
+      },
+      "avertismente": [
+        "forma_contrazice_um"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+    },
+    {
+      "index": 248,
+      "text": "Tubulatura rectangulara de admisie aer orizontala din material din clasa de reactie la foc minimum A2-s1. d0 si rezistenta la foc EI 60 (ho) (protejata cu torcret Parafoc 20 mm) sau se pot utiliza alte soluții pentru care există documente legale de comercializare conform HGR nr. 668/2017 care să ateste performanța la foc specificată.\nperimetrul intre 1600-2500 mm | buc. | Tubulaturi / idem",
+      "um": "buc.",
+      "cantitate": 327,
+      "extras": {
+        "index": 248,
+        "sistem": "vata_minerala",
+        "diametru_valoare": null,
+        "diametru_tip": null,
+        "grosime_mm": 20,
+        "forma": "mp",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0,
+        "motiv": "Torcret Parafoc 20 mm este un strat de vata minerala aplicat pe tubulatura rectangulara, forma mp. UM este buc, dar izolatia se tarifeaza la mp. | NEVERIFICAT: forma \"mp\" contrazice unitatea de masura \"buc.\""
+      },
+      "avertismente": [
+        "forma_contrazice_um"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+    },
+    {
+      "index": 249,
+      "text": "Tubulatura rectangulara de admisie aer orizontala din material din clasa de reactie la foc minimum A2-s1. d0 si rezistenta la foc EI 60 (ho) (protejata cu torcret Parafoc 20 mm) sau se pot utiliza alte soluții pentru care există documente legale de comercializare conform HGR nr. 668/2017 care să ateste performanța la foc specificată.\nperimetrul intre 1600-2500 mm | buc. | Tubulaturi / idem",
+      "um": "buc.",
+      "cantitate": 592,
+      "extras": {
+        "index": 249,
+        "sistem": "vata_minerala",
+        "diametru_valoare": null,
+        "diametru_tip": null,
+        "grosime_mm": 20,
+        "forma": "mp",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0,
+        "motiv": "Torcret Parafoc 20 mm este un strat de vata minerala aplicat pe tubulatura rectangulara, forma mp. UM este buc, dar izolatia se tarifeaza la mp. | NEVERIFICAT: forma \"mp\" contrazice unitatea de masura \"buc.\""
+      },
+      "avertismente": [
+        "forma_contrazice_um"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+    },
+    {
+      "index": 250,
+      "text": "Tubulatura rectangulara de admisie aer orizontala din material din clasa de reactie la foc minimum A2-s1. d0 si rezistenta la foc EI 60 (ho) (protejata cu torcret Parafoc 20 mm) sau se pot utiliza alte soluții pentru care există documente legale de comercializare conform HGR nr. 668/2017 care să ateste performanța la foc specificată.\nperimetrul <4000 mm | buc. | Tubulaturi / idem",
+      "um": "buc.",
+      "cantitate": 746,
+      "extras": {
+        "index": 250,
+        "sistem": "vata_minerala",
+        "diametru_valoare": null,
+        "diametru_tip": null,
+        "grosime_mm": 20,
+        "forma": "mp",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0,
+        "motiv": "Torcret Parafoc 20 mm este un strat de vata minerala aplicat pe tubulatura rectangulara, forma mp. UM este buc, dar izolatia se tarifeaza la mp. | NEVERIFICAT: forma \"mp\" contrazice unitatea de masura \"buc.\""
+      },
+      "avertismente": [
+        "forma_contrazice_um"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+    },
+    {
+      "index": 251,
+      "text": "Tubulatura rectangulara de admisie aer verticala montata in interiorul aceluiasi nivel din material din clasa de reactie la foc minimum A2-s1.d0 si rezistenta la foc EI 120 ve, (protejata cu torcret Parafoc 25 mm) sau se pot utiliza alte soluții pentru care există documente legale de comercializare conform HGR nr. 668/2017 care să ateste performanța la foc specificată.\nperimetrul intre 700-1600 mm | buc. | Tubulaturi / Lindab, Temko, Aiva",
+      "um": "buc.",
+      "cantitate": 58,
+      "extras": {
+        "index": 251,
+        "sistem": "vata_minerala",
+        "diametru_valoare": null,
+        "diametru_tip": null,
+        "grosime_mm": 25,
+        "forma": "mp",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0,
+        "motiv": "Torcret Parafoc 25 mm este un strat de vata minerala aplicat pe tubulatura rectangulara, forma mp. UM este buc, dar izolatia se tarifeaza la mp. | NEVERIFICAT: vata_minerala nu se oferteaza in grosimea 25 mm (lista: 20, 30, 40, 50, 60, 80, 100); forma \"mp\" contrazice unitatea de masura \"buc.\""
+      },
+      "avertismente": [
+        "grosime_in_afara_listei",
+        "forma_contrazice_um"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+    },
+    {
+      "index": 252,
+      "text": "Tubulatura rectangulara de admisie aer verticala montata in interiorul aceluiasi nivel din material din clasa de reactie la foc minimum A2-s1.d0 si rezistenta la foc EI 120 ve, (protejata cu torcret Parafoc 25 mm) sau se pot utiliza alte soluții pentru care există documente legale de comercializare conform HGR nr. 668/2017 care să ateste performanța la foc specificată.\nperimetrul intre 1600-2500 mm | buc. | Tubulaturi / idem",
+      "um": "buc.",
+      "cantitate": 24,
+      "extras": {
+        "index": 252,
+        "sistem": "vata_minerala",
+        "diametru_valoare": null,
+        "diametru_tip": null,
+        "grosime_mm": 25,
+        "forma": "mp",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0,
+        "motiv": "Torcret Parafoc 25 mm este un strat de vata minerala aplicat pe tubulatura rectangulara, forma mp. UM este buc, dar izolatia se tarifeaza la mp. | NEVERIFICAT: vata_minerala nu se oferteaza in grosimea 25 mm (lista: 20, 30, 40, 50, 60, 80, 100); forma \"mp\" contrazice unitatea de masura \"buc.\""
+      },
+      "avertismente": [
+        "grosime_in_afara_listei",
+        "forma_contrazice_um"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+    },
+    {
+      "index": 253,
+      "text": "Tubulatura rectangulara de admisie aer verticala montata in interiorul aceluiasi nivel din material din clasa de reactie la foc minimum A2-s1.d0 si rezistenta la foc EI 120 ve, (protejata cu torcret Parafoc 25 mm) sau se pot utiliza alte soluții pentru care există documente legale de comercializare conform HGR nr. 668/2017 care să ateste performanța la foc specificată.\nperimetrul intre 1600-2500 mm | buc. | Tubulaturi / idem",
+      "um": "buc.",
+      "cantitate": 6,
+      "extras": {
+        "index": 253,
+        "sistem": "vata_minerala",
+        "diametru_valoare": null,
+        "diametru_tip": null,
+        "grosime_mm": 25,
+        "forma": "mp",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0,
+        "motiv": "Torcret Parafoc 25 mm este un strat de vata minerala aplicat pe tubulatura rectangulara, forma mp. UM este buc, dar izolatia se tarifeaza la mp. | NEVERIFICAT: vata_minerala nu se oferteaza in grosimea 25 mm (lista: 20, 30, 40, 50, 60, 80, 100); forma \"mp\" contrazice unitatea de masura \"buc.\""
+      },
+      "avertismente": [
+        "grosime_in_afara_listei",
+        "forma_contrazice_um"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+    },
+    {
+      "index": 254,
+      "text": "Tubulatura rectangulara de admisie aer verticala care strabate mai multe niveluri ale cladirii din material din material din clasa de reactie la foc minimum A2-s1.d0 si rezistenta la foc EI 180 ve, (protejata cu torcret Parafoc 35 mm) sau se pot utiliza alte soluții pentru care există documente legale de comercializare conform HGR nr. 668/2017 care să ateste performanța la foc specificată.\nperimetrul intre 700-1600 mm | buc. | Tubulaturi / Lindab, Temko, Aiva",
+      "um": "buc.",
+      "cantitate": 23,
+      "extras": {
+        "index": 254,
+        "sistem": "vata_minerala",
+        "diametru_valoare": null,
+        "diametru_tip": null,
+        "grosime_mm": 35,
+        "forma": "mp",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0,
+        "motiv": "Torcret Parafoc 35 mm este un strat de vata minerala aplicat pe tubulatura rectangulara, forma mp. UM este buc, dar izolatia se tarifeaza la mp. | NEVERIFICAT: vata_minerala nu se oferteaza in grosimea 35 mm (lista: 20, 30, 40, 50, 60, 80, 100); forma \"mp\" contrazice unitatea de masura \"buc.\""
+      },
+      "avertismente": [
+        "grosime_in_afara_listei",
+        "forma_contrazice_um"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+    },
+    {
+      "index": 255,
+      "text": "Tubulatura rectangulara de admisie aer verticala care strabate mai multe niveluri ale cladirii din material din material din clasa de reactie la foc minimum A2-s1.d0 si rezistenta la foc EI 180 ve, (protejata cu torcret Parafoc 35 mm) sau se pot utiliza alte soluții pentru care există documente legale de comercializare conform HGR nr. 668/2017 care să ateste performanța la foc specificată.\nperimetrul intre 1600-2500 mm | buc. | Tubulaturi / idem",
+      "um": "buc.",
+      "cantitate": 92,
+      "extras": {
+        "index": 255,
+        "sistem": "vata_minerala",
+        "diametru_valoare": null,
+        "diametru_tip": null,
+        "grosime_mm": 35,
+        "forma": "mp",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0,
+        "motiv": "Torcret Parafoc 35 mm este un strat de vata minerala aplicat pe tubulatura rectangulara, forma mp. UM este buc, dar izolatia se tarifeaza la mp. | NEVERIFICAT: vata_minerala nu se oferteaza in grosimea 35 mm (lista: 20, 30, 40, 50, 60, 80, 100); forma \"mp\" contrazice unitatea de masura \"buc.\""
+      },
+      "avertismente": [
+        "grosime_in_afara_listei",
+        "forma_contrazice_um"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+    },
+    {
+      "index": 256,
+      "text": "Tubulatura rectangulara de admisie aer verticala care strabate mai multe niveluri ale cladirii din material din material din clasa de reactie la foc minimum A2-s1.d0 si rezistenta la foc EI 180 ve, (protejata cu torcret Parafoc 35 mm) sau se pot utiliza alte soluții pentru care există documente legale de comercializare conform HGR nr. 668/2017 care să ateste performanța la foc specificată.\nperimetrul intre 1600-2500 mm | buc. | Tubulaturi / idem",
+      "um": "buc.",
+      "cantitate": 370,
+      "extras": {
+        "index": 256,
+        "sistem": "vata_minerala",
+        "diametru_valoare": null,
+        "diametru_tip": null,
+        "grosime_mm": 35,
+        "forma": "mp",
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0,
+        "motiv": "Torcret Parafoc 35 mm este un strat de vata minerala aplicat pe tubulatura rectangulara, forma mp. UM este buc, dar izolatia se tarifeaza la mp. | NEVERIFICAT: vata_minerala nu se oferteaza in grosimea 35 mm (lista: 20, 30, 40, 50, 60, 80, 100); forma \"mp\" contrazice unitatea de masura \"buc.\""
+      },
+      "avertismente": [
+        "grosime_in_afara_listei",
+        "forma_contrazice_um"
+      ],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+    },
+    {
+      "index": 257,
+      "text": "Tubulatura rectangulara de admisie aer verticala care strabate mai multe niveluri ale cladirii din material din material din clasa de reactie la foc minimum A2-s1.d0 si rezistenta la foc EI 180 ve, (protejata cu torcret Parafoc 35 mm) sau se pot utiliza alte soluții pentru care există documente legale de comercializare conform HGR nr. 668/2017 care să ateste performanța la foc specificată.\nperimetrul <4000 mm | buc. | Tubulaturi / idem",
+      "um": "buc.",
+      "cantitate": 189,
+      "extras": {
+        "index": 257,
+        "sistem": null,
+        "diametru_valoare": null,
+        "diametru_tip": null,
+        "grosime_mm": null,
+        "forma": null,
+        "gol_latime_mm": null,
+        "gol_inaltime_mm": null,
+        "straturi_extra": [],
+        "incredere": 0.7,
+        "motiv": "Linia descrie tubulatura rectangulara cu protectie la foc, dar nu este o pozitie de izolatie termica conform regulilor (nu elastomer, vata, tabla, pvc, goluri_foc). Torcretul Parafoc nu este sistem de izolatie termica, ci protectie la foc. Nu se specifica diametru, grosime sau forma de izolare."
+      },
+      "avertismente": [],
+      "pret_unitar": null,
+      "total": null,
+      "eroare": null
+    }
+  ]
+}

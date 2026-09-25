@@ -74,7 +74,10 @@ async function inregistreaza(cale: string): Promise<void> {
   for (const s of surse) {
     const extras = dupaIndex.get(s.index);
     if (!extras) continue;
-    const t = tarifeazaExtras(extras, s.cantitate ?? 1);
+    // Cu textul randului, ca in `tests/golden.test.ts`: regulile care depind de
+    // el (protectia la foc a tubulaturii, livrarea de teava) altfel lipsesc la
+    // inregistrare si apar la rejucare, iar testul pica pe un golden proaspat.
+    const t = tarifeazaExtras(extras, s.cantitate ?? 1, "rezidential", s.text);
     linii.push({
       ...s, extras,
       avertismente: valideazaExtragere(extras, { text: s.text, ...(s.um ? { um: s.um } : {}) }).map((a) => a.cod),
