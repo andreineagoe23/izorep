@@ -160,6 +160,16 @@ loopback și plafonează la 400 de linii per import.
 - **nu vede și nu calculează prețuri**
 - scor de încredere pe linie; sub prag → validare umană obligatorie
 - ieșirea trece prin `valideaza.ts` înainte să plece din `extrageCuModel`
+- primește și **antetul de secțiune** al liniei, doar ca să afle sistemul; fără
+  el, pe Oferta Matari 12 rânduri `Teava OL/OLZN DN15` (sistemul vine din
+  „Treceri prin pereți rezistenți la foc”) ar fi ieșit `null`
+- răspunsurile se leagă **doar** de indecșii trimiși în apelul respectiv; un
+  index întors de două ori se aruncă (`modelFaraRaspuns`)
+- un `sistem: null` de la model **nu șterge** o citire parțială care știa
+  sistemul: linia rămâne, marcată, cu cauza ei
+- jacheta (tablă, inox, PVC) e pusă mereu peste izolație înainte de tarifare
+  (`jachetaLaExterior`): la `temperature 0` modelul a pus o dată, nu și a doua
+  oară, `tabla_inox` ca strat principal pe 14 casete din Izolații Transavia
 
 ## Deduplicarea pe șablon
 

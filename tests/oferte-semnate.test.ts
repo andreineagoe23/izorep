@@ -77,12 +77,16 @@ const CAZURI: Caz[] = [
   },
   {
     fisier: "oferta-284-transavia-abur.xlsx",
-    semnat: 94575.06, peOferta: 85, generat: 74993.76,
+    semnat: 94575.06, peOferta: 83, generat: 74376.48,
     deCe: "79% din oferta semnată. Două schimbări au urcat-o de la 25%: extragerea deterministă a "
         + "început să construiască `straturi_extra` (jachetele nu se tarifau deloc), iar firma a "
         + "confirmat pe 11 sep 2026 regula „cot/teu de vată sub ø60 nu intră în preț” — cele 24 de "
         + "poziții care o foloseau nu mai sunt oprite la validare, fiindcă regula nu mai e o "
-        + "presupunere a noastră. Au rămas 13 netarifate, toate `grosime_inexistenta`.",
+        + "presupunere a noastră. Au rămas 13 netarifate, toate `grosime_inexistenta`. "
+        + "Pe 25 sep 2026, SCĂZUT deliberat cu 2 (85 → 83): „Di169, g50 - COT” cu UM `ml` (r54–55) "
+        + "ieșea 51,44 € „Gata”, oferta semnată are cotul, 102,88 €. Textul și UM-ul se contrazic și "
+        + "dau prețuri diferite, deci merg la „De validat” (`forma_contrazisa`). Di76 COT/TEU cu UM "
+        + "`ml` rămân pe ofertă: acolo coeficientul e 1, prețul e același.",
   },
   {
     fisier: "oferta-manopera-anexa-contract-2024.xlsx",

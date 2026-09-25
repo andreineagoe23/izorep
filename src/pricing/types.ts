@@ -119,7 +119,9 @@ export type MotivVerificare =
   /** Grosimea e cea uzuala a firmei, nu scrisa de client. */
   | "grosime_propusa"
   /** Descrierea s-a schimbat dupa ce omul verificase pozitia: e recitita din textul nou. */
-  | "descriere_schimbata";
+  | "descriere_schimbata"
+  /** UM-ul spune ml/mp, textul spune cot/teu/...; cele doua forme dau preturi diferite. */
+  | "forma_contrazisa";
 
 /**
  * De ce nu s-a putut tarifa o pozitie, ca valoare STABILA.

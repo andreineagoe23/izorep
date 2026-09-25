@@ -64,9 +64,17 @@ ele linia nu se poate tarifa. La orice alt sistem, null.
 STRATURI_EXTRA: pentru pozitii compuse, straturile de PESTE primul, in ordine.
 Ex: "DN80 elastomer 13mm + vata 40mm + tabla" -> sistem=elastomer, grosime=13,
 straturi_extra=[{vata_minerala,40},{tabla,null}].
+SISTEM e mereu izolatia de pe teava; jacheta (tabla, tabla_inox, pvc) merge in
+straturi_extra, chiar daca in text e scrisa prima ("caseta din tabla inox si vata
+minerala" -> sistem=vata_minerala, straturi_extra=[{tabla_inox,null}]).
 
 INCREDERE: 0..1. Pune sub 0.85 daca ghicesti orice camp. E mai bine sa trimiti
 linia la validare umana decat sa nimeresti gresit.
+
+SECTIUNE: unele linii au "(Sectiune: ...)" — antetul de deasupra randului din
+Excel, de ex. "Treceri prin pereti rezistenti la foc EI120". Foloseste-l DOAR ca
+sa afli SISTEMUL cand linia nu-l spune. Diametrul, grosimea, forma si
+dimensiunile golului se citesc NUMAI din linie, niciodata din sectiune.
 
 MOTIV: o propozitie scurta in romana, ce ai dedus si de ce.
 
@@ -152,7 +160,7 @@ export async function cuLimitaDeRata<T>(f: () => Promise<T>): Promise<T> {
 }
 
 export async function extrageCuModel(
-  linii: { index: number; text: string; um?: string }[],
+  linii: { index: number; text: string; um?: string; sectiune?: string }[],
   optiuni: OptiuniModel = {},
 ): Promise<LinieExtrasa[]> {
   if (linii.length === 0) return [];
@@ -191,7 +199,9 @@ export async function extrageCuModel(
 
   async function proceseaza(bucata: typeof linii): Promise<LinieExtrasa[]> {
     const payload = bucata
-      .map((l) => `[${l.index}]${l.um ? ` (UM: ${l.um})` : ""} ${l.text.replace(/\s+/g, " ").slice(0, 900)}`)
+      .map((l) => `[${l.index}]${l.um ? ` (UM: ${l.um})` : ""}`
+        + `${l.sectiune ? ` (Sectiune: ${l.sectiune.replace(/\s+/g, " ").slice(0, 200)})` : ""}`
+        + ` ${l.text.replace(/\s+/g, " ").slice(0, 900)}`)
       .join("\n");
 
     const raspuns = await cuLimitaDeRata(() => client.chat.completions.create({

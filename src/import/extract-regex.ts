@@ -183,6 +183,20 @@ const FORMA: [LinieExtrasa["forma"], RegExp][] = [
   ["ml", /\bML\b|\bml\b|\blm\b|\bm\b/i],
 ];
 
+/**
+ * Forma de ELEMENT (cot, teu, flansa...) scrisa in text, ignorand UM-ul.
+ *
+ * La extragere UM-ul bate textul, si de obicei are dreptate. Dar Oferta 284
+ * scrie „Di169, g50 - COT" cu UM `ml`: forma din UM da pretul pe metru
+ * (51,44 €), oferta semnata a tarifat cotul (102,88 €). Cand textul numeste un
+ * element si UM-ul spune altceva, nu stim care greseste — deci nu se alege
+ * tacut. `nucleu.ts` tarifeaza ambele si marcheaza pozitia daca difera.
+ */
+export function formaElementDinText(text: string): LinieExtrasa["forma"] {
+  const f = FORMA.find(([forma, re]) => forma !== "ml" && forma !== "mp" && re.test(text));
+  return f?.[0] ?? null;
+}
+
 export interface RezultatRegex {
   linie: LinieExtrasa;
   /** true daca sistem + diametru + grosime au fost toate determinate. */

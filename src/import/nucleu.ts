@@ -7,7 +7,7 @@ import { amprentaFoaie, aplicaMapare } from "./mapare.js";
 import type { MapareSalvata } from "./cache-mapari.js";
 import { adaugaSectiuni, type LinieCuSectiune } from "./sectiuni.js";
 import { aplicaContinuare } from "./continuare.js";
-import { extrageDeterminist } from "./extract-regex.js";
+import { extrageDeterminist, formaElementDinText } from "./extract-regex.js";
 import {
   diametruContrazisDeText, notatieContraziceMaterialul, valideazaExtragere,
   type Avertisment, type CodAvertisment,
@@ -238,6 +238,24 @@ export function citesteText(
   return extrageDeterminist(index, text, um, sectiune, cantitate).linie;
 }
 
+const JACHETE = new Set<string>(["tabla", "tabla_inox", "pvc"]);
+
+/**
+ * Jacheta (tabla, inox, PVC) sta mereu PESTE izolatie, oricum ar fi fost
+ * scrisa ordinea in extragere.
+ *
+ * Motorul pune primul strat pe teava si creste geometria de acolo, deci o
+ * jacheta pusa prima muta toate randurile. Modelul face exact greseala asta,
+ * si nu constant: pe „Caseta izolatie armaturi ... din tabla inox 304 si vata
+ * minerala" (Izolatii Transavia), la `temperature 0`, o rulare a dat 14 linii
+ * cu `tabla_inox` ca sistem principal, urmatoarea niciuna. E fizica, nu
+ * interpretare, deci se repara aici, stabil — ordinea dintre izolatii si
+ * dintre jachete ramane cea scrisa.
+ */
+function jachetaLaExterior<T extends { sistem: string }>(straturi: T[]): T[] {
+  return [...straturi.filter((s) => !JACHETE.has(s.sistem)), ...straturi.filter((s) => JACHETE.has(s.sistem))];
+}
+
 /**
  * L3 pe o singura linie extrasa.
  *
@@ -272,12 +290,12 @@ export function tarifeazaExtras(
     if (extras.sistem && extras.diametru_valoare !== null && extras.diametru_tip) {
       const pret = tarifeaza({
         diametru: { valoare: extras.diametru_valoare, tip: extras.diametru_tip },
-        straturi: [
+        straturi: jachetaLaExterior([
           { sistem: extras.sistem, ...(extras.grosime_mm !== null ? { grosime_mm: extras.grosime_mm } : {}) },
           ...extras.straturi_extra.map((s) => ({
             sistem: s.sistem, ...(s.grosime_mm !== null ? { grosime_mm: s.grosime_mm } : {}),
           })),
-        ],
+        ]),
         forma: extras.forma ?? "ml",
         cantitate,
         destinatie,
@@ -343,6 +361,43 @@ function completeazaCuPartiale(
   for (const [index, extras] of partiale) {
     if (!rezolvate.has(index)) rezolvate.set(index, { extras, sursa: "regex" });
   }
+}
+
+/**
+ * Raspunsurile modelului, doar pe indecsii care i s-au trimis in apelul ASTA.
+ *
+ * Indexul e singura legatura dintre raspuns si rand, iar modelul il scrie
+ * singur. Un index strain ar suprascrie o linie rezolvata deja de reguli; unul
+ * intors de doua ori inseamna ca raspunsurile s-au decalat, deci nu stim care
+ * obiect e al liniei — amandoua se arunca, linia ramane fara raspuns
+ * (`modelFaraRaspuns`) si cade pe ce a citit determinismul, marcata.
+ */
+function doarLiniileTrimise(extrase: LinieExtrasa[], trimise: LinieSursa[]): LinieExtrasa[] {
+  const permise = new Set(trimise.map((l) => l.index));
+  const aparitii = new Map<number, number>();
+  for (const e of extrase) aparitii.set(e.index, (aparitii.get(e.index) ?? 0) + 1);
+  return extrase.filter((e) => permise.has(e.index) && aparitii.get(e.index) === 1);
+}
+
+/**
+ * Pune raspunsul modelului (sau proiectia lui pe sablon), cu o exceptie: un
+ * `sistem: null` nu sterge ce stia deja determinismul.
+ *
+ * `null` inseamna „nu e pozitie de izolatie", iar o linie asa dispare din
+ * lista. Dar regulile vad si antetul de sectiune, iar modelul vede doar randul:
+ * pe Oferta Matari, 12 randuri `Teava OL/OLZN DN15` isi iau sistemul numai din
+ * „Treceri prin pereti rezistenti la foc EI120" de deasupra. Un model care
+ * raspunde `null` le-ar fi scos din „Netarifate" fara nicio cauza. Ramane
+ * citirea partiala, cu increderea ei mica, deci la validare.
+ */
+function puneDinModel(
+  rezolvate: Map<number, Rezolvare>,
+  partiale: ReadonlyMap<number, LinieExtrasa>,
+  e: LinieExtrasa,
+  sursa: "model" | "sablon",
+): void {
+  if (e.sistem === null && partiale.get(e.index)?.sistem != null) return;
+  rezolvate.set(e.index, { extras: e, sursa });
 }
 
 /**
@@ -436,6 +491,25 @@ function construiesteLinii(
       t.pret.note = [...(t.pret.note ?? []), n];
       t.pret.noteDeVerificat = [...(t.pret.noteDeVerificat ?? []), n];
       t.pret.motiveDeVerificat = [...(t.pret.motiveDeVerificat ?? []), "descriere_schimbata"];
+    }
+    // Forma a venit din UM (ml/mp), dar textul numeste un element: Oferta 284,
+    // „Di169, g50 - COT" cu UM `ml` iesea 51,44 € „Gata", oferta semnata are
+    // cotul, 102,88 €. Nu stim care greseste, deci se pastreaza UM-ul si se
+    // marcheaza — dar numai daca cele doua forme chiar dau alt pret: la Di76
+    // cotul de vata are coeficient 1, iar un semnal fara efect nu mai e citit.
+    if (t.pret && sursa !== "om" && b.um && deTarifat.sistem !== "goluri_foc"
+        && (deTarifat.forma === "ml" || deTarifat.forma === "mp")) {
+      const dinText = formaElementDinText(b.text);
+      if (dinText) {
+        const alt = tarifeazaExtras({ ...deTarifat, forma: dinText }, b.cantitate ?? 1, destinatie);
+        if (alt.pret?.pret_unitar !== t.pret.pret_unitar) {
+          const n = `UM-ul "${b.um}" da ${t.pret.pret_unitar} €, dar textul spune "${dinText}", care `
+            + (alt.pret ? `da ${alt.pret.pret_unitar} €` : "nu se poate tarifa") + "; s-a pastrat UM-ul";
+          t.pret.note = [...(t.pret.note ?? []), n];
+          t.pret.noteDeVerificat = [...(t.pret.noteDeVerificat ?? []), n];
+          t.pret.motiveDeVerificat = [...(t.pret.motiveDeVerificat ?? []), "forma_contrazisa"];
+        }
+      }
     }
     if (t.pret) proc.pret = t.pret;
     // Doar notele care CER ochi opresc linia la validare: pretul venit din
@@ -537,7 +611,9 @@ export async function proceseazaRegistru(foi: FoaieBruta[], o: OptiuniNucleu): P
     const r = extrageDeterminist(b.index, b.text, b.um, b.sectiune, b.cantitate);
     if (r.complet) rezolvate.set(b.index, { extras: r.linie, sursa: "regex" });
     else {
-      reziduale.push({ index: b.index, text: b.text, ...(b.um ? { um: b.um } : {}) });
+      reziduale.push({
+        index: b.index, text: b.text, ...(b.um ? { um: b.um } : {}), ...(b.sectiune ? { sectiune: b.sectiune } : {}),
+      });
       if (r.linie.sistem !== null) partiale.set(b.index, r.linie);
     }
   }
@@ -566,19 +642,30 @@ export async function proceseazaRegistru(foi: FoaieBruta[], o: OptiuniNucleu): P
     trunchiat += reprezentanti.length - deTrimis1.length;
     buget -= deTrimis1.length;
 
-    const extrase = deTrimis1.length > 0 ? await o.extrage(deTrimis1, { faza: "reprezentanti" }) : [];
-    for (const e of extrase) rezolvate.set(e.index, { extras: e, sursa: "model" });
+    const raspunse = new Set<number>();
+    const extrase = deTrimis1.length > 0
+      ? doarLiniileTrimise(await o.extrage(deTrimis1, { faza: "reprezentanti" }), deTrimis1)
+      : [];
+    for (const e of extrase) {
+      raspunse.add(e.index);
+      puneDinModel(rezolvate, partiale, e, "model");
+    }
 
     const { proiectate, ramase } = extindePeSablon(grupuri, extrase);
-    for (const p of proiectate) rezolvate.set(p.index, { extras: p, sursa: "sablon" });
+    for (const p of proiectate) puneDinModel(rezolvate, partiale, p, "sablon");
 
     // Ce n-a putut fi proiectat merge la model ca orice alta linie, sub
     // ACELASI buget — nu unul nou.
     const deTrimis2 = ramase.slice(0, buget);
     trunchiat += ramase.length - deTrimis2.length;
 
-    const extrase2 = deTrimis2.length > 0 ? await o.extrage(deTrimis2, { faza: "ramase" }) : [];
-    for (const e of extrase2) rezolvate.set(e.index, { extras: e, sursa: "model" });
+    const extrase2 = deTrimis2.length > 0
+      ? doarLiniileTrimise(await o.extrage(deTrimis2, { faza: "ramase" }), deTrimis2)
+      : [];
+    for (const e of extrase2) {
+      raspunse.add(e.index);
+      puneDinModel(rezolvate, partiale, e, "model");
+    }
 
     trimise = deTrimis1.length + deTrimis2.length;
     // Contractul e "cate un obiect per linie, cu acelasi index". Modelul il
@@ -586,9 +673,10 @@ export async function proceseazaRegistru(foi: FoaieBruta[], o: OptiuniNucleu): P
     // linii trimise, 35 intoarse — si disparitia lor nu se vedea nicaieri pe
     // ecran, doar in CLI. Se numara doar ce s-a TRIMIS efectiv, nu tot
     // reziduul: liniile netrimise din cauza plafonului sunt `trunchiat`, nu
-    // "fara raspuns".
+    // "fara raspuns". Se numara pe ce a RASPUNS modelul, nu pe `rezolvate`:
+    // un `null` refuzat de `puneDinModel` e tot un raspuns.
     const trimiseToate = [...deTrimis1, ...deTrimis2];
-    faraRaspuns = trimiseToate.filter((r) => !rezolvate.has(r.index)).length;
+    faraRaspuns = trimiseToate.filter((r) => !raspunse.has(r.index)).length;
 
     o.laProgres?.({ faza: "model", gata: trimise, total: trimise + trunchiat });
   }
@@ -676,7 +764,9 @@ export function reevalueaza(rez: Rezultat, o: OptiuniNucleu): void {
     const r = extrageDeterminist(b.index, b.text, b.um, b.sectiune, b.cantitate);
     if (r.complet) rezolvate.set(b.index, { extras: r.linie, sursa: "regex" });
     else {
-      reziduale.push({ index: b.index, text: b.text, ...(b.um ? { um: b.um } : {}) });
+      reziduale.push({
+        index: b.index, text: b.text, ...(b.um ? { um: b.um } : {}), ...(b.sectiune ? { sectiune: b.sectiune } : {}),
+      });
       if (r.linie.sistem !== null) partiale.set(b.index, r.linie);
     }
   }

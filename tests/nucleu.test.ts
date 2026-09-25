@@ -16,7 +16,7 @@ import { join } from "node:path";
 import ExcelJS from "exceljs";
 import { parseFoi } from "../src/import/parse-workbook.js";
 import { scrieCelula, reconstruieste } from "../src/import/editare.js";
-import { proceseazaRegistru, reevalueaza, type Extractor, type Rezultat } from "../src/import/nucleu.js";
+import { proceseazaRegistru, reevalueaza, tarifeazaExtras, type Extractor, type Rezultat } from "../src/import/nucleu.js";
 import { stocInMemorie } from "../src/import/memorie.js";
 import { tarifeazaSimplu } from "../src/pricing/engine.js";
 import type { LinieExtrasa } from "../src/import/schema.js";
@@ -121,6 +121,113 @@ describe("modelFaraRaspuns", () => {
 
     expect(rez.statistici.trimiseLaModel).toBe(3);
     expect(rez.statistici.modelFaraRaspuns).toBe(1);
+  });
+});
+
+describe("raspunsul modelului se leaga doar de liniile trimise", () => {
+  const RANDURI = [
+    ANTET,
+    [1, "Izolatie elastomer 13 mm pe teava DN25 apa rece", "ml", 100],
+    [2, "Alfa unu doi trei fara sistem cunoscut", "buc", 1],
+    [3, "Beta patru cinci sase fara sistem cunoscut", "buc", 1],
+  ];
+
+  it("un index care nu i s-a trimis nu suprascrie linia citita de reguli", async () => {
+    const foi = await parseFoi(await registru(RANDURI));
+    const regex = await proceseazaRegistru(await parseFoi(await registru(RANDURI)), { stoc: stocInMemorie() });
+    const idxRegex = regex.linii.find((l) => l.extras.sistem === "elastomer")!.bruta.index;
+
+    const extractor: Extractor = async (linii) => [
+      ...linii.map((l) => extrasa({ index: l.index })),
+      extrasa({ index: idxRegex, sistem: "vata_minerala", grosime_mm: 100, diametru_valoare: 200 }),
+    ];
+    const rez = await proceseazaRegistru(foi, { stoc: stocInMemorie(), extrage: extractor });
+
+    const linie = rez.linii.find((l) => l.bruta.index === idxRegex)!;
+    expect(linie.sursa).toBe("regex");
+    expect(linie.extras.sistem).toBe("elastomer");
+    expect(linie.extras.diametru_valoare).toBe(25);
+  });
+
+  it("un index intors de doua ori se arunca si linia se numara fara raspuns", async () => {
+    const foi = await parseFoi(await registru(RANDURI));
+    const extractor: Extractor = async (linii) => [
+      extrasa({ index: linii[0]!.index, diametru_valoare: 50 }),
+      extrasa({ index: linii[0]!.index, diametru_valoare: 80 }),
+      ...linii.slice(1).map((l) => extrasa({ index: l.index })),
+    ];
+    const rez = await proceseazaRegistru(foi, { stoc: stocInMemorie(), extrage: extractor });
+
+    expect(rez.statistici.trimiseLaModel).toBe(2);
+    expect(rez.statistici.modelFaraRaspuns).toBe(1);
+    expect(rez.linii.filter((l) => l.sursa === "model")).toHaveLength(1);
+  });
+});
+
+describe("sectiunea ajunge la model, iar un null nu sterge ce stia determinismul", () => {
+  // Antetul de sectiune e recunoscut fizic: acelasi text pe tot randul (celula
+  // imbinata), fara UM si fara cantitate. Ca in Oferta Matari.
+  const SECTIUNE = "Treceri prin pereti rezistenti la foc EI120";
+  const RANDURI = [
+    ANTET,
+    [SECTIUNE, SECTIUNE, SECTIUNE, SECTIUNE],
+    [1, "Teava OL/OLZN DN15", "buc", 3],
+  ];
+
+  it("modelul primeste antetul de sectiune al liniei", async () => {
+    const foi = await parseFoi(await registru(RANDURI));
+    let primite: { sectiune?: string }[] = [];
+    const extractor: Extractor = async (linii) => {
+      primite = linii;
+      return [];
+    };
+    await proceseazaRegistru(foi, { stoc: stocInMemorie(), extrage: extractor });
+
+    expect(primite).toHaveLength(1);
+    expect(primite[0]!.sectiune).toBe(SECTIUNE);
+  });
+
+  it("sistem null de la model nu scoate din lista o pozitie cu sistemul luat din sectiune", async () => {
+    const foi = await parseFoi(await registru(RANDURI));
+    const extractor: Extractor = async (linii) => linii.map((l) => extrasa({
+      index: l.index, sistem: null, diametru_valoare: null, diametru_tip: null, grosime_mm: null,
+    }));
+    const rez = await proceseazaRegistru(foi, { stoc: stocInMemorie(), extrage: extractor });
+
+    const pozitii = rez.linii.filter((l) => l.extras.sistem !== null);
+    expect(pozitii).toHaveLength(1);
+    const linie = pozitii[0]!;
+    expect(linie.extras.sistem).toBe("goluri_foc");
+    expect(linie.codEroare).toBe("gol_fara_dimensiuni");
+    expect(linie.necesitaValidare).toBe(true);
+    // A raspuns, deci nu e „fara raspuns", chiar daca raspunsul n-a fost luat.
+    expect(rez.statistici.modelFaraRaspuns).toBe(0);
+  });
+});
+
+describe("forma din text care contrazice UM-ul", () => {
+  const rand = (di: number): (string | number)[] =>
+    [1, `Izolatii cu vata minerala si protectie cu tabla de aluminiu Di${di}, g50 - COT`, "ml", 2];
+
+  it("Di169 COT cu UM ml: pretul pe ml ramane, dar pozitia merge la validare", async () => {
+    // Oferta 284, r54: iesea 51,44 € „Gata", oferta semnata are cotul, 102,88 €.
+    const rez = await proceseazaRegistru(await parseFoi(await registru([ANTET, rand(169)])), {
+      stoc: stocInMemorie(),
+    });
+    const l = rez.linii.find((x) => x.extras.sistem !== null)!;
+    expect(l.pret!.pret_unitar).toBe(51.44);
+    expect(l.pret!.motiveDeVerificat).toContain("forma_contrazisa");
+    expect(l.pret!.noteDeVerificat!.join(" ")).toContain("102.88");
+    expect(l.necesitaValidare).toBe(true);
+  });
+
+  it("Di76 COT cu UM ml: coeficientul e 1, acelasi pret, deci nu se marcheaza", async () => {
+    const rez = await proceseazaRegistru(await parseFoi(await registru([ANTET, rand(76)])), {
+      stoc: stocInMemorie(),
+    });
+    const l = rez.linii.find((x) => x.extras.sistem !== null)!;
+    expect(l.pret!.motiveDeVerificat ?? []).not.toContain("forma_contrazisa");
+    expect(l.necesitaValidare).toBe(false);
   });
 });
 
@@ -362,5 +469,25 @@ describe("o nota care cere ochi se stinge la confirmare", () => {
     // iar pozitia nu ajungea niciodata pe foaia Ofertă.
     expect(dupa.necesitaValidare).toBe(false);
     expect(dupa.pret?.noteDeVerificat?.length).toBeGreaterThan(0);
+  });
+});
+
+describe("jacheta sta mereu peste izolatie", () => {
+  it("tabla_inox pusa ca sistem principal se tarifeaza ca jacheta peste vata", () => {
+    // Modelul, la temperature 0, a pus o data `tabla_inox` primul pe 14 casete
+    // din Izolatii Transavia, iar la rularea urmatoare nu. Pretul nu are voie
+    // sa depinda de care rulare a fost.
+    const bun = extrasa({
+      index: 1, sistem: "vata_minerala", diametru_valoare: 169, diametru_tip: "interior", grosime_mm: 50,
+      straturi_extra: [{ sistem: "tabla_inox", grosime_mm: 0.5 }],
+    });
+    const inversat = extrasa({
+      index: 1, sistem: "tabla_inox", diametru_valoare: 169, diametru_tip: "interior", grosime_mm: 0.5,
+      straturi_extra: [{ sistem: "vata_minerala", grosime_mm: 50 }],
+    });
+    const a = tarifeazaExtras(bun, 1).pret!;
+    const b = tarifeazaExtras(inversat, 1).pret!;
+    expect(b.pret_unitar).toBe(a.pret_unitar);
+    expect("straturi" in b && b.straturi.map((s) => s.sistem)).toEqual(["vata_minerala", "tabla_inox"]);
   });
 });

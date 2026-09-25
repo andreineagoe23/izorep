@@ -193,6 +193,7 @@ export const MOTIV: Record<CodMotiv, string> = {
   rotunjire_neconfirmata: "Diametru între două rânduri din listă",
   grosime_propusa: "Grosime propusă, nu scrisă de client",
   descriere_schimbata: "Descrierea s-a schimbat după verificare",
+  forma_contrazisa: "Textul spune altă formă decât unitatea de măsură",
   citit_nesigur: "Citit nesigur din text",
   pret_necunoscut: "Prețul nu s-a putut calcula",
 };
