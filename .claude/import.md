@@ -231,6 +231,8 @@ aprindă.
 | `notatie_contrazice_materialul` | scrie `DN`, dar materialul din text dă diametrul exterior |
 | `diametru_contrazis` | scrie `DN`, dar pe rând e un Ø care nu e DN-ul ăla în tabelul de conversie (ISO, DIN); rulează, ca rândul de mai sus, pe orice sursă |
 | `diametru_nenotat` | numărul citit e în text, dar nu e scris ca diametru, iar rândul are un diametru notat (DN, Di, Ø, țoli, `114,3 x 4,5`) cu altă valoare: „inox 304 Di89” citit 304 |
+| `strat_necitat` | o jachetă (tablă, inox, PVC) pe care textul n-o numește: „protejată cu folie de aluminiu” (fața vatei caserate) citit ca tablă, 23,31 în loc de 6,23 €/ml |
+| `grosime_interval` | rândul dă grosimea ca interval („0.6 – 0.8 mm”, „20 to 50mm”): alegerea e a omului, orice a ales modelul |
 
 Regula de citare vine din promptul propriu al stratului: *„nu inventa valori,
 dacă un câmp nu apare în text pune null"*. Aici doar se verifică dacă a

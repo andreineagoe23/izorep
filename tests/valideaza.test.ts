@@ -164,3 +164,31 @@ describe("alt număr de pe rând citit ca diametru", () => {
       "Izolatie vata minerala 50 mm conducta 89")).not.toContain("diametru_nenotat");
   });
 });
+
+describe("jachetă adăugată fără să fie scrisă", () => {
+  const FOLIE = "Teava din otel serie medie, protejata anticoroziv, izolatie in grosime de 20 mm "
+    + "protejata cu folie de aluminiu Dn 1/2\"";
+
+  it("„folie de aluminiu” nu e tablă: stratul tabla e necitat", () => {
+    expect(coduri(linie({ sistem: "vata_minerala", diametru_valoare: 15, diametru_tip: "DN", grosime_mm: 20,
+      straturi_extra: [{ sistem: "tabla", grosime_mm: null }] }), FOLIE)).toContain("strat_necitat");
+  });
+
+  it("„protectie cu tabla de aluminiu” e scrisă: nimic", () => {
+    expect(coduri(linie({ sistem: "vata_minerala", diametru_valoare: 114, diametru_tip: "interior", grosime_mm: 50,
+      straturi_extra: [{ sistem: "tabla", grosime_mm: null }] }),
+    "Izolatii cu vata minerala si protectie cu tabla de aluminiu Di114, g50 - ML")).not.toContain("strat_necitat");
+  });
+});
+
+describe("grosime dată ca interval", () => {
+  it("„0.6 – 0.8 mm” (Book15) cere ochi, orice a ales modelul", () => {
+    expect(coduri(linie({ sistem: "tabla", forma: "mp" }),
+      "Supply and installation of aluminum sheet jacketing with a thickness of 0.6 – 0.8 mm")).toContain("grosime_interval");
+  });
+
+  it("„PPR 20 - 13 mm” nu e interval", () => {
+    expect(coduri(linie({ sistem: "elastomer", diametru_valoare: 20, diametru_tip: "exterior", grosime_mm: 13 }),
+      "Izolatie din cauciuc sintetic pentru PPR 20 - 13 mm")).not.toContain("grosime_interval");
+  });
+});

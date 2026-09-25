@@ -708,6 +708,23 @@ Spitalul, pe stratul determinist: 1.454.100 → 1.240.778 € tarifat, 3 poziți
 în plus la „De verificat”, una în plus fără preț. Celelalte fișiere: aceleași
 prețuri; NISAL r83 rămâne fără preț, cu cauza corectă.
 
+**Importul cu model** (pasul 2 din „Ce urmează”, gpt-4.1-2025-04-14,
+`IZOREP_CONCURENTA=1` — cu 4 loturi în paralel contul lovește plafonul de
+30.000 TPM). Pe spital modelul citește 81 de linii, pe Book15 2, pe Flower
+City 0. Ce ieșea greșit „Gata”:
+
+| Ce | Efect | Acum |
+|---|---|---|
+| Foile „țeavă … + izolație” (spital, 58 de rânduri): livrarea țevii cu fitinguri, susțineri și izolația inclusă | tarifate ca izolație, „Gata” | `livrare_teava`, fără preț (ca NISAL r83) |
+| „izolație 20 mm protejată cu **folie** de aluminiu” | modelul adăuga tablă: 23,31 €/ml în loc de 6,23 | `strat_necitat` |
+| Book15 r48, „jacketing 0.6 – 0.8 mm”, 1.850 m² | „Gata” pe 0,8 (110 k€) | `grosime_interval` |
+| „Protecție mecanică … tablă zincată min 0,5 mm” (13 rânduri, 360 k€) | modelul citește 0,5 → fără preț; determinist 0,8 la „De verificat” | neschimbat; e întrebare (tabla zincată pe mp) |
+
+Rejucat pe răspunsurile salvate ale modelului: pe spital, **zero** poziții
+citite de model mai ies „Gata”. Cele trei avertismente noi, puse pe cele 617
+poziții citite de reguli din cele 10 fișiere: 2 aprinderi, amândouă rândurile
+cu interval din Book15.
+
 ## Întrebări deschise către firmă
 
 Astea blochează arhitectura, nu doar implementarea:
@@ -819,7 +836,7 @@ de acoperire, restul sunt produs.
 ## Comenzi
 
 ```bash
-npm test                                       # 538 de teste (motor, import, baza, ofertă, ecran, meniu)
+npm test                                       # 544 de teste (motor, import, baza, ofertă, ecran, meniu)
 npm run typecheck
 npm run dev                                    # UI local, /izorep/
 npm run import -- ../attachments/clienti/cerere-de-oferta-spital.xlsx   # pipeline complet

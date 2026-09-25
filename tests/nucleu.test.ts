@@ -675,3 +675,18 @@ describe("grosimea scrisa de client nu se completeaza de la conducta", () => {
     expect(cot.pret).toBeUndefined();
   });
 });
+
+describe("livrarea de teava, cu izolatia in pret", () => {
+  it("„Teava din otel zincata ... imbinata ... izolatie 20 mm” (spital) e alta lucrare", () => {
+    const r = tarifeazaExtras(extrasa({ index: 0, sistem: "vata_minerala", diametru_valoare: 25, grosime_mm: 20 }), 1,
+      "rezidential", "Teava din otel zincata serie medie, Dn 1\", imbinata prin cuplaje rapide,inclusiv fitinguri, "
+        + "treceri prin pereti si plansee, sistem complet de sustinere, izolatie in grosime de 20 mm protejata cu folie");
+    expect(r.codEroare).toBe("livrare_teava");
+  });
+
+  it("„Izolatie ... pe teava DN25” ramane izolatie", () => {
+    const r = tarifeazaExtras(extrasa({ index: 0, sistem: "vata_minerala", diametru_valoare: 25, grosime_mm: 20 }), 1,
+      "rezidential", "Izolatie vata minerala 20 mm pe teava din otel zincat DN25, inclusiv fitinguri");
+    expect(r.pret).toBeDefined();
+  });
+});

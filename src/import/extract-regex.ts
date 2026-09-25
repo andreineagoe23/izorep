@@ -151,6 +151,15 @@ export function diametreScrise(text: string): number[] {
   }
   return out;
 }
+/**
+ * True daca materialul `sistem` e NUMIT pe rand, dupa aceleasi reguli ca
+ * extragerea (fara excluderile de tubulatura). Validatorul o foloseste ca sa
+ * prinda un strat pe care modelul l-a adaugat fara sa fie scris.
+ */
+export function sistemScris(text: string, sistem: Exclude<LinieExtrasa["sistem"], null>): boolean {
+  return SISTEM.some(([s, re]) => s === sistem && re.test(text));
+}
+
 /** Diametrele scrise pe rand CU notatia lor, separat pe DN si pe diametru. */
 export interface DiametreNotate { dn: number[]; exterior: number[] }
 
@@ -239,6 +248,16 @@ const FORMA: [LinieExtrasa["forma"], RegExp][] = [
 
 /** „20 to 50mm", „20-50 mm", „20 – 50 mm", „20 pana la 50 mm", „20/50mm" nu. */
 const RE_INTERVAL_MM = /\b(\d{1,3})\s*(?:mm\s*)?(?:to|-|–|—|pana\s+la|până\s+la)\s*(\d{1,3})\s*mm/gi;
+
+/** „0.6 – 0.8 mm", „0,6-0,8 mm": interval de grosime a tablei. */
+const RE_INTERVAL_ZECIMAL = /\d[.,]\d\s*(?:mm\s*)?(?:to|-|–|—|pana\s+la|până\s+la)\s*\d[.,]\d\s*mm/i;
+
+/** True daca randul da grosimea ca INTERVAL („20 to 50mm", „0.6 – 0.8 mm"). */
+export function areIntervalDeGrosime(text: string): boolean {
+  RE_INTERVAL_MM.lastIndex = 0;
+  const intreg = [...text.matchAll(RE_INTERVAL_MM)].some((m) => Number(m[1]) < Number(m[2]));
+  return intreg || RE_INTERVAL_ZECIMAL.test(text);
+}
 
 function inInterval(text: string, g: number): boolean {
   for (const m of text.matchAll(RE_INTERVAL_MM)) {

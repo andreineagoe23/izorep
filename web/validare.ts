@@ -90,6 +90,8 @@ export const ETICHETE_BLOCAJ: Record<CodBlocaj, { eticheta: string; intrebare?: 
   grosime_in_afara_listei: { eticheta: "grosime pe care sistemul ăla nu o ofertează" },
   forma_contrazice_um: { eticheta: "forma contrazice unitatea de măsură" },
   diametru_nenotat: { eticheta: "diametrul citit e alt număr de pe rând, nu cel scris ca diametru" },
+  strat_necitat: { eticheta: "un strat (tablă, inox, PVC) care nu e scris pe rând" },
+  grosime_interval: { eticheta: "grosimea e dată ca interval; alegerea e a omului" },
 };
 
 /**

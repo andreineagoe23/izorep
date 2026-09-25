@@ -287,14 +287,23 @@ export function esteProtectieLaFocTubulatura(text: string): boolean {
  * al vopsirii, facut de om. Ca la protectia la foc a tubulaturii: alta lucrare,
  * fara lista.
  *
+ * La fel `cerere-de-oferta-spital.xlsx`, foile „teava olzn canelata +
+ * izolatie", „teava prev can + izolatie", „teava PEX+izolatie": „Teava din
+ * otel zincata serie medie, imbinata prin cuplaje rapide, inclusiv fitinguri,
+ * treceri prin pereti ..., sistem complet de sustinere ..., izolatie in
+ * grosime de 20 mm". Pe calea cu model ieseau „Gata", cu vata si tabla.
+ *
  * Cere AMBELE: randul incepe cu teava (sau o coloana a lui incepe cu ea) si
- * izolatia e „inclusiv". „Izolatie ... pe teava DN50" nu intra aici.
+ * spune ca e livrarea ei — izolatia „inclusiv", sau imbinari, fitinguri,
+ * sustineri, seria tevii. „Izolatie ... pe teava DN50" nu intra aici.
  */
 const RE_TEAVA_LIVRATA = /(?:^|\|)\s*(?:[a-zäöü]*rohr\b|teav[aă]\b|țeav[aă]\b|tevi\b|țevi\b|pipe\b)/i;
 const RE_IZOLATIE_INCLUSA = /inclusiv\s+izola|including\s+(?:thermal\s+)?insulation|inkl\.?\s+(?:w[aä]rme)?d[aä]mm/i;
+const RE_LIVRARE_TEAVA =
+  /[îi]mbinat|fitinguri|cuplaj|sus[țt]inere|serie\s+(?:medie|u[șs]oar[aă]|grea)|manson\s+alunecator/i;
 
 export function esteLivrareDeTeava(text: string): boolean {
-  return RE_TEAVA_LIVRATA.test(text) && RE_IZOLATIE_INCLUSA.test(text);
+  return RE_TEAVA_LIVRATA.test(text) && (RE_IZOLATIE_INCLUSA.test(text) || RE_LIVRARE_TEAVA.test(text));
 }
 
 /**

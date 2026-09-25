@@ -189,6 +189,8 @@ export const MOTIV: Record<CodMotiv, string> = {
   diametru_contrazis: "Verifică diametrul: DN și Ø diferite",
   diametru_necitat: "Diametrul nu apare în text",
   diametru_nenotat: "Verifică diametrul: alt număr de pe rând",
+  strat_necitat: "Verifică straturile: jachetă nescrisă în text",
+  grosime_interval: "Grosimea e un interval: alege una",
   grosime_necitata: "Grosimea nu apare în text",
   gol_necitat: "Dimensiunea golului nu apare în text",
   grosime_in_afara_listei: "Grosime neobișnuită pentru material",

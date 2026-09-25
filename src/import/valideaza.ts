@@ -1,7 +1,7 @@
 import { DN_TO_OD, DN_TO_OD_DIN, TOLI_DN, esteConversiaDN } from "../pricing/dn-table.js";
 import { lista } from "../pricing/lists.js";
 import type { SistemMatrice } from "../pricing/types.js";
-import { diametreNotate, diametreScrise, formaExplicitaDinText, type DiametreNotate } from "./extract-regex.js";
+import { areIntervalDeGrosime, diametreNotate, diametreScrise, formaExplicitaDinText, sistemScris, type DiametreNotate } from "./extract-regex.js";
 import type { LinieExtrasa } from "./schema.js";
 
 /**
@@ -29,7 +29,9 @@ export type CodAvertisment =
   | "forma_contrazice_um"
   | "notatie_contrazice_materialul"
   | "diametru_contrazis"
-  | "diametru_nenotat";
+  | "diametru_nenotat"
+  | "strat_necitat"
+  | "grosime_interval";
 
 export interface Avertisment {
   cod: CodAvertisment;
@@ -112,6 +114,7 @@ function umContrazice(um: string, forma: NonNullable<LinieExtrasa["forma"]>): bo
 }
 
 const MATRICE = new Set<string>(["elastomer", "vata_minerala", "tabla", "tabla_inox", "pvc"]);
+const JACHETE = new Set<string>(["tabla", "tabla_inox", "pvc"]);
 
 /**
  * Verifica o linie extrasa fata de textul din care a fost extrasa.
@@ -182,6 +185,25 @@ export function valideazaExtragere(
         mesaj: `${s.sistem} nu se oferteaza in grosimea ${s.grosime_mm} mm (lista: ${disponibile.join(", ")})`,
       });
     }
+  }
+
+  // Jacheta adaugata de model fara sa fie scrisa: spital, „izolatie in grosime
+  // de 20 mm protejata cu folie de aluminiu" — folia e fata vatei caserate, nu
+  // tabla. Cu `tabla` in plus, 23,31 €/ml in loc de 6,23, cu incredere mare.
+  // Doar pe straturile de deasupra: sistemul principal il poate da si antetul
+  // de sectiune, pe care validatorul nu il vede.
+  for (const s of l.straturi_extra) {
+    if (JACHETE.has(s.sistem) && !sistemScris(sursa.text, s.sistem)) {
+      av.push({ cod: "strat_necitat", mesaj: `stratul ${s.sistem} nu e numit in textul sursa` });
+    }
+  }
+
+  // „a thickness of 0.6 – 0.8 mm" (Book15, 1.850 m²): pe calea determinista
+  // intervalul ramane al omului; modelul lasa grosimea goala, motorul ia
+  // singura grosime pe mp a listei si pozitia iesea „Gata". Aceeasi regula,
+  // aici: un interval pe rand cere ochi, orice a ales modelul.
+  if (l.sistem !== null && l.sistem !== "goluri_foc" && areIntervalDeGrosime(sursa.text)) {
+    av.push({ cod: "grosime_interval", mesaj: "randul da grosimea ca interval; alegerea e a omului" });
   }
 
   if (l.sistem === "goluri_foc") {
