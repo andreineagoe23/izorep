@@ -517,6 +517,19 @@ real acolo.
   înainte, doar o grosime a acelui sistem (elastomerul și vata n-au grosimi
   comune). DN80 și DN100 compus ies acum 44,35 și 57,82 €, ca în oferta semnată.
 - **Oferta 118** — ligaturi stricate (`sinte␣c`): textul e copiat dintr-un PDF.
+- **UM „m²”** — `\bm²\b` nu prinde niciodată (după „²” nu e graniță de
+  cuvânt), deci UM-ul cădea pe `\bm\b`, adică ml. Pe m², o poziție e completă
+  cu material și grosime, fără diametru.
+- **„- COT” cu UM `ml`** — forma scrisă după liniuță bate UM-ul, cum a tarifat
+  firma (Oferta 284, 2 din 2). O mențiune în trecere („inclusiv coturi”, „de la
+  pompa diesel”) nu schimbă forma; dacă dă alt preț, poziția e marcată.
+- **Intervale de grosime** — „insulated with 20 to 50mm” (Book15, 4.148 m²)
+  ieșea 50 mm „Gata”. O grosime care e capătul unui interval rămâne a omului.
+- **„tabla dealuminiu”** — „de” lipit, în cererea TRANSAVIA; rândul ieșea fără
+  jachetă, deci fără preț.
+- **Tubulatura cu clasă de foc** — „EI60”, „fire-resistant”, „izolare la foc”
+  lângă „tubulatură / duct / Kanal”: altă lucrare, fără listă, indiferent de
+  sursă (regulă în `tarifeazaExtras`, cu textul rândului).
 - **Cantitatea** — primul număr de pe rând e aproape întotdeauna *numărul curent*
   al poziției, nu cantitatea. Euristica actuală o caută lângă unitatea de măsură;
   dispare când apare maparea de coloane (L1).

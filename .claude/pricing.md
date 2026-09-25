@@ -198,6 +198,34 @@ notă de verificat, și rămâne „de validat" până o confirmă omul. Prima v
 punea `sursa: "om"` pe toată foaia — o confirmare în masă pe care butonul nu o
 anunța; pe cererea Abur, 24 de casete plecau direct în ofertă.
 
+## Reguli din ofertele semnate (25 septembrie 2026)
+
+Fiecare dedusă din Oferta 284 sau Oferta 27.04.2026, cu dovada lângă ea în cod
+și în `stare.md`. Unde dovada e o singură valoare, prețul iese **marcat**.
+
+- **Celula lipsă din listă** (`celulaDedusa`): p(rând, g) = p(sus, g) ×
+  p(rând, g0) / p(sus, g0), doar din rândul **imediat** următor și doar când
+  amândouă au o grosime g0 < g. Vata 22|40 → 7,90, exact ca în ofertă (25,68 și
+  47,41). Motiv `celula_dedusa`, de validat.
+- **Peste ultimul rând** (`tarifeazaPesteLista`): formula firmei,
+  (φ + 2g) / 1000 × **3,14** × prețul pe mp al grosimii, strat cu strat.
+  Exact pe DN250 / 19 mm; SPIRO ø250 / ø315 au fost semnate cu 0,13 € peste.
+  Motiv `peste_lista`, de validat. Fără preț pe mp (PVC) rămâne refuzat.
+- **Pe suprafață, fără diametru** (`tarifeazaPeMp`): suma prețurilor pe mp ale
+  straturilor. Tubulatura rectangulară, vată 50 + tablă = 79,73, exact.
+- **Echivalențe de grosime** (`ECHIVALENTE` în `nucleu.ts`): elastomer 20 mm →
+  19 mm (3 din 3). Doar perechi dovedite; vata g48 rămâne netarifată.
+- **Grosimea de la conductă** (`grosimiDeLaConducte`): o poziție fără grosime
+  ia grosimea conductei de același diametru și material din aceeași listă,
+  dacă acolo e una singură (casetele TRANSAVIA, 24 din 24). Bate grosimea
+  uzuală: e citită din fișierul clientului, nu propusă de noi.
+- **Totalul documentului**: suma valorilor exacte preț × cantitate, rotunjită o
+  singură dată (`valoareLinie`, `totalOferta`) — ca Excel-ul firmei, care are
+  143,808 în celulă. Rotunjit pe linie, Oferta 284 ieșea cu un ban peste.
+- **Protecția la foc a tubulaturii** nu se tarifează din listele de izolație
+  (`protectie_foc_tubulatura`): canal EI60 semnat 48 €/m², vata pe mp ar da
+  22,22.
+
 ## Ce lipsește
 
 - **Rafinăria și regula de segment.** Din 12 septembrie 2026 `tarifeaza`
