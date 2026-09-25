@@ -28,6 +28,7 @@ import { existsSync } from "node:fs";
 import { imparte, registruOferta, totalOferta, type AntetOferta, type Provenienta } from "../web/oferta.js";
 import { importaFisier } from "../src/import/pipeline.js";
 import { stocInMemorie } from "../src/import/memorie.js";
+import { bani } from "../src/pricing/engine.js";
 
 const DIR = "../attachments/clienti";
 
@@ -60,7 +61,7 @@ const CAZURI: Caz[] = [
   },
   {
     fisier: "oferta-118-nisal.xlsx",
-    semnat: 162585.99 + 7933.40, peOferta: 41, generat: 119376.21,
+    semnat: 162585.99 + 7933.40, peOferta: 45, generat: 156805.03,
     deCe: "Pe 13 sep 2026, două mișcări în sensuri opuse. SCĂZUT deliberat: pozițiile la ø90 și "
         + "ø160 (SPIRO, țeavă PEHD, „Enteisungssystem Regenwasserrohre”) au preț, dar stau la 1 mm "
         + "peste rândul de dedesubt, iar oferta semnată le-a tarifat și pe acela, și pe cel de sus — "
@@ -73,11 +74,16 @@ const CAZURI: Caz[] = [
         + "e seria de PP-R, iar oferta semnată le-a tarifat pe Ø (5,79 / 5,99 / 6,15 / 8,29) — "
         + "acum la fel, în loc de un rând mai sus. „Ø32mm” și „Ø50mm” lipite de unitate (rândurile "
         + "76–77) nu se citeau deloc; acum ies exact. Rămân: 3 peste maximul listei (întrebarea 4) "
-        + "și grosimi inexistente.",
+        + "și grosimi inexistente. Pe 25 sep 2026, CRESCUT (41 → 45), toate exacte față de oferta semnată: "
+        + "tubulatura rectangulară în m² (UM „m²” se citea „m”) = vată 50 pe mp + tablă pe mp, 79,73 × 460; "
+        + "elastomer „S=20mm” = prețul de 19 mm, DN100 / 150 / 200 (15,71 / 17,66 / 19,44). Peste ø219 "
+        + "prețul vine acum din formula firmei pe mp, dar marcat (SPIRO ø250 / ø315 semnate cu 0,13 € "
+        + "peste formulă). Canalul de desfumare EI60 (semnat 48 €/m²) rămâne fără preț: protecție la foc, "
+        + "fără listă (întrebarea 8).",
   },
   {
     fisier: "oferta-284-transavia-abur.xlsx",
-    semnat: 94575.06, peOferta: 83, generat: 74376.48,
+    semnat: 94575.06, peOferta: 85, generat: 75611.04,
     deCe: "79% din oferta semnată. Două schimbări au urcat-o de la 25%: extragerea deterministă a "
         + "început să construiască `straturi_extra` (jachetele nu se tarifau deloc), iar firma a "
         + "confirmat pe 11 sep 2026 regula „cot/teu de vată sub ø60 nu intră în preț” — cele 24 de "
@@ -86,7 +92,12 @@ const CAZURI: Caz[] = [
         + "Pe 25 sep 2026, SCĂZUT deliberat cu 2 (85 → 83): „Di169, g50 - COT” cu UM `ml` (r54–55) "
         + "ieșea 51,44 € „Gata”, oferta semnată are cotul, 102,88 €. Textul și UM-ul se contrazic și "
         + "dau prețuri diferite, deci merg la „De validat” (`forma_contrazisa`). Di76 COT/TEU cu UM "
-        + "`ml` rămân pe ofertă: acolo coeficientul e 1, prețul e același.",
+        + "`ml` rămân pe ofertă: acolo coeficientul e 1, prețul e același. "
+        + "Tot pe 25 sep 2026, după verificarea față de oferta semnată, CRESCUT (83 → 85): „- COT” scris "
+        + "explicit bate UM-ul, cum a tarifat firma (102,88 €, 2 din 2). Cele 13 poziții cu vată 40 mm la "
+        + "DN15 / Di21 au acum preț exact (celula 22|40 dedusă proporțional: 47,41 și 25,68), dar stau la "
+        + "„De validat” — o singură valoare dovedită (întrebarea 18). Rămâne netarifat doar distribuitorul "
+        + "de abur (2.296,70, echipament la comandă). Toate cele 98 de prețuri calculate sunt exacte.",
   },
   {
     fisier: "oferta-manopera-anexa-contract-2024.xlsx",
@@ -200,5 +211,83 @@ describe("acoperirea față de ofertele semnate", () => {
     if (!existsSync(matari)) return;
     const raport = await importaFisier(matari, { faraModel: true, stoc: stocInMemorie() });
     expect(raport.randuriManopera).toBe(0);
+  });
+});
+
+describe("cererea TRANSAVIA importată reproduce Oferta 284 semnată", () => {
+  // Singura pereche cerere → ofertă pe aceleași rânduri: ce a trimis clientul
+  // și ce a semnat firma pe el. Importul cererii trebuie să dea, poziție cu
+  // poziție, prețul unitar din oferta semnată — deși cererea nu scrie grosimea
+  // casetelor (o ia de la conducta de același diametru), are un „- COT” cu UM
+  // `ml` și un „tabla dealuminiu” lipit.
+  const CERERE = `${DIR}/cerere-de-oferta-transavia-abur.xlsx`;
+  const OFERTA = `${DIR}/oferta-284-transavia-abur.xlsx`;
+
+  it("98 de prețuri exacte din 98 calculate; fără preț doar distribuitorul de abur", async () => {
+    if (!existsSync(CERERE) || !existsSync(OFERTA)) return;
+    const poz = async (f: string) => (await importaFisier(f, { faraModel: true, stoc: stocInMemorie() }))
+      .linii.filter((l) => l.extras.sistem !== null);
+    const cerere = await poz(CERERE);
+    const oferta = await poz(OFERTA);
+    expect(cerere).toHaveLength(oferta.length);
+
+    const diferite: string[] = [];
+    const faraPret: string[] = [];
+    cerere.forEach((l, i) => {
+      // Rândul ofertei: … | cantitate | preț unitar | preț total.
+      const numere = oferta[i]!.bruta.celule.filter((c): c is number => typeof c === "number");
+      const semnat = numere[numere.length - 2]!;
+      if (!l.pret) faraPret.push(l.bruta.text);
+      else if (Math.abs(l.pret.pret_unitar - semnat) >= 0.005) {
+        diferite.push(`r${l.bruta.rand}: ${l.pret.pret_unitar} față de ${semnat} — ${l.bruta.text}`);
+      }
+    });
+    expect(diferite).toEqual([]);
+    expect(faraPret).toHaveLength(1);
+    expect(faraPret[0]).toContain("DISTRIBUITOR ABUR");
+  });
+});
+
+describe("registrul generat din cererea TRANSAVIA are rândurile Ofertei 284", () => {
+  const CERERE = `${DIR}/cerere-de-oferta-transavia-abur.xlsx`;
+  const OFERTA = `${DIR}/oferta-284-transavia-abur.xlsx`;
+
+  it("după „Confirmă toate”: aceleași coloane și numere, rând cu rând, și totalul semnat fără distribuitor", async () => {
+    if (!existsSync(CERERE) || !existsSync(OFERTA)) return;
+    const cerere = await importaFisier(CERERE, { faraModel: true, stoc: stocInMemorie() });
+    // „Confirmă toate cele 13” din ecran: pozițiile cu preț nu mai cer validare.
+    const confirmate = cerere.linii.map((l) => (l.pret ? { ...l, necesitaValidare: false } : l));
+    const buf = await registruOferta({ linii: confirmate, antet: ANTET, provenienta: PROV });
+    const ExcelJS = (await import("exceljs")).default;
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(buf);
+    const ws = wb.getWorksheet("Ofertă")!;
+
+    const semnate = (await importaFisier(OFERTA, { faraModel: true, stoc: stocInMemorie() })).linii
+      .filter((l) => l.extras.sistem !== null && !/DISTRIBUITOR/.test(l.bruta.text))
+      .map((l) => l.bruta.celule);
+    const generate: unknown[][] = [];
+    ws.eachRow((r, n) => {
+      if (n > 15 && typeof r.getCell(6).value === "number" && !String(r.getCell(1).value).startsWith("TOTAL")) {
+        generate.push([1, 2, 3, 4, 5, 6].map((c) => r.getCell(c).value));
+      }
+    });
+
+    expect(generate).toHaveLength(semnate.length);
+    generate.forEach((g, i) => {
+      const s = semnate[i]!;
+      const cum = `rândul ${i + 16}: ${String(g[1])}`;
+      expect(g[0], cum).toBe(s[0]);                                   // Identificare_Norma
+      expect(g[2], cum).toBe(s[2]);                                   // UM
+      expect(g[3], cum).toBe(s[3]);                                   // cantitate
+      expect(g[4], cum).toBe(s[4]);                                   // preț unitar
+      expect(g[5] as number, cum).toBeCloseTo(s[5] as number, 4);     // total pe linie, exact ca în ofertă
+      const gr = /gr\. (\d+) mm/.exec(String(s[1]));
+      if (gr) expect(String(g[1]), cum).toContain(`gr. ${gr[1]} mm`);
+    });
+
+    let total = 0;
+    ws.eachRow((r) => { if (String(r.getCell(1).value).startsWith("TOTAL LUCRARI")) total = Number(r.getCell(6).value); });
+    expect(total).toBe(bani(94575.06 - 2296.70));
   });
 });

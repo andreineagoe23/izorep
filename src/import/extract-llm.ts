@@ -54,7 +54,8 @@ lista cea mai apropiata. Substitutia e decizia omului, nu a ta.
 
 FORMA: "ml" pentru metru liniar, "mp" pentru metru patrat (tubulatura), sau tipul
 elementului special: cot, teu, manseta, flansa, robinet, contor, filtru, pompa.
-Foloseste unitatea de masura din coloana UM daca exista.
+Foloseste unitatea de masura din coloana UM daca exista — cu O exceptie: forma scrisa
+explicit dupa liniuta in text ("Di169, g50 - COT") bate UM-ul, chiar daca UM e "ml".
 
 GOL_LATIME_MM / GOL_INALTIME_MM: doar la sistem="goluri_foc". Dimensiunile golului
 taiat in perete, scrise "130/130", "1400/600" intr-o coloana "dimensiune gol".

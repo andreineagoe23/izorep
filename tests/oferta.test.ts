@@ -139,8 +139,8 @@ describe("totalOferta", () => {
 describe("registrul generat", () => {
   const set = () => [
     linie({ text: "Izolatie elastomer DN50 gr. 13 mm", unitar: 10, cantitate: 5, sectiune: "TERMICE" }),
-    linie({ text: "Izolatie elastomer DN80 gr. 19 mm", unitar: 20, cantitate: 2 }),
-    linie({ text: "SPIRO DN 125", unitar: 13.74, cantitate: 1, necesitaValidare: true,
+    linie({ text: "Izolatie elastomer DN80 gr. 19 mm", unitar: 20, cantitate: 2, extras: { grosime_mm: 19 } }),
+    linie({ text: "SPIRO DN 125, Armaflex 13mm", unitar: 13.74, cantitate: 1, necesitaValidare: true,
       avertismente: [{ cod: "notatie_contrazice_materialul", mesaj: "brut" }] }),
     linie({ text: "Cot vata Di21", codEroare: "fara_coeficient_de_forma" }),
     linie({ extras: { sistem: null }, text: "TOTAL CAPITOL" }),
@@ -191,7 +191,7 @@ describe("registrul generat", () => {
       if (String(r.getCell(2).value ?? "").includes("SPIRO")) gasitInOferta = true;
     });
     expect(gasitInOferta).toBe(false);
-    expect(text(validat, "B2")).toBe("SPIRO DN 125");
+    expect(text(validat, "B2")).toBe("SPIRO DN 125, Armaflex 13mm");
   });
 
   it("totalul e suma coloanei de total, la bănuț", async () => {
@@ -442,5 +442,35 @@ describe("cap-coadă pe oferta semnată 118.1", () => {
     // Și e chiar suma coloanei, nu un număr scris separat.
     const suma = randuri.slice(0, -1).reduce((s, n) => s + Number(ws.getCell(`F${n}`).value), 0);
     expect(Math.round(suma * 100) / 100).toBe(12692.04);
+  });
+});
+
+describe("coloanele Identificare_Norma și Denumire", () => {
+  it("codul clientului de la începutul rândului merge în Identificare_Norma, nu în denumire", async () => {
+    // Cererea TRANSAVIA: „IZOLATII | Caseta izolatie ...”; oferta semnată are
+    // IZOLATII în coloana A și doar descrierea în B.
+    const l = linie({ text: "IZOLATII | Caseta izolatie armaturi cu flanse DN100 vata minerala gr. 13 mm", unitar: 121.67 });
+    const wb = await citeste(await registruOferta({ linii: [l], antet: ANTET, provenienta: PROV }));
+    const ws = wb.getWorksheet("Ofertă")!;
+    expect(text(ws, "A16")).toBe("IZOLATII");
+    expect(text(ws, "B16")).toBe("Caseta izolatie armaturi cu flanse DN100 vata minerala gr. 13 mm");
+  });
+
+  it("o descriere care începe cu text obișnuit nu e tratată drept cod", async () => {
+    const l = linie({ text: "Teava OL/OLZN DN15 | 130/130", unitar: 23.05, sectiune: "Treceri EI30" });
+    const wb = await citeste(await registruOferta({ linii: [l], antet: ANTET, provenienta: PROV }));
+    const ws = wb.getWorksheet("Ofertă")!;
+    expect(text(ws, "A16")).toBe("Treceri EI30");
+    expect(text(ws, "B16")).toContain("Teava OL/OLZN DN15");
+  });
+
+  it("grosimea pe care clientul n-a scris-o apare în denumire, ca în Oferta 284", async () => {
+    const l = linie({
+      text: "IZOLATII | Caseta izolatie armaturi cu flanse DN100 din tabla aluminiu si vata minerala",
+      unitar: 121.67, extras: { sistem: "vata_minerala", grosime_mm: 50 },
+    });
+    const wb = await citeste(await registruOferta({ linii: [l], antet: ANTET, provenienta: PROV }));
+    expect(text(wb.getWorksheet("Ofertă")!, "B16"))
+      .toBe("Caseta izolatie armaturi cu flanse DN100 din tabla aluminiu si vata minerala, gr. 50 mm");
   });
 });

@@ -173,6 +173,36 @@ function cauta(sistem: SistemMatrice, rand: number, grosime: number | null, l: L
 }
 
 /**
+ * Pretul unei celule care LIPSESTE din lista, dedus din randul urmator care are
+ * grosimea, prin proportia dintre cele doua randuri la grosimea de dedesubt:
+ *
+ *   p(rand, g) = p(sus, g) × p(rand, g0) / p(sus, g0)
+ *
+ * Din Oferta 284 (TRANSAVIA, semnata): vata 40 mm pe randul 22 nu exista in
+ * lista (nici in fisierul original al firmei), dar oferta o tarifeaza — 25,68 €
+ * pe ml si 47,41 € caseta DN15. Ambele pozitii dau aceeasi valoare de vata,
+ * 7,90 €, si exact asta iese aici: 7,9522 × 6,8157 / 6,8569 = 7,904. Sunt 13
+ * pozitii, dar O SINGURA valoare, deci regula nu e confirmata: pretul iese cu
+ * nota de verificat, iar golul ramane „nu se oferteaza" pana il confirma omul.
+ *
+ * Doar din randul IMEDIAT de deasupra, si doar cand ambele randuri au o
+ * grosime mai mica in comun. Altfel `null`, iar pozitia ramane netarifata.
+ */
+function celulaDedusa(
+  rand: number, grosime: number, l: ListaPreturi,
+): { pret: number; sus: number; g0: number } | null {
+  // Doar randul IMEDIAT urmator: 22 → 28 e dovedit; peste mai multe randuri ar
+  // fi extrapolare, iar golul chiar poate insemna „nu se executa".
+  const sus = diametreDin(l).find((r) => r > rand);
+  if (sus === undefined || l.cells[`${sus}|${grosime}`] === undefined) return null;
+  const g0 = [...l.grosimi_mm].filter((g) => g < grosime).reverse()
+    .find((g) => l.cells[`${rand}|${g}`] !== undefined && l.cells[`${sus}|${g}`] !== undefined);
+  if (g0 === undefined) return null;
+  const pret = l.cells[`${sus}|${grosime}`]! * l.cells[`${rand}|${g0}`]! / l.cells[`${sus}|${g0}`]!;
+  return { pret, sus, g0 };
+}
+
+/**
  * Verifica ca grosimea CERUTA a unui strat e una dintre grosimile pe care
  * sistemul chiar le ofertaza (`lista(sistem).grosimi_mm`) — indiferent daca
  * stratul ajunge sau nu INCLUS in pret.
@@ -340,6 +370,68 @@ export const ADJECTIV_DEST: Record<Destinatie, string> = {
 };
 
 export function tarifeaza(cerere: CerereTarifare): RezultatTarifare {
+  try {
+    return tarifeazaDinMatrice(cerere);
+  } catch (e) {
+    if (e instanceof PozitieNetarifata && e.cod === "peste_maximul_listei" && cerere.forma !== "mp") {
+      const r = tarifeazaPesteLista(cerere);
+      if (r) return r;
+    }
+    throw e;
+  }
+}
+
+/** π al firmei, din regula ei scrisa pentru diametrele peste lista („3,14"). */
+const PI_FIRMA = 3.14;
+
+/**
+ * Diametrul trece de ultimul rand al listei: regula FIRMEI, pe suprafata.
+ *
+ *   mp/ml = (φ + 2 × grosime) / 1000 × 3,14      pret = mp/ml × pretul pe mp al grosimii
+ *
+ * Scrisa de firma (`.claude/tevi.md`, „Peste ultimul rand din lista"), cu
+ * exemplul elastomer φ324 / 9 mm. Pe Oferta 27.04.2026 reproduce exact DN250 cu
+ * elastomer 19 mm (23,13 €), dar SPIRO ø250 si ø315 cu 9 mm ies 16,23 si 20,17,
+ * fata de 16,36 si 20,30 semnat — firma nu-si aplica formula identic peste tot.
+ * De-aia pretul iese, dar pozitia merge la om (`peste_lista`).
+ *
+ * Straturile se aduna din interior spre exterior: fiecare isi calculeaza aria
+ * pe diametrul de sub el. Forma aplica multiplicatorul benzii in care cade
+ * diametrul (listele au benzi pana la 9999). `null` cand un strat n-are pret pe
+ * mp la grosimea lui: atunci ramane eroarea initiala.
+ */
+function tarifeazaPesteLista(cerere: CerereTarifare): RezultatTarifare | null {
+  const dest: Destinatie = cerere.destinatie ?? "rezidential";
+  let geometric = toOuterDiameter(cerere.diametru.valoare, cerere.diametru.tip);
+  const tarifate: StratTarifat[] = [];
+  for (const strat of straturiMatrice(cerere.straturi)) {
+    const { lista: l } = listaDe(strat.sistem, dest);
+    const chei = Object.keys(l.per_mp);
+    const grosime = strat.grosime_mm ?? (chei.length === 1 ? Number(chei[0]) : undefined);
+    const pMp = grosime === undefined ? undefined : l.per_mp[String(grosime)];
+    if (grosime === undefined || pMp === undefined) return null;
+    const mult = multiplicatorOptional(strat.sistem, Math.round(geometric), cerere.forma, dest);
+    if (mult === null) return null;
+    const pret = bani((geometric + 2 * grosime) / 1000 * PI_FIRMA * pMp);
+    tarifate.push({
+      sistem: strat.sistem, grosime_mm: grosime, diametru_geometric: geometric, rand_lista: 0,
+      pret_unitar: pret, multiplicator: mult, inclus: true,
+    });
+    geometric += 2 * grosime;
+  }
+  if (tarifate.length === 0) return null;
+  const unitar = bani(tarifate.reduce((s, t) => s + bani(t.pret_unitar * t.multiplicator), 0));
+  const n = `diametrul trece de ultimul rand al listei: pret din formula firmei pe mp, ` +
+    `(φ + 2 × grosime) / 1000 × 3,14 × pret/mp. De verificat: pe Oferta 27.04.2026 formula da exact ` +
+    `DN250 / 19 mm, dar SPIRO ø250 si ø315 au fost semnate cu 0,13 € mai sus.`;
+  return {
+    straturi: tarifate, pret_unitar: unitar, multiplicator: tarifate[0]!.multiplicator,
+    cantitate: cerere.cantitate, total: bani(unitar * cerere.cantitate), moneda: "EUR",
+    note: [n], noteDeVerificat: [n], motiveDeVerificat: ["peste_lista"],
+  };
+}
+
+function tarifeazaDinMatrice(cerere: CerereTarifare): RezultatTarifare {
   const { diametru, straturi, forma, cantitate } = cerere;
   const dest: Destinatie = cerere.destinatie ?? "rezidential";
   if (straturi.length === 0) throw new PozitieNetarifata("pozitie_fara_straturi", "pozitie fara straturi", { cerere });
@@ -413,9 +505,26 @@ export function tarifeaza(cerere: CerereTarifare): RezultatTarifare {
 
     let pretBrut = 0;
     if (inclus) {
-      const p = forma === "mp"
-        ? listaStrat.per_mp[String(grosime)]
-        : cauta(strat.sistem, rand, grosime, listaStrat);
+      let p: number | undefined;
+      if (forma === "mp") {
+        p = listaStrat.per_mp[String(grosime)];
+      } else if (grosime !== null && strat.grosime_mm !== undefined
+          && listaStrat.cells[`${rand}|${grosime}`] === undefined) {
+        const d = celulaDedusa(rand, grosime, listaStrat);
+        if (d === null) {
+          p = cauta(strat.sistem, rand, grosime, listaStrat); // arunca `grosime_inexistenta`
+        } else {
+          p = d.pret;
+          const n = `${strat.sistem}: combinatia ø${rand} × ${grosime} mm lipseste din lista; pret dedus ` +
+            `proportional din randul ${d.sus} (prin ${d.g0} mm): ${bani(d.pret)} €, ca in Oferta 284. De confirmat ` +
+            `(intrebarea 18).`;
+          note.push(n);
+          noteDeVerificat.push(n);
+          motive.add("celula_dedusa");
+        }
+      } else {
+        p = cauta(strat.sistem, rand, grosime, listaStrat);
+      }
       if (p === undefined) {
         throw new PozitieNetarifata("fara_pret_pe_mp", "nu exista pret pe mp pentru grosimea ceruta", { sistem: strat.sistem, grosime });
       }
@@ -470,6 +579,54 @@ export function tarifeaza(cerere: CerereTarifare): RezultatTarifare {
     total: bani(unitar * cantitate),
     moneda: "EUR",
     ...(note.length ? { note } : {}),
+    ...(noteDeVerificat.length ? { noteDeVerificat } : {}),
+    ...(motive.size ? { motiveDeVerificat: [...motive] } : {}),
+  };
+}
+
+/**
+ * Pozitie pe SUPRAFATA, fara diametru: tubulatura rectangulara (A × B), in m².
+ *
+ * Listele au pentru asta coloana `per_mp`, pe grosime. Oferta 27.04.2026,
+ * „Luftleitg. eckig ... Matte Blech 50", 460 m²: 79,73 €/m² = vata 50 mm pe mp
+ * (20,22) + tabla pe mp (59,51), exact. Fara diametru nu exista rand si nici
+ * multiplicator de forma — de-aia e alta functie, nu o ramura din `tarifeaza`.
+ * Tabla are o singura grosime pe mp, deci implicita, ca la ml.
+ */
+export function tarifeazaPeMp(cerere: Omit<CerereTarifare, "diametru" | "forma">): RezultatTarifare {
+  const dest: Destinatie = cerere.destinatie ?? "rezidential";
+  const matrice = straturiMatrice(cerere.straturi);
+  if (matrice.length === 0) throw new PozitieNetarifata("pozitie_fara_straturi", "pozitie fara straturi", { cerere });
+  const tarifate: StratTarifat[] = [];
+  const noteDeVerificat: string[] = [];
+  const motive = new Set<MotivVerificare>();
+  for (const strat of matrice) {
+    const { lista: l, folosita } = listaDe(strat.sistem, dest);
+    if (folosita !== dest) {
+      motive.add("segment_diferit");
+      noteDeVerificat.push(`${strat.sistem}: pret din lista ${ADJECTIV_DEST[folosita].toUpperCase()} — nu exista lista ` +
+        `${ADJECTIV_DEST[dest]} pentru materialul asta.`);
+    }
+    const chei = Object.keys(l.per_mp);
+    const grosime = strat.grosime_mm ?? (chei.length === 1 ? Number(chei[0]) : undefined);
+    if (grosime === undefined) {
+      throw new PozitieNetarifata("grosime_ambigua", "grosime nespecificata si ambigua", { sistem: strat.sistem, disponibile: chei });
+    }
+    const p = l.per_mp[String(grosime)];
+    if (p === undefined) {
+      throw new PozitieNetarifata("fara_pret_pe_mp", "nu exista pret pe mp pentru grosimea ceruta", { sistem: strat.sistem, grosime });
+    }
+    tarifate.push({
+      sistem: strat.sistem, grosime_mm: grosime, diametru_geometric: 0, rand_lista: 0,
+      pret_unitar: bani(p), multiplicator: 1, inclus: true,
+    });
+  }
+  const unitar = bani(tarifate.reduce((s, t) => s + t.pret_unitar, 0));
+  const note = ["tarifat pe suprafata (pret pe mp al fiecarui strat): pozitia n-are diametru", ...noteDeVerificat];
+  return {
+    straturi: tarifate, pret_unitar: unitar, multiplicator: 1,
+    cantitate: cerere.cantitate, total: bani(unitar * cerere.cantitate), moneda: "EUR",
+    note,
     ...(noteDeVerificat.length ? { noteDeVerificat } : {}),
     ...(motive.size ? { motiveDeVerificat: [...motive] } : {}),
   };

@@ -28,7 +28,9 @@ const SISTEM: [LinieExtrasa["sistem"], RegExp][] = [
   // insa, o pozitie "vata + jacheta de tabla" iesea tarifata doar cu vata,
   // mai ieftin si tacut. Capcana de material e tratata separat, in
   // `sistemeDinText` — vezi `TABLA_E_TUBULATURA`.
-  ["tabla", /tabl[aă]\s+(?:de\s+)?(?:aluminiu|zincat)|jachet|jacket|\bblech\b/i],
+  // „de" poate veni lipit: cererea TRANSAVIA are „tabla dealuminiu" pe un rand
+  // (r71), care iesea fara jacheta, deci fara pret.
+  ["tabla", /tabl[aă]\s+(?:de\s*)?(?:aluminiu|zincat)|jachet|jacket|\bblech\b/i],
   ["pvc", /\bpvc\b/i],
   // Cere notiunea de GOL, nu doar mentiunea focului. "Protectie la foc EI 60
   // pentru tubulaturile din tabla zincata" din cerere-de-oferta-spital.xlsx e protectia
@@ -177,11 +179,25 @@ const FORMA: [LinieExtrasa["forma"], RegExp][] = [
   // `mp` NU se citeste dupa un slash: "275 g/m2" e densitatea zincului din
   // caietul de sarcini, nu unitatea pozitiei. Masurat pe `cerere-de-oferta-book15.xlsx`, de
   // acolo veneau forme `mp` pe randuri cu UM `lm`.
-  ["mp", /(?<!\/)\bmp\b|(?<!\/)\bm²\b|(?<!\/)\bm2\b/i],
+  // „m²" nu are granita de cuvant dupa „²" (nu e litera), deci `\bm²\b` nu
+  // prindea niciodata, iar UM-ul „m²" cadea pe `\bm\b` de mai jos: tubulatura
+  // de pe Oferta 27.04.2026 (460 m²) iesea „ml".
+  ["mp", /(?<!\/)\bmp\b|(?<!\/)\bm²|(?<!\/)\bm2\b/i],
   // `lm` = metru liniar, scris asa in `cerere-de-oferta-book15.xlsx`. Lipsea, desi parserul il
   // accepta deja ca unitate de masura, deci randul cadea pe textul liniei.
   ["ml", /\bML\b|\bml\b|\blm\b|\bm\b/i],
 ];
+
+/** „20 to 50mm", „20-50 mm", „20 – 50 mm", „20 pana la 50 mm", „20/50mm" nu. */
+const RE_INTERVAL_MM = /\b(\d{1,3})\s*(?:mm\s*)?(?:to|-|–|—|pana\s+la|până\s+la)\s*(\d{1,3})\s*mm/gi;
+
+function inInterval(text: string, g: number): boolean {
+  for (const m of text.matchAll(RE_INTERVAL_MM)) {
+    const a = Number(m[1]), b = Number(m[2]);
+    if (a < b && (g === a || g === b)) return true;
+  }
+  return false;
+}
 
 /**
  * Forma de ELEMENT (cot, teu, flansa...) scrisa in text, ignorand UM-ul.
@@ -195,6 +211,24 @@ const FORMA: [LinieExtrasa["forma"], RegExp][] = [
 export function formaElementDinText(text: string): LinieExtrasa["forma"] {
   const f = FORMA.find(([forma, re]) => forma !== "ml" && forma !== "mp" && re.test(text));
   return f?.[0] ?? null;
+}
+
+/**
+ * Forma scrisa EXPLICIT ca eticheta a pozitiei: „Di169, g50 - COT".
+ *
+ * Aici textul bate UM-ul. Oferta 284 (TRANSAVIA, semnata) are doua randuri
+ * „Di169, g50 - COT" cu UM `ml` si le-a tarifat ca cot, 102,88 €, nu pe metru,
+ * 51,44 € — 2 din 2. Forma e ceruta dupa liniuta, ca o mentiune de trecere
+ * („inclusiv coturi", „de la pompa diesel") sa nu schimbe forma pozitiei;
+ * acolo ramane UM-ul si, daca pretul difera, `forma_contrazisa` din nucleu.
+ */
+const FORMA_EXPLICITA: [LinieExtrasa["forma"], RegExp][] = [
+  ["cot", /\s[-–]\s*cot\b/i], ["teu", /\s[-–]\s*teu\b/i], ["reductie", /\s[-–]\s*reductie\b/i],
+  ["manseta", /\s[-–]\s*manseta\b/i], ["flansa", /\s[-–]\s*flansa\b/i],
+];
+
+export function formaExplicitaDinText(text: string): LinieExtrasa["forma"] {
+  return FORMA_EXPLICITA.find(([, re]) => re.test(text))?.[0] ?? null;
 }
 
 export interface RezultatRegex {
@@ -464,9 +498,13 @@ export function extrageDeterminist(
       .filter((n) => GROSIMI_PLAUZIBILE.has(n));
     grosime_mm = toate.at(-1) ?? null;
   }
+  // O grosime care e capatul unui INTERVAL nu e grosimea pozitiei: Book15,
+  // „insulated with 20 to 50mm mineral wool", 4.148 m², iesea „Gata" pe 50 mm
+  // (83.872 €). Intervalul e decizia omului, ca la „0.6 – 0.8 mm" de tabla.
+  if (grosime_mm !== null && inInterval(text, grosime_mm)) grosime_mm = null;
 
   const dinUm = um ? FORMA.find(([, re]) => re.test(um))?.[0] : undefined;
-  const forma = dinUm ?? FORMA.find(([, re]) => re.test(text))?.[0] ?? null;
+  const forma = formaExplicitaDinText(text) ?? dinUm ?? FORMA.find(([, re]) => re.test(text))?.[0] ?? null;
 
   // Dimensiunea golului se citeste DOAR daca linia e deja identificata ca
   // inchidere la foc. "130/130" e un tipar prea comun ca sa fie semnal de
@@ -480,9 +518,11 @@ export function extrageDeterminist(
 
   // Inchiderile la foc se tarifeaza pe SUPRAFATA golului: diametrul si
   // grosimea nu le fac complete, dimensiunile golului da.
+  // Pe m² nu trebuie diametru: pretul vine din `per_mp`, pe grosime
+  // (tubulatura rectangulara, Oferta 27.04.2026: 79,73 exact).
   const complet = sistem === "goluri_foc"
     ? gol_latime_mm !== null && gol_inaltime_mm !== null
-    : sistem !== null && diametru_valoare !== null && grosime_mm !== null;
+    : sistem !== null && grosime_mm !== null && (diametru_valoare !== null || forma === "mp");
 
   return {
     linie: {

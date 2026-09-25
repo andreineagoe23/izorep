@@ -79,6 +79,7 @@ export const ETICHETE_BLOCAJ: Record<CodBlocaj, { eticheta: string; intrebare?: 
   material_conducta_lipsa: { eticheta: "lipsește materialul conductei (oțel sau plastic)" },
   gol_foc_in_matrice: { eticheta: "închidere de gol la foc trimisă pe matricea ø × grosime" },
   fara_diametru: { eticheta: "poziția n-are diametru (tubulatură rectangulară?): listele se caută doar pe ø" },
+  protectie_foc_tubulatura: { eticheta: "protecție la foc a tubulaturii: altă lucrare, fără listă de prețuri", intrebare: 8 },
   /* --- au pret, dar sunt marcate (CodAvertisment) --- */
   notatie_contrazice_materialul: { eticheta: "scrie DN, dar materialul dă diametrul exterior", intrebare: 10 },
   diametru_contrazis: { eticheta: "scrie DN, dar Ø-ul de pe rând nu e DN-ul ăla în tabelul de conversie" },

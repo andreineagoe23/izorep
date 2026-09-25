@@ -121,7 +121,11 @@ export type MotivVerificare =
   /** Descrierea s-a schimbat dupa ce omul verificase pozitia: e recitita din textul nou. */
   | "descriere_schimbata"
   /** UM-ul spune ml/mp, textul spune cot/teu/...; cele doua forme dau preturi diferite. */
-  | "forma_contrazisa";
+  | "forma_contrazisa"
+  /** Celula ø × grosime lipseste din lista; pretul e dedus proportional din randul urmator. */
+  | "celula_dedusa"
+  /** Diametru peste ultimul rand: pret din formula firmei pe mp, nu din matrice. */
+  | "peste_lista";
 
 /**
  * De ce nu s-a putut tarifa o pozitie, ca valoare STABILA.
@@ -157,7 +161,9 @@ export type CodNetarifare =
   /* --- sistemul e cunoscut, dar nu se poate cauta pe nimic --- */
   | "fara_diametru"
   /* --- din DiametruNecunoscut, mapat in tarifeazaExtras --- */
-  | "dn_necunoscut";
+  | "dn_necunoscut"
+  /* --- alta lucrare decat cea din liste --- */
+  | "protectie_foc_tubulatura";
 
 export class PozitieNetarifata extends Error {
   constructor(

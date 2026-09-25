@@ -158,14 +158,26 @@ describe("pozitii care NU se pot tarifa - se semnaleaza, nu se ghicesc", () => {
     })).toThrow(PozitieNetarifata);
   });
 
-  it("diametru peste lista (ø250, ø315 din oferta 118)", () => {
-    for (const od of [250, 315]) {
-      expect(() => tarifeaza({
-        diametru: { valoare: od, tip: "exterior" },
-        straturi: [{ sistem: "elastomer", grosime_mm: 9 }],
-        forma: "ml", cantitate: 1,
-      })).toThrow(PozitieNetarifata);
-    }
+  it("diametru peste lista (ø250, ø315 din oferta 118): formula firmei, dar marcat", () => {
+    // Pana pe 25 septembrie 2026 aruncau. Firma a dat regula scrisa pe mp:
+    // (φ + 2g) / 1000 × 3,14 × pret/mp. Oferta semnata are 16,36 si 20,30 —
+    // 0,13 € peste formula ei, deci pretul nu e sigur si pozitia merge la om.
+    const pret = (od: number) => tarifeaza({
+      diametru: { valoare: od, tip: "exterior" },
+      straturi: [{ sistem: "elastomer", grosime_mm: 9 }],
+      forma: "ml", cantitate: 1,
+    });
+    expect(pret(250).pret_unitar).toBe(16.23);
+    expect(pret(315).pret_unitar).toBe(20.17);
+    expect(pret(250).motiveDeVerificat).toContain("peste_lista");
+  });
+
+  it("peste lista, fara pret pe mp (PVC peste o710): ramane refuzat", () => {
+    expect(() => tarifeaza({
+      diametru: { valoare: 800, tip: "exterior" },
+      straturi: [{ sistem: "pvc" }],
+      forma: "ml", cantitate: 1,
+    })).toThrow(PozitieNetarifata);
   });
 
   it("DN inexistent in tabelul de conversie", () => {

@@ -1,7 +1,7 @@
 import { DN_TO_OD, DN_TO_OD_DIN, TOLI_DN, esteConversiaDN } from "../pricing/dn-table.js";
 import { lista } from "../pricing/lists.js";
 import type { SistemMatrice } from "../pricing/types.js";
-import { diametreScrise } from "./extract-regex.js";
+import { diametreScrise, formaExplicitaDinText } from "./extract-regex.js";
 import type { LinieExtrasa } from "./schema.js";
 
 /**
@@ -162,7 +162,9 @@ export function valideazaExtragere(
     }
   }
 
-  if (sursa.um && l.forma && umContrazice(sursa.um, l.forma)) {
+  // „Di169, g50 - COT" cu UM ml: forma scrisa explicit bate UM-ul, cum a
+  // tarifat firma in Oferta 284 — nu e o contradictie a modelului.
+  if (sursa.um && l.forma && umContrazice(sursa.um, l.forma) && l.forma !== formaExplicitaDinText(sursa.text)) {
     av.push({
       cod: "forma_contrazice_um",
       mesaj: `forma "${l.forma}" contrazice unitatea de masura "${sursa.um}"`,

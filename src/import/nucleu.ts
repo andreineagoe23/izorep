@@ -7,7 +7,7 @@ import { amprentaFoaie, aplicaMapare } from "./mapare.js";
 import type { MapareSalvata } from "./cache-mapari.js";
 import { adaugaSectiuni, type LinieCuSectiune } from "./sectiuni.js";
 import { aplicaContinuare } from "./continuare.js";
-import { extrageDeterminist, formaElementDinText } from "./extract-regex.js";
+import { extrageDeterminist, formaElementDinText, formaExplicitaDinText } from "./extract-regex.js";
 import {
   diametruContrazisDeText, notatieContraziceMaterialul, valideazaExtragere,
   type Avertisment, type CodAvertisment,
@@ -15,13 +15,13 @@ import {
 import { grupeazaPeSablon, extindePeSablon, type LinieSursa } from "./sabloane.js";
 import { aplicaMemorie, type StocSabloane } from "./memorie.js";
 import type { LinieExtrasa, Sursa } from "./schema.js";
-import { tarifeaza } from "../pricing/engine.js";
+import { tarifeaza, tarifeazaPeMp } from "../pricing/engine.js";
 import { tarifeazaGolFoc } from "../pricing/goluri-foc.js";
 import {
   PozitieNetarifata,
   type CodNetarifare, type RezultatGolFoc, type RezultatTarifare,
 } from "../pricing/types.js";
-import { DiametruNecunoscut } from "../pricing/dn-table.js";
+import { DiametruNecunoscut, TOLERANTA_SERIE_OTEL, toOuterDiameter } from "../pricing/dn-table.js";
 
 /**
  * Nucleul comun de import, IZOMORF: fara `node:*`, fara DOM.
@@ -257,6 +257,48 @@ function jachetaLaExterior<T extends { sistem: string }>(straturi: T[]): T[] {
 }
 
 /**
+ * Tubulatura cu CLASA DE FOC: protectia la foc a tubulaturii, alta lucrare
+ * decat izolatia termica din listele firmei (intrebarea 8).
+ *
+ * Oferta 27.04.2026, „Entrauchungskanal ... izolare termica la foc a
+ * tubulaturii pentru obtinerea clasificarii EI60min, cu vata minerala grosime
+ * 60mm": semnat 48 €/m². Din lista de vata pe mp ar fi iesit 22,22 — −54%, si
+ * exact asa iesea pe calea cu model. Book15 are acelasi fel de pozitie
+ * („fire-resistant", 1.944 m²), care iesea „Gata" la 22,22.
+ *
+ * Cere AMBELE: o tubulatura (nu o teava) si un semnal de clasa la foc. O teava
+ * izolata „rezistenta la temperatura" sau o inchidere de gol nu intra aici.
+ */
+const RE_TUBULATURA = /tubulatur|\bduct\b|luftleit|kanal\b|entrauchung/i;
+const RE_CLASA_FOC = /\bEI\s?\d{2,3}\b|\bE\d{3}\b|fire[- ]?resist|rezistent\w*\s+la\s+foc|izolare\s+(?:termica\s+)?la\s+foc|brandschutz/i;
+
+export function esteProtectieLaFocTubulatura(text: string): boolean {
+  return RE_TUBULATURA.test(text) && RE_CLASA_FOC.test(text);
+}
+
+/**
+ * Grosimi scrise de client care inseamna, in practica firmei, alta grosime din
+ * lista. Elastomerul nu se face in 20 mm (9 / 13 / 19 / 25 / 32), iar „S=20mm"
+ * din Oferta 27.04.2026 e tarifat de firma cu pretul de 19 mm: DN100 15,71,
+ * DN150 17,66, DN200 19,44 — 3 din 3, exact. Se aplica doar perechilor dovedite;
+ * restul (vata g48) raman netarifate, decizia omului.
+ */
+const ECHIVALENTE: Partial<Record<string, Record<number, number>>> = {
+  elastomer: { 20: 19 },
+};
+
+function cuEchivalente<T extends { sistem: string; grosime_mm?: number }>(straturi: T[]): { straturi: T[]; note: string[] } {
+  const note: string[] = [];
+  const out = straturi.map((s) => {
+    const g = s.grosime_mm === undefined ? undefined : ECHIVALENTE[s.sistem]?.[s.grosime_mm];
+    if (g === undefined) return s;
+    note.push(`${s.sistem} ${s.grosime_mm} mm nu exista in lista; tarifat ca ${g} mm, ca in Oferta 27.04.2026 (3 din 3)`);
+    return { ...s, grosime_mm: g };
+  });
+  return { straturi: out, note };
+}
+
+/**
  * L3 pe o singura linie extrasa.
  *
  * Sta separat de bucla pentru ca acelasi drum e parcurs si de testul de golden
@@ -269,7 +311,16 @@ export function tarifeazaExtras(
   extras: LinieExtrasa,
   cantitate: number,
   destinatie: Destinatie = "rezidential",
+  /** Textul randului, pentru regulile care depind de el; lipsa = nu se aplica. */
+  text?: string,
 ): { pret?: RezultatTarifare | RezultatGolFoc; eroare?: string; codEroare?: CodNetarifare } {
+  if (text !== undefined && extras.sistem !== null && extras.sistem !== "goluri_foc"
+      && esteProtectieLaFocTubulatura(text)) {
+    return {
+      eroare: "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi",
+      codEroare: "protectie_foc_tubulatura",
+    };
+  }
   try {
     if (extras.sistem === "goluri_foc") {
       if (extras.gol_latime_mm === null || extras.gol_inaltime_mm === null) {
@@ -287,19 +338,24 @@ export function tarifeazaExtras(
         }),
       };
     }
+    // Fara sistem linia nu e pozitie de izolatie: nimic de tarifat, nicio cauza.
+    if (extras.sistem === null) return {};
+    const { straturi, note: echivalente } = cuEchivalente(jachetaLaExterior([
+      { sistem: extras.sistem, ...(extras.grosime_mm !== null ? { grosime_mm: extras.grosime_mm } : {}) },
+      ...extras.straturi_extra.map((s) => ({
+        sistem: s.sistem, ...(s.grosime_mm !== null ? { grosime_mm: s.grosime_mm } : {}),
+      })),
+    ]));
+    const cuNote = <R extends { note?: string[] }>(r: R): R =>
+      (echivalente.length ? { ...r, note: [...echivalente, ...(r.note ?? [])] } : r);
     if (extras.sistem && extras.diametru_valoare !== null && extras.diametru_tip) {
-      const pret = tarifeaza({
+      const pret = cuNote(tarifeaza({
         diametru: { valoare: extras.diametru_valoare, tip: extras.diametru_tip },
-        straturi: jachetaLaExterior([
-          { sistem: extras.sistem, ...(extras.grosime_mm !== null ? { grosime_mm: extras.grosime_mm } : {}) },
-          ...extras.straturi_extra.map((s) => ({
-            sistem: s.sistem, ...(s.grosime_mm !== null ? { grosime_mm: s.grosime_mm } : {}),
-          })),
-        ]),
+        straturi,
         forma: extras.forma ?? "ml",
         cantitate,
         destinatie,
-      });
+      }));
       return { pret };
     }
 
@@ -314,6 +370,11 @@ export function tarifeazaExtras(
     // `Entrauchungskanal`, UM `m²`) — care chiar n-are diametru, ci A x B.
     // Conversia perimetrului e in `.claude/tevi.md` si nu e implementata.
     // Pana atunci pozitia se MARCHEAZA, ca oricare alta fara pret.
+    // Fara diametru, dar pe suprafata: tubulatura rectangulara in m² se
+    // tarifeaza din coloana `per_mp` a listei (Oferta 27.04.2026, 79,73 exact).
+    if (extras.sistem !== null && extras.forma === "mp") {
+      return { pret: cuNote(tarifeazaPeMp({ straturi, cantitate, destinatie })) };
+    }
     if (extras.sistem !== null) {
       throw new PozitieNetarifata(
         "fara_diametru",
@@ -412,6 +473,60 @@ function stampileazaText(brute: LinieCuSectiune[], rezolvate: Map<number, Rezolv
   }
 }
 
+/** Diametrul exterior al unei extrageri, ca sa se poata compara intre linii scrise diferit. */
+function diametruExterior(e: LinieExtrasa): number | null {
+  if (e.diametru_valoare === null || e.diametru_tip === null) return null;
+  try {
+    return toOuterDiameter(e.diametru_valoare, e.diametru_tip);
+  } catch {
+    return null;
+  }
+}
+
+interface GrosimeDeLaConducta { grosime: number; rand: number; foaie: string }
+
+/**
+ * Grosimea pe care clientul n-a scris-o, luata de la conducta de ACELASI
+ * diametru si ACELASI material din aceeasi lista.
+ *
+ * Cererea TRANSAVIA (abur) scrie „Caseta izolatie armaturi cu flanse DN100 din
+ * tabla aluminiu si vata minerala" fara grosime, dar aceeasi lista are
+ * conducta „Di114, g50". Oferta semnata a dat casetei exact grosimea conductei
+ * ei, la toate cele 11 diametre (DN15…DN250, 24 de casete): armatura se
+ * izoleaza ca teava pe care sta. E o citire din fisierul clientului, nu o
+ * presupunere a noastra — de-aia bate grosimea uzuala a firmei.
+ *
+ * Doar cand pe acel diametru lista are O SINGURA grosime pentru material: doua
+ * conducte DN100 cu 50 si 80 mm (tur si retur, alt agent) nu spun care e a
+ * armaturii, deci pozitia ramane fara grosime, ca inainte. Se compara
+ * diametrul exterior, cu toleranta seriei de otel: DN100 (ø114,3) si Di114
+ * sunt aceeasi teava.
+ */
+function grosimiDeLaConducte(
+  brute: LinieCuSectiune[], rezolvate: Map<number, Rezolvare>,
+): Map<number, GrosimeDeLaConducta> {
+  const surse: { sistem: string; od: number; grosime: number; rand: number; foaie: string }[] = [];
+  for (const b of brute) {
+    const e = rezolvate.get(b.index)?.extras;
+    if (!e || e.sistem === null || e.grosime_mm === null) continue;
+    const od = diametruExterior(e);
+    if (od !== null) surse.push({ sistem: e.sistem, od, grosime: e.grosime_mm, rand: b.rand, foaie: b.foaie });
+  }
+  const out = new Map<number, GrosimeDeLaConducta>();
+  for (const b of brute) {
+    const e = rezolvate.get(b.index)?.extras;
+    if (!e || e.grosime_mm !== null || (e.sistem !== "vata_minerala" && e.sistem !== "elastomer")) continue;
+    const od = diametruExterior(e);
+    if (od === null) continue;
+    const potrivite = surse.filter((s) => s.sistem === e.sistem && Math.abs(s.od - od) <= TOLERANTA_SERIE_OTEL);
+    const grosimi = new Set(potrivite.map((s) => s.grosime));
+    if (grosimi.size !== 1) continue;
+    const prima = potrivite[0]!;
+    out.set(b.index, { grosime: prima.grosime, rand: prima.rand, foaie: prima.foaie });
+  }
+  return out;
+}
+
 /**
  * L3 + guardrails, pentru toata lista de linii brute rezolvate.
  *
@@ -427,6 +542,7 @@ function construiesteLinii(
   descrieriSchimbate?: ReadonlySet<number>,
 ): LinieProcesata[] {
   const linii: LinieProcesata[] = [];
+  const deLaConducte = grosimiDeLaConducte(brute, rezolvate);
   for (const b of brute) {
     const r = rezolvate.get(b.index);
     if (!r) continue;
@@ -458,7 +574,13 @@ function construiesteLinii(
     // cu increderea reprezentantului ei, nesuspecta. Idempotent pentru CLI:
     // acolo `extrageCuModel` a zerorizat-o deja, deci a doua zerorizare nu
     // schimba nimic.
-    const extras = avertismente.length > 0 ? { ...r.extras, incredere: 0 } : r.extras;
+    // Grosimea de la conducta de acelasi diametru completeaza o citire careia ii
+    // lipsea DOAR grosimea: pe o linie citita de reguli, linia devine completa.
+    const conducta = r.extras.grosime_mm === null ? deLaConducte.get(b.index) : undefined;
+    const completat = conducta
+      ? { ...r.extras, grosime_mm: conducta.grosime, ...(sursa === "regex" ? { incredere: 0.99 } : {}) }
+      : r.extras;
+    const extras = avertismente.length > 0 ? { ...completat, incredere: 0 } : completat;
 
     // Grosimea propusa intra DUPA guardrails: nu vine din text, deci
     // `grosime_necitata` s-ar aprinde pe o valoare pe care chiar omul a cerut-o.
@@ -479,7 +601,19 @@ function construiesteLinii(
         && (extras.incredere < prag || avertismente.length > 0 || cuPropunere || schimbata),
     };
 
-    const t = tarifeazaExtras(deTarifat, b.cantitate ?? 1, destinatie);
+    // Textul intra doar cand nu e linia omului: el a decis ce e pozitia.
+    const t = tarifeazaExtras(deTarifat, b.cantitate ?? 1, destinatie, sursa === "om" ? undefined : b.text);
+    if (t.pret && conducta) {
+      t.pret.note = [...(t.pret.note ?? []),
+        `grosime ${conducta.grosime} mm luata de la conducta de acelasi diametru din lista (randul ${conducta.rand}); `
+        + "clientul n-a scris-o pe randul asta"];
+    }
+    // Forma scrisa explicit in text („- COT") a batut UM-ul: se spune pe pozitie.
+    if (t.pret && b.um && /^(ml|m|lm)$/i.test(b.um.trim()) && deTarifat.forma !== null
+        && deTarifat.forma === formaExplicitaDinText(b.text)) {
+      t.pret.note = [...(t.pret.note ?? []),
+        `UM-ul e "${b.um}", dar textul spune "${deTarifat.forma}": tarifat ca ${deTarifat.forma}, ca in Oferta 284`];
+    }
     if (t.pret && cuPropunere) {
       const n = `grosime ${propusa} mm propusa dupa diametru (grosimea uzuala a firmei), nu scrisa de client`;
       t.pret.note = [...(t.pret.note ?? []), n];
@@ -565,7 +699,10 @@ function statisticiDeterministe(
     // s-ar cauta doar in pozitii, exact fisierul care are nevoie de semnal ar
     // iesi cu zero.
     randuriManopera: brute.filter((b) => RE_MANOPERA.test(b.text)).length,
-    valoareTotala: Math.round(izolatie.reduce((s, l) => s + (l.pret?.total ?? 0), 0) * 100) / 100,
+    // Ca in ofertele firmei: suma valorilor exacte, rotunjita o data (vezi
+    // `totalOferta` din web/oferta.ts).
+    valoareTotala: Math.round(izolatie.reduce(
+      (s, l) => s + (l.pret ? l.pret.pret_unitar * l.pret.cantitate : 0), 0) * 100) / 100,
   };
 }
 

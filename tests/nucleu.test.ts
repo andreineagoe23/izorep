@@ -16,7 +16,9 @@ import { join } from "node:path";
 import ExcelJS from "exceljs";
 import { parseFoi } from "../src/import/parse-workbook.js";
 import { scrieCelula, reconstruieste } from "../src/import/editare.js";
-import { proceseazaRegistru, reevalueaza, tarifeazaExtras, type Extractor, type Rezultat } from "../src/import/nucleu.js";
+import {
+  esteProtectieLaFocTubulatura, proceseazaRegistru, reevalueaza, tarifeazaExtras, type Extractor, type Rezultat,
+} from "../src/import/nucleu.js";
 import { stocInMemorie } from "../src/import/memorie.js";
 import { tarifeazaSimplu } from "../src/pricing/engine.js";
 import type { LinieExtrasa } from "../src/import/schema.js";
@@ -205,29 +207,79 @@ describe("sectiunea ajunge la model, iar un null nu sterge ce stia determinismul
   });
 });
 
-describe("forma din text care contrazice UM-ul", () => {
+describe("forma din text fata de UM", () => {
   const rand = (di: number): (string | number)[] =>
     [1, `Izolatii cu vata minerala si protectie cu tabla de aluminiu Di${di}, g50 - COT`, "ml", 2];
 
-  it("Di169 COT cu UM ml: pretul pe ml ramane, dar pozitia merge la validare", async () => {
-    // Oferta 284, r54: iesea 51,44 € „Gata", oferta semnata are cotul, 102,88 €.
+  it("„Di169, g50 - COT” cu UM ml se tarifeaza ca cot, ca in Oferta 284 semnata", async () => {
+    // Oferta 284, r54–55: UM `ml`, dar oferta semnata are cotul, 102,88 € (2 din 2).
     const rez = await proceseazaRegistru(await parseFoi(await registru([ANTET, rand(169)])), {
+      stoc: stocInMemorie(),
+    });
+    const l = rez.linii.find((x) => x.extras.sistem !== null)!;
+    expect(l.extras.forma).toBe("cot");
+    expect(l.pret!.pret_unitar).toBe(102.88);
+    expect(l.pret!.note!.join(" ")).toContain("Oferta 284");
+    expect(l.necesitaValidare).toBe(false);
+  });
+
+  it("o mentiune in trecere („inclusiv coturi”) lasa UM-ul, dar marcheaza pozitia cand pretul difera", async () => {
+    const text = "Izolatii cu vata minerala 50 mm si protectie cu tabla de aluminiu Di169, inclusiv coturi";
+    const rez = await proceseazaRegistru(await parseFoi(await registru([ANTET, [1, text, "ml", 2]])), {
       stoc: stocInMemorie(),
     });
     const l = rez.linii.find((x) => x.extras.sistem !== null)!;
     expect(l.pret!.pret_unitar).toBe(51.44);
     expect(l.pret!.motiveDeVerificat).toContain("forma_contrazisa");
-    expect(l.pret!.noteDeVerificat!.join(" ")).toContain("102.88");
     expect(l.necesitaValidare).toBe(true);
   });
 
-  it("Di76 COT cu UM ml: coeficientul e 1, acelasi pret, deci nu se marcheaza", async () => {
+  it("Di76 COT cu UM ml: coeficientul e 1, acelasi pret, nimic de marcat", async () => {
     const rez = await proceseazaRegistru(await parseFoi(await registru([ANTET, rand(76)])), {
       stoc: stocInMemorie(),
     });
     const l = rez.linii.find((x) => x.extras.sistem !== null)!;
     expect(l.pret!.motiveDeVerificat ?? []).not.toContain("forma_contrazisa");
     expect(l.necesitaValidare).toBe(false);
+  });
+});
+
+describe("grosimea de la conducta de acelasi diametru", () => {
+  const CASETA = "Caseta izolatie armaturi cu flanse DN100 din tabla aluminiu si vata minerala";
+
+  it("caseta fara grosime o ia de la conducta Di114 din aceeasi lista, ca in Oferta 284", async () => {
+    const rez = await proceseazaRegistru(await parseFoi(await registru([
+      ANTET,
+      [1, CASETA, "buc", 1],
+      [2, "Izolatii cu vata minerala si protectie cu tabla de aluminiu Di114, g50 - ML", "ml", 27],
+    ])), { stoc: stocInMemorie() });
+    const l = rez.linii.find((x) => x.bruta.text.includes("Caseta"))!;
+    expect(l.extras.grosime_mm).toBe(50);
+    expect(l.pret!.pret_unitar).toBe(121.67);
+    expect(l.necesitaValidare).toBe(false);
+    expect(l.pret!.note!.join(" ")).toContain("conducta de acelasi diametru");
+  });
+
+  it("doua grosimi pe acelasi diametru nu spun care e a casetei: ramane fara grosime", async () => {
+    const rez = await proceseazaRegistru(await parseFoi(await registru([
+      ANTET,
+      [1, CASETA, "buc", 1],
+      [2, "Izolatii cu vata minerala si protectie cu tabla de aluminiu Di114, g50 - ML", "ml", 27],
+      [3, "Izolatii cu vata minerala si protectie cu tabla de aluminiu Di114, g80 - ML", "ml", 10],
+    ])), { stoc: stocInMemorie() });
+    const l = rez.linii.find((x) => x.bruta.text.includes("Caseta"))!;
+    expect(l.extras.grosime_mm).toBeNull();
+    expect(l.pret).toBeUndefined();
+  });
+
+  it("nu ia grosimea altui material", async () => {
+    const rez = await proceseazaRegistru(await parseFoi(await registru([
+      ANTET,
+      [1, CASETA, "buc", 1],
+      [2, "Izolatie elastomer 19 mm pe teava DN100 apa rece", "ml", 50],
+    ])), { stoc: stocInMemorie() });
+    const l = rez.linii.find((x) => x.bruta.text.includes("Caseta"))!;
+    expect(l.extras.grosime_mm).toBeNull();
   });
 });
 
@@ -489,5 +541,55 @@ describe("jacheta sta mereu peste izolatie", () => {
     const b = tarifeazaExtras(inversat, 1).pret!;
     expect(b.pret_unitar).toBe(a.pret_unitar);
     expect("straturi" in b && b.straturi.map((s) => s.sistem)).toEqual(["vata_minerala", "tabla_inox"]);
+  });
+});
+
+describe("reguli din Oferta 27.04.2026 semnată", () => {
+  it("tubulatura rectangulară în m², vată 50 + tablă: preț pe mp, 79,73", () => {
+    const r = tarifeazaExtras(extrasa({
+      index: 1, sistem: "vata_minerala", diametru_valoare: null, diametru_tip: null, grosime_mm: 50, forma: "mp",
+      straturi_extra: [{ sistem: "tabla", grosime_mm: null }],
+    }), 460);
+    expect(r.pret!.pret_unitar).toBe(79.73);
+  });
+
+  it("elastomer „S=20mm” se tarifează ca 19 mm, cu notă", () => {
+    const r = tarifeazaExtras(extrasa({ index: 1, diametru_valoare: 100, diametru_tip: "DN", grosime_mm: 20 }), 1);
+    expect(r.pret!.pret_unitar).toBe(15.71);
+    expect(r.pret!.note!.join(" ")).toContain("19 mm");
+  });
+
+  it("UM-ul „m²” e citit ca mp, nu ca m", async () => {
+    const rez = await proceseazaRegistru(await parseFoi(await registru([
+      ANTET, [1, "Izolarea termica a tubulaturilor cu saltele de vata minerala 50mm + jacketing de tabla", "m²", 460],
+    ])), { stoc: stocInMemorie() });
+    const l = rez.linii.find((x) => x.extras.sistem !== null)!;
+    expect(l.extras.forma).toBe("mp");
+    expect(l.pret!.pret_unitar).toBe(79.73);
+  });
+});
+
+describe("protecția la foc a tubulaturii nu se tarifează din listele de izolație", () => {
+  it("canalul de desfumare EI60 (semnat 48 €/m²) nu iese 22,22 din vata pe mp", () => {
+    const text = "Entrauchungskanal | Sistem pentru presurizare, tubulatura rectangulara din otel zincat, "
+      + "izolare termica la foc a tubulaturii pentru obtinerea clasificarii EI60min, cu vata minerala grosime 60mm";
+    const r = tarifeazaExtras(extrasa({
+      index: 1, sistem: "vata_minerala", diametru_valoare: null, diametru_tip: null, grosime_mm: 60, forma: "mp",
+    }), 17, "rezidential", text);
+    expect(r.pret).toBeUndefined();
+    expect(r.codEroare).toBe("protectie_foc_tubulatura");
+  });
+
+  it("tubulatura izolată obișnuit, fără clasă de foc, se tarifează", () => {
+    const text = "Izolarea termica a tubulaturilor cu saltele de vata minerala 50mm + jacketing de tabla";
+    const r = tarifeazaExtras(extrasa({
+      index: 1, sistem: "vata_minerala", diametru_valoare: null, diametru_tip: null, grosime_mm: 50, forma: "mp",
+      straturi_extra: [{ sistem: "tabla", grosime_mm: null }],
+    }), 1, "rezidential", text);
+    expect(r.pret!.pret_unitar).toBe(79.73);
+  });
+
+  it("o țeavă izolată la temperatură înaltă nu e tubulatură", () => {
+    expect(esteProtectieLaFocTubulatura("Teava de inox, izolatie vata 50 mm rezistenta la temperatura de peste 600°C")).toBe(false);
   });
 });

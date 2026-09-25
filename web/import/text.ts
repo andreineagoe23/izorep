@@ -118,7 +118,8 @@ export function inteles(e: LinieExtrasa, pret?: LinieProcesata["pret"]): string[
   const straturi = pret && "straturi" in pret ? pret.straturi : [];
   const peRand = (k: number): string => {
     const s = straturi[k];
-    return s ? ` · rândul ${numarRo(s.rand_lista)}` : "";
+    if (!s) return "";
+    return s.rand_lista > 0 ? ` · rândul ${numarRo(s.rand_lista)}` : " · pe mp";
   };
   return [
     `${MATERIAL[e.sistem]}${mm(e.grosime_mm)}${peRand(0)}`,
@@ -170,6 +171,7 @@ export const MOTIV: Record<CodMotiv, string> = {
   peste_maximul_listei: "Diametru mai mare decât lista de prețuri",
   dn_necunoscut: "DN necunoscut",
   fara_diametru: "Lipsește diametrul",
+  protectie_foc_tubulatura: "Protecție la foc a tubulaturii: fără listă de prețuri",
   fara_coeficient_de_forma: "Piesa nu are preț în listă",
   banda_inexistenta: "Diametrul nu e în lista de prețuri",
   lista_goala: "Lista de prețuri e goală",
@@ -194,6 +196,8 @@ export const MOTIV: Record<CodMotiv, string> = {
   grosime_propusa: "Grosime propusă, nu scrisă de client",
   descriere_schimbata: "Descrierea s-a schimbat după verificare",
   forma_contrazisa: "Textul spune altă formă decât unitatea de măsură",
+  celula_dedusa: "Preț calculat: combinația lipsește din listă",
+  peste_lista: "Diametru peste listă: preț din formula pe mp",
   citit_nesigur: "Citit nesigur din text",
   pret_necunoscut: "Prețul nu s-a putut calcula",
 };
