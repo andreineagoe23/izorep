@@ -34,7 +34,12 @@ export const ecran: Ecran = {
 
 Router-ul îl încarcă leneș (`import()`), desenează titlul, apoi apelează
 `render` cu un container gol. Ecranele nu ating nimic din afara containerului
-lor și nu manipulează meniul.
+lor și nu manipulează meniul. Un ecran care are nevoie de toată lățimea o
+**cere** (`ceriSpatiu` din `web/meniu-stare.ts`), iar `main.ts` pliază bara —
+temporar, fără să scrie preferința, doar la trecerea de la „nu cere” la
+„cere” (dacă omul redeschide meniul, o redesenare nu i-l închide din nou) și
+până la schimbarea ecranului. Importul o cere cât timp e un fișier deschis
+(25 septembrie 2026).
 
 Ecran nou: creezi fișierul în `web/ecrane/`, îl adaugi în `ECRANE` din `main.ts`
 și pui itemul în `MENIU` din `nav.ts`.
@@ -304,13 +309,16 @@ explicit pe 13 septembrie 2026. Modelul rămâne scris în importul salvat
   la margine nu spune că mai e ceva în dreapta. Pe telefon stau două câte două.
 - Ținte de minimum 44 px; câmpuri de 16 px, ca iOS să nu mărească pagina la
   focus.
-- **Tabelul se derulează lateral în cardul lui**, cu numărul rândului lipit la
-  stânga; capetele de coloană se rup pe rânduri, iar coloana cu descrieri lungi
-  își păstrează loc de citit. Containerul are `position: relative`: fără el,
-  eticheta ascunsă „Acțiuni" din antet ieșea din zona derulată și lățea pagina
-  la 809 px pe un telefon de 360. Verificarea de lățime se face față de
-  `screen.width` — în emulare mobilă `innerWidth` crește odată cu conținutul și
-  ascundea exact problema asta.
+- **Foaia încape pe lățimea ecranului, fără derulare laterală** (25 septembrie
+  2026). `table-layout: fixed`, cu lățimile din `<colgroup>` calculate de
+  `grilaFoaie`: numărul rândului, „Am înțeles · preț” și „Stare” (cu butoanele
+  pe un rând) au procente fixe; restul se împarte coloanelor clientului după
+  mediana lungimii pe rândurile de poziție, iar descrierea e plafonată — ea se
+  rupe pe rânduri, prețul și butoanele nu. Coloanele goale pe toată foaia nu se
+  desenează (Flower City: 7 din 16). Sub 1000 px lățime de ecran de import,
+  fișierul se deschide ca listă de carduri. Verificat cu Playwright pe cele 10
+  fișiere de client la 390, 1024, 1280, 1440 și 1920 px: zero derulare laterală,
+  butoanele pe un rând de la 1280 în sus.
 - Verificat în browser la 360, 390, 768, 1024, 1440 și 1920 px, în temă
   deschisă și închisă: fără derulare orizontală, fără ținte sub 40 px, fără
   erori în pagină, fluxul complet până la registrul descărcat.

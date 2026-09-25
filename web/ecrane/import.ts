@@ -10,6 +10,7 @@ import type { FoaieBruta } from "../../src/import/parse-workbook.js";
 import type { Destinatie } from "../../src/pricing/lists.js";
 import { grosimePropusa } from "../../src/pricing/grosimi-uzuale.js";
 import { stocLocal } from "../stoc-local.js";
+import { ceriSpatiu } from "../meniu-stare.js";
 import { anuleaza, confirma, potrivit } from "../validare.js";
 import { cate, esc, type Ecran } from "./tip.js";
 import { FIRME } from "../date/seed.js";
@@ -50,6 +51,12 @@ const RUTA_MODEL = location.pathname.replace(/[^/]*$/, "") + "api/extrage";
 interface StareModel { disponibil: boolean; model: string; prag: number; lot?: number; concurenta?: number }
 /** Loturi mici, in paralel: fiecare lot intors misca bara de progres. */
 const LOT_IMPLICIT = 25;
+/**
+ * Sub latimea asta (a ecranului de import, cu bara pliata) foaia se deschide ca
+ * lista. E pragul la care si cardurile trec pe un rand; sub el, un registru ca
+ * Book15 (12 coloane) ar ramane cu coloane de doua-trei litere.
+ */
+const LATIME_MINIMA_EXCEL = 1000;
 const CONCURENTA_IMPLICITA = 4;
 
 async function interogheazaModel(): Promise<StareModel | null> {
@@ -98,7 +105,7 @@ export const ecran: Ecran = {
     let motiv: CodMotiv | null = null;
     let foaie: string | null = null;
     let editIdx: number | null = null;
-    /** Foaia ca in Excel e vederea implicita; lista de carduri e la un clic. */
+    /** Foaia ca in Excel e vederea implicita pe ecran lat; lista de carduri e la un clic. */
     let excel = true;
     let detaliiDeschise = false;
     let stergeDe: string | null = null;
@@ -193,6 +200,9 @@ export const ecran: Ecran = {
     /* ------------------------------------------------------------ desenare */
     function deseneaza(): void {
       const areSesiune = sesiune !== null;
+      // Cu fisierul deschis, foaia clientului are nevoie de toata latimea:
+      // bara laterala se pliaza (temporar, fara sa schimbe preferinta omului).
+      ceriSpatiu(gazda, areSesiune && pas !== 1);
       elPasi.innerHTML = pasi(pas, { 1: true, 2: areSesiune, 3: areSesiune });
       if (pas === 1 || !sesiune) {
         pagina.innerHTML = ecranStart({ destinatie, istoric, stergeDe, eroare: eroareStart });
@@ -302,7 +312,13 @@ export const ecran: Ecran = {
     /* ------------------------------------------------------------- actiuni */
     function deschideSesiune(s: Sesiune): void {
       sesiune = s;
-      pas = 2; filtru = "toate"; motiv = null; foaie = null; editIdx = null; excel = true;
+      pas = 2; filtru = "toate"; motiv = null; foaie = null; editIdx = null;
+      // Latimea se masoara DUPA plierea barei, altfel ar decide pe locul pe
+      // care il ocupa inca meniul. Sub prag, foaia 1:1 n-ar incapea fara
+      // derulare laterala decat cu coloane de cateva litere: se deschide ca
+      // lista, iar „Arată ca în Excel" ramane la un clic.
+      ceriSpatiu(gazda, true);
+      excel = gazda.clientWidth >= LATIME_MINIMA_EXCEL;
       eroareStart = "";
       salveazaSesiune();
       deseneaza();

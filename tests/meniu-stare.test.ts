@@ -6,7 +6,9 @@
  * are voie sa se opreasca din asta — preferinta se pierde, navigatia ramane.
  */
 import { describe, it, expect } from "vitest";
-import { citesteMeniu, scrieMeniu, inverseaza, CHEIE_MENIU } from "../web/meniu-stare.js";
+import {
+  citesteMeniu, scrieMeniu, inverseaza, laCerere, stareEfectiva, FARA_CERERE, CHEIE_MENIU,
+} from "../web/meniu-stare.js";
 
 const depozitFals = (initial: Record<string, string> = {}): Storage => {
   const m = new Map(Object.entries(initial));
@@ -58,5 +60,31 @@ describe("starea barei laterale", () => {
   it("inverseaza comuta intre cele doua stari", () => {
     expect(inverseaza("extins")).toBe("pliat");
     expect(inverseaza("pliat")).toBe("extins");
+  });
+});
+
+describe("plierea cerută de ecranul de import", () => {
+  it("pliază temporar bara deschisă, fără să schimbe preferința", () => {
+    const s = laCerere(FARA_CERERE, true, "extins", false);
+    expect(stareEfectiva("extins", s)).toBe("pliat");
+    expect(laCerere(s, false, "extins", false)).toEqual(FARA_CERERE);
+    expect(stareEfectiva("extins", FARA_CERERE)).toBe("extins");
+  });
+
+  it("o redesenare nu închide din nou meniul redeschis de om", () => {
+    const pliat = laCerere(FARA_CERERE, true, "extins", false);
+    const redeschis = { ...pliat, pliatTemporar: false };
+    const dupaRedesenare = laCerere(redeschis, true, "extins", false);
+    expect(stareEfectiva("extins", dupaRedesenare)).toBe("extins");
+  });
+
+  it("pe telefon nu atinge nimic: acolo meniul e sertar și e deja închis", () => {
+    expect(laCerere(FARA_CERERE, true, "extins", true).pliatTemporar).toBe(false);
+  });
+
+  it("bara pliată din preferință rămâne pliată și după retragerea cererii", () => {
+    const s = laCerere(FARA_CERERE, true, "pliat", false);
+    expect(s.pliatTemporar).toBe(false);
+    expect(stareEfectiva("pliat", laCerere(s, false, "pliat", false))).toBe("pliat");
   });
 });

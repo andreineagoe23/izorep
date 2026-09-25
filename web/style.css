@@ -260,6 +260,13 @@ main { padding: 26px 28px 56px; max-width: 1400px; }
 @media (prefers-reduced-motion: reduce) {
   .aplicatie, aside, .eticheta-item { transition: none; }
 }
+/*
+ * Plierea ceruta de un ecran (importul, la deschiderea fisierului) e
+ * instantanee: ecranul isi masoara latimea imediat dupa, ca sa aleaga intre
+ * foaia ca in Excel si lista. Animata, masura ar prinde bara pe jumatate.
+ */
+:root[data-fara-tranzitie] .aplicatie, :root[data-fara-tranzitie] aside,
+:root[data-fara-tranzitie] .eticheta-item { transition: none; }
 
 /* ---------------------------------------------------------- componente */
 .card {
@@ -782,34 +789,41 @@ button.filtru[aria-pressed="true"], button.filtru.activ {
  */
 .imp-excel .tabelwrap { position: relative; margin: 0; padding: 0; border: 0; border-radius: 8px; background: none; }
 /*
+ * Foaia incape pe latimea ecranului, fara derulare laterala (cerut pe 25
+ * septembrie 2026). `table-layout: fixed` ia latimile din `<colgroup>`, in
+ * procente calculate de `grilaFoaie` dupa continut, deci un text lung nu mai
+ * poate lati tabelul: se rupe pe randuri in coloana lui. Coloanele goale nu se
+ * deseneaza, iar coloanele noastre sunt doua, nu patru.
+ */
+.imp-excel table { table-layout: fixed; width: 100%; }
+.imp-excel td { padding: 8px 8px 8px 0; }
+.imp-excel .camp { max-width: none; overflow-wrap: anywhere; }
+/* Un numar nu se rupe pe cifre: 1550 pe doua randuri se citeste 15 si 50. */
+.imp-excel .camp.nr { overflow-wrap: normal; }
+/*
  * Capetele se rup pe randuri. Pe un singur rand, „Pret unitar Euro /elem Vata
  * + Tabla aluminiu" lua 287 px, iar coloana cu descrierea ramanea cu 108 —
  * adica opt randuri de cate doua cuvinte pe fiecare pozitie.
  */
-.imp-excel th { padding: 8px 12px 8px 0; white-space: normal; vertical-align: bottom; min-width: 11ch; }
-.imp-excel th.gutter { min-width: 0; }
-.imp-excel .camp.lung { min-width: min(34ch, 70cqw); }
-/* Numarul randului ramane pe ecran cand tabelul se deruleaza lateral. */
-.imp-excel td.gutter, .imp-excel th.gutter { position: sticky; left: 0; z-index: 1; padding-left: 10px; }
+.imp-excel th { padding: 8px 8px 8px 0; white-space: normal; vertical-align: bottom; overflow-wrap: break-word; }
+.imp-excel td.gutter, .imp-excel th.gutter { padding-left: 6px; padding-right: 8px; }
 .imp-excel tr[data-stare] td.gutter { box-shadow: inset 4px 0 0 var(--c); }
 .imp-excel td.extras, .imp-excel th.extras { padding-left: 12px; }
-.imp-excel td.n strong { display: block; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.imp-excel td.n small { display: block; font-size: 13px; color: var(--slab); white-space: nowrap; }
+.imp-grila-pret { display: block; margin-top: 2px; }
+.imp-grila-pret strong { display: block; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.imp-grila-pret small { display: block; font-size: 13px; color: var(--slab); white-space: nowrap; }
+.imp-excel .imp-eticheta { white-space: normal; overflow-wrap: anywhere; }
 .imp-eticheta {
   display: inline-block; margin: 0 4px 4px 0; padding: 2px 8px; border-radius: 999px;
   background: var(--panou); font-size: 13px; white-space: nowrap;
 }
-.imp-grila-stare { min-width: 150px; }
 .imp-grila-stare .imp-poz-motiv { display: block; margin-top: 2px; font-size: 13.5px; }
-.imp-grila-actiuni { white-space: nowrap; }
-.imp-grila-actiuni button { min-height: 40px; padding: 8px 14px; font-size: 14px; }
-.imp-grila-actiuni button + button { margin-left: 6px; }
+.imp-grila-actiuni { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.imp-grila-actiuni:empty { display: none; }
+.imp .imp-grila-actiuni button { min-height: 40px; max-width: 100%; padding: 8px 10px; font-size: 14px; }
 /* Corectura, pe un rand sub pozitie, lipita de marginea vizibila a tabelului. */
 .imp-grila-editor > td { padding: var(--imp-gap); background: var(--accent-slab); }
-.imp-grila-editor .imp-editor {
-  position: sticky; left: var(--imp-gap); width: min(820px, calc(100cqw - 4 * var(--imp-gap)));
-  margin-top: 0;
-}
+.imp-grila-editor .imp-editor { max-width: 820px; margin-top: 0; }
 .imp-grila-editor .imp-editor input, .imp-grila-editor .imp-editor select,
 .imp-grila-editor .imp-editor textarea { width: 100%; min-height: 44px; padding: 8px 11px; font-size: 16px; }
 .imp-grila-editor .imp-rand-campuri select { width: 4.4em; }

@@ -189,6 +189,46 @@ describe("foaia ca în Excel", () => {
 
   it("corectura se deschide pe rândul de sub poziție, pe toată lățimea", () => {
     const html = grilaFoaie(foaie(), harta, { ...opt, vizibile: null, editIdx: 4 });
-    expect(html).toContain('<tr class="imp-grila-editor"><td colspan="8">');
+    // Trei coloane ale fisierului, numarul randului si cele doua ale noastre.
+    expect(html).toContain('<tr class="imp-grila-editor"><td colspan="6">');
+  });
+
+  it("coloanele goale pe toată foaia nu se desenează, iar lățimile însumează 100%", () => {
+    // Flower City: 16 coloane, 7 fara nimic sub antet. Fiecare cerea loc.
+    const f: FoaieBruta = {
+      nume: "F", coloane: 5,
+      antet: { rand: 1, celule: [celula("Nr"), celula("Denumire"), celula("Gol"), celula("UM"), celula("Tot gol")] },
+      randuri: [
+        { rand: 1, celule: [celula("Nr"), celula("Denumire"), celula("Gol"), celula("UM"), celula("Tot gol")] },
+        { rand: 2, celule: [celula(1), celula("Izolatie"), { v: null, span: 1 }, celula("ml"), { v: null, span: 1 }],
+          linie: { index: 4, foaie: "F", rand: 2, text: "Izolatie", celule: [] } },
+      ],
+    };
+    const html = grilaFoaie(f, harta, { ...opt, vizibile: null });
+    expect(html).not.toContain(">Gol<");
+    expect(html).not.toContain(">Tot gol<");
+    expect(html).toContain(">UM<");
+    // Editarea tine indexul celulei din fisier, nu pe cel de pe ecran.
+    expect(html).toMatch(/data-rand="2" data-cel="3">ml</);
+    const procente = [...html.matchAll(/<col style="width:([\d.]+)%">/g)].map((m) => Number(m[1]));
+    expect(procente).toHaveLength(1 + 3 + 2);
+    expect(procente.reduce((a, b) => a + b, 0)).toBeCloseTo(100, 0);
+  });
+
+  it("o celulă îmbinată cu text nu rămâne fără nicio coloană sub ea", () => {
+    const f: FoaieBruta = {
+      nume: "F", coloane: 3,
+      antet: { rand: 1, celule: [celula("Nr"), celula("Denumire"), celula("Nota")] },
+      randuri: [
+        { rand: 1, celule: [celula("Nr"), celula("Denumire"), celula("Nota")] },
+        { rand: 2, celule: [celula(1), celula("Izolatie"), { v: null, span: 1 }],
+          linie: { index: 4, foaie: "F", rand: 2, text: "Izolatie", celule: [] } },
+        { rand: 3, celule: [celula(2), celula("Alt rand"), { v: "Nota pe doua", span: 1 }] },
+        { rand: 4, celule: [{ v: "Capitol 2", span: 3 }] },
+      ],
+    };
+    const html = grilaFoaie(f, harta, { ...opt, vizibile: null });
+    expect(html).toContain("Capitol 2");
+    expect(html).toContain('colspan="3"');
   });
 });
