@@ -1,7 +1,7 @@
 # Stare curentă
 
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
-> Ultima actualizare: 15 septembrie 2026.
+> Ultima actualizare: 25 septembrie 2026.
 
 ## Contextul proiectului
 
@@ -435,7 +435,7 @@ golden files, nu sweep-ul. Valoarea s-a schimbat și în minus pe unele fișiere
 (Oferta 284: 24.052 → 23.788 €) — corect: regula de serie mută Di49 de pe
 rândul 54 pe 48, care e mai ieftin și e cel din oferta semnată.
 
-## Acoperirea față de ofertele semnate (actualizat 15 septembrie 2026)
+## Acoperirea față de ofertele semnate (actualizat 25 septembrie 2026)
 
 Din cele 9 fișiere de client, **4 sunt oferte** cu rând de TOTAL — restul sunt
 cereri, n-au cu ce fi comparate. Măsurat pe `--fara-model`, comparând registrul
@@ -443,12 +443,16 @@ generat cu totalul semnat. `tests/oferte-semnate.test.ts` ține cifrele ca
 clichetă: dacă cresc, se actualizează; dacă scad, s-a stricat ceva — sau e o
 scădere deliberată, explicată în `deCe`.
 
-| Ofertă semnată | pe ofertă (7 sep → 13 sep → 15 sep) | generat | semnat | |
+| Ofertă semnată | pe ofertă (7 sep → 13 sep → 15 sep → 25 sep) | generat | semnat | |
 |---|---|---|---|---|
-| Matari (goluri foc) | 53 → 53 → 53 | 12.692,04 | 12.692,04 | **100%** |
-| Oferta 27.04.2026 | 29 → 39 → **41** | 119.376,21 | 170.519,39 | 70% |
-| Oferta 284 Transavia | 61 → 85 → 85 | 74.993,76 | 94.575,06 | 79% |
-| Anexa 1 / 06.12.2024 | 0 → 0 → 0 | 0,00 | 706,90 | **0%** |
+| Matari (goluri foc) | 53 → 53 → 53 → 53 | 12.692,04 | 12.692,04 | **100%** |
+| Oferta 27.04.2026 | 29 → 39 → **41** → 41 | 119.376,21 | 170.519,39 | 70% |
+| Oferta 284 Transavia | 61 → 85 → 85 → **83** | 74.376,48 | 94.575,06 | 79% |
+| Anexa 1 / 06.12.2024 | 0 → 0 → 0 → 0 | 0,00 | 706,90 | **0%** |
+
+Scăderea din 25 septembrie la Oferta 284 e deliberată: cele două coturi Di169
+cu UM `ml` ieșeau „Gata” la jumătate de preț, acum merg la „De validat” —
+vezi „25 septembrie 2026”, mai jos.
 
 Distincția care contează: **nu e o problemă de preț, e una de acoperire.**
 Prețurile pe liniile care ies sunt comparate linie cu linie cu oferta semnată:
@@ -456,7 +460,9 @@ Prețurile pe liniile care ies sunt comparate linie cu linie cu oferta semnată:
 - **Oferta 284** — **83 din 85** de prețuri unitare exacte. Cele două diferite
   sunt `Di169, g50 - COT` cu UM `ml` în fișierul clientului: UM-ul decide forma,
   deci iese prețul pe ml (51,44), oferta are cotul (102,88). E fișierul, nu
-  motorul. Restul de 13 netarifate sunt grosimi inexistente în listă.
+  motorul. Restul de 13 netarifate sunt grosimi inexistente în listă. Din 25
+  septembrie 2026 cele două coturi nu mai ies „Gata”: textul (COT) și UM-ul
+  (`ml`) se contrazic și dau prețuri diferite, deci poziția merge la om.
 - **Oferta 27.04.2026** — **43** de prețuri exacte (erau 20, apoi 37). Ce diferă
   e marcat: ø90 și ø160 (rotunjire, întrebarea 3), 3 peste maximul listei
   (întrebarea 4), grosimi inexistente. Rândurile 44–47 (DN20–DN40), care
@@ -573,6 +579,58 @@ schimbat, se recitește și intră în `descrieriSchimbate` (salvat în istoric)
 motivul „Descrierea s-a schimbat după verificare". Cantitatea schimbată nu atinge
 verificarea: nu e descriere.
 
+## 25 septembrie 2026: audit, stratul cu model, foaia fără derulare
+
+Audit cerut de Andrei: sunt corecte calculele de la import și își face
+modelul treaba? Măsurat, nu citit: fiecare preț unitar calculat comparat cu
+cel din oferta semnată (testele verificau până acum doar totaluri și
+acoperire), plus simulări ale stratului cu model și `npm run golden --
+--verifica` pe modelul real.
+
+**Prețurile ies corect.** Pe stratul determinist: Oferta 284 — 83 din 85 de
+prețuri unitare exacte; Oferta 27.04.2026 — 43 exacte, cele 4 diferite toate
+marcate (ø90, ø160 SPIRO ×2, DTIP8); Matari — 53 din 53, total exact. Toate
+pozițiile fără preț au cauză. Ce nu era în regulă stătea în jurul calculelor:
+
+| Problemă | Efect măsurat | Acum |
+|---|---|---|
+| „Di169, g50 - COT” cu UM `ml` | 51,44 € „Gata”, oferta are 102,88 € (−50%, tăcut) | tarifează ambele forme; diferite → `forma_contrazisa`, „De validat” |
+| Modelul nu primea antetul de secțiune | pe Matari, 12 poziții își iau sistemul doar din el | secțiunea pleacă la model, doar pentru sistem; intră și în cheia de șablon (+1 linie trimisă pe 10 fișiere) |
+| `sistem: null` de la model suprascria citirea parțială | acele 12 poziții ar fi dispărut din „Netarifate”, fără cauză | `null` nu mai șterge ce știa determinismul |
+| Indecșii întorși de model nu se filtrau | un index străin suprascria o linie citită de reguli | doar indecșii trimiși; un index dublu se aruncă (`modelFaraRaspuns`) |
+| La `temperature 0`, o rulare a pus `tabla_inox` ca strat pe țeavă la 14 casete Transavia, următoarea nu | jacheta pe primul rând mută toată geometria | `jachetaLaExterior` înainte de tarifare, plus regula în prompt |
+
+A/B pe cele 10 fișiere, înainte și după: singura diferență sunt cele 4 coturi
+Di169 cu UM `ml` (2 în cerere, 2 în Oferta 284), trecute la validare. La Di76
+cotul are coeficient 1, același preț, deci nu se aprinde. Golden: 16/16 și
+35/35 cu promptul nou.
+
+**Cererea Abur față de Oferta 284**, poziție cu poziție (99 = 99, aceleași
+DN-uri și forme):
+
+| Import cerere | exacte | diferite | fără preț |
+|---|---|---|---|
+| așa cum e | 64 | 2 | 33 (24 fără grosime) |
+| + grosimea uzuală | 67 | 23 | 9 |
+| + grosimea din oferta semnată, pusă din editor | **82** | 2 | 15 |
+
+Cererea nu scrie grosimea casetelor, iar grosimile uzuale nu sunt cele
+TRANSAVIA (excepția clientului). Cu grosimea pusă de om, rămân cele 2 coturi
+Di169 (marcate) și 13 poziții cu vată 40 mm la DN15 / Di21 (întrebarea 18).
+
+**Ecranul de import.** Meniul se pliază singur cât e un fișier deschis —
+temporar, fără să schimbe preferința; redeschis de om, rămâne deschis. Foaia
+ca în Excel încape pe lățimea ecranului: `table-layout: fixed`, coloanele goale
+nu se desenează, descrierea cedează loc și se rupe pe rânduri, coloanele
+noastre sunt două („Am înțeles · preț”, „Stare”) cu butoanele pe un rând. Sub
+~1000 px de ecran de import pornește ca listă. Verificat cu Playwright: 10
+fișiere × 5 lățimi (390–1920 px), zero derulare laterală, nicio eroare.
+
+**Rămâne deschis din audit:** cuprul se convertește încă pe seria de oțel,
+nemarcat (DN15 → rândul 22 în loc de 18) — azi nu apare în niciun fișier, dar
+prima cerere cu cupru ar ieși greșit tăcut. Și confuzia între două numere care
+apar amândouă în text („inox 304 Di89”) nu o prinde niciun validator.
+
 ## Întrebări deschise către firmă
 
 Astea blochează arhitectura, nu doar implementarea:
@@ -682,7 +740,7 @@ contract, stoc și facturare.
 ## Comenzi
 
 ```bash
-npm test                                       # 482 de teste (motor, import, baza, ofertă, editor)
+npm test                                       # 501 teste (motor, import, baza, ofertă, editor, meniu)
 npm run typecheck
 npm run dev                                    # UI local, /izorep/
 npm run import -- ../attachments/clienti/cerere-de-oferta-spital.xlsx   # pipeline complet
