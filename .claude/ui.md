@@ -281,6 +281,21 @@ Principiul: ce trebuie făcut se vede din așezare, nu dintr-un text explicativ.
   „Material" singur în stânga cu un gol cât tot blocul de sub el. Celulele cu
   text își iau numele coloanei din antet, sau litera ei („Coloana B") când
   foaia n-are antet: două celule pe același rând arătau amândouă „Descriere".
+- **Prețul pus de mână** (25 septembrie 2026): ultimul câmp din editor,
+  „Preț unitar pus de mână (€)”, gol = prețul din listă. Pentru ce nu acoperă
+  listele — distribuitorul de abur, livrarea țevii cu izolația inclusă,
+  protecția la foc a tubulaturii — care altfel n-aveau niciun drum spre foaia
+  `Ofertă`. Poziția trece „Gata”, cardul scrie „preț pus de mână”, iar nota
+  păstrează ce dădea lista. Se ține separat de extragere
+  (`OptiuniNucleu.preturiManuale`, salvat în istoric), deci doar prețul
+  schimbat nu face din rând o corectură și nu învață șabloane. Registrul
+  listează rândurile cu preț pus de mână în „Cum a fost calculată oferta”.
+  Verificat în browser: cererea TRANSAVIA + distribuitorul la 2.296,70 +
+  „Confirmă toate cele 13” dă în pasul 3 exact 94.575,06 €, totalul Ofertei
+  284. Editorul, cu câmpul nou, fără derulare laterală la 390–1920 px, în
+  ambele teme, în listă și în foaie. Tot atunci: în editorul deschis în foaie,
+  `.tabelwrap select { min-width: 13ch }` împingea cifra diametrului sub
+  „Grosime”; `min-width: 0` pe notația diametrului.
 - **Acțiunile în masă apar doar sub filtrul lor**: „Pune grosimea uzuală la N
   poziții" (le trimite la „De verificat", nu le confirmă) și „Confirmă toate
   cele N". Nu există confirmare pe tot fișierul.

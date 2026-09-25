@@ -906,7 +906,9 @@ button.filtru[aria-pressed="true"], button.filtru.activ {
 .imp-grila-editor .imp-editor { max-width: 820px; margin-top: 0; }
 .imp-grila-editor .imp-editor input, .imp-grila-editor .imp-editor select,
 .imp-grila-editor .imp-editor textarea { width: 100%; min-height: 44px; padding: 8px 11px; font-size: 16px; }
-.imp-grila-editor .imp-rand-campuri select { width: 4.4em; }
+/* `.tabelwrap select` cere 13ch, pentru select-urile din tabele; aici ar
+   impinge cifra diametrului sub „Grosime" (editorul deschis in foaie). */
+.imp-grila-editor .imp-rand-campuri select { width: 4.4em; min-width: 0; }
 .imp-grila-editor .imp-scoate { width: 44px; padding: 0; }
 
 .imp-detalii { font-size: 14px; color: var(--slab); }

@@ -103,6 +103,12 @@ export interface RezultatTarifare {
    */
   noteDeVerificat?: string[];
   /**
+   * Pretul unitar l-a pus omul, nu motorul: pozitii fara regula in liste
+   * (echipamente la comanda, livrarea tevii cu izolatia inclusa). `straturi` e
+   * gol; nota spune ce dadea lista.
+   */
+  manual?: true;
+  /**
    * Aceleasi note de verificat, ca valori pe care ecranul le poate numara si
    * scrie in cuvinte simple. Textul din `noteDeVerificat` ramane pentru
    * registru si pentru cine vrea detaliul.

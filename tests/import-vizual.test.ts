@@ -261,3 +261,19 @@ describe("foile ca taburi", () => {
     expect(html).not.toContain('data-filtru="');
   });
 });
+
+describe("prețul pus de mână", () => {
+  const manuala = (): LinieProcesata => ({
+    ...linie(),
+    pret: { straturi: [], pret_unitar: 2296.7, multiplicator: 1, cantitate: 1, total: 2296.7, moneda: "EUR", manual: true },
+  });
+
+  it("editorul are câmpul, gol când prețul vine din listă", () => {
+    expect(editorPozitie(linie({ pret: true }))).toMatch(/name="pret_manual"[^>]*value=""/);
+  });
+
+  it("editorul arată prețul pus, iar cardul spune de unde vine", () => {
+    expect(editorPozitie(manuala())).toMatch(/name="pret_manual"[^>]*value="2296.7"/);
+    expect(cardPozitie(manuala(), { propunere: null, editeaza: false, cuFoaie: false })).toContain("preț pus de mână");
+  });
+});

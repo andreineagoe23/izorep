@@ -113,6 +113,9 @@ export function inteles(e: LinieExtrasa, pret?: LinieProcesata["pret"]): string[
     return [MATERIAL.goluri_foc,
       ...(e.gol_latime_mm !== null && e.gol_inaltime_mm !== null ? [`gol ${e.gol_latime_mm}×${e.gol_inaltime_mm} mm`] : [])];
   }
+  if (pret && "manual" in pret && pret.manual) {
+    return [`${MATERIAL[e.sistem]}${mm(e.grosime_mm)}`, "preț pus de mână"];
+  }
   const d = diametruCuConversie(e);
   const forma = e.forma ? FORMA[e.forma] : undefined;
   const straturi = pret && "straturi" in pret ? pret.straturi : [];

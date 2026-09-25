@@ -74,6 +74,8 @@ export async function importaFisier(
     faraMapare?: boolean;
     /** Memoria de sabloane. Implicit cea de pe disc; teste dau alta. */
     stoc?: StocSabloane;
+    /** Preturile puse de om. Vezi `OptiuniNucleu.preturiManuale`. */
+    preturiManuale?: ReadonlyMap<number, number>;
   } = {},
 ): Promise<RaportImport> {
   const prag = optiuni.pragIncredere
@@ -90,6 +92,7 @@ export async function importaFisier(
   const opt: OptiuniNucleu = {
     stoc, prag,
     ...(mapari ? { mapari } : {}),
+    ...(optiuni.preturiManuale ? { preturiManuale: optiuni.preturiManuale } : {}),
     ...(optiuni.faraModel ? {} : { extrage: (linii) => extrageCuModel(linii, optiuni) }),
   };
 

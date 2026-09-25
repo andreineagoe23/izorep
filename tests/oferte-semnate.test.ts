@@ -291,3 +291,26 @@ describe("registrul generat din cererea TRANSAVIA are rândurile Ofertei 284", (
     expect(total).toBe(bani(94575.06 - 2296.70));
   });
 });
+
+describe("prețul pus de om închide oferta semnată", () => {
+  const CERERE = `${DIR}/cerere-de-oferta-transavia-abur.xlsx`;
+
+  it("cererea TRANSAVIA + distribuitorul de abur pus de mână (2.296,70) = totalul Ofertei 284", async () => {
+    if (!existsSync(CERERE)) return;
+    const fara = await importaFisier(CERERE, { faraModel: true, stoc: stocInMemorie() });
+    const distribuitor = fara.linii.find((l) => /DISTRIBUITOR ABUR/.test(l.bruta.text))!;
+    expect(distribuitor.pret).toBeUndefined();
+
+    const cerere = await importaFisier(CERERE, {
+      faraModel: true, stoc: stocInMemorie(), preturiManuale: new Map([[distribuitor.extras.index, 2296.70]]),
+    });
+    const d = cerere.linii.find((l) => l.extras.index === distribuitor.extras.index)!;
+    expect(d.pret!.pret_unitar).toBe(2296.70);
+    expect(d.necesitaValidare).toBe(false);
+    expect(d.pret!.note!.join(" ")).toContain("pus de om");
+
+    // „Confirmă toate cele 13”, ca în ecran.
+    const confirmate = cerere.linii.map((l) => (l.pret ? { ...l, necesitaValidare: false } : l));
+    expect(totalOferta(imparte(confirmate).oferta)).toBe(94575.06);
+  });
+});

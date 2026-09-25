@@ -15,7 +15,7 @@ import {
 import { grupeazaPeSablon, extindePeSablon, type LinieSursa } from "./sabloane.js";
 import { aplicaMemorie, type StocSabloane } from "./memorie.js";
 import type { LinieExtrasa, Sursa } from "./schema.js";
-import { tarifeaza, tarifeazaPeMp } from "../pricing/engine.js";
+import { bani, tarifeaza, tarifeazaPeMp } from "../pricing/engine.js";
 import { tarifeazaGolFoc } from "../pricing/goluri-foc.js";
 import {
   PozitieNetarifata,
@@ -102,6 +102,17 @@ export interface OptiuniNucleu {
    * avea de unde sti ca fusese verificata. Ecranul il salveaza in istoric.
    */
   descrieriSchimbate?: Set<number>;
+  /**
+   * Preturile unitare puse de om, pe indexul liniei, in EUR. Pentru pozitiile
+   * pe care listele nu le acopera: distribuitorul de abur din Oferta 284
+   * (2.296,70, echipament la comanda), livrarea tevii cu izolatia inclusa,
+   * protectia la foc a tubulaturii. Fara ele, registrul ramanea sub oferta
+   * semnata cu exact acele pozitii — n-aveau niciun drum spre foaia `Ofertă`.
+   *
+   * Bate tarifarea, dar nu o ascunde: nota spune ce dadea lista. E al
+   * apelantului, ca `grosimiPropuse`, si se salveaza in istoric.
+   */
+  preturiManuale?: ReadonlyMap<number, number>;
   laProgres?: (p: Progres) => void;
 }
 
@@ -636,6 +647,7 @@ function construiesteLinii(
   destinatie: Destinatie,
   grosimiPropuse?: ReadonlyMap<number, number>,
   descrieriSchimbate?: ReadonlySet<number>,
+  preturiManuale?: ReadonlyMap<number, number>,
 ): LinieProcesata[] {
   const linii: LinieProcesata[] = [];
   const deLaConducte = grosimiDeLaConducte(brute, rezolvate);
@@ -783,6 +795,19 @@ function construiesteLinii(
       // modelului. Ramane netarifata si vizibila prin `eroare`/absenta lui
       // `pret`, dar nu intra la coada de validare de plauzibilitate.
       if (sursa !== "om") proc.necesitaValidare = true;
+    }
+    const manual = extras.sistem !== null ? preturiManuale?.get(b.index) : undefined;
+    if (manual !== undefined) {
+      const cantitate = b.cantitate ?? 1;
+      const dinListe = t.pret ? `din liste iesea ${t.pret.pret_unitar} €` : `din liste: ${t.eroare ?? "fara pret"}`;
+      proc.pret = {
+        straturi: [], pret_unitar: bani(manual), multiplicator: 1, cantitate,
+        total: bani(manual * cantitate), moneda: "EUR", manual: true,
+        note: [`pret unitar pus de om: ${bani(manual)} €; ${dinListe}`],
+      };
+      delete proc.eroare;
+      delete proc.codEroare;
+      proc.necesitaValidare = false;
     }
     linii.push(proc);
   }
@@ -941,7 +966,7 @@ export async function proceseazaRegistru(foi: FoaieBruta[], o: OptiuniNucleu): P
   completeazaCuPartiale(rezolvate, partiale);
   stampileazaText(brute, rezolvate);
   const linii = construiesteLinii(
-    brute, rezolvate, prag, o.destinatie ?? "rezidential", o.grosimiPropuse, o.descrieriSchimbate,
+    brute, rezolvate, prag, o.destinatie ?? "rezidential", o.grosimiPropuse, o.descrieriSchimbate, o.preturiManuale,
   );
   o.laProgres?.({ faza: "tarifare", gata: linii.length, total: brute.length });
 
@@ -1048,7 +1073,7 @@ export function reevalueaza(rez: Rezultat, o: OptiuniNucleu): void {
   stampileazaText(brute, rezolvate);
   rez.rezolvate = rezolvate;
   rez.linii = construiesteLinii(
-    brute, rezolvate, prag, o.destinatie ?? "rezidential", o.grosimiPropuse, schimbate,
+    brute, rezolvate, prag, o.destinatie ?? "rezidential", o.grosimiPropuse, schimbate, o.preturiManuale,
   );
   rez.statistici = {
     ...statisticiDeterministe(rez.foi, foiMapate, brute, rez.linii),

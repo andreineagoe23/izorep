@@ -730,6 +730,14 @@ modelului; niciuna cu preț „Gata”). `scripts/golden.ts` tarifa la înregist
 fără textul rândului, iar testul rejoacă cu el: un golden proaspăt pica pe
 regulile care depind de text. Acum amândouă îl folosesc.
 
+**Prețul pus de mână.** Pozițiile fără regulă în liste (distribuitorul de
+abur, livrarea țevii cu izolație, protecția la foc) n-aveau cum ajunge în
+ofertă, deci registrul generat rămânea mereu sub cel semnat. Acum omul pune
+prețul unitar în editor (vezi `ui.md`). Cererea TRANSAVIA importată, cu
+distribuitorul la 2.296,70 și cele 13 celule deduse confirmate, dă **94.575,06
+€ = Oferta 284**, la ban (test în `oferte-semnate.test.ts` și verificat în
+browser).
+
 ## Întrebări deschise către firmă
 
 Astea blochează arhitectura, nu doar implementarea:
@@ -841,7 +849,7 @@ de acoperire, restul sunt produs.
 ## Comenzi
 
 ```bash
-npm test                                       # 547 de teste (motor, import, baza, ofertă, ecran, meniu)
+npm test                                       # 550 de teste (motor, import, baza, ofertă, ecran, meniu)
 npm run typecheck
 npm run dev                                    # UI local, /izorep/
 npm run import -- ../attachments/clienti/cerere-de-oferta-spital.xlsx   # pipeline complet

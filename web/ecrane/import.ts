@@ -99,6 +99,8 @@ export const ecran: Ecran = {
     let grosimiPropuse = new Map<number, number>();
     /** Descrierile schimbate dupa verificare. Vezi `OptiuniNucleu.descrieriSchimbate`. */
     let descrieriSchimbate = new Set<number>();
+    /** Preturile puse de mana. Vezi `OptiuniNucleu.preturiManuale`. */
+    let preturiManuale = new Map<number, number>();
     let pas: Pas = 1;
     let sesiune: Sesiune | null = null;
     let istoric: IntrareIstoric[] = [];
@@ -126,7 +128,7 @@ export const ecran: Ecran = {
     let ceasMesaj: ReturnType<typeof setTimeout> | undefined;
     let ceasSalvare: ReturnType<typeof setTimeout> | undefined;
 
-    const optiuni = () => ({ stoc, mapari, prag, destinatie, grosimiPropuse, descrieriSchimbate });
+    const optiuni = () => ({ stoc, mapari, prag, destinatie, grosimiPropuse, descrieriSchimbate, preturiManuale });
 
     gazda.innerHTML = `<div class="imp">
       <nav id="imp-pasi" aria-label="Pașii importului"></nav>
@@ -188,6 +190,7 @@ export const ecran: Ecran = {
           destinatie,
           grosimiPropuse: [...grosimiPropuse],
           descrieriSchimbate: [...descrieriSchimbate],
+          preturiManuale: [...preturiManuale],
         }).then(async () => { istoric = await listeaza(); });
       }, 400);
     }
@@ -425,12 +428,27 @@ export const ecran: Ecran = {
         if (i >= 0) s.editari[i] = editare; else s.editari.push(editare);
       }
       reconstruieste(rand);
+      // Pretul pus de mana nu e o corectura a extragerii: se tine separat.
+      const pmVechi = preturiManuale.get(idx);
+      const pmScris = (form.querySelector<HTMLInputElement>('[name="pret_manual"]')?.value ?? "").trim().replace(",", ".");
+      const pmNou = pmScris === "" || !(Number(pmScris) > 0) ? undefined : Number(pmScris);
+      const pretSchimbat = pmNou !== pmVechi;
+      if (pmNou === undefined) preturiManuale.delete(idx); else preturiManuale.set(idx, pmNou);
       const inapoi = (): void => {
         celuleVechi.forEach((v, cel) => { if (rand.celule[cel]?.v !== v) scrieCelula(rand, cel, v); });
         reconstruieste(rand);
         s.editari.splice(0, s.editari.length, ...editariVechi);
+        if (pmVechi === undefined) preturiManuale.delete(idx); else preturiManuale.set(idx, pmVechi);
       };
 
+      if (form.dataset["atins"] !== "da" && !descriereNoua && pretSchimbat) {
+        retarifeaza();
+        editIdx = null;
+        arataMesaj(pmNou === undefined
+          ? "Prețul pus de mână a fost scos: poziția ia prețul din listă."
+          : "Prețul pus de mână a fost salvat.", () => { inapoi(); retarifeaza(); });
+        return;
+      }
       if (form.dataset["atins"] === "da" || !descriereNoua) {
         corecteaza(idx, patchDinFormular(new FormData(form)), true, inapoi);
         return;
@@ -507,6 +525,7 @@ export const ecran: Ecran = {
       destinatie = s.destinatie ?? "rezidential";
       grosimiPropuse = new Map(s.grosimiPropuse ?? []);
       descrieriSchimbate = new Set(s.descrieriSchimbate ?? []);
+      preturiManuale = new Map(s.preturiManuale ?? []);
       const rez = await proceseazaRegistru(foi, optiuni());
       for (const x of s.extrase) {
         rez.rezolvate.set(x.index, { extras: x.extras, sursa: x.sursa, ...(x.text !== undefined ? { text: x.text } : {}) });
@@ -564,6 +583,7 @@ export const ecran: Ecran = {
         // Propunerile tin de indecsii fisierului de dinainte.
         grosimiPropuse = new Map();
         descrieriSchimbate = new Set();
+        preturiManuale = new Map();
         const rez = await proceseazaRegistru(foi, { ...optiuni(), ...(extractor ? { extrage: extractor } : {}) });
         deschideSesiune({
           foi, rez, editari: [],
@@ -782,7 +802,7 @@ export const ecran: Ecran = {
       if (!form) return;
       // Un camp extras atins face din salvare corectura omului. Descrierea,
       // UM-ul si cantitatea nu: alea se recitesc (vezi `salveazaEditor`).
-      if (!["text", "um", "cantitate"].includes(t.name)) form.dataset["atins"] = "da";
+      if (!["text", "um", "cantitate", "pret_manual"].includes(t.name)) form.dataset["atins"] = "da";
       if (t.name === "sistem") {
         const gol = t.value === "goluri_foc";
         form.querySelector<HTMLElement>(".imp-editor-teava")!.hidden = gol || t.value === "";
@@ -812,7 +832,7 @@ export const ecran: Ecran = {
       const camp = e.target as HTMLElement;
       const editor = camp.closest<HTMLFormElement>(".imp-editor");
       if (editor) {
-        if (!["text", "um", "cantitate"].includes((camp as HTMLInputElement).name)) editor.dataset["atins"] = "da";
+        if (!["text", "um", "cantitate", "pret_manual"].includes((camp as HTMLInputElement).name)) editor.dataset["atins"] = "da";
         return;
       }
       const s = sesiune;

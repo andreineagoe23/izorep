@@ -329,6 +329,14 @@ export async function registruOferta(c: CerereOferta): Promise<ArrayBuffer> {
       `${deValidat.length} de validat, ${netarifate.length} netarifate — vezi foile următoare`,
     ],
   ];
+  // Un pret pus de om nu vine din nicio lista: rândul lui trebuie găsit în
+  // registru, nu doar în sesiunea de import.
+  const manuale = oferta.filter((l) => l.pret && "manual" in l.pret && l.pret.manual);
+  if (manuale.length > 0) {
+    detalii.push(["Prețuri puse de mână", manuale
+      .map((l) => `rândul ${l.bruta.rand}${l.bruta.foaie ? ` (${l.bruta.foaie})` : ""}: ${l.pret!.pret_unitar} €`)
+      .join("; ")]);
+  }
   detalii.forEach(([k, v], i) => {
     ws.getCell(`A${prov + 1 + i}`).value = k;
     ws.getCell(`B${prov + 1 + i}`).value = v;

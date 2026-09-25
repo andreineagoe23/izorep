@@ -369,6 +369,12 @@ export function editorPozitie(l: LinieProcesata, o: OptiuniEditor = {}): string 
       <datalist id="ed-um-${i}"><option value="ml"></option><option value="buc"></option><option value="mp"></option></datalist></label>` : ""}`;
 
   const ajutor = ajutorDiametru(l);
+  // Pretul pus de mana: pentru ce nu acopera listele (echipamente la comanda,
+  // livrarea tevii cu izolatia inclusa). Gol = pretul din lista.
+  const manual = l.pret && "manual" in l.pret && l.pret.manual ? String(l.pret.pret_unitar) : "";
+  const pretManual = `<label class="imp-editor-pret">Preț unitar pus de mână (€)
+      <input name="pret_manual" type="number" inputmode="decimal" step="any" min="0" value="${manual}" placeholder="din listă" />
+      <span class="imp-ajutor">Gol = prețul din listă. Pentru ce nu acoperă listele.</span></label>`;
 
   return `<form class="imp-editor" data-idx="${i}">
     <p class="imp-editor-titlu">Corectează poziția · rândul ${l.bruta.rand} din fișier</p>
@@ -404,6 +410,7 @@ export function editorPozitie(l: LinieProcesata, o: OptiuniEditor = {}): string 
         <label>Înălțime gol (mm)<input name="gol_inaltime" type="number" inputmode="numeric" min="0" value="${val(e.gol_inaltime_mm)}" /></label>
       </div>
       ${cantitate}
+      ${pretManual}
     </div>
     ${liste}
     <div class="imp-editor-butoane">

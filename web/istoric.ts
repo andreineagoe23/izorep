@@ -63,6 +63,8 @@ export interface SesiuneImport extends IntrareIstoric {
   grosimiPropuse?: [number, number][];
   /** Vezi `OptiuniNucleu.descrieriSchimbate`. */
   descrieriSchimbate?: number[];
+  /** Preturile unitare puse de om, `[index, EUR]`. Vezi `OptiuniNucleu.preturiManuale`. */
+  preturiManuale?: [number, number][];
 }
 
 /**
