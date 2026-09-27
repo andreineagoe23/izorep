@@ -738,7 +738,8 @@ browser).
 
 ## Pentru întâlnirea cu firma (25 septembrie 2026)
 
-Ordonate după cât deblochează pe cele 10 fișiere. Tot restul s-a dedus din
+Varianta scurtă, de dus la firmă: `docs/intrebari-firma.md`. Ordonate după
+cât deblochează pe cele 10 fișiere. Tot restul s-a dedus din
 date și e în cod, marcat unde dovada e subțire. Numerele din paranteză sunt cele
 din lista completă de mai jos (codul le citează).
 
