@@ -867,6 +867,8 @@ button.filtru[aria-pressed="true"], button.filtru.activ {
  * antet (pozitionata absolut) iesea din zona care se deruleaza si latea
  * documentul la 809 px pe un telefon de 360 — browserul micsora toata pagina.
  */
+/* Un tabel intr-un card (stocul, materialele necesare): cardul e deja chenarul. */
+.imp-card .tabelwrap { margin: 0; padding: 0; border: 0; border-radius: 0; box-shadow: none; background: none; }
 .imp-excel .tabelwrap { position: relative; margin: 0; padding: 0; border: 0; border-radius: 8px; background: none; }
 /*
  * Foaia incape pe latimea ecranului, fara derulare laterala (cerut pe 25

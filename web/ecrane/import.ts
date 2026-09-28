@@ -16,6 +16,9 @@ import { cate, esc, type Ecran } from "./tip.js";
 import { FIRME } from "../date/seed.js";
 import { clientPropus, dataAzi, imparte, registruOferta, totalOferta, type AntetOferta } from "../oferta.js";
 import { descarca, numeOferta } from "../descarca.js";
+import { ADAOS_IMPLICIT, necesarDinLinii } from "../../src/stoc/necesar.js";
+import { cardNecesar } from "../stoc-vizual.js";
+import { citesteDepozit, idNou, scrieDepozit } from "../depozit-local.js";
 import {
   idCurent, incarca, listeaza, puneCurent, salveaza, sterge,
   type EditareCelula, type IntrareIstoric, type SesiuneImport,
@@ -110,6 +113,8 @@ export const ecran: Ecran = {
     let editIdx: number | null = null;
     /** Foaia ca in Excel e vederea implicita pe ecran lat; lista de carduri e la un clic. */
     let excel = true;
+    /** Adaosul pentru coturi si fitinguri din cardul „Materiale necesare". */
+    let adaosNecesar = ADAOS_IMPLICIT;
     let detaliiDeschise = false;
     let stergeDe: string | null = null;
     let eroareStart = "";
@@ -219,7 +224,7 @@ export const ecran: Ecran = {
           gata: oferta.length, valoare: totalOferta(oferta),
           deVerificat: deValidat.length, faraPret: netarifate.length,
           destinatie, client: clientPropus(sesiune.meta.nume), data: dataAzi(), firme: FIRME, eroare: "",
-        });
+        }) + cardNecesar(necesarDinLinii(sesiune.rez.linii, adaosNecesar));
       }
     }
 
@@ -643,6 +648,27 @@ export const ecran: Ecran = {
       }
     }
 
+    /**
+     * Necesarul ofertei, trimis la depozit. Unul pe fisier: retrimis dupa o
+     * corectura, il inlocuieste pe cel vechi, pastrand santierul ales acolo.
+     */
+    function trimiteLaDepozit(): void {
+      const s = sesiune;
+      if (!s) return;
+      const n = necesarDinLinii(s.rez.linii, adaosNecesar);
+      const obiectiv = pagina.querySelector<HTMLInputElement>('[name="obiectiv"]')?.value.trim() ?? "";
+      const st = citesteDepozit();
+      const vechi = st.necesare.find((x) => x.fisier === s.meta.nume);
+      const nou = {
+        id: vechi?.id ?? idNou(), creat: new Date().toISOString(), fisier: s.meta.nume,
+        obiectiv: obiectiv || vechi?.obiectiv || "", adaos: n.adaos, materiale: n.materiale,
+        faraNecesar: n.faraNecesar.length, ...(vechi?.santier ? { santier: vechi.santier } : {}),
+      };
+      const pastrat = scrieDepozit({ ...st, necesare: [nou, ...st.necesare.filter((x) => x !== vechi)] });
+      if (!pastrat) { arataMesaj("Browserul nu permite salvarea: necesarul nu a putut fi trimis."); return; }
+      location.hash = "#/stoc";
+    }
+
     /* ---------------------------------------------------------- evenimente */
     function legaDrop(): void {
       const drop = pagina.querySelector<HTMLElement>("#drop");
@@ -703,6 +729,7 @@ export const ecran: Ecran = {
         }
         case "schimba-fisier": pas = 1; editIdx = null; deseneaza(); scrollTo({ top: 0 }); return;
         case "la-verificare": pas = 2; deseneaza(); scrollTo({ top: 0 }); return;
+        case "trimite-depozit": trimiteLaDepozit(); return;
         case "excel": excel = !excel; editIdx = null; deseneaza(); return;
         case "modifica":
           editIdx = editIdx === idx ? null : idx;
@@ -795,6 +822,12 @@ export const ecran: Ecran = {
         destinatie = t.value as Destinatie;
         retarifeaza();
         if (pas !== 1) deseneaza();
+        return;
+      }
+      if (t.id === "adaos-necesar" && sesiune) {
+        // Doar cardul: o redesenare a pasului ar sterge datele ofertei deja scrise.
+        adaosNecesar = Number(t.value);
+        pagina.querySelector("#necesar")!.outerHTML = cardNecesar(necesarDinLinii(sesiune.rez.linii, adaosNecesar));
         return;
       }
       if (t.dataset["act"] === "filtru") { filtru = t.value as FiltruStare; motiv = null; editIdx = null; deseneaza(); return; }

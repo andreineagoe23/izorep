@@ -1,6 +1,8 @@
 import { atentionare, card, esc, eur, indicator, nota, nr, progres, stare, tabel, type Ecran } from "./tip.js";
 import { CURS_BNR, DOCUMENTE, LUCRARI, client, santier, type StareLucrare } from "../date/seed.js";
 import { vedeCosturi } from "../nav.js";
+import { citesteDepozit } from "../depozit-local.js";
+import { deComandatPeNecesar } from "./stoc.js";
 
 /** Eticheta afisata si tonul indicatorului `stare()`, per stare de lucrare. */
 const ETICHETA_STARE: Record<StareLucrare, { text: string; ton: "ok" | "atentie" | "neutru" }> = {
@@ -82,6 +84,15 @@ function sectiuneAtentie(): string {
       html: `Oferta${oferteTrimise.length > 1 ? "le" : ""} <b>${numere}</b> ${
         oferteTrimise.length > 1 ? "sunt trimise" : "e trimisă"
       } și așteaptă răspuns de la client.`,
+    });
+  }
+
+  for (const { necesar, articole } of deComandatPeNecesar(citesteDepozit())) {
+    if (articole === 0) continue;
+    itemi.push({
+      href: "#/stoc",
+      html: `Pentru <b>${esc(necesar.obiectiv || necesar.fisier)}</b> ${articole === 1
+        ? "e un material" : `sunt <b>${nr(articole)}</b> materiale`} de comandat.`,
     });
   }
 

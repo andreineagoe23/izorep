@@ -9,7 +9,7 @@ export interface GrupMeniu {
 }
 
 /**
- * Meniul contine doar destinatii care exista. Sapte intrari, doua grupuri:
+ * Meniul contine doar destinatii care exista. Opt intrari, doua grupuri:
  * fluxul zilnic sus, nomenclatoarele care se ating rar dedesubt.
  *
  * Varianta anterioara amesteca ecrane livrate cu module viitoare in cinci
@@ -24,6 +24,7 @@ export const MENIU: GrupMeniu[] = [
     { id: "documente", eticheta: "Cereri și oferte" },
     { id: "deviz", eticheta: "Calcul deviz" },
     { id: "import", eticheta: "Import Excel" },
+    { id: "stoc", eticheta: "Depozit și stoc" },
   ]},
   { titlu: "Nomenclatoare", itemi: [
     { id: "clienti", eticheta: "Clienți" },
@@ -33,7 +34,6 @@ export const MENIU: GrupMeniu[] = [
 
 /** Module care fac parte din sistem, dar nu sunt livrate in aceasta etapa. */
 export const VIITOR: string[] = [
-  "Depozit și stoc",
   "Aplicația de teren",
   "Situații de lucrări",
   "Facturi",

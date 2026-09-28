@@ -33,7 +33,7 @@ function notaInchidere(): string {
   return nota(
     `O lucrare nu se poate închide cu sold de material nezero pe gestiunea de șantier: la închidere, sistemul ` +
       `cere o decizie explicită pentru fiecare poziție rămasă — retur, casare sau facturare suplimentară. ` +
-      `Modulul de depozit și stoc care ține această gestiune urmează.`
+      `Materialul pe șantier și necesarul fiecărei lucrări se văd în <a href="#/stoc">Depozit și stoc</a>.`
   );
 }
 
