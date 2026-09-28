@@ -18,6 +18,10 @@ Produsul e pregătit pentru demo-ul lui Adrian la firmă: scenariul e în
   cu perechea TRANSAVIA și cu un test care le leagă de fișiere.
 - **Depozit și stoc, prototip:** necesarul de materiale din oferta importată,
   registrul de mișcări, „de comandat”; datele stau în browser.
+- **Trei roluri: Birou, Șantier, Contabilitate** (erau cinci). Firma e mică,
+  cu oameni fără IT: Șantier nu vede bani, celelalte două da. `docs/productie.md`
+  e rescris simplu: un link, cont pe email, Saga rămâne cum e, contabila
+  importă un fișier.
 - **Modelul rămâne `gpt-4.1-2025-04-14`.** Bugul din 28 septembrie era de
   arhitectură, nu de calitate; un model nou se alege abia când ofertele semnate
   pe spital / Book15 / Transavia inox dau răspunsul corect de comparat.

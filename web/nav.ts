@@ -40,17 +40,19 @@ export const VIITOR: string[] = [
   "Portal client",
 ];
 
-export type Rol = "patron" | "tehnic" | "sef_echipa" | "gestionar" | "contabilitate";
+export type Rol = "birou" | "santier" | "contabilitate";
 
+/**
+ * Trei roluri, cat are o firma mica: biroul face ofertele, santierul
+ * raporteaza, contabilitatea factureaza. Valorile in bani nu se vad pe santier.
+ */
 export const ROLURI: { id: Rol; eticheta: string; vedeCosturi: boolean }[] = [
-  { id: "patron", eticheta: "Patron", vedeCosturi: true },
-  { id: "tehnic", eticheta: "Tehnic / Ofertant", vedeCosturi: false },
-  { id: "sef_echipa", eticheta: "Șef echipă", vedeCosturi: false },
-  { id: "gestionar", eticheta: "Gestionar", vedeCosturi: false },
-  { id: "contabilitate", eticheta: "Contabilitate", vedeCosturi: false },
+  { id: "birou", eticheta: "Birou", vedeCosturi: true },
+  { id: "santier", eticheta: "Șantier", vedeCosturi: false },
+  { id: "contabilitate", eticheta: "Contabilitate", vedeCosturi: true },
 ];
 
-/** Rolul activ. Marja si costul de achizitie se vad doar de patron. */
-export let rolActiv: Rol = "patron";
+/** Rolul activ. Valorile ofertate si facturate nu se vad pe santier. */
+export let rolActiv: Rol = "birou";
 export const setRol = (r: Rol): void => { rolActiv = r; };
 export const vedeCosturi = (): boolean => ROLURI.find((r) => r.id === rolActiv)?.vedeCosturi ?? false;

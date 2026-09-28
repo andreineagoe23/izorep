@@ -110,8 +110,8 @@ async function main(): Promise<void> {
       ]);
 
       await tx.insert(utilizator).values([
-        { tenantId, email: "patron@radoia.test", nume: "Patron", rol: "patron" },
-        { tenantId, email: "tehnic@radoia.test", nume: "Tehnic", rol: "tehnic" },
+        { tenantId, email: "birou@radoia.test", nume: "Birou", rol: "birou" },
+        { tenantId, email: "santier@radoia.test", nume: "Șantier", rol: "santier" },
       ]);
 
       await tx.insert(client).values([

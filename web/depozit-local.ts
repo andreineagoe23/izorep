@@ -3,8 +3,8 @@
  *
  * Doar pentru prototip: miscarile si necesarurile trimise din import stau in
  * `localStorage`, deci le vede doar browserul in care au fost facute. Stocul
- * adevarat e folosit de mai multi oameni (gestionar, sef de echipa, patron) si
- * va sta in baza; logica lui e deja in `src/stoc/`, pura, si nu se schimba.
+ * adevarat e folosit de mai multi oameni (birou, santier) si va sta in baza;
+ * logica lui e deja in `src/stoc/`, pura, si nu se schimba.
  *
  * Depozitul e injectabil ca sa poata fi testat in Node, si e best-effort, ca
  * `meniu-stare.ts`: blocat sau stricat, ecranul porneste gol, nu cade.

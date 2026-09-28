@@ -185,7 +185,8 @@ browser, e best-effort: blocat, preferința se pierde, meniul merge.
 ## Rolul activ
 
 Comutatorul din bara laterală schimbă ce se vede. `vedeCosturi()` din `nav.ts`
-spune dacă rolul curent are voie să vadă valori și marje — doar patronul are.
+spune dacă rolul curent are voie să vadă valori în bani: Birou și Contabilitate
+da, Șantier nu. Sunt trei roluri, cât are o firmă mică.
 Ecranele care afișează bani trebuie să îl respecte.
 
 În aplicația reală asta se verifică pe server; aici e doar demonstrația

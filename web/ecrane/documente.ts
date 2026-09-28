@@ -43,7 +43,12 @@ const LANT: Record<string, string> = {
   "d-5998": "↳ conține oferta 5997 ca Anexa 1",
   "d-6009": "↳ aceeași structură ca anexa contractului 5998, fără coloane de preț",
   "d-transavia-abur": "↳ ofertată prin Oferta 284; importul ei dă exact oferta semnată",
-  "d-284": "↳ răspunsul la cererea TRANSAVIA: 94.575,06 € − discount 3 %",
+  "d-284": "↳ răspunsul la cererea TRANSAVIA",
+};
+
+/** Partea din legatura care spune bani: doar pentru rolurile care vad valori. */
+const LANT_VALOARE: Record<string, string> = {
+  "d-284": ": 94.575,06 € − discount 3 %",
 };
 
 function indicatori(): string {
@@ -63,7 +68,7 @@ function indicatori(): string {
 function randuri(lista: Document[], arataValoare: boolean): string[] {
   return lista.map((doc) => {
     const c = client(doc.clientId);
-    const hint = LANT[doc.id];
+    const hint = LANT[doc.id] && LANT[doc.id] + (arataValoare ? LANT_VALOARE[doc.id] ?? "" : "");
     // O cerere ofertata nu e „trimisa": a primit o oferta.
     const st = doc.tip === "cerere" && doc.stare === "ofertata" ? { text: "Ofertată", ton: "ok" as const } : STARE_INFO[doc.stare];
     // Numarul contine si data ("118 / 27.04.2026"); data are coloana ei.

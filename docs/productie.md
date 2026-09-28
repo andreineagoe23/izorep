@@ -1,112 +1,53 @@
 # Producție
 
-> Decizii de infrastructură și operare. Nu se încarcă în contextul modelului —
-> e referință pentru oameni. Contextul de cod stă în `.claude/`.
+> Cum va ajunge aplicația la oamenii din firmă. Nu se încarcă în contextul
+> modelului — e referință pentru oameni. Contextul de cod stă în `.claude/`.
 
-## Constrângerea care decide restul
+## Pentru cine e
 
-**Nu vrem administrare după predarea aplicației către client.**
+O firmă mică de izolații: oameni de birou, oameni pe șantier și o contabilă.
+Nu au IT și nu vor să învețe unelte noi. Tot ce urmează e măsurat după asta:
+**cât mai puțini pași, cât mai puține lucruri de ținut minte.**
 
-De aici decurge logic: nu se livrează o instanță per client. Zece clienți ar
-însemna zece servere de patch-uit, zece baze de restaurat, zece incidente. Iar
-o firmă de izolații cu opt angajați n-are IT — sună dezvoltatorul oricum.
+## Cum o folosesc
 
-Deci: **o singură instanță, cu bază administrată**, plus infrastructură
-administrată acolo unde e posibil.
+- **Un link.** Se deschide din browser, pe calculator sau pe telefon. Nimic de
+  instalat.
+- **Un cont pentru fiecare om**, cu intrare prin link primit pe email — fără
+  parole de ținut minte. Contul comun de birou nu merge: nu se mai știe cine a
+  schimbat un preț.
+- **Trei roluri:** Birou (face ofertele), Șantier (raportează ce s-a lucrat,
+  fără să vadă prețuri), Contabilitate (facturează).
 
-## Conturile stau pe numele clientului
+## Legătura cu Saga
 
-Hosting, bază de date, domeniu, stocare, expeditor de email — deschise și
-plătite de firmă. Dezvoltatorii primesc acces de colaborator.
+Saga rămâne cum e: contabila ține acolo contabilitatea, stocul oficial și
+trimite facturile la ANAF.
 
-De ce, în ordinea greutății:
+Saga C nu se poate lega direct de alte programe, dar știe să importe fișiere
+XML (*Diverse → Import → Import din fișiere*). Deci aplicația pregătește
+fișierul, iar contabila apasă **Import** în Saga. Factura apare completată, nu
+o mai scrie de mână.
 
-1. **Datele nu trec prin custodia dezvoltatorilor.** Firma e operator și
-   deținător al infrastructurii.
-2. **Predarea devine „îmi scot accesul"**, nu migrare de conturi.
-3. **Dacă dezvoltarea se oprește, firma nu rămâne fără sistem.** Serverul e al
-   ei, altcineva poate prelua.
-4. Nu plătești tu infrastructura altcuiva.
+De aflat de la contabilă, când ajungem acolo: ce versiune de Saga folosește și
+o factură exportată din Saga, ca să vedem formatul.
 
-Costul: firma deschide două-trei conturi. Cinci minute pentru ei.
+## Unde stă și cine plătește
 
-## Forma infrastructurii
+- Conturile (găzduire, bază de date, domeniu) sunt **pe numele firmei**; noi
+  avem acces de colaborator. Dacă ne oprim, aplicația și datele rămân ale lor.
+- **Backup automat**, verificat din când în când că se poate restaura.
+- O singură instalare pentru toți, ca să nu fie nimic de întreținut la firmă.
 
-| Piesă | Alegere | De ce |
-|---|---|---|
-| Bază de date | Postgres **administrat**, în UE, cu PITR | Singura piesă care nu se administrează niciodată manual. Restul e înlocuibil; baza e afacerea. |
-| Aplicație | host cu **containere**, nu serverless | Playwright pentru PDF cere runtime cu browser. În container e banal, în serverless e bătaie de cap. |
-| Fișiere | stocare S3-compatibilă | Poze de șantier, PDF-uri, Excel-uri. Nu în bază. |
-| Frontend | rămâne cel existent | Vanilla TS, 8 ecrane, fără framework. Next.js ar însemna rescrierea lor pentru beneficii (SEO, edge) pe care o aplicație internă nu le are. |
+## Ordinea
 
-Versiunea majoră de Postgres din `docker-compose.yml` trebuie să fie aceeași
-cu cea din producție. E singura constrângere de mediu care contează.
+Ofertarea merge prima: e construită și verificată pe oferte reale, iar o ofertă
+e citită de un om înainte să plece la client. Stocul și facturarea vin după,
+pentru că acolo o greșeală ajunge la ANAF.
 
-## Rolul de bază de date al aplicației
+## Pentru noi, la instalare
 
-**Aplicația nu se conectează niciodată cu rolul administrativ.**
-
-Superuserii și rolurile cu `BYPASSRLS` ocolesc row-level security complet,
-chiar și cu `FORCE ROW LEVEL SECURITY`. Cu rolul greșit, toată izolarea între
-tenanți e decorativă și nimic nu semnalează asta — testele trec.
-
-- migrări → rol proprietar
-- aplicație → rol dedicat, `NOBYPASSRLS`
-
-Descoperit local, prin test. Vezi `.claude/backend.md` și migrarea 0002.
-
-## Backup
-
-**Un backup nerestaurat nu e backup.**
-
-- exercițiu **lunar** de restaurare într-o bază separată, verificat că
-  ofertele istorice ies identic
-- copie la **alt furnizor** decât serverul. Dacă se blochează contul, altfel
-  pierzi și serverul, și backup-urile
-- retenție lungă. Corupția tăcută se descoperă după săptămâni; șapte zile nu
-  ajung
-
-## Poarta: ce trebuie să existe înainte ca un angajat să atingă sistemul
-
-Listă de blocare, nu de dorințe. Cât timp una lipsește, se rulează **în
-paralel** cu procesul actual, nu în locul lui.
-
-1. **Autentificare cu conturi individuale.** Nu se construiesc parole proprii —
-   SSO dacă firma are Microsoft 365 sau Google Workspace, altfel magic link.
-   Contul comun de birou distruge exact jurnalul de audit pentru care se
-   construiește sistemul.
-2. **Permisiuni verificate pe server.** `web/nav.ts` notează deja că
-   ascunderea unui buton nu e securitate.
-3. **Jurnal de audit pe documentele financiare** — cine, când, de la ce
-   valoare la ce valoare.
-4. **Backup restaurat**, nu doar configurat.
-5. **HTTPS pe domeniu propriu.**
-
-## Ordinea modulelor în producție
-
-Roadmap-ul inițial pune stocul primul. Pentru lansare, ofertarea merge înainte:
-
-- stocul e **blocat** pe întrebarea „cine ține evidența oficială, aplicația sau
-  Saga" — vezi `.claude/stare.md`
-- stocul e modulul unde greșeala ajunge la **ANAF**; o ofertă e citită de un om
-  înainte să plece la client
-- motorul de ofertare e deja construit și dovedit pe oferte reale
-
-## Integrarea cu Saga
-
-**Saga C nu are API.** Integrarea e prin fișiere XML importate manual din
-`Diverse → Import → Import din fișiere`.
-
-Deci „puntea către Saga" înseamnă: aplicația generează XML-ul, contabila îl
-descarcă și îl importă. Pasul manual trebuie proiectat ca fiind manual și
-vizibil, nu ascuns ca și cum ar fi automat.
-
-Saga rămâne evidența oficială cât timp întrebarea de mai sus n-are răspuns.
-
-## Ce rămâne deschis
-
-- Cine ține stocul oficial — aplicația sau Saga? Determină tot modulul de stoc.
-- Cine emite factura și cine o trimite în SPV?
-- Seriile și numerotarea facturilor rămân în Saga?
-
-Întrebările complete, în `.claude/stare.md`.
+Aplicația se conectează la bază cu un rol dedicat, `NOBYPASSRLS`, niciodată cu
+cel de administrator. Cu rolul greșit, separarea datelor între firme nu mai
+funcționează și niciun test nu semnalează. Detalii în `.claude/backend.md` și
+în migrarea 0002.

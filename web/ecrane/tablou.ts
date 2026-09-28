@@ -46,7 +46,7 @@ function randIndicatori(): string {
   }
   indicatori.push(indicator(nr(pozitiiNeofertate), "Poziții din cereri neofertate", `${cereriNeofertate.length} cereri`));
 
-  const notaRol = vedeCosturi() ? "" : nota("Valorile ofertate, facturate și marja se văd doar de rolul Patron.");
+  const notaRol = vedeCosturi() ? "" : nota("Valorile ofertate și facturate nu se văd pe rolul Șantier.");
 
   return `<div class="stats">${indicatori.join("")}</div>${notaRol}`;
 }

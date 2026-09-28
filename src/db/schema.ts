@@ -75,7 +75,7 @@ export const utilizator = pgTable("utilizator", {
   tenantId: uuid("tenant_id").notNull().references(() => tenant.id, { onDelete: "restrict" }),
   email: text("email").notNull(),
   nume: text("nume").notNull(),
-  /** patron | tehnic | sef_echipa | gestionar | contabilitate */
+  /** birou | santier | contabilitate */
   rol: text("rol").notNull(),
   activ: boolean("activ").notNull().default(true),
   creatLa: timestamp("creat_la", { withTimezone: true }).notNull().defaultNow(),
