@@ -122,7 +122,7 @@ Tema închisă e scrisă de două ori în CSS, cu aceleași valori: o dată sub
 `@media` cu un selector de atribut într-o singură regulă — dacă modifici una,
 modific-o și pe cealaltă.
 
-## Meniul: șapte destinații, restul pliat
+## Meniul: opt destinații, restul pliat
 
 `MENIU` din `nav.ts` conține doar ecrane care există. Modulele nelivrate stau în
 `VIITOR`, într-un `<details>` sub meniu.
@@ -176,7 +176,7 @@ poate stiliza pe bara închisă la culoare — tooltipul CSS apare și pe
 `:focus-visible`.
 
 Cât e pliată, `#meniu` trece pe `overflow: visible`: `auto` ar tăia tooltipul la
-68px. Banda ține cele șapte destinații fără derulare, deci nu se pierde nimic.
+68px. Banda ține cele opt destinații fără derulare, deci nu se pierde nimic.
 
 Logica de preferință stă în `web/meniu-stare.ts`, cu depozit injectabil, ca să
 fie testabilă în Node (`tests/meniu-stare.test.ts`). Ca la orice depozit din
@@ -440,6 +440,41 @@ linie, deci confirmarea supraviețuiește reîncărcării fără câmp nou.
 Logica — ce intră într-un filtru, ce se confirmă, ce se anulează — stă în
 `web/validare.ts`, nu în handlere: același motiv ca la `invataDinCorectie`, cod
 riscant care fără test nu se verifică. Ecranul rămâne cu apeluri simple.
+
+## Depozit și stoc (prototip, 28 septembrie 2026)
+
+`web/ecrane/stoc.ts`, în meniu la „Zi de zi”. Logica e în `src/stoc/`, pură și
+testată; datele stau în `localStorage` (`web/depozit-local.ts`), deci doar în
+browserul care le-a introdus. Ecranul o spune.
+
+- **Stocul e suma mișcărilor** (`solduri`): intrare, transfer, consum, retur,
+  ajustare la inventar. Nicio mișcare nu se modifică sau șterge: „Anulează”
+  adaugă mișcarea inversă, vizibilă în jurnal. Soldul negativ e marcat, nu
+  blocat.
+- **Necesarul vine din import.** Pasul „Oferta” are cardul „Materiale
+  necesare” (`cardNecesar` în `web/stoc-vizual.ts`): strat cu strat, din
+  pozițiile cu preț, m²/ml = π × (φ + 2g) / 1000 (registrul firmei), piesele în
+  bucăți, adaos pentru coturi și fitinguri ales (5 / 10 %, implicit 10). Adaosul
+  se schimbă fără să redeseneze pasul, altfel s-ar pierde datele ofertei deja
+  scrise. „Trimite la depozit” îl salvează (unul pe fișier) și deschide stocul.
+- **De comandat** = necesar − stocul din depozitul central și din șantierul
+  legat de necesar. Tabloul de bord îl arată la „Necesită atenția ta”.
+- **Stocul pornește gol.** „Încarcă date de exemplu” pune intrări marcate
+  „exemplu” (unele materiale acoperite complet, altele pe jumătate), cu banner
+  și „Scoate datele de exemplu”, care nu atinge mișcările omului.
+- Izolația pe țeavă se ține în ml, tabla, inoxul, PVC-ul și materialul pe
+  suprafață în m². Fără bani: costurile de achiziție nu le avem.
+
+## Tabelele pe ecran îngust
+
+`tabel()` din `tip.ts` pune pe fiecare celulă numele coloanei
+(`data-eticheta`). Când containerul tabelului e mai îngust de 560 px (900 px la
+tabelele cu 6+ coloane), rândul devine card: câmpurile curg câte două-trei pe
+rând, cu numele coloanei deasupra valorii. Înainte, pe telefon aproape toate
+tabelele derulau lateral în interior. Verificat cu Playwright pe cele 8 ecrane
+× 390 / 768 / 1024 / 1440 / 1920 px × două teme × două roluri: zero derulare, de
+pagină sau în tabel. Foaia de import (`grila.ts`) are markup propriu și nu e
+atinsă.
 
 ## Ce rulează în browser și ce nu
 

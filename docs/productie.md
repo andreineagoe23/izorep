@@ -37,7 +37,7 @@ Costul: firma deschide două-trei conturi. Cinci minute pentru ei.
 | Bază de date | Postgres **administrat**, în UE, cu PITR | Singura piesă care nu se administrează niciodată manual. Restul e înlocuibil; baza e afacerea. |
 | Aplicație | host cu **containere**, nu serverless | Playwright pentru PDF cere runtime cu browser. În container e banal, în serverless e bătaie de cap. |
 | Fișiere | stocare S3-compatibilă | Poze de șantier, PDF-uri, Excel-uri. Nu în bază. |
-| Frontend | rămâne cel existent | Vanilla TS, 7 ecrane, fără framework. Next.js ar însemna rescrierea lor pentru beneficii (SEO, edge) pe care o aplicație internă nu le are. |
+| Frontend | rămâne cel existent | Vanilla TS, 8 ecrane, fără framework. Next.js ar însemna rescrierea lor pentru beneficii (SEO, edge) pe care o aplicație internă nu le are. |
 
 Versiunea majoră de Postgres din `docker-compose.yml` trebuie să fie aceeași
 cu cea din producție. E singura constrângere de mediu care contează.

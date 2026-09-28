@@ -49,6 +49,7 @@ data/referinte/      seriile de diametre pe material, secțiuni rectangulare
 scripts/             ETL one-off Excel → JSON (Python, .xls vechi)
 src/pricing/         motorul de prețuri — determinist, testat pe oferte reale
 src/import/          pipeline L0–L4 de citire a Excel-urilor de la clienți
+src/stoc/            necesarul de materiale din ofertă, registrul de stoc (pur, testat)
 tests/               suita de referință: reproduce oferte istorice la bănuț
 ```
 

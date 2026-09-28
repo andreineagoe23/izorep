@@ -3,28 +3,24 @@
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
 > Ultima actualizare: 28 septembrie 2026.
 
-## Unde am rămas (28 septembrie 2026)
+## Unde am rămas (28 septembrie 2026, seara)
 
-Importul Excel e închis ca etapă; totul e pe `main` (**554 de teste**, build
-verde), celelalte branch-uri au fost șterse. Următoarea etapă e stocul — planul
-e la „Ce urmează”. Firma e așteptată săptămâna asta.
+Produsul e pregătit pentru demo-ul lui Adrian la firmă: scenariul e în
+`docs/demo-firma.md`, întrebările în `docs/intrebari-firma.md`. Totul e pe
+`main` (**573 de teste**, build verde, publicat pe Pages).
 
 - **Calculele de import, verificate linie cu linie** față de ofertele semnate,
   cu model și fără: TRANSAVIA 98 / 98 prețuri și 99 / 99 cantități, Oferta
   27.04.2026 48 exacte (cele 9 diferite, toate „De verificat”), Matari 53 / 53;
   DN → ø → rând exact pe 209 linii. Cu prețul pus de mână pe distribuitor,
   cererea TRANSAVIA dă **94.575,06 € = Oferta 284**, la ban.
-- **Calea cu model dă același rezultat ca cea deterministă** pe TRANSAVIA
-  (85 / 13 / 1): casetele nu mai pleacă la model, distribuitorul e `echipament`
-  (vezi „28 septembrie 2026”).
+- **Datele demo sunt cele din ofertele semnate** (erau dublate la 118 / 118.1),
+  cu perechea TRANSAVIA și cu un test care le leagă de fișiere.
+- **Depozit și stoc, prototip:** necesarul de materiale din oferta importată,
+  registrul de mișcări, „de comandat”; datele stau în browser.
 - **Modelul rămâne `gpt-4.1-2025-04-14`.** Bugul din 28 septembrie era de
-  arhitectură (încrederea raportată de model folosită ca poartă), nu de
-  calitate; un model mai mare nu-l repara. Un model nou se alege abia când
-  ofertele semnate pe spital / Book15 / Transavia inox dau răspunsul corect de
-  comparat (`npm run compara`); familia gpt-5 cere schimbare de cod
-  (fără `temperature 0`).
-- **Ce așteaptă de la firmă:** „Pentru întâlnirea cu firma”, mai jos, plus
-  întrebările de stoc de la „Ce urmează”.
+  arhitectură, nu de calitate; un model nou se alege abia când ofertele semnate
+  pe spital / Book15 / Transavia inox dau răspunsul corect de comparat.
 
 Detaliile fiecărei zile sunt în secțiunile datate de mai jos; ce urmează, la
 „Ce urmează”.
@@ -145,8 +141,8 @@ pe aceiași bytes o reface). Reîncărcarea paginii nu mai pierde munca, iar
 redeschiderea unui import vechi **nu cheamă modelul din nou**. Detaliile în
 `ui.md`.
 
-**Aplicația** (`web/`) — 7 ecrane: tablou de bord, lucrări, cereri și oferte,
-calcul deviz, import Excel, clienți, liste de prețuri. Datele sunt reale,
+**Aplicația** (`web/`) — 8 ecrane: tablou de bord, lucrări, cereri și oferte,
+calcul deviz, import Excel, depozit și stoc (prototip), clienți, liste de prețuri. Datele sunt reale,
 extrase din fișierele firmei. Paleta și tipografia respectă WCAG AA; detaliile
 în `ui.md`. Bara laterală se pliază la o bandă de pictograme pe ecran larg
 (preferință reținută) și glisează ca sertar pe ecran îngust.
@@ -760,6 +756,37 @@ Verificare linie cu linie, cu și fără model: TRANSAVIA 98 / 98 prețuri și
 (întrebările 3–4); Matari 53 / 53; DN → ø → rând pe 209 linii, zero abateri.
 Browser, cu model: 85 / 13 / 1, un apel (distribuitorul). 554 de teste.
 
+## 28 septembrie 2026 (2): produsul pentru demo, prototipul de stoc
+
+Adrian merge la firmă să arate ce e făcut; ținta a fost un produs corect și
+coerent cu ce avem, plus primul ecran de stoc. Planul complet a fost aprobat de
+Andrei; întrebări pentru firmă nu intră aici.
+
+| Ce | Efect | Acum |
+|---|---|---|
+| Lucrările 118 / 118.1 în datele demo | 341.038,78 / 25.384,08 €: dublate față de ofertele semnate | 170.519,39 / 12.692,04, cu test pe fișiere (`tests/seed.test.ts`) |
+| Anexa 5997 | 585,40 € din 10 rânduri | 706,90 din 16, emisă de R&F ISORAD |
+| Perechea TRANSAVIA | lipsea; „d-transavia” era cererea de inox, cu dată inventată | cerere → Oferta 284 (Grup Energoinstal, 91.737,81 după discount) → lucrare; inoxul fără dată |
+| „Poză cu foaia de măsurători … vision”, „categoria clientului decide lista” | funcții care nu există | scoase; textul descrie importul real |
+| Calcul deviz | eticheta „SistemMatrice”, exemplul „netarifabilă” avea preț | „Material”, tip ofertă, exemplu chiar refuzat, notele de verificat marcate |
+| Tabelele pe telefon | derulau lateral în interior pe aproape toate ecranele | rândul devine card (`tabel()`), zero derulare |
+
+**Necesarul de materiale** (`src/stoc/necesar.ts`): strat cu strat, din
+pozițiile cu preț, m²/ml = π × (φ + 2g) / 1000 (formula registrului firmei, π
+întreg), piesele în bucăți, adaos ales pentru coturi și fitinguri (registrul:
+5–10 %). Pe cererea TRANSAVIA: 21 de materiale, toată vata pe metru din ofertă
+ajunge în necesar; doar distribuitorul rămâne fără.
+
+**Registrul de stoc** (`src/stoc/registru.ts`): stocul e suma mișcărilor, o
+greșeală se anulează cu mișcarea inversă, soldul negativ e marcat. Ecranul
+„Depozit și stoc” și cardul „Materiale necesare” sunt în `ui.md`.
+
+Verificat în browser, pe dev și pe build-ul de producție: fluxul demo cap-coadă
+(import → 13 confirmate → distribuitor 2.296,70 → 94.575,06 € → ofertă
+descărcată → necesar → depozit → exemple → intrare → anulare → reîncărcare →
+tabloul de bord) și cele 8 ecrane × 5 lățimi × 2 teme × 2 roluri: 160 de
+verificări, zero derulare, zero erori.
+
 ## Pentru întâlnirea cu firma (25 septembrie 2026)
 
 Varianta scurtă, de dus la firmă: `docs/intrebari-firma.md`. Ordonate după
@@ -890,38 +917,29 @@ Astea blochează arhitectura, nu doar implementarea:
 
 ## Ce urmează
 
-**Pe import rămân doar lucruri mici:** răspunsurile firmei (fiecare devine
-test, ca TRANSAVIA) și, opțional, bara de filtre a fișierelor cu o singură foaie
-adusă la așezarea registrelor cu mai multe foi. Rafinăria și manopera — liste
-care n-au venit (D2).
+**Pe import rămân doar lucruri mici:** fiecare pereche nouă cerere ↔ ofertă
+semnată devine test, ca TRANSAVIA; comparația dintre modele se face abia când
+există răspunsul corect; bara de filtre a fișierelor cu o singură foaie, adusă
+la așezarea registrelor cu mai multe foi. Rafinăria și manopera — liste care
+n-au venit (D2).
 
-**Etapa următoare: stocul.** Constatarea care ordonează planul: aplicația e azi
-un demo pe o mașină — baza ține doar listele de prețuri, nu există server,
-autentificare, oferte sau lucrări salvate. Stocul e folosit de mai mulți oameni
-(gestionar, șef de echipă, patron), deci nu poate sta în browser.
+**Făcut pe 28 septembrie 2026:** prototipul de stoc (etapa A de mai jos) și
+lustruirea pentru demo. Mai departe, în ordine:
 
-- **A. Prototipul „Depozit și stoc” + necesarul de materiale din ofertă** (fără
-  să așteptăm firma). Ecranul pe date demo marcate: stoc pe depozit (central,
-  șantiere), jurnal de mișcări, intrare, transfer, consum, inventar. Necesarul
-  determinist din oferta importată: m² de material pe strat cu formula
-  registrului (`π(φ+2g)/1000 × ml`; rectangular `2(A+B+4g)`) + adaos la
-  fitinguri → „de comandat” față de stoc. Scop: firma validează fluxul pe un
-  ecran concret.
 - **B. Fundația multi-utilizator.** Server HTTP, autentificare, rolurile pe
-  server; oferta importată devine document imutabil în bază (versiuni, preț
-  copiat), lucrarea se creează din oferta acceptată. Gata când: TRANSAVIA
-  salvată și redeschisă pe alt calculator dă 94.575,06 € la ban.
-- **C. Stocul real.** Nomenclator de articole (sistem, grosime, ø, UM de
-  cumpărare — rolă, tub 2 m, placă, coală, kg — cu conversia în m²/ml, furnizor,
-  cost). Mișcările sunt registru imutabil (NIR, transfer, consum pe lucrare,
-  retur, pierdere, ajustare de inventar; corecția e storno). Stocul = suma
-  mișcărilor, niciodată câmp editabil; soldul negativ se marchează. Necesarul
-  din A devine rezervare pe lucrare.
-- **D. Teren și situații.** Aplicația de teren (ml executați, material primit),
-  situația de lucrări (executat × prețul din ofertă, în formatul clientului),
-  consum real față de normat, pe lucrare.
-- **E. Contabilitate.** Facturare, SPV, curs BNR, export Saga / SAF-T —
-  depinde de întrebările 1–2.
+  server; oferta importată devine document imutabil în Postgres (versiuni,
+  preț copiat, legat de `SesiuneImport`), lucrarea se creează din oferta
+  acceptată. Gata când: TRANSAVIA salvată și redeschisă pe alt calculator dă
+  94.575,06 € la ban.
+- **C. Stocul real, în bază.** Tabele `articol`, `depozit`, `miscare` cu RLS pe
+  tenant și firmă, trigger care refuză UPDATE / DELETE pe `miscare` (ca la
+  `lista_preturi`), soldul ca view; `src/stoc/` rămâne logica comună. Necesarul
+  devine rezervare pe lucrare.
+- **D. Teren și situații.** Pe telefon: ml executați pe poziție, material
+  primit sau consumat; situația = executat × prețul din ofertă, în formatul
+  clientului; consum real față de necesar, pe lucrare.
+- **E. Contabilitate.** Facturi, curs BNR înghețat pe document, e-Factura,
+  export spre Saga.
 
 **Întrebări de stoc pentru firmă:**
 
@@ -942,12 +960,10 @@ furnizor, un bon de consum sau aviz, ultimul inventar, și forma de cumpărare
 (m² pe rolă de vată la fiecare grosime, tuburile de elastomer, tabla în coli
 sau rolă, accesoriile).
 
-Recomandarea: întâi A (legată direct de import, gata pentru întâlnire), apoi B.
-
 ## Comenzi
 
 ```bash
-npm test                                       # 554 de teste (motor, import, baza, ofertă, ecran, meniu)
+npm test                                       # 573 de teste (motor, import, baza, ofertă, ecran, meniu)
 npm run typecheck
 npm run dev                                    # UI local, /izorep/
 npm run import -- ../attachments/clienti/cerere-de-oferta-spital.xlsx   # pipeline complet
