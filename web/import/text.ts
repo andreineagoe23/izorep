@@ -224,3 +224,26 @@ export function motiveLinie(l: LinieProcesata): CodMotiv[] {
   ];
   return coduri.length > 0 ? [...new Set(coduri)] : ["citit_nesigur"];
 }
+
+/**
+ * Ce i se spune omului cand fisierul nu se poate citi deloc. Eroarea bibliotecii
+ * („Can't find end of central directory", in engleza, cu link) nu-i spune ce sa
+ * faca; extensia ii spune aproape mereu.
+ */
+export function fisierNecitit(nume: string): string {
+  const ext = nume.toLowerCase().split(".").pop() ?? "";
+  if (ext === "pdf") {
+    return "E un PDF. Aplicația citește doar liste în Excel (.xlsx): cere-o clientului în Excel.";
+  }
+  if (ext === "xls") {
+    return "E un Excel vechi (.xls). Deschide-l în Excel și salvează-l ca .xlsx (Fișier → Salvare ca).";
+  }
+  if (ext === "doc" || ext === "docx") {
+    return "E un document Word. Aplicația citește doar liste în Excel (.xlsx).";
+  }
+  return "Nu pare un Excel (.xlsx) sau e deteriorat. Deschide-l în Excel și salvează-l din nou ca .xlsx.";
+}
+
+/** Fisierul s-a deschis, dar n-are nicio pozitie de ofertat. */
+export const FARA_POZITII =
+  "N-am găsit nicio poziție în fișier: niciun rând cu descriere și cantitate. Verifică dacă e lista de cantități a clientului.";

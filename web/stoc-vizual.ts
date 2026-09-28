@@ -43,9 +43,9 @@ export function cardNecesar(n: Necesar): string {
   const fara = n.faraNecesar.length;
   return `<section class="imp-card" id="necesar">
     <h2>Materiale necesare</h2>
-    <p class="hint">Din pozițiile cu preț (Gata și De verificat), strat cu strat. Suprafața pe metru e
-      formula din registrul firmei: π × (φ + 2 × grosime) / 1000. Coturile, teurile, flanșele și casetele
-      se numără în bucăți.</p>
+    <p class="hint" title="Suprafața pe metru: π × (φ + 2 × grosime) / 1000, formula din registrul firmei.">Calculat
+      din pozițiile cu preț, strat cu strat, după formula firmei. Coturile, teurile, flanșele și casetele se
+      numără în bucăți.</p>
     <div class="imp-campuri">
       <label>Adaos pentru coturi și fitinguri (registrul firmei: 5–10 %)
         <select id="adaos-necesar">${ADAOSURI.map(([v, t]) =>

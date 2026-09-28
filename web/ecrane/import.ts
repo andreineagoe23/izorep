@@ -29,7 +29,7 @@ import {
   type FiltruStare, type Pas, type TabFoaie,
 } from "../import/vizual.js";
 import { celuleExtrase, grilaFoaie } from "../import/grila.js";
-import { motiveLinie, stareLinie, type CodMotiv } from "../import/text.js";
+import { FARA_POZITII, fisierNecitit, motiveLinie, stareLinie, type CodMotiv } from "../import/text.js";
 
 /**
  * Ecranul de import, in trei pasi: fisierul, verificarea pozitiilor, oferta.
@@ -590,6 +590,12 @@ export const ecran: Ecran = {
         descrieriSchimbate = new Set();
         preturiManuale = new Map();
         const rez = await proceseazaRegistru(foi, { ...optiuni(), ...(extractor ? { extrage: extractor } : {}) });
+        if (rez.linii.length === 0) {
+          pas = 1;
+          eroareStart = `<strong>${esc(fisier.name)} nu are poziții.</strong> ${esc(FARA_POZITII)}`;
+          deseneaza();
+          return;
+        }
         deschideSesiune({
           foi, rez, editari: [],
           avertisment: esuate > 0
@@ -603,8 +609,9 @@ export const ecran: Ecran = {
         });
       } catch (e) {
         pas = 1;
-        eroareStart = `<strong>Fișierul nu a putut fi citit.</strong> ${esc(e instanceof Error ? e.message : String(e))}`
-          + " Dacă e un .xls vechi, salvează-l din Excel ca .xlsx.";
+        // Detaliul tehnic ramane in consola, pentru noi; omul primeste ce sa faca.
+        console.error(e);
+        eroareStart = `<strong>Fișierul nu a putut fi citit.</strong> ${esc(fisierNecitit(fisier.name))}`;
         deseneaza();
       }
     }

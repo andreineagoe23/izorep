@@ -494,6 +494,8 @@ export function ecranOferta(o: OptiuniOferta): string {
         ${camp("discount", "Discount (%)", "0", 'type="number" inputmode="decimal" min="0" max="100" step="any"')}
       </div>
       ${o.eroare ? `<p class="alerta" role="alert">${esc(o.eroare)}</p>` : ""}
+      ${afara > 0 ? `<p class="imp-oferta-lipsa">Oferta descărcată nu va conține ${pozitii(afara)}: ${o.deVerificat} de verificat
+        și ${o.faraPret} fără preț. Dacă trebuie să fie în ofertă, rezolvă-le întâi la verificare.</p>` : ""}
       <div class="imp-formular-butoane">
         <button type="submit" class="primar">Descarcă oferta</button>
       </div>

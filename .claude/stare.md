@@ -7,7 +7,7 @@
 
 Produsul e pregătit pentru demo-ul lui Adrian la firmă: scenariul e în
 `docs/demo-firma.md`, întrebările în `docs/intrebari-firma.md`. Totul e pe
-`main` (**573 de teste**, build verde, publicat pe Pages).
+`main` (**582 de teste**, build verde, publicat pe Pages).
 
 - **Calculele de import, verificate linie cu linie** față de ofertele semnate,
   cu model și fără: TRANSAVIA 98 / 98 prețuri și 99 / 99 cantități, Oferta
@@ -21,7 +21,11 @@ Produsul e pregătit pentru demo-ul lui Adrian la firmă: scenariul e în
 - **Trei roluri: Birou, Șantier, Contabilitate** (erau cinci). Firma e mică,
   cu oameni fără IT: Șantier nu vede bani, celelalte două da. `docs/productie.md`
   e rescris simplu: un link, cont pe email, Saga rămâne cum e, contabila
-  importă un fișier.
+  importă un fișier. Șantierul are meniu scurt: tablou, lucrări, depozit.
+- **Importul, trecut prin ochii omului de la birou:** fișier stricat / PDF /
+  .xls primesc un mesaj în română cu ce să facă (nu eroarea JSZip în engleză);
+  un Excel fără poziții se oprește la pasul 1 cu explicație; lângă „Descarcă
+  oferta” scrie câte poziții lipsesc din ea.
 - **Modelul rămâne `gpt-4.1-2025-04-14`.** Bugul din 28 septembrie era de
   arhitectură, nu de calitate; un model nou se alege abia când ofertele semnate
   pe spital / Book15 / Transavia inox dau răspunsul corect de comparat.
@@ -967,7 +971,7 @@ sau rolă, accesoriile).
 ## Comenzi
 
 ```bash
-npm test                                       # 573 de teste (motor, import, baza, ofertă, ecran, meniu)
+npm test                                       # 582 de teste (motor, import, baza, ofertă, ecran, meniu)
 npm run typecheck
 npm run dev                                    # UI local, /izorep/
 npm run import -- ../attachments/clienti/cerere-de-oferta-spital.xlsx   # pipeline complet

@@ -9,7 +9,7 @@
 import { describe, it, expect } from "vitest";
 import type { LinieProcesata } from "../src/import/nucleu.js";
 import type { LinieExtrasa } from "../src/import/schema.js";
-import { baraFoi, cardPozitie, ecranStart, editorPozitie, numaraMotive, pasi } from "../web/import/vizual.js";
+import { baraFoi, cardPozitie, ecranOferta, ecranStart, editorPozitie, numaraMotive, pasi } from "../web/import/vizual.js";
 import { antetDocument, grilaFoaie } from "../web/import/grila.js";
 import type { FoaieBruta } from "../src/import/parse-workbook.js";
 
@@ -275,5 +275,20 @@ describe("prețul pus de mână", () => {
   it("editorul arată prețul pus, iar cardul spune de unde vine", () => {
     expect(editorPozitie(manuala())).toMatch(/name="pret_manual"[^>]*value="2296.7"/);
     expect(cardPozitie(manuala(), { propunere: null, editeaza: false, cuFoaie: false })).toContain("preț pus de mână");
+  });
+});
+
+describe("pasul Oferta", () => {
+  const oferta = (deVerificat: number, faraPret: number): string => ecranOferta({
+    gata: 85, valoare: 75611.04, deVerificat, faraPret, destinatie: "rezidential",
+    client: "Transavia", data: "28.09.2026", firme: [{ id: "ri", denumire: "RADOIA", serieOferta: "RI" }], eroare: "",
+  });
+
+  it("lângă buton spune câte poziții lipsesc din oferta descărcată", () => {
+    expect(oferta(13, 1)).toMatch(/nu va conține 14 poziții: 13 de verificat\s+și 1 fără preț/);
+  });
+
+  it("fără poziții lipsă, niciun avertisment", () => {
+    expect(oferta(0, 0)).not.toContain("imp-oferta-lipsa");
   });
 });

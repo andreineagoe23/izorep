@@ -955,6 +955,12 @@ button.filtru[aria-pressed="true"], button.filtru.activ {
 .imp-oferta-suma { display: grid; gap: 2px; margin: 0; }
 .imp-oferta-suma span { font-size: 15px; color: var(--slab); }
 .imp-oferta-suma strong { font-size: 30px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+/* Langa butonul de descarcare: omul care descarca trebuie sa stie ce lipseste. */
+.imp-oferta-lipsa {
+  margin: var(--imp-gap) 0 0; padding: 11px 14px; border-radius: 9px; font-size: 14.5px;
+  background: color-mix(in srgb, var(--atentie) 10%, var(--panou));
+  border: 1px solid color-mix(in srgb, var(--atentie) 40%, transparent); color: var(--atentie);
+}
 .imp-oferta-afara { margin: var(--imp-gap) 0 0; padding-top: var(--imp-gap); border-top: 1px solid var(--linie); font-size: 15px; }
 .imp-campuri { display: grid; gap: 14px 16px; }
 @container imp (min-width: 620px) { .imp-campuri { grid-template-columns: 1fr 1fr; } }

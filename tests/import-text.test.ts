@@ -11,7 +11,7 @@ import type { LinieExtrasa } from "../src/import/schema.js";
 import { ETICHETE_BLOCAJ } from "../web/validare.js";
 import { imparte } from "../web/oferta.js";
 import {
-  MOTIV, ajutorDiametru, diametruCuConversie, diametruText, inteles, motiveLinie, stareLinie,
+  MOTIV, ajutorDiametru, diametruCuConversie, diametruText, fisierNecitit, inteles, motiveLinie, stareLinie,
 } from "../web/import/text.js";
 
 const extrasa = (p: Partial<LinieExtrasa> = {}): LinieExtrasa => ({
@@ -127,5 +127,20 @@ describe("starea și motivul", () => {
 
   it("fără preț și fără cod: tot un motiv, nu nimic", () => {
     expect(motiveLinie(linie({ validare: true }))).toEqual(["pret_necunoscut"]);
+  });
+});
+
+describe("fișierul care nu se poate citi", () => {
+  it("spune ce să facă, după extensie", () => {
+    expect(fisierNecitit("Lista.PDF")).toMatch(/PDF.*Excel/);
+    expect(fisierNecitit("cerere.xls")).toMatch(/salvează-l ca \.xlsx/);
+    expect(fisierNecitit("oferta.docx")).toMatch(/Word/);
+    expect(fisierNecitit("cerere.xlsx")).toMatch(/deteriorat/);
+  });
+
+  it("nu trimite omul la erori în engleză sau la linkuri", () => {
+    for (const n of ["a.pdf", "a.xls", "a.doc", "a.xlsx", "fara-extensie"]) {
+      expect(fisierNecitit(n)).not.toMatch(/https?:|zip|directory/i);
+    }
   });
 });
