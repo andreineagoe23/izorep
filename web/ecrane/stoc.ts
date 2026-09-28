@@ -11,6 +11,7 @@
  */
 import { esc, indicator, stare, tabel, type Ecran } from "./tip.js";
 import { SANTIERE } from "../date/seed.js";
+import { areAcces } from "../nav.js";
 import { MATERIALE, MATERIAL } from "../import/text.js";
 import { cantitate, cifra, numeArticol, unitate } from "../stoc-vizual.js";
 import { citesteDepozit, idNou, scrieDepozit, type NecesarLucrare, type StareDepozit } from "../depozit-local.js";
@@ -110,8 +111,10 @@ export const ecran: Ecran = {
     function sectiuneNecesar(sold: ReturnType<typeof solduri>): string {
       if (st.necesare.length === 0) {
         return `<section class="imp-card"><h2>Necesar pentru lucrări</h2>
-          <p class="hint" style="margin:0">Niciun necesar încă. În <a href="#/import">Import Excel</a>, după verificare,
-          pasul „Oferta” calculează materialele din ofertă și le trimite aici cu „Trimite la depozit”.</p></section>`;
+          <p class="hint" style="margin:0">${areAcces("import")
+            ? `Niciun necesar încă. În <a href="#/import">Import Excel</a>, după verificare,
+          pasul „Oferta” calculează materialele din ofertă și le trimite aici cu „Trimite la depozit”.`
+            : "Niciun necesar încă. Îl trimite biroul, din oferta lucrării."}</p></section>`;
       }
       return st.necesare.map((n) => {
         const r = deComandat(n.materiale, sold, depoziteNecesar(n));

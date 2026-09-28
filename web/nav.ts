@@ -45,10 +45,14 @@ export type Rol = "birou" | "santier" | "contabilitate";
 /**
  * Trei roluri, cat are o firma mica: biroul face ofertele, santierul
  * raporteaza, contabilitatea factureaza. Valorile in bani nu se vad pe santier.
+ *
+ * `ecrane` lipseste = vede tot meniul. Santierul are doar ce-i trebuie pe
+ * telefon: lucrarile si materialul. Calculul de deviz, importul si listele de
+ * preturi arata preturi si sunt treaba biroului.
  */
-export const ROLURI: { id: Rol; eticheta: string; vedeCosturi: boolean }[] = [
+export const ROLURI: { id: Rol; eticheta: string; vedeCosturi: boolean; ecrane?: readonly string[] }[] = [
   { id: "birou", eticheta: "Birou", vedeCosturi: true },
-  { id: "santier", eticheta: "Șantier", vedeCosturi: false },
+  { id: "santier", eticheta: "Șantier", vedeCosturi: false, ecrane: ["tablou", "lucrari", "stoc"] },
   { id: "contabilitate", eticheta: "Contabilitate", vedeCosturi: true },
 ];
 
@@ -56,3 +60,13 @@ export const ROLURI: { id: Rol; eticheta: string; vedeCosturi: boolean }[] = [
 export let rolActiv: Rol = "birou";
 export const setRol = (r: Rol): void => { rolActiv = r; };
 export const vedeCosturi = (): boolean => ROLURI.find((r) => r.id === rolActiv)?.vedeCosturi ?? false;
+
+/** Ecranul e in meniul rolului? Ca `vedeCosturi`, e doar demonstratie: in aplicatia reala se verifica pe server. */
+export const areAcces = (ecran: string, rol: Rol = rolActiv): boolean => {
+  const permise = ROLURI.find((r) => r.id === rol)?.ecrane;
+  return !permise || permise.includes(ecran);
+};
+
+/** Meniul rolului: grupurile ramase fara itemi dispar cu totul. */
+export const meniuPentru = (rol: Rol = rolActiv): GrupMeniu[] =>
+  MENIU.map((g) => ({ ...g, itemi: g.itemi.filter((i) => areAcces(i.id, rol)) })).filter((g) => g.itemi.length > 0);
