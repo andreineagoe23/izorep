@@ -299,6 +299,32 @@ th {
   padding: 12px 12px 9px 0; white-space: nowrap; border-bottom: 2px solid var(--linie);
 }
 td { padding: 10px 12px 10px 0; border-top: 1px solid var(--linie); vertical-align: top; }
+/* Tabelele din `tabel()` (tip.ts): pe latime mica, fiecare rand devine un card,
+   cu numele coloanei deasupra fiecarei valori, in loc de derulare laterala.
+   Late (6+ coloane) de la 900 px de container, restul de la 560 px. Cele doua
+   blocuri au aceleasi reguli: CSS nu poate lega un @container de doua praguri. */
+.tabelwrap { container-type: inline-size; }
+@container (max-width: 560px) {
+  table.stiva thead { display: none; }
+  table.stiva, table.stiva tbody, table.stiva tr, table.stiva td, table.stiva th[scope="row"] { display: block; width: 100%; }
+  table.stiva tr { display: flex; flex-wrap: wrap; gap: 6px 18px; padding: 12px 0; border-top: 1px solid var(--linie); }
+  table.stiva td, table.stiva th[scope="row"] { flex: 1 1 8rem; width: auto; min-width: 0; border: 0; padding: 0; text-align: left; white-space: normal; }
+  table.stiva th[scope="row"] { flex-basis: 100%; }
+  table.stiva td[data-eticheta]:not([data-eticheta=""])::before {
+    content: attr(data-eticheta); display: block; font-size: 12.5px; color: var(--slab); }
+  table.stiva td:empty { display: none; }
+}
+@container (max-width: 900px) {
+  table.stiva.lat thead { display: none; }
+  table.stiva.lat, table.stiva.lat tbody, table.stiva.lat tr, table.stiva.lat td, table.stiva.lat th[scope="row"] { display: block; width: 100%; }
+  table.stiva.lat tr { display: flex; flex-wrap: wrap; gap: 6px 18px; padding: 12px 0; border-top: 1px solid var(--linie); }
+  table.stiva.lat td, table.stiva.lat th[scope="row"] { flex: 1 1 8rem; width: auto; min-width: 0; border: 0; padding: 0; text-align: left; white-space: normal; }
+  table.stiva.lat th[scope="row"] { flex-basis: 100%; }
+  table.stiva.lat td[data-eticheta]:not([data-eticheta=""])::before {
+    content: attr(data-eticheta); display: block; font-size: 12.5px; color: var(--slab); }
+  table.stiva.lat td:empty { display: none; }
+}
+
 tbody th {
   color: var(--text); font-size: 14px; border-bottom: 0;
   border-top: 1px solid var(--linie); padding: 10px 12px 10px 0;
@@ -356,6 +382,8 @@ tbody tr:hover { background: var(--accent-slab); }
 /* `display:inline-block` doar pe span: pe un <td> ar scoate celula din tabel. */
 .desc { max-width: 44ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 span.desc { display: inline-block; vertical-align: bottom; }
+/* Pe carduri (tabelul stivuit) descrierea se rupe pe randuri, nu iese din card. */
+table.stiva span.desc { max-width: 100%; }
 td.desc { color: var(--slab); }
 .desc.scurt { max-width: 22ch; }
 .ingust { max-width: 380px; }

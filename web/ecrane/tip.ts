@@ -79,18 +79,28 @@ export const stare = (text: string, ton: "ok" | "atentie" | "neutru" = "neutru")
  *
  * `scope="col"` nu e decorativ: fara el, un cititor de ecran nu leaga celula de
  * antetul ei, iar tabelele astea au 8-10 coloane. `tabindex="0"` face zona
- * derulabila accesibila de la tastatura — altfel coloanele din dreapta sunt
- * inaccesibile fara mouse pe ecran ingust.
+ * derulabila accesibila de la tastatura.
+ *
+ * Pe ecran ingust tabelul nu se deruleaza lateral (preferinta din `ui.md`):
+ * fiecare rand devine un card, iar fiecare celula isi poarta numele coloanei
+ * (`data-eticheta`), scris deasupra valorii. Tabelele late (6+ coloane) trec
+ * pe carduri mai devreme — vezi `table.stiva` in `style.css`.
  */
-export const tabel = (capete: string[], randuri: string[], clase: string[] = []): string => `
+export const tabel = (capete: string[], randuri: string[], clase: string[] = []): string => {
+  const etichetate = randuri.map((r) => {
+    let i = 0;
+    return r.replace(/<t([dh])\b/g, (_, t: string) => `<t${t} data-eticheta="${esc(capete[i++] ?? "")}"`);
+  });
+  return `
   <div class="tabelwrap" tabindex="0">
-    <table>
+    <table class="stiva${capete.length >= 6 ? " lat" : ""}">
       <thead><tr>${capete
         .map((c, i) => `<th scope="col" class="${clase[i] ?? ""}">${esc(c)}</th>`)
         .join("")}</tr></thead>
-      <tbody>${randuri.join("")}</tbody>
+      <tbody>${etichetate.join("")}</tbody>
     </table>
   </div>`;
+};
 
 /** Nota explicativa sub un ecran. Aici se explica REGULA de business. */
 export const nota = (text: string): string => `<p class="nota">${text}</p>`;
