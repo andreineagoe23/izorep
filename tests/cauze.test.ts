@@ -195,6 +195,17 @@ const CAZURI: { cod: CodNetarifare; de: string; f: () => unknown }[] = [
     },
   },
   {
+    cod: "echipament",
+    de: "distribuitor de abur D=500, L=4500 (Oferta 284, semnat 2.296,70 €/buc): listele sunt pe metru de țeavă",
+    f: () => {
+      const r = tarifeazaExtras(extrasa({ sistem: "vata_minerala", diametru_valoare: 500, diametru_tip: "exterior",
+        grosime_mm: 100, forma: "ml" }), 1, "rezidential",
+        "Izolare echipament DISTRIBUITOR ABUR cu vata minerala si protectie cu tabla de aluminiu, g100 D=500, L=4500");
+      if (r.codEroare) throw new PozitieNetarifata(r.codEroare, r.eroare ?? "", {});
+      return r;
+    },
+  },
+  {
     cod: "dn_necunoscut",
     de: "DN160 (care nu exista in seria de otel): `DiametruNecunoscut`, mapat la granita in `tarifeazaExtras`",
     f: () => {
@@ -224,6 +235,7 @@ describe("fiecare cauza de netarifare are un cod stabil", () => {
       "gol_dimensiuni_invalide", "banda_wrap_inexistenta", "colier_inexistent",
       "diametru_conducta_lipsa", "material_conducta_lipsa", "gol_foc_in_matrice",
       "fara_diametru", "dn_necunoscut", "protectie_foc_tubulatura", "livrare_teava",
+      "echipament",
     ];
     const acoperite = new Set(CAZURI.map((c) => c.cod));
     expect(toate.filter((c) => !acoperite.has(c))).toEqual([]);

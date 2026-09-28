@@ -562,6 +562,12 @@ real acolo.
 - **Țeavă de cupru în DN** — pe seria de oțel DN15 cădea pe rândul 22.
   Convertită pe seria de cupru din registrul firmei (DN15 → ø18), marcată
   (`serie_cupru`). Țeava de inox în DN rămâne pe ISO, marcată (`serie_inox`).
+- **Casetele fără grosime pe calea cu model** — TRANSAVIA Abur: plecau la
+  model doar pentru grosime (nu e în text), iar încrederea lui oscila pe prag;
+  24 de casete exacte ieșeau „De verificat” fără motiv. Ce completează conducta
+  de același DN rămâne al regulilor (`completeazaDinConducte`).
+- **„Izolare echipament”** (distribuitor D=500, L=4500) — listele sunt pe metru
+  de țeavă; `echipament`, preț pus de mână. „Distribuitor” singur rămâne formă.
 - **Coloanele diferă de la client la client** — de aceea registrul de ofertă
   nu copiază coloanele clientului, ci le citește după rol: codul de rând
   („IZOLATII”, „01.82.02.01A”) merge în Identificare_Norma, descrierea în

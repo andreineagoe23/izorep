@@ -318,6 +318,26 @@ export function esteLivrareDeTeava(text: string): boolean {
 }
 
 /**
+ * Izolarea unui ECHIPAMENT, nu a unei tevi: listele sunt pe metru de teava.
+ *
+ * Cererea TRANSAVIA (abur), randul 25: „Izolare echipament DISTRIBUITOR ABUR
+ * cu vata minerala si protectie cu tabla de aluminiu, g100 D=500, L=4500, 10
+ * racorduri". Oferta 284 are 2.296,70 €/buc. Determinist iesea „fara
+ * diametru"; modelul citea D=500 ca teava si dadea 191,83 € prin formula pe mp
+ * (−92%). Nicio regula din liste nu da 2.296,70: 17,5 × pretul pe ml la ø500
+ * g100, iar 17,5 nu iese nici din L, nici din coeficientul de distribuitor
+ * (4,5), nici din racorduri. Pretul e al omului.
+ *
+ * Doar pe cuvantul „echipament": „distribuitor" singur e si o FORMA din liste
+ * (coloana „pompa, filtru, distribuitor", multiplicator pe pretul tevii).
+ */
+const RE_ECHIPAMENT = /\bechipament|\bequipment\b/i;
+
+export function esteIzolareDeEchipament(text: string): boolean {
+  return RE_ECHIPAMENT.test(text);
+}
+
+/**
  * Grosimi scrise de client care inseamna, in practica firmei, alta grosime din
  * lista. Elastomerul nu se face in 20 mm (9 / 13 / 19 / 25 / 32), iar „S=20mm"
  * din Oferta 27.04.2026 e tarifat de firma cu pretul de 19 mm: DN100 15,71,
@@ -367,6 +387,13 @@ export function tarifeazaExtras(
     return {
       eroare: "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie",
       codEroare: "livrare_teava",
+    };
+  }
+  if (text !== undefined && extras.sistem !== null && extras.sistem !== "goluri_foc"
+      && esteIzolareDeEchipament(text)) {
+    return {
+      eroare: "izolarea unui echipament: listele de preturi sunt pe metru de teava, pretul se pune de mana",
+      codEroare: "echipament",
     };
   }
   try {
@@ -632,6 +659,41 @@ function grosimiDeLaConducte(
     out.set(b.index, { grosime: prima.grosime, rand: prima.rand, foaie: prima.foaie });
   }
   return out;
+}
+
+/**
+ * Liniile carora determinismul le-a citit tot in afara de grosime, iar
+ * grosimea o da conducta de acelasi diametru (`grosimiDeLaConducte`): raman
+ * ale regulilor, nu mai pleaca la model. Intoarce restul, care pleaca.
+ *
+ * Cererea TRANSAVIA (abur): cele 24 de casete „… cu flanse DN100 din tabla
+ * aluminiu si vata minerala" plecau la model doar pentru grosime, care nu e in
+ * text. Modelul intorcea grosimea null si o incredere de 0,85 intr-o rulare,
+ * mai mica in alta; grosimea de la conducta le completa, dar increderea
+ * ramanea a modelului. La 0,85 ieseau „Gata", sub 0,85 toate 24 „De verificat"
+ * fara motiv („citit nesigur") — acelasi fisier, alta stare de la o rulare la
+ * alta, pe preturi exacte fata de Oferta 284. Fara model, aceleasi linii ieseau
+ * „Gata" cu 0,99: calea cu model o facea mai proasta.
+ *
+ * Dupa memorie, nu inainte: ce a corectat omul pe tiparul asta castiga.
+ */
+function completeazaDinConducte(
+  brute: LinieCuSectiune[],
+  rezolvate: Map<number, Rezolvare>,
+  partiale: Map<number, LinieExtrasa>,
+  ramase: LinieSursa[],
+): LinieSursa[] {
+  const cuPartiale = new Map(rezolvate);
+  for (const [index, extras] of partiale) {
+    if (!cuPartiale.has(index)) cuPartiale.set(index, { extras, sursa: "regex" });
+  }
+  const deLaConducte = grosimiDeLaConducte(brute, cuPartiale);
+  return ramase.filter((l) => {
+    const partiala = partiale.get(l.index);
+    if (!partiala || !deLaConducte.has(l.index)) return true;
+    rezolvate.set(l.index, { extras: partiala, sursa: "regex" });
+    return false;
+  });
 }
 
 /**
@@ -903,7 +965,7 @@ export async function proceseazaRegistru(foi: FoaieBruta[], o: OptiuniNucleu): P
   // L4 - memoria de sabloane: ce a corectat omul deja nu se mai intreaba.
   const dinMemorie = aplicaMemorie(reziduale, o.stoc);
   for (const e of dinMemorie.rezolvate) rezolvate.set(e.index, { extras: e, sursa: "memorie" });
-  const deLucrat = dinMemorie.ramase;
+  const deLucrat = completeazaDinConducte(brute, rezolvate, partiale, dinMemorie.ramase);
   o.laProgres?.({ faza: "memorie", gata: rezolvate.size, total: brute.length });
 
   // L2b - model, doar pe rest, cate un reprezentant per sablon, cu un buget
@@ -1061,7 +1123,7 @@ export function reevalueaza(rez: Rezultat, o: OptiuniNucleu): void {
   // rechemam modelul, iar `reevalueaza` n-are voie sa faca asta. Si doar pe
   // textul pe care l-a citit modelul: pe o descriere schimbata ar tarifa
   // descrierea veche, deci ramane ce se poate citi determinist, marcat.
-  for (const l of dinMemorie.ramase) {
+  for (const l of completeazaDinConducte(brute, rezolvate, partiale, dinMemorie.ramase)) {
     const existent = vechi.get(l.index);
     if (existent && (existent.sursa === "model" || existent.sursa === "sablon")) {
       if ((existent.text ?? l.text) === l.text) rezolvate.set(l.index, existent);

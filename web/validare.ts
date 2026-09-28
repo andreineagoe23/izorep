@@ -81,6 +81,7 @@ export const ETICHETE_BLOCAJ: Record<CodBlocaj, { eticheta: string; intrebare?: 
   fara_diametru: { eticheta: "poziția n-are diametru (tubulatură rectangulară?): listele se caută doar pe ø" },
   protectie_foc_tubulatura: { eticheta: "protecție la foc a tubulaturii: altă lucrare, fără listă de prețuri", intrebare: 8 },
   livrare_teava: { eticheta: "livrare de țeavă cu izolația inclusă: prețul țevii nu e în listele de izolație" },
+  echipament: { eticheta: "izolarea unui echipament (distribuitor, rezervor): listele sunt pe metru de țeavă" },
   /* --- au pret, dar sunt marcate (CodAvertisment) --- */
   notatie_contrazice_materialul: { eticheta: "scrie DN, dar materialul dă diametrul exterior", intrebare: 10 },
   diametru_contrazis: { eticheta: "scrie DN, dar Ø-ul de pe rând nu e DN-ul ăla în tabelul de conversie" },

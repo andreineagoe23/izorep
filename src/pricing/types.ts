@@ -176,7 +176,8 @@ export type CodNetarifare =
   | "dn_necunoscut"
   /* --- alta lucrare decat cea din liste --- */
   | "protectie_foc_tubulatura"
-  | "livrare_teava";            // livrarea tevii, cu izolatia „inclusiv"
+  | "livrare_teava"             // livrarea tevii, cu izolatia „inclusiv"
+  | "echipament";               // izolarea unui echipament (distribuitor, rezervor), nu a unei tevi
 
 export class PozitieNetarifata extends Error {
   constructor(

@@ -176,6 +176,7 @@ export const MOTIV: Record<CodMotiv, string> = {
   fara_diametru: "Lipsește diametrul",
   protectie_foc_tubulatura: "Protecție la foc a tubulaturii: fără listă de prețuri",
   livrare_teava: "Livrare de țeavă cu izolație inclusă: preț de pus manual",
+  echipament: "Izolare de echipament: preț de pus manual",
   fara_coeficient_de_forma: "Piesa nu are preț în listă",
   banda_inexistenta: "Diametrul nu e în lista de prețuri",
   lista_goala: "Lista de prețuri e goală",

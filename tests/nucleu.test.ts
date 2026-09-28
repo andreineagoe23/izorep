@@ -690,3 +690,57 @@ describe("livrarea de teava, cu izolatia in pret", () => {
     expect(r.pret).toBeDefined();
   });
 });
+
+describe("grosimea de la conductă nu trimite linia la model", () => {
+  // Cererea TRANSAVIA: casetele n-au grosime în text, dar conducta de același
+  // diametru o are. Cu model, încrederea lui (0,85 într-o rulare, sub prag în
+  // alta) scotea toate 24 de casete „De verificat” fără motiv.
+  const RANDURI = [
+    ANTET,
+    [1, "IZOLATII | Caseta izolatie armaturi cu flanse DN100 din tabla aluminiu si vata minerala", "buc", 1],
+    [2, "IZOLATII | Izolatii cu vata minerala si protectie cu tabla de aluminiu Di114, g50 - ML", "ml", 20],
+  ];
+
+  it("caseta rămâne a regulilor, „Gata”, la fel cu și fără model", async () => {
+    const trimise: string[] = [];
+    const nesigur: Extractor = async (linii) => {
+      trimise.push(...linii.map((l) => l.text));
+      return linii.map((l) => extrasa({
+        index: l.index, sistem: "vata_minerala", diametru_valoare: 100, diametru_tip: "DN", grosime_mm: null,
+        forma: "flansa", straturi_extra: [{ sistem: "tabla", grosime_mm: null }], incredere: 0.6,
+      }));
+    };
+    const cuModel = await proceseazaRegistru(await parseFoi(await registru(RANDURI)), {
+      stoc: stocInMemorie(), extrage: nesigur,
+    });
+    const faraModel = await proceseazaRegistru(await parseFoi(await registru(RANDURI)), { stoc: stocInMemorie() });
+
+    expect(trimise).toEqual([]);
+    for (const rez of [cuModel, faraModel]) {
+      const caseta = rez.linii.find((l) => l.bruta.text.includes("Caseta"))!;
+      expect(caseta.sursa).toBe("regex");
+      expect(caseta.necesitaValidare).toBe(false);
+      expect(caseta.pret!.pret_unitar).toBe(121.67); // Oferta 284, DN100
+    }
+  });
+});
+
+describe("izolarea unui echipament", () => {
+  it("distribuitorul de abur (Oferta 284: 2.296,70) nu primește preț pe metru de țeavă", () => {
+    const text = "IZOLATII | Izolare echipament DISTRIBUITOR ABUR cu vata minerala si protectie cu tabla de aluminiu, "
+      + "g100 D=500, L=4500, 10 racorduri";
+    // Ce citea modelul: D=500 ca țeavă, deci 191,83 € prin formula pe mp.
+    const r = tarifeazaExtras(extrasa({
+      index: 0, sistem: "vata_minerala", diametru_valoare: 500, diametru_tip: "exterior", grosime_mm: 100,
+      straturi_extra: [{ sistem: "tabla", grosime_mm: null }],
+    }), 1, "rezidential", text);
+    expect(r.pret).toBeUndefined();
+    expect(r.codEroare).toBe("echipament");
+  });
+
+  it("„distribuitor” singur rămâne formă de pe țeavă", () => {
+    const r = tarifeazaExtras(extrasa({ index: 0, sistem: "vata_minerala", diametru_valoare: 50, grosime_mm: 50 }), 1,
+      "rezidential", "Izolatie vata minerala 50 mm distribuitor DN50");
+    expect(r.pret).toBeDefined();
+  });
+});
