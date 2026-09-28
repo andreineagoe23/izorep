@@ -1,7 +1,8 @@
 import { tarifeaza } from "../../src/pricing/engine.js";
 import { PozitieNetarifata, type Forma, type SistemMatrice, type Strat } from "../../src/pricing/types.js";
-import { lista } from "../../src/pricing/lists.js";
-import { esc, eur, nota, tabel, type Ecran } from "./tip.js";
+import { lista, type Destinatie } from "../../src/pricing/lists.js";
+import { esc, eur, nota, stare, tabel, type Ecran } from "./tip.js";
+import { MOTIV } from "../import/text.js";
 
 const SISTEME: [SistemMatrice, string][] = [
   ["elastomer", "elastomer (Armaflex)"],
@@ -11,12 +12,16 @@ const SISTEME: [SistemMatrice, string][] = [
   ["pvc", "PVC"],
 ];
 
-/** Poziții reale din Oferta 118 / 27.04.2026, ca demonstrație. */
+/**
+ * Poziții din Oferta 118 / 27.04.2026 (DN80, DN100, tubulatura, SPIRO ø315) și
+ * un caz pe care listele nu-l acoperă: vata de 100 mm nu se ofertează pe DN20.
+ */
 const EXEMPLE: Record<string, { diam: number; tip: string; forma: string; cant: number; straturi: [SistemMatrice, number | ""][] }> = {
   dn80: { diam: 80, tip: "DN", forma: "ml", cant: 345, straturi: [["elastomer", 13], ["vata_minerala", 40], ["tabla", ""]] },
   dn100: { diam: 100, tip: "DN", forma: "ml", cant: 60, straturi: [["elastomer", 13], ["vata_minerala", 40], ["tabla", ""]] },
   tub: { diam: 100, tip: "DN", forma: "mp", cant: 460, straturi: [["vata_minerala", 50], ["tabla", ""]] },
-  fail: { diam: 315, tip: "exterior", forma: "ml", cant: 100, straturi: [["elastomer", 9]] },
+  peste: { diam: 315, tip: "exterior", forma: "ml", cant: 100, straturi: [["elastomer", 9]] },
+  fail: { diam: 20, tip: "DN", forma: "ml", cant: 50, straturi: [["vata_minerala", 100]] },
 };
 
 export const ecran: Ecran = {
@@ -49,17 +54,24 @@ export const ecran: Ecran = {
             </select>
           </label>
           <label>Cantitate <input id="cant" type="number" value="345" min="0" step="1" /></label>
+          <label>Tip ofertă
+            <select id="dest">
+              <option value="rezidential">Rezidențială</option>
+              <option value="industrial">Industrială</option>
+            </select>
+          </label>
 
           <h2>Straturi <span class="hint">dinspre țeavă spre exterior</span></h2>
           <div id="straturi"></div>
           <button id="adauga" class="secundar" type="button">+ adaugă strat</button>
 
           <div class="exemple">
-            <span class="hint">poziții reale din oferta 118:</span>
+            <span class="hint">exemple:</span>
             <button class="chip" type="button" data-ex="dn80">DN80 compus</button>
             <button class="chip" type="button" data-ex="dn100">DN100 compus</button>
             <button class="chip" type="button" data-ex="tub">tubulatură /mp</button>
-            <button class="chip" type="button" data-ex="fail">netarifabilă</button>
+            <button class="chip" type="button" data-ex="peste">peste listă (ø315)</button>
+            <button class="chip" type="button" data-ex="fail">nu se ofertează</button>
           </div>
         </section>
 
@@ -73,7 +85,7 @@ export const ecran: Ecran = {
       const div = document.createElement("div");
       div.className = "strat";
       div.innerHTML = `
-        <label style="flex:1;margin:0">SistemMatrice
+        <label style="flex:1;margin:0">Material
           <select class="s">${SISTEME.map(([v, t]) => `<option value="${v}"${v === sistem ? " selected" : ""}>${t}</option>`).join("")}</select>
         </label>
         <label style="flex:0 0 112px;margin:0">Grosime <select class="g"></select></label>
@@ -117,7 +129,9 @@ export const ecran: Ecran = {
           straturi: citeste(),
           forma,
           cantitate: Number($<HTMLInputElement>("#cant").value) || 0,
+          destinatie: $<HTMLSelectElement>("#dest").value as Destinatie,
         });
+        const deVerificat = r.noteDeVerificat ?? [];
         const um = forma === "mp" ? "mp" : forma === "ml" ? "ml" : "buc";
         $("#iesire").innerHTML = `
           <div class="pret">${eur(r.pret_unitar)}<small>/ ${um}</small></div>
@@ -130,12 +144,14 @@ export const ecran: Ecran = {
               <td class="n">${s.rand_lista}</td>
               <td class="n">${eur(s.pret_unitar)}</td></tr>`),
             ["", "n", "n", "n"])}
-          ${(r.note ?? []).map((n) => nota(esc(n))).join("")}
+          ${deVerificat.map((n) => `<p class="nota">${stare("De verificat", "atentie")} ${esc(n)}</p>`).join("")}
+          ${(r.note ?? []).filter((n) => !deVerificat.includes(n)).map((n) => nota(esc(n))).join("")}
           ${nota("Fiecare strat se rotunjește separat la 2 zecimale, apoi se însumează. Diametrul geometric pornește de la rândul primului strat și crește cu 2 × grosime.")}`;
       } catch (e) {
         const p = e instanceof PozitieNetarifata;
         $("#iesire").innerHTML = `
-          <div class="alerta"><strong>Poziție netarifabilă</strong>${esc(e instanceof Error ? e.message : String(e))}</div>
+          <div class="alerta"><strong>Poziție netarifabilă</strong>${esc(
+            e instanceof PozitieNetarifata ? MOTIV[e.cod] : e instanceof Error ? e.message : String(e))}</div>
           ${nota(p
             ? "Golul din matricea de prețuri înseamnă „nu se ofertează”, nu „preț zero”. Poziția se marchează pentru tarifare manuală — nu se ghicește."
             : "Verifică datele introduse.")}`;
@@ -144,7 +160,7 @@ export const ecran: Ecran = {
 
     $("#straturi").append(randStrat("elastomer", 13));
     $("#adauga").addEventListener("click", () => { $("#straturi").append(randStrat("vata_minerala", 40)); calc(); });
-    for (const id of ["#diam", "#tipDiam", "#forma", "#cant"]) $(id).addEventListener("input", calc);
+    for (const id of ["#diam", "#tipDiam", "#forma", "#cant", "#dest"]) $(id).addEventListener("input", calc);
 
     for (const chip of root.querySelectorAll<HTMLButtonElement>(".chip")) {
       chip.onclick = () => {
