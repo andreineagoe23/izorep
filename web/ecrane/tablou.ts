@@ -27,7 +27,7 @@ function randIndicatori(): string {
     return acc;
   }, {});
 
-  const cereriNeofertate = DOCUMENTE.filter((d) => d.tip === "cerere");
+  const cereriNeofertate = DOCUMENTE.filter((d) => d.tip === "cerere" && d.stare === "cerere");
   const pozitiiNeofertate = cereriNeofertate.reduce((s, d) => s + d.linii, 0);
 
   const indicatoriStari = (Object.keys(STARE_PLURAL) as StareLucrare[])
@@ -62,7 +62,7 @@ function sectiuneAtentie(): string {
     });
   }
 
-  const cerereMaiMare = [...DOCUMENTE].filter((d) => d.tip === "cerere").sort((a, b) => b.linii - a.linii)[0];
+  const cerereMaiMare = [...DOCUMENTE].filter((d) => d.tip === "cerere" && d.stare === "cerere").sort((a, b) => b.linii - a.linii)[0];
   if (cerereMaiMare) {
     const c = client(cerereMaiMare.clientId);
     itemi.push({
@@ -75,7 +75,8 @@ function sectiuneAtentie(): string {
 
   const oferteTrimise = DOCUMENTE.filter((d) => d.tip === "oferta" && d.stare === "ofertata");
   if (oferteTrimise.length > 0) {
-    const numere = oferteTrimise.map((d) => esc(d.numar.split(" / ")[0] ?? d.numar)).join(" și ");
+    const toate = oferteTrimise.map((d) => esc(d.numar.split(" / ")[0] ?? d.numar));
+    const numere = toate.length > 1 ? `${toate.slice(0, -1).join(", ")} și ${toate[toate.length - 1]}` : toate[0]!;
     itemi.push({
       href: "#/documente",
       html: `Oferta${oferteTrimise.length > 1 ? "le" : ""} <b>${numere}</b> ${

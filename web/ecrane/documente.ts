@@ -1,6 +1,6 @@
 import type { Ecran } from "./tip.js";
 import { card, dataScurta, esc, eur, indicator, nota, nr, stare, tabel } from "./tip.js";
-import { DOCUMENTE, client, type Document } from "../date/seed.js";
+import { DOCUMENTE, FIRME, client, type Document } from "../date/seed.js";
 import { vedeCosturi } from "../nav.js";
 
 /**
@@ -42,10 +42,12 @@ const LANT: Record<string, string> = {
   "d-5997": "↳ devine Anexa 1 la contractul 5998",
   "d-5998": "↳ conține oferta 5997 ca Anexa 1",
   "d-6009": "↳ aceeași structură ca anexa contractului 5998, fără coloane de preț",
+  "d-transavia-abur": "↳ ofertată prin Oferta 284; importul ei dă exact oferta semnată",
+  "d-284": "↳ răspunsul la cererea TRANSAVIA: 94.575,06 € − discount 3 %",
 };
 
 function indicatori(): string {
-  const cereri = DOCUMENTE.filter((d) => d.tip === "cerere");
+  const cereri = DOCUMENTE.filter((d) => d.tip === "cerere" && d.stare === "cerere");
   const oferte = DOCUMENTE.filter((d) => d.tip === "oferta");
   const valoare = oferte.reduce((s, d) => s + (d.valoare ?? 0), 0);
 
@@ -62,19 +64,21 @@ function randuri(lista: Document[], arataValoare: boolean): string[] {
   return lista.map((doc) => {
     const c = client(doc.clientId);
     const hint = LANT[doc.id];
-    const st = STARE_INFO[doc.stare];
+    // O cerere ofertata nu e „trimisa": a primit o oferta.
+    const st = doc.tip === "cerere" && doc.stare === "ofertata" ? { text: "Ofertată", ton: "ok" as const } : STARE_INFO[doc.stare];
     // Numarul contine si data ("118 / 27.04.2026"); data are coloana ei.
     const numar = doc.numar.split("/")[0]?.trim() || "—";
-    const actiune = doc.tip === "cerere" ? `<a href="#/deviz">Calculează devizul</a>` : "";
+    const actiune = doc.tip === "cerere" && doc.stare === "cerere" ? `<a href="#/import">Importă cererea</a>` : "";
+    const firma = doc.firmaId ? FIRME.find((f) => f.id === doc.firmaId)?.denumire : undefined;
     // Legatura dintre documente sta sub titlu, nu sub numar: coloana de numar
     // e ingusta si o nota de un rand acolo intinde randul pe sase linii.
     return `<tr>
       <td class="fix">${esc(numar)}</td>
-      <td class="fix">${dataScurta(doc.data)}</td>
+      <td class="fix">${doc.data ? dataScurta(doc.data) : "—"}</td>
       <td>${esc(TIP_ETICHETA[doc.tip])}</td>
       <td>${esc(c?.denumire ?? "—")}</td>
       <td><span class="desc" title="${esc(doc.titlu)}">${esc(doc.titlu)}</span>
-        <br><span class="hint">${hint ? `${esc(hint)} · ` : ""}${esc(doc.fisierSursa)}</span></td>
+        <br><span class="hint">${hint ? `${esc(hint)} · ` : ""}${firma ? `emisă de ${esc(firma)} · ` : ""}${esc(doc.fisierSursa)}</span></td>
       <td class="n">${nr(doc.linii)}</td>
       ${arataValoare ? `<td class="n">${doc.valoare != null ? eur(doc.valoare) : "—"}</td>` : ""}
       <td>${stare(st.text, st.ton)}</td>
@@ -111,14 +115,15 @@ export const ecran: Ecran = {
       ${card(
         "Cum ajunge o cerere în sistem",
         `<div class="grid grid-2">
-          <p><strong>Excel de la client.</strong> Sistemul citește fișierul primit, propune o mapare a
-          coloanelor pe câmpurile interne și o memorează pentru clientul respectiv — la următorul import
-          se aplică automat.</p>
-          <p><strong>Poză cu foaia de măsurători.</strong> Un model de vision extrage câmpurile direct din
-          imagine, cu un scor de încredere pentru fiecare valoare citită.</p>
+          <p><strong>Excel de la client, în formatul lui.</strong> Fiecare client trimite alt tabel. Sistemul
+          recunoaște coloanele (descriere, UM, cantitate), citește rândurile cu reguli fixe, testate pe
+          fișierele reale, și trimite la AI doar rândurile pe care regulile nu le pot citi.</p>
+          <p><strong>Prețul îl calculează listele firmei, nu AI-ul.</strong> Fiecare poziție iese „Gata”,
+          „De verificat” (cu motivul scris) sau „Fără preț” (cu cauza). Ce a corectat omul o dată se
+          ține minte pentru fișierele următoare.</p>
         </div>
-        <p class="hint">În ambele cazuri urmează obligatoriu un ecran de validare — nimic nu ajunge în baza
-        de date fără ca un om să confirme.</p>`,
+        <p class="hint">Nimic nu ajunge în oferta descărcată fără ca un om să fi văzut pozițiile marcate.
+        Cererea TRANSAVIA importată dă, rând cu rând, exact Oferta 284 semnată.</p>`,
       )}
       ${nota(
         "Oferta 5997 devine <strong>Anexa 1</strong> a contractului 5998, iar situația de lucrări 6009 reia " +

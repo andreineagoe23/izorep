@@ -51,14 +51,13 @@ export const ecran: Ecran = {
         ["", "", "", "", "", "", "n", "n", "n"],
       )}
       ${nota(
-        "Categoria clientului determină lista de prețuri implicită — un client de rafinărie primește alte tarife " +
-          "decât unul rezidențial. Prețul poate fi oricând suprascris manual pe deviz, cu marcaj vizibil pe linie, " +
-          "pentru abaterile negociate care apar în ofertele reale.",
+        "Tipul ofertei — rezidențială sau industrială — se alege la import, pentru fiecare ofertă: categoria " +
+          "clientului nu o decide. Oferta 284, pentru o lucrare industrială, a fost tarifată pe lista rezidențială. " +
+          "Prețul poate fi pus de mână pe orice poziție, cu marcaj vizibil în ofertă.",
       )}
       ${nota(
-        "Fiecare client impune propriul format de situație de lucrări (vezi coloana „Format situații”). Maparea " +
-          "coloanelor din Excel-ul lui cu formatul intern se face o singură dată, per client, apoi se refolosește " +
-          "automat la fiecare import ulterior.",
+        "Fiecare client trimite alt format de tabel (vezi coloana „Format situații”). Coloanele unui format " +
+          "nou se recunosc o singură dată, apoi se refolosesc automat la fiecare fișier cu același format.",
       )}
     `;
   },

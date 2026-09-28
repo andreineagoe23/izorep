@@ -52,7 +52,8 @@ export interface Document {
   id: string;
   tip: "cerere" | "oferta" | "contract" | "situatie";
   numar: string;
-  data: string;
+  /** Lipsa = fisierul clientului nu poarta data; nu o inventam. */
+  data: string | null;
   clientId: string;
   lucrareId: string | null;
   titlu: string;
@@ -60,6 +61,8 @@ export interface Document {
   linii: number;
   stare: StareDocument;
   fisierSursa: string;
+  /** Firma emitenta, pentru documentele emise de noi. */
+  firmaId?: "radoia" | "isorad";
 }
 
 /** Documentele pleaca de la doua firme. Sistemul e multi-firma din prima zi. */
@@ -75,7 +78,7 @@ export const CLIENTI: Client[] = [
     contacte: [{ nume: "Alina Matieș", rol: "oferta 118" }, { nume: "Bogdan Mirza", rol: "contract 5998" }],
     formatSituatii: "Caietul clientului · coduri poziție (01.82.02.01A), descrieri DE/RO",
     termenPlataZile: null,
-    sursa: "Oferta 27.04.2026.xlsx · Anexa 1 la contract 5998",
+    sursa: "oferta-118-nisal.xlsx · oferta-manopera-anexa-contract-2024.xlsx",
   },
   {
     id: "regina-maria", denumire: "Spital Regina Maria", cui: null,
@@ -83,7 +86,15 @@ export const CLIENTI: Client[] = [
     contacte: [],
     formatSituatii: "Listă de cantități pe capitole, fără prețuri",
     termenPlataZile: null,
-    sursa: "Radoia.xlsx · 7 capitole, 215 poziții",
+    sursa: "cerere-de-oferta-spital.xlsx · 7 foi, 129 de poziții de izolație",
+  },
+  {
+    id: "energoinstal", denumire: "Grup Energoinstal SA", cui: null,
+    categorie: "industrial", tip: "antreprenor_general",
+    contacte: [{ nume: "Vlad Emil", rol: "oferta 284" }],
+    formatSituatii: "Listă pe rânduri · tip codat în denumire (Di114, g50 - COT)",
+    termenPlataZile: null,
+    sursa: "cerere-de-oferta-transavia-abur.xlsx · Oferta 284 / 27.05.2026",
   },
   {
     id: "transavia", denumire: "Transavia", cui: null,
@@ -91,7 +102,7 @@ export const CLIENTI: Client[] = [
     contacte: [],
     formatSituatii: "Pivot pe zone · tip codat în denumire (Di89, g50 - COT)",
     termenPlataZile: null,
-    sursa: "Izolatii Transavia.xlsx",
+    sursa: "cerere-de-oferta-transavia-inox.xlsx",
   },
   {
     id: "flower-city", denumire: "Flower City", cui: null,
@@ -99,7 +110,7 @@ export const CLIENTI: Client[] = [
     contacte: [{ nume: "ing. Emil Pușcaș Pop", rol: "întocmit" }],
     formatSituatii: "Cantitate/unitate × nr. unități · Cluj-Napoca",
     termenPlataZile: null,
-    sursa: "Lista de cantitati Flower City_F4.xlsx",
+    sursa: "cerere-de-oferta-flower-city.xlsx",
   },
 ];
 
@@ -107,7 +118,7 @@ export const SANTIERE: Santier[] = [
   { id: "s-lutz", clientId: "nisal", denumire: "XXXLutz + Momax Balotești", adresa: "Balotești, Ilfov" },
   { id: "s-dy", clientId: "nisal", denumire: "DY Nutrition, J8 Office Park", adresa: "J8 Office Park, Etaj 3, Corp A" },
   { id: "s-pipera", clientId: "regina-maria", denumire: "Spital Regina Maria", adresa: "Modul 3 · PUD șos. Pipera nr. 59, NC 242523" },
-  { id: "s-transavia", clientId: "transavia", denumire: "Rampe de reducere abur", adresa: "—" },
+  { id: "s-transavia", clientId: "energoinstal", denumire: "TRANSAVIA Alba-Iulia", adresa: "Alba-Iulia" },
   { id: "s-flower", clientId: "flower-city", denumire: "Flower City, faza F4", adresa: "Cluj-Napoca · 37 case tip A+B, 6 case tip C" },
 ];
 
@@ -115,17 +126,22 @@ export const LUCRARI: Lucrare[] = [
   {
     id: "L-118", denumire: "Izolații termice, sanitare și ventilație",
     clientId: "nisal", santierId: "s-lutz", stare: "ofertata", progres: 0,
-    contractat: 341038.78, facturat: 0, inceput: null, pozitii: 63,
+    contractat: 170519.39, facturat: 0, inceput: null, pozitii: 61,
   },
   {
     id: "L-118.1", denumire: "Închideri goluri la foc",
     clientId: "nisal", santierId: "s-lutz", stare: "ofertata", progres: 0,
-    contractat: 25384.08, facturat: 0, inceput: null, pozitii: 54,
+    contractat: 12692.04, facturat: 0, inceput: null, pozitii: 53,
   },
   {
     id: "L-5998", denumire: "Izolații conducte PPR și apă răcită",
     clientId: "nisal", santierId: "s-dy", stare: "de_inchis", progres: 100,
-    contractat: 585.40, facturat: 585.40, inceput: "2024-12-06", pozitii: 10,
+    contractat: 706.90, facturat: 706.90, inceput: "2024-12-06", pozitii: 16,
+  },
+  {
+    id: "L-284", denumire: "Izolații abur: vată minerală și tablă de aluminiu",
+    clientId: "energoinstal", santierId: "s-transavia", stare: "ofertata", progres: 0,
+    contractat: 91737.81, facturat: 0, inceput: null, pozitii: 99,
   },
 ];
 
@@ -134,57 +150,71 @@ export const DOCUMENTE: Document[] = [
     id: "d-118", tip: "oferta", numar: "118 / 27.04.2026", data: "2026-04-27",
     clientId: "nisal", lucrareId: "L-118",
     titlu: "Izolații termice — XXXLutz + Momax Balotești",
-    valoare: 341038.78, linii: 63, stare: "ofertata",
-    fisierSursa: "Oferta 27.04.2026.xlsx",
+    valoare: 170519.39, linii: 61, stare: "ofertata",
+    fisierSursa: "oferta-118-nisal.xlsx", firmaId: "radoia",
   },
   {
     id: "d-118-1", tip: "oferta", numar: "118.1 / 27.04.2026", data: "2026-04-27",
     clientId: "nisal", lucrareId: "L-118.1",
     titlu: "Închideri goluri la foc — Mătari",
-    valoare: 25384.08, linii: 54, stare: "ofertata",
-    fisierSursa: "Oferta 27.04.2026 Matari.xlsx",
+    valoare: 12692.04, linii: 53, stare: "ofertata",
+    fisierSursa: "oferta-118-1-matari-goluri-foc.xlsx", firmaId: "radoia",
   },
   {
     id: "d-5997", tip: "oferta", numar: "5997 / 06.12.2024", data: "2024-12-06",
     clientId: "nisal", lucrareId: "L-5998",
     titlu: "DY Nutrition, J8 Office Park — manoperă",
-    valoare: 585.40, linii: 10, stare: "acceptata",
-    fisierSursa: "Anexa 1 la contract - Oferta 06.12.2024.xlsx",
+    valoare: 706.90, linii: 16, stare: "acceptata",
+    fisierSursa: "oferta-manopera-anexa-contract-2024.xlsx", firmaId: "isorad",
   },
   {
     id: "d-5998", tip: "contract", numar: "5998 / 06.12.2024", data: "2024-12-06",
     clientId: "nisal", lucrareId: "L-5998",
     titlu: "Contract cu oferta 5997 ca Anexa 1",
-    valoare: 585.40, linii: 10, stare: "contractata",
-    fisierSursa: "Anexa 1 la contract - Oferta 06.12.2024.xlsx",
+    valoare: 706.90, linii: 16, stare: "contractata",
+    fisierSursa: "oferta-manopera-anexa-contract-2024.xlsx", firmaId: "isorad",
   },
   {
     id: "d-6009", tip: "situatie", numar: "6009 / 19.12.2024", data: "2024-12-19",
     clientId: "nisal", lucrareId: "L-5998",
     titlu: "Situație de lucrări — aceeași structură ca anexa, fără prețuri",
-    valoare: null, linii: 10, stare: "confirmata",
-    fisierSursa: "Anexa 1 la contract - Oferta 06.12.2024.xlsx",
+    valoare: null, linii: 16, stare: "confirmata",
+    fisierSursa: "oferta-manopera-anexa-contract-2024.xlsx", firmaId: "isorad",
   },
   {
     id: "d-spital", tip: "cerere", numar: "— / 04.09.2026", data: "2026-09-04",
     clientId: "regina-maria", lucrareId: null,
     titlu: "Spital Regina Maria — listă de cantități, 7 capitole",
-    valoare: null, linii: 215, stare: "cerere",
-    fisierSursa: "Radoia.xlsx",
+    valoare: null, linii: 129, stare: "cerere",
+    fisierSursa: "cerere-de-oferta-spital.xlsx",
   },
   {
-    id: "d-transavia", tip: "cerere", numar: "— ", data: "2026-01-01",
+    id: "d-transavia-abur", tip: "cerere", numar: "—", data: null,
+    clientId: "energoinstal", lucrareId: "L-284",
+    titlu: "TRANSAVIA Alba-Iulia — izolații abur",
+    valoare: null, linii: 99, stare: "ofertata",
+    fisierSursa: "cerere-de-oferta-transavia-abur.xlsx",
+  },
+  {
+    id: "d-284", tip: "oferta", numar: "284 / 27.05.2026", data: "2026-05-27",
+    clientId: "energoinstal", lucrareId: "L-284",
+    titlu: "Izolații abur — TRANSAVIA Alba-Iulia",
+    valoare: 91737.81, linii: 99, stare: "ofertata",
+    fisierSursa: "oferta-284-transavia-abur.xlsx", firmaId: "radoia",
+  },
+  {
+    id: "d-transavia", tip: "cerere", numar: "—", data: null,
     clientId: "transavia", lucrareId: null,
     titlu: "Izolații cu vată minerală și protecție inox 304",
-    valoare: null, linii: 77, stare: "cerere",
-    fisierSursa: "Izolatii Transavia.xlsx",
+    valoare: null, linii: 72, stare: "cerere",
+    fisierSursa: "cerere-de-oferta-transavia-inox.xlsx",
   },
   {
     id: "d-flower", tip: "cerere", numar: "12.1 / 29.05.2026", data: "2026-05-29",
     clientId: "flower-city", lucrareId: null,
     titlu: "Flower City F4 — case tip A+B (37) și tip C (6)",
     valoare: null, linii: 9, stare: "cerere",
-    fisierSursa: "Lista de cantitati Flower City_F4.xlsx",
+    fisierSursa: "cerere-de-oferta-flower-city.xlsx",
   },
 ];
 
