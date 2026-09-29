@@ -1,4 +1,4 @@
-import { ROLURI, VIITOR, areAcces, meniuPentru, setRol, rolActiv, vedeCosturi, type Rol } from "./nav.js";
+import { MENIU, ROLURI, VIITOR, setRol, rolActiv, type Rol } from "./nav.js";
 import { esc, type Ecran } from "./ecrane/tip.js";
 import { CURS_BNR } from "./date/seed.js";
 import { icoana } from "./icoane.js";
@@ -53,7 +53,7 @@ function deseneazaMeniu(): void {
   // Eticheta e mereu in marcaj, si cand bara e pliata: acolo CSS-ul o muta
   // langa item ca tooltip. Ascunsa cu `display:none` ar disparea si din numele
   // accesibil al linkului, iar pe banda ar ramane sapte linkuri fara nume.
-  const grupuri = meniuPentru().map((g) => `
+  const grupuri = MENIU.map((g) => `
     <div class="grup">
       <h3>${esc(g.titlu)}</h3>
       ${g.itemi.map((i) => `<a href="#/${i.id}" class="item"${
@@ -77,12 +77,6 @@ async function navigheaza(mutaFocus = false): Promise<void> {
   // Cererea de spatiu e a ecranului care pleaca. Se retrage INAINTE de randare:
   // importul isi redeschide singur sesiunea in `render` si o cere din nou.
   renuntaLaSpatiu();
-  // Un ecran din afara meniului rolului (link vechi, rol schimbat pe loc) duce
-  // la tabloul de bord. `replaceState`, ca butonul Inapoi sa nu ne readuca aici.
-  if (ECRANE[ruta()] && !areAcces(ruta())) history.replaceState(null, "", "#/tablou");
-  // Cursul e despre preturi; pe santier n-are rost. `visibility`, nu `hidden`:
-  // `.curs` impinge butoanele din dreapta cu `margin-left: auto`.
-  $("#curs").style.visibility = vedeCosturi() ? "" : "hidden";
   const id = ruta();
   const incarca = ECRANE[id];
   const root = $("#ecran");

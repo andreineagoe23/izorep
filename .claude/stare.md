@@ -15,11 +15,21 @@ exacte din 50, față de 28 cu gpt-4.1. Referința e transcrisă de noi. **De ce
 oferta Ecoterm făcută din cele 4 pagini și confirmarea notației (ROB, „preț
 dublu”, „× 2”).
 
+**Testele, curățate (29 septembrie 2026): 630 → 363.** Regula, cerută de
+Andrei: rămân testele care păzesc banii (prețurile față de ofertele semnate,
+nicio poziție greșită „Gata” pe tăcute, importul cap-coadă, registrul ofertei),
+cheia OpenAI și izolarea datelor. Au plecat testele pe marcaj și texte de
+ecran, pe preferințe din browser și pe detalii de formă: aplicația nu e gata,
+iar aspectul se verifică în browser. Familiile „un test pe poziție” (Matari
+53, Oferta 118 48, coduri de cauză, cot/teu Oferta 284, combinațiile Șantier)
+sunt acum un test pe ofertă, care la eșec listează toate pozițiile greșite:
+aceeași acoperire, alt număr.
+
 ## 28 septembrie 2026, seara
 
 Produsul e pregătit pentru demo-ul lui Adrian la firmă: scenariul e în
 `docs/demo-firma.md`, întrebările în `docs/intrebari-firma.md`. Totul e pe
-`main` (**615 de teste**, build verde, publicat pe Pages).
+`main` (**363 de teste**, build verde, publicat pe Pages).
 
 - **Calculele de import, verificate linie cu linie** față de ofertele semnate,
   cu model și fără: TRANSAVIA 98 / 98 prețuri și 99 / 99 cantități, Oferta
@@ -30,10 +40,10 @@ Produsul e pregătit pentru demo-ul lui Adrian la firmă: scenariul e în
   cu perechea TRANSAVIA și cu un test care le leagă de fișiere.
 - **Depozit și stoc, prototip:** necesarul de materiale din oferta importată,
   registrul de mișcări, „de comandat”; datele stau în browser.
-- **Trei roluri: Birou, Șantier, Contabilitate** (erau cinci). Firma e mică,
-  cu oameni fără IT: Șantier nu vede bani, celelalte două da. `docs/productie.md`
-  e rescris simplu: un link, cont pe email, Saga rămâne cum e, contabila
-  importă un fișier. Șantierul are meniu scurt: tablou, lucrări, depozit.
+- **Două roluri provizorii: Birou și Contabilitate** (erau cinci; Șantierul,
+  scos pe 29 septembrie: nu folosește aplicația). Amândouă văd tot; rolurile se
+  stabilesc cu firma. `docs/productie.md` e rescris simplu: un link, cont pe
+  email, Saga rămâne cum e, contabila importă un fișier.
 - **Importul, trecut prin ochii omului de la birou:** fișier stricat / PDF /
   .xls primesc un mesaj în română cu ce să facă (nu eroarea JSZip în engleză);
   un Excel fără poziții se oprește la pasul 1 cu explicație; lângă „Descarcă
@@ -985,7 +995,7 @@ sau rolă, accesoriile).
 ## Comenzi
 
 ```bash
-npm test                                       # 615 de teste (motor, import, baza, ofertă, ecran, meniu)
+npm test                                       # 363 de teste (motor, import, baza, ofertă, șantier)
 npm run typecheck
 npm run dev                                    # UI local, /izorep/
 npm run import -- ../attachments/clienti/cerere-de-oferta-spital.xlsx   # pipeline complet

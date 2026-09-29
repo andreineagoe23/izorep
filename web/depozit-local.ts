@@ -3,7 +3,7 @@
  *
  * Doar pentru prototip: miscarile si necesarurile trimise din import stau in
  * `localStorage`, deci le vede doar browserul in care au fost facute. Stocul
- * adevarat e folosit de mai multi oameni (birou, santier) si va sta in baza;
+ * adevarat e folosit de mai multi oameni si va sta in baza;
  * logica lui e deja in `src/stoc/`, pura, si nu se schimba.
  *
  * Depozitul e injectabil ca sa poata fi testat in Node, si e best-effort, ca

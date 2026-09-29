@@ -72,22 +72,21 @@ describe("textul pentru motor", () => {
   const SISTEM = { vata_minerala: "vata_minerala", elastomer: "elastomer" } as const;
   const JACHETA = { aluminiu: "tabla", inox: "tabla_inox", pvc: "pvc" } as const;
 
-  for (const s of STRATURI) {
-    for (const element of ELEMENTE.filter((e) => e !== "alt")) {
-      it(`${element} · ${s.izolatie ?? "fara izolatie"} ${s.grosime_mm ?? ""} + ${s.jacheta ?? "fara jacheta"}`, () => {
+  it("fiecare element × straturi se citeste complet de regulile importului", () => {
+    const gresite: string[] = [];
+    for (const s of STRATURI) {
+      for (const element of ELEMENTE.filter((e) => e !== "alt")) {
         const campuri = { zona: "Z", diametru_valoare: 168, diametru_tip: "exterior" as const, element, pret_dublu: false, ...s };
-        const text = textRand(campuri);
-        const { linie } = extrageDeterminist(1, text, element === "ml" ? "ml" : "buc");
-        expect(linie.diametru_valoare).toBe(168);
-        expect(linie.diametru_tip).toBe("exterior");
-        expect(linie.forma).toBe(FORMA[element]);
+        const { linie } = extrageDeterminist(1, textRand(campuri), element === "ml" ? "ml" : "buc");
         const straturi = [linie.sistem, ...linie.straturi_extra.map((x) => x.sistem)];
         const asteptat = [s.izolatie ? SISTEM[s.izolatie] : null, s.jacheta ? JACHETA[s.jacheta] : null].filter(Boolean);
-        expect(straturi).toEqual(asteptat);
-        if (s.izolatie) expect(linie.grosime_mm).toBe(s.grosime_mm);
-      });
+        const bun = linie.diametru_valoare === 168 && linie.diametru_tip === "exterior" && linie.forma === FORMA[element]
+          && JSON.stringify(straturi) === JSON.stringify(asteptat) && (!s.izolatie || linie.grosime_mm === s.grosime_mm);
+        if (!bun) gresite.push(`${element} · ${s.izolatie ?? "-"} ${s.grosime_mm ?? ""} + ${s.jacheta ?? "-"}`);
+      }
     }
-  }
+    expect(gresite).toEqual([]);
+  });
 
   it("DN ramane DN", () => {
     const text = textRand({ zona: "Z", diametru_valoare: 400, diametru_tip: "DN", izolatie: "vata_minerala", grosime_mm: 50, jacheta: "aluminiu", element: "ml", pret_dublu: false });

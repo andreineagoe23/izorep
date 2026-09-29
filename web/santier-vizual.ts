@@ -5,8 +5,8 @@ import { esc, stare, tabel } from "./ecrane/tip.js";
 import { alegereSegment } from "./import/vizual.js";
 
 /**
- * Marcajul ecranului „Șantier". Pur, fara DOM, testat in Node
- * (`tests/santier-vizual.test.ts`), ca la import.
+ * Marcajul ecranului „Șantier". Pur, fara DOM, ca la import; regulile care
+ * nu au voie sa se strice sunt in `tests/ecrane.test.ts`.
  *
  * Ecranul il foloseste omul de la birou care a primit pozele pe telefon: poza
  * sta langa randurile citite din ea, ca sa le compare cu ochiul. Modelul doar

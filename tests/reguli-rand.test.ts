@@ -66,27 +66,21 @@ describe("cot/teu de vata minerala pe banda 18-60: 9/9 potriviri exacte cu Ofert
     [60, "teu", 18.83, 60, 140],
   ];
 
-  it.each(cazuri)("Di%i %s = %f EUR (vata rand %i exclus, tabla rand %i)", (di, forma, pret, randVata, randTabla) => {
-    const r = tarifeaza({
-      diametru: { valoare: di, tip: "interior" },
-      straturi: [{ sistem: "vata_minerala", grosime_mm: 40 }, { sistem: "tabla" }],
-      forma, cantitate: 1,
+  it("cele 9 pozitii: pretul tablei, vata exclusa pe randul ei, cu nota de provenienta", () => {
+    const gresite = cazuri.filter(([di, forma, pret, randVata, randTabla]) => {
+      const r = tarifeaza({
+        diametru: { valoare: di, tip: "interior" },
+        straturi: [{ sistem: "vata_minerala", grosime_mm: 40 }, { sistem: "tabla" }],
+        forma, cantitate: 1,
+      });
+      const [vata, tabla] = r.straturi;
+      return r.pret_unitar !== pret
+        || vata!.rand_lista !== randVata || vata!.inclus || vata!.pret_unitar !== 0
+        || tabla!.rand_lista !== randTabla || !tabla!.inclus || tabla!.pret_unitar !== pret
+        // Pozitia poarta nota de proveniente a regulii — omul trebuie sa o vada.
+        || !r.note?.[0]?.includes(`vata_minerala nu are coeficient de ${forma}`) || !r.note[0].includes("banda 18-60");
     });
-    expect(r.pret_unitar).toBe(pret);
-
-    const [vata, tabla] = r.straturi;
-    expect(vata!.rand_lista).toBe(randVata);
-    expect(vata!.inclus).toBe(false);
-    expect(vata!.pret_unitar).toBe(0);
-
-    expect(tabla!.rand_lista).toBe(randTabla);
-    expect(tabla!.inclus).toBe(true);
-    expect(tabla!.pret_unitar).toBe(pret);
-
-    // Pozitia poarta nota de proveniente a regulii — omul trebuie sa o vada.
-    expect(r.note).toBeDefined();
-    expect(r.note![0]).toContain("vata_minerala nu are coeficient de " + forma);
-    expect(r.note![0]).toContain("banda 18-60");
+    expect(gresite).toEqual([]);
   });
 });
 
@@ -98,15 +92,16 @@ describe("Di49 / Di169 / Di273 pe ml — vata + tabla, ambele incluse (multiplic
     [273, 60, 72.58],
   ];
 
-  it.each(cazuri)("Di%i g%i ml = %f EUR/ml", (di, g, pret) => {
-    const r = tarifeaza({
-      diametru: { valoare: di, tip: "interior" },
-      straturi: [{ sistem: "vata_minerala", grosime_mm: g }, { sistem: "tabla" }],
-      forma: "ml", cantitate: 1,
+  it("cele 3 pozitii din oferta, fara nicio nota", () => {
+    const gresite = cazuri.filter(([di, g, pret]) => {
+      const r = tarifeaza({
+        diametru: { valoare: di, tip: "interior" },
+        straturi: [{ sistem: "vata_minerala", grosime_mm: g }, { sistem: "tabla" }],
+        forma: "ml", cantitate: 1,
+      });
+      return r.pret_unitar !== pret || !r.straturi.every((s) => s.inclus) || r.note !== undefined;
     });
-    expect(r.pret_unitar).toBe(pret);
-    expect(r.straturi.every((s) => s.inclus)).toBe(true);
-    expect(r.note).toBeUndefined();
+    expect(gresite).toEqual([]);
   });
 });
 

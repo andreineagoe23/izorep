@@ -178,15 +178,16 @@ poate stiliza pe bara închisă la culoare — tooltipul CSS apare și pe
 Cât e pliată, `#meniu` trece pe `overflow: visible`: `auto` ar tăia tooltipul la
 68px. Banda ține cele opt destinații fără derulare, deci nu se pierde nimic.
 
-Logica de preferință stă în `web/meniu-stare.ts`, cu depozit injectabil, ca să
-fie testabilă în Node (`tests/meniu-stare.test.ts`). Ca la orice depozit din
-browser, e best-effort: blocat, preferința se pierde, meniul merge.
+Logica de preferință stă în `web/meniu-stare.ts`, cu depozit injectabil. Ca la
+orice depozit din browser, e best-effort: blocat, preferința se pierde, meniul
+merge.
 
 ## Rolul activ
 
 Comutatorul din bara laterală schimbă ce se vede. `vedeCosturi()` din `nav.ts`
-spune dacă rolul curent are voie să vadă valori în bani: Birou și Contabilitate
-da, Șantier nu. Sunt trei roluri, cât are o firmă mică.
+spune dacă rolul curent are voie să vadă valori în bani. Azi sunt două roluri,
+Birou și Contabilitate, amândouă cu acces la tot: rolurile se stabilesc cu
+firma. Șantierul nu are rol, fiindcă nu folosește aplicația.
 Ecranele care afișează bani trebuie să îl respecte.
 
 În aplicația reală asta se verifică pe server; aici e doar demonstrația
@@ -369,10 +370,9 @@ neconfirmată, grosime propusă), nu citite din textul notelor. Registrul de
 ofertă păstrează etichetele lungi din `web/validare.ts`, cu întrebările către
 firmă.
 
-Tot marcajul stă în funcții pure (`web/import/vizual.ts`), testate în Node
-(`tests/import-vizual.test.ts`, `tests/import-text.test.ts`): textul clientului
-nu poate injecta HTML, fiecare stare are acțiunea ei, starea e aceeași cu foaia
-registrului în care pleacă poziția.
+Tot marcajul stă în funcții pure (`web/import/vizual.ts`). Aspectul se
+verifică în browser; testele (`tests/ecrane.test.ts`) țin doar ce nu are voie
+să se strice: textul clientului nu poate injecta HTML.
 
 ### Ieșirea: registrul de ofertă
 

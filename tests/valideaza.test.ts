@@ -29,13 +29,14 @@ describe("DN citit, dar pe rând scrie alt Ø", () => {
     expect(av[0]!.mesaj).toContain("ISO 26.9");
   });
 
-  it.each([
-    ["Dn 80 (Ø88,9 x 4 - 3'')", 80],
-    ["Izolatie Armaflex 13 mm Ф 57 x 3,5 mm (Dn 2\")", 50],
-    ["Armaflex DN100, fara niciun diametru scris", 100],
-    ["Armaflex Ø1/2\" (Dn 15mm)", 15],
-  ])("tace pe %s", (text, v) => {
-    expect(diametruContrazisDeText(dn(v), text)).toEqual([]);
+  it("tace cand Ø-ul chiar e DN-ul, sau cand nu e scris niciun Ø", () => {
+    const cazuri: [string, number][] = [
+      ["Dn 80 (Ø88,9 x 4 - 3'')", 80],
+      ["Izolatie Armaflex 13 mm Ф 57 x 3,5 mm (Dn 2\")", 50],
+      ["Armaflex DN100, fara niciun diametru scris", 100],
+      ["Armaflex Ø1/2\" (Dn 15mm)", 15],
+    ];
+    expect(cazuri.filter(([text, v]) => diametruContrazisDeText(dn(v), text).length > 0)).toEqual([]);
   });
 });
 

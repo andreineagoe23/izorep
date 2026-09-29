@@ -23,10 +23,9 @@ import { describe, it, expect } from "vitest";
 import ExcelJS from "exceljs";
 import { existsSync } from "node:fs";
 import {
-  clientPropus, dataAzi, imparte, registruOferta, totalOferta,
+  imparte, registruOferta, totalOferta,
   type AntetOferta, type Provenienta,
 } from "../web/oferta.js";
-import { numeOferta } from "../web/descarca.js";
 import type { LinieProcesata } from "../src/import/nucleu.js";
 import type { LinieExtrasa } from "../src/import/schema.js";
 
@@ -146,27 +145,6 @@ describe("registrul generat", () => {
     linie({ extras: { sistem: null }, text: "TOTAL CAPITOL" }),
   ];
 
-  it("are exact cele trei foi, în ordinea în care se folosesc", async () => {
-    const wb = await citeste(await registruOferta({ linii: set(), antet: ANTET, provenienta: PROV }));
-    expect(wb.worksheets.map((w) => w.name)).toEqual(["Ofertă", "De validat", "Netarifate"]);
-  });
-
-  it("antetul poartă toate câmpurile formularului", async () => {
-    const ws = (await citeste(await registruOferta({
-      linii: set(), antet: ANTET, provenienta: PROV,
-    }))).getWorksheet("Ofertă")!;
-
-    expect(text(ws, "A5")).toBe("OFERTA LUCRARI IZOLATII TERMICE");
-    expect(text(ws, "C7")).toBe("Nr. RAD284 / 27.05.2026");
-    expect(text(ws, "A10")).toContain("Vlad Emil");
-    expect(text(ws, "A11")).toContain("Grup Energoinstal SA");
-    expect(text(ws, "A12")).toContain("TRANSAVIA ALBA-IULIA");
-    expect(ws.getRow(15).values).toEqual([
-      undefined, "Identificare_Norma", "Denumire", "UM", "TOTAL CANTITATE",
-      "Pret unitar Euro", "Pret total Euro",
-    ]);
-  });
-
   it("pe foaia Ofertă stau doar pozițiile cu preț și nemarcate", async () => {
     const ws = (await citeste(await registruOferta({
       linii: set(), antet: ANTET, provenienta: PROV,
@@ -266,15 +244,6 @@ describe("registrul generat", () => {
     expect(tot.join(" | ")).toContain("niciunul (doar stratul determinist)");
   });
 
-  it("subsolul poartă localitatea, data și firma emitentă", async () => {
-    const ws = (await citeste(await registruOferta({
-      linii: set(), antet: ANTET, provenienta: PROV,
-    }))).getWorksheet("Ofertă")!;
-    expect(text(ws, "A21")).toBe("PALTINIS,");
-    expect(text(ws, "F21")).toBe("RADOIA ISOLIRUNG SRL");
-    expect(text(ws, "A22")).toBe("27.05.2026");
-  });
-
   it("un import fără nicio poziție tarifată dă un registru valid, cu total zero", async () => {
     // Cazul care ar fi crăpat cel mai ușor: fără rânduri, `randTotal` cade pe
     // primul rând de date. Registrul trebuie să existe și să spună zero, nu să
@@ -283,18 +252,6 @@ describe("registrul generat", () => {
       linii: [linie({ codEroare: "grosime_inexistenta" })], antet: ANTET, provenienta: PROV,
     }))).getWorksheet("Ofertă")!;
     expect(ws.getCell("F17").value).toBe(0);
-  });
-});
-
-describe("numeOferta", () => {
-  it("compune numele din serie, număr și dată", () => {
-    expect(numeOferta("RAD", "284", "27.05.2026")).toBe("Oferta RAD284 27.05.2026.xlsx");
-  });
-
-  it("scoate caracterele pe care un nume de fișier nu le poate purta", () => {
-    // Numărul și data vin dintr-un formular: un `/` tastat acolo ar face
-    // descărcarea să eșueze fără niciun mesaj.
-    expect(numeOferta("RAD", "284/2", "27/05/2026")).toBe("Oferta RAD284-2 27-05-2026.xlsx");
   });
 });
 
@@ -355,52 +312,6 @@ describe("discountul comercial", () => {
     expect(val).toEqual([2323.09, 69.69, 2253.40]);
   });
 
-  it("subsolul și zona de proveniență stau sub ultimul total, nu peste el", async () => {
-    // Cu discount apar doua randuri in plus; daca subsolul ar ramane calculat
-    // din primul total, ar scrie peste ele.
-    const ws = (await citeste(await cuDiscount(3))).getWorksheet("Ofertă")!;
-    let randGeneral = 0, randFirma = 0;
-    ws.eachRow((r, n) => {
-      if (String(r.getCell(1).value ?? "").startsWith("TOTAL GENERAL")) randGeneral = n;
-      if (String(r.getCell(6).value ?? "") === ANTET.firma) randFirma = n;
-    });
-    expect(randGeneral).toBeGreaterThan(0);
-    expect(randFirma).toBeGreaterThan(randGeneral);
-  });
-});
-
-describe("propunerile din formular", () => {
-  it("scoate din numele fișierului zgomotul care apare în toate", () => {
-    // Numele cu care au venit fișierele de la clienți. Propunerea nu trebuie să fie
-    // perfectă — câmpul rămâne editabil — dar trebuie să fie mai bună decât
-    // numele întreg, altfel omul o șterge de fiecare dată și n-are rost.
-    expect(clientPropus("Oferta 27.04.2026 Matari.xlsx")).toBe("Matari");
-    expect(clientPropus("Izolatii Transavia.xlsx")).toBe("Izolatii Transavia");
-    expect(clientPropus("Lista de cantitati Flower City_F4.xlsx")).toBe("Lista de cantitati Flower City F4");
-    // Numele scurte, fără spații, cu care stau acum în `attachments/clienti/`.
-    expect(clientPropus("cerere-de-oferta-transavia-abur.xlsx")).toBe("Transavia Abur");
-    expect(clientPropus("oferta-284-transavia-abur.xlsx")).toBe("Transavia Abur");
-    expect(clientPropus("oferta-118-1-matari-goluri-foc.xlsx")).toBe("Matari Goluri Foc");
-    expect(clientPropus("Cerere oferta 2 Izolatii - Abur.xlsx")).toBe("Izolatii Abur");
-  });
-
-  it("când n-ar rămâne nimic, propune numele întreg", () => {
-    // Numele astea chiar nu conțin niciun client — sunt doar „Oferta" plus o
-    // dată. Mai bine ceva de șters decât un câmp gol pe care omul nu știe ce
-    // ar trebui să conțină. Sufixul de copie iese doar când mai rămâne ceva
-    // după el; aici cade tot, deci se întoarce numele întreg.
-    expect(clientPropus("Oferta 27.04.2026.xlsx")).toBe("Oferta 27.04.2026");
-    expect(clientPropus("Oferta 27.04.2026 (1).xlsx")).toBe("Oferta 27.04.2026 (1)");
-    expect(clientPropus("cerere de oferta.xlsx")).toBe("cerere de oferta");
-    expect(clientPropus("oferta.xlsx")).toBe("oferta");
-  });
-
-  it("data e scrisă cum o scriu ofertele firmei", () => {
-    expect(dataAzi(new Date(2026, 4, 27))).toBe("27.05.2026");
-    // Cu zero în față la zi și lună: `7.9.2026` n-ar semăna cu nimic din
-    // ofertele reale, care au toate `27.05.2026`.
-    expect(dataAzi(new Date(2026, 0, 7))).toBe("07.01.2026");
-  });
 });
 
 /* ------------------------------------------------------------------ *

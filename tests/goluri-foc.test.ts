@@ -163,16 +163,13 @@ describe("pretul e aditiv: gol + banda + colier", () => {
 });
 
 describe("oferta 118.1 / 27.04.2026 se reproduce la banut", () => {
-  it.each(POZITII.map((p) => [p.nr, p.clasa, p.denumire, p] as const))(
-    "poz. %i %s — %s",
-    (_nr, _clasa, _den, p) => {
-      const r = tarifeazaGolFoc({
-        gol: p.gol, clasa_foc: p.clasa, cantitate: p.cant,
-      });
-      expect(r.pret_unitar).toBe(p.pu);
-      expect(r.total).toBe(Math.round(p.pu * p.cant * 100) / 100);
-    },
-  );
+  it("toate cele 53 de pozitii: pret unitar si total pe linie", () => {
+    const gresite = POZITII.filter((p) => {
+      const r = tarifeazaGolFoc({ gol: p.gol, clasa_foc: p.clasa, cantitate: p.cant });
+      return r.pret_unitar !== p.pu || r.total !== Math.round(p.pu * p.cant * 100) / 100;
+    }).map((p) => `poz. ${p.nr} ${p.denumire}`);
+    expect(gresite).toEqual([]);
+  });
 
   it("suprafata afisata coincide cu coloana din oferta, in 52 din 53 de pozitii", () => {
     const abateri = POZITII.filter(

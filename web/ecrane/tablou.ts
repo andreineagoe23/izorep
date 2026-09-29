@@ -1,6 +1,6 @@
 import { atentionare, card, esc, eur, indicator, nota, nr, progres, stare, tabel, type Ecran } from "./tip.js";
 import { CURS_BNR, DOCUMENTE, LUCRARI, client, santier, type StareLucrare } from "../date/seed.js";
-import { areAcces, vedeCosturi } from "../nav.js";
+import { vedeCosturi } from "../nav.js";
 import { citesteDepozit } from "../depozit-local.js";
 import { deComandatPeNecesar } from "./stoc.js";
 
@@ -44,11 +44,9 @@ function randIndicatori(): string {
   if (vedeCosturi()) {
     indicatori.push(indicator(eur(totalFacturat), "Total facturat"));
   }
-  if (areAcces("documente")) {
-    indicatori.push(indicator(nr(pozitiiNeofertate), "Poziții din cereri neofertate", `${cereriNeofertate.length} cereri`));
-  }
+  indicatori.push(indicator(nr(pozitiiNeofertate), "Poziții din cereri neofertate", `${cereriNeofertate.length} cereri`));
 
-  const notaRol = vedeCosturi() ? "" : nota("Valorile ofertate și facturate nu se văd pe rolul Șantier.");
+  const notaRol = vedeCosturi() ? "" : nota("Valorile ofertate și facturate nu se văd pe rolul ăsta.");
 
   return `<div class="stats">${indicatori.join("")}</div>${notaRol}`;
 }
@@ -98,13 +96,11 @@ function sectiuneAtentie(): string {
     });
   }
 
-  // Fiecare rol vede doar ce poate deschide: santierul n-are ce face cu o cerere neofertata.
-  const aleRolului = itemi.filter((i) => areAcces(i.href.replace("#/", "")));
-  if (aleRolului.length === 0) return "";
+  if (itemi.length === 0) return "";
 
   return card(
     "Necesită atenția ta",
-    aleRolului.map((i) => atentionare(i.href, i.html)).join("")
+    itemi.map((i) => atentionare(i.href, i.html)).join("")
   );
 }
 
@@ -139,6 +135,6 @@ export const ecran: Ecran = {
   titlu: "Tablou de bord",
   subtitlu: "Situația curentă a lucrărilor, ofertelor trimise și cererilor nerezolvate.",
   render(root) {
-    root.innerHTML = `${randIndicatori()}${sectiuneAtentie()}${tabelDerulare()}${vedeCosturi() ? notaCurs() : ""}`;
+    root.innerHTML = `${randIndicatori()}${sectiuneAtentie()}${tabelDerulare()}${notaCurs()}`;
   },
 };

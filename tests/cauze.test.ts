@@ -217,11 +217,10 @@ const CAZURI: { cod: CodNetarifare; de: string; f: () => unknown }[] = [
 ];
 
 describe("fiecare cauza de netarifare are un cod stabil", () => {
-  for (const { cod, de, f } of CAZURI) {
-    it(`${cod}: ${de}`, () => {
-      expect(codAruncat(f)).toBe(cod);
-    });
-  }
+  it("fiecare caz din CAZURI arunca exact codul lui", () => {
+    const gresite = CAZURI.filter(({ cod, f }) => codAruncat(f) !== cod).map(({ cod, de }) => `${cod}: ${de}`);
+    expect(gresite).toEqual([]);
+  });
 
   it("niciun cod din CodNetarifare nu ramane fara caz", () => {
     // Lista e scrisa de mana, deliberat: `CodNetarifare` e un tip, deci nu

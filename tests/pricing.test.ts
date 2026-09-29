@@ -38,8 +38,9 @@ describe("elastomer pe teava de otel (DN)", () => {
     [40, 25, 14.07], [50, 25, 16.42], [65, 25, 17.69], [80, 25, 17.91],
     [100, 32, 28.96], [125, 32, 29.99], [150, 32, 32.74],
   ];
-  it.each(cazuri)("DN%i elastomer %imm = %f EUR/ml", (dn, g, pret) => {
-    expect(tarifeazaSimplu("elastomer", dn, g, "ml").pret_unitar).toBe(pret);
+  it("cele 11 pozitii din oferta, la banut", () => {
+    const gresite = cazuri.filter(([dn, g, pret]) => tarifeazaSimplu("elastomer", dn, g, "ml").pret_unitar !== pret);
+    expect(gresite).toEqual([]);
   });
 });
 
@@ -47,8 +48,9 @@ describe("vata minerala pe teava de otel (DN)", () => {
   const cazuri: [number, number, number][] = [
     [32, 30, 7.13], [40, 30, 7.21], [50, 30, 7.38], [65, 30, 9.80], [80, 30, 9.97],
   ];
-  it.each(cazuri)("DN%i vata %imm = %f EUR/ml", (dn, g, pret) => {
-    expect(tarifeazaSimplu("vata_minerala", dn, g, "ml").pret_unitar).toBe(pret);
+  it("cele 5 pozitii din oferta, la banut", () => {
+    const gresite = cazuri.filter(([dn, g, pret]) => tarifeazaSimplu("vata_minerala", dn, g, "ml").pret_unitar !== pret);
+    expect(gresite).toEqual([]);
   });
 });
 
@@ -59,13 +61,13 @@ describe("conducte de plastic - dimensiunea nominala E diametrul exterior", () =
     [56, 8.88], [63, 9.10], [75, 9.26], [110, 11.12],
     [125, 11.36], [160, 14.37], [200, 15.46],
   ];
-  it.each(cazuri)("ø%i elastomer 9mm = %f EUR/ml", (od, pret) => {
-    const r = tarifeaza({
+  it("cele 12 pozitii din oferta, la banut", () => {
+    const gresite = cazuri.filter(([od, pret]) => tarifeaza({
       diametru: { valoare: od, tip: "exterior" },
       straturi: [{ sistem: "elastomer", grosime_mm: 9 }],
       forma: "ml", cantitate: 1,
-    });
-    expect(r.pret_unitar).toBe(pret);
+    }).pret_unitar !== pret);
+    expect(gresite).toEqual([]);
   });
 });
 
@@ -78,8 +80,9 @@ describe("tevi in toli, convertite prin DN", () => {
     [40, 8.45],  // 1 1/2"
     [50, 8.88],  // 2"
   ];
-  it.each(cazuri)("DN%i elastomer 9mm = %f EUR/ml", (dn, pret) => {
-    expect(tarifeazaSimplu("elastomer", dn, 9, "ml").pret_unitar).toBe(pret);
+  it("cele 6 pozitii din oferta, la banut", () => {
+    const gresite = cazuri.filter(([dn, pret]) => tarifeazaSimplu("elastomer", dn, 9, "ml").pret_unitar !== pret);
+    expect(gresite).toEqual([]);
   });
 });
 
