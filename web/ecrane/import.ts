@@ -30,6 +30,8 @@ import {
 } from "../import/vizual.js";
 import { celuleExtrase, grilaFoaie } from "../import/grila.js";
 import { FARA_POZITII, fisierNecitit, motiveLinie, stareLinie, type CodMotiv } from "../import/text.js";
+import { preia, type Predare } from "../predare.js";
+import { MARCA_PRET_DUBLU } from "../../src/santier/spre-cerere.js";
 
 /**
  * Ecranul de import, in trei pasi: fisierul, verificarea pozitiilor, oferta.
@@ -541,7 +543,7 @@ export const ecran: Ecran = {
       if (!restaurat) arataMesaj(`Ai deschis ${s.nume}.`);
     }
 
-    async function proceseaza(fisier: File): Promise<void> {
+    async function proceseaza(fisier: File, predare?: Predare): Promise<void> {
       pas = 2;
       elPasi.innerHTML = pasi(2, { 1: true, 2: false, 3: false });
       pagina.innerHTML = ecranProgres(`Se citește ${fisier.name}…`, null);
@@ -595,6 +597,17 @@ export const ecran: Ecran = {
           eroareStart = `<strong>${esc(fisier.name)} nu are poziții.</strong> ${esc(FARA_POZITII)}`;
           deseneaza();
           return;
+        }
+        // Din notitele de santier: „(pret dublu)" scris pe foaie si confirmat de
+        // om acolo. Pretul iese de doua ori cel din lista, ca pret pus de mana,
+        // deci pozitia arata si ce dadea lista.
+        if (predare?.pretDublu) {
+          for (const l of rez.linii) {
+            if (l.pret && l.bruta.text.includes(MARCA_PRET_DUBLU)) {
+              preturiManuale.set(l.extras.index, Math.round(l.pret.pret_unitar * 2 * 100) / 100);
+            }
+          }
+          if (preturiManuale.size > 0) reevalueaza(rez, optiuni());
         }
         deschideSesiune({
           foi, rez, editari: [],
@@ -929,6 +942,14 @@ export const ecran: Ecran = {
     // Reincarcarea paginii nu arunca munca: importul la care se lucra se
     // redeschide singur, fara sa cheme modelul.
     istoric = await listeaza();
+    // Registrul venit din notitele de santier trece prin import ca un fisier
+    // de client: aceeasi verificare, acelasi pas „Oferta".
+    const predat = preia();
+    if (predat) {
+      destinatie = predat.destinatie;
+      await proceseaza(predat.fisier, predat);
+      return;
+    }
     const curent = idCurent();
     if (curent) {
       try {

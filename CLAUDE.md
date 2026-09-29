@@ -12,5 +12,6 @@ backup, poarta de intrare în producție — stă în `docs/productie.md` și nu
 @.claude/liste-preturi.md
 @.claude/backend.md
 @.claude/import.md
+@.claude/santier.md
 @.claude/plan-l1-l4.md
 @.claude/ui.md

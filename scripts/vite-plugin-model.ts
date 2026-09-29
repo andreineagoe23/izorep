@@ -3,6 +3,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Plugin } from "vite";
 import { extrageCuModel, MODEL_IMPLICIT } from "../src/import/extract-llm.js";
 import { RaspunsModel } from "../src/import/schema.js";
+import { citestePoza, MODEL_POZE_IMPLICIT } from "../src/santier/extrage-poza.js";
 
 /**
  * Stratul cu model, disponibil DOAR pe serverul de dezvoltare.
@@ -17,6 +18,10 @@ import { RaspunsModel } from "../src/import/schema.js";
  * ca ruta lipseste.
  */
 const RUTA = "/api/extrage";
+/** Pozele cu notite de santier: una pe cerere, ca data URL. */
+const RUTA_POZA = "/api/poza";
+/** O poza micsorata in browser la 2048 px are ~0,5–1 MB; data URL-ul, cu o treime mai mult. */
+const MAX_CORP_POZA = 12 * 1024 * 1024;
 
 /** Plafon per cerere: un fisier de 3.000 de randuri nu trebuie sa poata porni
  *  3.000 de extrageri dintr-un click gresit. */
@@ -36,12 +41,12 @@ const raspunde = (res: ServerResponse, cod: number, corp: unknown): void => {
   res.end(JSON.stringify(corp));
 };
 
-function citesteCorp(req: IncomingMessage): Promise<string> {
+function citesteCorp(req: IncomingMessage, max = MAX_CORP): Promise<string> {
   return new Promise((rezolva, respinge) => {
     let date = "";
     req.on("data", (bucata: Buffer) => {
       date += bucata.toString("utf8");
-      if (date.length > MAX_CORP) { respinge(new Error("corp prea mare")); req.destroy(); }
+      if (date.length > max) { respinge(new Error("corp prea mare")); req.destroy(); }
     });
     req.on("end", () => rezolva(date));
     req.on("error", respinge);
@@ -72,6 +77,32 @@ export function pluginModel(): Plugin {
           ? `  ➜  Stratul cu model: activ (${model}), doar pe acest server`
           : `  ➜  Stratul cu model: inactiv (OPENAI_API_KEY lipseste din .env)`,
       );
+
+      const modelPoze = process.env["IZOREP_MODEL_POZE"] ?? MODEL_POZE_IMPLICIT;
+      if (cheie) server.config.logger.info(`  ➜  Pozele de șantier: ${modelPoze}`);
+
+      server.middlewares.use((req, res, next) => {
+        if (!req.url?.split("?")[0]?.endsWith(RUTA_POZA)) return next();
+        if (!esteLocal(req)) return raspunde(res, 403, { eroare: "doar de pe localhost" });
+        if (req.method === "GET") return raspunde(res, 200, { disponibil: Boolean(cheie), model: modelPoze });
+        if (req.method !== "POST") return raspunde(res, 405, { eroare: "metoda nepermisa" });
+        if (!cheie) return raspunde(res, 503, { eroare: "OPENAI_API_KEY lipseste din .env" });
+
+        void (async () => {
+          try {
+            const corp = JSON.parse(await citesteCorp(req, MAX_CORP_POZA)) as { imagine?: string };
+            if (!corp.imagine?.startsWith("data:image/")) return raspunde(res, 400, { eroare: "lipseste imaginea" });
+            server.config.logger.info(`  ➜  model: citesc o poza de santier (${modelPoze})`);
+            const r = await citestePoza(corp.imagine, { apiKey: cheie, model: modelPoze });
+            raspunde(res, 200, { termeni: r.termeni, note: r.note, model: r.model });
+          } catch (e) {
+            const mesaj = e instanceof Error ? e.message : String(e);
+            server.config.logger.error(`  ✗  model (poza): ${mesaj}`);
+            raspunde(res, 500, { eroare: mesaj });
+          }
+        })();
+        return undefined;
+      });
 
       server.middlewares.use((req, res, next) => {
         if (!req.url?.split("?")[0]?.endsWith(RUTA)) return next();

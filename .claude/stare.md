@@ -1,13 +1,25 @@
 # Stare curentă
 
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
-> Ultima actualizare: 28 septembrie 2026.
+> Ultima actualizare: 29 septembrie 2026.
 
-## Unde am rămas (28 septembrie 2026, seara)
+## Unde am rămas (29 septembrie 2026)
+
+**Notițe de șantier** (detalii în `santier.md`). Decis cu Andrei: șantierul
+nu folosește aplicația, scrie în carnet și trimite poze; aplicația nu va fi
+PWA; o folosesc tehnicul și patronul, pe web; rolurile se stabilesc mai târziu.
+Ecranul nou citește pozele cu modelul, omul confirmă pagină cu pagină lângă
+poză, iar rândurile trec prin import ca o listă de client. Modelul pentru poze
+e `gpt-5.6-terra`, ales pe 4 × 4 rulări: 42–45 de rânduri exacte din 50,
+față de 28 cu gpt-4.1. Referința e transcrisă de noi. **De cerut firmei:**
+oferta Ecoterm făcută din cele 4 pagini și confirmarea notației (ROB, „preț
+dublu”, „× 2”).
+
+## 28 septembrie 2026, seara
 
 Produsul e pregătit pentru demo-ul lui Adrian la firmă: scenariul e în
 `docs/demo-firma.md`, întrebările în `docs/intrebari-firma.md`. Totul e pe
-`main` (**582 de teste**, build verde, publicat pe Pages).
+`main` (**615 de teste**, build verde, publicat pe Pages).
 
 - **Calculele de import, verificate linie cu linie** față de ofertele semnate,
   cu model și fără: TRANSAVIA 98 / 98 prețuri și 99 / 99 cantități, Oferta
@@ -943,9 +955,10 @@ lustruirea pentru demo. Mai departe, în ordine:
   tenant și firmă, trigger care refuză UPDATE / DELETE pe `miscare` (ca la
   `lista_preturi`), soldul ca view; `src/stoc/` rămâne logica comună. Necesarul
   devine rezervare pe lucrare.
-- **D. Teren și situații.** Pe telefon: ml executați pe poziție, material
-  primit sau consumat; situația = executat × prețul din ofertă, în formatul
-  clientului; consum real față de necesar, pe lucrare.
+- **D. Situații de lucrări.** Șantierul nu folosește aplicația (29 septembrie
+  2026): cantitățile vin ca poze, prin „Notițe de șantier”. Situația =
+  executat × prețul din ofertă, în formatul clientului; consum real față de
+  necesar, pe lucrare.
 - **E. Contabilitate.** Facturi, curs BNR înghețat pe document, e-Factura,
   export spre Saga.
 
@@ -971,13 +984,14 @@ sau rolă, accesoriile).
 ## Comenzi
 
 ```bash
-npm test                                       # 582 de teste (motor, import, baza, ofertă, ecran, meniu)
+npm test                                       # 615 de teste (motor, import, baza, ofertă, ecran, meniu)
 npm run typecheck
 npm run dev                                    # UI local, /izorep/
 npm run import -- ../attachments/clienti/cerere-de-oferta-spital.xlsx   # pipeline complet
 npm run import -- <fisier> --fara-model        # doar determinist
 npm run golden -- <fisier.xlsx>                # inregistreaza iesirea modelului
 npm run golden -- --verifica                   # cauta deriva modelului
+npm run compara-poze -- gpt-5.6-terra gpt-5.5-2026-04-23 --repetari 3   # modelele pe pozele de santier
 npm run mapare -- <fisier.xlsx>                # inregistreaza maparea de coloane
 IZOREP_FARA_MAPARE=1 npm run import -- <fisier>  # masoara A/B fara L1
 python scripts/extract_price_lists.py ../attachments   # regenerează prețurile

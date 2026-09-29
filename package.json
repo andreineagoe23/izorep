@@ -22,6 +22,7 @@
     "import": "tsx src/import/cli.ts",
     "price": "tsx src/pricing/cli.ts",
     "compara": "tsx scripts/compara-modele.ts",
+    "compara-poze": "tsx scripts/compara-poze.ts",
     "golden": "tsx scripts/golden.ts",
     "mapare": "tsx scripts/mapare.ts"
   },

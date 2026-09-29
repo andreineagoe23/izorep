@@ -15,3 +15,6 @@ dist-web/
 
 # Sabloane invatate din corectiile omului: date de lucru, per instalare.
 data/sabloane.json
+
+# Raspunsurile brute ale modelelor pe pozele de santier (npm run compara-poze).
+.rezultate-poze/

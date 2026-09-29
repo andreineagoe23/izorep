@@ -466,6 +466,31 @@ browserul care le-a introdus. Ecranul o spune.
 - Izolația pe țeavă se ține în ml, tabla, inoxul, PVC-ul și materialul pe
   suprafață în m². Fără bani: costurile de achiziție nu le avem.
 
+## Notițe de șantier (29 septembrie 2026)
+
+`web/ecrane/santier.ts`, marcajul în `web/santier-vizual.ts` (pur, testat).
+Detaliile de logică în `santier.md`.
+
+- Sus, tipul ofertei și „Alege pozele” (mai multe deodată, câte o poză pe
+  pagină de carnet). Fiecare poză devine un card: poza în stânga (lipită sus
+  cât derulezi, clic = mare în altă filă), rândurile citite în dreapta, pe
+  zone. Sub 900 px de ecran, una sub alta.
+- Un rând: „ø60 · Coturi”, straturile pe rândul doi, cantitatea, „Pe foaie”
+  (de unde vine suma: „(40 + 1) × 2”) și acțiunile. Doar rândurile care cer
+  ochi au stare: „De verificat” (cifră greu de citit, cu „Confirmă”) sau „De
+  completat” (lipsește diametrul, cantitatea sau orice strat).
+- „Modifică” deschide corectura sub zonă: zonă, diametru (ø / DN), izolație și
+  grosime, protecție, ce e, cantitate, preț dublu.
+- „Am verificat pagina” e oprit cât mai sunt rânduri marcate. „Trimite la
+  ofertă” e oprit cât mai e o pagină neverificată. Trimis, registrul pleacă la
+  import (`web/predare.ts`), care îl procesează ca pe un fișier de client.
+- Fără rută de model (Pages): pagina e goală, cu „Adaugă rând”, și aceeași
+  verificare.
+
+Verificat cu Playwright, cu răspunsurile modelului salvate: 390, 768, 1024,
+1440 și 1920 px, ambele teme, cu și fără model. Zero derulare laterală, zero
+tabele care derulează, fluxul până la pasul „Oferta”.
+
 ## Tabelele pe ecran îngust
 
 `tabel()` din `tip.ts` pune pe fiecare celulă numele coloanei

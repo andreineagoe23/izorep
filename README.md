@@ -97,7 +97,8 @@ npm run dev               # doar interfața, fără Docker
 **Interfața nu depinde de bază.** Motorul și parsarea Excel rulează în browser,
 cu listele importate static — poți lucra pe UI fără Docker. Cu cheia în `.env`,
 `npm run dev` pornește în plus ruta `/api/extrage` pentru liniile pe care
-regulile nu le rezolvă; fără ea, importul cade curat pe stratul determinist.
+regulile nu le rezolvă și `/api/poza` pentru notițele de șantier; fără ele,
+importul cade curat pe stratul determinist, iar pozele se transcriu de mână.
 
 **Server HTTP nu există încă.** E construit stratul de bază — schemă, migrări,
 izolare între tenanți, repository de prețuri. Interfața și baza nu comunică
@@ -123,6 +124,7 @@ deocamdată. Când apare serverul, intră în `docker-compose.yml` și `npm star
 | `npm run import -- <fisier> --fara-model` | doar stratul determinist |
 | `npm run golden -- <fisier.xlsx>` | înregistrează ieșirea modelului pe un fișier |
 | `npm run golden -- --verifica` | re-cheamă modelul și caută deriva |
+| `npm run compara-poze -- <model> … [--repetari N]` | compară modelele pe pozele de șantier (`../attachments/santier/`) |
 | `npm run mapare -- <fisier.xlsx>` | înregistrează rolurile de coloană ale foilor |
 | `npm run mapare -- --lista` | ce mapări sunt în cache |
 

@@ -970,3 +970,33 @@ button.filtru[aria-pressed="true"], button.filtru.activ {
 .imp-formular-butoane { display: flex; margin-top: var(--imp-gap); }
 .imp-formular-butoane .primar { flex: 1 1 auto; min-height: 52px; font-size: 16px; }
 @container imp (min-width: 620px) { .imp-formular-butoane .primar { flex: 0 0 auto; } }
+
+/* ---- notitele de santier: poza langa randurile citite din ea */
+.sant-card { display: grid; gap: var(--imp-gap); }
+.sant-antet { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
+.sant-antet h2 { margin: 0; }
+.sant-pagina { display: grid; gap: var(--imp-gap); min-width: 0; }
+@container imp (min-width: 900px) {
+  .sant-pagina { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); align-items: start; }
+  /* Poza ramane in vedere cat derulezi randurile. */
+  .sant-poza { position: sticky; top: 12px; }
+}
+.sant-poza img {
+  display: block; width: 100%; max-height: 78vh; object-fit: contain;
+  border: 1px solid var(--linie); border-radius: 10px; background: var(--panou-2);
+}
+.sant-poza .hint { margin: 6px 0 0; }
+.sant-randuri { display: grid; gap: var(--imp-gap); min-width: 0; }
+.sant-zona h3, .sant-note h3, .sant-editor h3 { margin: 0 0 8px; font-size: 15px; }
+.sant-note ul { margin: 0; padding-left: 18px; }
+.sant-note .imp-oferta-lipsa { margin-top: 10px; }
+.sant-actiuni { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.sant-actiuni .primar { min-height: 44px; padding: 10px 18px; }
+.sant-editor { margin-top: 10px; display: grid; gap: var(--imp-gap); background: var(--panou-2); }
+.sant-diametru { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr); gap: 6px; }
+.sant-diametru select, .sant-diametru input { min-width: 0; }
+.sant-bifa { display: flex; align-items: center; gap: 8px; align-self: end; min-height: 48px; }
+.sant-bifa input { width: 20px; height: 20px; min-height: 0; margin: 0; }
+.sant-nesigur { margin: 6px 0 0; }
+.sant-rand-nesigur > td { background: color-mix(in srgb, var(--atentie) 7%, var(--panou)); }
+.sant-zona .sant-actiuni { justify-content: flex-end; }

@@ -24,6 +24,7 @@ export const MENIU: GrupMeniu[] = [
     { id: "documente", eticheta: "Cereri și oferte" },
     { id: "deviz", eticheta: "Calcul deviz" },
     { id: "import", eticheta: "Import Excel" },
+    { id: "santier", eticheta: "Notițe de șantier" },
     { id: "stoc", eticheta: "Depozit și stoc" },
   ]},
   { titlu: "Nomenclatoare", itemi: [
@@ -34,7 +35,6 @@ export const MENIU: GrupMeniu[] = [
 
 /** Module care fac parte din sistem, dar nu sunt livrate in aceasta etapa. */
 export const VIITOR: string[] = [
-  "Aplicația de teren",
   "Situații de lucrări",
   "Facturi",
   "Portal client",

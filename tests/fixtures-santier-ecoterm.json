@@ -1,0 +1,81 @@
+{
+  "sursa": "attachments/santier/santier1.jpeg … santier4.jpeg — carnet de santier, masuratori pentru oferta Ecoterm (statie de epurare), 01.09.2026",
+  "stare": "Transcrisa de noi pe 29 septembrie 2026, NECONFIRMATA de firma. Randurile cu `nesigur` au o citire pe care o poate lamuri doar cine a scris. Numele si emailul persoanei de contact de pe pagina 1 nu sunt copiate aici.",
+  "conventii": "Cantitatea e suma de pe pagina, cu `× 2` aplicat. `ø` = exterior. v.50 = vata minerala 50 mm, Al = tabla de aluminiu, CT = cot, ROB = robinet.",
+  "pagini": [
+    {
+      "fisier": "santier1.jpeg",
+      "note": [],
+      "randuri": [
+        { "zona": "A) Zona Amaschelo", "diametru_tip": "DN", "diametru_valoare": 400, "izolatie": "vata_minerala", "grosime_mm": 50, "jacheta": "aluminiu", "element": "ml", "pret_dublu": false, "cantitate": 1.5 },
+        { "zona": "A) Zona Amaschelo", "diametru_tip": "exterior", "diametru_valoare": 60, "izolatie": "vata_minerala", "grosime_mm": 50, "jacheta": "aluminiu", "element": "cot", "pret_dublu": false, "cantitate": 12, "nesigur": "ø60: al doilea 0 e scris peste alta cifra" },
+        { "zona": "A) Zona Amaschelo", "diametru_tip": "exterior", "diametru_valoare": 60, "izolatie": "vata_minerala", "grosime_mm": 50, "jacheta": "aluminiu", "element": "ml", "pret_dublu": false, "cantitate": 34, "nesigur": "ø60: al doilea 0 e scris peste alta cifra" },
+        { "zona": "A) Zona Amaschelo", "diametru_tip": "exterior", "diametru_valoare": 76, "izolatie": "vata_minerala", "grosime_mm": 50, "jacheta": "aluminiu", "element": "cot", "pret_dublu": false, "cantitate": 3 },
+        { "zona": "A) Zona Amaschelo", "diametru_tip": "exterior", "diametru_valoare": 76, "izolatie": "vata_minerala", "grosime_mm": 50, "jacheta": "aluminiu", "element": "teu", "pret_dublu": false, "cantitate": 1 },
+        { "zona": "A) Zona Amaschelo", "diametru_tip": "exterior", "diametru_valoare": 76, "izolatie": "vata_minerala", "grosime_mm": 50, "jacheta": "aluminiu", "element": "robinet", "pret_dublu": false, "cantitate": 2 },
+        { "zona": "A) Zona Amaschelo", "diametru_tip": "exterior", "diametru_valoare": 76, "izolatie": "vata_minerala", "grosime_mm": 50, "jacheta": "aluminiu", "element": "ml", "pret_dublu": false, "cantitate": 2 },
+        { "zona": "A) Zona Amaschelo", "diametru_tip": "exterior", "diametru_valoare": 35, "izolatie": "vata_minerala", "grosime_mm": 50, "jacheta": "aluminiu", "element": "robinet", "pret_dublu": false, "cantitate": 9, "nesigur": "primul „7 ROB” are o cifra stearsa dupa 7" },
+        { "zona": "A) Zona Amaschelo", "diametru_tip": "exterior", "diametru_valoare": 35, "izolatie": "vata_minerala", "grosime_mm": 50, "jacheta": "aluminiu", "element": "flansa", "pret_dublu": false, "cantitate": 6, "nesigur": "primul 3 e scris peste alta cifra" },
+        { "zona": "A) Zona Amaschelo", "diametru_tip": "exterior", "diametru_valoare": 35, "izolatie": "vata_minerala", "grosime_mm": 50, "jacheta": "aluminiu", "element": "ml", "pret_dublu": false, "cantitate": 96 },
+        { "zona": "A) Zona Amaschelo", "diametru_tip": "exterior", "diametru_valoare": 35, "izolatie": "vata_minerala", "grosime_mm": 50, "jacheta": "aluminiu", "element": "cot", "pret_dublu": false, "cantitate": 40, "nesigur": "„+ 6” fara unitate inainte de „+ 10 CT”, necontat" }
+      ]
+    },
+    {
+      "fisier": "santier2.jpeg",
+      "note": [],
+      "randuri": [
+        { "zona": "B) Zona Ory + Ocu 2", "diametru_tip": "exterior", "diametru_valoare": 60, "izolatie": "vata_minerala", "grosime_mm": 50, "jacheta": "aluminiu", "element": "ml", "pret_dublu": false, "cantitate": 82, "nesigur": "(40 + 1) × 2; un „5” e scris sub „40 ml”" },
+        { "zona": "B) Zona Ory + Ocu 2", "diametru_tip": "exterior", "diametru_valoare": 60, "izolatie": "vata_minerala", "grosime_mm": 50, "jacheta": "aluminiu", "element": "cot", "pret_dublu": false, "cantitate": 36 },
+        { "zona": "B) Zona Ory + Ocu 2", "diametru_tip": "exterior", "diametru_valoare": 76, "izolatie": "vata_minerala", "grosime_mm": 50, "jacheta": "aluminiu", "element": "ml", "pret_dublu": false, "cantitate": 8 },
+        { "zona": "B) Zona Ory + Ocu 2", "diametru_tip": "exterior", "diametru_valoare": 76, "izolatie": "vata_minerala", "grosime_mm": 50, "jacheta": "aluminiu", "element": "cot", "pret_dublu": false, "cantitate": 8 },
+        { "zona": "B) Zona Ory + Ocu 2", "diametru_tip": "exterior", "diametru_valoare": 64, "izolatie": "vata_minerala", "grosime_mm": 50, "jacheta": "aluminiu", "element": "ml", "pret_dublu": false, "cantitate": 12 },
+        { "zona": "B) Zona Ory + Ocu 2", "diametru_tip": "exterior", "diametru_valoare": 64, "izolatie": "vata_minerala", "grosime_mm": 50, "jacheta": "aluminiu", "element": "cot", "pret_dublu": false, "cantitate": 8 },
+        { "zona": "C) Zona By pass Soda 1", "diametru_tip": "exterior", "diametru_valoare": 320, "izolatie": "vata_minerala", "grosime_mm": 50, "jacheta": "aluminiu", "element": "ml", "pret_dublu": false, "cantitate": 20 },
+        { "zona": "C) Zona By pass Soda 1", "diametru_tip": "exterior", "diametru_valoare": 320, "izolatie": "vata_minerala", "grosime_mm": 50, "jacheta": "aluminiu", "element": "robinet", "pret_dublu": false, "cantitate": 8, "nesigur": "5 scris peste 2, 3 scris peste 2" },
+        { "zona": "C) Zona By pass Soda 1", "diametru_tip": "exterior", "diametru_valoare": 320, "izolatie": "vata_minerala", "grosime_mm": 50, "jacheta": "aluminiu", "element": "cot", "pret_dublu": false, "cantitate": 3 },
+        { "zona": "C) Zona By pass Soda 1", "diametru_tip": "exterior", "diametru_valoare": 320, "izolatie": "vata_minerala", "grosime_mm": 50, "jacheta": "aluminiu", "element": "teu", "pret_dublu": false, "cantitate": 4 },
+        { "zona": "C) Zona By pass Soda 1", "diametru_tip": "exterior", "diametru_valoare": 320, "izolatie": "vata_minerala", "grosime_mm": 50, "jacheta": "aluminiu", "element": "robinet", "pret_dublu": true, "cantitate": 1 }
+      ]
+    },
+    {
+      "fisier": "santier3.jpeg",
+      "note": ["La Desotech (ca zone) se vor calcula preturi industriale"],
+      "randuri": [
+        { "zona": "D) Soda 1 (doar Al)", "diametru_tip": "exterior", "diametru_valoare": 130, "izolatie": null, "grosime_mm": null, "jacheta": "aluminiu", "element": "ml", "pret_dublu": false, "cantitate": 8, "nesigur": "8 sau 6" },
+        { "zona": "D) Soda 1 (doar Al)", "diametru_tip": "exterior", "diametru_valoare": 130, "izolatie": null, "grosime_mm": null, "jacheta": "aluminiu", "element": "cot", "pret_dublu": false, "cantitate": 4 },
+        { "zona": "D) Soda 1 (doar Al)", "diametru_tip": "exterior", "diametru_valoare": 160, "izolatie": null, "grosime_mm": null, "jacheta": "aluminiu", "element": "cot", "pret_dublu": false, "cantitate": 4 },
+        { "zona": "D) Soda 1 (doar Al)", "diametru_tip": "exterior", "diametru_valoare": 160, "izolatie": null, "grosime_mm": null, "jacheta": "aluminiu", "element": "ml", "pret_dublu": false, "cantitate": 8, "nesigur": "8 sau 6" },
+        { "zona": "D) Soda 1 (doar Al)", "diametru_tip": "exterior", "diametru_valoare": 160, "izolatie": null, "grosime_mm": null, "jacheta": "aluminiu", "element": "robinet", "pret_dublu": false, "cantitate": 2 },
+        { "zona": "Desotech a) By pass", "diametru_tip": "exterior", "diametru_valoare": 450, "izolatie": null, "grosime_mm": null, "jacheta": "aluminiu", "element": "teu", "pret_dublu": false, "cantitate": 1 },
+        { "zona": "Desotech a) By pass", "diametru_tip": "exterior", "diametru_valoare": 450, "izolatie": null, "grosime_mm": null, "jacheta": "aluminiu", "element": "ml", "pret_dublu": false, "cantitate": 3 },
+        { "zona": "Desotech a) By pass", "diametru_tip": "exterior", "diametru_valoare": 450, "izolatie": null, "grosime_mm": null, "jacheta": "aluminiu", "element": "cot", "pret_dublu": false, "cantitate": 2 },
+        { "zona": "Desotech a) By pass", "diametru_tip": "exterior", "diametru_valoare": 540, "izolatie": null, "grosime_mm": null, "jacheta": "aluminiu", "element": "robinet", "pret_dublu": false, "cantitate": 2 }
+      ]
+    },
+    {
+      "fisier": "santier4.jpeg",
+      "note": [],
+      "randuri": [
+        { "zona": "b) Zona filtre Desotech", "diametru_tip": "exterior", "diametru_valoare": 320, "izolatie": "vata_minerala", "grosime_mm": 50, "jacheta": "aluminiu", "element": "ml", "pret_dublu": false, "cantitate": 11 },
+        { "zona": "b) Zona filtre Desotech", "diametru_tip": "exterior", "diametru_valoare": 320, "izolatie": "vata_minerala", "grosime_mm": 50, "jacheta": "aluminiu", "element": "cot", "pret_dublu": false, "cantitate": 1 },
+        { "zona": "b) Zona filtre Desotech", "diametru_tip": "exterior", "diametru_valoare": 320, "izolatie": "vata_minerala", "grosime_mm": 50, "jacheta": "aluminiu", "element": "robinet", "pret_dublu": false, "cantitate": 1 },
+        { "zona": "b) Zona filtre Desotech", "diametru_tip": "exterior", "diametru_valoare": 320, "izolatie": "vata_minerala", "grosime_mm": 50, "jacheta": "aluminiu", "element": "reductie", "pret_dublu": false, "cantitate": 4 },
+        { "zona": "b) Zona filtre Desotech", "diametru_tip": "exterior", "diametru_valoare": 168, "izolatie": "vata_minerala", "grosime_mm": 50, "jacheta": "aluminiu", "element": "ml", "pret_dublu": false, "cantitate": 33, "nesigur": "1,50 × 2 din grupul incercuit + 30" },
+        { "zona": "b) Zona filtre Desotech", "diametru_tip": "exterior", "diametru_valoare": 168, "izolatie": "vata_minerala", "grosime_mm": 50, "jacheta": "aluminiu", "element": "cot", "pret_dublu": false, "cantitate": 9, "nesigur": "1 × 2 din grupul incercuit + 7" },
+        { "zona": "b) Zona filtre Desotech", "diametru_tip": "exterior", "diametru_valoare": 168, "izolatie": "vata_minerala", "grosime_mm": 50, "jacheta": "aluminiu", "element": "flansa", "pret_dublu": false, "cantitate": 2, "nesigur": "flansa e in grupul „× 2 buc”?" },
+        { "zona": "b) Zona filtre Desotech", "diametru_tip": "exterior", "diametru_valoare": 168, "izolatie": "vata_minerala", "grosime_mm": 50, "jacheta": "aluminiu", "element": "teu", "pret_dublu": false, "cantitate": 11, "nesigur": "primul 4 scris peste 1; teul de sub grup e in afara lui × 2?" },
+        { "zona": "b) Zona filtre Desotech", "diametru_tip": "exterior", "diametru_valoare": 168, "izolatie": "vata_minerala", "grosime_mm": 50, "jacheta": "aluminiu", "element": "robinet", "pret_dublu": false, "cantitate": 12 },
+        { "zona": "b) Zona filtre Desotech", "diametru_tip": "exterior", "diametru_valoare": 168, "izolatie": "vata_minerala", "grosime_mm": 50, "jacheta": "aluminiu", "element": "robinet", "pret_dublu": true, "cantitate": 3, "nesigur": "3 scris peste 2" },
+        { "zona": "b) Zona filtre Desotech", "diametru_tip": "exterior", "diametru_valoare": 168, "izolatie": "vata_minerala", "grosime_mm": 50, "jacheta": "aluminiu", "element": "reductie", "pret_dublu": true, "cantitate": 2, "nesigur": "scrie „pret FY dublu”" },
+        { "zona": "b) Zona filtre Desotech", "diametru_tip": "exterior", "diametru_valoare": 330, "izolatie": "vata_minerala", "grosime_mm": 50, "jacheta": "aluminiu", "element": "robinet", "pret_dublu": false, "cantitate": 1 },
+        { "zona": "b) Zona filtre Desotech", "diametru_tip": "exterior", "diametru_valoare": 330, "izolatie": "vata_minerala", "grosime_mm": 50, "jacheta": "aluminiu", "element": "flansa", "pret_dublu": false, "cantitate": 1 },
+        { "zona": "b) Zona filtre Desotech", "diametru_tip": "exterior", "diametru_valoare": 330, "izolatie": "vata_minerala", "grosime_mm": 50, "jacheta": "aluminiu", "element": "cot", "pret_dublu": false, "cantitate": 2 },
+        { "zona": "b) Zona filtre Desotech", "diametru_tip": "exterior", "diametru_valoare": 330, "izolatie": "vata_minerala", "grosime_mm": 50, "jacheta": "aluminiu", "element": "ml", "pret_dublu": false, "cantitate": 2 },
+        { "zona": "b) Zona filtre Desotech", "diametru_tip": "exterior", "diametru_valoare": 250, "izolatie": "vata_minerala", "grosime_mm": 50, "jacheta": "aluminiu", "element": "ml", "pret_dublu": false, "cantitate": 2 },
+        { "zona": "b) Zona filtre Desotech", "diametru_tip": "exterior", "diametru_valoare": 250, "izolatie": "vata_minerala", "grosime_mm": 50, "jacheta": "aluminiu", "element": "cot", "pret_dublu": false, "cantitate": 1 },
+        { "zona": "b) Zona filtre Desotech", "diametru_tip": "exterior", "diametru_valoare": 250, "izolatie": "vata_minerala", "grosime_mm": 50, "jacheta": "aluminiu", "element": "robinet", "pret_dublu": false, "cantitate": 1 },
+        { "zona": "b) Zona filtre Desotech", "diametru_tip": "exterior", "diametru_valoare": 89, "izolatie": "vata_minerala", "grosime_mm": 50, "jacheta": "aluminiu", "element": "robinet", "pret_dublu": false, "cantitate": 4 }
+      ]
+    }
+  ]
+}
