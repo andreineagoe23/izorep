@@ -11,13 +11,15 @@ Nu au IT și nu vor să învețe unelte noi. Tot ce urmează e măsurat după as
 
 ## Cum o folosesc
 
-- **Un link.** Se deschide din browser, pe calculator sau pe telefon. Nimic de
-  instalat.
+- **Un link.** Se deschide din browser, pe calculator. Nimic de instalat.
+  O folosesc cei de la birou (tehnicul, patronul, contabila).
+- **Șantierul nu folosește aplicația.** Oamenii de acolo scriu în carnet, ca
+  azi, și trimit poze. Tehnicul le pune în ecranul „Șantier”, verifică ce a
+  citit aplicația de pe poză și le trimite spre ofertă.
 - **Un cont pentru fiecare om**, cu intrare prin link primit pe email — fără
   parole de ținut minte. Contul comun de birou nu merge: nu se mai știe cine a
   schimbat un preț.
-- **Trei roluri:** Birou (face ofertele), Șantier (raportează ce s-a lucrat,
-  fără să vadă prețuri), Contabilitate (facturează).
+- **Rolurile** (cine vede ce) se stabilesc mai târziu, cu firma.
 
 ## Legătura cu Saga
 

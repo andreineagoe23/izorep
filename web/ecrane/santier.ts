@@ -8,7 +8,7 @@ import { cardIncarca, cardPagina, cardTrimite, type PaginaSantier } from "../san
 import type { Ecran } from "./tip.js";
 
 /**
- * Notițe de șantier: pozele carnetului -> randuri confirmate -> importul.
+ * Șantier: pozele carnetului -> randuri confirmate -> importul.
  *
  * Santierul nu foloseste aplicatia: scrie pe foaie si trimite poze. Omul de la
  * birou le incarca aici, modelul propune randurile (cand ruta exista, doar pe
@@ -27,6 +27,16 @@ const CONCURENTA = 2;
 const LATURA = 2048;
 
 let pagini: PaginaSantier[] = [];
+/** Pozele, pastrate ca „Citește din nou" sa aiba ce trimite. */
+const fisiere = new Map<string, File>();
+/** Numele ultimei liste trimise la import, ca omul sa stie ca a plecat. */
+let trimisa = "";
+/**
+ * Redesenarea ecranului DESCHIS acum. O citire porneste pe un ecran si se poate
+ * termina dupa ce omul a plecat si s-a intors: ea cheama ce e aici, nu
+ * functia ecranului pe care a pornit, care nu mai e in pagina.
+ */
+let redeseneaza: (id?: string) => void = () => {};
 let destinatie: Destinatie = "rezidential";
 let titlu = "";
 let editeaza: string | null = null;
@@ -66,7 +76,7 @@ const randGol = (zona: string): RandSantier => ({
 
 export const ecran: Ecran = {
   id: "santier",
-  titlu: "Notițe de șantier",
+  titlu: "Șantier",
   subtitlu: "Pozele cu măsurătorile din carnet: rândurile citite din poză, verificate de tine, ajung în ofertă prin import.",
 
   async render(root) {
@@ -79,12 +89,27 @@ export const ecran: Ecran = {
     const cuModel = await modelDisponibil();
 
     const deseneaza = (): void => {
-      gazda.querySelector("#sant-incarca")!.innerHTML = cardIncarca({ destinatie, eroare });
+      gazda.querySelector("#sant-incarca")!.innerHTML = cardIncarca({ destinatie, eroare, trimisa });
       gazda.querySelector("#sant-pagini")!.innerHTML = pagini
-        .map((p, i) => cardPagina(p, i + 1, { editeaza, destinatie })).join("");
-      gazda.querySelector("#sant-trimite")!.innerHTML = cardTrimite({ pagini, titlu });
+        .map((p, i) => `<div data-pagina="${p.id}">${cardPagina(p, i + 1, { editeaza, destinatie })}</div>`).join("");
+      deseneazaTrimite();
       legaDrop();
     };
+    const deseneazaTrimite = (): void => {
+      gazda.querySelector("#sant-trimite")!.innerHTML = cardTrimite({ pagini, titlu });
+    };
+    /**
+     * Doar pagina atinsa. O citire care se termina pe pagina 3 nu are voie sa
+     * redeseneze pagina 1, unde omul poate avea o corectura nesalvata.
+     */
+    const deseneazaPagina = (id: string): void => {
+      const i = pagini.findIndex((p) => p.id === id);
+      const loc = gazda.querySelector(`[data-pagina="${CSS.escape(id)}"]`);
+      if (i < 0 || !loc) return deseneaza();
+      loc.innerHTML = cardPagina(pagini[i]!, i + 1, { editeaza, destinatie });
+      deseneazaTrimite();
+    };
+    redeseneaza = (id) => (id ? deseneazaPagina(id) : deseneaza());
 
     const pagina = (id: string | undefined): PaginaSantier | undefined => pagini.find((p) => p.id === id);
 
@@ -98,7 +123,7 @@ export const ecran: Ecran = {
         const imagine = await micsoreaza(f);
         const r = await fetch(RUTA_POZA, {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ imagine }), signal: AbortSignal.timeout(300_000),
+          body: JSON.stringify({ imagine }), signal: AbortSignal.timeout(400_000),
         });
         const corp = (await r.json()) as { termeni?: unknown; note?: unknown; eroare?: string };
         if (!r.ok) throw new Error(corp.eroare ?? `HTTP ${r.status}`);
@@ -110,14 +135,15 @@ export const ecran: Ecran = {
       } catch (e) {
         console.error(e);
         p.stare = "eroare";
-        p.eroare = "Poza nu s-a putut citi. Încearcă din nou, sau scoate pagina și scrie rândurile de mână.";
+        p.eroare = "Poza nu s-a putut citi.";
       }
     }
 
-    async function adaugaPoze(fisiere: File[]): Promise<void> {
+    async function adaugaPoze(alese: File[]): Promise<void> {
       eroare = "";
-      const imagini = fisiere.filter((f) => f.type.startsWith("image/"));
-      if (imagini.length < fisiere.length) {
+      trimisa = "";
+      const imagini = alese.filter((f) => f.type.startsWith("image/"));
+      if (imagini.length < alese.length) {
         eroare = "Unele fișiere nu sunt poze și n-au fost adăugate. Aici merg doar poze (JPG, PNG).";
       }
       const noi = imagini.map((f) => ({
@@ -127,13 +153,21 @@ export const ecran: Ecran = {
           randuri: [], note: [], verificata: false, faraModel: false,
         } satisfies PaginaSantier as PaginaSantier,
       }));
+      // Paginile noi se adauga la capat; cele existente nu se ating, ca o
+      // corectura deschisa pe alta pagina sa nu se piarda.
+      const inainte = pagini.length;
       pagini.push(...noi.map((x) => x.p));
-      deseneaza();
+      for (const { f, p } of noi) fisiere.set(p.id, f);
+      gazda.querySelector("#sant-incarca")!.innerHTML = cardIncarca({ destinatie, eroare, trimisa });
+      legaDrop();
+      gazda.querySelector("#sant-pagini")!.insertAdjacentHTML("beforeend", noi.map(({ p }, k) =>
+        `<div data-pagina="${p.id}">${cardPagina(p, inainte + k + 1, { editeaza, destinatie })}</div>`).join(""));
+      deseneazaTrimite();
       let i = 0;
       const lucrator = async (): Promise<void> => {
         for (let j = i++; j < noi.length; j = i++) {
           await citeste(noi[j]!.p, noi[j]!.f);
-          deseneaza();
+          redeseneaza(noi[j]!.p.id);
         }
       };
       await Promise.all(Array.from({ length: Math.min(CONCURENTA, noi.length) }, lucrator));
@@ -165,9 +199,23 @@ export const ecran: Ecran = {
     gazda.addEventListener("click", (e) => {
       const b = (e.target as HTMLElement).closest<HTMLButtonElement>("button[data-act]");
       if (!b) return;
-      const p = pagina(b.dataset["pag"]);
+      const p = pagina(b.dataset["pag"] ?? b.closest<HTMLElement>("[data-pagina]")?.dataset["pagina"]);
       const r = p?.randuri.find((x) => x.id === b.dataset["rand"]);
+      // Corectura deschisa pe alta pagina se inchide si ea: se redeseneaza amandoua.
+      const editataInainte = editeaza?.split(":")[0];
       switch (b.dataset["act"]) {
+        case "reciteste": {
+          const f = p && fisiere.get(p.id);
+          if (!p || !f) return;
+          p.stare = "citeste";
+          p.eroare = "";
+          redeseneaza(p.id);
+          void citeste(p, f).then(() => redeseneaza(p.id));
+          return;
+        }
+        case "de-mana":
+          if (p) { p.stare = "gata"; p.faraModel = true; p.eroare = ""; }
+          break;
         case "confirma":
           if (r) r.nesigur = false;
           break;
@@ -195,12 +243,15 @@ export const ecran: Ecran = {
           if (p) p.verificata = false;
           break;
         case "scoate-pagina":
-          if (p) { URL.revokeObjectURL(p.url); pagini = pagini.filter((x) => x !== p); }
-          break;
+          if (p) { URL.revokeObjectURL(p.url); fisiere.delete(p.id); pagini = pagini.filter((x) => x !== p); }
+          deseneaza();
+          return;
         default:
           return;
       }
-      deseneaza();
+      if (!p) return deseneaza();
+      deseneazaPagina(p.id);
+      if (editataInainte && editataInainte !== p.id) deseneazaPagina(editataInainte);
       if (editeaza) gazda.querySelector<HTMLInputElement>(".sant-editor [name='cantitate']")?.focus();
     });
 
@@ -232,7 +283,7 @@ export const ecran: Ecran = {
       } satisfies Partial<RandSantier>);
       p.verificata = false;
       editeaza = null;
-      deseneaza();
+      deseneazaPagina(p.id);
     });
 
     async function trimite(): Promise<void> {
@@ -245,6 +296,13 @@ export const ecran: Ecran = {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       });
       preda({ fisier, destinatie, pretDublu: true });
+      // Lista a plecat; ramasa aici, s-ar putea trimite a doua oara.
+      for (const p of pagini) URL.revokeObjectURL(p.url);
+      pagini = [];
+      fisiere.clear();
+      titlu = "";
+      editeaza = null;
+      trimisa = fisier.name;
       location.hash = "#/import";
     }
 

@@ -466,7 +466,7 @@ browserul care le-a introdus. Ecranul o spune.
 - Izolația pe țeavă se ține în ml, tabla, inoxul, PVC-ul și materialul pe
   suprafață în m². Fără bani: costurile de achiziție nu le avem.
 
-## Notițe de șantier (29 septembrie 2026)
+## Șantier: notițele din carnet (29 septembrie 2026)
 
 `web/ecrane/santier.ts`, marcajul în `web/santier-vizual.ts` (pur, testat).
 Detaliile de logică în `santier.md`.

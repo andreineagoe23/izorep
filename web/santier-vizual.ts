@@ -5,7 +5,7 @@ import { esc, stare, tabel } from "./ecrane/tip.js";
 import { alegereSegment } from "./import/vizual.js";
 
 /**
- * Marcajul ecranului „Notițe de șantier". Pur, fara DOM, testat in Node
+ * Marcajul ecranului „Șantier". Pur, fara DOM, testat in Node
  * (`tests/santier-vizual.test.ts`), ca la import.
  *
  * Ecranul il foloseste omul de la birou care a primit pozele pe telefon: poza
@@ -140,9 +140,13 @@ export function cardPagina(p: PaginaSantier, nr: number, o: { editeaza: string |
   const corp = p.stare === "citeste"
     ? `<p class="hint">Se citesc rândurile de pe poză. Durează câteva secunde.</p>`
     : p.stare === "eroare"
-      ? `<p class="alerta" role="alert">${esc(p.eroare)}</p>`
+      ? `<p class="alerta" role="alert">${esc(p.eroare)}</p>
+         <div class="sant-actiuni">
+           <button type="button" class="primar" data-act="reciteste" data-pag="${esc(p.id)}">Citește din nou</button>
+           <button type="button" class="secundar" data-act="de-mana" data-pag="${esc(p.id)}">Scriu de mână</button>
+         </div>`
       : `${p.faraModel && p.randuri.length === 0
-          ? `<p class="hint">Citirea automată a pozelor nu e disponibilă aici. Scrie rândurile de mână, cu poza alături.</p>`
+          ? `<p class="hint">Scrie rândurile de mână, cu poza alături: „Adaugă rând”, jos.</p>`
           : ""}
         ${zone.map((z) => {
           const randuri = p.randuri.filter((r) => r.zona === z);
@@ -182,7 +186,7 @@ export function cardPagina(p: PaginaSantier, nr: number, o: { editeaza: string |
   </section>`;
 }
 
-export function cardIncarca(o: { destinatie: Destinatie; eroare: string }): string {
+export function cardIncarca(o: { destinatie: Destinatie; eroare: string; trimisa?: string }): string {
   return `<section class="imp-card imp-incarca">
     ${alegereSegment(o.destinatie)}
     <label class="imp-drop" id="drop" for="poze">
@@ -191,6 +195,7 @@ export function cardIncarca(o: { destinatie: Destinatie; eroare: string }): stri
       <input id="poze" type="file" accept="image/*" multiple />
     </label>
     ${o.eroare ? `<p class="alerta" role="alert">${esc(o.eroare)}</p>` : ""}
+    ${o.trimisa ? `<p class="hint">Ultima listă a plecat la import: <b>${esc(o.trimisa)}</b>. O găsești la „Import Excel”, în importurile recente.</p>` : ""}
   </section>`;
 }
 

@@ -1,4 +1,4 @@
-# Notițe de șantier
+# Șantier: notițele din carnet
 
 > Context pentru `src/santier/`, `web/ecrane/santier.ts`, `web/santier-vizual.ts`
 > și `scripts/compara-poze.ts`.
@@ -40,6 +40,15 @@ poze → modelul citește termenii → codul îi adună pe rânduri
   incomplete (fără diametru, fără cantitate, fără niciun strat).
 - Pe Pages ruta `/api/poza` lipsește, deci ecranul trece pe **scris de mână**:
   poza alături, „Adaugă rând”. Aceeași verificare, același drum spre ofertă.
+- **O poză care nu se citește** are „Citește din nou” și „Scriu de mână”. Un
+  apel are 180 s și o singură reîncercare: în comparație, o pagină blocată la
+  OpenAI a ținut 20 de minute cu reîncercările implicite.
+- **Nimic nu se redesenează peste omul care scrie.** O citire care se termină,
+  sau o poză nouă, redesenează doar pagina ei. O citire pornită înainte ca omul
+  să plece pe alt ecran se termină pe ecranul deschis acum (`redeseneaza`, la
+  nivel de modul), nu pe cel vechi.
+- După „Trimite la ofertă” paginile se golesc, ca lista să nu plece de două
+  ori; sus rămâne numele fișierului trimis.
 
 ## Notația din carnet
 
@@ -92,12 +101,12 @@ familia gpt-5, deci aceeași poză poate da alt răspuns):
 | gpt-5-2025-08-07 | 41 · 39 · 32 · 39 | 33 · 31 · 24 · 30 | 0–4 | 75–99 s |
 | gpt-5.2-2025-12-11 | 37 · 29 · 32 · 30 | 27 · 19 · 22 · 22 | 4–11 | 25–27 s |
 
-**Implicit: `gpt-5.6-terra`** (`MODEL_POZE_IMPLICIT`), schimbabil din `.env`
-cu `IZOREP_MODEL_POZE`. E o excepție de la regula snapshot-ului datat: modelul
-n-are unul. E acceptabilă aici și nu la import, pentru că nicio pagină nu
-ajunge în ofertă fără „Am verificat pagina”. Când OpenAI publică snapshot-ul,
-se pinuiește și se rerulează comparația. Alternativa pinuită e
-`gpt-5.5-2026-04-23`, cu mai multe rânduri în plus de șters.
+**Implicit: `gpt-5.5-2026-04-23`** (`MODEL_POZE_IMPLICIT`), schimbabil din
+`.env` cu `IZOREP_MODEL_POZE`. Ales cu Andrei pe 29 septembrie 2026: snapshot
+datat, ca la import. `gpt-5.6-terra` a ieșit puțin mai bine și mai stabil, dar
+n-are snapshot, deci OpenAI îl poate muta fără nicio urmă în repo. Costul
+alegerii: mai multe rânduri în plus de scos (5–11 pe 4 pagini, față de 1–5).
+Când `gpt-5.6-terra` primește snapshot, se rerulează comparația.
 
 **Cu patru pagini, clasamentul e o indicație, nu o dovadă.** Referința e a
 noastră, nu a firmei. Cu oferta Ecoterm semnată (cerută), rândurile nesigure

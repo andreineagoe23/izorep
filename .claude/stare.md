@@ -5,13 +5,13 @@
 
 ## Unde am rămas (29 septembrie 2026)
 
-**Notițe de șantier** (detalii în `santier.md`). Decis cu Andrei: șantierul
+**Șantier: notițele din carnet** (detalii în `santier.md`). Decis cu Andrei: șantierul
 nu folosește aplicația, scrie în carnet și trimite poze; aplicația nu va fi
 PWA; o folosesc tehnicul și patronul, pe web; rolurile se stabilesc mai târziu.
 Ecranul nou citește pozele cu modelul, omul confirmă pagină cu pagină lângă
 poză, iar rândurile trec prin import ca o listă de client. Modelul pentru poze
-e `gpt-5.6-terra`, ales pe 4 × 4 rulări: 42–45 de rânduri exacte din 50,
-față de 28 cu gpt-4.1. Referința e transcrisă de noi. **De cerut firmei:**
+e `gpt-5.5-2026-04-23`, snapshot datat, ales pe 4 × 4 rulări: 39–45 de rânduri
+exacte din 50, față de 28 cu gpt-4.1. Referința e transcrisă de noi. **De cerut firmei:**
 oferta Ecoterm făcută din cele 4 pagini și confirmarea notației (ROB, „preț
 dublu”, „× 2”).
 
@@ -161,8 +161,9 @@ pe aceiași bytes o reface). Reîncărcarea paginii nu mai pierde munca, iar
 redeschiderea unui import vechi **nu cheamă modelul din nou**. Detaliile în
 `ui.md`.
 
-**Aplicația** (`web/`) — 8 ecrane: tablou de bord, lucrări, cereri și oferte,
-calcul deviz, import Excel, depozit și stoc (prototip), clienți, liste de prețuri. Datele sunt reale,
+**Aplicația** (`web/`) — 9 ecrane: tablou de bord, lucrări, cereri și oferte,
+calcul deviz, import Excel, șantier (pozele din carnet), depozit și stoc
+(prototip), clienți, liste de prețuri. Datele sunt reale,
 extrase din fișierele firmei. Paleta și tipografia respectă WCAG AA; detaliile
 în `ui.md`. Bara laterală se pliază la o bandă de pictograme pe ecran larg
 (preferință reținută) și glisează ca sertar pe ecran îngust.
@@ -956,7 +957,7 @@ lustruirea pentru demo. Mai departe, în ordine:
   `lista_preturi`), soldul ca view; `src/stoc/` rămâne logica comună. Necesarul
   devine rezervare pe lucrare.
 - **D. Situații de lucrări.** Șantierul nu folosește aplicația (29 septembrie
-  2026): cantitățile vin ca poze, prin „Notițe de șantier”. Situația =
+  2026): cantitățile vin ca poze, prin ecranul „Șantier”. Situația =
   executat × prețul din ofertă, în formatul clientului; consum real față de
   necesar, pe lucrare.
 - **E. Contabilitate.** Facturi, curs BNR înghețat pe document, e-Factura,
@@ -991,7 +992,7 @@ npm run import -- ../attachments/clienti/cerere-de-oferta-spital.xlsx   # pipeli
 npm run import -- <fisier> --fara-model        # doar determinist
 npm run golden -- <fisier.xlsx>                # inregistreaza iesirea modelului
 npm run golden -- --verifica                   # cauta deriva modelului
-npm run compara-poze -- gpt-5.6-terra gpt-5.5-2026-04-23 --repetari 3   # modelele pe pozele de santier
+npm run compara-poze -- gpt-5.5-2026-04-23 gpt-5.6-terra --repetari 3   # modelele pe pozele de santier
 npm run mapare -- <fisier.xlsx>                # inregistreaza maparea de coloane
 IZOREP_FARA_MAPARE=1 npm run import -- <fisier>  # masoara A/B fara L1
 python scripts/extract_price_lists.py ../attachments   # regenerează prețurile

@@ -13,7 +13,7 @@ facturare.
 Fluxul de business complet:
 ```
 cerere client (Excel/poză) → deviz → ofertă → contract → lucrare
-  → raportare teren → situație de lucrări → confirmare client → factură
+  → poze din carnetul de șantier → situație de lucrări → confirmare client → factură
 ```
 
 ## Cinci reguli care nu se încalcă

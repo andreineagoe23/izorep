@@ -46,6 +46,13 @@ aplicația în același browser, șterge importurile vechi (Import Excel →
    - o intrare nouă (de exemplu, o factură de furnizor), apoi „Anulează”: mișcarea nu se șterge, apare mișcarea inversă.
 8. **Calcul deviz:** o poziție la mână, cu tipul ofertei. Exemplul „nu se
    ofertează” arată că un gol din listă nu devine preț zero.
+9. **Șantier:** pozele din carnet (cele 4 de la Ecoterm, din
+   `attachments/santier/`). Pe link, rândurile se scriu de mână lângă poză:
+   „Adaugă rând”, „Am verificat pagina”, „Trimite la ofertă”, și ajung în
+   import ca un Excel. Citirea automată a pozelor merge doar pe laptop, cu
+   `npm run dev` și cheia: acolo cele 4 pagini se citesc în ~1,5 minute, iar
+   omul confirmă pagină cu pagină. **Întrebarea de pus:** avem oferta făcută
+   din aceste 4 pagini? Cu ea verificăm citirea rând cu rând.
 
 ## Ce e real și ce e prototip
 
@@ -54,6 +61,7 @@ aplicația în același browser, șterge importurile vechi (Import Excel →
 | Prețurile din import: 98 din 98 exacte față de Oferta 284; Oferta 118 și Matari la fel | Depozitul: datele stau doar în browserul în care au fost introduse |
 | Totalul și registrul Excel al ofertei | Datele de exemplu din stoc, marcate „exemplu” |
 | Necesarul de materiale (geometrie din pozițiile tarifate) | Lucrările, clienții și documentele: citite din fișiere, nu salvate în bază |
+| Rândurile din poze, după „Am verificat pagina”, trec prin același import și aceleași prețuri | Citirea automată a pozelor: doar pe laptop; pe link se scriu de mână |
 
 ## Cifre de știut
 

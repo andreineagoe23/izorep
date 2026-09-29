@@ -1,5 +1,5 @@
 /**
- * Marcajul ecranului „Notițe de șantier" (`web/santier-vizual.ts`), in Node.
+ * Marcajul ecranului „Șantier" (`web/santier-vizual.ts`), in Node.
  *
  * Aspectul se verifica in browser. Aici: textul venit din poza nu poate
  * injecta HTML, iar o pagina nu poate fi marcata verificata cat are randuri pe
@@ -8,7 +8,7 @@
 import { describe, expect, it } from "vitest";
 import type { RandSantier } from "../src/santier/agrega.js";
 import {
-  cardPagina, cardTrimite, deVerificat, lipsa, poateFiVerificata, straturi, type PaginaSantier,
+  cardIncarca, cardPagina, cardTrimite, deVerificat, lipsa, poateFiVerificata, straturi, type PaginaSantier,
 } from "../web/santier-vizual.js";
 
 const rand = (p: Partial<RandSantier> = {}): RandSantier => ({
@@ -64,5 +64,19 @@ describe("trimiterea", () => {
   it("merge doar cand toate paginile sunt verificate", () => {
     expect(cardTrimite({ pagini: [pagina()], titlu: "" })).toMatch(/type="submit"[^>]*disabled/);
     expect(cardTrimite({ pagini: [pagina({ verificata: true })], titlu: "" })).not.toMatch(/type="submit"[^>]*disabled/);
+  });
+});
+
+describe("cand citirea nu merge", () => {
+  it("pagina cu eroare are „Citește din nou” si „Scriu de mână”", () => {
+    const html = cardPagina(pagina({ stare: "eroare", eroare: "Poza nu s-a putut citi.", randuri: [] }), 1, o);
+    expect(html).toContain('data-act="reciteste"');
+    expect(html).toContain('data-act="de-mana"');
+    expect(html).not.toContain('data-act="verificata"');
+  });
+
+  it("dupa trimitere, ecranul spune unde a plecat lista", () => {
+    expect(cardIncarca({ destinatie: "rezidential", eroare: "", trimisa: "Ecoterm - masuratori santier.xlsx" }))
+      .toContain("Ecoterm - masuratori santier.xlsx");
   });
 });

@@ -31,16 +31,15 @@ REGULI:
 
 /**
  * Modelul pentru poze, ales pe `npm run compara-poze` (29 septembrie 2026, 4
- * rulari pe 4 pagini): cel mai bun si cel mai stabil, 42–45 de randuri exacte
- * din 50 si 34–35 din 35 pe cele citite sigur; gpt-4.1, modelul importului, 28.
+ * rulari pe 4 pagini): 39–45 de randuri exacte din 50, 32–34 din 35 pe cele
+ * citite sigur; gpt-4.1, modelul importului, 28.
  *
- * Exceptie de la regula snapshot-ului datat: `gpt-5.6-terra` n-are unul. E
- * acceptabila aici si nu la import, pentru ca nicio pagina nu ajunge in oferta
- * nevazuta de om. Cand apare snapshot-ul, se pinuieste si se reruleaza
- * comparatia. Alternativa pinuita: `gpt-5.5-2026-04-23` (39–45, cu mai multe
- * randuri in plus). `IZOREP_MODEL_POZE` din `.env` il schimba fara commit.
+ * Snapshot DATAT, ca la import: acelasi model azi si peste un an. `gpt-5.6-terra`
+ * a iesit putin mai bine si mai stabil (42–45), dar n-are snapshot, deci
+ * OpenAI il poate muta fara nicio urma in repo. Cand apare unul, se reruleaza
+ * comparatia. `IZOREP_MODEL_POZE` din `.env` il schimba fara commit.
  */
-export const MODEL_POZE_IMPLICIT = "gpt-5.6-terra";
+export const MODEL_POZE_IMPLICIT = "gpt-5.5-2026-04-23";
 
 export interface OptiuniPoza {
   apiKey?: string;
@@ -74,7 +73,9 @@ export async function citestePoza(imagine: string, optiuni: OptiuniPoza = {}): P
       },
     ],
     response_format: { type: "json_schema", json_schema: JSON_SCHEMA_POZA as never },
-  }, { timeout: 300_000 }));
+  // O reincercare, nu patru: in comparatie o pagina blocata a tinut 20 de
+  // minute. Pica de doua ori, omul vede eroarea si „Citește din nou".
+  }, { timeout: 180_000, maxRetries: 1 }));
 
   const continut = raspuns.choices[0]?.message.content;
   if (!continut) throw new Error("model fara continut in raspuns");
