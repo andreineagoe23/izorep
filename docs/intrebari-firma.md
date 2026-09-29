@@ -1,62 +1,58 @@
-# Întrebări pentru RADOIA
+# Ce ne trebuie de la RADOIA
 
-> 27 septembrie 2026. Lista scurtă pentru întâlnirea de săptămâna viitoare.
-> Varianta cu toate dovezile și istoricul: `.claude/stare.md`, secțiunile
-> „Pentru întâlnirea cu firma” și „Întrebări deschise către firmă” (numerele
-> din paranteze sunt cele de acolo; codul le citează).
+> 29 septembrie 2026. Listă scurtă, pentru întâlnire.
 
-Aplicația reproduce deja ofertele semnate la ban: cererea TRANSAVIA dă exact
-Oferta 284 (94.575,06 €), Oferta 27.04.2026 și Matari la fel. Ce nu știm să
-calculăm singuri iese „De verificat” sau „Fără preț” — nu se ghicește nimic.
-Răspunsurile de mai jos deblochează aproape tot ce a rămas.
+## Fișiere de trimis
 
-## Documente de cerut
+1. **Oferta făcută din cele 4 poze Ecoterm** (carnetul din 01.09.2026). Cu ea
+   verificăm citirea pozelor rând cu rând.
+2. **5–10 poze din carnet, de pe alte lucrări**, fiecare cu oferta sau
+   situația făcută din ea.
+3. **Ofertele semnate pe cererile pe care ni le-ați dat:** întâi Transavia
+   inox, apoi spital, Book15, Flower City.
+4. **Două cereri de la același client**, din proiecte diferite.
+5. **Listele de prețuri lipsă:** rafinărie; manopera, dacă e scrisă undeva;
+   PVC și închideri goluri la foc pe industrial.
+6. **Din Saga:** nomenclatorul de articole exportat, 2–3 facturi emise
+   exportate în XML și un bon de consum.
 
-1. **Oferte semnate pe cererile pe care le avem deja** — întâi Transavia inox
-   (72 de poziții blocate), apoi spital (Regina Maria), Book15, Flower City.
-   Ideal și două cereri de la același client, din proiecte diferite. (11, 15, 18)
-2. **Listele lipsă:** rafinărie (13); manopera, dacă e scrisă undeva (5); PVC
-   și închideri goluri la foc pe industrial (14).
+## Întrebări despre prețuri
 
-## Întrebări
+1. Tablă de inox, când clientul nu scrie grosimea: **0,4, 0,5 sau 0,6 mm?**
+2. Tablă zincată pe mp: **același preț ca aluminiul?** Cât e 0,6 mm pe mp, pe
+   rezidențial?
+3. „Țeavă + izolație” (livrați și țeava, cu izolația inclusă): **o ofertați,
+   sau doar izolația?**
+4. Protecția la foc a tubulaturii (EI 60/120, torcret): **o ofertați?** De unde
+   vine 48 €/m² la canalul EI60 din oferta NISAL?
+5. Țeavă ø90 sau ø160, la 1 mm peste un rând din listă: **luați rândul de jos
+   sau pe cel de sus?**
+6. Peste ø219 (ultimul rând din listă): **cum calculați exact prețul?**
+7. **Rezidențial sau industrial: cine alege, și după ce?** Transavia a fost
+   industrială, dar tarifată pe rezidențial.
 
-1. **Tabla de inox — ce grosime se ia când clientul n-o scrie: 0,4, 0,5 sau
-   0,6 mm?** (15) Lista are toate trei la fiecare diametru. Transavia inox,
-   72 de poziții; la un rând: 40,25 / 45,57 / 50,89 €.
-2. **Tabla zincată ca protecție mecanică, pe mp — același preț ca aluminiul?**
-   Spitalul cere „zincată min 0,5 mm” și „0,6 mm”, ~14.600 mp. Pe rezidențial
-   avem pe mp doar aluminiu 0,8 (59,51 €); industrialul are și 0,6 (45,00 €).
-   Cât e 0,6 pe mp pe rezidențial?
-3. **„Țeavă + izolație” (livrarea țevii cu fitinguri, susțineri și izolația
-   inclusă) — o ofertați, sau doar izolația?** Spital: 58 de rânduri. Oferta
-   27.04.2026, rândul 83 (țeavă inox Ø125, vată 50 mm) e semnat 20,09 €/m; din
-   listă vata dă 14,68. Ce mai intră?
-4. **Protecția la foc a tubulaturii (EI 60/120/180, torcret Parafoc 20–40 mm) —
-   o ofertați?** (8) Spital 28 de rânduri, Book15 2.233 mp. De unde vin
-   48 €/m² la canalul de desfumare EI60 din Oferta 27.04.2026?
-5. **Diametrele la limită** (3, 4):
-   - la 1 mm peste un rând din listă (ø90, ø160) se ia rândul de jos sau de
-     sus? În aceeași ofertă țeava ø160 a luat 169, SPIRO 160 a luat 159, PEHD
-     ø90 a luat 89;
-   - peste ø219: formula voastră cu 3,14 dă exact DN250 / 19 mm (23,13), dar
-     SPIRO ø250 și ø315 cu 9 mm (16,36 și 20,30) ies exact doar cu π și 10 mm
-     pe parte. Care e calculul?
-6. **Confirmări da / nu** — reguli deduse din ofertele voastre, aplicate azi cu
-   poziția la „De verificat”:
-   - vata 40 mm pe DN15 = 7,90 €/ml, calculată din rândul următor (18);
-   - elastomer „20 mm” se tarifează ca 19 mm;
-   - țeava de cupru dată în DN: DN15 = ø18 (seria cuprului, nu a oțelului).
-     Și țeava de inox?
-   - UM „buc” pe izolație dreaptă (spital, 750 buc.): bucata e tubul de 2 m
-     sau metrul?
-   - un Ø scris lângă un DN care nu-i corespunde bate DN-ul (17);
-   - elastomer „până la ø60 → 13 mm” include DN50 (16).
-7. **Rezidențial sau industrial — cine decide și după ce?** (12) Oferta 284 e
-   o lucrare industrială tarifată pe lista rezidențială. Se deduce din client
-   sau din obiectiv, ori îl alege omul la fiecare ofertă?
+## Confirmați da / nu
 
-## Pentru etapele următoare
+8. Vată 40 mm pe DN15 = 7,90 €/ml (lipsește din listă, am calculat-o din rândul
+   următor).
+9. Elastomer „20 mm” se tarifează ca 19 mm.
+10. Țeava de cupru dată în DN: DN15 = ø18. Și la inox la fel?
+11. „buc” pe izolație dreaptă (spital, 750 buc.): bucata e tubul de 2 m?
+12. Elastomer până la ø60 → 13 mm: intră și DN50?
 
-Nu blochează ofertarea, dar decid arhitectura: stocul oficial — aplicația sau
-Saga (1); cine emite factura și o trimite în SPV (2); cum se împart cele două
-firme (6); ce curs se folosește la facturare (7).
+## Carnetul de șantier
+
+13. **ROB** = casetă de robinet?
+14. **„preț dublu”** = de două ori prețul din listă? Ce înseamnă „preț FY
+    dublu” la reductoare?
+15. **„× 2”** lângă o acoladă = tot grupul de două ori?
+
+## Contabilitate și stoc
+
+16. Ce Saga folosiți: **Saga C pe calculator sau SAGA WEB?**
+17. **Cine emite facturile și cine le trimite în SPV?** Seriile rămân în Saga?
+18. **Stocul oficial îl țineți în Saga?**
+19. Cele două firme (RADOIA ISOLIRUNG și R&F ISORAD): **cum se împart**
+    clienții, stocul și facturile?
+20. Curs euro la facturare: **BNR din ziua anterioară, din ziua facturii, sau
+    cel din contract?**
