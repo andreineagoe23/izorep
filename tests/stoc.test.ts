@@ -1,7 +1,7 @@
 /** Registrul de stoc (`src/stoc/registru.ts`): stocul e suma mișcărilor. */
 import { describe, it, expect } from "vitest";
 import {
-  articolDin, deComandat, esteAnulata, solduri, storno, type Miscare,
+  articolDin, deComandat, pretMediu, esteAnulata, solduri, storno, type Miscare,
 } from "../src/stoc/registru.js";
 import type { MaterialNecesar } from "../src/stoc/necesar.js";
 
@@ -37,8 +37,8 @@ describe("registrul de stoc", () => {
 
   it("de comandat = necesar − stocul din depozitele lucrării, niciodată negativ", () => {
     const nec: MaterialNecesar[] = [
-      { cheie: vata.cheie, sistem: "vata_minerala", grosime_mm: 50, rand: 114, ml: 80, m2: 60, bucati: 0, pozitii: 2 },
-      { cheie: tabla.cheie, sistem: "tabla", grosime_mm: 0.8, rand: 220, ml: 80, m2: 70, bucati: 0, pozitii: 2 },
+      { cheie: vata.cheie, sistem: "vata_minerala", grosime_mm: 50, rand: 114, ml: 80, m2: 60, bucati: 0, pozitii: 2, valoareOferta: 0 },
+      { cheie: tabla.cheie, sistem: "tabla", grosime_mm: 0.8, rand: 220, ml: 80, m2: 70, bucati: 0, pozitii: 2, valoareOferta: 0 },
     ];
     const ms = [
       m({ tip: "intrare", cantitate: 50, spre: "central" }),
@@ -49,4 +49,12 @@ describe("registrul de stoc", () => {
     expect(r.map((x) => [x.necesar, x.inStoc, x.deComandat])).toEqual([[80, 50, 30], [70, 90, 0]]);
   });
 
+  it("costul: media intrărilor cu preț, ponderată cu cantitatea; anulatele nu intră", () => {
+    const a = m({ tip: "intrare", cantitate: 100, spre: "central", pret: { valoare: 10 } });
+    const b = m({ tip: "intrare", cantitate: 300, spre: "central", pret: { valoare: 14 } });
+    const anulata = m({ tip: "intrare", cantitate: 1000, spre: "central", pret: { valoare: 99 } });
+    const ms = [a, b, anulata, storno(anulata, [anulata], "x", "2026-09-29T09:00:00.000Z")!];
+    expect(pretMediu(ms, vata.cheie)).toBe(13);
+    expect(pretMediu(ms, tabla.cheie)).toBeNull();
+  });
 });

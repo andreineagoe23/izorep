@@ -76,6 +76,8 @@ export async function importaFisier(
     stoc?: StocSabloane;
     /** Preturile puse de om. Vezi `OptiuniNucleu.preturiManuale`. */
     preturiManuale?: ReadonlyMap<number, number>;
+    /** Tipul ofertei. Implicit rezidential, ca in ecran. */
+    destinatie?: OptiuniNucleu["destinatie"];
   } = {},
 ): Promise<RaportImport> {
   const prag = optiuni.pragIncredere
@@ -93,6 +95,7 @@ export async function importaFisier(
     stoc, prag,
     ...(mapari ? { mapari } : {}),
     ...(optiuni.preturiManuale ? { preturiManuale: optiuni.preturiManuale } : {}),
+    ...(optiuni.destinatie ? { destinatie: optiuni.destinatie } : {}),
     ...(optiuni.faraModel ? {} : { extrage: (linii) => extrageCuModel(linii, optiuni) }),
   };
 

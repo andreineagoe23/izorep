@@ -45,6 +45,28 @@ export interface Miscare {
   exemplu?: true;
   /** Storno: id-ul miscarii pe care o anuleaza. Efectul e cel al ei, cu semn schimbat. */
   anuleaza?: string;
+  /** Pretul de achizitie pe unitate (ml sau m²), la intrare, de pe factura furnizorului. */
+  pret?: PretAchizitie;
+}
+
+export interface PretAchizitie {
+  /** EUR pe unitate. Lei nu: cursul nu e inca in aplicatie (vezi `stare.md`, „De retinut"). */
+  valoare: number;
+}
+
+/**
+ * Pretul mediu de achizitie al unui articol, in euro: media intrarilor cu pret,
+ * ponderata cu cantitatea. Intrarile anulate nu intra. Null = niciun pret.
+ */
+export function pretMediu(miscari: readonly Miscare[], cheie: string): number | null {
+  let cant = 0;
+  let valoare = 0;
+  for (const m of miscari) {
+    if (m.tip !== "intrare" || m.anuleaza || !m.pret || m.articol.cheie !== cheie || esteAnulata(m, miscari)) continue;
+    cant += m.cantitate;
+    valoare += m.pret.valoare * m.cantitate;
+  }
+  return cant > 0 ? valoare / cant : null;
 }
 
 export interface Sold {
@@ -72,6 +94,7 @@ export const cantitateNecesara = (m: MaterialNecesar, a: Articol = articolDin(m)
 export function valideazaMiscare(m: Omit<Miscare, "id" | "data">): string | null {
   if (!Number.isFinite(m.cantitate) || m.cantitate === 0) return "Cantitatea trebuie să fie un număr diferit de zero.";
   if (m.tip !== "ajustare" && m.cantitate < 0) return "Cantitatea trebuie să fie pozitivă.";
+  if (m.pret && (!Number.isFinite(m.pret.valoare) || m.pret.valoare < 0)) return "Prețul trebuie să fie un număr pozitiv.";
   const cere = CERE[m.tip];
   if (cere.din && !m.din) return "Alege depozitul din care iese materialul.";
   if (cere.spre && !m.spre) return "Alege depozitul în care intră materialul.";
