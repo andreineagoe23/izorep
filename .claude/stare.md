@@ -17,8 +17,9 @@ exacte, 47 s). Pozele din carnet vin în două momente (Andrei): înainte de
 ofertă și în timpul lucrării — logica de potrivire pe planul de șantier e în
 `src/lucrari/potrivire.ts` (`santier.md`); ecranul: pagina „Șantier” devine
 „Măsurători”, cu „Pentru ofertă” / „Pentru situație de lucrări” (`ui.md`).
-Foaia pentru întâlnirea de luni, 5 octombrie: `docs/intrebari-firma.md`.
-**384 de teste.**
+Foaia pentru întâlnirea de luni, 5 octombrie: `docs/intrebari-firma.md`
+(tipărită ca `../Intrebari RADOIA 5 octombrie.pdf`, cu loc de răspuns); ce
+facem cu fiecare răspuns: `docs/dupa-intalnire.md`. **384 de teste.**
 
 ## Unde am rămas (29 septembrie 2026, după apelul cu firma)
 
