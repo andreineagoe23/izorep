@@ -708,7 +708,7 @@ export const ecran: Ecran = {
         return;
       }
       const cerere = cerereDinFormular(s, form);
-      const plan = planDinOferta(cerere, vechi?.id ?? `S-${idNou()}`);
+      const plan = planDinOferta(cerere, vechi?.id ?? `S-${idNou()}`, new Map(s.rez.brute.map((b) => [b.index, b.sectiune ?? ""])));
       if (!scriePlanuri([plan, ...planuri.filter((p) => p !== vechi)])) {
         arataMesaj("Browserul nu permite salvarea: șantierul nu a putut fi creat.");
         return;

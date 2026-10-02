@@ -29,6 +29,14 @@ export interface PozitiePlan {
   pretUnitar: number;
   /** Inchidere de gol la foc: pe industrial primeste adaosul pe total. */
   foc: boolean;
+  /**
+   * Ce lucrare e, indiferent de notatie (`amprenta` din `potrivire.ts`): pe ea
+   * se pun masuratorile din timpul lucrarii. Lipseste pe planurile facute
+   * inainte de 2 octombrie 2026.
+   */
+  amprenta?: string;
+  /** Sectiunea din cerere (zona, etajul): alege intre pozitii cu aceeasi amprenta. */
+  zona?: string;
 }
 
 export interface Situatie {

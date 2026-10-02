@@ -2,6 +2,7 @@ import type { LinieProcesata } from "../src/import/nucleu.js";
 import { bani } from "../src/pricing/engine.js";
 import { ADAOS_FOC_INDUSTRIAL } from "../src/pricing/goluri-foc.js";
 import type { PlanSantier } from "../src/lucrari/situatii.js";
+import { amprenta } from "../src/lucrari/amprenta.js";
 import { ETICHETE_BLOCAJ, intrebareaPentru } from "./validare.js";
 
 /**
@@ -423,12 +424,16 @@ export async function registruOferta(c: CerereOferta): Promise<ArrayBuffer> {
   return (await wb.xlsx.writeBuffer()) as ArrayBuffer;
 }
 
+/** `{ [cheie]: valoare }` doar când valoarea există (exactOptionalPropertyTypes). */
+const optional = <K extends string, V>(cheie: K, v: V | null | undefined): { [P in K]?: V } =>
+  (v === null || v === undefined || v === "" ? {} : { [cheie]: v }) as { [P in K]?: V };
+
 /**
  * Planul de șantier din ofertă: exact pozițiile, cantitățile și prețurile care
  * pleacă în registrul `Ofertă` (aceeași împărțire, aceeași ajustare, aceeași
  * denumire), copiate. Situațiile de lucrări se fac pe el.
  */
-export function planDinOferta(c: CerereOferta, id: string): PlanSantier {
+export function planDinOferta(c: CerereOferta, id: string, sectiuni?: ReadonlyMap<number, string>): PlanSantier {
   const ajustare = c.antet.ajustareProcent ?? 0;
   const { oferta } = imparte(cuAjustare(c.linii, ajustare));
   return {
@@ -445,6 +450,8 @@ export function planDinOferta(c: CerereOferta, id: string): PlanSantier {
     pozitii: oferta.map((l, i) => ({
       nr: i + 1, denumire: denumirea(l), um: l.bruta.um ?? "", cantitate: cantitatea(l),
       pretUnitar: bani(l.pret!.pret_unitar), foc: l.extras.sistem === "goluri_foc",
+      ...optional("amprenta", amprenta(l)),
+      ...optional("zona", sectiuni?.get(l.bruta.index)),
     })),
     situatii: [],
   };

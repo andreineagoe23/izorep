@@ -127,6 +127,25 @@ alta.
 - Pozele nu se păstrează: la reîncărcarea paginii munca din ecran se pierde
   (predarea spre import e salvată, ca orice import).
 - Situațiile de lucrări există din 29 septembrie 2026 (ecranul Lucrări), dar
-  cantitățile executate se scriu de mână. Drumul de aici duce spre ofertă,
-  pentru că exemplele primite sunt măsurători pentru ofertă; pozele pentru
-  situații vin după ce avem un exemplu de la firmă.
+  cantitățile executate se scriu de mână.
+
+## Două momente pentru poze (2 octombrie 2026)
+
+Andrei: pozele din carnet vin **înainte de ofertă** (la clienții din
+apropiere firma măsoară și oferta finală se face din poze, ca Ecoterm) sau
+**în timpul lucrării** (ce s-a executat, pentru situație). Citirea și
+verificarea sunt aceleași; diferă doar unde pleacă rândurile.
+
+Al doilea drum: `src/lucrari/potrivire.ts`. Rândurile confirmate trec prin
+același import ca oferta (`executatDinMasuratori`), deci primesc aceleași
+straturi pe aceleași rânduri din listă; `amprenta` (`src/lucrari/amprenta.ts`)
+le compară cu pozițiile planului: formă + material, grosime și rândul din
+listă pe fiecare strat, plus „preț dublu”. Notația nu contează (DN50 în
+cerere = ø60 în carnet). Același material pe mai multe poziții: decide zona,
+altfel omul (`deAles`); ce nu e în plan rămâne la om (`nepotrivite`). Planul
+ține amprenta și zona din 2 octombrie 2026; planurile mai vechi nu se pot
+potrivi (`planVechi`) și se refac din ofertă cât n-au situații. Testul
+Ecoterm: oferta din poze, apoi aceleași poze ca executat tot → situația dă
+exact valoarea ofertei. Ecranul (pagina „Măsurători”, cu „Pentru ofertă” /
+„Pentru situație”) urmează. Nu avem încă poze reale din timpul lucrării:
+cerute firmei.
