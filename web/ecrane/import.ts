@@ -12,9 +12,13 @@ import { grosimePropusa } from "../../src/pricing/grosimi-uzuale.js";
 import { stocLocal } from "../stoc-local.js";
 import { ceriSpatiu } from "../meniu-stare.js";
 import { anuleaza, confirma, potrivit } from "../validare.js";
-import { cate, esc, type Ecran } from "./tip.js";
+import { cate, esc, eur, type Ecran } from "./tip.js";
 import { FIRME } from "../date/seed.js";
-import { clientPropus, dataAzi, imparte, registruOferta, totalOferta, type AntetOferta } from "../oferta.js";
+import {
+  adaosFocIndustrial, clientPropus, cuAjustare, dataAzi, imparte, planDinOferta, registruOferta, totalCuAdaos,
+  type AntetOferta, type CerereOferta,
+} from "../oferta.js";
+import { citestePlanuri, deschideLaIntrare, scriePlanuri } from "../lucrari-local.js";
 import { descarca, numeOferta } from "../descarca.js";
 import { ADAOS_IMPLICIT, necesarDinLinii } from "../../src/stoc/necesar.js";
 import { cardNecesar } from "../stoc-vizual.js";
@@ -24,7 +28,7 @@ import {
   type EditareCelula, type IntrareIstoric, type SesiuneImport,
 } from "../istoric.js";
 import {
-  actiuniLista, antetVerificare, cardPozitie, comutaExcel, ecranOferta, ecranProgres, ecranStart, editorPozitie,
+  actiuniLista, antetVerificare, cardPozitie, comutaExcel, detaliuValoare, ecranOferta, ecranProgres, ecranStart, editorPozitie,
   baraFoi, filtreMotiv, filtreStare, numaraMotive, pasi, patchDinFormular, randStrat, toast,
   type FiltruStare, type Pas, type TabFoaie,
 } from "../import/vizual.js";
@@ -117,6 +121,8 @@ export const ecran: Ecran = {
     let excel = true;
     /** Adaosul pentru coturi si fitinguri din cardul „Materiale necesare". */
     let adaosNecesar = ADAOS_IMPLICIT;
+    /** Ajustarea tehnicului pe toate prețurile, din pasul „Oferta" (procente). */
+    let ajustare = 0;
     let detaliiDeschise = false;
     let stergeDe: string | null = null;
     let eroareStart = "";
@@ -221,9 +227,10 @@ export const ecran: Ecran = {
       } else if (pas === 2) {
         pagina.innerHTML = paginaVerificare(sesiune);
       } else {
-        const { oferta, deValidat, netarifate } = imparte(sesiune.rez.linii);
+        const { oferta, deValidat, netarifate } = imparte(cuAjustare(sesiune.rez.linii, ajustare));
         pagina.innerHTML = ecranOferta({
-          gata: oferta.length, valoare: totalOferta(oferta),
+          gata: oferta.length, valoare: totalCuAdaos(oferta, destinatie),
+          adaosFoc: adaosFocIndustrial(oferta, destinatie), ajustare,
           deVerificat: deValidat.length, faraPret: netarifate.length,
           destinatie, client: clientPropus(sesiune.meta.nume), data: dataAzi(), firme: FIRME, eroare: "",
         }) + cardNecesar(necesarDinLinii(sesiune.rez.linii, adaosNecesar));
@@ -629,9 +636,8 @@ export const ecran: Ecran = {
       }
     }
 
-    async function genereazaOferta(form: HTMLFormElement): Promise<void> {
-      const s = sesiune;
-      if (!s) return;
+    /** Antetul ofertei din formularul pasului 3; același pentru ofertă și pentru șantier. */
+    function cerereDinFormular(s: Sesiune, form: HTMLFormElement): CerereOferta {
       const date = new FormData(form);
       const val = (n: string): string => ((date.get(n) as string | null) ?? "").trim();
       const firma = FIRME.find((f) => f.id === val("firma")) ?? FIRME[0]!;
@@ -644,19 +650,28 @@ export const ecran: Ecran = {
         antet.discountProcent = procent;
         antet.discountConditie = "PENTRU PLATA FACTURII FISCALE IN TERMEN DE 5-7 ZILE CALENDARISTICE DE LA DATA EMITERII";
       }
+      if (ajustare) antet.ajustareProcent = ajustare;
+      return {
+        linii: s.rez.linii, antet,
+        provenienta: {
+          generatLa: new Date().toISOString(), destinatie, model: s.meta.model,
+          sesiune: s.meta.id, fisierSursa: s.meta.nume,
+        },
+      };
+    }
+
+    async function genereazaOferta(form: HTMLFormElement): Promise<void> {
+      const s = sesiune;
+      if (!s) return;
+      const cerere = cerereDinFormular(s, form);
+      const { antet } = cerere;
       const buton = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
       const eticheta = buton.textContent;
       buton.disabled = true;
       buton.textContent = "Se pregătește…";
       form.querySelector(".alerta")?.remove();
       try {
-        const buf = await registruOferta({
-          linii: s.rez.linii, antet,
-          provenienta: {
-            generatLa: new Date().toISOString(), destinatie, model: s.meta.model,
-            sesiune: s.meta.id, fisierSursa: s.meta.nume,
-          },
-        });
+        const buf = await registruOferta(cerere);
         descarca(buf, numeOferta(antet.serie, antet.numar, antet.data));
         arataMesaj("Oferta a fost descărcată.");
       } catch (err) {
@@ -669,24 +684,37 @@ export const ecran: Ecran = {
     }
 
     /**
-     * Necesarul ofertei, trimis la depozit. Unul pe fisier: retrimis dupa o
-     * corectura, il inlocuieste pe cel vechi, pastrand santierul ales acolo.
+     * Șantierul din ofertă: planul (pozițiile ofertei, înghețate) plus
+     * necesarul lui, trimis la depozit pe șantierul nou. Unul pe fișier: refăcut
+     * după o corectură, îl înlocuiește pe cel vechi — dar nu și după ce are
+     * situații de lucrări, fiindcă istoricul lor e pe pozițiile vechi.
      */
-    function trimiteLaDepozit(): void {
+    function creeazaSantier(): void {
       const s = sesiune;
-      if (!s) return;
+      const form = pagina.querySelector<HTMLFormElement>("#antet-oferta");
+      if (!s || !form) return;
+      const planuri = citestePlanuri();
+      const vechi = planuri.find((p) => p.fisier === s.meta.nume);
+      if (vechi && vechi.situatii.length > 0) {
+        arataMesaj(`Șantierul „${vechi.denumire}” are deja situații de lucrări: nu se mai poate înlocui din ofertă.`);
+        return;
+      }
+      const plan = planDinOferta(cerereDinFormular(s, form), vechi?.id ?? `S-${idNou()}`);
+      if (!scriePlanuri([plan, ...planuri.filter((p) => p !== vechi)])) {
+        arataMesaj("Browserul nu permite salvarea: șantierul nu a putut fi creat.");
+        return;
+      }
       const n = necesarDinLinii(s.rez.linii, adaosNecesar);
-      const obiectiv = pagina.querySelector<HTMLInputElement>('[name="obiectiv"]')?.value.trim() ?? "";
       const st = citesteDepozit();
-      const vechi = st.necesare.find((x) => x.fisier === s.meta.nume);
+      const vechiNecesar = st.necesare.find((x) => x.fisier === s.meta.nume);
       const nou = {
-        id: vechi?.id ?? idNou(), creat: new Date().toISOString(), fisier: s.meta.nume,
-        obiectiv: obiectiv || vechi?.obiectiv || "", adaos: n.adaos, materiale: n.materiale,
-        faraNecesar: n.faraNecesar.length, ...(vechi?.santier ? { santier: vechi.santier } : {}),
+        id: vechiNecesar?.id ?? idNou(), creat: new Date().toISOString(), fisier: s.meta.nume,
+        obiectiv: plan.denumire, adaos: n.adaos, materiale: n.materiale,
+        faraNecesar: n.faraNecesar.length, santier: plan.id,
       };
-      const pastrat = scrieDepozit({ ...st, necesare: [nou, ...st.necesare.filter((x) => x !== vechi)] });
-      if (!pastrat) { arataMesaj("Browserul nu permite salvarea: necesarul nu a putut fi trimis."); return; }
-      location.hash = "#/stoc";
+      scrieDepozit({ ...st, necesare: [nou, ...st.necesare.filter((x) => x !== vechiNecesar)] });
+      deschideLaIntrare(plan.id);
+      location.hash = "#/lucrari";
     }
 
     /* ---------------------------------------------------------- evenimente */
@@ -749,7 +777,7 @@ export const ecran: Ecran = {
         }
         case "schimba-fisier": pas = 1; editIdx = null; deseneaza(); scrollTo({ top: 0 }); return;
         case "la-verificare": pas = 2; deseneaza(); scrollTo({ top: 0 }); return;
-        case "trimite-depozit": trimiteLaDepozit(); return;
+        case "creeaza-santier": creeazaSantier(); return;
         case "excel": excel = !excel; editIdx = null; deseneaza(); return;
         case "modifica":
           editIdx = editIdx === idx ? null : idx;
@@ -883,6 +911,15 @@ export const ecran: Ecran = {
     // doar bara de jos, care spune cat e gata.
     gazda.addEventListener("input", (e) => {
       const camp = e.target as HTMLElement;
+      if ((camp as HTMLInputElement).name === "ajustare" && sesiune && pas === 3) {
+        // Doar suma de sus: o redesenare a pasului ar sterge datele ofertei deja scrise.
+        const v = Number((camp as HTMLInputElement).value.replace(",", "."));
+        ajustare = Number.isFinite(v) && v > -100 ? v : 0;
+        const { oferta } = imparte(cuAjustare(sesiune.rez.linii, ajustare));
+        pagina.querySelector("#valoare-oferta")!.textContent = eur(totalCuAdaos(oferta, destinatie));
+        pagina.querySelector("#detaliu-valoare")!.innerHTML = detaliuValoare(adaosFocIndustrial(oferta, destinatie), ajustare);
+        return;
+      }
       const editor = camp.closest<HTMLFormElement>(".imp-editor");
       if (editor) {
         if (!["text", "um", "cantitate", "pret_manual"].includes((camp as HTMLInputElement).name)) editor.dataset["atins"] = "da";

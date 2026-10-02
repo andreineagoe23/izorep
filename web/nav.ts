@@ -35,7 +35,6 @@ export const MENIU: GrupMeniu[] = [
 
 /** Module care fac parte din sistem, dar nu sunt livrate in aceasta etapa. */
 export const VIITOR: string[] = [
-  "Situații de lucrări",
   "Facturi",
   "Portal client",
 ];

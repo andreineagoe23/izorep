@@ -306,8 +306,8 @@ export const ecran: Ecran = {
       corp.innerHTML = pastrat
         ? construiesteContinut(pastrat, dest)
         : nota(
-            "Lista de <strong>rafinărie</strong> nu a fost primită încă. Segmentul rămâne aici, gol, pentru că " +
-            "absența lui e o informație: s-a cerut și nu a venit.",
+            "<strong>Rafinărie</strong>: momentan nu lucrăm pe acest tip de ofertă. Locul rămâne pregătit " +
+            "pentru când vine lista de prețuri.",
           );
     };
 

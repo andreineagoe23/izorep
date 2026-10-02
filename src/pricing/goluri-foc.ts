@@ -1,4 +1,7 @@
 import { ADJECTIV_DEST, bani } from "./engine.js";
+
+/** Pe industrial, inchiderile la foc costa cu 20 % mai mult, pe total (regula firmei, 29 septembrie 2026). */
+export const ADAOS_FOC_INDUSTRIAL = 0.2;
 import { listaGoluriFoc } from "./lists.js";
 import {
   PozitieNetarifata,
@@ -163,14 +166,20 @@ export function tarifeazaGolFoc(cerere: CerereGolFoc): RezultatGolFoc {
     }
   }
 
-  // Lista de inchideri la foc exista doar pe rezidential. Pe alt segment
-  // pretul vine tot de acolo — nu se refuza, fiindca pozitia are pret — dar
-  // se spune, exact ca la PVC in `tarifeaza`. Fara nota, o oferta industriala
-  // ar amesteca tacut preturi rezidentiale printre cele industriale.
+  // Lista de inchideri la foc exista doar pe rezidential. Pe industrial firma
+  // a spus regula (29 septembrie 2026): pretul rezidential + 20 %, pus pe
+  // TOTALUL inchiderilor din oferta, nu pe fiecare produs. Unitarul ramane deci
+  // cel rezidential, iar adaosul il pune oferta (`adaosFocIndustrial`,
+  // `web/oferta.ts`) — nota e informativa. Pe rafinarie regula nu e spusa:
+  // pozitia merge la om, ca la PVC in `tarifeaza`.
   const dest = cerere.destinatie ?? "rezidential";
   const nota = dest === "rezidential" ? null
-    : `goluri_foc: pret din lista ${ADJECTIV_DEST.rezidential.toUpperCase()} — nu exista lista `
-      + `${ADJECTIV_DEST[dest]} pentru inchideri goluri la foc (intrebarea 14).`;
+    : dest === "industrial"
+      ? `goluri_foc: pret din lista REZIDENTIALA; pe industrial oferta adauga ${ADAOS_FOC_INDUSTRIAL * 100} % `
+        + `pe totalul inchiderilor, nu pe fiecare produs (regula firmei).`
+      : `goluri_foc: pret din lista ${ADJECTIV_DEST.rezidential.toUpperCase()} — nu exista lista `
+        + `${ADJECTIV_DEST[dest]} pentru inchideri goluri la foc (intrebarea 14).`;
+  const deVerificat = nota !== null && dest !== "industrial";
 
   const unitar = bani(componente.reduce((s, c) => s + c.pret, 0));
   return {
@@ -182,6 +191,7 @@ export function tarifeazaGolFoc(cerere: CerereGolFoc): RezultatGolFoc {
     cantitate,
     total: bani(unitar * cantitate),
     moneda: "EUR",
-    ...(nota ? { note: [nota], noteDeVerificat: [nota], motiveDeVerificat: ["segment_diferit" as const] } : {}),
+    ...(nota ? { note: [nota] } : {}),
+    ...(deVerificat ? { noteDeVerificat: [nota!], motiveDeVerificat: ["segment_diferit" as const] } : {}),
   };
 }

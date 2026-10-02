@@ -1,5 +1,7 @@
 import type { LinieProcesata } from "../src/import/nucleu.js";
 import { bani } from "../src/pricing/engine.js";
+import { ADAOS_FOC_INDUSTRIAL } from "../src/pricing/goluri-foc.js";
+import type { PlanSantier } from "../src/lucrari/situatii.js";
 import { ETICHETE_BLOCAJ, intrebareaPentru } from "./validare.js";
 
 /**
@@ -56,6 +58,13 @@ export interface AntetOferta {
   discountProcent?: number;
   /** Condiția discountului, scrisă în paranteză după procent. */
   discountConditie?: string;
+  /**
+   * Ajustarea tehnicului, în procente, pe TOATE prețurile unitare: 10 = „crește
+   * tot cu 10 %”, −5 = scade. Lipsă sau 0 = prețurile din liste, neatinse.
+   * Spre deosebire de discount, clientul nu vede un rând separat: vede
+   * prețurile unitare deja ajustate (`cuAjustare`).
+   */
+  ajustareProcent?: number;
 }
 
 /**
@@ -139,6 +148,35 @@ export const valoareLinie = (l: LinieProcesata): number =>
  */
 export const totalOferta = (linii: LinieProcesata[]): number =>
   bani(linii.reduce((s, l) => s + valoareLinie(l), 0));
+
+/**
+ * Ajustarea tehnicului pe toate prețurile: fiecare preț unitar × (1 + p/100),
+ * rotunjit la bani, ca un preț din listă. Liniile se copiază; sesiunea de
+ * import rămâne pe prețurile din liste, deci ajustarea se poate schimba oricând.
+ */
+export function cuAjustare(linii: LinieProcesata[], procent = 0): LinieProcesata[] {
+  if (!procent) return linii;
+  return linii.map((l) => {
+    if (!l.pret) return l;
+    const unitar = bani(l.pret.pret_unitar * (1 + procent / 100));
+    return { ...l, pret: { ...l.pret, pret_unitar: unitar, total: bani(unitar * l.pret.cantitate) } } as LinieProcesata;
+  });
+}
+
+/**
+ * Adaosul închiderilor la foc pe o ofertă industrială: 20 % pe TOTALUL lor,
+ * nu pe fiecare produs (regula firmei, 29 septembrie 2026). Pozițiile rămân
+ * pe prețul din lista rezidențială; adaosul e un rând separat în ofertă.
+ */
+export function adaosFocIndustrial(oferta: LinieProcesata[], destinatie: string): number {
+  if (destinatie !== "industrial") return 0;
+  const foc = oferta.filter((l) => l.extras.sistem === "goluri_foc");
+  return foc.length === 0 ? 0 : bani(totalOferta(foc) * ADAOS_FOC_INDUSTRIAL);
+}
+
+/** Totalul lucrărilor așa cum apare în ofertă: pozițiile plus adaosul de foc industrial. */
+export const totalCuAdaos = (oferta: LinieProcesata[], destinatie: string): number =>
+  bani(totalOferta(oferta) + adaosFocIndustrial(oferta, destinatie));
 
 /** Cantitatea de pe rând. Lipsa ei înseamnă „o bucată", ca la tarifare. */
 const cantitatea = (l: LinieProcesata): number => l.bruta.cantitate ?? 1;
@@ -241,7 +279,8 @@ export async function registruOferta(c: CerereOferta): Promise<ArrayBuffer> {
   // Lazy, ca la citire: ExcelJS are ~940 kB și n-are ce căuta în bundle-ul cu
   // care se deschide ecranul — se încarcă abia când chiar se generează ceva.
   const { default: ExcelJS } = await import("exceljs");
-  const { oferta, deValidat, netarifate } = imparte(c.linii);
+  const ajustare = c.antet.ajustareProcent ?? 0;
+  const { oferta, deValidat, netarifate } = imparte(cuAjustare(c.linii, ajustare));
   const wb = new ExcelJS.Workbook();
 
   wb.creator = c.antet.firma;
@@ -277,8 +316,9 @@ export async function registruOferta(c: CerereOferta): Promise<ArrayBuffer> {
     ws.getCell(`F${r - 1}`).numFmt = "#,##0.00";
   }
 
-  const total = totalOferta(oferta);
-  const randTotal = r + 1;
+  const adaosFoc = adaosFocIndustrial(oferta, c.provenienta.destinatie);
+  const total = bani(totalOferta(oferta) + adaosFoc);
+  let randTotal = r + 1;
 
   /** Un rând de total: eticheta întinsă pe A:E, valoarea în F, îngroșat. */
   const randDeTotal = (rand: number, eticheta: string, valoare: number): void => {
@@ -288,6 +328,13 @@ export async function registruOferta(c: CerereOferta): Promise<ArrayBuffer> {
     ws.getRow(rand).font = { bold: true };
   };
 
+  if (adaosFoc > 0) {
+    const foc = totalOferta(oferta.filter((l) => l.extras.sistem === "goluri_foc"));
+    randDeTotal(randTotal,
+      `ADAOS INCHIDERI GOLURI LA FOC, OFERTA INDUSTRIALA ${ADAOS_FOC_INDUSTRIAL * 100} % (pe totalul lor de ${foc.toFixed(2)} €)`,
+      adaosFoc);
+    randTotal += 2;
+  }
   randDeTotal(randTotal, "TOTAL LUCRARI IZOLATII TERMICE (fara TVA)", total);
 
   // Discountul, doar când există. Rândurile respectă structura ofertei 284:
@@ -331,6 +378,7 @@ export async function registruOferta(c: CerereOferta): Promise<ArrayBuffer> {
   ];
   // Un pret pus de om nu vine din nicio lista: rândul lui trebuie găsit în
   // registru, nu doar în sesiunea de import.
+  if (ajustare) detalii.push(["Ajustare prețuri", `${ajustare > 0 ? "+" : ""}${ajustare} % pe toate prețurile unitare din liste`]);
   const manuale = oferta.filter((l) => l.pret && "manual" in l.pret && l.pret.manual);
   if (manuale.length > 0) {
     detalii.push(["Prețuri puse de mână", manuale
@@ -373,6 +421,33 @@ export async function registruOferta(c: CerereOferta): Promise<ArrayBuffer> {
   });
 
   return (await wb.xlsx.writeBuffer()) as ArrayBuffer;
+}
+
+/**
+ * Planul de șantier din ofertă: exact pozițiile, cantitățile și prețurile care
+ * pleacă în registrul `Ofertă` (aceeași împărțire, aceeași ajustare, aceeași
+ * denumire), copiate. Situațiile de lucrări se fac pe el.
+ */
+export function planDinOferta(c: CerereOferta, id: string): PlanSantier {
+  const ajustare = c.antet.ajustareProcent ?? 0;
+  const { oferta } = imparte(cuAjustare(c.linii, ajustare));
+  return {
+    id, creat: c.provenienta.generatLa,
+    denumire: c.antet.obiectiv || c.antet.client || c.provenienta.fisierSursa,
+    client: c.antet.client,
+    firma: c.antet.firma,
+    oferta: c.antet.numar ? `${c.antet.serie}${c.antet.numar} / ${c.antet.data}` : "",
+    fisier: c.provenienta.fisierSursa,
+    destinatie: c.provenienta.destinatie,
+    ajustareProcent: ajustare,
+    discountProcent: c.antet.discountProcent ?? 0,
+    adaosFocProcent: c.provenienta.destinatie === "industrial" ? ADAOS_FOC_INDUSTRIAL * 100 : 0,
+    pozitii: oferta.map((l, i) => ({
+      nr: i + 1, denumire: denumirea(l), um: l.bruta.um ?? "", cantitate: cantitatea(l),
+      pretUnitar: bani(l.pret!.pret_unitar), foc: l.extras.sistem === "goluri_foc",
+    })),
+    situatii: [],
+  };
 }
 
 /**

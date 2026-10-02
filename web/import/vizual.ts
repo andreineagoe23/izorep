@@ -460,6 +460,10 @@ export function toast(text: string, cuAnulare: boolean): string {
 export interface OptiuniOferta {
   gata: number;
   valoare: number;
+  /** Adaosul de 20 % pe închiderile la foc, pe o ofertă industrială; inclus în `valoare`. */
+  adaosFoc: number;
+  /** Ajustarea tehnicului pe toate prețurile, în procente. */
+  ajustare: number;
   deVerificat: number;
   faraPret: number;
   destinatie: Destinatie;
@@ -469,14 +473,24 @@ export interface OptiuniOferta {
   eroare: string;
 }
 
+/** Sub valoarea ofertei: ce e inclus în ea, dincolo de prețurile din liste. */
+export function detaliuValoare(adaosFoc: number, ajustare: number): string {
+  const parti = [
+    ajustare ? `prețuri ajustate cu ${ajustare > 0 ? "+" : ""}${String(ajustare).replace(".", ",")} %` : "",
+    adaosFoc > 0 ? `include ${eur(adaosFoc)}: +20 % pe totalul închiderilor la foc (ofertă industrială)` : "",
+  ].filter(Boolean);
+  return parti.length ? esc(parti.join(" · ")) : "Prețurile din liste, neajustate.";
+}
+
 export function ecranOferta(o: OptiuniOferta): string {
   const camp = (nume: string, eticheta: string, valoare: string, extra = ""): string =>
     `<label>${eticheta}<input name="${nume}" value="${esc(valoare)}" ${extra} /></label>`;
   const afara = o.deVerificat + o.faraPret;
   return `<div class="imp-oferta">
     <section class="imp-card imp-oferta-rezumat">
-      <p class="imp-oferta-suma"><span>Intră în ofertă</span><strong>${eur(o.valoare)}</strong>
+      <p class="imp-oferta-suma"><span>Intră în ofertă</span><strong id="valoare-oferta">${eur(o.valoare)}</strong>
         <span>${pozitii(o.gata)} · ofertă ${SEGMENT[o.destinatie]}</span></p>
+      <p class="hint" id="detaliu-valoare">${detaliuValoare(o.adaosFoc, o.ajustare)}</p>
       ${afara > 0 ? `<p class="imp-oferta-afara">Nu intră: ${o.deVerificat} de verificat, ${o.faraPret} fără preț.
         <button type="button" class="legatura" data-act="la-verificare">Înapoi la verificare</button></p>` : ""}
     </section>
@@ -491,6 +505,8 @@ export function ecranOferta(o: OptiuniOferta): string {
         ${camp("obiectiv", "Obiectiv", "")}
         ${camp("persoana", "În atenția", "")}
         ${camp("localitate", "Localitate", "PALTINIS", "required")}
+        ${camp("ajustare", "Ajustare prețuri (%): 10 = toate cu 10 % mai mari, −5 = mai mici", String(o.ajustare),
+          'type="number" inputmode="decimal" min="-50" max="100" step="any"')}
         ${camp("discount", "Discount (%)", "0", 'type="number" inputmode="decimal" min="0" max="100" step="any"')}
       </div>
       ${o.eroare ? `<p class="alerta" role="alert">${esc(o.eroare)}</p>` : ""}

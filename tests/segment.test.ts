@@ -29,19 +29,24 @@ describe("inchiderile goluri la foc pe alt segment decat rezidential", () => {
     expect(r.noteDeVerificat).toBeUndefined();
   });
 
-  it("pe industrial au acelasi pret, dar spun ca vine din lista rezidentiala", () => {
+  it("pe industrial au pretul rezidential pe produs; +20 % vine pe total, in oferta", () => {
     const rez = tarifeazaGolFoc({ gol, cantitate: 1 });
     const ind = tarifeazaGolFoc({ gol, cantitate: 1, destinatie: "industrial" });
     expect(ind.pret_unitar).toBe(rez.pret_unitar);
-    expect(ind.noteDeVerificat?.join(" ")).toContain("REZIDENTIALA");
-    expect(ind.noteDeVerificat?.join(" ")).toContain("intrebarea 14");
+    expect(ind.note?.join(" ")).toContain("20 %");
+    expect(ind.noteDeVerificat).toBeUndefined();
+  });
+
+  it("pe rafinarie regula nu e spusa: merg la om", () => {
+    const raf = tarifeazaGolFoc({ gol, cantitate: 1, destinatie: "rafinarie" });
+    expect(raf.noteDeVerificat?.join(" ")).toContain("intrebarea 14");
   });
 
   it("segmentul ajunge pana la ele din import", () => {
     const t = tarifeazaExtras(
       extrasa({ sistem: "goluri_foc", diametru_valoare: null, diametru_tip: null, grosime_mm: null,
         gol_latime_mm: 200, gol_inaltime_mm: 200 }),
-      1, "industrial",
+      1, "rafinarie",
     );
     expect(t.pret?.noteDeVerificat?.length).toBe(1);
   });
