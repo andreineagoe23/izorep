@@ -94,12 +94,21 @@ aside :focus-visible { outline-color: #9ecbf5; }
   display: grid; grid-template-columns: var(--lat-bara, 250px) minmax(0, 1fr);
   min-height: 100vh; transition: grid-template-columns .18s ease;
 }
+/*
+ * Antetul din dreapta si numele firmei din bara au aceeasi inaltime, ca linia
+ * de sub ele sa fie una singura, de la marginea din stanga pana la cea din dreapta.
+ */
+:root { --inaltime-antet: 64px; }
 aside {
-  background: var(--bara); color: #d5dae0; padding: 20px 0 18px;
+  background: var(--bara); color: #d5dae0; padding: 0 0 18px;
   display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh;
   overflow-x: hidden;
 }
-.marca { padding: 0 20px 18px; border-bottom: 1px solid rgba(255,255,255,.12); }
+.marca {
+  flex: 0 0 auto; height: var(--inaltime-antet); padding: 0 20px;
+  display: flex; flex-direction: column; justify-content: center;
+  border-bottom: 1px solid rgba(255,255,255,.12);
+}
 .marca strong { display: block; font-size: 17px; color: #fff; letter-spacing: -0.01em; }
 .marca span { font-size: 13px; color: #96a0ab; }
 
@@ -149,25 +158,19 @@ a.item[aria-current="page"] {
 
 .continut { display: flex; flex-direction: column; min-width: 0; }
 .continut > header {
-  display: flex; justify-content: space-between; align-items: center; gap: 16px;
-  padding: 12px 28px; border-bottom: 1px solid var(--linie); background: var(--panou);
+  display: flex; align-items: center; gap: 16px; height: var(--inaltime-antet);
+  padding: 0 28px; border-bottom: 1px solid var(--linie); background: var(--panou);
 }
-.demo {
-  font-size: 12.5px; background: var(--panou-2); color: var(--slab);
-  padding: 4px 10px; border-radius: 6px;
-}
-/* Cursul ramane lipit de marginea din dreapta, oricate controale apar in stanga. */
-.curs { font-size: 13.5px; color: var(--slab); font-variant-numeric: tabular-nums; margin-left: auto; }
 
 /*
  * Un singur buton pentru doua comportamente: pe ecran larg plieaza bara la o
  * banda de pictograme, pe ecran ingust deschide sertarul. Eticheta lui se
- * schimba din `main.ts` si e vizibila doar pentru cititorul de ecran —
- * pictograma plus `title` sunt de ajuns pentru ochi.
+ * schimba din `main.ts` si se vede langa pictograma: oamenii firmei nu sunt
+ * obisnuiti cu aplicatii, iar o pictograma singura nu spune ce face.
  */
 .pliaza {
-  display: inline-flex; align-items: center; justify-content: center;
-  flex: 0 0 auto; width: 36px; height: 36px; padding: 0; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  flex: 0 0 auto; min-height: 40px; padding: 0 14px 0 10px; cursor: pointer; font: inherit; font-size: 14.5px;
   border: 1px solid var(--linie-tare); border-radius: 8px;
   background: var(--panou); color: var(--text);
 }
@@ -179,6 +182,9 @@ a.item[aria-current="page"] {
   overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
 }
 main { padding: 26px 28px 56px; max-width: 1400px; }
+/* Focusul pe conținut e pentru cititorul de ecran, la schimbarea ecranului:
+   ochiul nu trebuie să vadă o ramă în jurul întregii pagini. */
+#ecran:focus { outline: none; }
 .titlu-ecran { margin-bottom: 22px; }
 .titlu-ecran h1 { margin: 0; font-size: 26px; letter-spacing: -0.02em; }
 .titlu-ecran p { margin: 6px 0 0; color: var(--slab); max-width: 74ch; }
@@ -191,7 +197,7 @@ main { padding: 26px 28px 56px; max-width: 1400px; }
  */
 @media (min-width: 861px) {
   :root[data-meniu="pliat"] .aplicatie { --lat-bara: 68px; }
-  :root[data-meniu="pliat"] .marca { padding: 0 8px 18px; text-align: center; }
+  :root[data-meniu="pliat"] .marca { padding: 0 8px; text-align: center; }
   :root[data-meniu="pliat"] .marca strong { font-size: 15px; }
   :root[data-meniu="pliat"] .marca span,
   :root[data-meniu="pliat"] .grup h3,
@@ -497,6 +503,8 @@ input, select, textarea {
 button.filtru[aria-pressed="true"], button.filtru.activ {
   background: var(--accent-fill); color: var(--pe-accent); border-color: var(--accent-fill); font-weight: 600;
 }
+/* Cifra de lângă eticheta filtrului ales: gri pe albastru nu se citea. */
+button.filtru[aria-pressed="true"] .hint, button.filtru.activ .hint { color: inherit; }
 .filtre { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
 
 .pret { font-size: 36px; font-weight: 600; letter-spacing: -0.025em; font-variant-numeric: tabular-nums; }

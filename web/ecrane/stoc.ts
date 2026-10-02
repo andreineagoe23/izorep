@@ -67,7 +67,7 @@ function articoleCunoscute(s: StareDepozit): Articol[] {
 export const ecran: Ecran = {
   id: "stoc",
   titlu: "Depozit și stoc",
-  subtitlu: "Unde e materialul și cât mai trebuie pentru fiecare lucrare. Stocul e suma mișcărilor: nicio cifră nu se scrie peste alta.",
+  subtitlu: "Unde e materialul și cât mai trebuie cumpărat pentru fiecare lucrare. Fiecare intrare și ieșire rămâne scrisă; nimic nu se șterge.",
 
   render(root) {
     let st = citesteDepozit();
@@ -96,7 +96,7 @@ export const ecran: Ecran = {
       </div>`;
 
       const banner = `<section class="imp-card">
-        <p class="hint" style="margin:0">Prototip: mișcările și necesarurile stau doar în acest browser.${
+        <p class="hint" style="margin:0">Deocamdată datele de aici se păstrează doar pe acest calculator, în acest browser.${
           pastrat ? "" : " <strong>Browserul nu permite salvarea: datele se pierd la reîncărcare.</strong>"}</p>
         ${cuExemple ? `<p style="margin:12px 0 0">${stare("Date de exemplu", "atentie")} Intrările marcate „exemplu”
           nu sunt stocuri reale.</p>
@@ -204,14 +204,14 @@ export const ecran: Ecran = {
               `<option value="${v}"${v === tipAles ? " selected" : ""}>${t}</option>`).join("")}</select></label>
           <label>Material
             <select name="articol">${articole.map((a) =>
-              `<option value="${esc(a.cheie)}">${esc(numeArticol(a))} (${unitate(a.um)})</option>`).join("")}
+              `<option value="${esc(a.cheie)}">${esc(numeArticol(a))}${numeArticol(a).endsWith("m²") ? "" : ` (${unitate(a.um)})`}</option>`).join("")}
               <option value="__alt"${articole.length === 0 ? " selected" : ""}>Alt material…</option></select></label>
           <label data-camp="alt">Material nou
             <select name="sistem">${MATERIALE.filter((m) => m !== "goluri_foc").map((m) =>
               `<option value="${m}">${esc(MATERIAL[m])}</option>`).join("")}</select></label>
           <label data-camp="alt">Grosime (mm)
             <input name="grosime" type="number" inputmode="decimal" step="any" min="0" /></label>
-          <label data-camp="alt">ø din listă (gol = material pe suprafață, în m²)
+          <label data-camp="alt">Diametrul tubului, ø mm (gol pentru plăci sau tablă, în m²)
             <input name="rand" type="number" inputmode="numeric" step="1" min="1" /></label>
           <label>Cantitate${tipAles === "ajustare" ? " (cu minus, dacă la inventar e mai puțin)" : ""}
             <input name="cantitate" type="number" inputmode="decimal" step="any" required /></label>
@@ -244,7 +244,7 @@ export const ecran: Ecran = {
         </tr>`;
       });
       return `<section class="imp-card"><h2>Jurnalul mișcărilor</h2>
-        <p class="hint" style="margin:0 0 12px">O mișcare nu se șterge și nu se modifică: „Anulează” adaugă mișcarea inversă.</p>
+        <p class="hint" style="margin:0 0 12px">Nimic din jurnal nu se șterge. „Anulează” adaugă un rând care o anulează pe cea greșită, ca să se vadă ce s-a întâmplat.</p>
         ${tabel(["Data", "Mișcare", "Cantitate", ""], randuri, ["", "", "n", ""])}
       </section>`;
     }

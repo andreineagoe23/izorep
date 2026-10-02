@@ -35,7 +35,9 @@
         <span class="tema-titlu" id="tema-titlu">Temă</span>
         <div class="tema-grup" id="tema" role="group" aria-labelledby="tema-titlu"></div>
       </div>
-      <div class="rol">
+      <!-- Rolurile se stabilesc mai tarziu, cu firma (29 septembrie 2026): azi
+           amandoua vad tot, deci comutatorul n-ar schimba nimic pe ecran. -->
+      <div class="rol" hidden>
         <label for="rol">Rol activ</label>
         <select id="rol"></select>
       </div>
@@ -44,10 +46,8 @@
     <div class="continut">
       <header>
         <button type="button" class="pliaza" id="pliaza" aria-controls="bara" aria-expanded="true">
-          <span class="doar-citit" id="pliaza-eticheta">Ascunde meniul</span>
+          <span id="pliaza-eticheta">Ascunde meniul</span>
         </button>
-        <span class="demo">DEMO · date reale din fișierele firmei</span>
-        <span id="curs" class="curs"></span>
       </header>
       <main id="ecran" tabindex="-1"></main>
     </div>

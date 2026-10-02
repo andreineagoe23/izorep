@@ -96,7 +96,7 @@ export const ecran: Ecran = {
   id: "documente",
   titlu: "Cereri și oferte",
   subtitlu:
-    "Același document, în stadii diferite: cerere primită → ofertă → contract (cu oferta ca anexă) → situație de lucrări.",
+    "Cererile clienților și ofertele trimise, pe drumul lor: cerere → ofertă → contract → situație de lucrări.",
 
   render(root) {
     const arataValoare = vedeCosturi();
@@ -118,33 +118,29 @@ export const ecran: Ecran = {
       </div>
       <div id="tabel-documente"></div>
       ${card(
-        "Cum ajunge o cerere în sistem",
+        "Cum se face oferta din cererea clientului",
         `<div class="grid grid-2">
-          <p><strong>Excel de la client, în formatul lui.</strong> Fiecare client trimite alt tabel. Sistemul
-          recunoaște coloanele (descriere, UM, cantitate), citește rândurile cu reguli fixe, testate pe
-          fișierele reale, și trimite la AI doar rândurile pe care regulile nu le pot citi.</p>
-          <p><strong>Prețul îl calculează listele firmei, nu AI-ul.</strong> Fiecare poziție iese „Gata”,
-          „De verificat” (cu motivul scris) sau „Fără preț” (cu cauza). Ce a corectat omul o dată se
-          ține minte pentru fișierele următoare.</p>
+          <p><strong>Excel-ul clientului, așa cum vine.</strong> Fiecare client trimite alt tabel. Aplicația
+          găsește singură coloanele (descriere, UM, cantitate) și citește rândurile. Doar rândurile pe care nu
+          le înțelege le trimite la AI.</p>
+          <p><strong>Prețul vine din listele firmei, nu de la AI.</strong> Fiecare poziție iese „Gata”,
+          „De verificat” (cu motivul) sau „Fără preț” (cu cauza). Ce ai corectat o dată, aplicația ține
+          minte data viitoare.</p>
         </div>
         <p class="hint">Nimic nu ajunge în oferta descărcată fără ca un om să fi văzut pozițiile marcate.
         Cererea TRANSAVIA importată dă, rând cu rând, exact Oferta 284 semnată.</p>`,
       )}
       ${nota(
-        "Oferta 5997 devine <strong>Anexa 1</strong> a contractului 5998, iar situația de lucrări 6009 reia " +
-        "exact aceleași poziții. Anexa la contract și situația de lucrări nu sunt două documente diferite — " +
-        "sunt <strong>aceeași structură de date</strong>, citită o dată cu coloanele de preț (anexa) și o " +
-        "dată fără ele (situația, spre confirmare de client).",
+        "Oferta 5997 a devenit <strong>Anexa 1</strong> la contractul 5998, iar situația de lucrări 6009 are " +
+        "aceleași poziții, fără prețuri, ca s-o confirme clientul.",
       )}
       ${nota(
-        "Oferta 118 și oferta 118.1 sunt <strong>același obiect comercial</strong> — șantierul XXXLutz + " +
-        "Momax Balotești — împărțit pe două tipuri de lucrare. De-asta numerotarea are nevoie de " +
-        "subnumerotare (118, 118.1), nu doar de un număr întreg.",
+        "Ofertele 118 și 118.1 sunt pentru <strong>același șantier</strong> (XXXLutz + Momax Balotești), pe " +
+        "două tipuri de lucrare. De aceea au numerele 118 și 118.1.",
       )}
       ${nota(
-        "O ofertă emisă <strong>nu se mai editează niciodată</strong> — se corectează printr-o versiune nouă. " +
-        "Prețul se copiază în linia de deviz (snapshot), nu se referențiază din lista curentă, ca oferta să " +
-        "rămână reproductibilă peste ani chiar dacă lista de prețuri s-a schimbat între timp.",
+        "O ofertă trimisă <strong>nu se mai modifică</strong>: dacă trebuie schimbată, se face o ofertă nouă. " +
+        "Prețurile rămân cele din ziua ofertei, chiar dacă lista de prețuri se schimbă mai târziu.",
       )}`;
 
     const gazda = root.querySelector<HTMLElement>("#tabel-documente")!;

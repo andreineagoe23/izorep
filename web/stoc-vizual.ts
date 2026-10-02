@@ -38,9 +38,11 @@ export const ADAOSURI: [number, string][] = [[0, "fără rezervă"], [0.05, "5 %
 export function cardNecesar(n: Necesar): string {
   const randuri = n.materiale.map((m) => {
     const um = articolDin(m).um;
+    const deComandat = um === "ml" ? m.ml : m.m2;
+    // Un rand doar cu piese (coturi sub 3 toli) n-are inca regula de material: nu „0 ml”.
     return `<tr>
       <td>${esc(numeArticol(m))}</td>
-      <td class="n"><strong>${cantitate(um === "ml" ? m.ml : m.m2, um)}</strong></td>
+      <td class="n">${deComandat === 0 && m.bucati > 0 ? `<span class="hint">doar piese</span>` : `<strong>${cantitate(deComandat, um)}</strong>`}</td>
       <td class="n">${m.ml > 0 ? cantitate(m.ml, "ml") : "—"}</td>
       <td class="n">${m.bucati > 0 ? `${cifra(m.bucati)} buc.` : "—"}</td>
     </tr>`;
@@ -48,11 +50,11 @@ export function cardNecesar(n: Necesar): string {
   const fara = n.faraNecesar.length;
   return `<section class="imp-card" id="necesar">
     <h2>Materiale de comandat</h2>
-    <p class="hint">Doar pozițiile care intră în ofertă. Până la 3 țoli (ø90) se comandă tuburi, pe diametru și grosime. Peste 3 țoli, plăci pe m²:
-      (ø + 2 × grosime) / 1000 × 3,14, rotunjit la două zecimale, × metrii de țeavă. Coturile și teurile peste 3 țoli
-      intră în m²: dintr-un metru se fac 3 piese la ø114–140, 2 la ø159–168, una de la ø219 (de confirmat). Tabla, pe m².</p>
+    <p class="hint">Pentru pozițiile din ofertă. Până la 3 țoli (ø90) se comandă tuburi, pe diametru și grosime; peste
+      3 țoli, plăci în m², cu coturile și teurile incluse. Tabla, în m². Coloana „Piese” (flanșe, casete, coturi sub 3
+      țoli) nu intră încă în calcul: se socotesc de mână.</p>
     <div class="imp-campuri">
-      <label>Rezervă peste calcul (lista de prețuri include manopera; comandăm cât trebuie, ca să nu rămână pe stoc)
+      <label>Material în plus, de rezervă (de obicei fără: se comandă cât trebuie, ca să nu rămână pe stoc)
         <select id="adaos-necesar">${ADAOSURI.map(([v, t]) =>
           `<option value="${v}"${v === n.adaos ? " selected" : ""}>${t}</option>`).join("")}</select>
       </label>
@@ -62,9 +64,8 @@ export function cardNecesar(n: Necesar): string {
       : `<p class="nota">Nicio poziție cu preț din liste: nu e nimic de calculat.</p>`}
     ${fara > 0 ? `<p class="hint">${fara === 1 ? "O poziție nu are" : `${fara} poziții nu au`} necesar calculat
       (fără preț, preț pus de mână sau închideri la foc).</p>` : ""}
-    <p class="hint">„Creează șantierul” face planul de șantier din ofertă (pozițiile, cantitățile și prețurile de mai sus,
-      cu ajustarea și discountul din formular), iar materialele merg la depozit, pe șantierul nou. Pe plan se fac
-      situațiile de lucrări.</p>
+    <p class="hint">„Creează șantierul” face șantierul din ofertă (pozițiile, cantitățile și prețurile ei, cu ajustarea
+      și discountul de mai sus). Materialele ajung în „Depozit și stoc”, iar pe șantier se fac situațiile de lucrări.</p>
     <div class="imp-formular-butoane">
       <button type="button" class="primar" data-act="creeaza-santier">Creează șantierul</button>
     </div>

@@ -1,6 +1,5 @@
 import { MENIU, ROLURI, VIITOR, setRol, rolActiv, type Rol } from "./nav.js";
 import { esc, type Ecran } from "./ecrane/tip.js";
-import { CURS_BNR } from "./date/seed.js";
 import { icoana } from "./icoane.js";
 import {
   citesteMeniu, scrieMeniu, inverseaza, laCerere, stareEfectiva, EVENIMENT_SPATIU, FARA_CERERE,
@@ -134,7 +133,6 @@ function aplicaBara(): void {
   const buton = $<HTMLButtonElement>("#pliaza");
   const eticheta = deschisa ? "Ascunde meniul" : "Arată meniul";
   buton.setAttribute("aria-expanded", String(deschisa));
-  buton.title = eticheta;
   $("#pliaza-eticheta").textContent = eticheta;
 }
 
@@ -211,7 +209,7 @@ aplicaBara();
 
 type Tema = "sistem" | "light" | "dark";
 const TEME: { id: Tema; eticheta: string }[] = [
-  { id: "sistem", eticheta: "Sistem" },
+  { id: "sistem", eticheta: "Automat" },
   { id: "light", eticheta: "Deschis" },
   { id: "dark", eticheta: "Închis" },
 ];
@@ -263,6 +261,5 @@ $("#rol").addEventListener("change", (e) => {
 // Rutarea e pe hash, deci un link ancora ar strica ruta: sarim cu focus.
 $("#sari").addEventListener("click", () => $("#ecran").focus());
 
-$("#curs").textContent = `1 € = ${CURS_BNR.toFixed(4)} lei`;
 addEventListener("hashchange", () => void navigheaza(true));
 void navigheaza();

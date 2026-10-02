@@ -79,7 +79,7 @@ function deseneazaMatrice(l: ListaPreturi): string {
 
 function deseneazaMultiplicatori(l: ListaPreturi): string {
   const campuriActive = CAMPURI_MULT.filter((c) => l.multiplicatori.some((m) => c.cheie in m));
-  const capete = ["Bandă Ø mm", ...campuriActive.map((c) => c.eticheta)];
+  const capete = ["Diametru (mm)", ...campuriActive.map((c) => c.eticheta)];
   const clase = capete.map((_, i) => (i === 0 ? "" : "n"));
 
   const randuri = l.multiplicatori.map((m) => {
@@ -100,7 +100,7 @@ function deseneazaIndicatori(l: ListaPreturi): string {
   const posibile = diam.length * coloane;
 
   return `<div class="stats">
-    ${indicator(nr(completate), "celule completate", `din ${nr(posibile)} posibile (Ø × grosime)`)}
+    ${indicator(nr(completate), "prețuri în listă", `din ${nr(posibile)} combinații diametru × grosime`)}
     ${indicator(
       nr(l.grosimi_mm.length),
       "grosimi disponibile",
@@ -142,7 +142,7 @@ function deseneazaInventar(): string {
   // celule comparabil: se trec cu forma lor, nu cu o cifra care ar sugera ca
   // se citesc la fel ca restul.
   randuri.push(`<tr><th scope="row">Închideri goluri la foc</th>
-    <td class="n">${stare("preț aditiv", "ok")}</td>
+    <td class="n">${stare("listă separată", "ok")}</td>
     <td class="n gol">—</td>
     <td class="n gol">—</td></tr>`);
 
@@ -191,15 +191,14 @@ function construiesteGoluriFoc(): string {
 
   return `
     <h2>${esc(l.denumire)}</h2>
-    ${nota(`Preț aditiv, nu matrice: <strong>${esc(l.regula)}</strong>.`)}
+    ${nota(`Prețul se adună din trei părți: <strong>${esc(l.regula)}</strong>.`)}
 
     <h2>Golul, după suprafața lui</h2>
     ${praguri}
     ${nota(
-      "Suprafața = lățime × înălțime, din coloana „dimensiune gol” (<code>130/130</code>) — " +
-      "<strong>diametrul conductei nu intră</strong> în prețul golului. Pragurile sunt scrise „Goluri până la " +
-      "0,05 mp”, deci limita de sus e <strong>inclusivă</strong>: se vede în ofertă la 1000/600 = 0,60 mp și " +
-      "1500/600 = 0,90 mp, amândouă tarifate pe pragul cu acea limită.",
+      "Prețul golului depinde de <strong>suprafața lui</strong> (lățime × înălțime, din coloana „dimensiune " +
+      "gol”, de ex. 130/130), nu de diametrul conductei. „Până la 0,60 mp” include și 0,60 mp: golul " +
+      "1000/600 intră la pragul acesta, ca în oferta 118.1.",
     )}
 
     <h2>Banda WRAP, pe conductă de plastic</h2>
@@ -207,17 +206,16 @@ function construiesteGoluriFoc(): string {
     <h2>Banda WRAP, pe conductă de oțel</h2>
     ${banda("otel")}
     ${nota(
-      "Două tabele, nu unul: prețul urmează <strong>numărul de înfășurări</strong>, care diferă după material " +
-      "(1 la oțel, 2–6 la plastic). La ø140 sunt 12,19 € pe oțel și 65,67 € pe plastic — de aceea materialul " +
-      "conductei e obligatoriu, nu implicit. Căutarea e pe <strong>diametru exact</strong>: între două trepte " +
-      "nu există valoare intermediară, ci o decizie umană.",
+      "Banda are două tabele, fiindcă pe plastic se înfășoară de mai multe ori (2–6) decât pe oțel (o dată): " +
+      "la ø140, 12,19 € pe oțel și 65,67 € pe plastic. Prețul se caută pe <strong>diametrul exact</strong>; " +
+      "la un diametru care nu e în tabel, decide omul.",
     )}
 
     <h2>Colier PROMASTOP UNICOLLAR</h2>
     ${coliere}
     ${nota(
-      "Clasa peretelui (EI30, EI60, EI120) e <strong>etichetă de grupare, nu variabilă de preț</strong>: " +
-      "în oferta 118.1 aceeași conductă DN15 costă 23,05 € și la EI30, și la EI120.",
+      "Clasa peretelui (EI30, EI60, EI120) <strong>nu schimbă prețul</strong>: în oferta 118.1 aceeași " +
+      "conductă DN15 costă 23,05 € și la EI30, și la EI120.",
     )}
   `;
 }
@@ -227,36 +225,32 @@ function construiesteContinut(sistem: Sistem, dest: Destinatie): string {
   const l = listaPe(sistem as SistemMatrice, dest);
   if (!l) {
     return nota(`Nu există listă de <strong>${esc(SISTEME.find((s) => s.id === sistem)?.eticheta ?? sistem)}</strong> ` +
-      `pe segmentul ${esc(ETICHETA_DEST[dest].toLowerCase())}.`);
+      `pe lista ${esc(ETICHETA_DEST[dest].toLowerCase())}.`);
   }
   return `
     <h2>${esc(l.denumire)}</h2>
     ${deseneazaMatrice(l)}
     ${deseneazaIndicatori(l)}
     ${nota(
-      "Matricile sunt <strong>rare</strong>: combinațiile care nu se execută rămân goale. Golul înseamnă " +
-      "„nu se ofertează”, NU „preț zero”. O poziție fără preț se marchează pentru tarifare manuală — nu se ghicește.",
+      "O căsuță goală înseamnă <strong>„nu se ofertează”</strong>, nu „preț zero”. O poziție care cade pe o " +
+      "căsuță goală apare la import la „Fără preț”, ca prețul să-l pună omul.",
     )}
     ${dest === "industrial"
       ? nota(
-          "Lista industrială se poate <strong>citi</strong>, dar motorul încă nu tarifează cu ea: ofertele ies " +
-          "pe prețuri rezidențiale. Nu e o scăpare — lipsește regula după care se alege segmentul, iar un motor " +
-          "care ar alege singur ar putea oferta o lucrare rezidențială la prețuri de industrial. Excepția e " +
-          "<strong>tabla de inox</strong>, care n-are variantă rezidențială: acolo lista asta e singura care există.",
+          "Lista asta se folosește când la import alegi <strong>ofertă industrială</strong>. Tabla de inox există " +
+          "doar aici, deci și o ofertă rezidențială cu inox ia prețul de aici, marcat „De verificat”.",
         )
       : ""}
-    <h2>Multiplicatori pentru elemente speciale</h2>
+    <h2>Coturi, teuri, robineți: de câte ori prețul pe metru</h2>
     ${deseneazaMultiplicatori(l)}
     ${nota(
-      "Fitingurile (coturi, teuri, robinete, vane, flanșe…) nu au preț propriu: se tarifează ca multiplu al " +
-      "prețului pe metru liniar de la acel diametru, pe benzi de diametru. Tabelul de mai sus e valoare " +
-      "<strong>implicită</strong>, nu regulă rigidă — ofertele reale conțin abateri negociate, care trebuie " +
-      "permise, dar marcate vizibil.",
+      "Coturile, teurile, robineții și flanșele nu au preț propriu: costă de câte ori prețul pe metru de la " +
+      "același diametru, după tabelul de mai sus. În ofertele reale apar uneori alte valori, negociate: " +
+      "aplicația le permite, dar le marchează.",
     )}
     ${nota(
-      "Lista se <strong>versionează</strong>, nu se editează. Modificarea prețurilor creează o versiune nouă " +
-      "cu valabilitate de la o dată; ofertele vechi rămân reproductibile chiar dacă prețurile curente s-au " +
-      "schimbat între timp.",
+      "Prețurile noi nu se scriu peste cele vechi: o listă nouă intră în vigoare de la o dată. Ofertele " +
+      "făcute înainte rămân cu prețurile lor.",
     )}
   `;
 }
@@ -264,21 +258,20 @@ function construiesteContinut(sistem: Sistem, dest: Destinatie): string {
 export const ecran: Ecran = {
   id: "preturi",
   titlu: "Liste de prețuri",
-  subtitlu: "Datele reale de tarifare ale firmei, pe segment și pe sistem de izolație.",
+  subtitlu: "Prețurile firmei, pe tip de ofertă (rezidențială, industrială) și pe material.",
   render(root) {
     let dest: Destinatie = "rezidential";
 
     root.innerHTML =
-      card("Ce liste avem, pe segment", deseneazaInventar() + nota(
-        "Industrialul <strong>nu e un coeficient</strong> peste rezidențial: raportul diferă pe sistem și " +
-        "chiar pe grosime — vata ×1,25 constant, elastomerul ×1,25 la 9/13/19 mm dar ×1,20 la 25/32 mm. " +
-        "De-asta sunt liste proprii, nu un procent aplicat la ofertare.",
+      card("Ce liste avem", deseneazaInventar() + nota(
+        "Lista industrială <strong>nu e</strong> lista rezidențială plus un procent: diferența variază pe " +
+        "material și pe grosime (vata +25 %, elastomerul +25 % sau +20 %). De aceea sunt liste separate.",
       )) +
-      `<div class="filtre" role="group" aria-label="Segmentul listei de prețuri">
+      `<div class="filtre" role="group" aria-label="Tipul ofertei">
          ${DESTINATII.map((d) => `<button class="filtru" data-dest="${d}" aria-pressed="${d === dest}">
            ${esc(ETICHETA_DEST[d])} <span class="hint">${nr(inventarPe(d).length)}</span></button>`).join("")}
        </div>
-       <label for="sistemSel">Alege sistemul de izolație</label>
+       <label for="sistemSel">Alege materialul</label>
        <select id="sistemSel" class="ingust"></select>
        <div id="corpPreturi"></div>`;
 

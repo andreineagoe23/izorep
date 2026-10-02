@@ -18,7 +18,7 @@ export const ecran: Ecran = {
   id: "clienti",
   titlu: "Clienți",
   subtitlu:
-    `${CLIENTI.length} clienți în sistem — fiecare cu propriul format de situație de lucrări, așa cum vine el de la client.`,
+    `${CLIENTI.length} clienți. Fiecare trimite cererile și situațiile în alt format de tabel.`,
 
   render(root) {
     const randuri = CLIENTI.map((c) => {
@@ -51,13 +51,13 @@ export const ecran: Ecran = {
         ["", "", "", "", "", "", "n", "n", "n"],
       )}
       ${nota(
-        "Tipul ofertei — rezidențială sau industrială — se alege la import, pentru fiecare ofertă: categoria " +
-          "clientului nu o decide. Oferta 284, pentru o lucrare industrială, a fost tarifată pe lista rezidențială. " +
-          "Prețul poate fi pus de mână pe orice poziție, cu marcaj vizibil în ofertă.",
+        "Tipul ofertei (rezidențială sau industrială) se alege la import, pentru fiecare ofertă; nu depinde de " +
+          "client. De exemplu, Oferta 284, pentru o lucrare industrială, a fost făcută pe lista rezidențială. " +
+          "Pe orice poziție prețul se poate pune și de mână; în ofertă se vede că a fost pus de mână.",
       )}
       ${nota(
-        "Fiecare client trimite alt format de tabel (vezi coloana „Format situații”). Coloanele unui format " +
-          "nou se recunosc o singură dată, apoi se refolosesc automat la fiecare fișier cu același format.",
+        "Fiecare client trimite alt tabel (coloana „Format situații”). Aplicația învață coloanele unui tabel " +
+          "nou o singură dată și le recunoaște singură data viitoare.",
       )}
     `;
   },

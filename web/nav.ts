@@ -27,7 +27,7 @@ export const MENIU: GrupMeniu[] = [
     { id: "masuratori", eticheta: "Măsurători" },
     { id: "stoc", eticheta: "Depozit și stoc" },
   ]},
-  { titlu: "Nomenclatoare", itemi: [
+  { titlu: "Date de bază", itemi: [
     { id: "clienti", eticheta: "Clienți" },
     { id: "preturi", eticheta: "Liste de prețuri" },
   ]},

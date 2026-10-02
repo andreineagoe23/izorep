@@ -1,8 +1,8 @@
 import { tarifeaza } from "../../src/pricing/engine.js";
 import { PozitieNetarifata, type Forma, type SistemMatrice, type Strat } from "../../src/pricing/types.js";
 import { lista, type Destinatie } from "../../src/pricing/lists.js";
-import { esc, eur, nota, stare, tabel, type Ecran } from "./tip.js";
-import { MOTIV } from "../import/text.js";
+import { esc, eur, nota, nr, stare, tabel, type Ecran } from "./tip.js";
+import { MATERIAL, MOTIV } from "../import/text.js";
 
 const SISTEME: [SistemMatrice, string][] = [
   ["elastomer", "elastomer (Armaflex)"],
@@ -27,7 +27,7 @@ const EXEMPLE: Record<string, { diam: number; tip: string; forma: string; cant: 
 export const ecran: Ecran = {
   id: "deviz",
   titlu: "Calcul deviz",
-  subtitlu: "Tarifare deterministă din listele firmei. Aceleași reguli care reproduc ofertele istorice la bănuț.",
+  subtitlu: "Prețul unei poziții, din listele firmei: alegi diametrul, materialul și grosimea.",
 
   render(root) {
     root.innerHTML = `
@@ -67,9 +67,9 @@ export const ecran: Ecran = {
 
           <div class="exemple">
             <span class="hint">exemple:</span>
-            <button class="chip" type="button" data-ex="dn80">DN80 compus</button>
-            <button class="chip" type="button" data-ex="dn100">DN100 compus</button>
-            <button class="chip" type="button" data-ex="tub">tubulatură /mp</button>
+            <button class="chip" type="button" data-ex="dn80">DN80, două straturi</button>
+            <button class="chip" type="button" data-ex="dn100">DN100, două straturi</button>
+            <button class="chip" type="button" data-ex="tub">tubulatură, pe m²</button>
             <button class="chip" type="button" data-ex="peste">peste listă (ø315)</button>
             <button class="chip" type="button" data-ex="fail">nu se ofertează</button>
           </div>
@@ -137,23 +137,23 @@ export const ecran: Ecran = {
           <div class="pret">${eur(r.pret_unitar)}<small>/ ${um}</small></div>
           <div class="total">${r.cantitate} × ${eur(r.pret_unitar)} = <strong>${eur(r.total)}</strong>${
             r.multiplicator !== 1 ? ` · multiplicator ×${r.multiplicator}` : ""}</div>
-          ${tabel(["Strat", "ø geometric", "rând listă", "preț"],
+          ${tabel(["Material", "Pus pe ø (mm)", "Rândul din listă", "Preț"],
             r.straturi.map((s) => `<tr>
-              <td>${esc(s.sistem.replace("_", " "))}${s.grosime_mm ? ` ${s.grosime_mm} mm` : ""}</td>
-              <td class="n">${s.diametru_geometric.toFixed(1)}</td>
+              <td>${esc(MATERIAL[s.sistem] ?? s.sistem)}${s.grosime_mm ? ` ${s.grosime_mm.toLocaleString("ro-RO")} mm` : ""}</td>
+              <td class="n">${nr(s.diametru_geometric, 1)}</td>
               <td class="n">${s.rand_lista}</td>
               <td class="n">${eur(s.pret_unitar)}</td></tr>`),
             ["", "n", "n", "n"])}
           ${deVerificat.map((n) => `<p class="nota">${stare("De verificat", "atentie")} ${esc(n)}</p>`).join("")}
           ${(r.note ?? []).filter((n) => !deVerificat.includes(n)).map((n) => nota(esc(n))).join("")}
-          ${nota("Fiecare strat se rotunjește separat la 2 zecimale, apoi se însumează. Diametrul geometric pornește de la rândul primului strat și crește cu 2 × grosime.")}`;
+          ${nota("Fiecare material se rotunjește la bani, apoi se adună. Al doilea strat se pune peste primul, deci prețul lui se caută la un diametru mai mare (cu de două ori grosimea primului).")}`;
       } catch (e) {
         const p = e instanceof PozitieNetarifata;
         $("#iesire").innerHTML = `
           <div class="alerta"><strong>Poziție netarifabilă</strong>${esc(
             e instanceof PozitieNetarifata ? MOTIV[e.cod] : e instanceof Error ? e.message : String(e))}</div>
           ${nota(p
-            ? "Golul din matricea de prețuri înseamnă „nu se ofertează”, nu „preț zero”. Poziția se marchează pentru tarifare manuală — nu se ghicește."
+            ? "O căsuță goală în lista de prețuri înseamnă „nu se ofertează”, nu „preț zero”. Prețul îl pune omul, nu aplicația."
             : "Verifică datele introduse.")}`;
       }
     }

@@ -61,9 +61,9 @@ function lucrariExemplu(): string {
     ${tabel(capete, LUCRARI.map(randTabel), clase)}
   </section>
   ${nota(
-    `O lucrare nu se poate închide cu sold de material nezero pe gestiunea de șantier: la închidere, sistemul ` +
-      `cere o decizie explicită pentru fiecare poziție rămasă — retur, casare sau facturare suplimentară. ` +
-      `Materialul pe șantier și necesarul fiecărei lucrări se văd în <a href="#/stoc">Depozit și stoc</a>.`,
+    `Urmează: când se termină o lucrare, aplicația va întreba ce faci cu materialul rămas pe șantier — îl ` +
+      `aduci înapoi în depozit, îl scoți ca pierdere sau îl facturezi clientului. Materialul de pe fiecare ` +
+      `șantier se vede în <a href="#/stoc">Depozit și stoc</a>.`,
   )}`;
 }
 

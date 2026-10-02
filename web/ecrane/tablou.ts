@@ -1,5 +1,5 @@
 import { atentionare, card, esc, eur, indicator, nota, nr, progres, stare, tabel, type Ecran } from "./tip.js";
-import { CURS_BNR, DOCUMENTE, LUCRARI, client, santier, type StareLucrare } from "../date/seed.js";
+import { DOCUMENTE, LUCRARI, client, santier, type StareLucrare } from "../date/seed.js";
 import { vedeCosturi } from "../nav.js";
 import { citesteDepozit } from "../depozit-local.js";
 import { deComandatPeNecesar } from "./stoc.js";
@@ -60,7 +60,7 @@ function sectiuneAtentie(): string {
       html: `Lucrarea <b>${esc(l.id)}</b> — ${esc(l.denumire)} — e în starea ${stare(
         ETICHETA_STARE.de_inchis.text,
         ETICHETA_STARE.de_inchis.ton
-      )} și așteaptă decizia de închidere pe gestiunea de șantier.`,
+      )}: lucrarea e terminată și mai trebuie hotărât ce se face cu materialul rămas pe șantier.`,
     });
   }
 
@@ -124,9 +124,8 @@ function tabelDerulare(): string {
 
 function notaCurs(): string {
   return nota(
-    `Prețurile din oferte sunt în EUR, fără TVA. Plata se face în lei, la cursul BNR din ziua facturării ` +
-      `(curent afișat: 1 € = ${nr(CURS_BNR, 4)} lei) — cursul folosit se îngheață pe fiecare document la emitere, ` +
-      `ca oferta sau factura să rămână reproductibilă în timp, indiferent cum evoluează cursul după aceea.`
+    `Prețurile din oferte sunt în euro, fără TVA. Plata se face în lei, la cursul BNR din ziua facturii. ` +
+      `Cursul se scrie pe fiecare document, ca suma să nu se schimbe mai târziu.`
   );
 }
 

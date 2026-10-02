@@ -105,10 +105,22 @@ Regulile pe care le respectă `style.css`:
 - tokenii sunt numiți după rol (`--accent`, `--linie-tare`), nu după culoare
 - ambele teme sunt definite pe tokeni; un ecran nu scrie niciodată o culoare
 
+## Antetul și bara (3 octombrie 2026)
+
+Antetul din dreapta și numele firmei din bară au aceeași înălțime
+(`--inaltime-antet`, 64 px), ca linia de sub ele să fie una singură. Antetul
+ține doar butonul de meniu, cu text vizibil („Ascunde meniul” / „Arată
+meniul”), nu doar pictogramă. „DEMO” și cursul au plecat: cursul era un număr
+fix din cod, care arăta ca un curs de azi. Comutatorul de rol e ascuns
+(`hidden`): ambele roluri văd tot până se stabilesc rolurile cu firma. Rama de
+focus de pe `#ecran` nu se mai desenează (focusul rămâne, pentru cititorul de
+ecran). Textele ecranelor au fost rescrise fără jargon („snapshot”, „segment”,
+„matrice rară”, „gestiune”) pentru oameni care nu sunt obișnuiți cu aplicații.
+
 ## Tema
 
-Comutator cu trei stări în bara laterală: **Sistem** (implicit), **Deschis**,
-**Închis**. Alegerea se ține în `localStorage` sub `izorep-tema`.
+Comutator cu trei stări în bara laterală: **Automat** (implicit, după
+sistem), **Deschis**, **Închis**. Alegerea se ține în `localStorage` sub `izorep-tema`.
 
 „Sistem" înseamnă absența atributului `data-tema`, nu o a treia paletă — așa
 pagina răspunde la schimbarea temei din sistem cât timp e deschisă, fără cod.
