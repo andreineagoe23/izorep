@@ -59,4 +59,14 @@ describe("pagina de santier ajunge in oferta doar verificata", () => {
     expect(cardTrimite({ pagini: [pagina()], titlu: "" })).toMatch(/type="submit"[^>]*disabled/);
     expect(cardTrimite({ pagini: [pagina({ verificata: true })], titlu: "" })).not.toMatch(/type="submit"[^>]*disabled/);
   });
+
+  it("„Pune în situație” cere pagini verificate și un șantier ales; numele șantierului nu injectează HTML", () => {
+    const santier = { id: "S-1", denumire: "<img src=x>", client: "" };
+    const gata = pagina({ verificata: true });
+    expect(cardTrimite({ pagini: [gata], titlu: "", scop: "situatie", santier: null })).toMatch(/type="submit"[^>]*disabled/);
+    expect(cardTrimite({ pagini: [pagina()], titlu: "", scop: "situatie", santier })).toMatch(/type="submit"[^>]*disabled/);
+    const html = cardTrimite({ pagini: [gata], titlu: "", scop: "situatie", santier });
+    expect(html).not.toMatch(/type="submit"[^>]*disabled/);
+    expect(html).not.toContain("<img");
+  });
 });

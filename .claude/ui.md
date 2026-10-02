@@ -506,10 +506,24 @@ pe materialele care au preț de achiziție. Piesele fără regulă de material
   dar e marcat „peste ofertă”. Se șterge doar ultima situație.
 - Pe telefon numărul poziției e lipit de denumire, ca textul să aibă lățimea.
 
-## Șantier: notițele din carnet (29 septembrie 2026)
+## Măsurători: notițele din carnet (29 septembrie 2026)
 
-`web/ecrane/santier.ts`, marcajul în `web/santier-vizual.ts` (pur, testat).
-Detaliile de logică în `santier.md`.
+`web/ecrane/santier.ts` (ruta `#/masuratori`; `#/santier` e alias), marcajul în
+`web/santier-vizual.ts` (pur, testat). Detaliile de logică în `santier.md`.
+Pagina se numea „Șantier”; redenumită pe 3 octombrie 2026, fiindcă pozele de
+dinainte de ofertă nu au încă un șantier.
+
+- **Pentru ce sunt măsurătorile** (3 octombrie 2026), primul control de sus:
+  „Pentru ofertă” (alături, tipul ofertei) sau „Pentru situație de lucrări”
+  (alături, șantierul). Cardul de jos e „Trimite la ofertă”, respectiv „Pune
+  în situație”: rândurile se potrivesc pe planul șantierului
+  (`src/lucrari/potrivire.ts`), iar Lucrări deschide situația nouă,
+  completată, cu cardul „Din măsurători”: câte rânduri s-au pus (pozițiile au
+  „din poze” sub cantitate), „De ales” cu un buton pe fiecare poziție posibilă
+  („Poziția 22 · rămas 27 ml”, sau zona, când cererea are zone) și „Nu sunt în
+  oferta șantierului”. Situația se salvează tot de om. Verificat cu
+  Playwright pe TRANSAVIA, 390 / 768 / 1440 / 1920 px, ambele teme: zero
+  derulare, zero erori; drumul spre ofertă neschimbat.
 
 - Sus, tipul ofertei și „Alege pozele” (mai multe deodată, câte o poză pe
   pagină de carnet). Fiecare poză devine un card: poza în stânga (lipită sus

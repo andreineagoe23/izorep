@@ -3,12 +3,19 @@ import { RaspunsPoza, type Element, type Izolatie, type Jacheta } from "../../sr
 import { spreCerere } from "../../src/santier/spre-cerere.js";
 import { registruCerere } from "../../src/santier/registru.js";
 import type { Destinatie } from "../../src/pricing/lists.js";
-import { preda } from "../predare.js";
-import { cardIncarca, cardPagina, cardTrimite, type PaginaSantier } from "../santier-vizual.js";
+import { preda, predaSituatie } from "../predare.js";
+import { citestePlanuri } from "../lucrari-local.js";
+import { cardIncarca, cardPagina, cardTrimite, type PaginaSantier, type SantierAles, type Scop } from "../santier-vizual.js";
 import type { Ecran } from "./tip.js";
 
 /**
- * Șantier: pozele carnetului -> randuri confirmate -> importul.
+ * Măsurători: pozele carnetului -> randuri confirmate -> oferta sau situatia.
+ *
+ * Pozele vin in doua momente (Andrei, 2 octombrie 2026): inainte de oferta
+ * (la clientii din apropiere firma masoara, iar oferta se face din poze) si in
+ * timpul lucrarii (ce s-a executat). Citirea si verificarea sunt aceleasi; la
+ * final randurile pleaca fie la import, ca o cerere, fie pe planul unui santier,
+ * ca situatie noua (`src/lucrari/potrivire.ts`).
  *
  * Santierul nu foloseste aplicatia: scrie pe foaie si trimite poze. Omul de la
  * birou le incarca aici, modelul propune randurile (cand ruta exista, doar pe
@@ -38,6 +45,11 @@ let trimisa = "";
  */
 let redeseneaza: (id?: string) => void = () => {};
 let destinatie: Destinatie = "rezidential";
+let scop: Scop = "oferta";
+/** Santierul ales pentru „Pentru situatie”. */
+let planAles = "";
+/** Potrivirea ruleaza importul: cat dureaza, butonul e oprit. */
+let lucreaza = false;
 let titlu = "";
 let editeaza: string | null = null;
 let eroare = "";
@@ -75,9 +87,10 @@ const randGol = (zona: string): RandSantier => ({
 });
 
 export const ecran: Ecran = {
-  id: "santier",
-  titlu: "Șantier",
-  subtitlu: "Pozele cu măsurătorile din carnet: rândurile citite din poză, verificate de tine, ajung în ofertă prin import.",
+  id: "masuratori",
+  titlu: "Măsurători",
+  subtitlu: "Pozele din carnet, înainte de ofertă sau din timpul lucrării. Rândurile citite din poză, verificate de tine, " +
+    "ajung în ofertă sau în situația de lucrări.",
 
   async render(root) {
     root.innerHTML = `<div class="imp sant">
@@ -88,15 +101,23 @@ export const ecran: Ecran = {
     const gazda = root.querySelector<HTMLElement>(".sant")!;
     const cuModel = await modelDisponibil();
 
+    const santiere = (): SantierAles[] => citestePlanuri().map((p) => ({ id: p.id, denumire: p.denumire, client: p.client }));
+    /** Pe situatie, tipul ofertei e al santierului, nu cel ales sus. */
+    const destinatiaPaginii = (): Destinatie =>
+      scop === "situatie" ? ((citestePlanuri().find((p) => p.id === planAles)?.destinatie as Destinatie | undefined) ?? destinatie) : destinatie;
+    const incarca = (): string => cardIncarca({ scop, destinatie, santiere: santiere(), planAles, eroare, trimisa });
+
     const deseneaza = (): void => {
-      gazda.querySelector("#sant-incarca")!.innerHTML = cardIncarca({ destinatie, eroare, trimisa });
+      gazda.querySelector("#sant-incarca")!.innerHTML = incarca();
       gazda.querySelector("#sant-pagini")!.innerHTML = pagini
-        .map((p, i) => `<div data-pagina="${p.id}">${cardPagina(p, i + 1, { editeaza, destinatie })}</div>`).join("");
+        .map((p, i) => `<div data-pagina="${p.id}">${cardPagina(p, i + 1, { editeaza, destinatie: destinatiaPaginii() })}</div>`).join("");
       deseneazaTrimite();
       legaDrop();
     };
     const deseneazaTrimite = (): void => {
-      gazda.querySelector("#sant-trimite")!.innerHTML = cardTrimite({ pagini, titlu });
+      gazda.querySelector("#sant-trimite")!.innerHTML = cardTrimite({
+        pagini, titlu, scop, lucreaza, santier: santiere().find((x) => x.id === planAles) ?? null,
+      });
     };
     /**
      * Doar pagina atinsa. O citire care se termina pe pagina 3 nu are voie sa
@@ -106,7 +127,7 @@ export const ecran: Ecran = {
       const i = pagini.findIndex((p) => p.id === id);
       const loc = gazda.querySelector(`[data-pagina="${CSS.escape(id)}"]`);
       if (i < 0 || !loc) return deseneaza();
-      loc.innerHTML = cardPagina(pagini[i]!, i + 1, { editeaza, destinatie });
+      loc.innerHTML = cardPagina(pagini[i]!, i + 1, { editeaza, destinatie: destinatiaPaginii() });
       deseneazaTrimite();
     };
     redeseneaza = (id) => (id ? deseneazaPagina(id) : deseneaza());
@@ -158,10 +179,10 @@ export const ecran: Ecran = {
       const inainte = pagini.length;
       pagini.push(...noi.map((x) => x.p));
       for (const { f, p } of noi) fisiere.set(p.id, f);
-      gazda.querySelector("#sant-incarca")!.innerHTML = cardIncarca({ destinatie, eroare, trimisa });
+      gazda.querySelector("#sant-incarca")!.innerHTML = incarca();
       legaDrop();
       gazda.querySelector("#sant-pagini")!.insertAdjacentHTML("beforeend", noi.map(({ p }, k) =>
-        `<div data-pagina="${p.id}">${cardPagina(p, inainte + k + 1, { editeaza, destinatie })}</div>`).join(""));
+        `<div data-pagina="${p.id}">${cardPagina(p, inainte + k + 1, { editeaza, destinatie: destinatiaPaginii() })}</div>`).join(""));
       deseneazaTrimite();
       let i = 0;
       const lucrator = async (): Promise<void> => {
@@ -189,6 +210,8 @@ export const ecran: Ecran = {
       const t = e.target as HTMLInputElement;
       if (t.id === "poze" && t.files) void adaugaPoze([...t.files]);
       if (t.name === "segment") { destinatie = t.value as Destinatie; deseneaza(); }
+      if (t.name === "scop") { scop = t.value as Scop; trimisa = ""; deseneaza(); }
+      if (t.name === "plan") { planAles = t.value; deseneaza(); }
     });
 
     gazda.addEventListener("input", (e) => {
@@ -286,8 +309,41 @@ export const ecran: Ecran = {
       deseneazaPagina(p.id);
     });
 
+    /** Paginile au plecat; ramase aici, s-ar putea trimite a doua oara. */
+    function golesteDupaTrimitere(): void {
+      for (const p of pagini) URL.revokeObjectURL(p.url);
+      pagini = [];
+      fisiere.clear();
+      titlu = "";
+      editeaza = null;
+    }
+
+    async function puneInSituatie(): Promise<void> {
+      const plan = citestePlanuri().find((p) => p.id === planAles);
+      if (!plan || lucreaza) return;
+      lucreaza = true;
+      deseneazaTrimite();
+      try {
+        // Importul (ExcelJS) se incarca abia acum, ca la citirea unui fisier.
+        const { executatDinMasuratori, potriveste } = await import("../../src/lucrari/potrivire.js");
+        const executat = await executatDinMasuratori(pagini.flatMap((p) => p.randuri), plan.destinatie as Destinatie);
+        predaSituatie({ plan: plan.id, potrivire: potriveste(plan, executat), pagini: pagini.length });
+      } catch (e) {
+        console.error(e);
+        eroare = "Rândurile nu s-au putut pune pe șantier. Încearcă din nou.";
+        lucreaza = false;
+        deseneaza();
+        return;
+      }
+      lucreaza = false;
+      golesteDupaTrimitere();
+      trimisa = `Ultimele măsurători au plecat în situația nouă de pe șantierul „${plan.denumire}”, în Lucrări.`;
+      location.hash = "#/lucrari";
+    }
+
     async function trimite(): Promise<void> {
       if (pagini.some((p) => !p.verificata)) return;
+      if (scop === "situatie") return puneInSituatie();
       const linii = spreCerere(pagini.flatMap((p) => p.randuri));
       if (linii.length === 0) return;
       const nume = titlu.trim() || "Măsurători de șantier";
@@ -296,13 +352,8 @@ export const ecran: Ecran = {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       });
       preda({ fisier, destinatie, pretDublu: true });
-      // Lista a plecat; ramasa aici, s-ar putea trimite a doua oara.
-      for (const p of pagini) URL.revokeObjectURL(p.url);
-      pagini = [];
-      fisiere.clear();
-      titlu = "";
-      editeaza = null;
-      trimisa = fisier.name;
+      golesteDupaTrimitere();
+      trimisa = `Ultima listă a plecat la import: ${fisier.name}. O găsești la „Import Excel”, în importurile recente.`;
       location.hash = "#/import";
     }
 

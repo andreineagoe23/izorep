@@ -15,8 +15,10 @@ Tot pe 2 octombrie: demo-ul din `docs/demo-firma.md` rulat cap-coadă pe link
 (Playwright), toate cifrele ies; cheia OpenAI merge (pozele Ecoterm: 39 / 50
 exacte, 47 s). Pozele din carnet vin în două momente (Andrei): înainte de
 ofertă și în timpul lucrării — logica de potrivire pe planul de șantier e în
-`src/lucrari/potrivire.ts` (`santier.md`), ecranul urmează. Foaia pentru
-întâlnirea de luni, 5 octombrie: `docs/intrebari-firma.md`. **383 de teste.**
+`src/lucrari/potrivire.ts` (`santier.md`); ecranul: pagina „Șantier” devine
+„Măsurători”, cu „Pentru ofertă” / „Pentru situație de lucrări” (`ui.md`).
+Foaia pentru întâlnirea de luni, 5 octombrie: `docs/intrebari-firma.md`.
+**384 de teste.**
 
 ## Unde am rămas (29 septembrie 2026, după apelul cu firma)
 
@@ -1051,7 +1053,7 @@ sau rolă, accesoriile).
 ## Comenzi
 
 ```bash
-npm test                                       # 383 de teste (motor, import, baza, ofertă, șantier)
+npm test                                       # 384 de teste (motor, import, baza, ofertă, șantier)
 npm run typecheck
 npm run dev                                    # UI local, /izorep/
 npm run import -- ../attachments/clienti/cerere-de-oferta-spital.xlsx   # pipeline complet

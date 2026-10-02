@@ -43,8 +43,9 @@ aplicația în același browser, șterge importurile vechi (Import Excel →
    plăci pe m² peste (ø114 cu vată 30: 0,55 m² pe metru, regula lor), coturile
    peste 3 țoli trecute în m². → „Creează șantierul”: se deschide șantierul, cu
    valoarea 91.737,81 € (după discount).
-8. **Situație de lucrări:** „Situație nouă”, câteva cantități, „Salvează”;
-   apoi încă una cu „Tot restul”. Istoricul, cumulatul, „Descarcă” (Excel).
+8. **Situație de lucrări:** „Situație nouă”, câteva cantități (în limita
+   ofertei), „Salvează”. Istoricul, cumulatul, „Descarcă” (Excel). „Tot restul”
+   îl arătăm la final, după pasul 11.
 9. **Depozit și stoc:**
    - necesarul TRANSAVIA apare cu „de comandat”;
    - „Încarcă date de exemplu”: unele materiale devin „acoperit”, restul rămân de comandat;
@@ -53,13 +54,25 @@ aplicația în același browser, șterge importurile vechi (Import Excel →
    - „Anulează”: mișcarea nu se șterge, apare mișcarea inversă.
 10. **Calcul deviz:** o poziție la mână, cu tipul ofertei. Exemplul „nu se
    ofertează” arată că un gol din listă nu devine preț zero.
-11. **Șantier:** pozele din carnet (cele 4 de la Ecoterm, din
-   `attachments/santier/`). Pe link, rândurile se scriu de mână lângă poză:
-   „Adaugă rând”, „Am verificat pagina”, „Trimite la ofertă”, și ajung în
-   import ca un Excel. Citirea automată a pozelor merge doar pe laptop, cu
-   `npm run dev` și cheia: acolo cele 4 pagini se citesc în ~1,5 minute, iar
-   omul confirmă pagină cu pagină. **Întrebarea de pus:** avem oferta făcută
-   din aceste 4 pagini? Cu ea verificăm citirea rând cu rând.
+11. **Măsurători:** pozele din carnet (cele 4 de la Ecoterm, din
+   `attachments/santier/`). Sus, „Pentru ce sunt măsurătorile”: două drumuri.
+   - **Pentru ofertă** (clienții din apropiere, unde măsurați voi): pe link,
+     rândurile se scriu de mână lângă poză: „Adaugă rând”, „Am verificat
+     pagina”, „Trimite la ofertă”, și ajung în import ca un Excel. Citirea
+     automată a pozelor merge doar pe laptop, cu `npm run dev` și cheia: acolo
+     cele 4 pagini se citesc în ~1 minut, iar omul confirmă pagină cu pagină.
+   - **Pentru situație de lucrări** (ce s-a executat): alegi șantierul
+     TRANSAVIA făcut la pasul 7, o poză, „Adaugă rând”: ø114, vată 50 mm, tablă
+     aluminiu, metri, 10 → „Am verificat pagina” → „Pune în situație”. Se
+     deschide Lucrări cu situația nouă. Același material e pe trei poziții, deci
+     aplicația nu ghicește: arată pozițiile cu cât a mai rămas din fiecare
+     („Poziția 22 · rămas … ml”) și alegi tu.
+     Un rând care nu e în ofertă (de ex. ø500) apare separat, nu intră în bani.
+
+   **Întrebările de pus:** avem oferta făcută din aceste 4 pagini? Și o poză
+   din carnet făcută în timpul unei lucrări, cu situația făcută din ea?
+12. **Încheierea șantierului:** în Lucrări, „Situație nouă” → „Tot restul” →
+   „Salvează”: cumulatul ajunge exact la valoarea ofertei, 91.737,81 €.
 
 ## Ce e real și ce e prototip
 

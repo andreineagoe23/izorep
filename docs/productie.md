@@ -14,8 +14,9 @@ Nu au IT și nu vor să învețe unelte noi. Tot ce urmează e măsurat după as
 - **Un link.** Se deschide din browser, pe calculator. Nimic de instalat.
   O folosesc cei de la birou (tehnicul, patronul, contabila).
 - **Șantierul nu folosește aplicația.** Oamenii de acolo scriu în carnet, ca
-  azi, și trimit poze. Tehnicul le pune în ecranul „Șantier”, verifică ce a
-  citit aplicația de pe poză și le trimite spre ofertă.
+  azi, și trimit poze. Tehnicul le pune în ecranul „Măsurători”, verifică ce a
+  citit aplicația de pe poză și le trimite spre ofertă sau în situația de
+  lucrări a șantierului.
 - **Un cont pentru fiecare om**, cu intrare prin link primit pe email — fără
   parole de ținut minte. Contul comun de birou nu merge: nu se mai știe cine a
   schimbat un preț.

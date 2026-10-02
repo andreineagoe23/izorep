@@ -16,6 +16,8 @@ import { deComandat, solduri } from "../../src/stoc/registru.js";
 import { cifra } from "../stoc-vizual.js";
 import { descarca } from "../descarca.js";
 import { numeSituatie, registruSituatie } from "../situatie.js";
+import { preiaSituatie } from "../predare.js";
+import type { Potrivire } from "../../src/lucrari/potrivire.js";
 import {
   faraUltimaSituatie, progresPlan, randuriSituatie, situatieNoua, totalSituatie, valideazaSituatie, valoareOferta,
   type PlanSantier, type Situatie,
@@ -80,6 +82,20 @@ export const ecran: Ecran = {
     let eroare = "";
     let stergeDe: string | null = null;
     let mesaj = "";
+    /** Situatia in lucru a venit din „Măsurători”: ce s-a pus, ce e de ales, ce nu e in oferta. */
+    let dinPoze: Potrivire | null = null;
+
+    const venita = preiaSituatie();
+    const tinta = venita && planuri.find((p) => p.id === venita.plan);
+    if (venita && tinta) {
+      deschis = tinta.id;
+      inLucru = {
+        ...situatieNoua(tinta, idNou(), new Date().toISOString()),
+        cantitati: { ...venita.potrivire.cantitati },
+        nota: `Din măsurători (${venita.pagini === 1 ? "o pagină" : `${venita.pagini} pagini`} din carnet)`,
+      };
+      dinPoze = venita.potrivire;
+    }
 
     const salveaza = (): void => {
       if (!scriePlanuri(planuri)) mesaj = "Browserul nu permite salvarea: modificarea se pierde la reîncărcare.";
@@ -151,6 +167,7 @@ export const ecran: Ecran = {
             p.adaosFocProcent ? ` · +${p.adaosFocProcent} % pe închiderile la foc` : ""}</p>
           <p class="hint">Materialele: <a href="#/stoc">Depozit și stoc</a>, la necesarul acestui șantier.</p>
         </section>
+        ${inLucru && dinPoze ? cardDinPoze(p, inLucru, dinPoze) : ""}
         ${inLucru ? formularSituatie(p, inLucru) : ""}
         ${istoric(p)}
         <section class="imp-card"><h2>Planul de șantier</h2>
@@ -189,15 +206,54 @@ export const ecran: Ecran = {
       </section>`;
     }
 
+    function cardDinPoze(p: PlanSantier, s: Situatie, d: Potrivire): string {
+      const pozitiiPuse = new Set(d.puse.map((x) => x.pozitie)).size;
+      // Pozitiile cu acelasi material se deosebesc prin zona, iar cand cererea
+      // n-are zone, prin cat a mai ramas de executat din ele.
+      const rest = new Map(randuriSituatie(p, s).map((x) => [x.poz.nr, x.rest]));
+      const deAles = d.deAles.map((x, i) => `<tr>
+        <td>${esc(x.rand.text)}<br><span class="hint">${esc(x.rand.zona)}</span></td>
+        <td class="n">${cifra(x.rand.cantitate)}</td>
+        <td>${x.pozitii.map((nr) => {
+          const poz = p.pozitii.find((y) => y.nr === nr);
+          return `<button type="button" class="secundar" data-act="pune-la" data-i="${i}" data-nr="${nr}">Poziția ${nr} · ${
+            poz?.zona ? esc(poz.zona) : `rămas ${cant(Math.max(0, rest.get(nr) ?? 0), poz?.um ?? "")}`}</button>`;
+        }).join(" ")}</td>
+      </tr>`);
+      const nepotrivite = d.nepotrivite.map((x) => `<tr>
+        <td>${esc(x.text)}</td><td>${esc(x.zona)}</td><td class="n">${cifra(x.cantitate)}</td>
+      </tr>`);
+      return `<section class="imp-card"><h2>Din măsurători</h2>
+        ${d.planVechi
+          ? `<p class="alerta" role="alert" style="margin:0 0 12px">Șantierul a fost făcut înainte ca aplicația să poată potrivi
+            măsurătorile cu oferta. Refă-l din ofertă (Import Excel → pasul „Oferta” → „Creează șantierul”) cât nu are
+            situații, sau scrie cantitățile de mână.</p>`
+          : d.puse.length === 0
+            ? `<p class="hint" style="margin:0 0 12px">Niciun rând din carnet nu s-a putut pune singur pe o poziție. Alege mai
+              jos, sau scrie cantitățile de mână.</p>`
+            : `<p class="hint" style="margin:0 0 12px">${d.puse.length === 1 ? "Un rând" : `${d.puse.length} rânduri`} din carnet
+              ${d.puse.length === 1 ? "a fost pus" : "au fost puse"} pe ${pozitiiPuse === 1 ? "o poziție" : `${pozitiiPuse} poziții`}
+              (marcate „din poze” mai jos). Verifică și salvează.</p>`}
+        ${deAles.length ? `<h3>De ales: același material e pe mai multe poziții</h3>
+          ${tabel(["Rândul din carnet", "Cantitate", "Pune la"], deAles, ["", "n", ""])}` : ""}
+        ${nepotrivite.length ? `<h3>Nu sunt în oferta șantierului</h3>
+          <p class="hint" style="margin:0 0 12px">Lucrări în plus, sau scrise altfel decât în ofertă. Nu intră în situație;
+            dacă sunt o poziție din ofertă, scrie cantitatea de mână la ea.</p>
+          ${tabel(["Rândul din carnet", "Zona", "Cantitate"], nepotrivite, ["", "", "n"])}` : ""}
+      </section>`;
+    }
+
     function formularSituatie(p: PlanSantier, s: Situatie): string {
       const r = randuriSituatie(p, s);
+      const dinCarnet = new Set(dinPoze?.puse.map((x) => x.pozitie) ?? []);
       const t = totalSituatie(p, s);
       const randuri = r.map((x) => `<tr>
         <td>${x.poz.nr}. ${esc(x.poz.denumire)}</td>
         <td class="n">${cant(x.anterior, x.poz.um)} din ${cant(x.poz.cantitate, x.poz.um)}</td>
         <td class="n"><input name="cant-${x.poz.nr}" type="number" inputmode="decimal" min="0" step="any"
           value="${x.curent || ""}" aria-label="Executat acum, poziția ${x.poz.nr}" style="width:100%;max-width:9rem" />${
-          x.pesteOferta ? `<br>${stare("peste ofertă", "atentie")}` : ""}</td>
+          x.pesteOferta ? `<br>${stare("peste ofertă", "atentie")}` : ""}${
+          dinCarnet.has(x.poz.nr) && x.curent > 0 ? `<br>${stare("din poze")}` : ""}</td>
       </tr>`);
       return `<form class="imp-card" id="situatie">
         <h2>Situația nr. ${s.nr}</h2>
@@ -246,10 +302,27 @@ export const ecran: Ecran = {
       const p = plan();
       mesaj = "";
       switch (b.dataset["act"]) {
-        case "deschide": deschis = b.dataset["id"] ?? null; inLucru = null; stergeDe = null; break;
-        case "inapoi": deschis = null; inLucru = null; stergeDe = null; break;
+        case "deschide": deschis = b.dataset["id"] ?? null; inLucru = null; dinPoze = null; stergeDe = null; break;
+        case "inapoi": deschis = null; inLucru = null; dinPoze = null; stergeDe = null; break;
         case "situatie-noua": if (p) { inLucru = situatieNoua(p, idNou(), new Date().toISOString()); eroare = ""; } break;
-        case "renunta": inLucru = null; eroare = ""; break;
+        case "renunta": inLucru = null; dinPoze = null; eroare = ""; break;
+        case "pune-la": {
+          const i = Number(b.dataset["i"]);
+          const nr = Number(b.dataset["nr"]);
+          const ales = dinPoze?.deAles[i];
+          if (!p || !inLucru || !dinPoze || !ales) return;
+          const f = root.querySelector<HTMLFormElement>("#situatie");
+          if (f) citesteFormular(f);
+          const cantitati = { ...inLucru.cantitati };
+          cantitati[nr] = Math.round(((cantitati[nr] ?? 0) + ales.rand.cantitate) * 1000) / 1000;
+          inLucru = { ...inLucru, cantitati };
+          dinPoze = {
+            ...dinPoze,
+            puse: [...dinPoze.puse, { rand: ales.rand, pozitie: nr }],
+            deAles: dinPoze.deAles.filter((_, k) => k !== i),
+          };
+          break;
+        }
         case "tot-restul": {
           if (!p || !inLucru) return;
           citesteFormular(b.form!);
@@ -310,6 +383,7 @@ export const ecran: Ecran = {
       const salvata = inLucru;
       planuri = planuri.map((x) => (x === p ? { ...p, situatii: [...p.situatii, salvata] } : x));
       inLucru = null;
+      dinPoze = null;
       eroare = "";
       salveaza();
       deseneaza();

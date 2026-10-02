@@ -5,7 +5,7 @@ import { esc, stare, tabel } from "./ecrane/tip.js";
 import { alegereSegment } from "./import/vizual.js";
 
 /**
- * Marcajul ecranului „Șantier". Pur, fara DOM, ca la import; regulile care
+ * Marcajul ecranului „Măsurători". Pur, fara DOM, ca la import; regulile care
  * nu au voie sa se strice sunt in `tests/ecrane.test.ts`.
  *
  * Ecranul il foloseste omul de la birou care a primit pozele pe telefon: poza
@@ -186,34 +186,91 @@ export function cardPagina(p: PaginaSantier, nr: number, o: { editeaza: string |
   </section>`;
 }
 
-export function cardIncarca(o: { destinatie: Destinatie; eroare: string; trimisa?: string }): string {
+/**
+ * Pentru ce sunt pozele (Andrei, 2 octombrie 2026): masuratori inainte de
+ * oferta (clientii din apropiere) sau ce s-a executat, pentru situatie.
+ * Citirea si verificarea sunt aceleasi; difera unde pleaca randurile.
+ */
+export type Scop = "oferta" | "situatie";
+
+/** Un santier in alegerea „Pentru situatie”. */
+export interface SantierAles {
+  id: string;
+  denumire: string;
+  client: string;
+}
+
+function alegereScop(scop: Scop): string {
+  const optiuni: [Scop, string][] = [["oferta", "Pentru ofertă"], ["situatie", "Pentru situație de lucrări"]];
+  return `<fieldset class="imp-segment"><legend>Pentru ce sunt măsurătorile</legend><div>${optiuni.map(([v, t]) =>
+    `<label><input type="radio" name="scop" value="${v}"${v === scop ? " checked" : ""} /><span>${t}</span></label>`).join("")}</div></fieldset>`;
+}
+
+function alegereSantier(santiere: SantierAles[], ales: string): string {
+  if (santiere.length === 0) {
+    return `<p class="hint" style="margin:0">Niciun șantier încă. Șantierul se face din ofertă: în
+      <a href="#/import">Import Excel</a>, la pasul „Oferta”, „Creează șantierul”.</p>`;
+  }
+  return `<label>Șantierul (situația se face pe pozițiile ofertei lui)
+    <select name="plan"><option value="">— alege șantierul —</option>${santiere.map((x) =>
+      `<option value="${esc(x.id)}"${x.id === ales ? " selected" : ""}>${esc(x.denumire)}${x.client && x.client !== x.denumire ? ` · ${esc(x.client)}` : ""}</option>`).join("")}</select>
+  </label>`;
+}
+
+export function cardIncarca(o: {
+  scop: Scop; destinatie: Destinatie; santiere: SantierAles[]; planAles: string; eroare: string; trimisa?: string;
+}): string {
   return `<section class="imp-card imp-incarca">
-    ${alegereSegment(o.destinatie)}
+    <div class="imp-campuri">
+      ${alegereScop(o.scop)}
+      ${o.scop === "oferta" ? alegereSegment(o.destinatie) : alegereSantier(o.santiere, o.planAles)}
+    </div>
     <label class="imp-drop" id="drop" for="poze">
       <span class="imp-drop-buton">Alege pozele</span>
       <span class="imp-drop-sub">sau trage-le aici · o poză pentru fiecare pagină de carnet</span>
       <input id="poze" type="file" accept="image/*" multiple />
     </label>
     ${o.eroare ? `<p class="alerta" role="alert">${esc(o.eroare)}</p>` : ""}
-    ${o.trimisa ? `<p class="hint">Ultima listă a plecat la import: <b>${esc(o.trimisa)}</b>. O găsești la „Import Excel”, în importurile recente.</p>` : ""}
+    ${o.trimisa ? `<p class="hint">${esc(o.trimisa)}</p>` : ""}
   </section>`;
 }
 
-export function cardTrimite(o: { pagini: PaginaSantier[]; titlu: string }): string {
+export function cardTrimite(o: {
+  pagini: PaginaSantier[]; titlu: string; scop?: Scop; santier?: SantierAles | null; lucreaza?: boolean;
+}): string {
   if (o.pagini.length === 0) return "";
   const neverificate = o.pagini.filter((p) => !p.verificata).length;
   const randuri = o.pagini.reduce((s, p) => s + p.randuri.filter((r) => r.cantitate > 0).length, 0);
   const dublu = o.pagini.reduce((s, p) => s + p.randuri.filter((r) => r.pret_dublu).length, 0);
+  const dinPagini = `${randuri} rânduri din ${o.pagini.length === 1 ? "o pagină" : `${o.pagini.length} pagini`}`;
+  const lipsa = neverificate > 0
+    ? `<p class="imp-oferta-lipsa">Mai ${neverificate === 1 ? "e o pagină neverificată" : `sunt ${neverificate} pagini neverificate`}.
+      ${o.scop === "situatie" ? "În situație intră" : "Oferta se face"} doar din pagini verificate.</p>`
+    : "";
+  if (o.scop === "situatie") {
+    const oprit = neverificate > 0 || randuri === 0 || !o.santier || o.lucreaza;
+    return `<form class="imp-card imp-formular" id="trimite">
+    <h2>Pune în situația de lucrări</h2>
+    <p class="hint">${dinPagini}. ${o.santier
+      ? `Fiecare rând se pune pe poziția din oferta șantierului „${esc(o.santier.denumire)}” care e aceeași lucrare
+        (material, grosime, diametru, formă). Se deschide o situație nouă, completată; o verifici și o salvezi în Lucrări.
+        Ce nu se potrivește sigur rămâne de ales de tine.`
+      : "Alege șantierul, sus."}</p>
+    ${lipsa}
+    <div class="imp-formular-butoane">
+      <button type="submit" class="primar"${oprit ? " disabled" : ""}>${o.lucreaza ? "Se potrivesc rândurile…" : "Pune în situație"}</button>
+    </div>
+  </form>`;
+  }
   return `<form class="imp-card imp-formular" id="trimite">
     <h2>Trimite la ofertă</h2>
     <div class="imp-campuri">
       <label>Obiectiv (apare în titlul listei)<input name="titlu" value="${esc(o.titlu)}" autocomplete="off" placeholder="de ex. Stație de epurare" /></label>
     </div>
-    <p class="hint">${randuri} rânduri din ${o.pagini.length === 1 ? "o pagină" : `${o.pagini.length} pagini`}. Rândurile trec prin
+    <p class="hint">${dinPagini}. Rândurile trec prin
       verificarea de la import, apoi se descarcă oferta, ca la o listă în Excel.${dublu > 0
         ? ` La ${dublu === 1 ? "un rând" : `${dublu} rânduri`} cu „preț dublu” prețul e de două ori cel din listă; se vede la verificare.` : ""}</p>
-    ${neverificate > 0 ? `<p class="imp-oferta-lipsa">Mai ${neverificate === 1 ? "e o pagină neverificată" : `sunt ${neverificate} pagini neverificate`}.
-      Oferta se face doar din pagini verificate.</p>` : ""}
+    ${lipsa}
     <div class="imp-formular-butoane">
       <button type="submit" class="primar"${neverificate > 0 || randuri === 0 ? " disabled" : ""}>Trimite la ofertă</button>
     </div>

@@ -13,14 +13,14 @@ const ECRANE: Record<string, () => Promise<{ ecran: Ecran }>> = {
   documente: () => import("./ecrane/documente.js"),
   deviz: () => import("./ecrane/deviz.js"),
   import: () => import("./ecrane/import.js"),
-  santier: () => import("./ecrane/santier.js"),
+  masuratori: () => import("./ecrane/santier.js"),
   stoc: () => import("./ecrane/stoc.js"),
   clienti: () => import("./ecrane/clienti.js"),
   preturi: () => import("./ecrane/preturi.js"),
 };
 
 /** Rutele vechi, dinainte ca cererile si ofertele sa ajunga pe acelasi ecran. */
-const ALIAS: Record<string, string> = { cereri: "documente", oferte: "documente" };
+const ALIAS: Record<string, string> = { cereri: "documente", oferte: "documente", santier: "masuratori" };
 
 const $ = <T extends HTMLElement>(s: string) => document.querySelector(s) as T;
 
