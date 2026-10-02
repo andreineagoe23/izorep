@@ -48,7 +48,7 @@ export function cardNecesar(n: Necesar): string {
   const fara = n.faraNecesar.length;
   return `<section class="imp-card" id="necesar">
     <h2>Materiale de comandat</h2>
-    <p class="hint">Până la 3 țoli (ø90) se comandă tuburi, pe diametru și grosime. Peste 3 țoli, plăci pe m²:
+    <p class="hint">Doar pozițiile care intră în ofertă. Până la 3 țoli (ø90) se comandă tuburi, pe diametru și grosime. Peste 3 țoli, plăci pe m²:
       (ø + 2 × grosime) / 1000 × 3,14, rotunjit la două zecimale, × metrii de țeavă. Coturile și teurile peste 3 țoli
       intră în m²: dintr-un metru se fac 3 piese la ø114–140, 2 la ø159–168, una de la ø219 (de confirmat). Tabla, pe m².</p>
     <div class="imp-campuri">

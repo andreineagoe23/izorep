@@ -57,8 +57,10 @@ export interface MaterialNecesar {
   /** Cate pozitii din oferta au contribuit. */
   pozitii: number;
   /**
-   * Cat valoreaza materialul asta in oferta, dupa lista de preturi (EUR).
-   * Lista include manopera, deci e mai mult decat costul de achizitie.
+   * Cat plateste clientul pentru materialul asta, in EUR: valoarea liniilor
+   * din oferta (cu ajustarea tehnicului si discountul), impartita pe straturi
+   * dupa pretul lor din lista. Lista include manopera, deci e mai mult decat
+   * costul de achizitie.
    */
   valoareOferta: number;
 }
@@ -103,7 +105,13 @@ const ORDINE = ["elastomer", "vata_minerala", "tabla", "tabla_inox", "pvc"];
 const estePeMatrice = (p: LinieProcesata["pret"]): p is RezultatTarifare =>
   p !== undefined && "straturi" in p && !p.manual;
 
-export function necesarDinLinii(linii: LinieProcesata[], adaos = ADAOS_IMPLICIT): Necesar {
+/**
+ * `linii` sunt cele care pleaca in oferta (`imparte(cuAjustare(...)).oferta`):
+ * santierul se face din oferta, deci nici materialele nu se comanda pentru
+ * pozitii care n-au intrat in ea. `discountProcent` scade din `valoareOferta`
+ * ce scade si din totalul ofertei.
+ */
+export function necesarDinLinii(linii: LinieProcesata[], adaos = ADAOS_IMPLICIT, discountProcent = 0): Necesar {
   const acc = new Map<string, MaterialNecesar & { brutMl: number; brutM2: number }>();
   const faraNecesar: FaraNecesar[] = [];
 
@@ -121,6 +129,12 @@ export function necesarDinLinii(linii: LinieProcesata[], adaos = ADAOS_IMPLICIT)
     const forma = l.extras.forma ?? "ml";
     const teava = l.pret.straturi[0]!.diametru_geometric;
     const pesteTrei = teava > PRAG_TUB_MM;
+    // Pretul unitar al liniei poate fi ajustat de tehnic (`cuAjustare`), iar
+    // al straturilor nu: valoarea liniei se imparte pe straturi dupa pretul
+    // lor din lista, ca suma pe materiale sa fie exact cat plateste clientul.
+    const dinLista = (s: StratTarifat): number => (s.inclus ? bani(s.pret_unitar * s.multiplicator) : 0);
+    const sumaLista = l.pret.straturi.reduce((t, s) => t + dinLista(s), 0);
+    const valoareLinie = l.pret.pret_unitar * l.pret.cantitate * (1 - discountProcent / 100);
     for (const s of l.pret.straturi) {
       const peSuprafata = forma === "mp" || s.diametru_geometric === 0 || PE_SUPRAFATA.has(s.sistem) || pesteTrei;
       const rand = peSuprafata ? null : randStrat(s);
@@ -130,7 +144,7 @@ export function necesarDinLinii(linii: LinieProcesata[], adaos = ADAOS_IMPLICIT)
         ml: 0, m2: 0, bucati: 0, pozitii: 0, valoareOferta: 0, brutMl: 0, brutM2: 0,
       };
       m.pozitii++;
-      if (s.inclus) m.valoareOferta += bani(s.pret_unitar * s.multiplicator) * cantitate;
+      if (sumaLista > 0) m.valoareOferta += valoareLinie * (dinLista(s) / sumaLista);
       const peMetru = m2PeMetru(s.diametru_geometric, s.grosime_mm ?? 0);
       if (forma === "mp") m.brutM2 += cantitate;
       else if (forma === "ml") {

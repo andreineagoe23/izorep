@@ -1,7 +1,16 @@
 # Stare curentă
 
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
-> Ultima actualizare: 29 septembrie 2026.
+> Ultima actualizare: 2 octombrie 2026.
+
+## 2 octombrie 2026: audit, necesarul legat de ofertă
+
+Munca din 29 septembrie era necommit-uită (linkul arăta versiunea de dinainte
+de apel): intrată pe `main` în trei commit-uri, Pages la zi. Reparat apoi
+necesarul: se calculează doar din pozițiile ofertei, „În ofertă” e cu
+ajustarea și discountul, piesele fără regulă de material se văd în Depozit
+(„+ N buc.”, „de stabilit”). Detalii în `ui.md`, „Depozit și stoc”. **378 de
+teste.**
 
 ## Unde am rămas (29 septembrie 2026, după apelul cu firma)
 
@@ -1036,7 +1045,7 @@ sau rolă, accesoriile).
 ## Comenzi
 
 ```bash
-npm test                                       # 377 de teste (motor, import, baza, ofertă, șantier)
+npm test                                       # 378 de teste (motor, import, baza, ofertă, șantier)
 npm run typecheck
 npm run dev                                    # UI local, /izorep/
 npm run import -- ../attachments/clienti/cerere-de-oferta-spital.xlsx   # pipeline complet

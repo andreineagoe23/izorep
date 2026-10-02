@@ -233,7 +233,7 @@ export const ecran: Ecran = {
           adaosFoc: adaosFocIndustrial(oferta, destinatie), ajustare,
           deVerificat: deValidat.length, faraPret: netarifate.length,
           destinatie, client: clientPropus(sesiune.meta.nume), data: dataAzi(), firme: FIRME, eroare: "",
-        }) + cardNecesar(necesarDinLinii(sesiune.rez.linii, adaosNecesar));
+        }) + cardNecesar(necesarOferta(sesiune));
       }
     }
 
@@ -637,6 +637,14 @@ export const ecran: Ecran = {
     }
 
     /** Antetul ofertei din formularul pasului 3; același pentru ofertă și pentru șantier. */
+    /**
+     * Materialele pentru exact pozitiile din oferta, cu preturile ei: aceleasi
+     * linii din care `planDinOferta` face santierul.
+     */
+    function necesarOferta(s: Sesiune, discountProcent = 0): ReturnType<typeof necesarDinLinii> {
+      return necesarDinLinii(imparte(cuAjustare(s.rez.linii, ajustare)).oferta, adaosNecesar, discountProcent);
+    }
+
     function cerereDinFormular(s: Sesiune, form: HTMLFormElement): CerereOferta {
       const date = new FormData(form);
       const val = (n: string): string => ((date.get(n) as string | null) ?? "").trim();
@@ -699,12 +707,13 @@ export const ecran: Ecran = {
         arataMesaj(`Șantierul „${vechi.denumire}” are deja situații de lucrări: nu se mai poate înlocui din ofertă.`);
         return;
       }
-      const plan = planDinOferta(cerereDinFormular(s, form), vechi?.id ?? `S-${idNou()}`);
+      const cerere = cerereDinFormular(s, form);
+      const plan = planDinOferta(cerere, vechi?.id ?? `S-${idNou()}`);
       if (!scriePlanuri([plan, ...planuri.filter((p) => p !== vechi)])) {
         arataMesaj("Browserul nu permite salvarea: șantierul nu a putut fi creat.");
         return;
       }
-      const n = necesarDinLinii(s.rez.linii, adaosNecesar);
+      const n = necesarOferta(s, cerere.antet.discountProcent ?? 0);
       const st = citesteDepozit();
       const vechiNecesar = st.necesare.find((x) => x.fisier === s.meta.nume);
       const nou = {
@@ -875,7 +884,7 @@ export const ecran: Ecran = {
       if (t.id === "adaos-necesar" && sesiune) {
         // Doar cardul: o redesenare a pasului ar sterge datele ofertei deja scrise.
         adaosNecesar = Number(t.value);
-        pagina.querySelector("#necesar")!.outerHTML = cardNecesar(necesarDinLinii(sesiune.rez.linii, adaosNecesar));
+        pagina.querySelector("#necesar")!.outerHTML = cardNecesar(necesarOferta(sesiune));
         return;
       }
       if (t.dataset["act"] === "filtru") { filtru = t.value as FiltruStare; motiv = null; editIdx = null; deseneaza(); return; }

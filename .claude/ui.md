@@ -481,6 +481,16 @@ browserul care le-a introdus. Ecranul o spune.
   intrărilor cu preț) și „În ofertă” (valoarea stratului din listă, cu
   manoperă), plus ce rămâne pentru manoperă și profit.
 
+**2 octombrie 2026:** necesarul se face doar din pozițiile care intră în ofertă
+(aceleași linii ca planul de șantier), nu din tot importul: pozițiile „De
+verificat” primeau materiale pentru lucrări care nu erau în plan. „În ofertă”
+e cât plătește clientul: valoarea liniei, cu ajustarea tehnicului și
+discountul, împărțită pe straturi după prețul lor din listă (TRANSAVIA, +10 %
+și −3 %: 80.676,12 €, la un ban de totalul ofertei). Marja se socotește doar
+pe materialele care au preț de achiziție. Piesele fără regulă de material
+(flanșe, casete, coturi sub 3 țoli) apar sub necesar ca „+ N buc.” și nu intră
+în „De comandat”; un rând care are doar piese e „de stabilit”, nu „acoperit”.
+
 ## Lucrări: șantierele din oferte (29 septembrie 2026)
 
 `web/ecrane/lucrari.ts`; logica în `src/lucrari/situatii.ts`, datele în

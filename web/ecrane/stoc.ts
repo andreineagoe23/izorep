@@ -126,17 +126,22 @@ export const ecran: Ecran = {
         let cost = 0;
         let faraPret = 0;
         let inOferta = 0;
+        let inOfertaCuCost = 0;
+        let piese = 0;
         const randuri = r.map((d, i) => {
           const pm = pretMediu(st.miscari, d.articol.cheie);
           const c = pm === null ? null : pm * d.necesar;
           if (c === null) faraPret++; else cost += c;
           const v = n.materiale[i]!.valoareOferta ?? 0;
+          const buc = n.materiale[i]!.bucati;
           inOferta += v;
+          if (c !== null) inOfertaCuCost += v;
+          if (buc > 0) piese++;
           return `<tr>
           <td>${esc(numeArticol(d.articol))}</td>
-          <td class="n">${cantitate(d.necesar, d.articol.um)}</td>
+          <td class="n">${cantitate(d.necesar, d.articol.um)}${buc > 0 ? `<br><span class="hint">+ ${cifra(buc)} buc.</span>` : ""}</td>
           <td class="n">${cantitate(d.inStoc, d.articol.um)}</td>
-          <td class="n">${d.deComandat > 0 ? `<strong>${cantitate(d.deComandat, d.articol.um)}</strong>` : stare("acoperit", "ok")}</td>
+          <td class="n">${d.deComandat > 0 ? `<strong>${cantitate(d.deComandat, d.articol.um)}</strong>` : d.necesar === 0 && buc > 0 ? stare("de stabilit", "atentie") : stare("acoperit", "ok")}</td>
           <td class="n">${c === null ? "—" : `${eur(c)}<br><span class="hint">${eur(pm!)} / ${unitate(d.articol.um)}</span>`}</td>
           <td class="n">${v > 0 ? eur(v) : "—"}</td>
         </tr>`;
@@ -154,10 +159,11 @@ export const ecran: Ecran = {
           </div>
           ${tabel(["Material", "Necesar", "În stoc", "De comandat", "Cost achiziție", "În ofertă"], randuri,
             ["", "n", "n", "n", "n", "n"])}
-          <p class="hint">În ofertă: ${eur(inOferta)} (lista de prețuri, material și manoperă) · cost material
-            ${faraPret === r.length ? "necunoscut: nicio intrare cu preț" : `${eur(cost)}${faraPret ? `, fără ${faraPret} ${faraPret === 1 ? "material" : "materiale"} încă fără preț` : ""}`}
-            ${faraPret < r.length ? ` · rămân ${eur(inOferta - cost)} pentru manoperă și profit` : ""}.
+          <p class="hint">În ofertă: ${eur(inOferta)} (cât plătește clientul, material și manoperă, cu ajustarea și discountul) · cost material
+            ${faraPret === r.length ? "necunoscut: nicio intrare cu preț" : `${eur(cost)}${faraPret ? `, fără ${faraPret} ${faraPret === 1 ? "material" : "materiale"} încă fără preț` : ""}`}${faraPret < r.length ? ` · rămân ${eur(inOfertaCuCost - cost)} pentru manoperă și profit${faraPret ? ", pe materialele cu preț" : ""}` : ""}.
             Costul e prețul mediu al intrărilor cu preț.</p>
+          ${piese > 0 ? `<p class="hint">„+ buc.”: flanșe, casete, coturi și teuri sub 3 țoli. Pentru ele nu avem încă regula de
+            material de la firmă, deci nu intră în „De comandat”: se adaugă de mână. „De stabilit”: materialul e doar în piese.</p>` : ""}
           <div class="imp-formular-butoane"><button type="button" class="secundar" data-act="scoate-necesar" data-id="${esc(n.id)}">Scoate necesarul</button></div>
         </section>`;
       }).join("");

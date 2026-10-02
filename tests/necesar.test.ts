@@ -15,6 +15,7 @@ import { stocInMemorie } from "../src/import/memorie.js";
 import { importaFisier } from "../src/import/pipeline.js";
 import { m2PeMetru, necesarDinLinii, piesePeMetru } from "../src/stoc/necesar.js";
 import { articolDin } from "../src/stoc/registru.js";
+import { cuAjustare, imparte, totalOferta } from "../web/oferta.js";
 import type { RezultatTarifare } from "../src/pricing/types.js";
 
 let dir: string;
@@ -91,6 +92,22 @@ describe("necesarul de materiale", () => {
     const n = necesarDinLinii(l);
     const suma = n.materiale.reduce((t, m) => t + m.valoareOferta, 0);
     expect(suma).toBeCloseTo(p.pret_unitar * 10, 2);
+    // Pe straturi, după prețul lor din listă: vata și tabla își păstrează partea.
+    const [vata, tabla] = p.straturi.map((s) => s.pret_unitar * s.multiplicator * 10);
+    expect(n.materiale.find((m) => m.sistem === "vata_minerala")!.valoareOferta).toBeCloseTo(vata!, 2);
+    expect(n.materiale.find((m) => m.sistem === "tabla")!.valoareOferta).toBeCloseTo(tabla!, 2);
+  });
+
+  it("valoarea în ofertă e cât plătește clientul: cu ajustarea tehnicului și discountul", async () => {
+    const l = await linii([
+      [1, "Izolatii cu vata minerala si protectie cu tabla de aluminiu Di114, g30 - ML", "ml", 10],
+      [2, "Izolatii cu vata minerala si protectie cu tabla de aluminiu Di60, g40 - COT", "buc", 4],
+    ]);
+    const oferta = imparte(cuAjustare(l, 10)).oferta;
+    expect(oferta).toHaveLength(2);
+    const n = necesarDinLinii(oferta, 0, 3);
+    const suma = n.materiale.reduce((t, m) => t + m.valoareOferta, 0);
+    expect(suma).toBeCloseTo(totalOferta(oferta) * 0.97, 1);
   });
 
   it("ce nu are preț din liste apare separat, cu motivul", async () => {
