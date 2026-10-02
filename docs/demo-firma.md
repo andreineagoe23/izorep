@@ -37,16 +37,23 @@ aplicația în același browser, șterge importurile vechi (Import Excel →
 5. **Pasul 3, Oferta:** **94.575,06 €**, exact totalul Ofertei 284. Scrie
    numărul 284, obiectivul, discount 3 → „Descarcă oferta”. Excel-ul generat are
    rândurile ofertei lor și foile „De validat” și „Netarifate”.
-6. **Materiale necesare**, în același pas: vata și tabla pe fiecare diametru, în
-   metri și m², plus piesele. Adaosul pentru coturi (5–10 %, din registrul lor)
-   se alege. → „Trimite la depozit”.
-7. **Depozit și stoc:**
+6. **Ajustare prețuri**, în același pas: scrie 10 → toate prețurile cresc cu
+   10 % (104.031,67 €); pune înapoi 0.
+7. **Materiale de comandat**, în același pas: tuburi pe diametru până la 3 țoli,
+   plăci pe m² peste (ø114 cu vată 30: 0,55 m² pe metru, regula lor), coturile
+   peste 3 țoli trecute în m². → „Creează șantierul”: se deschide șantierul, cu
+   valoarea 91.737,81 € (după discount).
+8. **Situație de lucrări:** „Situație nouă”, câteva cantități, „Salvează”;
+   apoi încă una cu „Tot restul”. Istoricul, cumulatul, „Descarcă” (Excel).
+9. **Depozit și stoc:**
    - necesarul TRANSAVIA apare cu „de comandat”;
    - „Încarcă date de exemplu”: unele materiale devin „acoperit”, restul rămân de comandat;
-   - o intrare nouă (de exemplu, o factură de furnizor), apoi „Anulează”: mișcarea nu se șterge, apare mișcarea inversă.
-8. **Calcul deviz:** o poziție la mână, cu tipul ofertei. Exemplul „nu se
+   - o intrare nouă cu preț de achiziție (de pe factură, în euro): apare costul
+     lângă valoarea din ofertă;
+   - „Anulează”: mișcarea nu se șterge, apare mișcarea inversă.
+10. **Calcul deviz:** o poziție la mână, cu tipul ofertei. Exemplul „nu se
    ofertează” arată că un gol din listă nu devine preț zero.
-9. **Șantier:** pozele din carnet (cele 4 de la Ecoterm, din
+11. **Șantier:** pozele din carnet (cele 4 de la Ecoterm, din
    `attachments/santier/`). Pe link, rândurile se scriu de mână lângă poză:
    „Adaugă rând”, „Am verificat pagina”, „Trimite la ofertă”, și ajung în
    import ca un Excel. Citirea automată a pozelor merge doar pe laptop, cu

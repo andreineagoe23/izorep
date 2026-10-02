@@ -2,7 +2,9 @@
 
 > Surse, amândouă în `../attachments/referinte/`:
 > `tabel-conversie-tevi.docx` (3 septembrie 2026) și
-> `conversie-ml-mp-tevi-tubulaturi.xlsx` (4 septembrie 2026).
+> `conversie-ml-mp-tevi-tubulaturi.xlsx` (4 septembrie 2026). Originalele
+> scrise de mână ale firmei — pozele `preturi1–3.jpeg` (29 septembrie 2026) —
+> spun același lucru, cu o corectură: vezi bifele, mai jos.
 > Context pentru `src/pricing/dn-table.ts` și pentru extragerea diametrului din
 > `src/import/`.
 >
@@ -17,9 +19,12 @@ diametru exterior. Conversia e obligatorie și depinde de materialul țevii.
 ## Tabelul de conversie
 
 Valabil **doar pentru țeavă zincată și țeavă neagră**. Coloanele bifate de firmă
-ca fiind cele folosite la conversie: **Toli** și **ISO**.
+ca fiind cele folosite la conversie („conversie în cele bifate”): **DN** și
+**ISO**, adică DN → ISO. Deasupra coloanei **Toli** e un „?”, nu o bifă. Docx-ul
+transcris spunea „Toli și ISO”; pozele originale (29 septembrie 2026) arată
+altfel. Codul folosea deja DN → ISO, deci nu se schimbă nimic la preț.
 
-| DN (mm) | Toli ✓ | DIN φ ext. (mm) | ISO (mm) ✓ | Metric (mm) |
+| DN (mm) ✓ | Toli ? | DIN φ ext. (mm) | ISO (mm) ✓ | Metric (mm) |
 |---|---|---|---|---|
 | 10 | 1 3/8" | 14,0 | 17,2 | 12x1,0 |
 | 15 | 1/2" | 20,0 | 21,3 | 18x1,5 |
@@ -135,11 +140,36 @@ Pentru fitinguri și coturi, nota generală zice **+5–10% suprafață** — e 
 regulă de suprafață, distinctă de multiplicatorii de preț din listele de
 prețuri, care se aplică prețului pe ml.
 
-**π e π, nu 3,14.** Celulele sunt calculate cu constanta întreagă: φ33,7 dă
-0,105871672425976, adică `Math.PI × 33.7 / 1000` la ultima zecimală. Asta e
-contra notiței din docx („3,14"). Registrul fiind o transcriere generată,
-diferența poate fi a transcrierii, nu a firmei — dar pe ce avem scris, π
-câștigă. Diferența e 0,05% pe suprafață.
+**π e 3,14** (lămurit pe 29 septembrie 2026). Registrul transcris e calculat cu
+`Math.PI`, dar notița scrisă de mână (poza `preturi2`) și exemplul dat de firmă
+la telefon folosesc 3,14: ø114 cu vată 30 → 0,174 × 3,14 = 0,5463… → **0,55
+m²/ml**, rotunjit la două zecimale. Necesarul de materiale folosește acum
+formula firmei (`src/stoc/necesar.ts`).
+
+### Ce se comandă: tuburi până la 3 țoli, plăci peste
+
+Regula firmei, din apelul din 29 septembrie 2026:
+
+- **până la 3 țoli** (DN80 = ø88,9; în cod ø ≤ 90): **tuburi** (elastomer,
+  cochilie de vată), pe diametru și grosime, în metri;
+- **peste 3 țoli**: **plăci pe m²** — mai ieftin decât tuburile.
+  m²/ml = (φ + 2 × grosime) / 1000 × 3,14, rotunjit la 2 zecimale, × metrii;
+- **coturile și teurile peste 3 țoli** se fac din placă: dintr-un metru ies
+  **3 piese la ø114–140**, **2 la ø159–168** și **una de la ø219** în sus.
+  Firma a zis literal „între 119 și 123, 1 ml = 1 cot” (confirmat de Andrei pe
+  29 septembrie 2026, căruia nici lui nu i se pare logic). Literal nu se poate
+  aplica: **nicio țeavă nu are ø între 119 și 123** (verificat pe toate seriile
+  din `conversii-tevi.json` și pe rândurile listelor de izolație), iar
+  intervalul e în interiorul lui 114–140, unde firma a spus 3. Citim 219–323
+  (DN200–DN300 pe ISO): continuă șirul 114 · 140 · 168 · 219 · 273 · 324 și
+  scade cum trebuie (țeavă mai groasă, mai puține piese pe metru). De
+  confirmat; peste ø324 nu s-a spus nimic, codul pune tot 1.
+- Sub 3 țoli, piesele rămân numărate în bucăți pe tubul lor (regula pentru ele
+  nu a fost spusă).
+
+Lista de prețuri include manopera, deci necesarul e mai mic decât oferta.
+Scopul lui e să nu rămână material pe stoc: rezerva de 5–10 % din registru nu
+mai e implicită, se alege.
 
 ### Seriile pe material — ce lipsea din cod
 
@@ -202,7 +232,7 @@ pe Oferta 27.04.2026 formula dă exact DN250 / 19 mm (23,13), iar SPIRO ø250 /
 ## Întrebări deschise
 
 1. Coloana **DIN** (14,0 · 20,0 · 25,0 …) — ce țevi o folosesc? Tabelul spune
-   că se convertește „în cele bifate" (Toli, ISO), deci DIN pare informativă.
+   că se convertește „în cele bifate" (DN, ISO), deci DIN pare informativă.
 2. **DN10 = 1 3/8"** e aproape sigur o scăpare de tastare pentru **3/8"**
    (17,2 mm = 3/8" în serie gaz). De confirmat înainte de a folosi coloana Toli
    la extragere.
@@ -214,10 +244,8 @@ pe Oferta 27.04.2026 formula dă exact DN250 / 19 mm (23,13), iar SPIRO ø250 /
    asta**: e jachetare (protecție mecanică),
    indexată pe diametrul exterior al izolației, ø80–ø710 din 10 în 10, exact ca
    lista de aluminiu. Țeava de inox e altceva și rămâne fără conversie.
-4. π: se folosește **3,14** (ca în notița firmei) sau `Math.PI`? Registrul de
-   conversie ml → mp e calculat cu `Math.PI` — dar e o transcriere generată,
-   deci contrazice notița fără să o închidă. De confirmat pe o ofertă reală
-   tarifată pe suprafață.
+4. ~~π: 3,14 sau `Math.PI`?~~ **3,14** — notița scrisă de mână și exemplul
+   firmei din 29 septembrie 2026.
 5. **DN150: 165,1 sau 168,3?** Cele două documente ale firmei se contrazic
    (EN 10255 față de ISO 4200). Pentru tarifare contează 168,3 — rândul din
    listă e 168 — dar dacă suprafețele se calculează cu 165,1, un mp de la

@@ -1,6 +1,6 @@
 # Ce ne trebuie de la RADOIA
 
-> 29 septembrie 2026. Doar ce ne blochează acum: ofertele și pozele de pe
+> 29 septembrie 2026, actualizat după apel. Doar ce ne blochează acum: ofertele și pozele de pe
 > șantier. Cu cât mai multe exemple, cu atât mai puține întrebări: multe reguli
 > le citim direct din ofertele voastre.
 
@@ -14,6 +14,10 @@
    mai ales Transavia inox. Fără ea nu putem verifica prețurile rând cu rând.
 4. **Încă 5–10 perechi „cerere de la client + oferta voastră semnată”**, din
    lucrări recente. Ideal două de la același client.
+5. **O situație de lucrări trimisă unui client**, cu oferta ei. Aplicația face
+   deja situații pe pozițiile ofertei; o aducem la forma voastră.
+6. **O comandă de materiale și factura furnizorului** pentru aceeași lucrare,
+   ca să verificăm calculul de tuburi și plăci și prețul de achiziție.
 
 ## Întrebări tehnice
 
@@ -30,9 +34,15 @@
    - tablă zincată ca protecție, pe mp (spitalul: ~14.600 mp);
    - livrarea țevii cu izolația inclusă (spitalul: 58 de rânduri);
    - protecția la foc a tubulaturii, EI 60/120 (spital, Book15).
-5. **Listele de prețuri care lipsesc:** rafinărie, și PVC + închideri goluri
-   la foc pe industrial.
-6. **În carnet, ce înseamnă:**
+5. **Lista de prețuri care lipsește:** PVC pe industrial.
+   (Închiderile la foc pe industrial: rezidențial + 20 % pe total, lămurit.)
+6. **Din apel, de confirmat** (aplicate deja așa):
+   - coturile și teurile peste 3 țoli: ați spus 114–140 → 3 pe metru,
+     159–168 → 2, și 119–123 → 1. Nu există țeavă între ø119 și ø123, iar
+     intervalul e în interiorul lui 114–140. Ați vrut să spuneți **219–323**
+     (DN200–DN300)? Și peste ø324, câte piese dintr-un metru?
+   - sub 3 țoli, coturile și teurile se taie din tub: cât tub ia un cot?
+7. **În carnet, ce înseamnă:**
    - „ROB”: casetă de robinet?
    - „preț dublu”: de două ori prețul din listă? Și „preț FY dublu” la
      reductoare?

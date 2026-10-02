@@ -127,6 +127,23 @@ preț = golul (după SUPRAFAȚA lui) + bandă WRAP + colier PROMASTOP
 Verificat pe Oferta 118.1 / 27.04.2026: **53 de poziții, total 12.692,04 €**,
 identic cu oferta semnată. Vezi `tests/goluri-foc.test.ts`.
 
+**Pe industrial: rezidențial + 20 %, pe total** (regula firmei, 29 septembrie
+2026). Prețul pe produs rămâne cel rezidențial; oferta adaugă un rând „ADAOS
+INCHIDERI GOLURI LA FOC … 20 %” pe totalul închiderilor (`adaosFocIndustrial`
+în `web/oferta.ts`), nu 20 % pe fiecare preț unitar — rotunjirile ar da alt
+total. Nota de pe poziție e informativă, deci închiderile nu mai stau la „De
+verificat” pe industrial. Matari pe industrial: 12.692,04 + 2.538,41 =
+15.230,45 €. Pe rafinărie regula nu e spusă: rămân de verificat.
+
+## Ajustarea tehnicului
+
+Tehnicul poate muta toate prețurile cu un procent („crește tot cu 10 %”):
+câmpul „Ajustare prețuri” din pasul „Oferta”. Fiecare preț unitar × (1 + p/100),
+rotunjit la bani (`cuAjustare`); clientul vede prețurile ajustate, fără rând
+separat, iar registrul scrie ajustarea în „Cum a fost calculată oferta”.
+Sesiunea de import rămâne pe prețurile din liste. Ajustarea e înaintea
+adaosului de foc și a discountului.
+
 ## Cum verifici că nu ai stricat nimic
 
 `tests/pricing.test.ts` reproduce 48 de poziții reale din Oferta 118 /
@@ -239,9 +256,11 @@ Fiecare dedusă din Oferta 284 sau Oferta 27.04.2026, cu dovada lângă ea în c
   la import (comutatorul „Tipul ofertei"); motorul nu-l deduce — întrebarea 12
   rămâne, ca regulă după care s-ar putea deduce din client sau obiectiv.
   Unde segmentul ales n-are listă pentru un material, se ia singura care există
-  și poziția primește notă de verificat: PVC și închiderile la foc pe
-  industrial (întrebarea 14), tabla de inox pe rezidențial (întrebarea 15).
-  Rafinăria nu a venit și nu are buton. Nu se pot pune ca un coeficient peste
+  și poziția primește notă de verificat: PVC pe industrial (întrebarea 14),
+  tabla de inox pe rezidențial (întrebarea 15). Închiderile la foc pe
+  industrial au regula lor din 29 septembrie 2026 (+20 % pe total, mai sus).
+  Rafinăria e amânată (29 septembrie 2026): nu are buton la import; în „Liste
+  de prețuri” rămâne ca segment gol, pregătit. Nu se pot pune ca un coeficient peste
   rezidențial: raportul diferă pe sistem și pe grosime (vata ×1,25;
   elastomerul ×1,25 la 9/13/19 mm și ×1,20 la 25/32 mm).
 - ~~**Tabla de inox**~~ — e acum sistem de sine stătător. Rămâne o asimetrie

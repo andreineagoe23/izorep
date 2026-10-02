@@ -3,7 +3,50 @@
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
 > Ultima actualizare: 29 septembrie 2026.
 
-## Unde am rămas (29 septembrie 2026)
+## Unde am rămas (29 septembrie 2026, după apelul cu firma)
+
+Andrei a vorbit cu cineva de la firmă și a trimis notițele, plus trei poze
+(`~/Downloads/preturi1–3.jpeg`): tabelul DN → ISO și notițele scrise de mână
+din care fuseseră transcrise `tabel-conversie-tevi.docx` și regula „peste
+listă”. Tot ce era în poze era deja în sistem; o singură corectură: bifele
+firmei sunt pe **DN și ISO**, cu „?” pe Toli (docx-ul transcris spunea „Toli
+și ISO”). Codul folosea deja DN → ISO.
+
+**Fluxul firmei**, cum l-au spus: import cerere → verificarea prețurilor →
+oferta la client → **șantierul din ofertă** (plan de șantier) → materialele
+cumpărate / depozit / stoc pe șantier → **situații de lucrări, cu istoric**.
+
+| Ce au spus | Ce s-a făcut |
+|---|---|
+| Până la 3 țoli se comandă tuburi (elastomer, cochilie), pe diametru și grosime | necesarul: tub pe ø și grosime, în ml, până la ø90 |
+| Peste 3 țoli, plăci pe m²: (0,114 + 2 × 0,03) × 3,14 = 0,5463 → 0,55; × 100 m = 55 m² | `m2PeMetru` cu 3,14, rotunjit la 2 zecimale; plăcile pe grosime, fără ø; testul e exemplul lor |
+| Coturi / teuri: 1 m = 3 la ø114–140, 2 la ø159–168, „119–123” 1 la 1 | `piesePeMetru`; „119–123” citit ca 219+ (de confirmat) |
+| Lista include manopera; necesarul să nu lase marfă pe stoc | rezerva de 5–10 % nu mai e implicită (0) |
+| Tehnicul poate crește tot cu 10 % | „Ajustare prețuri (%)” în pasul „Oferta”, pe fiecare preț unitar |
+| Închiderile la foc pe industrial = rezidențial + 20 %, pe total | rând separat în ofertă; închiderile nu mai stau „De verificat” pe industrial |
+| Șantierul se face din ofertă | „Creează șantierul” în pasul „Oferta”: plan (pozițiile ofertei, înghețate) + necesar pe depozitul șantierului |
+| Situații de lucrări, cu istoric | ecranul Lucrări: situație nouă, cumulat, „Tot restul”, Excel, se șterge doar ultima |
+| Depozitul = cantitate și valoare: cost de achiziție față de ofertă | preț de achiziție pe intrare, în euro; cost față de „în ofertă” pe fiecare necesar |
+| Coturi „119–123 → 1 la 1” (Andrei a confirmat că așa s-a spus) | nicio țeavă nu are ø între 119 și 123 → citit 219–323, de confirmat (`tevi.md`) |
+
+**De reținut, fără cod încă** (cerut de Andrei, 29 septembrie 2026):
+
+- **Cursul: BNR + 1–2 %.** Firma pune la valoarea stocului „cursul valutar
+  +1–2 % în euro”. Nu avem încă cursul în aplicație, deci prețul de achiziție
+  se scrie direct în euro. Când vine cursul (facturare, etapa E), costul în lei
+  trecut în euro primește marja asta (de aflat: 1 sau 2 %).
+- **Rafinăria: momentan nu lucrăm pe ea.** Rămâne ca loc pregătit (tipul
+  `Destinatie`, segmentul gol din „Liste de prețuri”), fără buton la import și
+  fără întrebare către firmă acum. Se reia când vine lista.
+
+Verificat: TRANSAVIA în browser dă 94.575,06 € (+10 % → 104.031,67 €);
+șantierul cu discount 3 % = 91.737,81 €, adică Oferta 284, iar o situație cu tot
+executat dă exact atât (test). Matari pe industrial: 15.230,45 € (12.692,04 +
+2.538,41). Lucrări, Depozit, Tablou, pasul „Oferta”: 5 lățimi × 2 teme, zero
+derulare. **377 de teste.** Detalii în `tevi.md` (materialul), `pricing.md`
+(ajustarea, focul pe industrial), `ui.md` (ecranele).
+
+## Mai devreme, 29 septembrie 2026
 
 **Șantier: notițele din carnet** (detalii în `santier.md`). Decis cu Andrei: șantierul
 nu folosește aplicația, scrie în carnet și trimite poze; aplicația nu va fi
@@ -832,7 +875,7 @@ din lista completă de mai jos (codul le citează).
   Book15, Flower City. Fiecare pereche devine un test ca TRANSAVIA și confirmă
   sau răstoarnă regulile deduse dintr-o singură ofertă (11, 15, 18). Ideal și
   două cereri de la același client, din proiecte diferite (11).
-- **D2. Listele lipsă:** rafinărie (13), manopera dacă e scrisă (5), PVC și
+- **D2. Listele lipsă:** ~~rafinărie (13)~~ (amânată), manopera dacă e scrisă (5), PVC și
   închiderile la foc pe industrial (14).
 
 **Șapte întrebări:**
@@ -915,13 +958,11 @@ Astea blochează arhitectura, nu doar implementarea:
    client sau din tipul obiectivului, e o regulă. **Din 12 septembrie 2026** omul
    alege segmentul la import; rămâne de aflat dacă se poate deduce și dacă
    trebuie scris pe lucrare, în bază.
-13. **Lista de prețuri pentru rafinărie.** E al treilea segment anunțat și
-   singurul care lipsește complet. Până vine, `data/price-lists/` rămâne pe
-   rezidențial.
+13. ~~**Lista de prețuri pentru rafinărie.**~~ **Amânată, 29 septembrie 2026:**
+   momentan lucrăm doar rezidențial și industrial; locul pentru rafinărie rămâne.
 14. **PVC și închiderile goluri la foc pe industrial.** Nu au venit în pachetul
-   industrial. Nu se ofertează pe industrial, sau se folosesc cele
-   rezidențiale? Până la răspuns, pe o ofertă industrială se folosesc cele
-   rezidențiale, cu notă de verificat pe poziție.
+   industrial. **Răspuns pentru închideri, 29 septembrie 2026:** rezidențial +
+   20 %, pe totalul lor. PVC-ul rămâne pe rezidențial, cu notă de verificat.
 15. **Tabla de inox.** Două întrebări acum, prima fiind cea care blochează:
    - **Care e grosimea implicită — 0,4, 0,5 sau 0,6 mm?** Lista are toate trei
      la fiecare diametru, iar clienții nu scriu grosimea jachetei niciodată.
@@ -952,7 +993,7 @@ Astea blochează arhitectura, nu doar implementarea:
 semnată devine test, ca TRANSAVIA; comparația dintre modele se face abia când
 există răspunsul corect; bara de filtre a fișierelor cu o singură foaie, adusă
 la așezarea registrelor cu mai multe foi. Rafinăria și manopera — liste care
-n-au venit (D2).
+n-au venit (D2); rafinăria e amânată, nu scoasă.
 
 **Făcut pe 28 septembrie 2026:** prototipul de stoc (etapa A de mai jos) și
 lustruirea pentru demo. Mai departe, în ordine:
@@ -966,9 +1007,9 @@ lustruirea pentru demo. Mai departe, în ordine:
   tenant și firmă, trigger care refuză UPDATE / DELETE pe `miscare` (ca la
   `lista_preturi`), soldul ca view; `src/stoc/` rămâne logica comună. Necesarul
   devine rezervare pe lucrare.
-- **D. Situații de lucrări.** Șantierul nu folosește aplicația (29 septembrie
-  2026): cantitățile vin ca poze, prin ecranul „Șantier”. Situația =
-  executat × prețul din ofertă, în formatul clientului; consum real față de
+- **D. Situații de lucrări.** ~~Prototipul~~ făcut pe 29 septembrie 2026
+  (ecranul Lucrări, în browser). Rămâne: formatul situației al firmei (cerut),
+  pozele din carnet ca sursă pentru cantitățile executate, consum real față de
   necesar, pe lucrare.
 - **E. Contabilitate.** Facturi, curs BNR înghețat pe document, e-Factura,
   export spre Saga.
@@ -995,7 +1036,7 @@ sau rolă, accesoriile).
 ## Comenzi
 
 ```bash
-npm test                                       # 363 de teste (motor, import, baza, ofertă, șantier)
+npm test                                       # 377 de teste (motor, import, baza, ofertă, șantier)
 npm run typecheck
 npm run dev                                    # UI local, /izorep/
 npm run import -- ../attachments/clienti/cerere-de-oferta-spital.xlsx   # pipeline complet

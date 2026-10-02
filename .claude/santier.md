@@ -126,6 +126,7 @@ alta.
 
 - Pozele nu se păstrează: la reîncărcarea paginii munca din ecran se pierde
   (predarea spre import e salvată, ca orice import).
-- Situațiile de lucrări (executat × prețul din ofertă) nu există încă. Drumul
-  de azi duce spre ofertă, pentru că exemplele primite sunt măsurători pentru
-  ofertă.
+- Situațiile de lucrări există din 29 septembrie 2026 (ecranul Lucrări), dar
+  cantitățile executate se scriu de mână. Drumul de aici duce spre ofertă,
+  pentru că exemplele primite sunt măsurători pentru ofertă; pozele pentru
+  situații vin după ce avem un exemplu de la firmă.

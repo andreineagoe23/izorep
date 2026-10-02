@@ -452,19 +452,49 @@ browserul care le-a introdus. Ecranul o spune.
   ajustare la inventar. Nicio mișcare nu se modifică sau șterge: „Anulează”
   adaugă mișcarea inversă, vizibilă în jurnal. Soldul negativ e marcat, nu
   blocat.
-- **Necesarul vine din import.** Pasul „Oferta” are cardul „Materiale
-  necesare” (`cardNecesar` în `web/stoc-vizual.ts`): strat cu strat, din
-  pozițiile cu preț, m²/ml = π × (φ + 2g) / 1000 (registrul firmei), piesele în
-  bucăți, adaos pentru coturi și fitinguri ales (5 / 10 %, implicit 10). Adaosul
-  se schimbă fără să redeseneze pasul, altfel s-ar pierde datele ofertei deja
-  scrise. „Trimite la depozit” îl salvează (unul pe fișier) și deschide stocul.
+- **Necesarul vine din import.** Pasul „Oferta” are cardul „Materiale de
+  comandat” (`cardNecesar` în `web/stoc-vizual.ts`), pe regulile firmei (mai
+  jos). Rezerva se schimbă fără să redeseneze pasul, altfel s-ar pierde datele
+  ofertei deja scrise. „Creează șantierul” îl salvează (unul pe fișier), pe
+  depozitul șantierului nou.
 - **De comandat** = necesar − stocul din depozitul central și din șantierul
   legat de necesar. Tabloul de bord îl arată la „Necesită atenția ta”.
 - **Stocul pornește gol.** „Încarcă date de exemplu” pune intrări marcate
   „exemplu” (unele materiale acoperite complet, altele pe jumătate), cu banner
   și „Scoate datele de exemplu”, care nu atinge mișcările omului.
 - Izolația pe țeavă se ține în ml, tabla, inoxul, PVC-ul și materialul pe
-  suprafață în m². Fără bani: costurile de achiziție nu le avem.
+  suprafață în m².
+
+**29 septembrie 2026, după apelul cu firma:**
+
+- Cardul din pasul „Oferta” e „Materiale de comandat”, pe regulile firmei
+  (tuburi până la 3 țoli, plăci pe m² peste, coturile în m²; `tevi.md`), cu
+  „Se comandă” în unitatea articolului. Rezerva e 0 implicit. Butonul e
+  „Creează șantierul”: planul + necesarul, pe depozitul șantierului nou,
+  apoi deschide șantierul în Lucrări. Refăcut din același fișier, înlocuiește
+  planul — doar cât nu are situații.
+- Pasul „Oferta” are „Ajustare prețuri (%)”; suma de sus se schimbă la fiecare
+  tastă, fără redesenare (s-ar pierde datele scrise), iar sub ea scrie ce
+  include (ajustarea, +20 % pe foc).
+- Depozitul: șantierele din oferte sunt depozite; intrarea de la furnizor are
+  preț de achiziție, în euro (cursul nu e încă în aplicație). Fiecare necesar are „Cost achiziție” (media
+  intrărilor cu preț) și „În ofertă” (valoarea stratului din listă, cu
+  manoperă), plus ce rămâne pentru manoperă și profit.
+
+## Lucrări: șantierele din oferte (29 septembrie 2026)
+
+`web/ecrane/lucrari.ts`; logica în `src/lucrari/situatii.ts`, datele în
+`web/lucrari-local.ts` (browser, ca depozitul); Excel-ul în `web/situatie.ts`.
+
+- Lista: șantierele din oferte (valoare, executat, câte situații), apoi
+  lucrările-exemplu din datele firmei.
+- Un șantier: cifrele sus (valoare ofertă, executat cumulat, situații,
+  materiale de comandat), formularul de situație, istoricul, planul.
+- Situația nouă: câte un câmp pe poziție, „Executat înainte” din situațiile
+  precedente, totalul se schimbă la fiecare tastă. „Tot restul” completează
+  pozițiile goale cu ce a rămas din ofertă. Peste cantitatea ofertată se poate,
+  dar e marcat „peste ofertă”. Se șterge doar ultima situație.
+- Pe telefon numărul poziției e lipit de denumire, ca textul să aibă lățimea.
 
 ## Șantier: notițele din carnet (29 septembrie 2026)
 
