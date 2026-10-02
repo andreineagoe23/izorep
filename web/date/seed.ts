@@ -177,7 +177,7 @@ export const DOCUMENTE: Document[] = [
   {
     id: "d-6009", tip: "situatie", numar: "6009 / 19.12.2024", data: "2024-12-19",
     clientId: "nisal", lucrareId: "L-5998",
-    titlu: "Situație de lucrări — aceeași structură ca anexa, fără prețuri",
+    titlu: "Situație de lucrări pe contractul 5998",
     valoare: null, linii: 16, stare: "confirmata",
     fisierSursa: "oferta-manopera-anexa-contract-2024.xlsx", firmaId: "isorad",
   },

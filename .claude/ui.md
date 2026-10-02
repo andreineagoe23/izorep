@@ -105,6 +105,19 @@ Regulile pe care le respectă `style.css`:
 - tokenii sunt numiți după rol (`--accent`, `--linie-tare`), nu după culoare
 - ambele teme sunt definite pe tokeni; un ecran nu scrie niciodată o culoare
 
+## Cereri și oferte (3 octombrie 2026)
+
+Sus, **„Cererile importate”**: fiecare import din istoric (`web/istoric.ts`)
+e un rând, cu oferta descărcată din el (`web/oferte-local.ts`, scrisă la
+„Descarcă oferta”: număr, client, valoarea după ajustare, foc și discount) și
+cu „Șantier făcut” când există un plan pe fișierul lui. „Deschide” pune importul
+curent și duce la import; „Șterge” (a doua apăsare confirmă) șterge importul și
+oferta lui, ca și „Șterge” din import. Dedesubt, **„Documentele firmei”**:
+documentele reale din `web/date/seed.ts`, ca exemple, cu filtrele lor.
+Înainte pagina arăta doar exemplele, deci ce ștergea omul nu dispărea de
+nicăieri (Andrei, 3 octombrie 2026). Cardul de explicații și cele trei note de
+jos au plecat: erau pentru prezentare, nu pentru lucru.
+
 ## Antetul și bara (3 octombrie 2026)
 
 Antetul din dreapta și numele firmei din bară au aceeași înălțime

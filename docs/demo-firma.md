@@ -17,7 +17,7 @@ aplicația în același browser, șterge importurile vechi (Import Excel →
 
 ## Firul demo-ului (~15 minute)
 
-1. **Tablou de bord → Cereri și oferte.** Ofertele lor, cu valorile lor exacte:
+1. **Tablou de bord → Cereri și oferte**, jos, la „Documentele firmei”. Ofertele lor, cu valorile lor exacte:
    - 118 = 170.519,39 €;
    - 118.1 = 12.692,04 €;
    - 5997 = 706,90 €, emisă de R&F ISORAD;
@@ -36,7 +36,8 @@ aplicația în același browser, șterge importurile vechi (Import Excel →
    pentru un echipament. „Modifică” → preț pus de mână 2.296,70 → „Salvează”.
 5. **Pasul 3, Oferta:** **94.575,06 €**, exact totalul Ofertei 284. Scrie
    numărul 284, obiectivul, discount 3 → „Descarcă oferta”. Excel-ul generat are
-   rândurile ofertei lor și foile „De validat” și „Netarifate”.
+   rândurile ofertei lor și foile „De validat” și „Netarifate”. Oferta apare și la
+   „Cereri și oferte”, sus, pe rândul cererii; ce ștergi acolo dispare și din import.
 6. **Ajustare prețuri**, în același pas: scrie 10 → toate prețurile cresc cu
    10 % (104.031,67 €); pune înapoi 0.
 7. **Materiale de comandat**, în același pas: tuburi pe diametru până la 3 țoli,

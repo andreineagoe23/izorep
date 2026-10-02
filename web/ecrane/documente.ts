@@ -1,5 +1,8 @@
 import type { Ecran } from "./tip.js";
-import { card, dataScurta, esc, eur, indicator, nota, nr, stare, tabel } from "./tip.js";
+import { dataScurta, esc, eur, nr, stare, tabel } from "./tip.js";
+import { listeaza, puneCurent, sterge, type IntrareIstoric } from "../istoric.js";
+import { citesteOferte, uitaOferta, type OfertaEmisa } from "../oferte-local.js";
+import { citestePlanuri } from "../lucrari-local.js";
 import { DOCUMENTE, FIRME, client, type Document } from "../date/seed.js";
 import { vedeCosturi } from "../nav.js";
 
@@ -37,12 +40,12 @@ const STARE_INFO: Record<Document["stare"], { text: string; ton: "ok" | "atentie
 
 /** Legaturile reale dintre documente, altfel invizibile intr-un tabel plat. */
 const LANT: Record<string, string> = {
-  "d-118": "↳ subnumerotare cu 118.1 — aceeași lucrare, alt tip de lucrare",
-  "d-118-1": "↳ subnumerotare a ofertei 118",
+  "d-118": "↳ împreună cu 118.1: același șantier, alt tip de lucrare",
+  "d-118-1": "↳ împreună cu 118: același șantier",
   "d-5997": "↳ devine Anexa 1 la contractul 5998",
   "d-5998": "↳ conține oferta 5997 ca Anexa 1",
-  "d-6009": "↳ aceeași structură ca anexa contractului 5998, fără coloane de preț",
-  "d-transavia-abur": "↳ ofertată prin Oferta 284; importul ei dă exact oferta semnată",
+  "d-6009": "↳ aceleași poziții ca Anexa 1 la contractul 5998, fără prețuri",
+  "d-transavia-abur": "↳ ofertată prin Oferta 284; importată în aplicație, dă exact oferta semnată",
   "d-284": "↳ răspunsul la cererea TRANSAVIA",
 };
 
@@ -50,20 +53,6 @@ const LANT: Record<string, string> = {
 const LANT_VALOARE: Record<string, string> = {
   "d-284": ": 94.575,06 € − discount 3 %",
 };
-
-function indicatori(): string {
-  const cereri = DOCUMENTE.filter((d) => d.tip === "cerere" && d.stare === "cerere");
-  const oferte = DOCUMENTE.filter((d) => d.tip === "oferta");
-  const valoare = oferte.reduce((s, d) => s + (d.valoare ?? 0), 0);
-
-  const stat = [
-    indicator(nr(cereri.length), "Cereri de ofertat", `${nr(cereri.reduce((s, d) => s + d.linii, 0))} poziții`),
-    indicator(nr(oferte.length), "Oferte emise"),
-  ];
-  if (vedeCosturi()) stat.push(indicator(eur(valoare), "Valoare ofertată"));
-
-  return `<div class="stats">${stat.join("")}</div>`;
-}
 
 function randuri(lista: Document[], arataValoare: boolean): string[] {
   return lista.map((doc) => {
@@ -92,11 +81,27 @@ function randuri(lista: Document[], arataValoare: boolean): string[] {
   });
 }
 
+const TIP_OFERTA: Record<string, string> = { rezidential: "Rezidențială", industrial: "Industrială", rafinarie: "Rafinărie" };
+
+/** Un import din aplicatie: cererea, oferta descarcata din ea si santierul facut din oferta. */
+function randImport(m: IntrareIstoric, o: OfertaEmisa | undefined, santier: boolean, arataValoare: boolean, stergeDe: string | null): string {
+  const st = santier ? stare("Șantier făcut", "ok") : o ? stare("Ofertă descărcată", "ok") : stare("De ofertat", "atentie");
+  return `<tr>
+    <td><strong>${esc(m.nume)}</strong><br><span class="hint">importată pe ${esc(dataScurta(m.cand))}</span></td>
+    <td>${esc(TIP_OFERTA[m.destinatie ?? "rezidential"] ?? "")}</td>
+    <td class="n">${nr(m.tarifate)} din ${nr(m.pozitii)}<br><span class="hint">cu preț</span></td>
+    <td>${o ? `${esc(o.numar || "fără număr")} · ${esc(o.data)}${o.client ? `<br><span class="hint">${esc(o.client)}</span>` : ""}` : "—"}</td>
+    ${arataValoare ? `<td class="n">${o ? eur(o.valoare) : "—"}</td>` : ""}
+    <td>${st}</td>
+    <td class="fix"><button type="button" class="secundar" data-act="deschide" data-id="${esc(m.id)}">Deschide</button>
+      <button type="button" class="legatura pericol" data-act="sterge" data-id="${esc(m.id)}">${stergeDe === m.id ? "Sigur ștergi?" : "Șterge"}</button></td>
+  </tr>`;
+}
+
 export const ecran: Ecran = {
   id: "documente",
   titlu: "Cereri și oferte",
-  subtitlu:
-    "Cererile clienților și ofertele trimise, pe drumul lor: cerere → ofertă → contract → situație de lucrări.",
+  subtitlu: "Cererile importate în aplicație și ofertele făcute din ele.",
 
   render(root) {
     const arataValoare = vedeCosturi();
@@ -111,46 +116,66 @@ export const ecran: Ecran = {
       "", "",
     ];
 
-    root.innerHTML = `
-      ${indicatori()}
-      <div class="filtre" role="group" aria-label="Filtrează după tipul documentului">
-        ${FILTRE.map((f) => `<button class="filtru" data-f="${f.id}" aria-pressed="${f.id === "toate"}">${esc(f.eticheta)}</button>`).join("")}
-      </div>
-      <div id="tabel-documente"></div>
-      ${card(
-        "Cum se face oferta din cererea clientului",
-        `<div class="grid grid-2">
-          <p><strong>Excel-ul clientului, așa cum vine.</strong> Fiecare client trimite alt tabel. Aplicația
-          găsește singură coloanele (descriere, UM, cantitate) și citește rândurile. Doar rândurile pe care nu
-          le înțelege le trimite la AI.</p>
-          <p><strong>Prețul vine din listele firmei, nu de la AI.</strong> Fiecare poziție iese „Gata”,
-          „De verificat” (cu motivul) sau „Fără preț” (cu cauza). Ce ai corectat o dată, aplicația ține
-          minte data viitoare.</p>
+    root.innerHTML = `<div class="imp">
+      <section class="imp-card" id="cererile-tale"></section>
+      <section class="imp-card">
+        <h2>Documentele firmei</h2>
+        <p class="hint" style="margin:0 0 12px">Cererile și ofertele reale primite de la firmă, pe care am verificat
+          aplicația. Sunt exemple: nu se schimbă din aplicație.</p>
+        <div class="filtre" role="group" aria-label="Filtrează după tipul documentului">
+          ${FILTRE.map((f) => `<button class="filtru" data-f="${f.id}" aria-pressed="${f.id === "toate"}">${esc(f.eticheta)}</button>`).join("")}
         </div>
-        <p class="hint">Nimic nu ajunge în oferta descărcată fără ca un om să fi văzut pozițiile marcate.
-        Cererea TRANSAVIA importată dă, rând cu rând, exact Oferta 284 semnată.</p>`,
-      )}
-      ${nota(
-        "Oferta 5997 a devenit <strong>Anexa 1</strong> la contractul 5998, iar situația de lucrări 6009 are " +
-        "aceleași poziții, fără prețuri, ca s-o confirme clientul.",
-      )}
-      ${nota(
-        "Ofertele 118 și 118.1 sunt pentru <strong>același șantier</strong> (XXXLutz + Momax Balotești), pe " +
-        "două tipuri de lucrare. De aceea au numerele 118 și 118.1.",
-      )}
-      ${nota(
-        "O ofertă trimisă <strong>nu se mai modifică</strong>: dacă trebuie schimbată, se face o ofertă nouă. " +
-        "Prețurile rămân cele din ziua ofertei, chiar dacă lista de prețuri se schimbă mai târziu.",
-      )}`;
+        <div id="tabel-documente"></div>
+      </section>
+    </div>`;
+
+    const tale = root.querySelector<HTMLElement>("#cererile-tale")!;
+    let stergeDe: string | null = null;
+
+    async function deseneazaTale(): Promise<void> {
+      const importuri = await listeaza();
+      const oferte = citesteOferte();
+      const santiere = new Set(citestePlanuri().map((p) => p.fisier));
+      tale.innerHTML = `<h2>Cererile importate</h2>
+        ${importuri.length === 0
+          ? `<p class="hint" style="margin:0">Nicio cerere încă. O cerere intră aici când o aduci în aplicație, din
+            <a href="#/import">Import Excel</a> sau din <a href="#/masuratori">Măsurători</a>; oferta descărcată din ea
+            apare pe același rând.</p>`
+          : tabel(
+              ["Cererea", "Tip ofertă", "Poziții", "Oferta", ...(arataValoare ? ["Valoare"] : []), "Stare", ""],
+              importuri.map((m) => randImport(m, oferte[m.id], santiere.has(m.nume), arataValoare, stergeDe)),
+              ["", "", "n", "", ...(arataValoare ? ["n"] : []), "", ""],
+            )}`;
+    }
+
+    tale.addEventListener("click", (e) => {
+      const b = (e.target as HTMLElement).closest<HTMLButtonElement>("button[data-act]");
+      const id = b?.dataset["id"];
+      if (!b || !id) return;
+      if (b.dataset["act"] === "deschide") {
+        // Importul se redeschide singur pe importul curent, fara sa cheme modelul din nou.
+        puneCurent(id);
+        location.hash = "#/import";
+        return;
+      }
+      if (stergeDe !== id) {
+        stergeDe = id;
+        void deseneazaTale().then(() => tale.querySelector<HTMLElement>(`[data-act="sterge"][data-id="${CSS.escape(id)}"]`)?.focus());
+        return;
+      }
+      stergeDe = null;
+      uitaOferta(id);
+      void sterge(id).then(deseneazaTale);
+    });
+    void deseneazaTale();
 
     const gazda = root.querySelector<HTMLElement>("#tabel-documente")!;
-
-    function deseneaza(f: Filtru): void {
+    const deseneaza = (f: Filtru): void => {
       const lista = f === "toate" ? DOCUMENTE : DOCUMENTE.filter((d) => d.tip === f);
       gazda.innerHTML = lista.length
         ? tabel(capete, randuri(lista, arataValoare), clase)
         : `<p class="nota">Niciun document de acest tip.</p>`;
-    }
+    };
 
     for (const b of root.querySelectorAll<HTMLButtonElement>("button.filtru")) {
       b.onclick = () => {

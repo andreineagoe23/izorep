@@ -36,6 +36,8 @@ import { celuleExtrase, grilaFoaie } from "../import/grila.js";
 import { FARA_POZITII, fisierNecitit, motiveLinie, stareLinie, type CodMotiv } from "../import/text.js";
 import { preia, type Predare } from "../predare.js";
 import { MARCA_PRET_DUBLU } from "../../src/santier/spre-cerere.js";
+import { noteazaOferta, uitaOferta } from "../oferte-local.js";
+import { bani } from "../../src/pricing/engine.js";
 
 /**
  * Ecranul de import, in trei pasi: fisierul, verificarea pozitiilor, oferta.
@@ -681,7 +683,15 @@ export const ecran: Ecran = {
       try {
         const buf = await registruOferta(cerere);
         descarca(buf, numeOferta(antet.serie, antet.numar, antet.data));
-        arataMesaj("Oferta a fost descărcată.");
+        // Ca „Cereri și oferte” sa arate oferta langa cererea ei, cu ce plateste clientul.
+        const { oferta } = imparte(cuAjustare(cerere.linii, antet.ajustareProcent ?? 0));
+        const brut = totalCuAdaos(oferta, destinatie);
+        noteazaOferta(s.meta.id, {
+          numar: antet.numar ? `${antet.serie}${antet.numar}` : "", data: antet.data, client: antet.client,
+          obiectiv: antet.obiectiv, valoare: bani(brut - bani(brut * (antet.discountProcent ?? 0) / 100)),
+          pozitii: oferta.length, cand: new Date().toISOString(),
+        });
+        arataMesaj("Oferta a fost descărcată. O găsești și la „Cereri și oferte”.");
       } catch (err) {
         form.querySelector(".imp-formular-butoane")!.insertAdjacentHTML("beforebegin",
           `<p class="alerta" role="alert">Oferta nu s-a putut genera: ${esc(String(err))}</p>`);
@@ -777,6 +787,7 @@ export const ecran: Ecran = {
             return;
           }
           stergeDe = null;
+          uitaOferta(id);
           void sterge(id).then(async () => {
             if (sesiune?.meta.id === id) sesiune = null;
             istoric = await listeaza();
