@@ -11,9 +11,10 @@ aceleași cifre ca mai jos.
 `attachments/clienti/`. E cererea lor TRANSAVIA, pentru care au semnat Oferta
 284. Nu e în repo (conține prețurile firmei), așa că trebuie adus pe laptop.
 
-**Înainte de întâlnire:** deschide linkul o dată. Dacă ai mai încercat
-aplicația în același browser, șterge importurile vechi (Import Excel →
-„Șterge”) și datele din „Depozit și stoc”, ca demo-ul să pornească curat.
+**Înainte de întâlnire:** deschide linkul într-o **fereastră privată (incognito)
+din Chrome**: aplicația pornește goală, fără importurile, șantierele și stocul
+încercate înainte. Nu închide fereastra în timpul demo-ului: ce faci în ea se
+pierde la închidere. (În Safari, fereastra privată poate bloca salvarea.)
 
 ## Firul demo-ului (~15 minute)
 
