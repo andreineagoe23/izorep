@@ -1,7 +1,8 @@
 import { formula, type RandSantier } from "../src/santier/agrega.js";
 import type { Element, Izolatie, Jacheta } from "../src/santier/schema.js";
 import type { Destinatie } from "../src/pricing/lists.js";
-import { esc, stare, tabel } from "./ecrane/tip.js";
+import { esc, nr, stare, tabel } from "./ecrane/tip.js";
+import type { Comparatie, StareComparatie } from "../src/lucrari/comparatie.js";
 import { alegereSegment } from "./import/vizual.js";
 
 /**
@@ -235,8 +236,12 @@ export function cardIncarca(o: {
   </section>`;
 }
 
+/** Un import din istoric cu care se pot compara masuratorile. */
+export interface ListaClient { id: string; nume: string }
+
 export function cardTrimite(o: {
   pagini: PaginaSantier[]; titlu: string; scop?: Scop; santier?: SantierAles | null; lucreaza?: boolean;
+  liste?: ListaClient[]; comparaCu?: string;
 }): string {
   if (o.pagini.length === 0) return "";
   const neverificate = o.pagini.filter((p) => !p.verificata).length;
@@ -271,8 +276,51 @@ export function cardTrimite(o: {
       verificarea de la import, apoi se descarcă oferta, ca la o listă în Excel.${dublu > 0
         ? ` La ${dublu === 1 ? "un rând" : `${dublu} rânduri`} cu „preț dublu” prețul e de două ori cel din listă; se vede la verificare.` : ""}</p>
     ${lipsa}
+    ${(o.liste ?? []).length > 0 ? `<div class="imp-campuri">
+      <label>Compară cu lista clientului (opțional)
+        <select name="compara-cu">
+          <option value="">— fără comparație —</option>
+          ${o.liste!.map((l) => `<option value="${esc(l.id)}"${l.id === o.comparaCu ? " selected" : ""}>${esc(l.nume)}</option>`).join("")}
+        </select>
+      </label>
+    </div>` : ""}
     <div class="imp-formular-butoane">
+      ${(o.liste ?? []).length > 0 ? `<button type="button" data-act="compara"${!o.comparaCu || randuri === 0 || o.lucreaza ? " disabled" : ""}>${o.lucreaza ? "Se compară…" : "Compară"}</button>` : ""}
       <button type="submit" class="primar"${neverificate > 0 || randuri === 0 ? " disabled" : ""}>Trimite la ofertă</button>
     </div>
   </form>`;
+}
+
+const STARE_COMPARATIE: Record<StareComparatie, [string, "ok" | "atentie" | "neutru"]> = {
+  la_fel: ["La fel", "ok"],
+  diferit: ["Cantitate diferită", "atentie"],
+  doar_in_lista: ["Nu s-a măsurat", "atentie"],
+  doar_masurat: ["Lipsește din listă", "atentie"],
+};
+
+/**
+ * Lista clientului fata de masuratori (`comparaCuLista`). Sus, ce nu se
+ * potriveste; pozitiile la fel stau la final, ca omul sa nu le caute printre.
+ */
+export function cardComparatie(c: Comparatie, numeLista: string): string {
+  const ordine: StareComparatie[] = ["diferit", "doar_in_lista", "doar_masurat", "la_fel"];
+  const pozitii = [...c.pozitii].sort((a, b) => ordine.indexOf(a.stare) - ordine.indexOf(b.stare));
+  const deVazut = pozitii.filter((p) => p.stare !== "la_fel").length;
+  const cant = (x: number): string => (x === 0 ? "—" : nr(x, x % 1 ? 2 : 0));
+  return `<section class="imp-card" id="comparatie">
+    <h2>Lista clientului față de măsurători</h2>
+    <p class="hint">Lista: ${esc(numeLista)}. ${deVazut === 0
+      ? "Toate pozițiile se potrivesc."
+      : `${deVazut === 1 ? "O poziție nu se potrivește" : `${deVazut} poziții nu se potrivesc`}.`}
+      Pozițiile se compară după material, grosime, diametru și formă; cantitățile se adună pe toate zonele.
+      Oferta se face din măsurători.</p>
+    ${tabel(["Poziție", "În listă", "Măsurat", "Diferență", "Stare"], pozitii.map((p) => {
+      const [text, ton] = STARE_COMPARATIE[p.stare];
+      const dif = p.masurat - p.lista;
+      return `<tr><td>${esc(p.text)}</td><td>${cant(p.lista)}</td><td>${cant(p.masurat)}</td>
+        <td>${p.stare === "la_fel" ? "—" : `${dif > 0 ? "+" : ""}${nr(dif, dif % 1 ? 2 : 0)}`}</td><td>${stare(text, ton)}</td></tr>`;
+    }))}
+    ${c.necomparabile.length ? `<p class="hint">Nu s-au putut compara ${c.necomparabile.length === 1 ? "un rând" : `${c.necomparabile.length} rânduri`}
+      (n-au fost citite complet): ${c.necomparabile.map((x) => `${esc(x.text.slice(0, 60))} (${x.sursa === "lista" ? "din listă" : "măsurat"})`).join("; ")}.</p>` : ""}
+  </section>`;
 }

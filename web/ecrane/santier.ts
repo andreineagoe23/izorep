@@ -5,7 +5,12 @@ import { registruCerere } from "../../src/santier/registru.js";
 import type { Destinatie } from "../../src/pricing/lists.js";
 import { preda, predaSituatie } from "../predare.js";
 import { citestePlanuri } from "../lucrari-local.js";
-import { cardIncarca, cardPagina, cardTrimite, type PaginaSantier, type SantierAles, type Scop } from "../santier-vizual.js";
+import {
+  cardComparatie, cardIncarca, cardPagina, cardTrimite, type ListaClient, type PaginaSantier, type SantierAles, type Scop,
+} from "../santier-vizual.js";
+import { incarca as incarcaImport, listeaza as listeazaImporturi } from "../istoric.js";
+import { stocLocal } from "../stoc-local.js";
+import type { Comparatie } from "../../src/lucrari/comparatie.js";
 import type { Ecran } from "./tip.js";
 
 /**
@@ -54,6 +59,9 @@ let titlu = "";
 let editeaza: string | null = null;
 let eroare = "";
 let urmator = 0;
+/** Importul din istoric cu care se compara masuratorile, si rezultatul. */
+let comparaCu = "";
+let comparatie: { lista: string; c: Comparatie } | null = null;
 
 const idNou = (): string => `${Date.now().toString(36)}-${(urmator++).toString(36)}`;
 
@@ -97,9 +105,13 @@ export const ecran: Ecran = {
       <div id="sant-incarca"></div>
       <div id="sant-pagini" class="imp-pagina"></div>
       <div id="sant-trimite"></div>
+      <div id="sant-comparatie"></div>
     </div>`;
     const gazda = root.querySelector<HTMLElement>(".sant")!;
     const cuModel = await modelDisponibil();
+    /** Importurile din istoric: listele clientilor cu care se pot compara masuratorile. */
+    let liste: ListaClient[] = [];
+    try { liste = (await listeazaImporturi()).map((x) => ({ id: x.id, nume: x.nume })); } catch { liste = []; }
 
     const santiere = (): SantierAles[] => citestePlanuri().map((p) => ({ id: p.id, denumire: p.denumire, client: p.client }));
     /** Pe situatie, tipul ofertei e al santierului, nu cel ales sus. */
@@ -117,7 +129,10 @@ export const ecran: Ecran = {
     const deseneazaTrimite = (): void => {
       gazda.querySelector("#sant-trimite")!.innerHTML = cardTrimite({
         pagini, titlu, scop, lucreaza, santier: santiere().find((x) => x.id === planAles) ?? null,
+        ...(scop === "oferta" ? { liste, comparaCu } : {}),
       });
+      gazda.querySelector("#sant-comparatie")!.innerHTML =
+        comparatie && scop === "oferta" && pagini.length > 0 ? cardComparatie(comparatie.c, comparatie.lista) : "";
     };
     /**
      * Doar pagina atinsa. O citire care se termina pe pagina 3 nu are voie sa
@@ -212,6 +227,7 @@ export const ecran: Ecran = {
       if (t.name === "segment") { destinatie = t.value as Destinatie; deseneaza(); }
       if (t.name === "scop") { scop = t.value as Scop; trimisa = ""; deseneaza(); }
       if (t.name === "plan") { planAles = t.value; deseneaza(); }
+      if (t.name === "compara-cu") { comparaCu = t.value; comparatie = null; deseneazaTrimite(); }
     });
 
     gazda.addEventListener("input", (e) => {
@@ -227,6 +243,9 @@ export const ecran: Ecran = {
       // Corectura deschisa pe alta pagina se inchide si ea: se redeseneaza amandoua.
       const editataInainte = editeaza?.split(":")[0];
       switch (b.dataset["act"]) {
+        case "compara":
+          void compara();
+          return;
         case "reciteste": {
           const f = p && fisiere.get(p.id);
           if (!p || !f) return;
@@ -316,6 +335,44 @@ export const ecran: Ecran = {
       fisiere.clear();
       titlu = "";
       editeaza = null;
+      comparatie = null;
+    }
+
+    /**
+     * Lista clientului (un import din istoric, refacut fara model) fata de
+     * randurile din pagini. Ca la situatie, randurile trec prin import pe tipul
+     * ofertei ales sus, deci cad pe aceleasi randuri din lista ca cererea.
+     */
+    async function compara(): Promise<void> {
+      if (!comparaCu || lucreaza) return;
+      lucreaza = true;
+      deseneazaTrimite();
+      try {
+        const s = await incarcaImport(comparaCu);
+        if (!s) throw new Error("importul nu mai e in istoric");
+        const [{ redeschideImport }, { executatDinMasuratori }, { comparaCuLista, randuriDinLista }] =
+          await Promise.all([
+            import("../../src/import/redeschide.js"), import("../../src/lucrari/potrivire.js"),
+            import("../../src/lucrari/comparatie.js"),
+          ]);
+        // Memoria de sabloane a ecranului de import: lista iese cum a vazut-o omul acolo.
+        const rez = await redeschideImport(s, {
+          stoc: stocLocal(), destinatie,
+          grosimiPropuse: new Map(s.grosimiPropuse ?? []),
+          descrieriSchimbate: new Set(s.descrieriSchimbate ?? []),
+          preturiManuale: new Map(s.preturiManuale ?? []),
+        });
+        const masurat = await executatDinMasuratori(pagini.flatMap((p) => p.randuri), destinatie);
+        comparatie = { lista: s.nume, c: comparaCuLista(randuriDinLista(rez.linii), masurat) };
+        eroare = "";
+      } catch (e) {
+        console.error(e);
+        comparatie = null;
+        eroare = "Lista clientului nu s-a putut compara. Încearcă din nou.";
+      }
+      lucreaza = false;
+      deseneaza();
+      gazda.querySelector("#comparatie")?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
     async function puneInSituatie(): Promise<void> {

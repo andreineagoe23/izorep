@@ -68,18 +68,29 @@ Regula 4 a fost **dedusă din date** și **confirmată de firmă pe 11 septembri
 2026**. Poziția păstrează `note` cu proveniența, dar nu mai e oprită la
 validare — vezi „Notele de pe poziție", mai jos.
 
-### Rotunjirea neconfirmată (ø90, ø160)
+### Rotunjirea la ø90, ø160: rândul de sus (confirmat)
 
 Rotunjirea **în sus** a primului strat reproduce 12 din 13 poziții de plastic,
 dar ofertele semnate au două excepții exact acolo unde un rând stă **la 1 mm
 dedesubt**: ø90 tarifat pe rândul 89, și ø160 tarifat pe 159 ca SPIRO și pe 169
-ca PEHD, **în aceeași ofertă**. Motorul nu schimbă rândul — regula rămâne în
-sus — dar `randInferiorNeconfirmat` pune pe poziție o notă de verificat
-(`PRAG_ROTUNJIRE_NECONFIRMATA = 1 mm`). Prețul iese, poziția merge la „De
-validat". La 2 mm (PPR 20 peste rândul 18) nu există nicio ofertă care să fi
-coborât, deci nu se marchează. Întrebarea 3.
+ca PEHD, **în aceeași ofertă**. Firma a răspuns pe 5 octombrie 2026: **rândul
+de sus**. Din 8 octombrie poziția nu se mai marchează; cazurile semnate care au
+coborât rămân în „abateri cunoscute”. `randInferiorNeconfirmat` a rămas în cod,
+dar motorul nu-l mai cheamă.
 
-Pe cele 10 fișiere de client asta atinge 7 linii, toate la ø90 sau ø160.
+## Grosimea jachetei și golurile din liste (8 octombrie 2026)
+
+- **Fără grosime scrisă:** inox 0,4 mm, aluminiu 0,8 mm
+  (`GROSIME_JACHETA_IMPLICITA`), pe ml și pe mp. Unde rândul n-are grosimea
+  uzuală, cea mai apropiată, marcat (`grosime_jacheta_apropiata`).
+- **Grosime scrisă care nu e în listă** („min 0,5 mm”): cea mai subțire din listă
+  care o acoperă, marcat (`grosime_apropiata`). Pentru izolații
+  (`cuEchivalente` în `nucleu.ts`): cea mai apropiată, ca 20 → 19 la elastomer.
+- **Preț pe mp lipsă** (`pretPeMp`): întâi lista celuilalt segment (tabla 0,6
+  pe rezidențial ia 45,00 din industrial; 0,8 e identic în ambele), apoi, peste
+  ultima grosime, extrapolare liniară (elastomer 40 mm), marcat.
+- **Celulă lipsă pe industrial** (`celulaDinRezidential`): rezidențial × raportul
+  median al celor două liste pe aceeași grosime, marcat `celula_dedusa`.
 
 ## Notele de pe poziție
 
@@ -236,17 +247,28 @@ Fiecare dedusă din Oferta 284 sau Oferta 27.04.2026, cu dovada lângă ea în c
 - **Pe suprafață, fără diametru** (`tarifeazaPeMp`): suma prețurilor pe mp ale
   straturilor. Tubulatura rectangulară, vată 50 + tablă = 79,73, exact.
 - **Echivalențe de grosime** (`ECHIVALENTE` în `nucleu.ts`): elastomer 20 mm →
-  19 mm (3 din 3). Doar perechi dovedite; vata g48 rămâne netarifată.
+  19 mm (3 din 3). Din 8 octombrie 2026 orice altă grosime scrisă care nu e în
+  listă (vata g48) ia cea mai apropiată, marcat `grosime_apropiata`.
 - **Grosimea de la conductă** (`grosimiDeLaConducte`): o poziție fără grosime
-  ia grosimea conductei de același diametru și material din aceeași listă,
-  dacă acolo e una singură (casetele TRANSAVIA, 24 din 24). Bate grosimea
-  uzuală: e citită din fișierul clientului, nu propusă de noi.
+  ia grosimea conductei de același diametru și material din aceeași listă
+  (casetele TRANSAVIA, 24 din 24). Bate grosimea uzuală: e citită din fișierul
+  clientului, nu propusă de noi. Din 8 octombrie 2026: cu două grosimi pe același
+  ø, cea mai mare; fără conductă de același ø, cea cu ø cel mai apropiat; fără
+  nicio conductă, grosimea uzuală — toate trei marcate `grosime_propusa`.
 - **Totalul documentului**: suma valorilor exacte preț × cantitate, rotunjită o
   singură dată (`valoareLinie`, `totalOferta`) — ca Excel-ul firmei, care are
   143,808 în celulă. Rotunjit pe linie, Oferta 284 ieșea cu un ban peste.
-- **Protecția la foc a tubulaturii** nu se tarifează din listele de izolație
-  (`protectie_foc_tubulatura`): canal EI60 semnat 48 €/m², vata pe mp ar da
-  22,22.
+- **Protecția la foc a tubulaturii** nu se tarifează din listele de izolație:
+  canal EI60 semnat 48 €/m², vata pe mp ar da 22,22. Din 8 octombrie 2026 iese
+  la 48 €/m² (pe ml, × suprafața pe metru), mereu „De verificat” (`protectie_foc`):
+  firma pune prețul de mână (Conlit / Techrock), iar la EI120 / EI180 materialul
+  e mai gros decât la singura valoare semnată.
+- **Echipamentele** (`tarifeazaEchipament` în `nucleu.ts`): suprafața (manta +
+  capace, cu 3,14) × prețul pe mp al straturilor × 2,47, factorul care dă exact
+  distribuitorul din Oferta 284 (2.296,70). Marcat; fără D și L pe rând,
+  `echipament`, fără preț.
+- **Livrarea de țeavă cu izolația inclusă**: doar izolația din liste, marcat
+  (`doar_izolatia`). NISAL r83 a fost semnat 20,09, din liste 14,68.
 
 ## Ce lipsește
 
@@ -266,7 +288,7 @@ Fiecare dedusă din Oferta 284 sau Oferta 27.04.2026, cu dovada lângă ea în c
 - ~~**Tabla de inox**~~ — e acum sistem de sine stătător. Rămâne o asimetrie
   deliberată: inoxul e **singurul sistem fără listă rezidențială**. Pe o ofertă
   rezidențială prețul lui vine din lista industrială, cu notă de verificat.
-  Care e grosimea implicită a jachetei rămâne întrebarea 15.
+  Grosimea implicită a jachetei de inox e 0,4 mm (firma, 5 octombrie 2026).
 - **Seriile de diametre pe material.** Din 25 septembrie 2026 cuprul are seria
   lui (`DN_TO_OD_CUPRU`, din registrul de conversie al firmei, ținută egală cu
   `conversii-tevi.json` de un test): când rândul spune „cupru / copper /

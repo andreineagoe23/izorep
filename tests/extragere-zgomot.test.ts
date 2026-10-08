@@ -96,9 +96,13 @@ describe("tabla din care e făcută tubulatura nu e jachetă", () => {
     expect(l.straturi_extra).toEqual([]);
   });
 
-  it("protecția la foc a tubulaturii nu e poziție de izolație", () => {
-    expect(extrage("Protectie la foc EI 60 pentru tubulaturile din tabla zincata - torcret Parafoc 20 mm", "mp", 120)
-      .sistem).toBeNull();
+  it("protecția la foc a tubulaturii e poziție, fără jacheta din care e făcută tubulatura", () => {
+    // Spitalul, foaia „izolatie - torcret”: fără sistem, rândul dispărea din import.
+    const l = extrage("Protectie la foc EI 60 pentru tubulaturile din tabla zincata - torcret Parafoc 20 mm", "mp", 120);
+    expect(l.sistem).toBe("vata_minerala");
+    expect(l.forma).toBe("mp");
+    expect(l.grosime_mm).toBe(20);
+    expect(l.straturi_extra).toEqual([]);
   });
 
   it("dar jacheta rămâne jachetă, oricum ar fi scrisă", () => {
@@ -236,9 +240,10 @@ describe("grosimea tablei, scrisă lângă ea", () => {
   it("aluminiul la fel, dar numai din grosimile listei lui", () => {
     expect(straturi("Izolatie armaflex 19 mm, protejata cu tabla zincata de 0.8 mm Ø200"))
       .toEqual([{ sistem: "tabla", grosime_mm: 0.8 }]);
-    // 0,5 nu e grosime de aluminiu: rămâne implicită, nu se inventează.
+    // 0,5 nu e grosime de aluminiu, dar e ce a scris clientul: motorul ia cea
+    // mai subțire din listă care o acoperă (0,6), marcat. Pe model, la fel.
     expect(straturi("Izolatie vata minerala 50 mm cu tabla de aluminiu 0,5 mm DN80"))
-      .toEqual([{ sistem: "tabla", grosime_mm: null }]);
+      .toEqual([{ sistem: "tabla", grosime_mm: 0.5 }]);
   });
 
   it("„0. 6 mm”, cu spațiu după punct, e tot 0,6 (spital, rândul 137)", () => {

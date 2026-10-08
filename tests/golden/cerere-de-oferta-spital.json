@@ -24,9 +24,9 @@
       "avertismente": [
         "grosime_in_afara_listei"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "nu exista pret pe mp pentru grosimea ceruta"
+      "pret_unitar": 45,
+      "total": 13050,
+      "eroare": null
     },
     {
       "index": 26,
@@ -49,9 +49,9 @@
       "avertismente": [
         "grosime_in_afara_listei"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "nu exista pret pe mp pentru grosimea ceruta"
+      "pret_unitar": 45,
+      "total": 33388.7,
+      "eroare": null
     },
     {
       "index": 34,
@@ -74,9 +74,9 @@
       "avertismente": [
         "grosime_in_afara_listei"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "nu exista pret pe mp pentru grosimea ceruta"
+      "pret_unitar": 45,
+      "total": 6525,
+      "eroare": null
     },
     {
       "index": 40,
@@ -99,9 +99,9 @@
       "avertismente": [
         "grosime_in_afara_listei"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "nu exista pret pe mp pentru grosimea ceruta"
+      "pret_unitar": 45,
+      "total": 7560,
+      "eroare": null
     },
     {
       "index": 47,
@@ -125,9 +125,9 @@
         "grosime_in_afara_listei",
         "forma_contrazice_um"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "nu exista pret pe mp pentru grosimea ceruta"
+      "pret_unitar": 45,
+      "total": 2520,
+      "eroare": null
     },
     {
       "index": 52,
@@ -151,9 +151,9 @@
         "grosime_in_afara_listei",
         "forma_contrazice_um"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "nu exista pret pe mp pentru grosimea ceruta"
+      "pret_unitar": 45,
+      "total": 990,
+      "eroare": null
     },
     {
       "index": 59,
@@ -176,9 +176,9 @@
       "avertismente": [
         "grosime_in_afara_listei"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "nu exista pret pe mp pentru grosimea ceruta"
+      "pret_unitar": 45,
+      "total": 7596,
+      "eroare": null
     },
     {
       "index": 63,
@@ -201,9 +201,9 @@
       "avertismente": [
         "grosime_in_afara_listei"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "nu exista pret pe mp pentru grosimea ceruta"
+      "pret_unitar": 45,
+      "total": 1950.79,
+      "eroare": null
     },
     {
       "index": 70,
@@ -226,9 +226,9 @@
       "avertismente": [
         "grosime_in_afara_listei"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "nu exista pret pe mp pentru grosimea ceruta"
+      "pret_unitar": 45,
+      "total": 5634,
+      "eroare": null
     },
     {
       "index": 72,
@@ -251,9 +251,9 @@
       "avertismente": [
         "grosime_in_afara_listei"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "nu exista pret pe mp pentru grosimea ceruta"
+      "pret_unitar": 45,
+      "total": 7110,
+      "eroare": null
     },
     {
       "index": 78,
@@ -276,9 +276,9 @@
       "avertismente": [
         "grosime_in_afara_listei"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "nu exista pret pe mp pentru grosimea ceruta"
+      "pret_unitar": 45,
+      "total": 13500,
+      "eroare": null
     },
     {
       "index": 87,
@@ -301,9 +301,9 @@
       "avertismente": [
         "grosime_in_afara_listei"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "nu exista pret pe mp pentru grosimea ceruta"
+      "pret_unitar": 45,
+      "total": 15300,
+      "eroare": null
     },
     {
       "index": 97,
@@ -326,9 +326,9 @@
       "avertismente": [
         "grosime_in_afara_listei"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "nu exista pret pe mp pentru grosimea ceruta"
+      "pret_unitar": 45,
+      "total": 61335,
+      "eroare": null
     },
     {
       "index": 114,
@@ -351,9 +351,9 @@
       "avertismente": [
         "grosime_in_afara_listei"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "nu exista pret pe mp pentru grosimea ceruta"
+      "pret_unitar": 45,
+      "total": 91455.58,
+      "eroare": null
     },
     {
       "index": 125,
@@ -376,9 +376,9 @@
       "avertismente": [
         "grosime_in_afara_listei"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "nu exista pret pe mp pentru grosimea ceruta"
+      "pret_unitar": 45,
+      "total": 8324.55,
+      "eroare": null
     },
     {
       "index": 135,
@@ -399,9 +399,9 @@
         "motiv": "Textul mentioneaza 'Izolatii armaturi banda autoadeziva' si marci de elastomer, dar nu specifica diametru, grosime sau forma. Lipsesc detalii."
       },
       "avertismente": [],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "pozitia n-are diametru, iar listele de preturi se cauta doar pe diametru exterior; tubulatura rectangulara se masoara A x B si nu are inca regula de conversie"
+      "pret_unitar": 5.7,
+      "total": 256.5,
+      "eroare": null
     },
     {
       "index": 142,
@@ -422,9 +422,9 @@
         "motiv": "Protectie la foc EI60, torcret Parafoc 20 mm, pentru tubulatura. Sistem goluri_foc, grosime 20 mm, forma mp."
       },
       "avertismente": [],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "inchidere gol la foc fara dimensiunea golului; pretul vine din suprafata lui"
+      "pret_unitar": 48,
+      "total": 56496,
+      "eroare": null
     },
     {
       "index": 143,
@@ -445,9 +445,9 @@
         "motiv": "Protectie la foc EI120, torcret Parafoc 25 mm, pentru tubulatura. Sistem goluri_foc, grosime 25 mm, forma mp."
       },
       "avertismente": [],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "inchidere gol la foc fara dimensiunea golului; pretul vine din suprafata lui"
+      "pret_unitar": 48,
+      "total": 17280,
+      "eroare": null
     },
     {
       "index": 144,
@@ -468,9 +468,9 @@
         "motiv": "Protectie la foc EI180, torcret Parafoc 35 mm, pentru tubulatura. Sistem goluri_foc, grosime 35 mm, forma mp."
       },
       "avertismente": [],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "inchidere gol la foc fara dimensiunea golului; pretul vine din suprafata lui"
+      "pret_unitar": 48,
+      "total": 14400,
+      "eroare": null
     },
     {
       "index": 151,
@@ -498,9 +498,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 23.31,
+      "total": 46.62,
+      "eroare": null
     },
     {
       "index": 152,
@@ -528,9 +528,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 23.43,
+      "total": 749.76,
+      "eroare": null
     },
     {
       "index": 153,
@@ -558,9 +558,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 27.14,
+      "total": 407.1,
+      "eroare": null
     },
     {
       "index": 154,
@@ -588,9 +588,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 29.01,
+      "total": 522.18,
+      "eroare": null
     },
     {
       "index": 155,
@@ -618,9 +618,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 32.22,
+      "total": 3093.12,
+      "eroare": null
     },
     {
       "index": 156,
@@ -648,9 +648,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 23.31,
+      "total": 186.48,
+      "eroare": null
     },
     {
       "index": 157,
@@ -678,9 +678,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 23.43,
+      "total": 23.43,
+      "eroare": null
     },
     {
       "index": 158,
@@ -708,9 +708,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 27.14,
+      "total": 488.52,
+      "eroare": null
     },
     {
       "index": 159,
@@ -738,9 +738,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 29.01,
+      "total": 1943.67,
+      "eroare": null
     },
     {
       "index": 160,
@@ -768,9 +768,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 32.22,
+      "total": 6895.08,
+      "eroare": null
     },
     {
       "index": 161,
@@ -798,9 +798,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 29.01,
+      "total": 11284.89,
+      "eroare": null
     },
     {
       "index": 162,
@@ -828,9 +828,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 23.31,
+      "total": 652.68,
+      "eroare": null
     },
     {
       "index": 163,
@@ -858,9 +858,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 23.33,
+      "total": 1446.46,
+      "eroare": null
     },
     {
       "index": 164,
@@ -888,9 +888,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 23.43,
+      "total": 2975.61,
+      "eroare": null
     },
     {
       "index": 165,
@@ -918,9 +918,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 23.55,
+      "total": 471,
+      "eroare": null
     },
     {
       "index": 166,
@@ -948,9 +948,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 23.61,
+      "total": 3234.57,
+      "eroare": null
     },
     {
       "index": 167,
@@ -978,9 +978,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 24.11,
+      "total": 12368.43,
+      "eroare": null
     },
     {
       "index": 168,
@@ -1008,9 +1008,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 27.14,
+      "total": 597.08,
+      "eroare": null
     },
     {
       "index": 169,
@@ -1038,9 +1038,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 27.65,
+      "total": 20461,
+      "eroare": null
     },
     {
       "index": 170,
@@ -1068,9 +1068,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 29.01,
+      "total": 12967.47,
+      "eroare": null
     },
     {
       "index": 171,
@@ -1098,9 +1098,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 32.22,
+      "total": 31188.96,
+      "eroare": null
     },
     {
       "index": 172,
@@ -1128,9 +1128,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 29.01,
+      "total": 1624.56,
+      "eroare": null
     },
     {
       "index": 179,
@@ -1158,9 +1158,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 23.31,
+      "total": 192447.36,
+      "eroare": null
     },
     {
       "index": 180,
@@ -1188,9 +1188,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 23.33,
+      "total": 49576.25,
+      "eroare": null
     },
     {
       "index": 181,
@@ -1218,9 +1218,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 23.43,
+      "total": 38682.93,
+      "eroare": null
     },
     {
       "index": 182,
@@ -1248,9 +1248,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 23.55,
+      "total": 47194.2,
+      "eroare": null
     },
     {
       "index": 183,
@@ -1278,9 +1278,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 24.06,
+      "total": 43957.62,
+      "eroare": null
     },
     {
       "index": 184,
@@ -1308,9 +1308,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 26.64,
+      "total": 49497.12,
+      "eroare": null
     },
     {
       "index": 191,
@@ -1338,9 +1338,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 23.33,
+      "total": 4082.75,
+      "eroare": null
     },
     {
       "index": 192,
@@ -1368,9 +1368,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 23.43,
+      "total": 4100.25,
+      "eroare": null
     },
     {
       "index": 193,
@@ -1398,9 +1398,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 43.26,
+      "total": 5969.88,
+      "eroare": null
     },
     {
       "index": 194,
@@ -1428,9 +1428,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 23.33,
+      "total": 816.55,
+      "eroare": null
     },
     {
       "index": 195,
@@ -1458,9 +1458,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 23.43,
+      "total": 820.05,
+      "eroare": null
     },
     {
       "index": 196,
@@ -1488,9 +1488,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 43.26,
+      "total": 259.56,
+      "eroare": null
     },
     {
       "index": 203,
@@ -1518,9 +1518,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 23.31,
+      "total": 46.62,
+      "eroare": null
     },
     {
       "index": 204,
@@ -1548,9 +1548,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 23.33,
+      "total": 979.86,
+      "eroare": null
     },
     {
       "index": 205,
@@ -1578,9 +1578,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 23.43,
+      "total": 1171.5,
+      "eroare": null
     },
     {
       "index": 206,
@@ -1608,9 +1608,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 23.55,
+      "total": 164.85,
+      "eroare": null
     },
     {
       "index": 207,
@@ -1638,9 +1638,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 23.61,
+      "total": 94.44,
+      "eroare": null
     },
     {
       "index": 208,
@@ -1668,9 +1668,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 24.11,
+      "total": 192.88,
+      "eroare": null
     },
     {
       "index": 209,
@@ -1698,9 +1698,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 27.14,
+      "total": 1411.28,
+      "eroare": null
     },
     {
       "index": 210,
@@ -1728,9 +1728,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 27.65,
+      "total": 442.4,
+      "eroare": null
     },
     {
       "index": 211,
@@ -1758,9 +1758,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 29.01,
+      "total": 522.18,
+      "eroare": null
     },
     {
       "index": 212,
@@ -1788,9 +1788,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 43.26,
+      "total": 1946.7,
+      "eroare": null
     },
     {
       "index": 213,
@@ -1818,9 +1818,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 46.45,
+      "total": 2090.25,
+      "eroare": null
     },
     {
       "index": 214,
@@ -1848,9 +1848,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 27.65,
+      "total": 110.6,
+      "eroare": null
     },
     {
       "index": 215,
@@ -1878,9 +1878,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 29.01,
+      "total": 116.04,
+      "eroare": null
     },
     {
       "index": 216,
@@ -1908,9 +1908,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 29.01,
+      "total": 348.12,
+      "eroare": null
     },
     {
       "index": 217,
@@ -1938,9 +1938,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 27.14,
+      "total": 325.68,
+      "eroare": null
     },
     {
       "index": 218,
@@ -1968,9 +1968,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 27.65,
+      "total": 276.5,
+      "eroare": null
     },
     {
       "index": 219,
@@ -1998,9 +1998,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 29.01,
+      "total": 522.18,
+      "eroare": null
     },
     {
       "index": 220,
@@ -2028,9 +2028,9 @@
       "avertismente": [
         "strat_necitat"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 43.26,
+      "total": 5407.5,
+      "eroare": null
     },
     {
       "index": 221,
@@ -2051,9 +2051,9 @@
         "motiv": "Izolatie 20mm, protejata mecanic (nu specifica tabla), DN 1/2\" = DN15, UM m = ml."
       },
       "avertismente": [],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 6.23,
+      "total": 18.69,
+      "eroare": null
     },
     {
       "index": 222,
@@ -2074,9 +2074,9 @@
         "motiv": "Izolatie 20mm, protejata mecanic (nu specifica tabla), DN 25 mm, UM m = ml."
       },
       "avertismente": [],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 6.35,
+      "total": 298.45,
+      "eroare": null
     },
     {
       "index": 223,
@@ -2097,9 +2097,9 @@
         "motiv": "Izolatie 20mm, protejata mecanic (nu specifica tabla), DN 32 mm, UM m = ml."
       },
       "avertismente": [],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 6.47,
+      "total": 226.45,
+      "eroare": null
     },
     {
       "index": 224,
@@ -2120,9 +2120,9 @@
         "motiv": "Izolatie 20mm, protejata mecanic (nu specifica tabla), DN 40 mm, UM m = ml."
       },
       "avertismente": [],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 6.53,
+      "total": 2598.94,
+      "eroare": null
     },
     {
       "index": 225,
@@ -2143,9 +2143,9 @@
         "motiv": "Izolatie 20 mm pe teava DN50, nu se specifica alt sistem, deci vata minerala e uzual pentru protectie mecanica."
       },
       "avertismente": [],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 6.68,
+      "total": 427.52,
+      "eroare": null
     },
     {
       "index": 226,
@@ -2166,9 +2166,9 @@
         "motiv": "Izolatie 20 mm pe teava DN65, nu se specifica alt sistem, deci vata minerala e uzual pentru protectie mecanica."
       },
       "avertismente": [],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 9.02,
+      "total": 2318.14,
+      "eroare": null
     },
     {
       "index": 233,
@@ -2189,9 +2189,9 @@
         "motiv": "Torcret Parafoc 20 mm este un strat de vata minerala aplicat pe tubulatura rectangulara, forma mp."
       },
       "avertismente": [],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+      "pret_unitar": 48,
+      "total": 56928,
+      "eroare": null
     },
     {
       "index": 234,
@@ -2212,9 +2212,9 @@
         "motiv": "Torcret Parafoc 20 mm este un strat de vata minerala aplicat pe tubulatura rectangulara, forma mp."
       },
       "avertismente": [],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+      "pret_unitar": 48,
+      "total": 104976,
+      "eroare": null
     },
     {
       "index": 235,
@@ -2235,9 +2235,9 @@
         "motiv": "Torcret Parafoc 20 mm este un strat de vata minerala aplicat pe tubulatura rectangulara, forma mp."
       },
       "avertismente": [],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+      "pret_unitar": 48,
+      "total": 40224,
+      "eroare": null
     },
     {
       "index": 237,
@@ -2260,9 +2260,9 @@
       "avertismente": [
         "grosime_in_afara_listei"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+      "pret_unitar": 48,
+      "total": 1200,
+      "eroare": null
     },
     {
       "index": 238,
@@ -2285,9 +2285,9 @@
       "avertismente": [
         "grosime_in_afara_listei"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+      "pret_unitar": 48,
+      "total": 384,
+      "eroare": null
     },
     {
       "index": 239,
@@ -2310,9 +2310,9 @@
       "avertismente": [
         "grosime_in_afara_listei"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+      "pret_unitar": 48,
+      "total": 4176,
+      "eroare": null
     },
     {
       "index": 240,
@@ -2335,9 +2335,9 @@
       "avertismente": [
         "grosime_in_afara_listei"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+      "pret_unitar": 48,
+      "total": 42432,
+      "eroare": null
     },
     {
       "index": 241,
@@ -2360,9 +2360,9 @@
       "avertismente": [
         "grosime_in_afara_listei"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+      "pret_unitar": 48,
+      "total": 4464,
+      "eroare": null
     },
     {
       "index": 242,
@@ -2385,9 +2385,9 @@
       "avertismente": [
         "grosime_in_afara_listei"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+      "pret_unitar": 48,
+      "total": 9216,
+      "eroare": null
     },
     {
       "index": 243,
@@ -2410,9 +2410,9 @@
       "avertismente": [
         "forma_contrazice_um"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+      "pret_unitar": 48,
+      "total": 31536,
+      "eroare": null
     },
     {
       "index": 244,
@@ -2435,9 +2435,9 @@
       "avertismente": [
         "forma_contrazice_um"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+      "pret_unitar": 48,
+      "total": 26688,
+      "eroare": null
     },
     {
       "index": 245,
@@ -2460,9 +2460,9 @@
       "avertismente": [
         "forma_contrazice_um"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+      "pret_unitar": 48,
+      "total": 51504,
+      "eroare": null
     },
     {
       "index": 246,
@@ -2485,9 +2485,9 @@
       "avertismente": [
         "forma_contrazice_um"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+      "pret_unitar": 48,
+      "total": 15840,
+      "eroare": null
     },
     {
       "index": 247,
@@ -2510,9 +2510,9 @@
       "avertismente": [
         "forma_contrazice_um"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+      "pret_unitar": 48,
+      "total": 17856,
+      "eroare": null
     },
     {
       "index": 248,
@@ -2535,9 +2535,9 @@
       "avertismente": [
         "forma_contrazice_um"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+      "pret_unitar": 48,
+      "total": 15696,
+      "eroare": null
     },
     {
       "index": 249,
@@ -2560,9 +2560,9 @@
       "avertismente": [
         "forma_contrazice_um"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+      "pret_unitar": 48,
+      "total": 28416,
+      "eroare": null
     },
     {
       "index": 250,
@@ -2585,9 +2585,9 @@
       "avertismente": [
         "forma_contrazice_um"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+      "pret_unitar": 48,
+      "total": 35808,
+      "eroare": null
     },
     {
       "index": 251,
@@ -2611,9 +2611,9 @@
         "grosime_in_afara_listei",
         "forma_contrazice_um"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+      "pret_unitar": 48,
+      "total": 2784,
+      "eroare": null
     },
     {
       "index": 252,
@@ -2637,9 +2637,9 @@
         "grosime_in_afara_listei",
         "forma_contrazice_um"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+      "pret_unitar": 48,
+      "total": 1152,
+      "eroare": null
     },
     {
       "index": 253,
@@ -2663,9 +2663,9 @@
         "grosime_in_afara_listei",
         "forma_contrazice_um"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+      "pret_unitar": 48,
+      "total": 288,
+      "eroare": null
     },
     {
       "index": 254,
@@ -2689,9 +2689,9 @@
         "grosime_in_afara_listei",
         "forma_contrazice_um"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+      "pret_unitar": 48,
+      "total": 1104,
+      "eroare": null
     },
     {
       "index": 255,
@@ -2715,9 +2715,9 @@
         "grosime_in_afara_listei",
         "forma_contrazice_um"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+      "pret_unitar": 48,
+      "total": 4416,
+      "eroare": null
     },
     {
       "index": 256,
@@ -2741,9 +2741,9 @@
         "grosime_in_afara_listei",
         "forma_contrazice_um"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+      "pret_unitar": 48,
+      "total": 17760,
+      "eroare": null
     },
     {
       "index": 257,

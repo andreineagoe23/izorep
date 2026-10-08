@@ -109,6 +109,12 @@ export interface RezultatTarifare {
    */
   manual?: true;
   /**
+   * Suprafata unei bucati, in m², cand pretul vine din suprafata unui
+   * echipament, nu de pe metru de teava. Necesarul de materiale o foloseste in
+   * locul diametrului, pe care un echipament nu-l are.
+   */
+  suprafata_mp?: number;
+  /**
    * Aceleasi note de verificat, ca valori pe care ecranul le poate numara si
    * scrie in cuvinte simple. Textul din `noteDeVerificat` ramane pentru
    * registru si pentru cine vrea detaliul.
@@ -137,7 +143,25 @@ export type MotivVerificare =
   /** Teava de cupru data in DN: diametrul e luat de pe seria de cupru, nu de pe ISO. */
   | "serie_cupru"
   /** Teava de inox data in DN: seria (ISO sau cea de presare) nu e in datele firmei. */
-  | "serie_inox";
+  | "serie_inox"
+  /** Jacheta n-are grosimea uzuala pe randul asta: s-a luat cea mai apropiata. */
+  | "grosime_jacheta_apropiata"
+  /** Grosimea scrisa de client nu e in lista: s-a luat cea mai apropiata. */
+  | "grosime_apropiata"
+  /** Grosimea trece de ultima coloana a listei: pret pe mp extrapolat din ultimele doua. */
+  | "grosime_extrapolata"
+  /** Clientul a dat grosimea ca interval: s-a luat capatul de sus. */
+  | "grosime_interval"
+  /** Protectia la foc a tubulaturii: pretul pe m² din singura oferta semnata (EI60). */
+  | "protectie_foc"
+  /** Livrarea tevii cu izolatia inclusa: s-a tarifat doar izolatia. */
+  | "doar_izolatia"
+  /** Echipament: pret din suprafata lui, cu factorul din Oferta 284. */
+  | "echipament_suprafata"
+  /** Golul n-are dimensiuni pe rand: luate de la aceeasi teava din acelasi fisier. */
+  | "gol_de_la_aceeasi_teava"
+  /** Banda autoadeziva pe armaturi: pretul celei mai subtiri izolatii de elastomer. */
+  | "banda_armaturi";
 
 /**
  * De ce nu s-a putut tarifa o pozitie, ca valoare STABILA.
@@ -175,8 +199,6 @@ export type CodNetarifare =
   /* --- din DiametruNecunoscut, mapat in tarifeazaExtras --- */
   | "dn_necunoscut"
   /* --- alta lucrare decat cea din liste --- */
-  | "protectie_foc_tubulatura"
-  | "livrare_teava"             // livrarea tevii, cu izolatia „inclusiv"
   | "echipament";               // izolarea unui echipament (distribuitor, rezervor), nu a unei tevi
 
 export class PozitieNetarifata extends Error {

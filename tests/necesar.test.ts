@@ -111,18 +111,22 @@ describe("necesarul de materiale", () => {
   });
 
   it("ce nu are preț din liste apare separat, cu motivul", async () => {
-    const l = await linii([[1, "Izolatii cu vata minerala 48 mm Di60 - ML", "ml", 5]]);
+    // Un echipament fără D și L: singura izolație care mai rămâne fără preț.
+    const l = await linii([[1, "Izolare echipament schimbator de caldura cu vata minerala 100 mm", "buc", 1]]);
     const n = necesarDinLinii(l);
     expect(n.materiale).toEqual([]);
     expect(n.faraNecesar).toHaveLength(1);
   });
 
-  it("cererea TRANSAVIA: toți metrii de vată din ofertă ajung în necesar, doar distribuitorul rămâne afară", async () => {
+  it("cererea TRANSAVIA: toți metrii de vată din ofertă ajung în necesar, distribuitorul pe suprafața lui", async () => {
     const cale = "../attachments/clienti/cerere-de-oferta-transavia-abur.xlsx";
     if (!existsSync(cale)) return;
     const l = (await importaFisier(cale, { faraModel: true, stoc: stocInMemorie() })).linii;
     const n = necesarDinLinii(l, 0);
-    expect(n.faraNecesar.map((f) => f.text)).toEqual([expect.stringContaining("DISTRIBUITOR ABUR")]);
+    expect(n.faraNecesar).toEqual([]);
+    // Distribuitorul: g100, D=500, L=4500 → 10,66 m² de vată 100 mm, pe plăci (peste 3 țoli).
+    const vata100 = n.materiale.find((m) => m.sistem === "vata_minerala" && m.grosime_mm === 100 && m.rand === null)!;
+    expect(vata100.m2).toBeGreaterThanOrEqual(10.66);
     const mlOferta = l.filter((x) => x.pret && x.extras.sistem === "vata_minerala" && x.extras.forma === "ml")
       .reduce((s, x) => s + (x.bruta.cantitate ?? 0), 0);
     const mlNecesar = n.materiale.filter((m) => m.sistem === "vata_minerala").reduce((s, m) => s + m.ml, 0);

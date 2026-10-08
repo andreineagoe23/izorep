@@ -412,9 +412,9 @@
         "motiv": "Izolatie vata minerala 50mm pe teava inox Ø125mm, diametrul este exterior la astfel de pozitii."
       },
       "avertismente": [],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "livrare de teava, cu izolatia inclusa: pretul tevii nu e in listele de izolatie"
+      "pret_unitar": 14.68,
+      "total": 294.92,
+      "eroare": null
     },
     {
       "index": 60,
@@ -720,9 +720,9 @@
         "motiv": "Linia descrie izolatie termica la foc cu vata minerala 60mm pe tubulatura rectangulara (suprafata, mp)."
       },
       "avertismente": [],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "protectie la foc a tubulaturii: alta lucrare decat izolatia din liste, fara lista de preturi"
+      "pret_unitar": 48,
+      "total": 2304,
+      "eroare": null
     },
     {
       "index": 82,

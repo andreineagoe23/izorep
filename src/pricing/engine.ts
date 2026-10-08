@@ -1,6 +1,6 @@
 import { toOuterDiameter, peSeriaDeOtel, type TipDiametru } from "./dn-table.js";
 import {
-  diametre, diametreDin, grosimiLaDin, listaDe,
+  DESTINATII, diametre, diametreDin, grosimiLaDin, listaDe, listaPe,
   type BandaMultiplicator, type Destinatie, type ListaPreturi,
 } from "./lists.js";
 import {
@@ -149,15 +149,153 @@ export function randPentruJacheta(valoare: number, randuri: number[]): number {
   return randuri.find((r) => r >= valoare) ?? max;
 }
 
+/**
+ * Grosimea jachetei cand clientul n-o scrie, iar lista are mai multe pe rand.
+ *
+ * Inox 0,4 mm: raspunsul firmei la intalnirea din 5 octombrie 2026 („se merge
+ * pe 0,4"); deblocheaza toate cele 72 de pozitii din Transavia inox. Aluminiu
+ * 0,8 mm: raspunsul „7. la 0,8" de pe aceeasi foaie, si singura grosime de
+ * aluminiu cu pret pe mp in lista rezidentiala (39 din 63 de randuri au doar
+ * 0,8). Clientii nu scriu niciodata grosimea jachetei.
+ */
+export const GROSIME_JACHETA_IMPLICITA: Partial<Record<SistemMatrice, number>> = {
+  tabla: 0.8,
+  tabla_inox: 0.4,
+};
+
+/**
+ * Grosimea uzuala a jachetei, sau cea mai apropiata de ea dintre `disp` (la
+ * egalitate, cea mai groasa). `null` pentru izolatii: acolo grosimea e a
+ * clientului sau a tabelului de grosimi uzuale, nu a jachetei.
+ */
+function grosimeJacheta(
+  sistem: SistemMatrice, disp: number[],
+): { grosime: number; exacta: boolean } | null {
+  const uzuala = GROSIME_JACHETA_IMPLICITA[sistem];
+  if (uzuala === undefined || disp.length === 0) return null;
+  if (disp.includes(uzuala)) return { grosime: uzuala, exacta: true };
+  const aproape = [...disp].sort((a, b) => Math.abs(a - uzuala) - Math.abs(b - uzuala) || b - a)[0]!;
+  return { grosime: aproape, exacta: false };
+}
+
+/**
+ * Grosimea de jacheta CERUTA care nu e in lista: cea mai mica din lista care o
+ * acopera, altfel cea mai groasa. Spitalul cere „tabla zincata cu grosimea de
+ * min 0,5 mm": aluminiul are 0,6 / 0,8 / 1,0, deci 0,6.
+ */
+function jachetaCareAcopera(ceruta: number, disp: number[]): number {
+  const sortate = [...disp].sort((a, b) => a - b);
+  return sortate.find((g) => g >= ceruta) ?? sortate.at(-1)!;
+}
+
+const esteJachetaCuGrosime = (sistem: SistemMatrice): boolean => GROSIME_JACHETA_IMPLICITA[sistem] !== undefined;
+
 function grosimeEfectiva(
   sistem: SistemMatrice, rand: number, ceruta: number | undefined, l: ListaPreturi,
-): number | null {
-  if (sistem === "pvc") return null;               // PVC nu are coloana de grosime
-  if (ceruta !== undefined) return ceruta;
+): { grosime: number | null; jacheta?: { grosime: number; exacta: boolean }; acoperita?: number } {
+  if (sistem === "pvc") return { grosime: null };  // PVC nu are coloana de grosime
+  if (ceruta !== undefined) {
+    const disp = grosimiLaDin(l, rand);
+    if (esteJachetaCuGrosime(sistem) && disp.length > 0 && !disp.includes(ceruta)) {
+      return { grosime: jachetaCareAcopera(ceruta, disp), acoperita: ceruta };
+    }
+    return { grosime: ceruta };
+  }
   const disp = grosimiLaDin(l, rand);
   // Tabla de jachetare are o singura grosime ofertata per diametru: e implicita.
-  if (disp.length === 1) return disp[0]!;
+  if (disp.length === 1) return { grosime: disp[0]! };
+  const jacheta = grosimeJacheta(sistem, disp);
+  if (jacheta) return { grosime: jacheta.grosime, jacheta };
   throw new PozitieNetarifata("grosime_ambigua", "grosime nespecificata si ambigua", { sistem, rand, disponibile: disp });
+}
+
+/** Nota pentru grosimea de jacheta aleasa de noi, nu scrisa de client. */
+function notaJacheta(sistem: string, j: { grosime: number; exacta: boolean }): string {
+  const uzuala = GROSIME_JACHETA_IMPLICITA[sistem as SistemMatrice];
+  return j.exacta
+    ? `${sistem}: grosime ${j.grosime} mm, grosimea uzuala a firmei (clientul n-a scris-o)`
+    : `${sistem}: grosimea uzuala ${uzuala} mm nu e in lista pe randul asta; s-a luat ${j.grosime} mm, cea mai apropiata`;
+}
+
+/**
+ * Pretul pe mp al unui strat, cu cele doua plase pe care le cer cererile reale:
+ *
+ * 1. Grosimea are pret pe mp doar in lista celuilalt segment. Tabla de 0,6 mm
+ *    are pret pe mp doar in lista industriala (45,00 €), iar 0,8 mm e IDENTIC in
+ *    ambele (59,5125), deci preturile pe mp ale tablei nu depind de segment.
+ *    Spitalul cere tabla zincata de 0,6 mm pe ~7.300 mp de tubulatura.
+ * 2. Grosimea trece de ultima coloana (elastomer 40 mm, spitalul; lista se
+ *    opreste la 32): extrapolare liniara din ultimele doua grosimi. Marcata.
+ */
+function pretPeMp(
+  sistem: SistemMatrice, grosime: number, l: ListaPreturi, dest: Destinatie,
+): { pret: number; nota?: string; motiv?: MotivVerificare } | undefined {
+  const p = l.per_mp[String(grosime)];
+  if (p !== undefined) return { pret: p };
+  for (const d of DESTINATII) {
+    if (d === dest) continue;
+    const alta = listaPe(sistem, d)?.per_mp[String(grosime)];
+    if (alta !== undefined) {
+      return {
+        pret: alta, motiv: "segment_diferit",
+        nota: `${sistem} ${grosime} mm: pret pe mp din lista ${ADJECTIV_DEST[d].toUpperCase()}; lista ${ADJECTIV_DEST[dest]} ` +
+          `n-are grosimea asta pe mp`,
+      };
+    }
+  }
+  if (esteJachetaCuGrosime(sistem)) {
+    const toate = new Map<number, number>();
+    for (const d of DESTINATII) {
+      for (const [k, v] of Object.entries(listaPe(sistem, d)?.per_mp ?? {})) {
+        if (d === dest || !toate.has(Number(k))) toate.set(Number(k), v);
+      }
+    }
+    if (toate.size > 0) {
+      const g = jachetaCareAcopera(grosime, [...toate.keys()]);
+      return {
+        pret: toate.get(g)!, motiv: "grosime_apropiata",
+        nota: `${sistem} ${grosime} mm nu are pret pe mp; s-a luat ${g} mm, cea mai subtire care o acopera`,
+      };
+    }
+  }
+  const grosimi = Object.keys(l.per_mp).map(Number).sort((a, b) => a - b);
+  const [g1, g2] = grosimi.slice(-2);
+  if (g1 !== undefined && g2 !== undefined && grosime > g2) {
+    const p1 = l.per_mp[String(g1)]!;
+    const p2 = l.per_mp[String(g2)]!;
+    const pret = p2 + (p2 - p1) / (g2 - g1) * (grosime - g2);
+    return {
+      pret, motiv: "grosime_extrapolata",
+      nota: `${sistem} ${grosime} mm trece de ultima grosime din lista (${g2} mm): pret pe mp extrapolat din ` +
+        `${g1} si ${g2} mm, ${bani(pret)} €`,
+    };
+  }
+  return undefined;
+}
+
+/**
+ * Celula lipsa din lista INDUSTRIALA, cand rezidentialul o are: pretul
+ * rezidential × raportul median dintre cele doua liste, pe aceeasi grosime.
+ *
+ * Industrialul nu e un coeficient fix peste rezidential, dar pe o coloana de
+ * grosime raportul e stabil: vata e ×1,25 pe 90 din 97 de celule comune,
+ * elastomerul ×1,25 la 9/13/19 mm si ×1,20 la 25/32 mm.
+ */
+function celulaDinRezidential(
+  sistem: SistemMatrice, rand: number, grosime: number, dest: Destinatie,
+): { pret: number; raport: number } | null {
+  if (dest === "rezidential") return null;
+  const rez = listaPe(sistem, "rezidential");
+  const ceruta = listaPe(sistem, dest);
+  const p = rez?.cells[`${rand}|${grosime}`];
+  if (!rez || !ceruta || p === undefined) return null;
+  const rapoarte = Object.keys(ceruta.cells)
+    .filter((k) => k.endsWith(`|${grosime}`) && rez.cells[k])
+    .map((k) => ceruta.cells[k]! / rez.cells[k]!)
+    .sort((a, b) => a - b);
+  if (rapoarte.length === 0) return null;
+  const raport = rapoarte[Math.floor(rapoarte.length / 2)]!;
+  return { pret: p * raport, raport };
 }
 
 function cauta(sistem: SistemMatrice, rand: number, grosime: number | null, l: ListaPreturi): number {
@@ -235,7 +373,7 @@ function celulaDedusa(
 function verificaGrosimeOfertata(
   sistem: SistemMatrice, grosimeCeruta: number | undefined, l: ListaPreturi,
 ): void {
-  if (grosimeCeruta === undefined) return;
+  if (grosimeCeruta === undefined || esteJachetaCuGrosime(sistem)) return;
   const disponibile = l.grosimi_mm;
   if (disponibile.length > 0 && !disponibile.includes(grosimeCeruta)) {
     throw new PozitieNetarifata("grosime_inexistenta", "combinatia diametru/grosime nu exista in lista", {
@@ -407,8 +545,10 @@ function tarifeazaPesteLista(cerere: CerereTarifare): RezultatTarifare | null {
   for (const strat of straturiMatrice(cerere.straturi)) {
     const { lista: l } = listaDe(strat.sistem, dest);
     const chei = Object.keys(l.per_mp);
-    const grosime = strat.grosime_mm ?? (chei.length === 1 ? Number(chei[0]) : undefined);
-    const pMp = grosime === undefined ? undefined : l.per_mp[String(grosime)];
+    const jacheta = strat.grosime_mm === undefined && chei.length > 1
+      ? grosimeJacheta(strat.sistem, chei.map(Number)) : null;
+    const grosime = strat.grosime_mm ?? jacheta?.grosime ?? (chei.length === 1 ? Number(chei[0]) : undefined);
+    const pMp = grosime === undefined ? undefined : pretPeMp(strat.sistem, grosime, l, dest)?.pret;
     if (grosime === undefined || pMp === undefined) return null;
     const mult = multiplicatorOptional(strat.sistem, Math.round(geometric), cerere.forma, dest);
     if (mult === null) return null;
@@ -475,18 +615,22 @@ function tarifeazaDinMatrice(cerere: CerereTarifare): RezultatTarifare {
       : esteJacheta
         ? randPentruJacheta(geometric, randuri)
         : randCelMaiApropiat(geometric, randuri);
-    if (i === 0) {
-      const jos = randInferiorNeconfirmat(geometric, rand, randuri, diametru.tip);
-      if (jos !== null) {
-        const n = `${strat.sistem}: diametrul ${geometric} e la ${bani(geometric - jos)} mm peste randul ${jos}; ` +
-          `s-a luat randul ${rand} (in sus). Ofertele semnate au tarifat o90 si o160 si pe randul de ` +
-          `dedesubt — rotunjire neconfirmata, intrebarea 3.`;
-        note.push(n);
-        noteDeVerificat.push(n);
-        motive.add("rotunjire_neconfirmata");
-      }
+    // Rotunjirea in sus la 1 mm peste un rand (o90, o160) e regula firmei
+    // (intalnirea din 5 octombrie 2026: „randul de sus"), deci nu se mai
+    // marcheaza. Ofertele semnate care au coborat raman „abateri cunoscute".
+    const { grosime, jacheta, acoperita } = grosimeEfectiva(strat.sistem, rand, strat.grosime_mm, listaStrat);
+    if (acoperita !== undefined) {
+      const n = `${strat.sistem} ${acoperita} mm nu e in lista pe randul ${rand}; s-a luat ${grosime} mm, cea mai ` +
+        "subtire care o acopera";
+      note.push(n);
+      noteDeVerificat.push(n);
+      motive.add("grosime_apropiata");
     }
-    const grosime = grosimeEfectiva(strat.sistem, rand, strat.grosime_mm, listaStrat);
+    if (jacheta) {
+      const n = notaJacheta(strat.sistem, jacheta);
+      note.push(n);
+      if (!jacheta.exacta) { noteDeVerificat.push(n); motive.add("grosime_jacheta_apropiata"); }
+    }
 
     // Grosimea CERUTA a stratului decide geometria straturilor de deasupra
     // indiferent daca stratul ajunge inclus in pret — vezi
@@ -507,11 +651,21 @@ function tarifeazaDinMatrice(cerere: CerereTarifare): RezultatTarifare {
     if (inclus) {
       let p: number | undefined;
       if (forma === "mp") {
-        p = listaStrat.per_mp[String(grosime)];
+        const m = grosime === null ? undefined : pretPeMp(strat.sistem, grosime, listaStrat, dest);
+        p = m?.pret;
+        if (m?.nota) { note.push(m.nota); noteDeVerificat.push(m.nota); motive.add(m.motiv!); }
       } else if (grosime !== null && strat.grosime_mm !== undefined
           && listaStrat.cells[`${rand}|${grosime}`] === undefined) {
         const d = celulaDedusa(rand, grosime, listaStrat);
-        if (d === null) {
+        const r = d === null ? celulaDinRezidential(strat.sistem, rand, grosime, dest) : null;
+        if (r !== null) {
+          p = r.pret;
+          const n = `${strat.sistem}: combinatia ø${rand} × ${grosime} mm lipseste din lista ${ADJECTIV_DEST[dest]}; ` +
+            `pret rezidential × ${r.raport.toFixed(3)} (raportul celor doua liste pe ${grosime} mm): ${bani(r.pret)} €`;
+          note.push(n);
+          noteDeVerificat.push(n);
+          motive.add("celula_dedusa");
+        } else if (d === null) {
           p = cauta(strat.sistem, rand, grosime, listaStrat); // arunca `grosime_inexistenta`
         } else {
           p = d.pret;
@@ -598,6 +752,7 @@ export function tarifeazaPeMp(cerere: Omit<CerereTarifare, "diametru" | "forma">
   const matrice = straturiMatrice(cerere.straturi);
   if (matrice.length === 0) throw new PozitieNetarifata("pozitie_fara_straturi", "pozitie fara straturi", { cerere });
   const tarifate: StratTarifat[] = [];
+  const note: string[] = ["tarifat pe suprafata (pret pe mp al fiecarui strat): pozitia n-are diametru"];
   const noteDeVerificat: string[] = [];
   const motive = new Set<MotivVerificare>();
   for (const strat of matrice) {
@@ -608,21 +763,30 @@ export function tarifeazaPeMp(cerere: Omit<CerereTarifare, "diametru" | "forma">
         `${ADJECTIV_DEST[dest]} pentru materialul asta.`);
     }
     const chei = Object.keys(l.per_mp);
-    const grosime = strat.grosime_mm ?? (chei.length === 1 ? Number(chei[0]) : undefined);
+    const jacheta = strat.grosime_mm === undefined && chei.length > 1
+      ? grosimeJacheta(strat.sistem, chei.map(Number)) : null;
+    const grosime = strat.grosime_mm ?? jacheta?.grosime ?? (chei.length === 1 ? Number(chei[0]) : undefined);
     if (grosime === undefined) {
       throw new PozitieNetarifata("grosime_ambigua", "grosime nespecificata si ambigua", { sistem: strat.sistem, disponibile: chei });
     }
-    const p = l.per_mp[String(grosime)];
-    if (p === undefined) {
+    if (jacheta) {
+      const n = notaJacheta(strat.sistem, jacheta);
+      note.push(n);
+      if (!jacheta.exacta) { noteDeVerificat.push(n); motive.add("grosime_jacheta_apropiata"); }
+    }
+    const m = pretPeMp(strat.sistem, grosime, l, dest);
+    if (m === undefined) {
       throw new PozitieNetarifata("fara_pret_pe_mp", "nu exista pret pe mp pentru grosimea ceruta", { sistem: strat.sistem, grosime });
     }
+    if (m.nota) { note.push(m.nota); noteDeVerificat.push(m.nota); motive.add(m.motiv!); }
+    const p = m.pret;
     tarifate.push({
       sistem: strat.sistem, grosime_mm: grosime, diametru_geometric: 0, rand_lista: 0,
       pret_unitar: bani(p), multiplicator: 1, inclus: true,
     });
   }
   const unitar = bani(tarifate.reduce((s, t) => s + t.pret_unitar, 0));
-  const note = ["tarifat pe suprafata (pret pe mp al fiecarui strat): pozitia n-are diametru", ...noteDeVerificat];
+  for (const n of noteDeVerificat) if (!note.includes(n)) note.push(n);
   return {
     straturi: tarifate, pret_unitar: unitar, multiplicator: 1,
     cantitate: cerere.cantitate, total: bani(unitar * cerere.cantitate), moneda: "EUR",

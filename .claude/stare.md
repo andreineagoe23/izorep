@@ -1,7 +1,61 @@
 # Stare curentă
 
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
-> Ultima actualizare: 2 octombrie 2026.
+> Ultima actualizare: 8 octombrie 2026.
+
+## 8 octombrie 2026: răspunsurile de la întâlnire, nicio poziție fără preț
+
+Adrian a fost la firmă pe 5 octombrie; răspunsurile sunt în
+`docs/intrebari-firma.md`, planul pe faze în `docs/plan-implementare.md`.
+Regula cerută de Andrei: **nicio poziție dintr-o cerere de ofertă nu rămâne
+fără preț** (în afară de rafinărie): listele sunt toate, restul se calculează
+după regulile firmei, iar ce stă pe o singură dovadă iese cu preț, dar „De
+verificat”. Nu întrebăm nimic în plus pe Adrian sau pe firmă.
+
+Măsurat pe cele 10 fișiere de client, fără model: **115 poziții fără preț pe
+rezidențial și 129 pe industrial → 0 și 0**. Cu model (spital, Book15, NISAL,
+Transavia inox și abur, Flower City): 0. Cererea TRANSAVIA dă acum Oferta 284
+**99 / 99**, cu tot cu distribuitorul, iar după „Confirmă toate” totalul e
+94.575,06 € fără niciun preț pus de mână.
+
+| Ce era fără preț | Regula | De unde |
+|---|---|---|
+| Inox fără grosime (72 Transavia inox) | 0,4 mm | firma |
+| Aluminiu fără grosime, unde lista are mai multe | 0,8 mm | firma („7. la 0,8”), singura grosime pe mp rezidențială |
+| ø90 / ø160 la 1 mm peste un rând | rândul de sus, nemarcat | firma; ofertele semnate care au coborât rămân abateri |
+| Tablă „min 0,5 mm” | cea mai subțire din listă care o acoperă (0,6) | spitalul, marcat |
+| Tablă 0,6 pe mp pe rezidențial | prețul pe mp din lista industrială | 0,8 e identic în ambele liste |
+| Elastomer 40 mm pe mp | extrapolat din 25 și 32 mm | marcat |
+| Grosime scrisă care nu e în listă („g48”) | cea mai apropiată (ca 20 → 19 la elastomer) | marcat |
+| Grosime ca interval („20 to 50mm”) | capătul de sus | marcat |
+| Casetă fără grosime, două conducte de același ø | grosimea mai mare | marcat |
+| Casetă fără conductă de același ø | conducta cu ø cel mai apropiat | marcat |
+| Fără grosime de nicăieri | grosimea uzuală a firmei, aplicată singură | marcat (ca butonul) |
+| Celulă industrială lipsă | rezidențial × raportul median pe grosime | marcat |
+| Protecția la foc a tubulaturii (spital, Book15, NISAL) | 48 €/m², pe ml × suprafața | Oferta 27.04.2026, EI60; mereu marcat |
+| Torcretul de la spital (fără material pe rând) | recunoscut ca protecție la foc | dispărea din import |
+| Livrare de țeavă cu izolația inclusă | doar izolația din liste | firma: izolația, nu țeava; marcat |
+| Echipament (distribuitorul de abur) | suprafața × preț/mp × 2,47 | factorul din Oferta 284; marcat |
+| Gol EI180 fără dimensiuni (Matari) | golul aceleiași țevi din fișier | marcat |
+| Protecție cu tablă fără ø, UM buc | pe mp | marcat |
+| Bandă autoadezivă pe armături | elastomer 9 mm, primul rând | marcat |
+| Tubulatură flexibilă izolată, rezervor izolat (Book15) | nu se ofertează: vin izolate | firma („nu se face izolația pe țevile preizolate”) |
+| Jachetă inventată de model („protejată cu folie”) | scoasă din preț | spitalul: 23,31 → 6,23 €/ml |
+
+Codurile `protectie_foc_tubulatura` și `livrare_teava` au ieșit din
+`CodNetarifare`: nu mai există drum spre ele. `echipament` rămâne doar fără D
+și L pe rând. Teste: **401** (nou: `tests/fara-pret.test.ts`, care trece toate
+fișierele de client pe ambele segmente). Golden files: doar prețurile
+recalculate, răspunsurile modelului neatinse.
+
+**9 octombrie 2026, Faza 1 închisă:** „Măsurători → Pentru ofertă” poate
+compara rândurile din poze cu lista clientului (un import din istoric, refăcut
+fără model prin `src/import/redeschide.ts`, același drum pe care îl folosește
+acum și ecranul de import). Comparația e în `src/lucrari/comparatie.ts`, pe
+amprenta de la situații; detalii în `ui.md`. **406 teste.** SPIRO peste listă
+rămâne „De verificat”:
+ipoteza „grosime + 1 mm” nu dă 16,36 / 20,30, iar π întreg cu φ + 20 le dă,
+dar strică DN250 / 19 mm, care iese exact cu 3,14.
 
 ## 2 octombrie 2026: audit, necesarul legat de ofertă
 

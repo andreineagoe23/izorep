@@ -21,7 +21,7 @@
 import { describe, it, expect } from "vitest";
 import ExcelJS from "exceljs";
 import {
-  multiplicator, randCelMaiApropiat, tarifeaza, tarifeazaSimplu,
+  multiplicator, randCelMaiApropiat, tarifeaza, tarifeazaPeMp, tarifeazaSimplu,
 } from "../src/pricing/engine.js";
 import {
   pretBandaWrap, pretColier, suprafataGol, tarifeazaGolFoc,
@@ -72,8 +72,8 @@ const CAZURI: { cod: CodNetarifare; de: string; f: () => unknown }[] = [
   },
   {
     cod: "grosime_ambigua",
-    de: "tabla de inox are toate cele trei grosimi la fiecare rand (intrebarea 15)",
-    f: () => tarifeazaSimplu("tabla_inox", 80, undefined, "ml"),
+    de: "elastomer fara grosime: lista are cinci pe rand, iar izolatia (spre deosebire de jacheta) n-are una implicita",
+    f: () => tarifeazaSimplu("elastomer", 50, undefined, "ml"),
   },
   {
     cod: "peste_maximul_listei",
@@ -110,8 +110,8 @@ const CAZURI: { cod: CodNetarifare; de: string; f: () => unknown }[] = [
   },
   {
     cod: "fara_pret_pe_mp",
-    de: "tabla are 0,6 mm in grosimi_mm, dar per_mp doar 0,8",
-    f: () => tarifeazaSimplu("tabla", 100, 0.6, "mp"),
+    de: "vata 25 mm pe mp: intre doua coloane ale listei, iar pe mp motorul nu alege singur o grosime de izolatie",
+    f: () => tarifeazaPeMp({ straturi: [{ sistem: "vata_minerala", grosime_mm: 25 }], cantitate: 1 }),
   },
   {
     cod: "gol_foc_in_matrice",
@@ -173,34 +173,12 @@ const CAZURI: { cod: CodNetarifare; de: string; f: () => unknown }[] = [
     },
   },
   {
-    cod: "protectie_foc_tubulatura",
-    de: "canal de desfumare EI60 (Oferta 27.04.2026, semnat 48 €/m²): altă lucrare, fără listă (întrebarea 8)",
+    cod: "echipament",
+    de: "echipament fara D si L pe rand: suprafata lui nu se poate calcula (cu ele, ca distribuitorul din Oferta 284, are pret)",
     f: () => {
       const r = tarifeazaExtras(extrasa({ sistem: "vata_minerala", diametru_valoare: null, diametru_tip: null,
-        grosime_mm: 60, forma: "mp" }), 1, "rezidential", "tubulatura rectangulara, izolare la foc EI60, vata 60mm");
-      if (r.codEroare) throw new PozitieNetarifata(r.codEroare, r.eroare ?? "", {});
-      return r;
-    },
-  },
-  {
-    cod: "livrare_teava",
-    de: "țeavă de inox cu izolația „inclusiv” (Oferta 27.04.2026, rândul 83, semnat 20,09 €/m; din liste 14,68)",
-    f: () => {
-      const r = tarifeazaExtras(extrasa({ sistem: "vata_minerala", diametru_valoare: 125, diametru_tip: "exterior",
-        grosime_mm: 50, forma: "ml" }), 1, "rezidential",
-        "Edelstahlrohr für Abgas | Teava de inox pentru evacuarea gazelor arse; inclusiv izolatie termica "
-          + "avand grosimea de vata minerala 50 mm; Dimensiuni: Ø125x 3.0 mm");
-      if (r.codEroare) throw new PozitieNetarifata(r.codEroare, r.eroare ?? "", {});
-      return r;
-    },
-  },
-  {
-    cod: "echipament",
-    de: "distribuitor de abur D=500, L=4500 (Oferta 284, semnat 2.296,70 €/buc): listele sunt pe metru de țeavă",
-    f: () => {
-      const r = tarifeazaExtras(extrasa({ sistem: "vata_minerala", diametru_valoare: 500, diametru_tip: "exterior",
         grosime_mm: 100, forma: "ml" }), 1, "rezidential",
-        "Izolare echipament DISTRIBUITOR ABUR cu vata minerala si protectie cu tabla de aluminiu, g100 D=500, L=4500");
+        "Izolare echipament boiler cu vata minerala si protectie cu tabla de aluminiu, g100");
       if (r.codEroare) throw new PozitieNetarifata(r.codEroare, r.eroare ?? "", {});
       return r;
     },
@@ -233,8 +211,7 @@ describe("fiecare cauza de netarifare are un cod stabil", () => {
       "pozitie_fara_straturi", "fara_pret_pe_mp", "gol_fara_dimensiuni",
       "gol_dimensiuni_invalide", "banda_wrap_inexistenta", "colier_inexistent",
       "diametru_conducta_lipsa", "material_conducta_lipsa", "gol_foc_in_matrice",
-      "fara_diametru", "dn_necunoscut", "protectie_foc_tubulatura", "livrare_teava",
-      "echipament",
+      "fara_diametru", "dn_necunoscut", "echipament",
     ];
     const acoperite = new Set(CAZURI.map((c) => c.cod));
     expect(toate.filter((c) => !acoperite.has(c))).toEqual([]);

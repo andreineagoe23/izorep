@@ -199,7 +199,7 @@ describe("tubulatura spiro se citeste ca diametru exterior", () => {
     expect(l.extras.diametru_valoare).toBe(160);
     expect(l.eroare).toBeUndefined();
     expect(l.pret!.pret_unitar).toBe(14.37);
-    expect(l.necesitaValidare).toBe(true);
-    expect((l.pret as { noteDeVerificat?: string[] }).noteDeVerificat?.join(" ")).toContain("intrebarea 3");
+    // Firma, 5 octombrie 2026: „randul de sus" — deci pozitia e gata.
+    expect(l.necesitaValidare).toBe(false);
   });
 });

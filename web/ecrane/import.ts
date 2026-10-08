@@ -530,25 +530,14 @@ export const ecran: Ecran = {
       const s = await incarca(id);
       if (!s) { puneCurent(null); istoric = await listeaza(); deseneaza(); return; }
       pagina.innerHTML = ecranProgres(`Se deschide ${s.nume}…`, null);
-      const { parseFoiBuffer } = await import("../../src/import/parse-workbook.js");
-      const foi = await parseFoiBuffer(s.fisier);
-      // Corecturile de celula se aplica INAINTE de extragere; extragerile salvate
-      // (inclusiv ale modelului) se pun peste, fara sa se recheme modelul.
-      for (const e of s.editari) {
-        const rand = foi.find((f) => f.nume === e.foaie)?.randuri.find((r) => r.rand === e.rand);
-        if (rand) { scrieCelula(rand, e.cel, e.v); reconstruieste(rand); }
-      }
+      const { redeschideImport } = await import("../../src/import/redeschide.js");
       destinatie = s.destinatie ?? "rezidential";
       grosimiPropuse = new Map(s.grosimiPropuse ?? []);
       descrieriSchimbate = new Set(s.descrieriSchimbate ?? []);
       preturiManuale = new Map(s.preturiManuale ?? []);
-      const rez = await proceseazaRegistru(foi, optiuni());
-      for (const x of s.extrase) {
-        rez.rezolvate.set(x.index, { extras: x.extras, sursa: x.sursa, ...(x.text !== undefined ? { text: x.text } : {}) });
-      }
-      reevalueaza(rez, optiuni());
+      const rez = await redeschideImport(s, optiuni());
       puneCurent(id);
-      deschideSesiune({ foi, rez, meta: s, editari: [...s.editari], avertisment: "" });
+      deschideSesiune({ foi: rez.foi, rez, meta: s, editari: [...s.editari], avertisment: "" });
       if (!restaurat) arataMesaj(`Ai deschis ${s.nume}.`);
     }
 

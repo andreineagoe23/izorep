@@ -262,7 +262,7 @@ describe("grosimea de la conducta de acelasi diametru", () => {
     expect(l.pret!.note!.join(" ")).toContain("conducta de acelasi diametru");
   });
 
-  it("doua grosimi pe acelasi diametru nu spun care e a casetei: ramane fara grosime", async () => {
+  it("doua grosimi pe acelasi diametru: caseta ia grosimea mai mare, de verificat", async () => {
     const rez = await proceseazaRegistru(await parseFoi(await registru([
       ANTET,
       [1, CASETA, "buc", 1],
@@ -270,18 +270,34 @@ describe("grosimea de la conducta de acelasi diametru", () => {
       [3, "Izolatii cu vata minerala si protectie cu tabla de aluminiu Di114, g80 - ML", "ml", 10],
     ])), { stoc: stocInMemorie() });
     const l = rez.linii.find((x) => x.bruta.text.includes("Caseta"))!;
-    expect(l.extras.grosime_mm).toBeNull();
-    expect(l.pret).toBeUndefined();
+    expect(l.extras.grosime_mm).toBe(80);
+    expect(l.pret).toBeDefined();
+    expect(l.pret!.motiveDeVerificat).toContain("grosime_propusa");
+    expect(l.necesitaValidare).toBe(true);
   });
 
-  it("nu ia grosimea altui material", async () => {
+  it("nicio conducta de acelasi diametru: grosimea conductei celei mai apropiate, de verificat", async () => {
+    const rez = await proceseazaRegistru(await parseFoi(await registru([
+      ANTET,
+      [1, "Caseta izolatie armaturi cu flanse DN150 din tabla aluminiu si vata minerala", "buc", 1],
+      [2, "Izolatii cu vata minerala si protectie cu tabla de aluminiu Di140, g50 - ML", "ml", 27],
+    ])), { stoc: stocInMemorie() });
+    const l = rez.linii.find((x) => x.bruta.text.includes("Caseta"))!;
+    expect(l.extras.grosime_mm).toBe(50);
+    expect(l.pret!.noteDeVerificat!.join(" ")).toContain("cea mai apropiata");
+    expect(l.necesitaValidare).toBe(true);
+  });
+
+  it("nu ia grosimea altui material: fara vata in lista, grosimea uzuala a vatei", async () => {
     const rez = await proceseazaRegistru(await parseFoi(await registru([
       ANTET,
       [1, CASETA, "buc", 1],
       [2, "Izolatie elastomer 19 mm pe teava DN100 apa rece", "ml", 50],
     ])), { stoc: stocInMemorie() });
     const l = rez.linii.find((x) => x.bruta.text.includes("Caseta"))!;
-    expect(l.extras.grosime_mm).toBeNull();
+    // DN100 pe vata: 100 mm (grosimile uzuale ale firmei), nu cei 19 mm ai elastomerului.
+    expect(l.extras.grosime_mm).toBe(100);
+    expect(l.pret!.motiveDeVerificat).toContain("grosime_propusa");
   });
 });
 
@@ -475,9 +491,12 @@ describe("grosimile propuse", () => {
 
   it("intra in pret, dar linia ramane de validat si nu devine a omului", async () => {
     const rez = await proceseazaRegistru(await parseFoi(await registru([ANTET, [1, CASETA, "buc", 6]])), { stoc: stocInMemorie() });
-    const fara = rez.linii.find((l) => l.bruta.text.includes("Caseta"))!;
-    expect(fara.extras.grosime_mm).toBeNull();
-    expect(fara.pret).toBeUndefined();
+    // Fara nimic pe rand si fara conducte in lista: grosimea uzuala (DN50 → 50 mm), de verificat.
+    const uzuala = rez.linii.find((l) => l.bruta.text.includes("Caseta"))!;
+    expect(uzuala.extras.grosime_mm).toBe(50);
+    expect(uzuala.pret).toBeDefined();
+    expect(uzuala.necesitaValidare).toBe(true);
+    const fara = uzuala;
 
     reevalueaza(rez, { stoc: stocInMemorie(), grosimiPropuse: new Map([[fara.extras.index, 40]]) });
     const cu = rez.linii.find((l) => l.bruta.text.includes("Caseta"))!;
@@ -572,14 +591,31 @@ describe("reguli din Oferta 27.04.2026 semnată", () => {
 });
 
 describe("protecția la foc a tubulaturii nu se tarifează din listele de izolație", () => {
-  it("canalul de desfumare EI60 (semnat 48 €/m²) nu iese 22,22 din vata pe mp", () => {
+  it("canalul de desfumare EI60 iese 48 €/m², ca in Oferta 27.04.2026, nu 22,22 din vata pe mp", () => {
     const text = "Entrauchungskanal | Sistem pentru presurizare, tubulatura rectangulara din otel zincat, "
       + "izolare termica la foc a tubulaturii pentru obtinerea clasificarii EI60min, cu vata minerala grosime 60mm";
     const r = tarifeazaExtras(extrasa({
       index: 1, sistem: "vata_minerala", diametru_valoare: null, diametru_tip: null, grosime_mm: 60, forma: "mp",
     }), 17, "rezidential", text);
-    expect(r.pret).toBeUndefined();
-    expect(r.codEroare).toBe("protectie_foc_tubulatura");
+    expect(r.pret!.pret_unitar).toBe(48);
+    expect(r.pret!.total).toBe(816);
+    expect((r.pret as RezultatTarifare).motiveDeVerificat).toContain("protectie_foc");
+  });
+
+  it("torcretul de la spital, citit de model „inchidere de gol”, iese tot protectie la foc", () => {
+    const text = "Protectie la foc EI 60 pentru tubulaturile din tabla zincata - torcret Parafoc 20 mm";
+    const r = tarifeazaExtras(extrasa({ index: 1, sistem: "goluri_foc" }), 1177, "rezidential", text);
+    expect(r.pret!.pret_unitar).toBe(48);
+    expect((r.pret as RezultatTarifare).motiveDeVerificat).toContain("protectie_foc");
+  });
+
+  it("tubulatura circulara in ml: 48 €/m² × suprafata pe metru", () => {
+    const text = "Circular duct insulated with basalt mineral wool with a thickness of 60 mm, fire-resistant, Ø450 mm";
+    const r = tarifeazaExtras(extrasa({
+      index: 1, sistem: "vata_minerala", diametru_valoare: 450, diametru_tip: "exterior", grosime_mm: 60, forma: "ml",
+    }), 10, "rezidential", text);
+    // (450 + 2 × 60) / 1000 × 3,14 = 1,79 m²/ml
+    expect(r.pret!.pret_unitar).toBe(85.92);
   });
 
   it("tubulatura izolată obișnuit, fără clasă de foc, se tarifează", () => {
@@ -671,17 +707,21 @@ describe("grosimea scrisa de client nu se completeaza de la conducta", () => {
       [2, "Izolatii cu vata minerala si protectie cu tabla de aluminiu Di76, g50 - ML", "ml", 20],
     ])), { stoc: stocInMemorie() });
     const cot = rez.linii.find((x) => x.bruta.text.includes("g48"))!;
-    expect(cot.extras.grosime_mm).toBeNull();
-    expect(cot.pret).toBeUndefined();
+    // 48 ramane cum l-a scris clientul; pretul e pe cea mai apropiata grosime din lista, marcat.
+    expect(cot.extras.grosime_mm).toBe(48);
+    expect((cot.pret as RezultatTarifare).straturi[0]!.grosime_mm).toBe(50);
+    expect(cot.pret!.motiveDeVerificat).toContain("grosime_apropiata");
+    expect(cot.pret!.note!.join(" ")).not.toContain("conducta de acelasi diametru");
   });
 });
 
 describe("livrarea de teava, cu izolatia in pret", () => {
-  it("„Teava din otel zincata ... imbinata ... izolatie 20 mm” (spital) e alta lucrare", () => {
+  it("„Teava din otel zincata ... imbinata ... izolatie 20 mm” (spital): doar izolatia, de verificat", () => {
     const r = tarifeazaExtras(extrasa({ index: 0, sistem: "vata_minerala", diametru_valoare: 25, grosime_mm: 20 }), 1,
       "rezidential", "Teava din otel zincata serie medie, Dn 1\", imbinata prin cuplaje rapide,inclusiv fitinguri, "
         + "treceri prin pereti si plansee, sistem complet de sustinere, izolatie in grosime de 20 mm protejata cu folie");
-    expect(r.codEroare).toBe("livrare_teava");
+    expect(r.pret!.pret_unitar).toBe(tarifeazaSimplu("vata_minerala", 25, 20, "ml").pret_unitar);
+    expect((r.pret as RezultatTarifare).motiveDeVerificat).toContain("doar_izolatia");
   });
 
   it("„Izolatie ... pe teava DN25” ramane izolatie", () => {
@@ -726,7 +766,7 @@ describe("grosimea de la conductă nu trimite linia la model", () => {
 });
 
 describe("izolarea unui echipament", () => {
-  it("distribuitorul de abur (Oferta 284: 2.296,70) nu primește preț pe metru de țeavă", () => {
+  it("distribuitorul de abur iese 2.296,70, ca in Oferta 284, din suprafata lui, nu pe metru de țeavă", () => {
     const text = "IZOLATII | Izolare echipament DISTRIBUITOR ABUR cu vata minerala si protectie cu tabla de aluminiu, "
       + "g100 D=500, L=4500, 10 racorduri";
     // Ce citea modelul: D=500 ca țeavă, deci 191,83 € prin formula pe mp.
@@ -734,7 +774,13 @@ describe("izolarea unui echipament", () => {
       index: 0, sistem: "vata_minerala", diametru_valoare: 500, diametru_tip: "exterior", grosime_mm: 100,
       straturi_extra: [{ sistem: "tabla", grosime_mm: null }],
     }), 1, "rezidential", text);
-    expect(r.pret).toBeUndefined();
+    expect(r.pret!.pret_unitar).toBe(2296.7);
+    expect((r.pret as RezultatTarifare).motiveDeVerificat).toContain("echipament_suprafata");
+  });
+
+  it("echipament fara D si L pe rand: ramane fara pret, cu motivul", () => {
+    const r = tarifeazaExtras(extrasa({ index: 0, sistem: "vata_minerala", grosime_mm: 100 }), 1,
+      "rezidential", "Izolare echipament boiler cu vata minerala 100 mm");
     expect(r.codEroare).toBe("echipament");
   });
 

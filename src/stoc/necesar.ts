@@ -146,7 +146,9 @@ export function necesarDinLinii(linii: LinieProcesata[], adaos = ADAOS_IMPLICIT,
       m.pozitii++;
       if (sumaLista > 0) m.valoareOferta += valoareLinie * (dinLista(s) / sumaLista);
       const peMetru = m2PeMetru(s.diametru_geometric, s.grosime_mm ?? 0);
-      if (forma === "mp") m.brutM2 += cantitate;
+      // Echipamentul (distribuitorul de abur) n-are diametru: suprafata lui e pe pret.
+      if (l.pret.suprafata_mp !== undefined) m.brutM2 += cantitate * l.pret.suprafata_mp;
+      else if (forma === "mp") m.brutM2 += cantitate;
       else if (forma === "ml") {
         m.brutMl += cantitate;
         m.brutM2 += cantitate * peMetru;

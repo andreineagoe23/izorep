@@ -218,6 +218,12 @@ const RE_GROSIME_COMPACT = /\bg\s?(\d{2,3})\b/;
 export function scrieGrosime(text: string): boolean {
   return RE_GROSIME.test(text) || RE_GROSIME_COMPACT.test(text);
 }
+
+/** Grosimea de izolatie scrisa pe rand, chiar una care nu e in lista („g48"). */
+export function grosimeScrisa(text: string): number | null {
+  const m = text.match(RE_GROSIME) ?? text.match(RE_GROSIME_COMPACT);
+  return m ? Number(m[1]) : null;
+}
 const RE_MM = /(\d{1,3})\s*mm\b/g;
 /**
  * Dimensiunea golului la inchiderile goluri la foc: "130/130", "1400/600".
@@ -259,12 +265,49 @@ export function areIntervalDeGrosime(text: string): boolean {
   return intreg || RE_INTERVAL_ZECIMAL.test(text);
 }
 
-function inInterval(text: string, g: number): boolean {
+/** Capatul de sus al intervalului din care face parte `g`, sau `null`. */
+function capatulDeSus(text: string, g: number): number | null {
   for (const m of text.matchAll(RE_INTERVAL_MM)) {
     const a = Number(m[1]), b = Number(m[2]);
-    if (a < b && (g === a || g === b)) return true;
+    if (a < b && (g === a || g === b)) return b;
   }
-  return false;
+  return null;
+}
+
+/**
+ * Protectia la foc a TUBULATURII: o tubulatura plus un semnal de clasa la foc.
+ * Alta lucrare decat izolatia termica din liste; pretul are regula lui
+ * (`tarifeazaProtectieFoc` din `nucleu.ts`).
+ *
+ * Cere AMBELE: o tubulatura (nu o teava) si un semnal de clasa la foc. O teava
+ * izolata „rezistenta la temperatura" sau o inchidere de gol nu intra aici.
+ */
+const RE_TUBULATURA = /tubulatur|\bduct\b|luftleit|kanal\b|entrauchung/i;
+const RE_CLASA_FOC = /\bEI\s?\d{2,3}\b|\bE\d{3}\b|fire[- ]?resist|rezistent\w*\s+la\s+foc|izolare\s+(?:termica\s+)?la\s+foc|brandschutz/i;
+
+export function esteProtectieLaFocTubulatura(text: string): boolean {
+  return RE_TUBULATURA.test(text) && RE_CLASA_FOC.test(text);
+}
+
+/**
+ * Randul spune cu ce se protejeaza tubulatura la foc. Fara asta, „Tubulatura
+ * rectangulara ... EI 60" e livrarea tubulaturii, nu lucrarea firmei.
+ *
+ * `cerere-de-oferta-spital.xlsx`, foile „izolatie - torcret" si „tublt RF +
+ * torcret": „Protectie la foc EI 60 pentru tubulaturile din tabla zincata -
+ * torcret Parafoc 20 mm", 1.177 mp. Fara material numit, randul nu avea sistem
+ * si disparea din import fara urma; cu model, iesea „inchidere de gol, lipsesc
+ * dimensiunile".
+ */
+const RE_PROTECTIE_FOC = /torcret|parafoc|protec[țt]i[ae]\s+la\s+foc|protejat\w*\s+(?:la\s+foc|cu\s+torcret)/i;
+
+/** Grosimea protectiei la foc: „Parafoc 20 mm", „torcret 25 mm". */
+const RE_GROSIME_PROTECTIE = /(?:parafoc|torcret)\D{0,12}?(\d{2,3})\s*mm/i;
+
+/** Grosimea protectiei la foc scrisa pe rand, sau `null`. */
+export function grosimeProtectieFoc(text: string): number | null {
+  const m = text.match(RE_GROSIME_PROTECTIE);
+  return m ? Number(m[1]) : null;
 }
 
 /**
@@ -415,7 +458,11 @@ function grosimeLangaSistem(
         // "a thickness of 0.6 – 0.8 mm" (`cerere-de-oferta-book15.xlsx`) e un
         // interval, nu o grosime: alegerea ramane a omului.
         if (/\d\s*[–-]\s*$/.test(fereastra.slice(0, nr.index))) continue;
-        if (jacheta.has(zecimal(nr[1]!))) return zecimal(nr[1]!);
+        // Si o grosime care nu e in lista („min 0,5 mm", spitalul): motorul o
+        // duce la cea mai subtire din lista care o acopera, marcat. Altfel calea
+        // fara model lua 0,8 implicit, iar cea cu model 0,6 — alt pret.
+        const v = zecimal(nr[1]!);
+        if (jacheta.has(v) || (v >= 0.3 && v <= 1.5)) return v;
       }
       const inainte = /(?<![\d.,])(\d(?:[.,] ?\d{1,2})?)\s*mm\s*$/i
         .exec(text.slice(Math.max(0, gasit.index! - FEREASTRA_INAINTE), gasit.index!));
@@ -493,6 +540,21 @@ export function extrageDeterminist(
   const toate = gasite.length > 0
     ? gasite
     : (sectiune ? sistemeDinText(sectiune) : []);
+  // Protectia la foc a tubulaturii fara material numit: vata minerala, ca
+  // solutiile pe care le da firma (Conlit, Techrock); pretul nu vine din lista
+  // de vata, ci din regula protectiei la foc.
+  if (toate.length === 0 && esteProtectieLaFocTubulatura(text) && RE_PROTECTIE_FOC.test(text)) {
+    const gp = text.match(RE_GROSIME_PROTECTIE);
+    const dinUm = um ? FORMA.find(([, re]) => re.test(um))?.[0] : undefined;
+    const forma = dinUm === "mp" || dinUm === "ml" ? dinUm : "mp";
+    return {
+      linie: {
+        ...gol, sistem: "vata_minerala", grosime_mm: gp ? Number(gp[1]) : null, forma,
+        incredere: 0.99, motiv: "protectie la foc a tubulaturii",
+      },
+      complet: true,
+    };
+  }
   const sistem = toate[0] ?? null;
   // Ce mai e numit pe rand, peste primul strat. O descriere ca "Izolatii cu
   // vata minerala si protectie cu tabla de inox 304 Di21, g40" cumpara DOUA
@@ -578,7 +640,11 @@ export function extrageDeterminist(
   // O grosime care e capatul unui INTERVAL nu e grosimea pozitiei: Book15,
   // „insulated with 20 to 50mm mineral wool", 4.148 m², iesea „Gata" pe 50 mm
   // (83.872 €). Intervalul e decizia omului, ca la „0.6 – 0.8 mm" de tabla.
-  if (grosime_mm !== null && inInterval(text, grosime_mm)) grosime_mm = null;
+  //
+  // Din 8 octombrie 2026 se ia CAPATUL DE SUS, marcat (`grosime_interval` in
+  // `nucleu.ts`): nicio pozitie de cerere nu ramane fara pret, iar grosimea mai
+  // mare e cea care acopera cerinta oricum s-ar citi.
+  if (grosime_mm !== null) grosime_mm = capatulDeSus(text, grosime_mm) ?? grosime_mm;
 
   const dinUm = um ? FORMA.find(([, re]) => re.test(um))?.[0] : undefined;
   const forma = formaExplicitaDinText(text) ?? dinUm ?? FORMA.find(([, re]) => re.test(text))?.[0] ?? null;

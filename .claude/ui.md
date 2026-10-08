@@ -550,6 +550,16 @@ dinainte de ofertă nu au încă un șantier.
   Playwright pe TRANSAVIA, 390 / 768 / 1440 / 1920 px, ambele teme: zero
   derulare, zero erori; drumul spre ofertă neschimbat.
 
+- **Lista clientului față de măsurători** (9 octombrie 2026, întrebarea tehnică
+  1: firma măsoară și când clientul a trimis o listă). În cardul „Trimite la
+  ofertă”, „Compară cu lista clientului (opțional)” alege un import din
+  istoric; „Compară” îl reface fără model (`redeschideImport`) și pune sub
+  carduri un tabel: poziție, în listă, măsurat, diferență, stare. Sus ce nu se
+  potrivește (cantitate diferită, nu s-a măsurat, lipsește din listă), la final
+  ce e la fel. Potrivirea e pe amprentă, ca la situații; cantitățile se adună pe
+  zone; sub 1 % e rotunjire. Oferta se face tot din măsurători. Verificat cu
+  Playwright pe TRANSAVIA + două rânduri scrise de mână, 390 / 768 / 1440 /
+  1920 px, ambele teme: zero derulare, zero erori.
 - Sus, tipul ofertei și „Alege pozele” (mai multe deodată, câte o poză pe
   pagină de carnet). Fiecare poză devine un card: poza în stânga (lipită sus
   cât derulezi, clic = mare în altă filă), rândurile citite în dreapta, pe

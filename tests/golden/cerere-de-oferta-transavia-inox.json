@@ -29,9 +29,9 @@
       "avertismente": [
         "grosime_in_afara_listei"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "combinatia diametru/grosime nu exista in lista"
+      "pret_unitar": 40.14,
+      "total": 401.4,
+      "eroare": null
     },
     {
       "index": 28,
@@ -59,9 +59,9 @@
       "avertismente": [
         "grosime_in_afara_listei"
       ],
-      "pret_unitar": null,
-      "total": null,
-      "eroare": "combinatia diametru/grosime nu exista in lista"
+      "pret_unitar": 56.13,
+      "total": 112.26,
+      "eroare": null
     },
     {
       "index": 48,
