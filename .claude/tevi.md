@@ -164,12 +164,15 @@ Regula firmei, din apelul din 29 septembrie 2026:
   (DN200–DN300 pe ISO): continuă șirul 114 · 140 · 168 · 219 · 273 · 324 și
   scade cum trebuie (țeavă mai groasă, mai puține piese pe metru). De
   confirmat; peste ø324 nu s-a spus nimic, codul pune tot 1.
-- Sub 3 țoli, piesele rămân numărate în bucăți pe tubul lor (regula pentru ele
-  nu a fost spusă).
+- Sub 3 țoli piesele se taie tot din tub: 3 pe metru, presupus (9 octombrie
+  2026, Faza 2); flanșele, casetele și reducțiile urmează aceeași regulă, fiindcă
+  firma a spus că echivalența din listă e doar pentru ofertă. Adrian a corectat
+  pe foaia din 5 octombrie „119–123” în „219–273 → 1:1”, cum citea deja codul.
 
 Lista de prețuri include manopera, deci necesarul e mai mic decât oferta.
-Scopul lui e să nu rămână material pe stoc: rezerva de 5–10 % din registru nu
-mai e implicită, se alege.
+Scopul lui e să nu rămână material pe stoc: rezerva peste calcul e zero. Din 9
+octombrie 2026 rămân doar pierderile la croit, pe categorie (tablă și plăci
+10 %, tuburi 0; S15, S16).
 
 ### Seriile pe material — ce lipsea din cod
 

@@ -9,8 +9,8 @@
  * Depozitul e injectabil ca sa poata fi testat in Node, si e best-effort, ca
  * `meniu-stare.ts`: blocat sau stricat, ecranul porneste gol, nu cade.
  */
-import type { Miscare } from "../src/stoc/registru.js";
-import type { MaterialNecesar } from "../src/stoc/necesar.js";
+import type { Ambalaj, Miscare } from "../src/stoc/registru.js";
+import type { MaterialNecesar, Pierderi } from "../src/stoc/necesar.js";
 
 export const CHEIE_DEPOZIT = "izorep-depozit";
 
@@ -25,7 +25,12 @@ export interface NecesarLucrare {
   obiectiv: string;
   /** Depozitul santierului, daca omul l-a legat de unul. */
   santier?: string;
-  adaos: number;
+  /** Pierderile la croit cu care s-a calculat (lipsesc la necesarurile de dinainte de 9 octombrie 2026). */
+  pierderi?: Pierderi;
+  /** Pragul tub / placa, in mm. */
+  pragTub?: number;
+  /** Rezerva peste calcul, la necesarurile vechi; firma nu tine rezerva (S21). */
+  adaos?: number;
   materiale: MaterialNecesar[];
   /** Cate pozitii nu au necesar calculat (fara pret, pret pus de mana, goluri la foc). */
   faraNecesar: number;
@@ -34,6 +39,11 @@ export interface NecesarLucrare {
 export interface StareDepozit {
   miscari: Miscare[];
   necesare: NecesarLucrare[];
+  /**
+   * Cum se cumpara fiecare material (S13), pe `cheieBaza`: din listele
+   * furnizorilor, cand vin. Lipsa = se comanda exact cat iese din calcul.
+   */
+  ambalaje?: Record<string, Ambalaj>;
 }
 
 export const GOL: StareDepozit = { miscari: [], necesare: [] };
@@ -54,7 +64,11 @@ export function citesteDepozit(d?: Storage): StareDepozit {
     const s = JSON.parse(brut) as Partial<StareDepozit>;
     return {
       miscari: Array.isArray(s.miscari) ? s.miscari : [],
-      necesare: Array.isArray(s.necesare) ? s.necesare : [],
+      // Necesarurile de dinainte de 9 octombrie 2026 aveau piesele in bucati, nu in metri.
+      necesare: Array.isArray(s.necesare)
+        ? s.necesare.map((n) => ({ ...n, materiale: n.materiale.map((m) => Object.assign({ piese: 0, piesePresupuse: 0, pePozitie: [] }, m)) }))
+        : [],
+      ...(s.ambalaje && typeof s.ambalaje === "object" ? { ambalaje: s.ambalaje } : {}),
     };
   } catch {
     return { miscari: [], necesare: [] };

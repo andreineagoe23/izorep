@@ -55,7 +55,12 @@ Pe 9 octombrie: „Măsurători → Pentru ofertă” compară rândurile din po
 lista clientului (întrebarea tehnică 1). SPIRO peste listă rămâne „De
 verificat”: nicio regulă nu dă și SPIRO ø250 / ø315, și DN250 exact.
 
-## Faza 2. Lista de materiale corectă
+## Faza 2. Lista de materiale corectă — făcută, 9 octombrie 2026
+
+Toate cele opt puncte de mai jos sunt în cod, cu teste (`tests/necesar.test.ts`,
+`tests/stoc.test.ts`), și verificate în browser. Detaliile în `.claude/stare.md`
+(9 octombrie 2026). Necesarul TRANSAVIA nu mai are rânduri „de stabilit”;
+testul cu comanda reală a firmei se scrie când vine comanda.
 
 Doar logică în `src/stoc/`, fără bază de date. Se testează pe TRANSAVIA.
 

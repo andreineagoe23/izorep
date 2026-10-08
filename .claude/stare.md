@@ -3,6 +3,30 @@
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
 > Ultima actualizare: 8 octombrie 2026.
 
+## 9 octombrie 2026: Faza 2, lista de materiale
+
+Planul din `docs/plan-implementare.md`, Faza 2, făcut. Necesarul
+(`src/stoc/necesar.ts`) și stocul (`src/stoc/registru.ts`):
+
+| Ce | Cum | De unde |
+|---|---|---|
+| Piesele (cot, teu, flanșă, casetă, reducție) | trecute în metri de țeavă: 3 / 2 / 1 pe metru, apoi tub sau m²; nu mai există „+ N buc., de stabilit” | firma: echivalența doar în ofertă; sub 3 țoli și peste ø273 presupus, marcat |
+| Pierderi la croit | pe categorie: tablă 10 %, plăci 10 %, tuburi 0; se schimbă din cardul „Materiale de comandat” | S15, S16; rezerva peste calcul a ieșit (S21, „să nu rămână marfă”) |
+| Tub sau placă | pragul se alege: 3 țoli implicit, până la „toate în tuburi” | S12 |
+| Tabla | și în kg (densitate × grosime: aluminiu 2,70, inox 7,93) | S13 |
+| Necesarul pe poziție | `pePozitie`: material pe unitatea fiecărei poziții din plan | baza consumului din situații (Faza 6) |
+| Marca | pe articolul din stoc (intrare), nu pe necesar; „De comandat” adună toate mărcile; costul e media pe mărci | S11 |
+| Ambalajul | pe material: unitate + conținut; comanda se rotunjește în sus, restul rămâne în depozit | S13, S14; listele furnizorilor le completează |
+| Material adăugat de mână | pe necesar, cu motivul (goluri la foc, distribuitor) | S19, S20 |
+| Materialul clientului | marcat pe rând: nu se comandă, valoare zero | S38 |
+
+Necesarurile vechi din browser (cu `bucati` și `adaos`) se citesc mai departe:
+piesele lor apar ca zero. Verificat cu Playwright pe TRANSAVIA, de la import
+la „Depozit și stoc” (prag 4 țoli, plăci 5 %, ambalaj, client, material de
+mână, intrare cu marcă), 390 / 768 / 1440 / 1920 px, ambele teme: zero
+derulare, zero erori — după ce a prins o redesenare dublă a cardului la
+`change` (reparată, `redeseneazaNecesar`). **414 teste.**
+
 ## 8 octombrie 2026: răspunsurile de la întâlnire, nicio poziție fără preț
 
 Adrian a fost la firmă pe 5 octombrie; răspunsurile sunt în

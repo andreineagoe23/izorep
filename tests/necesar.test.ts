@@ -13,9 +13,12 @@ import { parseFoi } from "../src/import/parse-workbook.js";
 import { proceseazaRegistru } from "../src/import/nucleu.js";
 import { stocInMemorie } from "../src/import/memorie.js";
 import { importaFisier } from "../src/import/pipeline.js";
-import { m2PeMetru, necesarDinLinii, piesePeMetru } from "../src/stoc/necesar.js";
+import { PIERDERI_IMPLICITE, m2PeMetru, necesarDinLinii, piesePeMetru } from "../src/stoc/necesar.js";
+
+/** Fără pierderi la croit: geometria curată, ca în exemplele firmei. */
+const FARA = { pierderi: { tub: 0, placa: 0, tabla: 0 } };
 import { articolDin } from "../src/stoc/registru.js";
-import { cuAjustare, imparte, totalOferta } from "../web/oferta.js";
+import { cuAjustare, imparte, planDinOferta, totalOferta } from "../web/oferta.js";
 import type { RezultatTarifare } from "../src/pricing/types.js";
 
 let dir: string;
@@ -42,7 +45,7 @@ describe("necesarul de materiale", () => {
 
   it("peste 3 țoli: plăci pe m², nu tuburi — ø114 cu vată 30, 100 m → 55 m²", async () => {
     const l = await linii([[1, "Izolatii cu vata minerala si protectie cu tabla de aluminiu Di114, g30 - ML", "ml", 100]]);
-    const n = necesarDinLinii(l);
+    const n = necesarDinLinii(l, FARA);
     const vata = n.materiale.find((m) => m.sistem === "vata_minerala")!;
     expect(vata.rand).toBeNull();
     expect(vata.m2).toBe(55);
@@ -64,26 +67,59 @@ describe("necesarul de materiale", () => {
       [1, "Izolatii cu vata minerala si protectie cu tabla de aluminiu Di114, g30 - COT", "buc", 6],
       [2, "Izolatii cu vata minerala si protectie cu tabla de aluminiu Di169, g30 - TEU", "buc", 4],
     ]);
-    const vata = necesarDinLinii(l).materiale.find((m) => m.sistem === "vata_minerala")!;
+    const vata = necesarDinLinii(l, FARA).materiale.find((m) => m.sistem === "vata_minerala")!;
     // 6 coturi / 3 = 2 m × 0,55 + 4 teuri / 2 = 2 m × 0,72 (168,3 + 60 → 0,7169)
     expect(vata.m2).toBe(Math.round((2 * 0.55 + 2 * 0.72) * 100) / 100);
-    expect(vata.bucati).toBe(0);
+    expect(vata.piese).toBe(10);
+    expect(vata.piesePresupuse).toBe(0);
   });
 
-  it("piesele sub 3 țoli se numără în bucăți, pe tubul lor", async () => {
+  it("piesele sub 3 țoli se taie din tub: 3 pe metru, pe regulă presupusă", async () => {
     const l = await linii([
       [1, "Caseta izolatie armaturi cu flanse DN50 din tabla aluminiu si vata minerala gr. 40 mm", "buc", 3],
       [2, "Izolatii cu vata minerala si protectie cu tabla de aluminiu Di60, g40 - ML", "ml", 10],
     ]);
-    const vata = necesarDinLinii(l).materiale.find((m) => m.sistem === "vata_minerala")!;
-    expect(vata.bucati).toBe(3);
-    expect(vata.ml).toBe(10);
+    const vata = necesarDinLinii(l, FARA).materiale.find((m) => m.sistem === "vata_minerala")!;
+    expect(vata.ml).toBe(11);
+    expect(vata.piese).toBe(3);
+    expect(vata.piesePresupuse).toBe(3);
   });
 
-  it("fără rezervă implicit (să nu rămână pe stoc); rezerva e un parametru", async () => {
+  it("fără rezervă; pierderile la croit sunt pe categorie: tablă și plăci 10 %, tuburi 0 (S15, S16)", async () => {
+    const l = await linii([
+      [1, "Izolatii cu vata minerala si protectie cu tabla de aluminiu Di114, g30 - ML", "ml", 100],
+      [2, "Izolatii cu vata minerala si protectie cu tabla de aluminiu Di60, g40 - ML", "ml", 20],
+    ]);
+    const n = necesarDinLinii(l);
+    expect(n.pierderi).toEqual(PIERDERI_IMPLICITE);
+    const placa = n.materiale.find((m) => m.sistem === "vata_minerala" && m.rand === null)!;
+    const tub = n.materiale.find((m) => m.sistem === "vata_minerala" && m.rand === 60)!;
+    expect([placa.categorie, placa.m2]).toEqual(["placa", 60.5]);
+    expect([tub.categorie, tub.ml]).toEqual(["tub", 20]);
+    expect(n.materiale.find((m) => m.sistem === "tabla")!.pierdere).toBe(0.1);
+  });
+
+  it("tabla are și kg: densitate × grosime, 2,70 la aluminiu (0,6 mm = 1,62 kg/m²; S13: se cumpără la kg)", async () => {
     const l = await linii([[1, "Izolatii cu vata minerala si protectie cu tabla de aluminiu Di114, g30 - ML", "ml", 100]]);
-    expect(necesarDinLinii(l).materiale[0]!.m2).toBe(55);
-    expect(necesarDinLinii(l, 0.1).materiale[0]!.m2).toBe(60.5);
+    const tabla = necesarDinLinii(l, FARA).materiale.find((m) => m.sistem === "tabla")!;
+    expect(tabla.grosime_mm).toBe(0.6);
+    expect(tabla.kg).toBeCloseTo(tabla.m2 * 1.62, 1);
+  });
+
+  it("tuburi și peste 3 țoli, când șantierul o cere (S12): pragul se mută", async () => {
+    const l = await linii([[1, "Izolatii cu vata minerala si protectie cu tabla de aluminiu Di114, g30 - ML", "ml", 100]]);
+    const vata = necesarDinLinii(l, { ...FARA, pragTub: 114 }).materiale.find((m) => m.sistem === "vata_minerala")!;
+    expect([vata.rand, vata.ml, vata.categorie]).toEqual([114, 100, "tub"]);
+  });
+
+  it("necesarul pe poziție: cât material intră într-o unitate a fiecărei poziții din plan", async () => {
+    const l = await linii([
+      [1, "Izolatii cu vata minerala si protectie cu tabla de aluminiu Di114, g30 - ML", "ml", 100],
+      [2, "Izolatii cu vata minerala si protectie cu tabla de aluminiu Di114, g30 - COT", "buc", 6],
+    ]);
+    const vata = necesarDinLinii(l, FARA).materiale.find((m) => m.sistem === "vata_minerala")!;
+    // Poziția 1: 0,55 m² pe metru; poziția 2: un cot = 1/3 m × 0,55.
+    expect(vata.pePozitie).toEqual([{ pozitie: 1, peUnitate: 0.55 }, { pozitie: 2, peUnitate: 0.1833 }]);
   });
 
   it("fiecare material știe cât valorează în ofertă (lista, cu manoperă)", async () => {
@@ -105,7 +141,7 @@ describe("necesarul de materiale", () => {
     ]);
     const oferta = imparte(cuAjustare(l, 10)).oferta;
     expect(oferta).toHaveLength(2);
-    const n = necesarDinLinii(oferta, 0, 3);
+    const n = necesarDinLinii(oferta, { discountProcent: 3 });
     const suma = n.materiale.reduce((t, m) => t + m.valoareOferta, 0);
     expect(suma).toBeCloseTo(totalOferta(oferta) * 0.97, 1);
   });
@@ -122,14 +158,37 @@ describe("necesarul de materiale", () => {
     const cale = "../attachments/clienti/cerere-de-oferta-transavia-abur.xlsx";
     if (!existsSync(cale)) return;
     const l = (await importaFisier(cale, { faraModel: true, stoc: stocInMemorie() })).linii;
-    const n = necesarDinLinii(l, 0);
+    const n = necesarDinLinii(l, FARA);
     expect(n.faraNecesar).toEqual([]);
     // Distribuitorul: g100, D=500, L=4500 → 10,66 m² de vată 100 mm, pe plăci (peste 3 țoli).
     const vata100 = n.materiale.find((m) => m.sistem === "vata_minerala" && m.grosime_mm === 100 && m.rand === null)!;
     expect(vata100.m2).toBeGreaterThanOrEqual(10.66);
-    const mlOferta = l.filter((x) => x.pret && x.extras.sistem === "vata_minerala" && x.extras.forma === "ml")
-      .reduce((s, x) => s + (x.bruta.cantitate ?? 0), 0);
+    // Metrii din ofertă, plus piesele trecute în metri (n / piese pe metru).
+    const mlOferta = l.filter((x) => x.pret && x.extras.sistem === "vata_minerala" && x.extras.forma !== "mp"
+        && !(x.pret as RezultatTarifare).suprafata_mp)
+      .reduce((s, x) => s + (x.extras.forma === "ml" ? (x.bruta.cantitate ?? 0)
+        : (x.bruta.cantitate ?? 0) / piesePeMetru((x.pret as RezultatTarifare).straturi[0]!.diametru_geometric)), 0);
     const mlNecesar = n.materiale.filter((m) => m.sistem === "vata_minerala").reduce((s, m) => s + m.ml, 0);
-    expect(mlNecesar).toBeCloseTo(mlOferta, 2);
+    // Fiecare material se rotunjește la bani; suma lor poate fugi cu câțiva cenți.
+    expect(mlNecesar).toBeCloseTo(mlOferta, 1);
+  });
+
+  it("cererea TRANSAVIA: necesarul pe poziție × cantitatea din planul șantierului = necesarul total", async () => {
+    const cale = "../attachments/clienti/cerere-de-oferta-transavia-abur.xlsx";
+    if (!existsSync(cale)) return;
+    const l = (await importaFisier(cale, { faraModel: true, stoc: stocInMemorie() })).linii
+      .map((x) => (x.pret ? { ...x, necesitaValidare: false } : x));
+    const oferta = imparte(l).oferta;
+    const plan = planDinOferta({
+      linii: l,
+      antet: { serie: "RAD", numar: "1", data: "09.10.2026", persoana: "", client: "C", obiectiv: "O", firma: "RADOIA ISOLIRUNG SRL", localitate: "P" },
+      provenienta: { generatLa: "2026-10-09T00:00:00.000Z", destinatie: "rezidential", model: null, sesiune: "s", fisierSursa: "c.xlsx" },
+    }, "S-1");
+    const n = necesarDinLinii(oferta, FARA);
+    for (const m of n.materiale) {
+      const dinPlan = m.pePozitie.reduce((t, p) => t + p.peUnitate * plan.pozitii[p.pozitie - 1]!.cantitate, 0);
+      const total = m.rand === null ? m.m2 : m.ml;
+      expect(dinPlan, `${m.cheie}`).toBeCloseTo(total, 0);
+    }
   });
 });

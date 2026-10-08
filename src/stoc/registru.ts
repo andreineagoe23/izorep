@@ -19,12 +19,32 @@ export type TipMiscare = "intrare" | "transfer" | "consum" | "retur" | "ajustare
 export type UM = "ml" | "m2";
 
 export interface Articol {
+  /** `cheieMaterial`, plus `|marca` cand articolul are marca. */
   cheie: string;
   sistem: string;
   grosime_mm: number | null;
   /** Randul din lista (ø). Null = material pe suprafata. */
   rand: number | null;
   um: UM;
+  /**
+   * Producatorul (Armaflex, K-Flex, Rockwool …). Firma (S11): marca deosebeste
+   * doua materiale la comanda, o cere si clientul, iar pe acelasi santier se pot
+   * amesteca marci. Oferta n-o spune, deci necesarul e fara marca; stocul o tine
+   * pe intrare, iar „De comandat" aduna toate marcile aceluiasi material.
+   */
+  marca?: string;
+}
+
+/** Materialul fara marca: pe ea se potriveste stocul cu necesarul. */
+export const cheieBaza = (a: Pick<Articol, "sistem" | "grosime_mm" | "rand">): string =>
+  cheieMaterial(a.sistem, a.grosime_mm, a.rand);
+
+/** Cum se cumpara un articol: ambalajul si cat contine, in unitatea articolului (S13). */
+export interface Ambalaj {
+  /** „cutie", „sac", „pachet", „rola", „coala", „kg" … */
+  unitate: string;
+  /** Cat contine un ambalaj, in ml sau m² (unitatea articolului). */
+  continut: number;
 }
 
 export interface Miscare {
@@ -62,7 +82,9 @@ export function pretMediu(miscari: readonly Miscare[], cheie: string): number | 
   let cant = 0;
   let valoare = 0;
   for (const m of miscari) {
-    if (m.tip !== "intrare" || m.anuleaza || !m.pret || m.articol.cheie !== cheie || esteAnulata(m, miscari)) continue;
+    // Fara marca in cheie: media pe toate marcile materialului.
+    const potrivit = m.articol.cheie === cheie || cheieBaza(m.articol) === cheie;
+    if (m.tip !== "intrare" || m.anuleaza || !m.pret || !potrivit || esteAnulata(m, miscari)) continue;
     cant += m.cantitate;
     valoare += m.pret.valoare * m.cantitate;
   }
@@ -77,12 +99,14 @@ export interface Sold {
 }
 
 /** Tabla, inoxul si PVC-ul se masoara pe suprafata; izolatia pe teava, in metri. */
-export function articolDin(m: Pick<MaterialNecesar, "sistem" | "grosime_mm" | "rand">): Articol {
+export function articolDin(m: Pick<MaterialNecesar, "sistem" | "grosime_mm" | "rand">, marca?: string): Articol {
   const pesuprafata = m.rand === null || m.sistem === "tabla" || m.sistem === "tabla_inox" || m.sistem === "pvc";
+  const brand = marca?.trim();
   return {
-    cheie: cheieMaterial(m.sistem, m.grosime_mm, m.rand),
+    cheie: cheieMaterial(m.sistem, m.grosime_mm, m.rand) + (brand ? `|${brand}` : ""),
     sistem: m.sistem, grosime_mm: m.grosime_mm, rand: m.rand,
     um: pesuprafata ? "m2" : "ml",
+    ...(brand ? { marca: brand } : {}),
   };
 }
 
@@ -162,23 +186,45 @@ export interface DeComandat {
   necesar: number;
   inStoc: number;
   deComandat: number;
+  /** Cand articolul are ambalaj: cate ambalaje intregi se comanda. */
+  ambalaje?: { cate: number; ambalaj: Ambalaj; cantitate: number; rest: number };
+  /** Materialul il da clientul: nu se comanda. */
+  alClientului?: true;
+}
+
+/**
+ * Comanda rotunjita in sus la ambalaj intreg (S14: „rotunjim la ambalaj
+ * intreg; diferenta ajunge in depozit"). `rest` e ce ramane in depozit.
+ */
+export function laAmbalaj(cantitate: number, a: Ambalaj): { cate: number; ambalaj: Ambalaj; cantitate: number; rest: number } {
+  const cate = a.continut > 0 ? Math.ceil(Math.round((cantitate / a.continut) * 1e6) / 1e6) : 0;
+  const total = Math.round(cate * a.continut * 100) / 100;
+  return { cate, ambalaj: a, cantitate: total, rest: Math.round((total - cantitate) * 100) / 100 };
 }
 
 /**
  * Necesarul unei lucrari fata de stocul din depozitele date (de obicei cel
  * central plus santierul lucrarii). Soldul negativ nu se socoteste ca stoc.
+ * Stocul se ia pe material, oricare ar fi marca (`cheieBaza`); ambalajul e pe
+ * material, tot fara marca.
  */
 export function deComandat(
   materiale: readonly MaterialNecesar[], sold: readonly Sold[], depozite: readonly string[],
+  ambalaje: Readonly<Record<string, Ambalaj>> = {},
 ): DeComandat[] {
   return materiale.map((m) => {
     const articol = articolDin(m);
     const necesar = cantitateNecesara(m, articol);
+    if (m.alClientului) return { articol, necesar, inStoc: 0, deComandat: 0, alClientului: true };
     const inStoc = sold
-      .filter((s) => s.articol.cheie === articol.cheie && depozite.includes(s.depozit) && s.cantitate > 0)
+      .filter((s) => cheieBaza(s.articol) === articol.cheie && depozite.includes(s.depozit) && s.cantitate > 0)
       .reduce((t, s) => t + s.cantitate, 0);
     const rest = Math.max(0, Math.round((necesar - inStoc) * 100) / 100);
-    return { articol, necesar, inStoc: Math.round(inStoc * 100) / 100, deComandat: rest };
+    const a = ambalaje[articol.cheie];
+    return {
+      articol, necesar, inStoc: Math.round(inStoc * 100) / 100, deComandat: rest,
+      ...(a && rest > 0 ? { ambalaje: laAmbalaj(rest, a) } : {}),
+    };
   });
 }
 

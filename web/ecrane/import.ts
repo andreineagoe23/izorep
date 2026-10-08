@@ -20,7 +20,7 @@ import {
 } from "../oferta.js";
 import { citestePlanuri, deschideLaIntrare, scriePlanuri } from "../lucrari-local.js";
 import { descarca, numeOferta } from "../descarca.js";
-import { ADAOS_IMPLICIT, necesarDinLinii } from "../../src/stoc/necesar.js";
+import { PIERDERI_IMPLICITE, PRAG_TUB_MM, necesarDinLinii, type Pierderi } from "../../src/stoc/necesar.js";
 import { cardNecesar } from "../stoc-vizual.js";
 import { citesteDepozit, idNou, scrieDepozit } from "../depozit-local.js";
 import {
@@ -122,7 +122,8 @@ export const ecran: Ecran = {
     /** Foaia ca in Excel e vederea implicita pe ecran lat; lista de carduri e la un clic. */
     let excel = true;
     /** Adaosul pentru coturi si fitinguri din cardul „Materiale necesare". */
-    let adaosNecesar = ADAOS_IMPLICIT;
+    let pierderi: Pierderi = { ...PIERDERI_IMPLICITE };
+    let pragTub = PRAG_TUB_MM;
     /** Ajustarea tehnicului pe toate prețurile, din pasul „Oferta" (procente). */
     let ajustare = 0;
     let detaliiDeschise = false;
@@ -632,8 +633,25 @@ export const ecran: Ecran = {
      * Materialele pentru exact pozitiile din oferta, cu preturile ei: aceleasi
      * linii din care `planDinOferta` face santierul.
      */
+    /**
+     * Doar cardul necesarului. Inlocuit cat un camp din el are focus, campul
+     * isi pierde focusul, iar `change`-ul lui vine inca o data, pe un card deja
+     * scos din pagina: garda opreste a doua redesenare.
+     */
+    let redeseneazaNecesarAcum = false;
+    function redeseneazaNecesar(s: Sesiune): void {
+      if (redeseneazaNecesarAcum) return;
+      redeseneazaNecesarAcum = true;
+      try {
+        const el = pagina.querySelector("#necesar");
+        if (el?.isConnected) el.outerHTML = cardNecesar(necesarOferta(s));
+      } finally {
+        redeseneazaNecesarAcum = false;
+      }
+    }
+
     function necesarOferta(s: Sesiune, discountProcent = 0): ReturnType<typeof necesarDinLinii> {
-      return necesarDinLinii(imparte(cuAjustare(s.rez.linii, ajustare)).oferta, adaosNecesar, discountProcent);
+      return necesarDinLinii(imparte(cuAjustare(s.rez.linii, ajustare)).oferta, { pierderi, pragTub, discountProcent });
     }
 
     function cerereDinFormular(s: Sesiune, form: HTMLFormElement): CerereOferta {
@@ -717,7 +735,7 @@ export const ecran: Ecran = {
       const vechiNecesar = st.necesare.find((x) => x.fisier === s.meta.nume);
       const nou = {
         id: vechiNecesar?.id ?? idNou(), creat: new Date().toISOString(), fisier: s.meta.nume,
-        obiectiv: plan.denumire, adaos: n.adaos, materiale: n.materiale,
+        obiectiv: plan.denumire, pierderi: n.pierderi, pragTub: n.pragTub, materiale: n.materiale,
         faraNecesar: n.faraNecesar.length, santier: plan.id,
       };
       scrieDepozit({ ...st, necesare: [nou, ...st.necesare.filter((x) => x !== vechiNecesar)] });
@@ -881,10 +899,14 @@ export const ecran: Ecran = {
         if (pas !== 1) deseneaza();
         return;
       }
-      if (t.id === "adaos-necesar" && sesiune) {
+      if ((t.id === "prag-tub" || t.dataset["act"] === "pierdere") && sesiune) {
         // Doar cardul: o redesenare a pasului ar sterge datele ofertei deja scrise.
-        adaosNecesar = Number(t.value);
-        pagina.querySelector("#necesar")!.outerHTML = cardNecesar(necesarOferta(sesiune));
+        if (t.id === "prag-tub") pragTub = Number(t.value);
+        else {
+          const v = Number(t.value.replace(",", "."));
+          if (Number.isFinite(v) && v >= 0) pierderi = { ...pierderi, [t.dataset["cat"] as keyof Pierderi]: v / 100 };
+        }
+        redeseneazaNecesar(sesiune);
         return;
       }
       if (t.dataset["act"] === "filtru") { filtru = t.value as FiltruStare; motiv = null; editIdx = null; deseneaza(); return; }

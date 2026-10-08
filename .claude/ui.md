@@ -469,6 +469,18 @@ riscant care fără test nu se verifică. Ecranul rămâne cu apeluri simple.
 
 ## Depozit și stoc (prototip, 28 septembrie 2026)
 
+**9 octombrie 2026, Faza 2.** Cardul „Materiale de comandat” din pasul
+„Oferta” nu mai are rezervă: are „Tuburi până la” (3 țoli … toate în tuburi) și
+pierderile la croit pe tablă, plăci și tuburi; coloanele sunt „Se comandă” (cu
+kg la tablă), „Metri de țeavă” și „Din piese” (câte piese au intrat în metri,
+câte pe regulă presupusă). Se redesenează doar cardul (`redeseneazaNecesar`, cu
+gardă: înlocuit cât un câmp are focus, `change`-ul vine a doua oară). În
+„Depozit și stoc”, pe necesar: „De comandat” rotunjit la ambalaj („16 × cutie,
+192 m²; rămân 10,64 m² în depozit”) sau cu kg la tablă; pe fiecare rând „Îl dă
+clientul” / „Îl cumpărăm noi”, iar rândurile adăugate de mână au „Scoate”; sub
+tabel, „Adaugă material de mână” (pliat). Card nou „Ambalaje” (material,
+ambalaj, cât conține). În „Mișcare nouă”, la intrare, „Marcă (opțional)”.
+
 `web/ecrane/stoc.ts`, în meniu la „Zi de zi”. Logica e în `src/stoc/`, pură și
 testată; datele stau în `localStorage` (`web/depozit-local.ts`), deci doar în
 browserul care le-a introdus. Ecranul o spune.

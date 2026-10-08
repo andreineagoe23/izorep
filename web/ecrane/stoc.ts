@@ -17,8 +17,12 @@ import { cantitate, cifra, numeArticol, unitate } from "../stoc-vizual.js";
 import { citesteDepozit, idNou, scrieDepozit, type NecesarLucrare, type StareDepozit } from "../depozit-local.js";
 import {
   CERE, articolDin, deComandat, esteAnulata, faraExemple, miscariDeExemplu, pretMediu,
-  solduri, storno, valideazaMiscare, type Articol, type Miscare, type TipMiscare,
+  solduri, storno, valideazaMiscare, type Ambalaj, type Articol, type Miscare, type TipMiscare,
 } from "../../src/stoc/registru.js";
+import { materialManual } from "../../src/stoc/necesar.js";
+
+/** Ambalajele uzuale (S13): tuburile în cutii, vata în saci sau pachete, tabla la kg. */
+const UNITATI_AMBALAJ = ["cutie", "sac", "pachet", "rolă", "coală", "kg"];
 
 export const CENTRAL = "central";
 
@@ -50,11 +54,18 @@ export function deComandatPeNecesar(s: StareDepozit): { necesar: NecesarLucrare;
   const sold = solduri(s.miscari);
   return s.necesare.map((n) => ({
     necesar: n,
-    articole: deComandat(n.materiale, sold, depoziteNecesar(n)).filter((d) => d.deComandat > 0).length,
+    articole: deComandat(n.materiale, sold, depoziteNecesar(n), s.ambalaje).filter((d) => d.deComandat > 0).length,
   }));
 }
 
 const titluNecesar = (n: NecesarLucrare): string => n.obiectiv || n.fisier;
+
+/** Materialele fără marcă: pe ele se pun ambalajele. */
+function materialeDeBaza(s: StareDepozit): Articol[] {
+  const toate = new Map<string, Articol>();
+  for (const a of articoleCunoscute(s)) { const b = articolDin(a); toate.set(b.cheie, b); }
+  return [...toate.values()];
+}
 
 /** Toate articolele cunoscute: din necesaruri și din mișcări, fără dubluri. */
 function articoleCunoscute(s: StareDepozit): Articol[] {
@@ -108,6 +119,7 @@ export const ecran: Ecran = {
         ${stats}
         ${banner}
         ${sectiuneNecesar(sold)}
+        ${sectiuneAmbalaje()}
         ${sectiuneStoc(sold)}
         ${formularMiscare()}
         ${jurnal()}
@@ -122,51 +134,101 @@ export const ecran: Ecran = {
           pasul „Oferta” calculează materialele din ofertă și, cu „Creează șantierul”, le trimite aici.</p></section>`;
       }
       return st.necesare.map((n) => {
-        const r = deComandat(n.materiale, sold, depoziteNecesar(n));
+        const r = deComandat(n.materiale, sold, depoziteNecesar(n), st.ambalaje);
         let cost = 0;
         let faraPret = 0;
         let inOferta = 0;
         let inOfertaCuCost = 0;
-        let piese = 0;
+        let deCumparat = 0;
         const randuri = r.map((d, i) => {
-          const pm = pretMediu(st.miscari, d.articol.cheie);
+          const m = n.materiale[i]!;
+          const pm = d.alClientului ? null : pretMediu(st.miscari, d.articol.cheie);
           const c = pm === null ? null : pm * d.necesar;
-          if (c === null) faraPret++; else cost += c;
-          const v = n.materiale[i]!.valoareOferta ?? 0;
-          const buc = n.materiale[i]!.bucati;
+          if (!d.alClientului) { deCumparat++; if (c === null) faraPret++; else cost += c; }
+          const v = d.alClientului ? 0 : m.valoareOferta ?? 0;
           inOferta += v;
           if (c !== null) inOfertaCuCost += v;
-          if (buc > 0) piese++;
+          const kgPeUm = m.kg !== undefined && m.m2 > 0 ? m.kg / m.m2 : null;
+          const comanda = d.alClientului ? stare("al clientului", "neutru")
+            : d.deComandat === 0 ? stare("acoperit", "ok")
+              : d.ambalaje
+                ? `<strong>${cifra(d.ambalaje.cate)} × ${esc(d.ambalaje.ambalaj.unitate)}</strong><br><span class="hint">${
+                  cantitate(d.ambalaje.cantitate, d.articol.um)}${d.ambalaje.rest > 0 ? `; rămân ${cantitate(d.ambalaje.rest, d.articol.um)} în depozit` : ""}</span>`
+                : `<strong>${cantitate(d.deComandat, d.articol.um)}</strong>${kgPeUm ? `<br><span class="hint">${cifra(d.deComandat * kgPeUm)} kg</span>` : ""}`;
+          const nota = [
+            m.manual ? `adăugat de mână: ${esc(m.manual)}` : "",
+            m.piese > 0 ? `${cifra(m.piese)} piese incluse${m.piesePresupuse > 0 ? ` (${cifra(m.piesePresupuse)} pe regulă presupusă)` : ""}` : "",
+          ].filter(Boolean).join(" · ");
           return `<tr>
-          <td>${esc(numeArticol(d.articol))}</td>
-          <td class="n">${cantitate(d.necesar, d.articol.um)}${buc > 0 ? `<br><span class="hint">+ ${cifra(buc)} buc.</span>` : ""}</td>
-          <td class="n">${cantitate(d.inStoc, d.articol.um)}</td>
-          <td class="n">${d.deComandat > 0 ? `<strong>${cantitate(d.deComandat, d.articol.um)}</strong>` : d.necesar === 0 && buc > 0 ? stare("de stabilit", "atentie") : stare("acoperit", "ok")}</td>
+          <td>${esc(numeArticol(d.articol))}${nota ? `<br><span class="hint">${nota}</span>` : ""}</td>
+          <td class="n">${cantitate(d.necesar, d.articol.um)}</td>
+          <td class="n">${d.alClientului ? "—" : cantitate(d.inStoc, d.articol.um)}</td>
+          <td class="n">${comanda}</td>
           <td class="n">${c === null ? "—" : `${eur(c)}<br><span class="hint">${eur(pm!)} / ${unitate(d.articol.um)}</span>`}</td>
           <td class="n">${v > 0 ? eur(v) : "—"}</td>
+          <td class="fix">${m.manual
+            ? `<button type="button" class="secundar" data-act="scoate-material" data-id="${esc(n.id)}" data-i="${i}">Scoate</button>`
+            : `<button type="button" class="secundar" data-act="client" data-id="${esc(n.id)}" data-i="${i}">${d.alClientului ? "Îl cumpărăm noi" : "Îl dă clientul"}</button>`}</td>
         </tr>`;
         });
         const optiuni = santiere().map((s) =>
           `<option value="${esc(s.id)}"${s.id === n.santier ? " selected" : ""}>${esc(s.denumire)}</option>`).join("");
+        const p = n.pierderi;
+        const calcul = p ? ` · pierderi la croit: tablă ${cifra(p.tabla * 100)} %, plăci ${cifra(p.placa * 100)} %, tuburi ${cifra(p.tub * 100)} %` : "";
         return `<section class="imp-card">
           <h2>Necesar: ${esc(titluNecesar(n))}</h2>
-          <p class="hint" style="margin:0 0 12px">Din ${esc(n.fisier)}${n.adaos ? ` · rezervă ${cifra(n.adaos * 100)} %` : ""}${
-            n.faraNecesar > 0 ? ` · ${n.faraNecesar} ${n.faraNecesar === 1 ? "poziție" : "poziții"} fără necesar calculat` : ""}</p>
+          <p class="hint" style="margin:0 0 12px">Din ${esc(n.fisier)}${calcul}${
+            n.faraNecesar > 0 ? ` · ${n.faraNecesar} ${n.faraNecesar === 1 ? "poziție" : "poziții"} fără necesar calculat (adaugă-le materialul de mână, mai jos)` : ""}</p>
           <div class="imp-campuri">
             <label>Șantierul lucrării (stocul lui se socotește alături de depozitul central)
               <select data-act="santier" data-id="${esc(n.id)}"><option value="">— nelegat —</option>${optiuni}</select>
             </label>
           </div>
-          ${tabel(["Material", "Necesar", "În stoc", "De comandat", "Cost achiziție", "În ofertă"], randuri,
-            ["", "n", "n", "n", "n", "n"])}
+          ${tabel(["Material", "Necesar", "În stoc", "De comandat", "Cost achiziție", "În ofertă", ""], randuri,
+            ["", "n", "n", "n", "n", "n", ""])}
           <p class="hint">În ofertă: ${eur(inOferta)} (cât plătește clientul, material și manoperă, cu ajustarea și discountul) · cost material
-            ${faraPret === r.length ? "necunoscut: nicio intrare cu preț" : `${eur(cost)}${faraPret ? `, fără ${faraPret} ${faraPret === 1 ? "material" : "materiale"} încă fără preț` : ""}`}${faraPret < r.length ? ` · rămân ${eur(inOfertaCuCost - cost)} pentru manoperă și profit${faraPret ? ", pe materialele cu preț" : ""}` : ""}.
-            Costul e prețul mediu al intrărilor cu preț.</p>
-          ${piese > 0 ? `<p class="hint">„+ buc.”: flanșe, casete, coturi și teuri sub 3 țoli. Pentru ele nu avem încă regula de
-            material de la firmă, deci nu intră în „De comandat”: se adaugă de mână. „De stabilit”: materialul e doar în piese.</p>` : ""}
+            ${deCumparat === 0 ? "zero: tot materialul îl dă clientul" : faraPret === deCumparat ? "necunoscut: nicio intrare cu preț" : `${eur(cost)}${faraPret ? `, fără ${faraPret} ${faraPret === 1 ? "material" : "materiale"} încă fără preț` : ""}`}${faraPret < deCumparat ? ` · rămân ${eur(inOfertaCuCost - cost)} pentru manoperă și profit${faraPret ? ", pe materialele cu preț" : ""}` : ""}.
+            Costul e prețul mediu al intrărilor cu preț, pe toate mărcile.</p>
+          <details class="imp-card">
+            <summary>Adaugă material de mână (goluri la foc, distribuitor, ce nu reiese din liste)</summary>
+            <form class="imp-campuri" data-form="manual" data-id="${esc(n.id)}">
+              <label>Material<select name="sistem">${MATERIALE.filter((m) => m !== "goluri_foc").map((m) =>
+                `<option value="${m}">${esc(MATERIAL[m])}</option>`).join("")}</select></label>
+              <label>Grosime (mm)<input name="grosime" type="number" inputmode="decimal" step="any" min="0" /></label>
+              <label>Diametrul tubului, ø mm (gol pentru plăci sau tablă, în m²)<input name="rand" type="number" inputmode="numeric" step="1" min="1" /></label>
+              <label>Cantitate (ml la tub, m² altfel)<input name="cantitate" type="number" inputmode="decimal" step="any" min="0" required /></label>
+              <label>Pentru ce<input name="motiv" autocomplete="off" placeholder="de ex. goluri la foc, poziția 12" required /></label>
+              <div class="imp-formular-butoane"><button type="submit" class="secundar">Adaugă</button></div>
+            </form>
+          </details>
           <div class="imp-formular-butoane"><button type="button" class="secundar" data-act="scoate-necesar" data-id="${esc(n.id)}">Scoate necesarul</button></div>
         </section>`;
       }).join("");
+    }
+
+    function sectiuneAmbalaje(): string {
+      const definite = Object.entries(st.ambalaje ?? {});
+      const articole = materialeDeBaza(st);
+      if (articole.length === 0) return "";
+      const randuri = definite.map(([cheie, a]) => {
+        const art = articole.find((x) => x.cheie === cheie);
+        return `<tr><td>${esc(art ? numeArticol(art) : cheie)}</td>
+          <td>${esc(a.unitate)}</td><td class="n">${art ? cantitate(a.continut, art.um) : cifra(a.continut)}</td>
+          <td class="fix"><button type="button" class="secundar" data-act="scoate-ambalaj" data-cheie="${esc(cheie)}">Scoate</button></td></tr>`;
+      });
+      return `<section class="imp-card"><h2>Ambalaje</h2>
+        <p class="hint" style="margin:0 0 12px">Cum se cumpără fiecare material, din listele furnizorilor. Cu ambalajul trecut,
+          „De comandat” se rotunjește în sus la ambalaj întreg, iar diferența rămâne în depozit. Fără el, se comandă exact
+          cât iese din calcul.</p>
+        ${definite.length ? tabel(["Material", "Ambalaj", "Conține", ""], randuri, ["", "", "n", ""]) : ""}
+        <form class="imp-campuri" data-form="ambalaj">
+          <label>Material<select name="articol">${articole.map((a) =>
+            `<option value="${esc(a.cheie)}">${esc(numeArticol(a))}</option>`).join("")}</select></label>
+          <label>Ambalaj<select name="unitate">${UNITATI_AMBALAJ.map((u) => `<option>${u}</option>`).join("")}</select></label>
+          <label>Cât conține un ambalaj (ml la tub, m² altfel)<input name="continut" type="number" inputmode="decimal" step="any" min="0" required /></label>
+          <div class="imp-formular-butoane"><button type="submit" class="secundar">Salvează ambalajul</button></div>
+        </form>
+      </section>`;
     }
 
     function sectiuneStoc(sold: ReturnType<typeof solduri>): string {
@@ -213,6 +275,8 @@ export const ecran: Ecran = {
             <input name="grosime" type="number" inputmode="decimal" step="any" min="0" /></label>
           <label data-camp="alt">Diametrul tubului, ø mm (gol pentru plăci sau tablă, în m²)
             <input name="rand" type="number" inputmode="numeric" step="1" min="1" /></label>
+          <label data-camp="pret">Marcă (opțional: Armaflex, K-Flex, Rockwool …)
+            <input name="marca" autocomplete="off" /></label>
           <label>Cantitate${tipAles === "ajustare" ? " (cu minus, dacă la inventar e mai puțin)" : ""}
             <input name="cantitate" type="number" inputmode="decimal" step="any" required /></label>
           ${alegeDepozit("din", "Din depozitul")}
@@ -276,6 +340,8 @@ export const ecran: Ecran = {
         const r = val("rand") === "" ? null : Number(val("rand"));
         articol = articolDin({ sistem: val("sistem"), grosime_mm: g, rand: r });
       }
+      // Marca se scrie la intrare: de acolo materialul are producătorul lui.
+      if (tip === "intrare" && val("marca")) articol = articolDin(articol, val("marca"));
       const noua: Omit<Miscare, "id" | "data"> = {
         tip, articol, cantitate: Number(val("cantitate").replace(",", ".")),
         ...(CERE[tip].din && val("din") ? { din: val("din") } : {}),
@@ -315,6 +381,25 @@ export const ecran: Ecran = {
           break;
         }
         case "scoate-necesar": st = { ...st, necesare: st.necesare.filter((n) => n.id !== b.dataset["id"]) }; break;
+        case "client":
+        case "scoate-material": {
+          const i = Number(b.dataset["i"]);
+          st = { ...st, necesare: st.necesare.map((n) => {
+            if (n.id !== b.dataset["id"]) return n;
+            if (b.dataset["act"] === "scoate-material") return { ...n, materiale: n.materiale.filter((_, j) => j !== i) };
+            return { ...n, materiale: n.materiale.map((m, j) => {
+              if (j !== i) return m;
+              const { alClientului: _c, ...rest } = m;
+              return m.alClientului ? rest : { ...rest, alClientului: true as const };
+            }) };
+          }) };
+          break;
+        }
+        case "scoate-ambalaj": {
+          const { [b.dataset["cheie"]!]: _a, ...rest } = st.ambalaje ?? {};
+          st = { ...st, ambalaje: rest };
+          break;
+        }
         default: return;
       }
       salveaza();
@@ -342,6 +427,25 @@ export const ecran: Ecran = {
       e.preventDefault();
       const f = e.target as HTMLFormElement;
       if (f.id === "miscare") inregistreaza(f);
+      const date = new FormData(f);
+      const val = (n: string): string => ((date.get(n) as string | null) ?? "").trim();
+      const numar = (n: string): number | null => (val(n) === "" ? null : Number(val(n).replace(",", ".")));
+      if (f.dataset["form"] === "manual") {
+        const cant = numar("cantitate");
+        if (cant === null || !(cant > 0)) return;
+        const m = materialManual(val("sistem"), numar("grosime"), numar("rand"), cant, val("motiv"));
+        st = { ...st, necesare: st.necesare.map((n) => (n.id === f.dataset["id"] ? { ...n, materiale: [...n.materiale, m] } : n)) };
+        salveaza();
+        deseneaza();
+      }
+      if (f.dataset["form"] === "ambalaj") {
+        const continut = numar("continut");
+        if (continut === null || !(continut > 0)) return;
+        const a: Ambalaj = { unitate: val("unitate"), continut };
+        st = { ...st, ambalaje: { ...(st.ambalaje ?? {}), [val("articol")]: a } };
+        salveaza();
+        deseneaza();
+      }
     });
 
     deseneaza();

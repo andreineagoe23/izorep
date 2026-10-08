@@ -1,9 +1,9 @@
 /** Registrul de stoc (`src/stoc/registru.ts`): stocul e suma mișcărilor. */
 import { describe, it, expect } from "vitest";
 import {
-  articolDin, deComandat, pretMediu, esteAnulata, solduri, storno, type Miscare,
+  articolDin, deComandat, laAmbalaj, pretMediu, esteAnulata, solduri, storno, type Miscare,
 } from "../src/stoc/registru.js";
-import type { MaterialNecesar } from "../src/stoc/necesar.js";
+import { materialManual, type MaterialNecesar } from "../src/stoc/necesar.js";
 
 const vata = articolDin({ sistem: "vata_minerala", grosime_mm: 50, rand: 114 });
 const tabla = articolDin({ sistem: "tabla", grosime_mm: 0.8, rand: 220 });
@@ -12,6 +12,8 @@ const m = (p: Partial<Miscare> & Pick<Miscare, "tip" | "cantitate">): Miscare =>
   ({ id: `m${++n}`, data: "2026-09-29T08:00:00.000Z", articol: vata, ...p });
 const sold = (ms: Miscare[], depozit: string, cheie = vata.cheie): number =>
   solduri(ms).find((s) => s.depozit === depozit && s.articol.cheie === cheie)?.cantitate ?? 0;
+
+const baza = { piese: 0, piesePresupuse: 0, pierdere: 0, pozitii: 2, pePozitie: [], valoareOferta: 0 };
 
 describe("registrul de stoc", () => {
   it("soldul e suma mișcărilor: intrare, transfer pe șantier, consum, retur", () => {
@@ -37,8 +39,8 @@ describe("registrul de stoc", () => {
 
   it("de comandat = necesar − stocul din depozitele lucrării, niciodată negativ", () => {
     const nec: MaterialNecesar[] = [
-      { cheie: vata.cheie, sistem: "vata_minerala", grosime_mm: 50, rand: 114, ml: 80, m2: 60, bucati: 0, pozitii: 2, valoareOferta: 0 },
-      { cheie: tabla.cheie, sistem: "tabla", grosime_mm: 0.8, rand: 220, ml: 80, m2: 70, bucati: 0, pozitii: 2, valoareOferta: 0 },
+      { ...baza, cheie: vata.cheie, sistem: "vata_minerala", grosime_mm: 50, rand: 114, categorie: "tub", ml: 80, m2: 60 },
+      { ...baza, cheie: tabla.cheie, sistem: "tabla", grosime_mm: 0.8, rand: 220, categorie: "tabla", ml: 80, m2: 70 },
     ];
     const ms = [
       m({ tip: "intrare", cantitate: 50, spre: "central" }),
@@ -56,5 +58,43 @@ describe("registrul de stoc", () => {
     const ms = [a, b, anulata, storno(anulata, [anulata], "x", "2026-09-29T09:00:00.000Z")!];
     expect(pretMediu(ms, vata.cheie)).toBe(13);
     expect(pretMediu(ms, tabla.cheie)).toBeNull();
+  });
+
+  it("marca: stocul de orice marcă acoperă necesarul, iar costul e media pe toate mărcile (S11)", () => {
+    const armaflex = articolDin({ sistem: "vata_minerala", grosime_mm: 50, rand: 114 }, "Rockwool");
+    const isover = articolDin({ sistem: "vata_minerala", grosime_mm: 50, rand: 114 }, "Isover");
+    expect(armaflex.cheie).not.toBe(isover.cheie);
+    const ms = [
+      m({ tip: "intrare", cantitate: 30, spre: "central", articol: armaflex, pret: { valoare: 10 } }),
+      m({ tip: "intrare", cantitate: 10, spre: "central", articol: isover, pret: { valoare: 14 } }),
+    ];
+    // Stocul le ține separat …
+    expect(solduri(ms)).toHaveLength(2);
+    // … dar pentru necesar (fără marcă) contează amândouă.
+    const nec: MaterialNecesar[] = [{ ...baza, cheie: vata.cheie, sistem: "vata_minerala", grosime_mm: 50, rand: 114, categorie: "tub", ml: 80, m2: 60 }];
+    expect(deComandat(nec, solduri(ms), ["central"])[0]!.deComandat).toBe(40);
+    expect(pretMediu(ms, vata.cheie)).toBe(11);
+  });
+
+  it("ambalajul: comanda se rotunjește în sus la ambalaj întreg, restul rămâne în depozit (S14)", () => {
+    expect(laAmbalaj(25, { unitate: "cutie", continut: 12 })).toEqual({
+      cate: 3, ambalaj: { unitate: "cutie", continut: 12 }, cantitate: 36, rest: 11,
+    });
+    expect(laAmbalaj(24, { unitate: "cutie", continut: 12 }).cate).toBe(2);
+    const nec: MaterialNecesar[] = [{ ...baza, cheie: vata.cheie, sistem: "vata_minerala", grosime_mm: 50, rand: 114, categorie: "tub", ml: 80, m2: 60 }];
+    const r = deComandat(nec, [], ["central"], { [vata.cheie]: { unitate: "cutie", continut: 12 } })[0]!;
+    expect(r.deComandat).toBe(80);
+    expect(r.ambalaje).toMatchObject({ cate: 7, cantitate: 84, rest: 4 });
+  });
+
+  it("materialul clientului nu se comandă (S38)", () => {
+    const nec: MaterialNecesar[] = [{ ...baza, cheie: vata.cheie, sistem: "vata_minerala", grosime_mm: 50, rand: 114, categorie: "tub", ml: 80, m2: 60, alClientului: true }];
+    expect(deComandat(nec, [], ["central"])[0]).toMatchObject({ deComandat: 0, alClientului: true });
+  });
+
+  it("materialul adăugat de mână intră în „De comandat”, cu motivul lui; tabla are și kg", () => {
+    const banda = materialManual("tabla", 0.8, null, 25, "goluri la foc, poziția 12");
+    expect(banda).toMatchObject({ m2: 25, kg: 54, manual: "goluri la foc, poziția 12", categorie: "tabla" });
+    expect(deComandat([banda], [], ["central"])[0]!.deComandat).toBe(25);
   });
 });
