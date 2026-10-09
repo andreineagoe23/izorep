@@ -28,6 +28,9 @@ import { existsSync } from "node:fs";
 import { imparte, registruOferta, totalOferta, type AntetOferta, type Provenienta } from "../web/oferta.js";
 import { importaFisier } from "../src/import/pipeline.js";
 import { stocInMemorie } from "../src/import/memorie.js";
+import { proceseazaRegistru, reevalueaza } from "../src/import/nucleu.js";
+import { parseFoi } from "../src/import/parse-workbook.js";
+import { confirma } from "../web/validare.js";
 import { bani } from "../src/pricing/engine.js";
 
 const DIR = "../attachments/clienti";
@@ -319,5 +322,26 @@ describe("prețul pus de om închide oferta semnată", () => {
     // „Confirmă toate cele 13”, ca în ecran.
     const confirmate = cerere.linii.map((l) => (l.pret ? { ...l, necesitaValidare: false } : l));
     expect(totalOferta(imparte(confirmate).oferta)).toBe(94575.06);
+  });
+});
+
+describe("confirmarea din ecran nu scoate prețul pozițiilor care depind de textul rândului", () => {
+  // „Confirmă toate cele 14” pune `sursa: "om"`, iar linia omului se tarifa
+  // fără textul rândului: distribuitorul de abur (echipament, D și L din text)
+  // rămânea „Lipsește diametrul”, iar oferta ieșea 92.278,36 în loc de 94.575,06.
+  const CERERE = `${DIR}/cerere-de-oferta-transavia-abur.xlsx`;
+
+  it("TRANSAVIA, toate confirmate: 94.575,06 € și niciun rând fără preț", async () => {
+    if (!existsSync(CERERE)) return;
+    const opt = { stoc: stocInMemorie() };
+    const rez = await proceseazaRegistru(await parseFoi(CERERE), opt);
+    const deConfirmat = rez.linii.filter((l) => l.pret && l.necesitaValidare).map((l) => l.extras.index);
+    expect(deConfirmat).toHaveLength(14);
+    confirma(deConfirmat, rez.rezolvate);
+    reevalueaza(rez, opt);
+    const { oferta, deValidat, netarifate } = imparte(rez.linii);
+    expect(netarifate.map((l) => l.bruta.text)).toEqual([]);
+    expect(deValidat).toEqual([]);
+    expect(totalOferta(oferta)).toBe(94575.06);
   });
 });

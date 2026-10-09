@@ -502,23 +502,31 @@ export function tarifeazaExtras(
   destinatie: Destinatie = "rezidential",
   /** Textul randului, pentru regulile care depind de el; lipsa = nu se aplica. */
   text?: string,
+  /**
+   * Textul pentru regulile care spun CE LUCRARE e randul (protectia la foc a
+   * tubulaturii, echipamentul, livrarea de teava). Implicit `text`. Pe linia
+   * confirmata de om, `text` lipseste (forma si straturile sunt ale lui), dar
+   * lucrarea ramane cea scrisa de client: fara asta, distribuitorul TRANSAVIA
+   * confirmat ramanea fara pret, iar torcretul confirmat cadea pe lista de vata.
+   */
+  textLucrare: string | undefined = text,
 ): { pret?: RezultatTarifare | RezultatGolFoc; eroare?: string; codEroare?: CodNetarifare } {
   // Protectia la foc a tubulaturii: si cand modelul a citit-o „inchidere de
   // gol" (spitalul, „Protectie la foc EI 60 pentru tubulaturile ... torcret"),
   // atata timp cat randul n-are dimensiunile unui gol.
   const golCuDimensiuni = extras.sistem === "goluri_foc"
     && extras.gol_latime_mm !== null && extras.gol_inaltime_mm !== null;
-  if (text !== undefined && extras.sistem !== null && !golCuDimensiuni && esteProtectieLaFocTubulatura(text)) {
+  if (textLucrare !== undefined && extras.sistem !== null && !golCuDimensiuni && esteProtectieLaFocTubulatura(textLucrare)) {
     try {
-      return { pret: tarifeazaProtectieFoc(extras, cantitate, text) };
+      return { pret: tarifeazaProtectieFoc(extras, cantitate, textLucrare) };
     } catch (e) {
       if (e instanceof DiametruNecunoscut) return { eroare: e.message, codEroare: "dn_necunoscut" };
       throw e;
     }
   }
-  const material = text !== undefined && extras.sistem !== null && extras.sistem !== "goluri_foc";
-  if (material && esteIzolareDeEchipament(text)) {
-    const r = tarifeazaEchipament(extras, cantitate, destinatie, text);
+  const material = textLucrare !== undefined && extras.sistem !== null && extras.sistem !== "goluri_foc";
+  if (material && esteIzolareDeEchipament(textLucrare)) {
+    const r = tarifeazaEchipament(extras, cantitate, destinatie, textLucrare);
     if (r) return { pret: r };
     return {
       eroare: "izolarea unui echipament fara D si L pe rand: suprafata nu se poate calcula",
@@ -529,7 +537,7 @@ export function tarifeazaExtras(
   // Livrarea tevii cu izolatia „inclusiv": firma face izolatia, teava o livreaza
   // instalatorul. Se tarifeaza izolatia din liste; NISAL r83 a fost semnat
   // 20,09 €/m fata de 14,68 din liste, deci pozitia merge la om.
-  if (material && t.pret && "straturi" in t.pret && esteLivrareDeTeava(text)) {
+  if (material && t.pret && "straturi" in t.pret && esteLivrareDeTeava(textLucrare)) {
     marcheaza(t.pret, "livrare de teava cu izolatia inclusa: s-a tarifat doar izolatia din liste; teava, "
       + "fitingurile si sustinerile nu sunt in pret", "doar_izolatia");
   }
@@ -1043,8 +1051,9 @@ function construiesteLinii(
         && (extras.incredere < prag || avertismente.length > 0 || cuPropunere || schimbata),
     };
 
-    // Textul intra doar cand nu e linia omului: el a decis ce e pozitia.
-    const t = tarifeazaExtras(deTarifat, b.cantitate ?? 1, destinatie, sursa === "om" ? undefined : b.text);
+    // Textul intra in regulile de forma si straturi doar cand nu e linia
+    // omului: acolo el a decis. Ce lucrare e randul ramane insa cea scrisa de client.
+    const t = tarifeazaExtras(deTarifat, b.cantitate ?? 1, destinatie, sursa === "om" ? undefined : b.text, b.text);
     if (t.pret && conducta) {
       t.pret.note = [...(t.pret.note ?? []),
         `grosime ${conducta.grosime} mm luata de la conducta de acelasi diametru din lista (randul ${conducta.rand}); `
