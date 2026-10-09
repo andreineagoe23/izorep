@@ -36,6 +36,20 @@
       "when": 1788532196487,
       "tag": "0004_destinatie_si_serii_de_diametre",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791533731967,
+      "tag": "0005_date_comune",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791533743844,
+      "tag": "0006_imutabile_si_purjare",
+      "breakpoints": true
     }
   ]
 }

@@ -1,8 +1,8 @@
 import type { Ecran } from "./tip.js";
 import { dataScurta, esc, eur, nr, stare, tabel } from "./tip.js";
-import { listeaza, puneCurent, sterge, type IntrareIstoric } from "../istoric.js";
-import { citesteOferte, uitaOferta, type OfertaEmisa } from "../oferte-local.js";
-import { citestePlanuri } from "../lucrari-local.js";
+import { citesteOferte, citestePlanuri, listeaza, puneCurent, sterge, uitaOferta } from "../date.js";
+import type { IntrareIstoric } from "../istoric.js";
+import type { OfertaEmisa } from "../oferte-local.js";
 import { DOCUMENTE, FIRME, client, type Document } from "../date/seed.js";
 import { vedeCosturi } from "../nav.js";
 

@@ -6,15 +6,15 @@
  * greșeală se anulează cu o mișcare inversă, vizibilă în jurnal.
  *
  * Necesarul vine din import: pasul „Oferta" calculează materialele strat cu
- * strat și le trimite aici. Datele stau doar în browser (`web/depozit-local.ts`);
- * stocul real, folosit de mai mulți oameni, va sta în bază.
+ * strat și le trimite aici. Datele stau pe server (`web/date.ts`) sau, pe
+ * linkul demo, în browser (`web/depozit-local.ts`).
  */
 import { esc, eur, indicator, stare, tabel, type Ecran } from "./tip.js";
 import { SANTIERE } from "../date/seed.js";
-import { citestePlanuri } from "../lucrari-local.js";
+import { citestePlanuri, citesteDepozit, idNou, modDate, scrieDepozit } from "../date.js";
 import { MATERIALE, MATERIAL } from "../import/text.js";
 import { cantitate, cifra, numeArticol, unitate } from "../stoc-vizual.js";
-import { citesteDepozit, idNou, scrieDepozit, type NecesarLucrare, type StareDepozit } from "../depozit-local.js";
+import type { NecesarLucrare, StareDepozit } from "../depozit-local.js";
 import {
   CERE, articolDin, deComandat, esteAnulata, faraExemple, miscariDeExemplu, pretMediu,
   solduri, storno, valideazaMiscare, type Ambalaj, type Articol, type Miscare, type TipMiscare,
@@ -26,7 +26,7 @@ const UNITATI_AMBALAJ = ["cutie", "sac", "pachet", "rolă", "coală", "kg"];
 
 export const CENTRAL = "central";
 
-/** Șantierele: cele făcute din oferte (în browser), apoi cele din datele firmei. */
+/** Șantierele: cele făcute din oferte, apoi cele din datele firmei. */
 export const santiere = (): { id: string; denumire: string }[] => [
   ...citestePlanuri().map((p) => ({ id: p.id, denumire: p.denumire })),
   ...SANTIERE,
@@ -106,7 +106,8 @@ export const ecran: Ecran = {
           `${st.necesare.length} ${st.necesare.length === 1 ? "necesar" : "necesaruri"} din oferte`)}
       </div>`;
 
-      const banner = `<section class="imp-card">
+      // Pe server, stocul e al tuturor si e real: fara date de exemplu (miscarile nu se mai sterg).
+      const banner = modDate() === "server" ? "" : `<section class="imp-card">
         <p class="hint" style="margin:0">Deocamdată datele de aici se păstrează doar pe acest calculator, în acest browser.${
           pastrat ? "" : " <strong>Browserul nu permite salvarea: datele se pierd la reîncărcare.</strong>"}</p>
         ${cuExemple ? `<p style="margin:12px 0 0">${stare("Date de exemplu", "atentie")} Intrările marcate „exemplu”
@@ -248,7 +249,7 @@ export const ecran: Ecran = {
       </tr>`);
       return `<section class="imp-card"><h2>Stocul pe depozite</h2>
         ${sold.length === 0
-          ? `<p class="hint" style="margin:0">Depozitul e gol. Înregistrează o intrare mai jos, sau încarcă datele de exemplu.</p>`
+          ? `<p class="hint" style="margin:0">Depozitul e gol. Înregistrează o intrare mai jos${modDate() === "server" ? "" : ", sau încarcă datele de exemplu"}.</p>`
           : `${filtre}${tabel(["Material", "Depozit", "Cantitate"], randuri, ["", "", "n"])}`}
       </section>`;
     }

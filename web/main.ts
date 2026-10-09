@@ -5,6 +5,10 @@ import {
   citesteMeniu, scrieMeniu, inverseaza, laCerere, stareEfectiva, EVENIMENT_SPATIU, FARA_CERERE,
   type SpatiuCerut, type StareMeniu,
 } from "./meniu-stare.js";
+import {
+  amMutat, areDateDeMutat, cereLink, confirmaLink, dateInBrowser, EroareServer, euCurent, iesi, laEroare,
+  modDate, mutaDinBrowser, porneste, reimprospateaza,
+} from "./date.js";
 
 const ECRANE: Record<string, () => Promise<{ ecran: Ecran }>> = {
   tablou: () => import("./ecrane/tablou.js"),
@@ -76,9 +80,18 @@ async function navigheaza(mutaFocus = false): Promise<void> {
   // Cererea de spatiu e a ecranului care pleaca. Se retrage INAINTE de randare:
   // importul isi redeschide singur sesiunea in `render` si o cere din nou.
   renuntaLaSpatiu();
+  const root = $("#ecran");
+
+  // Linkul din email: `#/intrare/<token>`. Tokenul se trimite cu POST, din pagina,
+  // ca scanerele de email (care deschid linkurile) sa nu-l consume.
+  const token = /^#\/intrare\/(.+)$/.exec(location.hash)?.[1];
+  if (token) { await intraCuLink(token); return; }
+  if (stareDate === "intrare") { deseneazaIntrare(); return; }
+  if (stareDate === "fara-server") { deseneazaFaraServer(); return; }
+
+  delete document.documentElement.dataset["intrare"];
   const id = ruta();
   const incarca = ECRANE[id];
-  const root = $("#ecran");
 
   if (!incarca) {
     root.innerHTML = `<div class="titlu-ecran"><h1>Ecran inexistent</h1>
@@ -90,6 +103,13 @@ async function navigheaza(mutaFocus = false): Promise<void> {
   }
 
   root.innerHTML = `<p class="nota">Se încarcă…</p>`;
+  // Pe server, datele se iau la fiecare ecran: ce a scris un coleg intre timp se vede.
+  try {
+    await reimprospateaza();
+  } catch (e) {
+    if (e instanceof EroareServer && e.status === 401) { stareDate = "intrare"; deseneazaIntrare(); return; }
+    arataEroare(`Datele nu s-au putut lua de pe server: ${e instanceof Error ? e.message : String(e)}. Se arată ultimele primite.`);
+  }
   const { ecran } = await incarca();
   root.innerHTML = `<div class="titlu-ecran">
       <h1>${esc(ecran.titlu)}</h1>
@@ -261,5 +281,168 @@ $("#rol").addEventListener("change", (e) => {
 // Rutarea e pe hash, deci un link ancora ar strica ruta: sarim cu focus.
 $("#sari").addEventListener("click", () => $("#ecran").focus());
 
+/* ---------------------------------------------- datele comune: intrarea */
+
+/*
+ * Unde stau datele se afla la pornire (`porneste` din date.ts): pe server, cu
+ * cont, sau in browser, pe linkul demo. Pana intra omul, orice ruta arata
+ * formularul de intrare.
+ */
+let stareDate: "browser" | "server" | "intrare" | "fara-server" = "browser";
+let eroarePornire = "";
+
+function arataEroare(mesaj: string): void {
+  const el = document.createElement("p");
+  el.className = "alerta";
+  el.setAttribute("role", "alert");
+  el.innerHTML = `<span>${esc(mesaj)}</span><button type="button" class="secundar">Am înțeles</button>`;
+  el.querySelector("button")!.addEventListener("click", () => el.remove());
+  $("#mesaje").append(el);
+}
+laEroare(arataEroare);
+
+function deseneazaCont(): void {
+  const eu = euCurent();
+  const cont = $("#cont");
+  cont.hidden = !eu;
+  if (!eu) { cont.innerHTML = ""; return; }
+  cont.innerHTML = `<span class="nume" title="${esc(eu.email)}">${esc(eu.nume)}</span>
+    <button type="button" class="secundar" id="iesi">Ieși</button>`;
+  $("#iesi").addEventListener("click", async () => {
+    try { await iesi(); } catch { /* sesiunea moare oricum la expirare */ }
+    stareDate = "intrare";
+    deseneazaCont();
+    location.hash = "#/tablou";
+    deseneazaIntrare();
+  });
+}
+
+function pregatesteIntrare(titlu: string, subtitlu: string): HTMLElement {
+  document.documentElement.dataset["intrare"] = "";
+  document.title = `${titlu} · IzoERP`;
+  const root = $("#ecran");
+  root.innerHTML = `<div class="titlu-ecran"><h1>${esc(titlu)}</h1><p>${esc(subtitlu)}</p></div><div id="continut"></div>`;
+  laInceput();
+  return $("#continut");
+}
+
+function deseneazaIntrare(mesaj = ""): void {
+  const c = pregatesteIntrare("Intră în aplicație", "Fără parolă: primești un link pe email.");
+  c.innerHTML = `<div class="imp intrare"><section class="imp-card">
+    <form class="imp-formular" id="form-intrare" novalidate>
+      <label>Adresa ta de email
+        <input type="email" name="email" autocomplete="email" required inputmode="email">
+      </label>
+      ${mesaj ? `<p class="alerta" role="alert">${esc(mesaj)}</p>` : ""}
+      <div class="imp-formular-butoane"><button type="submit" class="primar">Trimite-mi linkul</button></div>
+    </form></section></div>`;
+  const form = $<HTMLFormElement>("#form-intrare");
+  form.querySelector("input")!.focus();
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = String(new FormData(form).get("email") ?? "").trim();
+    if (!email.includes("@")) { deseneazaIntrare("Scrie adresa de email cu care ai primit cont."); return; }
+    const buton = form.querySelector<HTMLButtonElement>("button")!;
+    buton.disabled = true;
+    buton.textContent = "Se trimite…";
+    try {
+      await cereLink(email);
+      c.innerHTML = `<div class="imp intrare"><section class="imp-card">
+        <h2>Verifică emailul</h2>
+        <p style="margin:0">Dacă <strong>${esc(email)}</strong> are cont, ți-am trimis un link. Deschide-l pe acest
+          calculator, în următoarele 15 minute. Linkul merge o singură dată.</p>
+        <div class="imp-formular-butoane"><button type="button" class="secundar" id="alt-email">Altă adresă</button></div>
+      </section></div>`;
+      $("#alt-email").addEventListener("click", () => deseneazaIntrare());
+    } catch (err) {
+      deseneazaIntrare(`Linkul nu s-a putut trimite: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  });
+}
+
+async function intraCuLink(token: string): Promise<void> {
+  pregatesteIntrare("Intră în aplicație", "Se verifică linkul…");
+  try {
+    await confirmaLink(token);
+  } catch (e) {
+    stareDate = "intrare";
+    history.replaceState(null, "", "#/tablou");
+    deseneazaIntrare(e instanceof Error ? e.message : "Linkul nu mai e valabil. Cere altul.");
+    return;
+  }
+  stareDate = "server";
+  delete document.documentElement.dataset["intrare"];
+  deseneazaCont();
+  location.hash = "#/tablou";
+  void propuneMutarea();
+}
+
+function deseneazaFaraServer(): void {
+  const c = pregatesteIntrare("Serverul nu răspunde", "Datele firmei stau pe server.");
+  c.innerHTML = `<p class="alerta" role="alert">${esc(eroarePornire)}</p>`;
+}
+
+/**
+ * Ce a ramas in browserul asta din vremea prototipului, cand datele stateau
+ * aici: un singur buton le muta pe server. Mutarea nu dubleaza nimic, deci
+ * butonul se poate apasa si a doua oara fara grija.
+ */
+async function propuneMutarea(): Promise<void> {
+  if (stareDate !== "server" || modDate() !== "server" || amMutat() || $("#card-mutare")) return;
+  const d = await dateInBrowser();
+  if (!areDateDeMutat(d) || $("#card-mutare")) return;
+  const miscari = d.depozit.miscari.filter((m) => !m.exemplu).length;
+  const parti = [
+    [d.cereri.length, "cerere importată", "cereri importate"],
+    [d.planuri.length, "șantier", "șantiere"],
+    [miscari, "mișcare de stoc", "mișcări de stoc"],
+  ].filter(([n]) => (n as number) > 0).map(([n, unu, multe]) => `${n} ${n === 1 ? unu : multe}`);
+  // In `.imp`, ca pe ecrane: de acolo vin spatiile cardului si latimea butonului.
+  const invelis = document.createElement("div");
+  invelis.className = "imp";
+  invelis.id = "card-mutare";
+  const card = document.createElement("section");
+  card.className = "imp-card";
+  invelis.append(card);
+  card.innerHTML = `<h2>Datele din acest browser</h2>
+    <p style="margin:0">Aici au rămas ${esc(parti.join(", "))} din perioada în care aplicația ținea datele doar pe
+      calculator. Mută-le pe server, ca să le vadă și colegii. Datele de exemplu nu se mută.</p>
+    <div class="imp-formular-butoane"><button type="button" class="primar">Mută datele pe server</button></div>`;
+  const buton = card.querySelector("button")!;
+  buton.addEventListener("click", async () => {
+    buton.disabled = true;
+    buton.textContent = "Se mută…";
+    try {
+      const r = await mutaDinBrowser();
+      const total = r.cereri + r.oferte + r.santiere + r.situatii + r.miscari + r.necesare + r.ambalaje;
+      card.innerHTML = `<h2>Datele au fost mutate</h2>
+        <p style="margin:0">${total === 0 ? "Totul era deja pe server." : esc(
+          `Au intrat: ${r.cereri} cereri, ${r.oferte} oferte, ${r.santiere} șantiere cu ${r.situatii} situații, ` +
+          `${r.miscari} mișcări de stoc, ${r.necesare} necesaruri de materiale.`)}${
+          r.oferteFaraCerere > 0 ? esc(` ${r.oferteFaraCerere} oferte n-au mai avut cererea în browser și nu s-au mutat.`) : ""}</p>
+        <div class="imp-formular-butoane"><button type="button" class="secundar">Am înțeles</button></div>`;
+      card.querySelector("button")!.addEventListener("click", () => invelis.remove());
+      void navigheaza();
+    } catch (e) {
+      buton.disabled = false;
+      buton.textContent = "Mută datele pe server";
+      arataEroare(`Mutarea nu a reușit: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  });
+  $("#mesaje").prepend(invelis);
+}
+
 addEventListener("hashchange", () => void navigheaza(true));
-void navigheaza();
+
+void (async () => {
+  try {
+    stareDate = await porneste();
+  } catch (e) {
+    stareDate = "fara-server";
+    eroarePornire = e instanceof Error ? e.message : String(e);
+  }
+  if (stareDate === "server") delete document.documentElement.dataset["intrare"];
+  deseneazaCont();
+  await navigheaza();
+  void propuneMutarea();
+})();

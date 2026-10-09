@@ -1,7 +1,48 @@
 # Stare curentă
 
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
-> Ultima actualizare: 8 octombrie 2026.
+> Ultima actualizare: 9 octombrie 2026.
+
+## 9 octombrie 2026: Faza 3, datele comune
+
+Datele nu mai stau în browser: server mic peste baza din `src/db/`, cu intrare
+prin link pe email. Ramura `faza-3` (peste `faza-1-2`), fără push. Decis cu
+Andrei: oferta se salvează la „Descarcă oferta”; linkul de pe Pages rămâne demo
+în browser; conturile le adăugăm noi, cu o comandă.
+
+| Ce | Cum |
+|---|---|
+| Serverul | `src/server/` (Hono): `app.ts` rutele, `intrare.ts` linkul și sesiunea, `repo.ts` tabelele, `contract.ts` formele de pe fir. `npm run server` (8787); `vite dev` îi trimite `/api/*`, în afară de rutele modelului |
+| Intrarea | emailul → link `#/intrare/<token>`, 15 minute, o dată; pagina îl trimite cu POST (scanerele de email nu-l consumă); cookie `httpOnly`, `SameSite=Lax`, 30 de zile. În bază doar hash-uri. Local, emailurile stau în Mailpit (http://localhost:8025) |
+| Fără tenant la intrare | politici RLS „după cheie”: emailul scris (`app.email_cautat`), hash-ul tokenului sau al cookie-ului (`app.hash_cautat`), prin `cuCheie`. Fără `SECURITY DEFINER` |
+| CSRF | orice schimbare cere antetul `X-Izorep: 1` |
+| Tabelele | migrarea 0005 (din schemă) și 0006 (scrisă de mână: `FORCE`, verificări, trigger-e). Id-urile sunt cele din browser, text: mutarea nu traduce nimic |
+| Ce nu se schimbă | oferta, mișcarea, măsurătoarea, anexa: fără UPDATE și DELETE. Situația: se șterge doar ultima. Planul șantierului: înghețat la prima situație |
+| Ștergerea unui tenant | doar ca proprietar, cu `app.purjare` (`purjeazaTenant`): testele și `db:reset`. `db:seed` nu mai șterge tenantul, doar completează și reface listele |
+| Oferta | la „Descarcă oferta”: întâi se salvează importul și versiunea nouă (`CerereOferta` întreagă), apoi descărcarea. Valoarea o socotește serverul (`valoareOferta` în `web/oferta.ts`) |
+| Browserul | `web/date.ts`: ecranele citesc sincron dintr-o copie luată la fiecare schimbare de ecran; o scriere trimite doar diferența, în ordine; refuzată → mesaj sus și copia de pe server |
+| Pages | `/api/eu` lipsește → datele rămân în browser, ca înainte (`VITE_DATE=server` la build impune serverul) |
+| Mutarea | cardul „Datele din acest browser” → `POST /api/mutare`; ce există deja nu se dublează; datele de exemplu nu pleacă; ofertele vechi intră „mutate”, cu sumarul (browserul nu ținea liniile) |
+| Măsurătorile | paginile verificate, cu poza, se păstrează la „Trimite la ofertă” / „Pune în situație”. Nu există încă ecran care să le arate |
+| Furnizorii | cei 13 din S25, din seed. Ecranul vine în Faza 4 |
+
+**Bug găsit pe drum, din Faza 1:** „Confirmă toate cele 14” scotea prețul
+distribuitorului. Linia confirmată (`sursa: "om"`) se tarifa fără textul
+rândului, iar echipamentul își ia D și L din text: TRANSAVIA confirmată dădea
+92.278,36 €. Acum regulile care spun ce lucrare e rândul (echipament, protecția
+la foc a tubulaturii, livrarea de țeavă) primesc mereu textul (`textLucrare`).
+Forma și straturile rămân ale omului. Test în `oferte-semnate.test.ts`.
+
+Verificat cu Playwright, două browsere separate: intrare prin Mailpit,
+TRANSAVIA importată, confirmată, descărcată pe A (94.575,06 €), deschisă pe B
+din „Cereri și oferte” (94.575,06 € la pasul „Oferta”), șantierul vizibil pe B,
+intrare de stoc pe B vizibilă pe A; mutarea din browser; demo-ul static fără
+server. 390 / 768 / 1440 / 1920 px, ambele teme: zero derulare. **429 de teste**
+(noi: `server.test.ts` pe Postgres, `date-web.test.ts`).
+
+Rămâne pentru producție: SMTP-ul (`SMTP_URL`), unde stă serverul, plafon pe
+mărimea cererilor, backup. Rulare locală: `npm start` (bază, Mailpit, server,
+vite), apoi `npm run om -- <email> "<nume>"`.
 
 ## 9 octombrie 2026: Faza 2, lista de materiale
 
@@ -1144,5 +1185,7 @@ npm run mapare -- <fisier.xlsx>                # inregistreaza maparea de coloan
 IZOREP_FARA_MAPARE=1 npm run import -- <fisier>  # masoara A/B fara L1
 python scripts/extract_price_lists.py ../attachments   # regenerează prețurile
 python scripts/extract_conversii.py ../attachments     # regenerează seriile de țevi
-npm run db:up && npm run db:migrate && npm run db:seed  # baza locală
+npm run db:up && npm run db:migrate && npm run db:seed  # baza locală (+ Mailpit pe 8025)
+npm start                                      # baza, serverul (8787) și vite, împreună
+npm run om -- ana@firma.ro "Ana" birou         # cont nou; intră cu link pe email
 ```

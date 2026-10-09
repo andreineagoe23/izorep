@@ -7,8 +7,8 @@
 > promise (comanda, avizul, factura, listele furnizorilor), devin teste. Nu
 > blochează nimic.
 >
-> Azi codul e cel din 2 octombrie (384 de teste). Niciun răspuns de la
-> întâlnire nu e încă aplicat.
+> Starea: fazele 1–3 sunt făcute (9 octombrie 2026, 429 de teste). Următoarea
+> e Faza 4, comanda și recepția.
 
 ## Deciziile luate fără firmă
 
@@ -87,7 +87,35 @@ Doar logică în `src/stoc/`, fără bază de date. Se testează pe TRANSAVIA.
 comanda lor reală, devine test material cu material, iar fiecare diferență are
 o cauză scrisă.
 
-## Faza 3. Datele comune
+## Faza 3. Datele comune — făcută, 9 octombrie 2026
+
+Pe ramura `faza-3`, peste `faza-1-2`. Detaliile în `.claude/stare.md`
+(9 octombrie 2026, Faza 3) și `.claude/backend.md`. Pe scurt:
+
+- **Serverul** (`src/server/`, Hono): intrare cu link pe email (Mailpit local,
+  http://localhost:8025), cookie de sesiune 30 de zile, fiecare cerere în
+  `caTenant`. Conturile le dăm noi: `npm run om -- <email> "<nume>"`.
+- **În bază** (migrările 0005, 0006): cererile cu fișierul clientului, ofertele
+  pe versiuni (nu se modifică și nu se șterg), șantierele (planul se îngheață la
+  prima situație), anexele, situațiile (se șterge doar ultima), măsurătorile cu
+  poze, depozitele cu firma, articolele, ambalajele, necesarurile, mișcările
+  (doar storno) și cei 13 furnizori.
+- **Oferta se salvează la „Descarcă oferta”**, înainte de descărcare, ca
+  versiune nouă; valoarea o socotește serverul din liniile salvate.
+- **Linkul de pe Pages rămâne demo**, cu datele în browser (`web/date.ts` alege
+  singur unde stau datele).
+- **„Mută datele pe server”** apare o dată, cât browserul mai are date din
+  prototip; apăsat de două ori nu dublează nimic.
+
+**Gata când:** verificat cu Playwright, două browsere separate: TRANSAVIA
+salvată pe primul se deschide pe al doilea la 94.575,06 €, iar intrarea de stoc
+scrisă pe al doilea se vede pe primul. Test pe Postgres: `tests/server.test.ts`.
+
+Pe drum: confirmarea din ecran scotea prețul distribuitorului (linia omului se
+tarifa fără textul rândului), deci TRANSAVIA confirmată ieșea 92.278,36 €.
+Reparat în `tarifeazaExtras` (`textLucrare`), cu test.
+
+Ce a cerut faza inițial:
 
 Firma are 12–14 șantiere deodată, iar la stoc lucrează mai mulți oameni de la
 tehnic și de la contabilitate (S47). Datele nu mai pot sta în browser.

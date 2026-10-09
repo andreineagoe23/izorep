@@ -4,11 +4,11 @@ import { spreCerere } from "../../src/santier/spre-cerere.js";
 import { registruCerere } from "../../src/santier/registru.js";
 import type { Destinatie } from "../../src/pricing/lists.js";
 import { preda, predaSituatie } from "../predare.js";
-import { citestePlanuri } from "../lucrari-local.js";
+import { citestePlanuri, modDate, salveazaMasuratori } from "../date.js";
 import {
   cardComparatie, cardIncarca, cardPagina, cardTrimite, type ListaClient, type PaginaSantier, type SantierAles, type Scop,
 } from "../santier-vizual.js";
-import { incarca as incarcaImport, listeaza as listeazaImporturi } from "../istoric.js";
+import { incarca as incarcaImport, listeaza as listeazaImporturi } from "../date.js";
 import { stocLocal } from "../stoc-local.js";
 import type { Comparatie } from "../../src/lucrari/comparatie.js";
 import type { Ecran } from "./tip.js";
@@ -375,6 +375,24 @@ export const ecran: Ecran = {
       gazda.querySelector("#comparatie")?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
+    /**
+     * Paginile verificate, cu poza lor, pastrate pe server cand pleaca (pe
+     * linkul demo nu se pastreaza). O poza care nu se poate citi din nou nu
+     * opreste trimiterea: randurile pleaca oricum.
+     */
+    async function pastreazaPagini(santierId?: string): Promise<void> {
+      if (modDate() !== "server") return;
+      const cuPoze = await Promise.all(pagini.map(async (p) => {
+        try {
+          const blob = await (await fetch(p.url)).blob();
+          return { poza: await micsoreaza(new File([blob], p.nume, { type: blob.type })), randuri: p.randuri };
+        } catch {
+          return { randuri: p.randuri };
+        }
+      }));
+      salveazaMasuratori(scop, santierId, cuPoze);
+    }
+
     async function puneInSituatie(): Promise<void> {
       const plan = citestePlanuri().find((p) => p.id === planAles);
       if (!plan || lucreaza) return;
@@ -385,6 +403,7 @@ export const ecran: Ecran = {
         const { executatDinMasuratori, potriveste } = await import("../../src/lucrari/potrivire.js");
         const executat = await executatDinMasuratori(pagini.flatMap((p) => p.randuri), plan.destinatie as Destinatie);
         predaSituatie({ plan: plan.id, potrivire: potriveste(plan, executat), pagini: pagini.length });
+        await pastreazaPagini(plan.id);
       } catch (e) {
         console.error(e);
         eroare = "Rândurile nu s-au putut pune pe șantier. Încearcă din nou.";
@@ -409,6 +428,7 @@ export const ecran: Ecran = {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       });
       preda({ fisier, destinatie, pretDublu: true });
+      await pastreazaPagini();
       golesteDupaTrimitere();
       trimisa = `Ultima listă a plecat la import: ${fisier.name}. O găsești la „Import Excel”, în importurile recente.`;
       location.hash = "#/import";

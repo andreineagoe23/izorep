@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
-  boolean, date, index, integer, jsonb, numeric, pgPolicy, pgTable,
-  text, timestamp, uniqueIndex, uuid,
+  boolean, customType, date, foreignKey, index, integer, jsonb, numeric, pgPolicy, pgTable,
+  primaryKey, text, timestamp, uniqueIndex, uuid,
 } from "drizzle-orm/pg-core";
 
 /**
@@ -39,6 +39,12 @@ const TENANT = sql`nullif(current_setting('app.tenant_id', true), '')::uuid`;
  * `tenant_id = NULL` e NULL, deci randul e filtrat. Implicitul e "nu vezi
  * nimic", nu "vezi tot" — singurul implicit acceptabil.
  */
+/**
+ * O valoare pusa de aplicatie pentru o singura tranzactie (`cuCheie`). Ca la
+ * tenant, sirul gol inseamna "nesetat", deci nu se potriveste cu nimic.
+ */
+const CHEIE = (nume: string) => sql.raw(`nullif(current_setting('${nume}', true), '')`);
+
 const doarTenantul = (nume: string) =>
   pgPolicy(nume, {
     as: "permissive",
@@ -59,6 +65,12 @@ export const firma = pgTable("firma", {
   id: uuid("id").primaryKey().defaultRandom(),
   tenantId: uuid("tenant_id").notNull().references(() => tenant.id, { onDelete: "restrict" }),
   denumire: text("denumire").notNull(),
+  /**
+   * Cheia stabila a firmei in aplicatie (`radoia`, `isorad`, ca `FIRME` din
+   * `web/date/seed.ts`): pe ea se leaga oferta, santierul si depozitul, nu pe
+   * denumire, care se scrie diferit de la un document la altul.
+   */
+  cod: text("cod"),
   /** Raman null pana le da firma. Un CUI plauzibil dar gresit e mai rau decat gol. */
   cui: text("cui"),
   regCom: text("reg_com"),
@@ -67,6 +79,7 @@ export const firma = pgTable("firma", {
   creatLa: timestamp("creat_la", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
   index("firma_tenant_idx").on(t.tenantId),
+  uniqueIndex("firma_tenant_cod_idx").on(t.tenantId, t.cod),
   doarTenantul("firma_tenant"),
 ]);
 
@@ -83,6 +96,12 @@ export const utilizator = pgTable("utilizator", {
   // Email unic pe tenant, nu global: acelasi om poate exista la doi clienti.
   uniqueIndex("utilizator_tenant_email_idx").on(t.tenantId, t.email),
   doarTenantul("utilizator_tenant"),
+  // La intrare nu se stie inca tenantul: omul scrie doar emailul. Vede randurile
+  // cu adresa pe care a scris-o el, si nimic altceva. Vezi `cuCheie` in client.ts.
+  pgPolicy("utilizator_dupa_email", {
+    as: "permissive", for: "select", to: "public",
+    using: sql`lower(email) = ${CHEIE("app.email_cautat")}`,
+  }),
 ]);
 
 export const client = pgTable("client", {
@@ -213,4 +232,293 @@ export const sectiuneRectangulara = pgTable("sectiune_rectangulara", {
   bMm: integer("b_mm").notNull(),
 }, (t) => [
   uniqueIndex("sectiune_rectangulara_ab_idx").on(t.aMm, t.bMm),
+]);
+
+/* ------------------------------------------------------------------------ */
+/* Faza 3: datele comune (9 octombrie 2026). Ce statea in browser trece aici. */
+/* ------------------------------------------------------------------------ */
+
+/**
+ * Bytes, pentru fisierul clientului si pozele din carnet. Stau in baza, nu pe
+ * disc: sunt putine (sute de kB, un MB o poza) si intra in acelasi backup.
+ */
+const bytea = customType<{ data: Buffer; driverData: Buffer }>({ dataType: () => "bytea" });
+
+/**
+ * Hash-ul cautat la intrare. Ca la email: cine stie tokenul (sau cookie-ul)
+ * vede randul lui, si atat. Hash-ul e secretul; in baza nu sta tokenul.
+ */
+const dupaHash = (nume: string) =>
+  pgPolicy(nume, {
+    as: "permissive", for: "all", to: "public",
+    using: sql`hash = ${CHEIE("app.hash_cautat")}`,
+    withCheck: sql`hash = ${CHEIE("app.hash_cautat")}`,
+  });
+
+/** Linkul de intrare primit pe email: o singura folosire, 15 minute. */
+export const tokenIntrare = pgTable("token_intrare", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenant.id, { onDelete: "restrict" }),
+  utilizatorId: uuid("utilizator_id").notNull().references(() => utilizator.id, { onDelete: "cascade" }),
+  /** sha256 al tokenului, hex. */
+  hash: text("hash").notNull(),
+  expira: timestamp("expira", { withTimezone: true }).notNull(),
+  folositLa: timestamp("folosit_la", { withTimezone: true }),
+  creatLa: timestamp("creat_la", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  uniqueIndex("token_intrare_hash_idx").on(t.hash),
+  doarTenantul("token_intrare_tenant"),
+  dupaHash("token_intrare_dupa_hash"),
+]);
+
+/** Sesiunea din cookie. Iesirea o sterge; altfel expira singura. */
+export const sesiune = pgTable("sesiune", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenant.id, { onDelete: "restrict" }),
+  utilizatorId: uuid("utilizator_id").notNull().references(() => utilizator.id, { onDelete: "cascade" }),
+  hash: text("hash").notNull(),
+  expira: timestamp("expira", { withTimezone: true }).notNull(),
+  creatLa: timestamp("creat_la", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  uniqueIndex("sesiune_hash_idx").on(t.hash),
+  doarTenantul("sesiune_tenant"),
+  dupaHash("sesiune_dupa_hash"),
+]);
+
+/**
+ * Cererea de oferta: importul, cum il tinea browserul (`SesiuneImport` din
+ * `web/istoric.ts`). Fisierul clientului plus ce a citit aplicatia si ce a
+ * corectat omul; grila se reface din ele. Se editeaza cat se lucreaza la ea.
+ *
+ * Id-ul e cel dat de browser, text: la mutarea datelor din browser nimic nu se
+ * traduce, iar o mutare repetata nu dubleaza nimic.
+ */
+export const cerere = pgTable("cerere", {
+  tenantId: uuid("tenant_id").notNull().references(() => tenant.id, { onDelete: "restrict" }),
+  id: text("id").notNull(),
+  nume: text("nume").notNull(),
+  marime: integer("marime").notNull(),
+  /** Cand a fost importata (ISO), cum o tinea browserul. */
+  cand: timestamp("cand", { withTimezone: true }).notNull(),
+  model: text("model"),
+  destinatie: text("destinatie"),
+  pozitii: integer("pozitii").notNull(),
+  tarifate: integer("tarifate").notNull(),
+  valoare: numeric("valoare", { precision: 14, scale: 2 }).notNull(),
+  fisier: bytea("fisier").notNull(),
+  /** extrase, editari, grosimiPropuse, descrieriSchimbate, preturiManuale. */
+  lucru: jsonb("lucru").notNull(),
+  creatDe: uuid("creat_de").references(() => utilizator.id, { onDelete: "set null" }),
+  actualizatLa: timestamp("actualizat_la", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  primaryKey({ columns: [t.tenantId, t.id] }),
+  doarTenantul("cerere_tenant"),
+]);
+
+/**
+ * Oferta salvata: ce a plecat la client, copiat, nu referentiat (regula 3).
+ * Se salveaza la „Descarca oferta", o versiune noua de fiecare data. Nu se
+ * editeaza si nu se sterge: trigger in migrarea 0006.
+ *
+ * `continut` e `CerereOferta` din `web/oferta.ts` (liniile cu preturile,
+ * antetul, provenienta): din el se reface registrul si totalul. Lipseste doar
+ * la ofertele mutate din browser, unde browserul tinea numai sumarul
+ * (`mutata = true`); acolo cererea, mutata intreaga, reface liniile.
+ */
+export const oferta = pgTable("oferta", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenant.id, { onDelete: "restrict" }),
+  cerereId: text("cerere_id").notNull(),
+  versiune: integer("versiune").notNull(),
+  firmaId: uuid("firma_id").references(() => firma.id, { onDelete: "restrict" }),
+  /** „RAD284", sau gol daca oferta n-a primit numar. */
+  numar: text("numar").notNull(),
+  /** Data scrisa pe oferta: „27.05.2026". */
+  data: text("data").notNull(),
+  client: text("client").notNull(),
+  obiectiv: text("obiectiv").notNull(),
+  /** Ce plateste clientul: dupa ajustare, adaosul de foc si discount. */
+  valoare: numeric("valoare", { precision: 14, scale: 2 }).notNull(),
+  pozitii: integer("pozitii").notNull(),
+  continut: jsonb("continut"),
+  mutata: boolean("mutata").notNull().default(false),
+  creatDe: uuid("creat_de").references(() => utilizator.id, { onDelete: "set null" }),
+  creatLa: timestamp("creat_la", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  uniqueIndex("oferta_cerere_versiune_idx").on(t.tenantId, t.cerereId, t.versiune),
+  foreignKey({ columns: [t.tenantId, t.cerereId], foreignColumns: [cerere.tenantId, cerere.id] }).onDelete("restrict"),
+  doarTenantul("oferta_tenant"),
+]);
+
+/**
+ * Santierul facut din oferta: planul (`PlanSantier` fara situatii) e inghetat
+ * de cand exista o situatie de lucrari — istoricul ei e pe pozitiile lui.
+ * Pana atunci se poate reface din oferta, ca in browser.
+ */
+export const santier = pgTable("santier", {
+  tenantId: uuid("tenant_id").notNull().references(() => tenant.id, { onDelete: "restrict" }),
+  id: text("id").notNull(),
+  ofertaId: uuid("oferta_id").references(() => oferta.id, { onDelete: "restrict" }),
+  firmaId: uuid("firma_id").references(() => firma.id, { onDelete: "restrict" }),
+  denumire: text("denumire").notNull(),
+  /** Fisierul importat din care a iesit oferta. */
+  fisier: text("fisier").notNull(),
+  plan: jsonb("plan").notNull(),
+  /** Seful de santier desemnat (S34). */
+  responsabil: text("responsabil"),
+  creat: timestamp("creat", { withTimezone: true }).notNull(),
+}, (t) => [
+  primaryKey({ columns: [t.tenantId, t.id] }),
+  doarTenantul("santier_tenant"),
+]);
+
+/** Lucrarile suplimentare, peste planul inghetat. Doar se adauga. */
+export const anexaSantier = pgTable("anexa_santier", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenant.id, { onDelete: "restrict" }),
+  santierId: text("santier_id").notNull(),
+  motiv: text("motiv").notNull(),
+  pozitii: jsonb("pozitii").notNull(),
+  creatDe: uuid("creat_de").references(() => utilizator.id, { onDelete: "set null" }),
+  creatLa: timestamp("creat_la", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  foreignKey({ columns: [t.tenantId, t.santierId], foreignColumns: [santier.tenantId, santier.id] }).onDelete("restrict"),
+  doarTenantul("anexa_santier_tenant"),
+]);
+
+/** Situatia de lucrari. Nu se editeaza; se sterge doar ultima (trigger). */
+export const situatie = pgTable("situatie", {
+  tenantId: uuid("tenant_id").notNull().references(() => tenant.id, { onDelete: "restrict" }),
+  santierId: text("santier_id").notNull(),
+  nr: integer("nr").notNull(),
+  id: text("id").notNull(),
+  data: timestamp("data", { withTimezone: true }).notNull(),
+  /** Cantitatea executata in perioada, pe numarul pozitiei. */
+  cantitati: jsonb("cantitati").notNull(),
+  nota: text("nota"),
+  creatDe: uuid("creat_de").references(() => utilizator.id, { onDelete: "set null" }),
+}, (t) => [
+  primaryKey({ columns: [t.tenantId, t.santierId, t.nr] }),
+  foreignKey({ columns: [t.tenantId, t.santierId], foreignColumns: [santier.tenantId, santier.id] }).onDelete("restrict"),
+  doarTenantul("situatie_tenant"),
+]);
+
+/** O pagina din carnet: poza si randurile confirmate de om. Doar se adauga. */
+export const masuratoare = pgTable("masuratoare", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenant.id, { onDelete: "restrict" }),
+  /** oferta | situatie */
+  scop: text("scop").notNull(),
+  santierId: text("santier_id"),
+  poza: bytea("poza"),
+  tipPoza: text("tip_poza"),
+  randuri: jsonb("randuri").notNull(),
+  creatDe: uuid("creat_de").references(() => utilizator.id, { onDelete: "set null" }),
+  creatLa: timestamp("creat_la", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  index("masuratoare_santier_idx").on(t.tenantId, t.santierId),
+  doarTenantul("masuratoare_tenant"),
+]);
+
+/**
+ * Locurile cu material. Id-ul e cel din miscari: `central`, sau id-ul
+ * santierului pentru depozitul lui. Firma (S46: stoc separat, „se mai
+ * amesteca"): un transfer intre depozite ale unor firme diferite se vede.
+ */
+export const depozit = pgTable("depozit", {
+  tenantId: uuid("tenant_id").notNull().references(() => tenant.id, { onDelete: "restrict" }),
+  id: text("id").notNull(),
+  denumire: text("denumire").notNull(),
+  /** central | atelier | santier */
+  tip: text("tip").notNull(),
+  firmaId: uuid("firma_id").references(() => firma.id, { onDelete: "restrict" }),
+  santierId: text("santier_id"),
+  responsabil: text("responsabil"),
+}, (t) => [
+  primaryKey({ columns: [t.tenantId, t.id] }),
+  doarTenantul("depozit_tenant"),
+]);
+
+/** Articolul din stoc: `Articol` din `src/stoc/registru.ts`, pe cheia lui (cu marca). */
+export const articol = pgTable("articol", {
+  tenantId: uuid("tenant_id").notNull().references(() => tenant.id, { onDelete: "restrict" }),
+  cheie: text("cheie").notNull(),
+  sistem: text("sistem").notNull(),
+  grosimeMm: numeric("grosime_mm", { precision: 8, scale: 2 }),
+  rand: numeric("rand", { precision: 8, scale: 2 }),
+  /** ml | m2 */
+  um: text("um").notNull(),
+  marca: text("marca"),
+}, (t) => [
+  primaryKey({ columns: [t.tenantId, t.cheie] }),
+  doarTenantul("articol_tenant"),
+]);
+
+/** Cum se cumpara un material (S13), pe cheia fara marca. */
+export const ambalaj = pgTable("ambalaj", {
+  tenantId: uuid("tenant_id").notNull().references(() => tenant.id, { onDelete: "restrict" }),
+  cheieBaza: text("cheie_baza").notNull(),
+  unitate: text("unitate").notNull(),
+  continut: numeric("continut", { precision: 12, scale: 3 }).notNull(),
+}, (t) => [
+  primaryKey({ columns: [t.tenantId, t.cheieBaza] }),
+  doarTenantul("ambalaj_tenant"),
+]);
+
+/**
+ * Necesarul de materiale al unei lucrari (`NecesarLucrare`). Se editeaza:
+ * pierderile, materialul clientului, randurile puse de mana.
+ */
+export const necesar = pgTable("necesar", {
+  tenantId: uuid("tenant_id").notNull().references(() => tenant.id, { onDelete: "restrict" }),
+  id: text("id").notNull(),
+  santierId: text("santier_id"),
+  continut: jsonb("continut").notNull(),
+  actualizatLa: timestamp("actualizat_la", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  primaryKey({ columns: [t.tenantId, t.id] }),
+  doarTenantul("necesar_tenant"),
+]);
+
+/**
+ * Miscarea de stoc. Stocul e suma lor; nimic nu se scrie peste o cifra. Nu se
+ * editeaza si nu se sterge (trigger): o greseala se anuleaza cu storno.
+ * `din` / `spre` sunt id-uri de depozit, fara cheie straina: depozitele
+ * santierelor-exemplu din datele demo nu sunt in baza.
+ */
+export const miscare = pgTable("miscare", {
+  tenantId: uuid("tenant_id").notNull().references(() => tenant.id, { onDelete: "restrict" }),
+  id: text("id").notNull(),
+  data: timestamp("data", { withTimezone: true }).notNull(),
+  /** intrare | transfer | consum | retur | ajustare */
+  tip: text("tip").notNull(),
+  articolCheie: text("articol_cheie").notNull(),
+  cantitate: numeric("cantitate", { precision: 14, scale: 3 }).notNull(),
+  din: text("din"),
+  spre: text("spre"),
+  lucrareId: text("lucrare_id"),
+  nota: text("nota"),
+  anuleaza: text("anuleaza"),
+  /** Pretul de achizitie pe unitate, EUR. */
+  pret: numeric("pret", { precision: 14, scale: 4 }),
+  creatDe: uuid("creat_de").references(() => utilizator.id, { onDelete: "set null" }),
+  creatLa: timestamp("creat_la", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  primaryKey({ columns: [t.tenantId, t.id] }),
+  foreignKey({ columns: [t.tenantId, t.articolCheie], foreignColumns: [articol.tenantId, articol.cheie] }).onDelete("restrict"),
+  doarTenantul("miscare_tenant"),
+]);
+
+/** Furnizorii (S25). Comanda din Faza 4 ii foloseste. */
+export const furnizor = pgTable("furnizor", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenant.id, { onDelete: "restrict" }),
+  denumire: text("denumire").notNull(),
+  /** Ce vinde, cum a spus firma. */
+  vinde: text("vinde").notNull(),
+  email: text("email"),
+  telefon: text("telefon"),
+}, (t) => [
+  uniqueIndex("furnizor_tenant_denumire_idx").on(t.tenantId, t.denumire),
+  doarTenantul("furnizor_tenant"),
 ]);

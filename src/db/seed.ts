@@ -1,19 +1,48 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { eq } from "drizzle-orm";
+import { and, eq, ilike, sql } from "drizzle-orm";
 import { caTenant, conecteaza, URL_PROPRIETAR, type Baza } from "./client.js";
 import {
-  client, firma, listaPreturi, sectiuneRectangulara, serieDiametre, tenant, utilizator,
+  client, depozit, firma, furnizor, listaPreturi, sectiuneRectangulara, serieDiametre, tenant, utilizator,
 } from "./schema.js";
+
+/**
+ * Cele doua firme, ca `FIRME` din `web/date/seed.ts`: aceeasi cheie (`cod`),
+ * aceeasi denumire si serie ca pe ofertele generate. `cauta` gaseste randul
+ * scris de seed-ul de dinainte de 9 octombrie 2026 („SC RADOIA …", seria RI).
+ */
+const FIRME = [
+  { cod: "radoia", denumire: "RADOIA ISOLIRUNG SRL", serieOferta: "RAD", cauta: "%RADOIA%" },
+  { cod: "isorad", denumire: "R&F ISORAD SYSTEM SRL", serieOferta: "ISO", cauta: "%ISORAD%" },
+];
+
+/** Furnizorii spusi de firma la intalnirea din 5 octombrie 2026 (S25). */
+const FURNIZORI: [string, string][] = [
+  ["Banda Tech", "elastomer și vată minerală de la diferiți producători, accesorii pentru vată, materiale pentru închideri la foc"],
+  ["Color Metal", "tablă de aluminiu"],
+  ["Direct Line Inox", "tablă de inox"],
+  ["Isoline", "cochilii de vată minerală"],
+  ["Isopartner", "elastomer și accesorii"],
+  ["Metal DM Automotive", "tablă de aluminiu"],
+  ["MTM Izolatii", "ca Banda Tech"],
+  ["Ravago Rom", "ca Banda Tech"],
+  ["STEELMET Romania", "tablă de aluminiu"],
+  ["Venus DSH", "șuruburi și nituri pentru protecția cu tablă"],
+  ["SEA Romania", "ca Venus DSH"],
+  ["Reca Romania", "ustensile și scule de lucru"],
+  ["Rocast", "ca SEA și Reca"],
+];
 import { catalogDinFisiere } from "../pricing/lists.js";
 import type { Sistem } from "../pricing/types.js";
 
 /**
  * `npm run db:seed` — populeaza baza locala cu datele reale ale firmei.
  *
- * Idempotent: sterge tenantul cu acelasi nume si il reface. E scriptul de
- * dezvoltare, nu unul de productie — in productie listele intra prin ecranul
- * de import, cu autor si data, nu dintr-un fisier commit-uit.
+ * Idempotent, dar NU mai sterge tenantul (din 9 octombrie 2026 are ofertele,
+ * santierele si stocul oamenilor, iar o parte din ele nu se pot sterge):
+ * completeaza ce lipseste si reface doar listele de preturi. Baza goala se
+ * obtine cu `npm run db:reset`. E scriptul de dezvoltare, nu unul de productie
+ * — in productie listele intra prin ecranul de import, cu autor si data.
  */
 
 const NUME_TENANT = "RADOIA";
@@ -56,20 +85,6 @@ interface Conversii {
 const conversii = (): Conversii =>
   JSON.parse(readFileSync(`${DATE}referinte/conversii-tevi.json`, "utf8")) as Conversii;
 
-async function sterge(db: Baza, tenantId: string): Promise<void> {
-  // Trigger-ul de imutabilitate interzice stergerea listelor activate, si
-  // pe buna dreptate. La reseed le trecem intai in draft, in mod explicit:
-  // asa ocolirea e vizibila in cod, nu ascunsa intr-un `delete` tacut.
-  await caTenant(db, tenantId, async (tx) => {
-    await tx.update(listaPreturi).set({ status: "draft" });
-    await tx.delete(listaPreturi);
-    await tx.delete(client);
-    await tx.delete(utilizator);
-    await tx.delete(firma);
-  });
-  await db.delete(tenant).where(eq(tenant.id, tenantId));
-}
-
 /**
  * Referintele sunt globale, nu per tenant: sunt norme de teava, aceleasi
  * pentru oricine. De aceea se sterg si se refac in afara lui `caTenant` —
@@ -95,29 +110,48 @@ async function seedReferinte(db: Baza): Promise<{ serii: number; sectiuni: numbe
 async function main(): Promise<void> {
   const { db, inchide } = conecteaza(process.env["DATABASE_URL"] ?? URL_PROPRIETAR);
   try {
-    const existent = await db.select().from(tenant).where(eq(tenant.denumire, NUME_TENANT));
-    for (const t of existent) await sterge(db, t.id);
-
-    const [t] = await db.insert(tenant).values({ denumire: NUME_TENANT }).returning();
-    const tenantId = t!.id;
+    const [existent] = await db.select().from(tenant).where(eq(tenant.denumire, NUME_TENANT));
+    const tenantId = existent?.id
+      ?? (await db.insert(tenant).values({ denumire: NUME_TENANT }).returning())[0]!.id;
     let nrListe = 0;
 
     await caTenant(db, tenantId, async (tx) => {
       // Doua entitati juridice, acelasi tenant: impart clienti si preturi.
-      await tx.insert(firma).values([
-        { tenantId, denumire: "SC RADOIA ISOLIRUNG SRL", serieOferta: "RI" },
-        { tenantId, denumire: "R&F ISORAD SYSTEM SRL", serieOferta: "IS" },
-      ]);
+      let central: string | undefined;
+      for (const f of FIRME) {
+        const [gasita] = await tx.select().from(firma)
+          .where(and(eq(firma.tenantId, tenantId), ilike(firma.denumire, f.cauta)));
+        const val = { tenantId, cod: f.cod, denumire: f.denumire, serieOferta: f.serieOferta };
+        const id = gasita
+          ? (await tx.update(firma).set(val).where(eq(firma.id, gasita.id)).returning())[0]!.id
+          : (await tx.insert(firma).values(val).returning())[0]!.id;
+        central ??= id;
+      }
 
+      // Emailurile se tin cu litere mici: intrarea le cauta asa (`utilizator_dupa_email`).
       await tx.insert(utilizator).values([
         { tenantId, email: "birou@radoia.test", nume: "Birou", rol: "birou" },
         { tenantId, email: "contabilitate@radoia.test", nume: "Contabilitate", rol: "contabilitate" },
-      ]);
+      ]).onConflictDoNothing();
 
-      await tx.insert(client).values([
-        { tenantId, denumire: "NISAL SRL", categorie: "industrial", sursa: "Oferta 118 / 27.04.2026" },
-        { tenantId, denumire: "Transavia", categorie: "industrial", sursa: "cerere-de-oferta-transavia-inox.xlsx" },
-      ]);
+      for (const denumire of ["NISAL SRL", "Transavia"]) {
+        const [are] = await tx.select().from(client).where(eq(client.denumire, denumire));
+        if (are) continue;
+        await tx.insert(client).values(denumire === "NISAL SRL"
+          ? { tenantId, denumire, categorie: "industrial", sursa: "Oferta 118 / 27.04.2026" }
+          : { tenantId, denumire, categorie: "industrial", sursa: "cerere-de-oferta-transavia-inox.xlsx" });
+      }
+
+      // Depozitul central e al firmei RADOIA (S46: stocul e in principiu separat pe firme).
+      await tx.insert(depozit).values({ tenantId, id: "central", denumire: "Depozit central", tip: "central", firmaId: central })
+        .onConflictDoNothing();
+      await tx.insert(furnizor).values(FURNIZORI.map(([denumire, vinde]) => ({ tenantId, denumire, vinde })))
+        .onConflictDoNothing();
+
+      // Listele se refac. Cele active nu se sterg (trigger): trec intai in draft,
+      // explicit, ca ocolirea sa se vada in cod.
+      await tx.update(listaPreturi).set({ status: "draft" });
+      await tx.delete(listaPreturi);
 
       const catalog = catalogDinFisiere();
       const liste = [
@@ -156,7 +190,7 @@ async function main(): Promise<void> {
 
     const ref = await seedReferinte(db);
     console.log(
-      `Tenant ${NUME_TENANT} (${tenantId}): 2 firme, 2 utilizatori, 2 clienti, ` +
+      `Tenant ${NUME_TENANT} (${tenantId}): 2 firme, utilizatorii de test, depozitul central, ${FURNIZORI.length} furnizori, ` +
       `${nrListe} liste de preturi (5 rezidentiale + 4 industriale).`,
     );
     console.log(

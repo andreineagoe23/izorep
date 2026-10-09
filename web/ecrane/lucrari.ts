@@ -10,8 +10,7 @@
 import { data as dataRo, esc, eur, indicator, nota, progres, stare, tabel, type Ecran } from "./tip.js";
 import { LUCRARI, client, santier, type Lucrare, type StareLucrare } from "../date/seed.js";
 import { vedeCosturi } from "../nav.js";
-import { citestePlanuri, iaDeDeschis, scriePlanuri } from "../lucrari-local.js";
-import { citesteDepozit, idNou, scrieDepozit } from "../depozit-local.js";
+import { citesteDepozit, citestePlanuri, iaDeDeschis, idNou, modDate, scrieDepozit, scriePlanuri } from "../date.js";
 import { deComandat, solduri } from "../../src/stoc/registru.js";
 import { cifra } from "../stoc-vizual.js";
 import { descarca } from "../descarca.js";
@@ -124,7 +123,7 @@ export const ecran: Ecran = {
           ? `<p class="hint" style="margin:0">Niciun șantier încă. În <a href="#/import">Import Excel</a>, la pasul
             „Oferta”, după ce descarci oferta, „Creează șantierul” face planul de șantier din ea și trimite materialele
             la depozit.</p>`
-          : `<p class="hint" style="margin:0 0 12px">Prototip: șantierele stau doar în acest browser.</p>
+          : `${modDate() === "server" ? "" : `<p class="hint" style="margin:0 0 12px">Prototip: șantierele stau doar în acest browser.</p>`}
             ${tabel(["Șantier", "Oferta", "Valoare ofertă", "Executat", "Situații", ""], randuri, ["", "", "n", "", "n", ""])}`}
       </section>${lucrariExemplu()}`;
     }

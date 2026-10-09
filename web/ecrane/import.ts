@@ -15,18 +15,18 @@ import { anuleaza, confirma, potrivit } from "../validare.js";
 import { cate, esc, eur, type Ecran } from "./tip.js";
 import { FIRME } from "../date/seed.js";
 import {
-  adaosFocIndustrial, clientPropus, cuAjustare, dataAzi, imparte, planDinOferta, registruOferta, totalCuAdaos,
+  adaosFocIndustrial, clientPropus, cuAjustare, dataAzi, imparte, planDinOferta, registruOferta, totalCuAdaos, valoareOferta,
   type AntetOferta, type CerereOferta,
 } from "../oferta.js";
-import { citestePlanuri, deschideLaIntrare, scriePlanuri } from "../lucrari-local.js";
+
 import { descarca, numeOferta } from "../descarca.js";
 import { PIERDERI_IMPLICITE, PRAG_TUB_MM, necesarDinLinii, type Pierderi } from "../../src/stoc/necesar.js";
 import { cardNecesar } from "../stoc-vizual.js";
-import { citesteDepozit, idNou, scrieDepozit } from "../depozit-local.js";
 import {
-  idCurent, incarca, listeaza, puneCurent, salveaza, sterge,
-  type EditareCelula, type IntrareIstoric, type SesiuneImport,
-} from "../istoric.js";
+  citesteDepozit, citestePlanuri, deschideLaIntrare, idCurent, idNou, incarca, listeaza, puneCurent,
+  salveaza, salveazaOferta, scrieDepozit, scriePlanuri, sterge, uitaOferta,
+} from "../date.js";
+import type { EditareCelula, IntrareIstoric, SesiuneImport } from "../istoric.js";
 import {
   actiuniLista, antetVerificare, cardPozitie, comutaExcel, detaliuValoare, ecranOferta, ecranProgres, ecranStart, editorPozitie,
   baraFoi, filtreMotiv, filtreStare, numaraMotive, pasi, patchDinFormular, randStrat, toast,
@@ -36,7 +36,6 @@ import { celuleExtrase, grilaFoaie } from "../import/grila.js";
 import { FARA_POZITII, fisierNecitit, motiveLinie, stareLinie, type CodMotiv } from "../import/text.js";
 import { preia, type Predare } from "../predare.js";
 import { MARCA_PRET_DUBLU } from "../../src/santier/spre-cerere.js";
-import { noteazaOferta, uitaOferta } from "../oferte-local.js";
 import { bani } from "../../src/pricing/engine.js";
 
 /**
@@ -190,25 +189,35 @@ export const ecran: Ecran = {
 
     /** Scrie sesiunea in istoric, amanat: la editarea unei celule vine un eveniment per tasta. */
     function salveazaSesiune(): void {
+      if (!sesiune) return;
+      clearTimeout(ceasSalvare);
+      ceasSalvare = setTimeout(() => void salveazaAcum(), 400);
+    }
+
+    /**
+     * Fara amanare: inainte de salvarea ofertei, care cere cererea ei pe server.
+     * Un om grabit (sau un test) descarca oferta in mai putin de 400 ms de la
+     * ultima corectura, iar oferta ar pleca inaintea cererii.
+     */
+    async function salveazaAcum(): Promise<void> {
       const s = sesiune;
       if (!s) return;
       clearTimeout(ceasSalvare);
-      ceasSalvare = setTimeout(() => {
-        void salveaza({
-          ...s.meta,
-          pozitii: s.rez.statistici.liniiIzolatie,
-          tarifate: s.rez.statistici.tarifate,
-          valoare: s.rez.statistici.valoareTotala,
-          extrase: [...s.rez.rezolvate].map(([index, r]) => ({
-            index, extras: r.extras, sursa: r.sursa, ...(r.text !== undefined ? { text: r.text } : {}),
-          })),
-          editari: s.editari,
-          destinatie,
-          grosimiPropuse: [...grosimiPropuse],
-          descrieriSchimbate: [...descrieriSchimbate],
-          preturiManuale: [...preturiManuale],
-        }).then(async () => { istoric = await listeaza(); });
-      }, 400);
+      await salveaza({
+        ...s.meta,
+        pozitii: s.rez.statistici.liniiIzolatie,
+        tarifate: s.rez.statistici.tarifate,
+        valoare: s.rez.statistici.valoareTotala,
+        extrase: [...s.rez.rezolvate].map(([index, r]) => ({
+          index, extras: r.extras, sursa: r.sursa, ...(r.text !== undefined ? { text: r.text } : {}),
+        })),
+        editari: s.editari,
+        destinatie,
+        grosimiPropuse: [...grosimiPropuse],
+        descrieriSchimbate: [...descrieriSchimbate],
+        preturiManuale: [...preturiManuale],
+      });
+      istoric = await listeaza();
     }
 
     function retarifeaza(): void {
@@ -689,19 +698,20 @@ export const ecran: Ecran = {
       form.querySelector(".alerta")?.remove();
       try {
         const buf = await registruOferta(cerere);
-        descarca(buf, numeOferta(antet.serie, antet.numar, antet.data));
-        // Ca „Cereri și oferte” sa arate oferta langa cererea ei, cu ce plateste clientul.
-        const { oferta } = imparte(cuAjustare(cerere.linii, antet.ajustareProcent ?? 0));
-        const brut = totalCuAdaos(oferta, destinatie);
-        noteazaOferta(s.meta.id, {
+        // Salvata INAINTE de descarcare: ce pleaca la client e exact ce s-a
+        // salvat. Pe server e o versiune noua; in browser, doar sumarul.
+        const { valoare, pozitii } = valoareOferta(cerere);
+        const firma = String(new FormData(form).get("firma") ?? FIRME[0].id);
+        await salveazaAcum();
+        await salveazaOferta(s.meta.id, firma, cerere, {
           numar: antet.numar ? `${antet.serie}${antet.numar}` : "", data: antet.data, client: antet.client,
-          obiectiv: antet.obiectiv, valoare: bani(brut - bani(brut * (antet.discountProcent ?? 0) / 100)),
-          pozitii: oferta.length, cand: new Date().toISOString(),
+          obiectiv: antet.obiectiv, valoare, pozitii, cand: new Date().toISOString(),
         });
-        arataMesaj("Oferta a fost descărcată. O găsești și la „Cereri și oferte”.");
+        descarca(buf, numeOferta(antet.serie, antet.numar, antet.data));
+        arataMesaj("Oferta a fost salvată și descărcată. O găsești și la „Cereri și oferte”.");
       } catch (err) {
         form.querySelector(".imp-formular-butoane")!.insertAdjacentHTML("beforebegin",
-          `<p class="alerta" role="alert">Oferta nu s-a putut genera: ${esc(String(err))}</p>`);
+          `<p class="alerta" role="alert">Oferta nu s-a putut salva și descărca: ${esc(err instanceof Error ? err.message : String(err))}</p>`);
       } finally {
         buton.disabled = false;
         buton.textContent = eticheta;

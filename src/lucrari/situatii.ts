@@ -63,6 +63,11 @@ export interface PlanSantier {
   oferta: string;
   /** Fisierul importat din care a iesit oferta. */
   fisier: string;
+  /**
+   * Id-ul importului (`SesiuneImport.id`): pe el baza leaga santierul de oferta
+   * salvata. Lipseste pe planurile de dinainte de 9 octombrie 2026.
+   */
+  cerere?: string;
   destinatie: string;
   ajustareProcent: number;
   discountProcent: number;

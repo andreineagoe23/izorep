@@ -72,3 +72,45 @@ export async function caTenant<T>(
 export const caAdmin = <T>(db: Baza, lucru: (db: Baza) => Promise<T>): Promise<T> => lucru(db);
 
 export { schema };
+
+/**
+ * O tranzactie in care aplicatia cunoaste o cheie, dar nu tenantul: emailul
+ * scris la intrare (`app.email_cautat`) sau hash-ul unui token sau al unui
+ * cookie (`app.hash_cautat`). Politicile din schema.ts lasa sa se vada doar
+ * randurile cu cheia asta — nimic altceva, nici din tenantul gasit.
+ */
+export async function cuCheie<T>(
+  db: Baza,
+  nume: "app.email_cautat" | "app.hash_cautat",
+  valoare: string,
+  lucru: (tx: Baza) => Promise<T>,
+): Promise<T> {
+  return db.transaction(async (tx) => {
+    await tx.execute(sql`select set_config(${nume}, ${valoare}, true)`);
+    return lucru(tx as unknown as Baza);
+  });
+}
+
+/**
+ * Sterge un tenant cu tot ce are, inclusiv documentele care altfel nu se
+ * sterg niciodata (oferta, miscarea de stoc). Doar pentru tenantii de test si
+ * doar ca proprietar: trigger-ele (migrarea 0006) refuza `izorep_app` chiar
+ * cu `app.purjare` pus.
+ */
+export async function purjeazaTenant(dbProprietar: Baza, tenantId: string): Promise<void> {
+  // Id-ul intra in SQL brut mai jos (numele tabelului nu se poate parametriza).
+  if (!/^[0-9a-f-]{36}$/i.test(tenantId)) throw new Error(`tenant invalid: ${tenantId}`);
+  await dbProprietar.transaction(async (tx) => {
+    await tx.execute(sql`select set_config('app.purjare', ${tenantId}, true)`);
+    await tx.execute(sql`select set_config('app.tenant_id', ${tenantId}, true)`);
+    // Copiii inaintea parintilor: cheile straine sunt `restrict`.
+    for (const tabel of [
+      "situatie", "anexa_santier", "masuratoare", "miscare", "articol", "ambalaj", "necesar",
+      "depozit", "santier", "oferta", "cerere", "furnizor", "sesiune", "token_intrare",
+      "lista_preturi", "client", "utilizator", "firma",
+    ]) {
+      await tx.execute(sql.raw(`delete from "${tabel}" where tenant_id = '${tenantId}'`));
+    }
+    await tx.execute(sql`delete from tenant where id = ${tenantId}`);
+  });
+}

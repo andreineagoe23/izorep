@@ -1,7 +1,7 @@
 import { atentionare, card, esc, eur, indicator, nota, nr, progres, stare, tabel, type Ecran } from "./tip.js";
 import { DOCUMENTE, LUCRARI, client, santier, type StareLucrare } from "../date/seed.js";
 import { vedeCosturi } from "../nav.js";
-import { citesteDepozit } from "../depozit-local.js";
+import { citesteDepozit } from "../date.js";
 import { deComandatPeNecesar } from "./stoc.js";
 
 /** Eticheta afisata si tonul indicatorului `stare()`, per stare de lucrare. */

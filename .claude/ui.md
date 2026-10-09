@@ -105,6 +105,25 @@ Regulile pe care le respectă `style.css`:
 - tokenii sunt numiți după rol (`--accent`, `--linie-tare`), nu după culoare
 - ambele teme sunt definite pe tokeni; un ecran nu scrie niciodată o culoare
 
+## Datele pe server, intrarea (9 octombrie 2026)
+
+`web/date.ts` e singurul loc din care ecranele citesc și scriu date
+(planuri, depozit, oferte, importuri). La pornire alege: server (cu cont) sau
+browser (linkul de pe Pages). Pe server, `navigheaza` ia datele la fiecare
+schimbare de ecran, deci ce a scris un coleg se vede la următorul clic.
+
+- **Intrarea**: un câmp de email și „Trimite-mi linkul”; apoi „Verifică
+  emailul”. Linkul deschide aplicația pe `#/intrare/<token>`. Cât omul n-a
+  intrat, meniul și butonul lui sunt ascunse (`data-intrare` pe `:root`).
+- **Antetul** are în dreapta numele omului și „Ieși” (`#cont`).
+- **Mesajele serverului** stau deasupra ecranului (`#mesaje`): o scriere
+  refuzată („Nu s-a salvat pe server: …”, cu „Am înțeles”) și cardul „Datele
+  din acest browser” / „Mută datele pe server”.
+- Pe server dispar „Încarcă date de exemplu” (mișcările nu se mai șterg) și
+  notele „Prototip: … doar în acest browser”.
+- „Descarcă oferta” salvează întâi (importul și versiunea ofertei), apoi
+  descarcă; o eroare de salvare oprește descărcarea.
+
 ## Cereri și oferte (3 octombrie 2026)
 
 Sus, **„Cererile importate”**: fiecare import din istoric (`web/istoric.ts`)

@@ -179,6 +179,17 @@ export function adaosFocIndustrial(oferta: LinieProcesata[], destinatie: string)
 export const totalCuAdaos = (oferta: LinieProcesata[], destinatie: string): number =>
   bani(totalOferta(oferta) + adaosFocIndustrial(oferta, destinatie));
 
+/**
+ * Ce plătește clientul: după ajustarea tehnicului, adaosul de foc și discount.
+ * Aceeași socoteală în pasul „Oferta” și pe server, care o refuză pe cea
+ * trimisă dacă nu iese din liniile salvate.
+ */
+export function valoareOferta(c: CerereOferta): { valoare: number; pozitii: number } {
+  const { oferta } = imparte(cuAjustare(c.linii, c.antet.ajustareProcent ?? 0));
+  const brut = totalCuAdaos(oferta, c.provenienta.destinatie);
+  return { valoare: bani(brut - bani(brut * (c.antet.discountProcent ?? 0) / 100)), pozitii: oferta.length };
+}
+
 /** Cantitatea de pe rând. Lipsa ei înseamnă „o bucată", ca la tarifare. */
 const cantitatea = (l: LinieProcesata): number => l.bruta.cantitate ?? 1;
 
@@ -443,6 +454,7 @@ export function planDinOferta(c: CerereOferta, id: string, sectiuni?: ReadonlyMa
     firma: c.antet.firma,
     oferta: c.antet.numar ? `${c.antet.serie}${c.antet.numar} / ${c.antet.data}` : "",
     fisier: c.provenienta.fisierSursa,
+    cerere: c.provenienta.sesiune,
     destinatie: c.provenienta.destinatie,
     ajustareProcent: ajustare,
     discountProcent: c.antet.discountProcent ?? 0,
