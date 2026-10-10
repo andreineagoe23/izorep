@@ -12,7 +12,10 @@
  *
  * Scrierile pleaca intr-o coada, una dupa alta (santierul inaintea situatiei
  * lui). Una refuzata de server (de exemplu, planul unui santier cu situatii)
- * se spune pe ecran (`laEroare`), iar copia se reia de pe server.
+ * se spune pe ecran (`laEroare`), iar copia se reia de pe server si ecranul se
+ * deseneaza din nou (`laReimprospatare`). Pana atunci scrierile se opresc:
+ * ecranul tine inca lista veche, iar ce lipseste din ea fata de copia noua
+ * (situatia scrisa de un coleg) ar pleca la server ca stergere.
  *
  * Modul se alege la pornire: `/api/eu` raspunde → server; nu exista → browser.
  * `VITE_DATE=server` la build il impune: o aplicatie de productie cu serverul
@@ -36,10 +39,14 @@ let copie: DateComune = { planuri: [], depozit: { miscari: [], necesare: [] }, o
 const cuFisier = new Set<string>();
 let coada: Promise<void> = Promise.resolve();
 let ascultaEroare: (mesaj: string) => void = (m) => console.error(m);
+let ascultaReimprospatare: () => void = () => undefined;
+/** Copia s-a luat din nou dupa un refuz, iar ecranul inca n-a citit-o. */
+let invechit = false;
 
 export const modDate = (): Mod => mod;
 export const euCurent = (): Eu | null => eu;
 export const laEroare = (f: (mesaj: string) => void): void => { ascultaEroare = f; };
+export const laReimprospatare = (f: () => void): void => { ascultaReimprospatare = f; };
 
 /* ------------------------------------------------------------- reteaua */
 
@@ -68,7 +75,11 @@ async function api<T>(cale: string, metoda = "GET", corp?: unknown): Promise<T> 
 function trimite(f: () => Promise<unknown>): void {
   coada = coada.then(f).then(() => undefined, async (e: unknown) => {
     ascultaEroare(`Nu s-a salvat pe server: ${e instanceof Error ? e.message : String(e)}`);
-    try { copie = await api<DateComune>("/api/date"); } catch { /* ramane copia locala */ }
+    try {
+      copie = await api<DateComune>("/api/date");
+      invechit = true;
+      ascultaReimprospatare();
+    } catch { /* ramane copia locala */ }
   });
 }
 
@@ -98,6 +109,13 @@ export async function reimprospateaza(): Promise<void> {
   if (mod !== "server") return;
   await coada;
   copie = await api<DateComune>("/api/date");
+  invechit = false;
+}
+
+/** Ecranul scrie dintr-o lista luata inainte de un refuz: nu pleaca nimic. */
+function refuzaInvechit(): boolean {
+  if (invechit) ascultaEroare("Pagina s-a reîncărcat cu datele de pe server: fă din nou ultima modificare.");
+  return invechit;
 }
 
 export async function cereLink(email: string): Promise<void> {
@@ -129,6 +147,7 @@ export const citestePlanuri = (): PlanSantier[] => (mod === "server" ? clona(cop
 
 export function scriePlanuri(planuri: PlanSantier[]): boolean {
   if (mod !== "server") return luc.scriePlanuri(planuri);
+  if (refuzaInvechit()) return true;
   const vechi = new Map(copie.planuri.map((p) => [p.id, p]));
   for (const p of planuri) {
     const v = vechi.get(p.id);
@@ -137,7 +156,7 @@ export function scriePlanuri(planuri: PlanSantier[]): boolean {
     const au = new Set(p.situatii.map((s) => s.id));
     // Intai cele sterse (de la ultima), apoi cele noi (in ordine).
     for (const s of [...(v?.situatii ?? [])].reverse().filter((s) => !au.has(s.id))) {
-      trimite(() => api(`/api/santiere/${enc(p.id)}/situatii/${s.nr}`, "DELETE"));
+      trimite(() => api(`/api/santiere/${enc(p.id)}/situatii/${s.nr}?id=${enc(s.id)}`, "DELETE"));
     }
     for (const s of p.situatii.filter((s: Situatie) => !aveau.has(s.id))) {
       trimite(() => api(`/api/santiere/${enc(p.id)}/situatii`, "POST", s));
@@ -158,6 +177,7 @@ export const citesteDepozit = (): dep.StareDepozit => (mod === "server" ? clona(
 
 export function scrieDepozit(s: dep.StareDepozit): boolean {
   if (mod !== "server") return dep.scrieDepozit(s);
+  if (refuzaInvechit()) return true;
   const v = copie.depozit;
   const aveau = new Set(v.miscari.map((m) => m.id));
   // Datele de exemplu nu ajung pe server (ecranul nu le ofera acolo).

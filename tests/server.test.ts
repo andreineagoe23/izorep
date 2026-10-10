@@ -12,7 +12,8 @@ import { existsSync, readFileSync } from "node:fs";
 import { sql } from "drizzle-orm";
 import { caTenant, conecteaza, purjeazaTenant, URL_PROPRIETAR } from "../src/db/client.js";
 import { firma, oferta, miscare, tenant, utilizator } from "../src/db/schema.js";
-import { creeazaServer, ANTET_CSRF, COOKIE } from "../src/server/app.js";
+import { creeazaServer, ANTET_CSRF, COOKIE, LIMITA_IMPLICITA } from "../src/server/app.js";
+import { LINKURI_PE_FEREASTRA } from "../src/server/intrare.js";
 import type { CererePeFir, DateComune, Mutare, RezultatMutare } from "../src/server/contract.js";
 import { importaFisier } from "../src/import/pipeline.js";
 import { stocInMemorie } from "../src/import/memorie.js";
@@ -127,6 +128,22 @@ describe("intrarea cu link pe email", () => {
     expect(linkuri).toEqual([]);
   });
 
+  daca()("peste cinci linkuri în 15 minute, formularul tace: răspunde la fel, dar nu mai trimite", async () => {
+    const email = `c-${sufix}@test.ro`;
+    await caTenant(prop.db, tenantA, (tx) => tx.insert(utilizator).values({ tenantId: tenantA, email, nume: "C", rol: "birou" }));
+    linkuri.length = 0;
+    for (let i = 0; i < LINKURI_PE_FEREASTRA + 2; i++) {
+      expect((await cere("/api/intrare", "", { method: "POST", body: { email } })).status).toBe(202);
+    }
+    expect(linkuri).toHaveLength(LINKURI_PE_FEREASTRA);
+  });
+
+  daca()("o cerere prea mare e refuzată înainte să ajungă la bază", async () => {
+    const mare = "x".repeat(LIMITA_IMPLICITA + 1);
+    const r = await cere("/api/miscari", cookieA, { method: "POST", body: miscareMica("mare", { nota: mare }) });
+    expect(r.status).toBe(413);
+  });
+
   daca()("fără antetul X-Izorep, nicio schimbare nu trece (CSRF)", async () => {
     const r = await cere("/api/miscari", cookieA, { method: "POST", body: miscareMica("csrf"), faraCsrf: true });
     expect(r.status).toBe(403);
@@ -193,10 +210,13 @@ describe("ce nu se mai schimbă", () => {
       expect((await cere("/api/santiere/S-imu/situatii", cookieA, { method: "POST", body: s })).status).toBe(200);
     }
     expect((await cere("/api/santiere/S-imu/situatii", cookieA, { method: "POST", body: { id: "x", nr: 5, data: "2026-10-09T08:00:00.000Z", cantitati: {} } })).status).toBe(409);
-    expect((await cere("/api/santiere/S-imu/situatii/1", cookieA, { method: "DELETE" })).status).toBe(409);
+    expect((await cere("/api/santiere/S-imu/situatii/1?id=sit-1", cookieA, { method: "DELETE" })).status).toBe(409);
+    // Alta situatie 2 decat cea vazuta (stearsa si scrisa din nou de un coleg): nu se sterge.
+    expect((await cere("/api/santiere/S-imu/situatii/2?id=alta", cookieA, { method: "DELETE" })).status).toBe(409);
+    expect((await cere("/api/santiere/S-imu/situatii/2", cookieA, { method: "DELETE" })).status).toBe(400);
     expect((await cere("/api/santiere/S-imu", cookieA, { method: "PUT", body: { ...plan, pozitii: [] } })).status).toBe(409);
     expect((await cere("/api/santiere/S-imu", cookieA, { method: "DELETE" })).status).toBe(409);
-    expect((await cere("/api/santiere/S-imu/situatii/2", cookieA, { method: "DELETE" })).status).toBe(200);
+    expect((await cere("/api/santiere/S-imu/situatii/2?id=sit-2", cookieA, { method: "DELETE" })).status).toBe(200);
 
     const d = (await cere("/api/date", cookieA)).corp as DateComune;
     const p = d.planuri.find((x) => x.id === "S-imu")!;

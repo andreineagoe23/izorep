@@ -13,6 +13,7 @@
  * care serverul nu-l da.
  */
 import { Hono, type Context as HonoCtx } from "hono";
+import { bodyLimit } from "hono/body-limit";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { z } from "zod";
 import { caTenant, type Baza } from "../db/client.js";
@@ -36,6 +37,20 @@ export interface OptiuniServer {
 }
 
 type Env = { Variables: { ctx: Context } };
+
+/**
+ * Cat poate avea o cerere. Fisierul clientului si poza din carnet vin in JSON
+ * (base64, cu o treime mai mari); mutarea din browser le aduce pe toate
+ * deodata. Restul sunt randuri de date.
+ */
+const MB = 1024 * 1024;
+export const LIMITE: readonly [RegExp, number][] = [
+  [/^\/api\/mutare$/, 100 * MB],
+  [/^\/api\/cereri\/[^/]+$/, 25 * MB],
+  [/^\/api\/masuratori$/, 15 * MB],
+];
+export const LIMITA_IMPLICITA = 5 * MB;
+const limitaPentru = (cale: string): number => LIMITE.find(([r]) => r.test(cale))?.[1] ?? LIMITA_IMPLICITA;
 
 /** Formele de pe fir, verificate doar cat trebuie ca o greseala sa nu ajunga in baza. */
 const Id = z.string().min(1).max(200);
@@ -83,6 +98,11 @@ export function creeazaServer(o: OptiuniServer): Hono<Env> {
     console.error(err);
     return c.json({ eroare: "Eroare pe server." }, 500);
   });
+
+  app.use("/api/*", (c, next) => bodyLimit({
+    maxSize: limitaPentru(c.req.path),
+    onError: (c) => c.json({ eroare: "Fișierul sau datele trimise sunt prea mari." }, 413),
+  })(c, next));
 
   app.use("/api/*", async (c, next) => {
     if (c.req.method !== "GET" && c.req.header(ANTET_CSRF) !== "1") return c.json({ eroare: "Cerere refuzată." }, 403);
@@ -170,8 +190,11 @@ export function creeazaServer(o: OptiuniServer): Hono<Env> {
     await inTenant(c, (tx, ctx) => repo.adaugaSituatie(tx, ctx, c.req.param("id"), corp as never));
     return ok(c);
   });
+  // Numarul spune care e ultima; id-ul, ca e aceeasi situatie pe care a vazut-o
+  // omul: altfel, stearsa si scrisa din nou de un coleg, ar pleca a colegului.
   app.delete("/api/santiere/:id/situatii/:nr", async (c) => {
-    await inTenant(c, (tx) => repo.stergeSituatie(tx, c.req.param("id"), Number(c.req.param("nr"))));
+    const id = Id.parse(c.req.query("id"));
+    await inTenant(c, (tx) => repo.stergeSituatie(tx, c.req.param("id"), Number(c.req.param("nr")), id));
     return ok(c);
   });
 

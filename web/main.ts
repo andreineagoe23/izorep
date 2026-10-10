@@ -7,7 +7,7 @@ import {
 } from "./meniu-stare.js";
 import {
   amMutat, areDateDeMutat, cereLink, confirmaLink, dateInBrowser, EroareServer, euCurent, iesi, laEroare,
-  modDate, mutaDinBrowser, porneste, reimprospateaza,
+  laReimprospatare, modDate, mutaDinBrowser, porneste, reimprospateaza,
 } from "./date.js";
 
 const ECRANE: Record<string, () => Promise<{ ecran: Ecran }>> = {
@@ -300,6 +300,8 @@ function arataEroare(mesaj: string): void {
   $("#mesaje").append(el);
 }
 laEroare(arataEroare);
+// Dupa o scriere refuzata, ecranul se deseneaza din copia noua (date.ts).
+laReimprospatare(() => { void navigheaza(); });
 
 function deseneazaCont(): void {
   const eu = euCurent();

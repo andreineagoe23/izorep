@@ -1,7 +1,7 @@
 /**
  * `npm run server` — serverul local, pe portul 8787. `vite dev` ii trimite
  * cererile `/api/*` (vite.config.ts). In productie acelasi proces serveste si
- * pagina construita (`dist-web`), cand exista.
+ * pagina construita cu `npm run build:server` (`dist-web`), cand exista.
  *
  * Variabile, toate cu implicit pentru local:
  *   DATABASE_URL   conexiunea, cu rolul izorep_app (NOBYPASSRLS), niciodata proprietarul
@@ -10,7 +10,7 @@
  *   SMTP_URL       smtp://localhost:1025 (Mailpit)
  *   EMAIL_DE       expeditorul
  */
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { serve } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { conecteaza } from "../db/client.js";
@@ -31,7 +31,16 @@ const app = creeazaServer({
   cookieSecure: urlAplicatie.startsWith("https://"),
 });
 
-if (existsSync("dist-web/index.html")) app.use("/*", serveStatic({ root: "./dist-web" }));
+// Pagina servita de aici trebuie construita cu `npm run build:server`: cea de
+// pe Pages (`build:web`) cere fisierele de la /izorep/ si, fara server,
+// scrie datele in browser.
+if (existsSync("dist-web/index.html")) {
+  if (readFileSync("dist-web/index.html", "utf8").includes("/izorep/assets/")) {
+    console.error("dist-web e construit pentru GitHub Pages. Pentru server: npm run build:server");
+  } else {
+    app.use("/*", serveStatic({ root: "./dist-web" }));
+  }
+}
 
 serve({ fetch: app.fetch, port }, () => {
   console.log(`Serverul Izorep pe http://localhost:${port} · aplicatia: ${urlAplicatie}`);

@@ -118,7 +118,9 @@ schimbare de ecran, deci ce a scris un coleg se vede la următorul clic.
 - **Antetul** are în dreapta numele omului și „Ieși” (`#cont`).
 - **Mesajele serverului** stau deasupra ecranului (`#mesaje`): o scriere
   refuzată („Nu s-a salvat pe server: …”, cu „Am înțeles”) și cardul „Datele
-  din acest browser” / „Mută datele pe server”.
+  din acest browser” / „Mută datele pe server”. După un refuz ecranul se
+  redesenează singur din datele de pe server (10 octombrie 2026): lista pe
+  care o ținea era veche, iar ce lipsea din ea ar fi plecat ca ștergere.
 - Pe server dispar „Încarcă date de exemplu” (mișcările nu se mai șterg) și
   notele „Prototip: … doar în acest browser”.
 - „Descarcă oferta” salvează întâi (importul și versiunea ofertei), apoi

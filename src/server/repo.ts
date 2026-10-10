@@ -78,7 +78,12 @@ async function stareDepozit(tx: Baza): Promise<StareDepozit> {
 }
 
 async function ultimeleOferte(tx: Baza): Promise<Record<string, OfertaEmisa>> {
-  const rows = await tx.select().from(oferta).orderBy(asc(oferta.versiune));
+  // Fara `continut`: se cere la fiecare schimbare de ecran, iar liniile tuturor
+  // versiunilor n-au ce cauta acolo (le da `versiuniOferta`).
+  const rows = await tx.select({
+    cerereId: oferta.cerereId, numar: oferta.numar, data: oferta.data, client: oferta.client,
+    obiectiv: oferta.obiectiv, valoare: oferta.valoare, pozitii: oferta.pozitii, creatLa: oferta.creatLa,
+  }).from(oferta).orderBy(asc(oferta.versiune));
   // In ordinea versiunilor: ultima o inlocuieste pe cea dinainte, ca `noteazaOferta`.
   return Object.fromEntries(rows.map((o) => [o.cerereId, {
     numar: o.numar, data: o.data, client: o.client, obiectiv: o.obiectiv, valoare: Number(o.valoare),
@@ -204,7 +209,7 @@ export async function stergeSantier(tx: Baza, id: string): Promise<void> {
 export async function adaugaSituatie(tx: Baza, ctx: Context, santierId: string, s: Situatie): Promise<void> {
   const [ultima] = await tx.select({ v: max(situatie.nr) }).from(situatie).where(eq(situatie.santierId, santierId));
   if (s.nr !== (ultima?.v ?? 0) + 1) {
-    throw new Refuz(409, `Situația ${s.nr} nu urmează după ultima de pe server (${ultima?.v ?? 0}). Reîncarcă pagina.`);
+    throw new Refuz(409, `Situația ${s.nr} nu urmează după ultima de pe server (${ultima?.v ?? 0}): a scris-o cineva între timp. Ecranul arată acum ce e pe server.`);
   }
   await tx.insert(situatie).values({
     tenantId: ctx.tenantId, santierId, nr: s.nr, id: s.id, data: new Date(s.data), cantitati: s.cantitati,
@@ -212,8 +217,11 @@ export async function adaugaSituatie(tx: Baza, ctx: Context, santierId: string, 
   });
 }
 
-export async function stergeSituatie(tx: Baza, santierId: string, nrSit: number): Promise<void> {
-  await tx.delete(situatie).where(and(eq(situatie.santierId, santierId), eq(situatie.nr, nrSit)));
+export async function stergeSituatie(tx: Baza, santierId: string, nrSit: number, id: string): Promise<void> {
+  const sterse = await tx.delete(situatie)
+    .where(and(eq(situatie.santierId, santierId), eq(situatie.nr, nrSit), eq(situatie.id, id)))
+    .returning({ nr: situatie.nr });
+  if (sterse.length === 0) throw new Refuz(409, `Situația ${nrSit} s-a schimbat pe server între timp. Ecranul arată acum ce e pe server.`);
 }
 
 /* ------------------------------------------------------------- stocul */

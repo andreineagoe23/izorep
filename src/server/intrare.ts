@@ -18,6 +18,8 @@ import { sesiune, tenant, tokenIntrare, utilizator } from "../db/schema.js";
 
 export const DURATA_TOKEN_MS = 15 * 60 * 1000;
 export const DURATA_SESIUNE_MS = 30 * 24 * 60 * 60 * 1000;
+/** Cate linkuri primeste un om in `DURATA_TOKEN_MS`: peste, formularul tace (nu umple casuta nimanui). */
+export const LINKURI_PE_FEREASTRA = 5;
 
 export const tokenNou = (): string => randomBytes(32).toString("base64url");
 export const hashToken = (t: string): string => createHash("sha256").update(t).digest("hex");
@@ -36,7 +38,8 @@ export type TrimiteLink = (catre: { email: string; nume: string; firma: string }
 
 /**
  * Cere un link. Raspunsul e acelasi daca adresa are cont sau nu: altfel
- * formularul ar spune oricui ce adrese exista.
+ * formularul ar spune oricui ce adrese exista. Tot acelasi raspuns si peste
+ * `LINKURI_PE_FEREASTRA`, doar ca linkul nu mai pleaca.
  *
  * Acelasi email poate fi in doi tenanti (unicitatea e pe tenant): primeste
  * cate un link pentru fiecare, cu numele firmei in mesaj.
@@ -50,6 +53,10 @@ export async function cereLink(db: Baza, email: string, urlAplicatie: string, tr
   for (const om of oameni.filter((o) => o.activ)) {
     const token = tokenNou();
     const firma = await caTenant(db, om.tenantId, async (tx) => {
+      const [cate] = await tx.select({ n: sql<number>`count(*)` }).from(tokenIntrare).where(and(
+        eq(tokenIntrare.utilizatorId, om.id), gt(tokenIntrare.creatLa, new Date(Date.now() - DURATA_TOKEN_MS)),
+      ));
+      if (Number(cate?.n ?? 0) >= LINKURI_PE_FEREASTRA) return null;
       await tx.insert(tokenIntrare).values({
         tenantId: om.tenantId, utilizatorId: om.id, hash: hashToken(token),
         expira: new Date(Date.now() + DURATA_TOKEN_MS),
@@ -58,6 +65,7 @@ export async function cereLink(db: Baza, email: string, urlAplicatie: string, tr
       const [t] = await tx.select({ denumire: tenant.denumire }).from(tenant).where(eq(tenant.id, om.tenantId));
       return t?.denumire ?? "";
     });
+    if (firma === null) continue;
     await trimite({ email: adresa, nume: om.nume, firma }, `${urlAplicatie}#/intrare/${token}`);
   }
 }

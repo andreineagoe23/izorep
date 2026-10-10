@@ -24,7 +24,7 @@ beforeEach(() => {
     expect(metoda === "GET" || (init?.headers as Record<string, string>)["x-izorep"] === "1").toBe(true);
     if (url === "/api/eu") return raspuns(200, { nume: "Birou", email: "b@x.ro", rol: "birou" });
     if (url === "/api/date") return raspuns(200, date);
-    if (url.endsWith("/situatii/1") && metoda === "DELETE") return raspuns(409, { eroare: "se șterge doar ultima" });
+    if (url.split("?")[0]!.endsWith("/situatii/1") && metoda === "DELETE") return raspuns(409, { eroare: "se șterge doar ultima" });
     return raspuns(200, { ok: true });
   }));
 });
@@ -78,6 +78,39 @@ describe("web/date.ts pe server: pleacă doar diferența", () => {
     await d.reimprospateaza();
     expect(mesaje).toEqual(["Nu s-a salvat pe server: se șterge doar ultima"]);
     expect(d.citestePlanuri()[0]!.situatii.map((s) => s.nr)).toEqual([1, 2]);
+  });
+
+  it("după un refuz, ecranul vechi nu mai poate șterge ce a scris un coleg", async () => {
+    // Pe server: situatia 1. Ecranul lui A o citeste si tine lista la el.
+    date = { ...(date as object), planuri: [plan([sit(1)])] };
+    const d = await import("../web/date.js");
+    await d.porneste();
+    const mesaje: string[] = [];
+    d.laEroare((m) => mesaje.push(m));
+    let redesenari = 0;
+    d.laReimprospatare(() => { redesenari++; });
+    const peEcran = d.citestePlanuri();
+
+    // Intre timp B scrie situatia 2; A scrie si el o situatie 2, refuzata.
+    const aLuiB = { ...sit(2), id: "b2" };
+    date = { ...(date as object), planuri: [plan([sit(1), aLuiB])] };
+    vi.mocked(fetch).mockImplementationOnce(async () => raspuns(409, { eroare: "Situația 2 nu urmează după ultima" }));
+    peEcran[0]!.situatii.push({ ...sit(2), id: "a2" });
+    d.scriePlanuri(peEcran);
+    await vi.waitFor(() => expect(redesenari).toBe(1));
+
+    // Ecranul lui A, inca nedesenat din nou, mai scrie o data lista lui.
+    cereri.length = 0;
+    d.scriePlanuri(peEcran);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(cereri).toEqual([]);
+    expect(mesaje.at(-1)).toMatch(/fă din nou ultima modificare/);
+
+    // Dupa redesenare (copia luata din nou), scrierile merg; stergerea poarta id-ul.
+    await d.reimprospateaza();
+    d.scriePlanuri([plan([sit(1)])]);
+    await d.reimprospateaza();
+    expect(cereri).toEqual(["DELETE /api/santiere/S-1/situatii/2?id=b2"]);
   });
 
   it("fără server (linkul demo), modul e „browser”", async () => {

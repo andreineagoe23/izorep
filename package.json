@@ -10,6 +10,7 @@
     "om": "tsx src/server/om.ts",
     "dev": "vite",
     "build:web": "vite build",
+    "build:server": "VITE_BASE=/ VITE_DATE=server vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",

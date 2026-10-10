@@ -1,7 +1,27 @@
 # Stare curentă
 
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
-> Ultima actualizare: 9 octombrie 2026.
+> Ultima actualizare: 10 octombrie 2026.
+
+## 10 octombrie 2026: auditul Fazei 3, reparații
+
+Audit pe tot ce s-a făcut (Fazele 1–3). Reparat pe `faza-3`, fiecare cu test:
+
+| Ce | Cum |
+|---|---|
+| **Situația unui coleg se ștergea pe tăcute** | A și B scriu situația 3; a lui A e refuzată, copia se reia de pe server, dar ecranul Lucrări ținea lista veche (`let planuri`). La următoarea scriere a lui A, situația lui B lipsea din listă → `DELETE`. La fel pe Depozit, cu necesarurile și ambalajele. Acum, după refuz, ecranul se redesenează (`laReimprospatare` în `web/date.ts`, legat în `main.ts`), iar până atunci scrierile nu pleacă. Situația se șterge cu id-ul ei (`?id=`): una ștearsă și scrisă din nou de altcineva nu mai pleacă. Reprodus în `date-web.test.ts` și verificat cu Playwright, două browsere, pe build-ul de server |
+| `/api/date` aducea liniile tuturor versiunilor de ofertă la fiecare ecran | doar sumarul (`ultimeleOferte`) |
+| Fără plafon pe cereri | 5 MB implicit; 25 MB cererea cu fișierul, 15 MB măsurătoarea cu poza, 100 MB mutarea (`LIMITE` în `app.ts`), altfel 413 |
+| Linkuri pe email fără limită | cel mult 5 pe om în 15 minute; peste, același răspuns, fără email |
+| Build-ul pentru server | `npm run build:server` (`VITE_BASE=/`, `VITE_DATE=server`); `build:web` rămâne pentru Pages. Serverul refuză să servească un `dist-web` construit pentru Pages |
+
+**432 de teste.** Rămase din audit, pentru mai târziu:
+
+- **Modelul nu e pe server**: `/api/extrage` și `/api/poza` există doar în `vite dev`. Pe serverul de producție importul merge doar pe reguli (tot 0 fără preț), dar Măsurătorile din poze nu merg. Condiție pentru producție și pentru Faza 4.8 (avizul citit cu modelul).
+- Cererea și necesarul se salvează „ultimul câștigă”: doi oameni pe același import se suprascriu.
+- Faza 4 și mai departe: rute proprii, cu operații explicite (adaugă, anulează), nu diferența de stare din `date.ts` — de acolo a venit bugul de mai sus. Faza 6: consumul scris la situație trebuie stornat când se șterge situația.
+- Numărul ofertei nu îl dă serverul; fără jurnal „cine a schimbat ce”.
+- `main` e în urmă cu Fazele 1–3: linkul de pe Pages arată varianta de dinainte de Faza 1, iar CI-ul (doar pe `main`) n-a rulat pe ele.
 
 ## 9 octombrie 2026: Faza 3, datele comune
 
