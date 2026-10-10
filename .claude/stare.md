@@ -3,6 +3,20 @@
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
 > Ultima actualizare: 10 octombrie 2026.
 
+## 10 octombrie 2026: Transavia inox, 72 de verificat → 19
+
+Toate cele 72 de poziții ieșeau „De verificat” pe rezidențial, cu „Preț din
+lista celuilalt tip de ofertă”: inoxul are o singură listă la firmă (fișierul
+industrial), deci orice strat de inox pe o ofertă rezidențială era marcat.
+Decizia din 7 septembrie spunea „notă, nu marcaj”; din Faza 1 devenise
+marcaj. Acum inoxul e în `LISTA_UNICA`: nota rămâne, marcajul nu. Rămân 19, fiecare
+cu motivul lui: 11 casete fără grosime (luată de la conductă, `grosime_propusa`),
+3 ø22 × 40 mm (celulă dedusă, ca în Oferta 284), 3 capace în bucăți
+(`um_bucata`), 2 „g48” (grosime care nu e în listă). În browser: 53 Gata, 19 De
+verificat, 0 fără preț. Testele: `inox.test.ts`, `fara-pret.test.ts`. Oferta
+semnată pe Transavia inox n-a venit încă (exemplul 3): când vine, devine test
+linie cu linie și lămurește și cele 19.
+
 ## 10 octombrie 2026: modelul pe server
 
 `/api/extrage` și `/api/poza` au trecut din pluginul lui `vite dev` (șters) în

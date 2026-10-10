@@ -129,6 +129,17 @@ const PE_DESTINATIE = {
 
 export const DESTINATII: readonly Destinatie[] = ["rezidential", "industrial", "rafinarie"];
 
+/**
+ * Sistemele pentru care firma are o SINGURA lista, pe orice tip de oferta.
+ * Inoxul: firma n-are lista rezidentiala de inox (nu una care lipseste), iar pe
+ * 5 octombrie 2026 a raspuns la grosimea celor 72 de pozitii Transavia inox
+ * („se merge pe 0,4”), deci le ofera din lista asta. Pretul de aici nu e o
+ * alegere de segment de verificat; ramane doar nota cu proveniena.
+ * PVC-ul pe industrial NU e aici: acolo lista firmei lipseste (planul de
+ * implementare, decizia PVC), deci pozitia ramane de verificat.
+ */
+export const LISTA_UNICA: ReadonlySet<SistemMatrice> = new Set<SistemMatrice>(["tabla_inox"]);
+
 /** Sistemele care au lista pe destinatia data, in ordinea din inventar. */
 export const sistemePe = (d: Destinatie): SistemMatrice[] =>
   Object.keys(PE_DESTINATIE[d]) as SistemMatrice[];

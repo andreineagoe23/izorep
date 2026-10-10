@@ -84,6 +84,17 @@ describe("tabla fără grosime scrisă", () => {
   });
 });
 
+describe("Transavia inox pe rezidențial", () => {
+  it("inoxul nu trimite nicio poziție la verificat; rămân doar cele cu motivul lor", async () => {
+    const f = join(DIR, "cerere-de-oferta-transavia-inox.xlsx");
+    if (!existsSync(f)) return;
+    const r = await importaFisier(f, { faraModel: true, destinatie: "rezidential", stoc: stocInMemorie() });
+    const cuPret = r.linii.filter((l) => l.extras.sistem !== null && l.pret);
+    expect(cuPret).toHaveLength(72);
+    expect(cuPret.filter((l) => motive(l.pret).includes("segment_diferit"))).toEqual([]);
+  });
+});
+
 describe("prețul pe mp, când lista segmentului nu-l are", () => {
   it("tablă 0,6 mm pe rezidențial: prețul pe mp din lista industrială (0,8 e identic în amândouă)", () => {
     const r = tarifeazaPeMp({ straturi: [{ sistem: "tabla", grosime_mm: 0.6 }], cantitate: 1 });

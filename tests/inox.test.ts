@@ -118,6 +118,28 @@ describe("nota de destinatie mixta", () => {
     expect(note?.[0]?.toLowerCase()).toContain("industriala");
   });
 
+  it("pe rezidential, inoxul NU trimite pozitia la verificat: e singura lista de inox a firmei", () => {
+    // Firma n-are lista rezidentiala de inox, nu una „lipsa”: a raspuns pe
+    // 5 octombrie la grosimea celor 72 de pozitii Transavia inox (0,4), deci
+    // le ofera din lista asta. Nota ramane, ca proveniena sa se vada.
+    const r = tarifeaza({
+      diametru: { valoare: 89, tip: "exterior" },
+      straturi: [{ sistem: "vata_minerala", grosime_mm: 50 }, { sistem: "tabla_inox" }],
+      forma: "ml", cantitate: 1,
+    });
+    expect(r.motiveDeVerificat ?? []).not.toContain("segment_diferit");
+    expect(r.note?.join(" ").toLowerCase()).toContain("industriala");
+  });
+
+  it("PVC pe industrial ramane de verificat: acolo lista firmei lipseste (plan, decizia PVC)", () => {
+    const r = tarifeaza({
+      diametru: { valoare: 89, tip: "exterior" },
+      straturi: [{ sistem: "vata_minerala", grosime_mm: 50 }, { sistem: "pvc" }],
+      forma: "ml", cantitate: 1, destinatie: "industrial",
+    });
+    expect(r.motiveDeVerificat).toContain("segment_diferit");
+  });
+
   it("o pozitie fara inox NU poarta nota", () => {
     const extras: LinieExtrasa = {
       index: 0, sistem: "tabla", diametru_valoare: 100, diametru_tip: "exterior",

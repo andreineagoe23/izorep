@@ -289,6 +289,11 @@ Fiecare dedusă din Oferta 284 sau Oferta 27.04.2026, cu dovada lângă ea în c
   deliberată: inoxul e **singurul sistem fără listă rezidențială**. Pe o ofertă
   rezidențială prețul lui vine din lista industrială, cu notă de verificat.
   Grosimea implicită a jachetei de inox e 0,4 mm (firma, 5 octombrie 2026).
+  Din 10 octombrie 2026 inoxul pe rezidențial **nu** mai e „De verificat”
+  (`LISTA_UNICA` în `lists.ts`): firma are o singură listă de inox, nu una
+  rezidențială care lipsește, și a răspuns la grosimea celor 72 de poziții
+  Transavia inox, deci le oferă din ea. Rămâne nota cu proveniența. PVC-ul pe
+  industrial rămâne de verificat: acolo lista lipsește.
 - **Seriile de diametre pe material.** Din 25 septembrie 2026 cuprul are seria
   lui (`DN_TO_OD_CUPRU`, din registrul de conversie al firmei, ținută egală cu
   `conversii-tevi.json` de un test): când rândul spune „cupru / copper /

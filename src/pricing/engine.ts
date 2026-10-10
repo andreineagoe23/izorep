@@ -2,6 +2,7 @@ import { toOuterDiameter, peSeriaDeOtel, type TipDiametru } from "./dn-table.js"
 import {
   DESTINATII, diametre, diametreDin, grosimiLaDin, listaDe, listaPe,
   type BandaMultiplicator, type Destinatie, type ListaPreturi,
+  LISTA_UNICA,
 } from "./lists.js";
 import {
   PozitieNetarifata,
@@ -590,13 +591,16 @@ function tarifeazaDinMatrice(cerere: CerereTarifare): RezultatTarifare {
     // ce a folosit, iar diferenta fata de ce s-a cerut ajunge in `note` —
     // altfel pretul ar veni din alt segment fara ca nimeni sa vada.
     const { lista: listaStrat, folosita } = listaDe(strat.sistem, dest);
-    if (folosita !== dest) {
-      // Asta CERE ochi: pretul vine din alt segment decat cel ales.
+    if (folosita !== dest && !LISTA_UNICA.has(strat.sistem)) {
+      // Asta CERE ochi: pretul vine din alt segment decat cel ales. Nu si la
+      // inox, unde firma are o singura lista (`LISTA_UNICA`): doar nota de jos.
       motive.add("segment_diferit");
       noteDeVerificat.push(
         `${strat.sistem}: pret din lista ${ADJECTIV_DEST[folosita].toUpperCase()} — nu exista lista ` +
         `${ADJECTIV_DEST[dest]} pentru materialul asta. Restul straturilor raman pe segmentul ${dest}.`,
       );
+    }
+    if (folosita !== dest) {
       note.push(
         `${strat.sistem}: pret din lista ${ADJECTIV_DEST[folosita].toUpperCase()} — nu exista lista ` +
         `${ADJECTIV_DEST[dest]} pentru materialul asta. Restul straturilor raman pe segmentul ${dest}.`,
@@ -758,9 +762,10 @@ export function tarifeazaPeMp(cerere: Omit<CerereTarifare, "diametru" | "forma">
   for (const strat of matrice) {
     const { lista: l, folosita } = listaDe(strat.sistem, dest);
     if (folosita !== dest) {
-      motive.add("segment_diferit");
-      noteDeVerificat.push(`${strat.sistem}: pret din lista ${ADJECTIV_DEST[folosita].toUpperCase()} — nu exista lista ` +
-        `${ADJECTIV_DEST[dest]} pentru materialul asta.`);
+      const n = `${strat.sistem}: pret din lista ${ADJECTIV_DEST[folosita].toUpperCase()} — nu exista lista ` +
+        `${ADJECTIV_DEST[dest]} pentru materialul asta.`;
+      note.push(n);
+      if (!LISTA_UNICA.has(strat.sistem)) { motive.add("segment_diferit"); noteDeVerificat.push(n); }
     }
     const chei = Object.keys(l.per_mp);
     const jacheta = strat.grosime_mm === undefined && chei.length > 1
