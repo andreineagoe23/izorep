@@ -53,10 +53,10 @@ documentate în `tests/pricing.test.ts`, blocul „abateri cunoscute".
 Rulează **integral în browser** — niciun fișier nu pleacă de pe calculatorul tău
 și nu există backend.
 
-Pe Pages, ecranul de import rulează doar stratul determinist. Local, cu
-`npm run dev` și cheia în `.env`, pornește singur și stratul cu model: ruta care
-îl servește există doar pe serverul de dezvoltare, deci cheia API nu ajunge
-niciodată în pagină și nu poate ajunge într-un build.
+Pe Pages, ecranul de import rulează doar stratul determinist. Cu serverul
+(`npm start`, cheia în `.env`), după intrare pornește și stratul cu model, pentru
+import și pentru pozele din carnet: rutele stau pe server, deci cheia API nu
+ajunge niciodată în pagină.
 
 Ecrane livrate: tablou de bord, lucrări, cereri și oferte, calcul deviz, import
 Excel, clienți, liste de prețuri. Modulele nelivrate stau într-o listă pliată

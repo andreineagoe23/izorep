@@ -305,3 +305,74 @@ describe("mutarea datelor din browser", () => {
   });
 });
 
+
+describe("stratul cu model pe server: doar după intrare, ieșirea verificată", () => {
+  const trimise: number[] = [];
+  const cuModel = creeazaServer({
+    db: app$.db,
+    trimiteLink: async () => undefined,
+    urlAplicatie: "http://test/",
+    cookieSecure: false,
+    model: {
+      cheie: "test", model: "m-test", modelPoze: "m-poze", prag: 0.85, lot: 25, concurenta: 4,
+      extrage: async (linii) => {
+        trimise.push(linii.length);
+        return linii.map((l) => ({
+          index: l.index, sistem: "elastomer", diametru_valoare: 22, diametru_tip: "exterior", grosime_mm: 19,
+          forma: "ml", gol_latime_mm: null, gol_inaltime_mm: null, straturi_extra: [], incredere: 0.9, motiv: "test",
+        }));
+      },
+      citeste: async () => ({ termeni: [], note: ["din test"], model: "m-poze" }),
+    },
+  });
+  const cereM = async (cale: string, cookie: string, corp?: unknown, csrf = true) => {
+    const h: Record<string, string> = { "content-type": "application/json" };
+    if (csrf) h[ANTET_CSRF] = "1";
+    if (cookie) h["cookie"] = `${COOKIE}=${cookie}`;
+    const r = await cuModel.request(cale, { method: corp === undefined ? "GET" : "POST", headers: h, ...(corp !== undefined ? { body: JSON.stringify(corp) } : {}) });
+    return { status: r.status, corp: await r.json() as Record<string, unknown> };
+  };
+  const linii = (n: number) => Array.from({ length: n }, (_, index) => ({ index, text: `Armaflex 19 mm ø22 ${index}` }));
+
+  daca()("fără cont, modelul nu se poate chema", async () => {
+    expect((await cereM("/api/extrage", "")).status).toBe(401);
+    expect((await cereM("/api/extrage", "", { linii: linii(1) })).status).toBe(401);
+    expect((await cereM("/api/poza", "", { imagine: "data:image/jpeg;base64,AA==" })).status).toBe(401);
+  });
+
+  daca()("cu cont: răspunde, plafonează la 400 de linii și cere antetul X-Izorep", async () => {
+    expect((await cereM("/api/extrage", cookieA)).corp).toMatchObject({ disponibil: true, model: "m-test", lot: 25 });
+    expect((await cereM("/api/extrage", cookieA, { linii: linii(2) }, false)).status).toBe(403);
+    trimise.length = 0;
+    const r = await cereM("/api/extrage", cookieA, { linii: linii(450) });
+    expect(r.status).toBe(200);
+    expect(trimise).toEqual([400]);
+    expect((r.corp["linii"] as unknown[]).length).toBe(400);
+    expect(r.corp["trunchiat"]).toBe(50);
+  });
+
+  daca()("un răspuns stricat al modelului nu ajunge la ecran", async () => {
+    const stricat = creeazaServer({
+      db: app$.db, trimiteLink: async () => undefined, urlAplicatie: "http://test/", cookieSecure: false,
+      model: { cheie: "test", model: "m", modelPoze: "m", prag: 0.85, lot: 25, concurenta: 4,
+        extrage: async (l) => l.map((x) => ({ index: x.index, sistem: "beton" }) as never) },
+    });
+    const r = await stricat.request("/api/extrage", {
+      method: "POST", body: JSON.stringify({ linii: linii(1) }),
+      headers: { "content-type": "application/json", [ANTET_CSRF]: "1", cookie: `${COOKIE}=${cookieA}` },
+    });
+    expect(r.status).toBe(502);
+  });
+
+  daca()("poza: doar imagine; răspunsul modelului ajunge la ecran", async () => {
+    expect((await cereM("/api/poza", cookieA)).corp).toEqual({ disponibil: true, model: "m-poze" });
+    expect((await cereM("/api/poza", cookieA, { imagine: "nu e poza" })).status).toBe(400);
+    expect((await cereM("/api/poza", cookieA, { imagine: "data:image/jpeg;base64,AA==" })).corp).toEqual({ termeni: [], note: ["din test"], model: "m-poze" });
+  });
+
+  daca()("fără cheie, ecranele aud „indisponibil” și merg pe reguli", async () => {
+    expect((await cere("/api/extrage", cookieA)).corp).toMatchObject({ disponibil: false });
+    expect((await cere("/api/extrage", cookieA, { method: "POST", body: { linii: linii(1) } })).status).toBe(503);
+    expect((await cere("/api/poza", cookieA)).corp).toMatchObject({ disponibil: false });
+  });
+});

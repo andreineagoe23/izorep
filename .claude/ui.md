@@ -634,10 +634,10 @@ Ecranul **nu** afișează modelul (cerut pe 13 septembrie 2026); importul salvat
 și registrul de ofertă îl păstrează, pentru cine trebuie să afle de unde a
 ieșit o poziție.
 
-Stratul cu model **nu** rulează în browser, dar ecranul de import îl folosește
-când e disponibil: `scripts/vite-plugin-model.ts` expune `POST /api/extrage`
-doar pe serverul de dezvoltare, iar ecranul întreabă ruta cu un GET înainte să
-o folosească. Local, cu `npm run dev` și cheia în `.env`, importul rulează
-pipeline-ul complet; pe Pages ruta lipsește și ecranul cade curat pe stratul
-determinist. Cheia stă în procesul Node — nu ajunge în pagină și, pentru că
-plugin-ul e `apply: "serve"`, nu poate ajunge nici într-un build.
+Stratul cu model **nu** rulează în browser, dar importul și Măsurătorile îl
+folosesc când e disponibil: serverul (`src/server/model.ts`) expune
+`/api/extrage` și `/api/poza` după intrare, iar ecranele întreabă ruta cu un GET
+înainte s-o folosească (POST-ul poartă `X-Izorep`, ca orice scriere). Cu
+`npm start` și cheia în `.env`, pipeline-ul e complet; pe Pages ruta lipsește
+și ecranele cad curat pe stratul determinist, respectiv pe scris de mână.
+Cheia stă în procesul serverului și nu ajunge în pagină.

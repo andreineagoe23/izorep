@@ -73,7 +73,7 @@ describe("codul de browser nu atinge stratul de Node", () => {
   });
 
   it("niciun ecran nu cheama OpenAI direct: nici clientul, nici cititorul de poze", () => {
-    // Cheia sta pe server (`scripts/vite-plugin-model.ts`); ecranul cere prin
+    // Cheia sta pe server (`src/server/model.ts`); ecranul cere prin
     // fetch. Importat intr-un ecran, `extrage-poza.js` sau `extract-llm.js` ar
     // trage clientul OpenAI in bundle si ar cere cheia in pagina.
     const interzise = /from\s+["'](openai|[^"']*src\/(santier\/extrage-poza|import\/extract-llm)\.js)["']/;

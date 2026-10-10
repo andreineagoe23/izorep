@@ -23,8 +23,9 @@ import type { Ecran } from "./tip.js";
  * ca situatie noua (`src/lucrari/potrivire.ts`).
  *
  * Santierul nu foloseste aplicatia: scrie pe foaie si trimite poze. Omul de la
- * birou le incarca aici, modelul propune randurile (cand ruta exista, doar pe
- * serverul de dezvoltare), iar el le compara cu poza si confirma pagina. Din
+ * birou le incarca aici, modelul propune randurile (cand ruta exista: pe
+ * server, dupa intrare; nu pe linkul de pe Pages), iar el le compara cu poza
+ * si confirma pagina. Din
  * paginile verificate iese un registru `.xlsx` care trece prin import exact ca
  * o lista de la client — deci aceeasi tarifare, aceeasi verificare, aceeasi
  * oferta. Nicio a doua cale de pret.
@@ -158,7 +159,7 @@ export const ecran: Ecran = {
       try {
         const imagine = await micsoreaza(f);
         const r = await fetch(RUTA_POZA, {
-          method: "POST", headers: { "Content-Type": "application/json" },
+          method: "POST", headers: { "Content-Type": "application/json", "X-Izorep": "1" },
           body: JSON.stringify({ imagine }), signal: AbortSignal.timeout(400_000),
         });
         const corp = (await r.json()) as { termeni?: unknown; note?: unknown; eroare?: string };

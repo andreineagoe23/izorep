@@ -3,6 +3,19 @@
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
 > Ultima actualizare: 10 octombrie 2026.
 
+## 10 octombrie 2026: modelul pe server
+
+`/api/extrage` și `/api/poza` au trecut din pluginul lui `vite dev` (șters) în
+server (`src/server/model.ts`), după intrare. Până acum, pe serverul adevărat
+importul mergea doar pe reguli și Măsurătorile din poze deloc. În dev, vite
+trimite tot `/api` la server, deci dev și producția au același drum. Teste
+(`server.test.ts`, cu model fals): fără cont 401, fără `X-Izorep` 403, plafon
+400 de linii, răspuns stricat 502, fără cheie „indisponibil”. Verificat cu
+Playwright pe `build:server`, cu OpenAI real: Transavia inox — modelul pe linia
+reziduală, 72 de poziții, 0 fără preț; `santier1.jpeg` citită în 42 s, rândurile
+la verificat. **437 de teste.** Pagina pe Pages: neschimbată (TRANSAVIA 99,
+14 de verificat, 0 fără preț).
+
 ## 10 octombrie 2026: auditul Fazei 3, reparații
 
 Audit pe tot ce s-a făcut (Fazele 1–3). Reparat pe `faza-3`, fiecare cu test:
@@ -28,7 +41,6 @@ amândoi; zero derulare laterală la 390–1920 px.
 
 Rămase din audit, pentru mai târziu:
 
-- **Modelul nu e pe server**: `/api/extrage` și `/api/poza` există doar în `vite dev`. Pe serverul de producție importul merge doar pe reguli (tot 0 fără preț), dar Măsurătorile din poze nu merg. Condiție pentru producție și pentru Faza 4.8 (avizul citit cu modelul).
 - Cererea și necesarul se salvează „ultimul câștigă”: doi oameni pe același import se suprascriu.
 - Faza 4 și mai departe: rute proprii, cu operații explicite (adaugă, anulează), nu diferența de stare din `date.ts` — de acolo a venit bugul de mai sus. Faza 6: consumul scris la situație trebuie stornat când se șterge situația.
 - Numărul ofertei nu îl dă serverul; fără jurnal „cine a schimbat ce”.

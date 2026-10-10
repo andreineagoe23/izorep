@@ -20,6 +20,7 @@ import { caTenant, type Baza } from "../db/client.js";
 import {
   cereLink, confirmaLink, contextDin, DURATA_SESIUNE_MS, iesire, type Context, type TrimiteLink,
 } from "./intrare.js";
+import { optiuniModelDinMediu, ruteModel, type OptiuniModel } from "./model.js";
 import * as repo from "./repo.js";
 import { Refuz } from "./repo.js";
 import type { Eu } from "./contract.js";
@@ -34,6 +35,8 @@ export interface OptiuniServer {
   urlAplicatie: string;
   /** `Secure` pe cookie: da in productie (https), nu pe localhost. */
   cookieSecure: boolean;
+  /** Stratul cu model. Lipsa = fara cheie: ecranele merg pe reguli. */
+  model?: OptiuniModel;
 }
 
 type Env = { Variables: { ctx: Context } };
@@ -48,6 +51,7 @@ export const LIMITE: readonly [RegExp, number][] = [
   [/^\/api\/mutare$/, 100 * MB],
   [/^\/api\/cereri\/[^/]+$/, 25 * MB],
   [/^\/api\/masuratori$/, 15 * MB],
+  [/^\/api\/poza$/, 15 * MB],
 ];
 export const LIMITA_IMPLICITA = 5 * MB;
 const limitaPentru = (cale: string): number => LIMITE.find(([r]) => r.test(cale))?.[1] ?? LIMITA_IMPLICITA;
@@ -149,6 +153,8 @@ export function creeazaServer(o: OptiuniServer): Hono<Env> {
     return caTenant(o.db, ctx.tenantId, (tx) => lucru(tx, ctx));
   };
   const ok = (c: HonoCtx<Env>) => c.json({ ok: true });
+
+  app.route("/api", ruteModel(o.model ?? optiuniModelDinMediu({})));
 
   app.get("/api/eu", (c) => c.json(eu(c.get("ctx"))));
   app.get("/api/date", async (c) => c.json(await inTenant(c, (tx) => repo.dateComune(tx))));

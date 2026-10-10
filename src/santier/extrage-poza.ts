@@ -3,7 +3,7 @@ import { JSON_SCHEMA_POZA, RaspunsPoza } from "./schema.js";
 
 /**
  * Citirea unei poze cu notite de santier. Doar pe server: cheia OpenAI nu
- * ajunge in pagina (vezi `scripts/vite-plugin-model.ts`).
+ * ajunge in pagina (vezi `src/server/model.ts`).
  *
  * Modelul citeste, nu calculeaza: da termenii asa cum sunt scrisi, iar suma,
  * textul pentru motor si pretul le face codul. Ce iese e o PROPUNERE — omul o

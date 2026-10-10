@@ -54,9 +54,9 @@ import { bani } from "../../src/pricing/engine.js";
  */
 
 /**
- * Ruta stratului cu model exista doar pe serverul de dezvoltare
- * (`scripts/vite-plugin-model.ts`). In build lipseste, iar ecranul cade curat
- * pe stratul determinist — si cheia API nu poate ajunge in pagina.
+ * Ruta stratului cu model e pe server (`src/server/model.ts`), dupa intrare.
+ * Pe linkul de pe Pages lipseste, iar ecranul cade curat pe stratul
+ * determinist — si cheia API nu poate ajunge in pagina.
  */
 const RUTA_MODEL = location.pathname.replace(/[^/]*$/, "") + "api/extrage";
 interface StareModel { disponibil: boolean; model: string; prag: number; lot?: number; concurenta?: number }
@@ -576,7 +576,7 @@ export const ecran: Ecran = {
             for (let i = urmator++; i < loturi.length; i = urmator++) {
               try {
                 const r = await fetch(RUTA_MODEL, {
-                  method: "POST", headers: { "Content-Type": "application/json" },
+                  method: "POST", headers: { "Content-Type": "application/json", "X-Izorep": "1" },
                   body: JSON.stringify({ linii: loturi[i] }), signal: AbortSignal.timeout(120_000),
                 });
                 const corp = (await r.json()) as { linii?: LinieExtrasa[]; eroare?: string };

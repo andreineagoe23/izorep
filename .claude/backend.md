@@ -166,6 +166,10 @@ cookieSecure })` întoarce aplicația, deci testele o cheamă direct
 - **Pagina** o servește tot serverul, construită cu `npm run build:server`
   (`VITE_BASE=/`, `VITE_DATE=server`). Construită pentru Pages, serverul n-o
   servește și spune de ce.
+- **Modelul** (`model.ts`, 10 octombrie 2026): `/api/extrage` și `/api/poza`,
+  după intrare. Cheia din `OPENAI_API_KEY`; fără ea, „indisponibil”. Funcțiile
+  modelului se primesc în `creeazaServer({ model })`, deci testele nu ating
+  OpenAI.
 - **Erorile** din trigger-e și chei (23001, 23503, 23505) ies 409, cu mesaj în
   română; `Refuz` din `repo.ts` poartă mesajul pentru ecran.
 
@@ -202,8 +206,7 @@ Trigger-ele lasă să treacă doar `purjare_permisa(tenant)`: setarea
 
 - Jurnal de audit (cine a schimbat ce; azi doar `creat_de` pe rânduri),
   permisiuni pe rol (rolurile se stabilesc cu firma).
-- SMTP de producție. Rutele modelului (`/api/extrage`, `/api/poza`) pe server:
-  azi sunt doar în `vite dev`.
+- SMTP de producție.
 - Restul tabelelor: deviz, contract, comandă, recepție, factură.
 - Regula după care se alege destinația unei lucrări. Coloana există și e
   populată; în aplicație segmentul se alege manual la import, dar nu se

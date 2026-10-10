@@ -130,8 +130,9 @@ atunci când cineva strică regula.
 
 CLI: `npm run import -- <fisier.xlsx>`.
 
-În aplicație: `scripts/vite-plugin-model.ts` expune `POST /api/extrage` **doar pe
-serverul de dezvoltare** (`apply: "serve"`). Ecranul de import întreabă întâi
+În aplicație: serverul (`src/server/model.ts`, din 10 octombrie 2026) expune
+`POST /api/extrage` și `POST /api/poza`, **doar după intrare**, în dev (prin
+proxy-ul lui vite) ca în producție. Ecranul de import întreabă întâi
 ruta cu un GET; dacă răspunde, trimite acolo liniile reziduale și primește
 înapoi parametrii extrași, apoi tarifează determinist în browser.
 
@@ -146,11 +147,16 @@ de linii ia ~19s, deci varianta secvențială inițială ținea ecranul gol ~80s
 loturi de 12, câte 4 deodată: **19–39s**, cu progres vizibil de la prima
 secundă.
 
-Cheia stă în procesul Node al lui `vite dev` și nu ajunge niciodată în pagină.
-`apply: "serve"` e mecanismul, nu o precauție: în `vite build` ruta nu există,
-deci varianta de pe Pages rămâne pur deterministă — ecranul vede doar că ruta
-lipsește și își schimbă mesajul. Middleware-ul răspunde doar cererilor de pe
-loopback și plafonează la 400 de linii per import.
+Cheia stă în procesul serverului (`OPENAI_API_KEY`, din `.env` sau din mediu)
+și nu ajunge niciodată în pagină. Pe Pages nu există server, deci varianta de
+acolo rămâne pur deterministă — ecranul vede doar că ruta lipsește și își
+schimbă mesajul. Fără cheie, ruta răspunde „indisponibil” și ecranul face la
+fel. O cerere are cel mult 400 de linii; răspunsul modelului trece prin schemă
+pe server (stricat: 502), apoi încă o dată în pagină.
+
+Până pe 10 octombrie 2026 rutele erau un plugin al lui `vite dev`
+(`apply: "serve"`, doar de pe loopback), deci pe serverul adevărat importul
+mergea doar pe reguli, iar Măsurătorile din poze deloc.
 
 ## Reguli pentru stratul cu model
 
