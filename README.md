@@ -54,7 +54,7 @@ Rulează **integral în browser** — niciun fișier nu pleacă de pe calculator
 și nu există backend.
 
 Pe Pages, ecranul de import rulează doar stratul determinist. Cu serverul
-(`npm start`, cheia în `.env`), după intrare pornește și stratul cu model, pentru
+(`npm start`, cheia în `.env`), pornește și stratul cu model, pentru
 import și pentru pozele din carnet: rutele stau pe server, deci cheia API nu
 ajunge niciodată în pagină.
 

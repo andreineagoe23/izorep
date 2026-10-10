@@ -6,7 +6,7 @@ import {
   type SpatiuCerut, type StareMeniu,
 } from "./meniu-stare.js";
 import {
-  amMutat, areDateDeMutat, cereLink, confirmaLink, dateInBrowser, EroareServer, euCurent, iesi, laEroare,
+  amMutat, areDateDeMutat, dateInBrowser, laEroare,
   laReimprospatare, modDate, mutaDinBrowser, porneste, reimprospateaza,
 } from "./date.js";
 
@@ -82,14 +82,9 @@ async function navigheaza(mutaFocus = false): Promise<void> {
   renuntaLaSpatiu();
   const root = $("#ecran");
 
-  // Linkul din email: `#/intrare/<token>`. Tokenul se trimite cu POST, din pagina,
-  // ca scanerele de email (care deschid linkurile) sa nu-l consume.
-  const token = /^#\/intrare\/(.+)$/.exec(location.hash)?.[1];
-  if (token) { await intraCuLink(token); return; }
-  if (stareDate === "intrare") { deseneazaIntrare(); return; }
   if (stareDate === "fara-server") { deseneazaFaraServer(); return; }
 
-  delete document.documentElement.dataset["intrare"];
+  delete document.documentElement.dataset["faraMeniu"];
   const id = ruta();
   const incarca = ECRANE[id];
 
@@ -107,7 +102,6 @@ async function navigheaza(mutaFocus = false): Promise<void> {
   try {
     await reimprospateaza();
   } catch (e) {
-    if (e instanceof EroareServer && e.status === 401) { stareDate = "intrare"; deseneazaIntrare(); return; }
     arataEroare(`Datele nu s-au putut lua de pe server: ${e instanceof Error ? e.message : String(e)}. Se arată ultimele primite.`);
   }
   const { ecran } = await incarca();
@@ -281,14 +275,14 @@ $("#rol").addEventListener("change", (e) => {
 // Rutarea e pe hash, deci un link ancora ar strica ruta: sarim cu focus.
 $("#sari").addEventListener("click", () => $("#ecran").focus());
 
-/* ---------------------------------------------- datele comune: intrarea */
+/* --------------------------------------------- datele comune: serverul */
 
 /*
- * Unde stau datele se afla la pornire (`porneste` din date.ts): pe server, cu
- * cont, sau in browser, pe linkul demo. Pana intra omul, orice ruta arata
- * formularul de intrare.
+ * Unde stau datele se afla la pornire (`porneste` din date.ts): pe server, sau
+ * in browser, pe linkul demo. Fara intrare: conturile au fost scoase pe
+ * 10 octombrie 2026, pana devin necesare.
  */
-let stareDate: "browser" | "server" | "intrare" | "fara-server" = "browser";
+let stareDate: "browser" | "server" | "fara-server" = "browser";
 let eroarePornire = "";
 
 function arataEroare(mesaj: string): void {
@@ -303,85 +297,12 @@ laEroare(arataEroare);
 // Dupa o scriere refuzata, ecranul se deseneaza din copia noua (date.ts).
 laReimprospatare(() => { void navigheaza(); });
 
-function deseneazaCont(): void {
-  const eu = euCurent();
-  const cont = $("#cont");
-  cont.hidden = !eu;
-  if (!eu) { cont.innerHTML = ""; return; }
-  cont.innerHTML = `<span class="nume" title="${esc(eu.email)}">${esc(eu.nume)}</span>
-    <button type="button" class="secundar" id="iesi">Ieși</button>`;
-  $("#iesi").addEventListener("click", async () => {
-    try { await iesi(); } catch { /* sesiunea moare oricum la expirare */ }
-    stareDate = "intrare";
-    deseneazaCont();
-    location.hash = "#/tablou";
-    deseneazaIntrare();
-  });
-}
-
-function pregatesteIntrare(titlu: string, subtitlu: string): HTMLElement {
-  document.documentElement.dataset["intrare"] = "";
-  document.title = `${titlu} · IzoERP`;
-  const root = $("#ecran");
-  root.innerHTML = `<div class="titlu-ecran"><h1>${esc(titlu)}</h1><p>${esc(subtitlu)}</p></div><div id="continut"></div>`;
-  laInceput();
-  return $("#continut");
-}
-
-function deseneazaIntrare(mesaj = ""): void {
-  const c = pregatesteIntrare("Intră în aplicație", "Fără parolă: primești un link pe email.");
-  c.innerHTML = `<div class="imp intrare"><section class="imp-card">
-    <form class="imp-formular" id="form-intrare" novalidate>
-      <label>Adresa ta de email
-        <input type="email" name="email" autocomplete="email" required inputmode="email">
-      </label>
-      ${mesaj ? `<p class="alerta" role="alert">${esc(mesaj)}</p>` : ""}
-      <div class="imp-formular-butoane"><button type="submit" class="primar">Trimite-mi linkul</button></div>
-    </form></section></div>`;
-  const form = $<HTMLFormElement>("#form-intrare");
-  form.querySelector("input")!.focus();
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const email = String(new FormData(form).get("email") ?? "").trim();
-    if (!email.includes("@")) { deseneazaIntrare("Scrie adresa de email cu care ai primit cont."); return; }
-    const buton = form.querySelector<HTMLButtonElement>("button")!;
-    buton.disabled = true;
-    buton.textContent = "Se trimite…";
-    try {
-      await cereLink(email);
-      c.innerHTML = `<div class="imp intrare"><section class="imp-card">
-        <h2>Verifică emailul</h2>
-        <p style="margin:0">Dacă <strong>${esc(email)}</strong> are cont, ți-am trimis un link. Deschide-l pe acest
-          calculator, în următoarele 15 minute. Linkul merge o singură dată.</p>
-        <div class="imp-formular-butoane"><button type="button" class="secundar" id="alt-email">Altă adresă</button></div>
-      </section></div>`;
-      $("#alt-email").addEventListener("click", () => deseneazaIntrare());
-    } catch (err) {
-      deseneazaIntrare(`Linkul nu s-a putut trimite: ${err instanceof Error ? err.message : String(err)}`);
-    }
-  });
-}
-
-async function intraCuLink(token: string): Promise<void> {
-  pregatesteIntrare("Intră în aplicație", "Se verifică linkul…");
-  try {
-    await confirmaLink(token);
-  } catch (e) {
-    stareDate = "intrare";
-    history.replaceState(null, "", "#/tablou");
-    deseneazaIntrare(e instanceof Error ? e.message : "Linkul nu mai e valabil. Cere altul.");
-    return;
-  }
-  stareDate = "server";
-  delete document.documentElement.dataset["intrare"];
-  deseneazaCont();
-  location.hash = "#/tablou";
-  void propuneMutarea();
-}
-
 function deseneazaFaraServer(): void {
-  const c = pregatesteIntrare("Serverul nu răspunde", "Datele firmei stau pe server.");
-  c.innerHTML = `<p class="alerta" role="alert">${esc(eroarePornire)}</p>`;
+  document.documentElement.dataset["faraMeniu"] = "";
+  document.title = "Serverul nu răspunde · IzoERP";
+  $("#ecran").innerHTML = `<div class="titlu-ecran"><h1>Serverul nu răspunde</h1><p>Datele firmei stau pe server.</p></div>
+    <div id="continut"><p class="alerta" role="alert">${esc(eroarePornire)}</p></div>`;
+  laInceput();
 }
 
 /**
@@ -443,8 +364,6 @@ void (async () => {
     stareDate = "fara-server";
     eroarePornire = e instanceof Error ? e.message : String(e);
   }
-  if (stareDate === "server") delete document.documentElement.dataset["intrare"];
-  deseneazaCont();
   await navigheaza();
   void propuneMutarea();
 })();

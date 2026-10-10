@@ -20,9 +20,8 @@ import type { NecesarLucrare, StareDepozit } from "../../web/depozit-local.js";
 import type { OfertaEmisa } from "../../web/oferte-local.js";
 import type { IntrareIstoric } from "../../web/istoric.js";
 import type {
-  CererePeFir, DateComune, MasuratoareDeSalvat, Mutare, OfertaDeSalvat, OfertaSalvata, RezultatMutare,
+  CererePeFir, Context, DateComune, MasuratoareDeSalvat, Mutare, OfertaDeSalvat, OfertaSalvata, RezultatMutare,
 } from "./contract.js";
-import type { Context } from "./intrare.js";
 
 /** O cerere care nu se poate face; mesajul ajunge pe ecran, deci e in romana. */
 export class Refuz extends Error {

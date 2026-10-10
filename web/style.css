@@ -176,11 +176,6 @@ a.item[aria-current="page"] {
 }
 .pliaza:hover { background: var(--accent-slab); color: var(--accent); border-color: var(--accent); }
 
-/* Cine a intrat, in dreapta antetului. Numele cedeaza loc butonului pe telefon. */
-.cont { margin-left: auto; display: flex; align-items: center; gap: 12px; min-width: 0; }
-.cont .nume { color: var(--slab); font-size: 14px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.cont .secundar { flex: 0 0 auto; }
-
 /* Mesajele serverului, deasupra ecranului: aceeasi margine ca antetul. */
 .mesaje { padding: 0 28px; display: grid; gap: 12px; }
 .mesaje:empty { display: none; }
@@ -188,11 +183,8 @@ a.item[aria-current="page"] {
 .mesaje .alerta, .mesaje .imp-card { margin: 0; }
 .mesaje .alerta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
 
-/* Formularul de intrare: un singur camp, nu se intinde pe tot ecranul lat. */
-.intrare { max-width: 32rem; }
-
-/* Pana intra omul, meniul n-are unde duce. */
-:root[data-intrare] #meniu, :root[data-intrare] .viitor, :root[data-intrare] #pliaza { display: none; }
+/* Cand serverul nu raspunde, meniul n-are unde duce. */
+:root[data-fara-meniu] #meniu, :root[data-fara-meniu] .viitor, :root[data-fara-meniu] #pliaza { display: none; }
 
 /* Vizibil doar pentru cititorul de ecran; ramane focusabil, spre deosebire de `hidden`. */
 .doar-citit {

@@ -7,7 +7,6 @@
   "scripts": {
     "start": "npm run db:up && npm run db:migrate && (npm run server & npm run dev)",
     "server": "tsx src/server/porneste.ts",
-    "om": "tsx src/server/om.ts",
     "dev": "vite",
     "build:web": "vite build",
     "build:server": "VITE_BASE=/ VITE_DATE=server vite build",
@@ -34,14 +33,12 @@
     "drizzle-orm": "^0.45.2",
     "exceljs": "^4.4.0",
     "hono": "^4.13.8",
-    "nodemailer": "^10.0.10",
     "openai": "^4.77.0",
     "postgres": "^3.4.9",
     "zod": "^3.24.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.5",
-    "@types/nodemailer": "^8.0.2",
     "drizzle-kit": "^0.31.10",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3",

@@ -52,7 +52,7 @@ src/import/          pipeline L0–L4 de citire a Excel-urilor de la clienți
 src/stoc/            necesarul de materiale din ofertă, registrul de stoc (pur, testat)
 src/lucrari/         planul de șantier din ofertă, situațiile de lucrări (pur, testat)
 src/db/              Postgres: schema, migrările, RLS pe tenant
-src/server/          serverul: intrarea cu link pe email, datele comune (Faza 3)
+src/server/          serverul: datele comune (Faza 3), stratul cu model; o firmă, fără conturi deocamdată
 web/date.ts          unde stau datele ecranelor: pe server, sau în browser pe linkul demo
 tests/               suita de referință: reproduce oferte istorice la bănuț
 ```

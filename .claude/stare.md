@@ -3,6 +3,44 @@
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
 > Ultima actualizare: 10 octombrie 2026.
 
+## 10 octombrie 2026: „De verificat” doar unde chiar trebuie; fără intrare
+
+Cerut de Andrei: scopul e să nu verifice omul linie cu linie. Pe cele 10
+cereri, rezidențial: **138 → 77 „De verificat”** (494 → 555 „Gata”, 0 fără
+preț). Regula: o poziție merge la „De verificat” doar dacă are un motiv
+**nedovedit** (`MOTIVE_DOVEDITE` în `nucleu.ts`, fiecare cu dovada lângă el):
+
+| Dovedit, deci „Gata” | Dovada |
+|---|---|
+| celula dedusă din rândul următor | Oferta 284, exact |
+| echipamentul (suprafață × mp × 2,47) | Oferta 284, distribuitorul exact |
+| grosimea propusă (tabelul firmei, conducta de același ø) | răspunsul firmei 11 sep; casetele 284, 24 / 24 |
+| grosimea cea mai apropiată, jacheta cea mai apropiată | 20 → 19 la elastomer, 3 / 3 semnate |
+| tabla pe mp din lista celuilalt segment | 0,8 e identic în ambele liste |
+| seria de cupru | registrul de conversie al firmei |
+| inoxul din singura listă de inox | vezi mai jos |
+
+Rămân „De verificat”, verificat pe ofertele semnate, nu presupus:
+protecția la foc (firma: Conlit / Techrock, preț pus de mână, 32), formula
+peste listă (iese cu 0,13 € sub SPIRO ø250 / ø315 și PEHD D250 din NISAL),
+golul luat de la aceeași țeavă (Matari r72–83: EI180 fără dimensiuni, lăsate
+**fără preț** în oferta semnată), bucăți fără piesă numită, grosime-interval,
+extrapolări, livrarea țevii NISAL (contrazice semnatul), banda pe armături.
+
+Garanția are test (`oferte-semnate.test.ts`): pe Oferta 284, NISAL și Matari,
+fiecare poziție „Gata” are exact prețul semnat; excepțiile sunt doar cele 4
+unde semnatul s-a abătut de la regula spusă de firmă (ø90 / ø160, rândul de
+sus). Pus „peste_lista” printre cele dovedite, testul pică. TRANSAVIA iese
+acum **99 / 99 „Gata”, 94.575,06 €, fără niciun clic**; Matari 53 „Gata” =
+12.692,04 € exact.
+
+**Fără intrare.** Cerut de Andrei: încă nu e nevoie de conturi. Serverul
+servește singura firmă din bază, ascultă doar pe 127.0.0.1, iar pagina se
+deschide direct. Scoase: `intrare.ts`, `email.ts`, `om.ts`, Mailpit,
+`nodemailer`. Tabelele de conturi rămân în bază, nefolosite. Verificat cu
+Playwright pe `build:server`: TRANSAVIA, descărcată pe A, văzută pe B; scenariul
+cu refuzul; zero derulare la 390–1920 px; serverul nu răspunde din rețea.
+
 ## 10 octombrie 2026: Transavia inox, 72 de verificat → 19
 
 Toate cele 72 de poziții ieșeau „De verificat” pe rezidențial, cu „Preț din
@@ -20,7 +58,7 @@ linie cu linie și lămurește și cele 19.
 ## 10 octombrie 2026: modelul pe server
 
 `/api/extrage` și `/api/poza` au trecut din pluginul lui `vite dev` (șters) în
-server (`src/server/model.ts`), după intrare. Până acum, pe serverul adevărat
+server (`src/server/model.ts`). Până acum, pe serverul adevărat
 importul mergea doar pe reguli și Măsurătorile din poze deloc. În dev, vite
 trimite tot `/api` la server, deci dev și producția au același drum. Teste
 (`server.test.ts`, cu model fals): fără cont 401, fără `X-Izorep` 403, plafon
@@ -1242,7 +1280,6 @@ npm run mapare -- <fisier.xlsx>                # inregistreaza maparea de coloan
 IZOREP_FARA_MAPARE=1 npm run import -- <fisier>  # masoara A/B fara L1
 python scripts/extract_price_lists.py ../attachments   # regenerează prețurile
 python scripts/extract_conversii.py ../attachments     # regenerează seriile de țevi
-npm run db:up && npm run db:migrate && npm run db:seed  # baza locală (+ Mailpit pe 8025)
-npm start                                      # baza, serverul (8787) și vite, împreună
-npm run om -- ana@firma.ro "Ana" birou         # cont nou; intră cu link pe email
+npm run db:up && npm run db:migrate && npm run db:seed  # baza locală
+npm start                                      # baza, serverul (8787, doar local) și vite, împreună
 ```

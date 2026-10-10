@@ -1,45 +1,39 @@
 /**
- * Serverul: rutele `/api/*`. Construit dintr-o functie, cu baza si trimiterea
- * emailului primite ca argumente, ca testele sa-l cheme direct
- * (`app.request(...)`), fara retea si fara SMTP.
+ * Serverul: rutele `/api/*`. Construit dintr-o functie, cu baza si firma
+ * primite ca argumente, ca testele sa-l cheme direct (`app.request(...)`),
+ * fara retea.
  *
- * Doua reguli tin pentru toate rutele cu date:
- *  - omul a intrat (cookie de sesiune valid); altfel 401;
- *  - totul ruleaza in `caTenant`, deci RLS vede doar firma lui.
+ * Fara intrare (scoasa pe 10 octombrie 2026, cerut de Andrei): un server
+ * serveste o singura firma (`tenantId`), iar totul ruleaza in `caTenant`, deci
+ * RLS vede doar firma lui. Fara conturi, serverul nu trebuie sa fie accesibil
+ * din internet: `porneste.ts` asculta implicit doar pe 127.0.0.1.
  *
- * Apararea CSRF: cookie-ul e `SameSite=Lax`, iar orice cerere care schimba
- * ceva trebuie sa poarte antetul `X-Izorep`. Un formular de pe alt site nu
- * poate pune un antet propriu fara acordul serverului (preflight CORS), pe
- * care serverul nu-l da.
+ * Orice cerere care schimba ceva trebuie sa poarte antetul `X-Izorep`: o
+ * pagina de pe alt site nu poate pune un antet propriu fara acordul serverului
+ * (preflight CORS), pe care serverul nu-l da.
  */
 import { Hono, type Context as HonoCtx } from "hono";
 import { bodyLimit } from "hono/body-limit";
-import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { z } from "zod";
+import { eq } from "drizzle-orm";
 import { caTenant, type Baza } from "../db/client.js";
-import {
-  cereLink, confirmaLink, contextDin, DURATA_SESIUNE_MS, iesire, type Context, type TrimiteLink,
-} from "./intrare.js";
+import { tenant } from "../db/schema.js";
 import { optiuniModelDinMediu, ruteModel, type OptiuniModel } from "./model.js";
 import * as repo from "./repo.js";
 import { Refuz } from "./repo.js";
-import type { Eu } from "./contract.js";
+import type { Context, Stare } from "./contract.js";
 
-export const COOKIE = "izorep_sesiune";
 export const ANTET_CSRF = "x-izorep";
 
 export interface OptiuniServer {
   db: Baza;
-  trimiteLink: TrimiteLink;
-  /** Adresa aplicatiei, cu `/` la final: linkul din email e `<url>#/intrare/<token>`. */
-  urlAplicatie: string;
-  /** `Secure` pe cookie: da in productie (https), nu pe localhost. */
-  cookieSecure: boolean;
+  /** Firma servita. Toate cererile ruleaza in contextul ei. */
+  tenantId: string;
   /** Stratul cu model. Lipsa = fara cheie: ecranele merg pe reguli. */
   model?: OptiuniModel;
 }
 
-type Env = { Variables: { ctx: Context } };
+type Env = { Variables: Record<string, never> };
 
 /**
  * Cat poate avea o cerere. Fisierul clientului si poza din carnet vin in JSON
@@ -113,130 +107,96 @@ export function creeazaServer(o: OptiuniServer): Hono<Env> {
     await next();
   });
 
-  /* ------------------------------------------------- intrarea, fara cont */
-
-  app.post("/api/intrare", async (c) => {
-    const { email } = z.object({ email: z.string().max(320) }).parse(await c.req.json());
-    await cereLink(o.db, email, o.urlAplicatie, o.trimiteLink);
-    return c.json({ ok: true }, 202);
-  });
-
-  app.post("/api/intrare/confirma", async (c) => {
-    const { token } = z.object({ token: z.string().min(10).max(200) }).parse(await c.req.json());
-    const r = await confirmaLink(o.db, token);
-    if (!r) return c.json({ eroare: "Linkul a expirat sau a fost deja folosit. Cere altul." }, 401);
-    setCookie(c, COOKIE, r.cookie, {
-      httpOnly: true, sameSite: "Lax", secure: o.cookieSecure, path: "/", maxAge: DURATA_SESIUNE_MS / 1000,
-    });
-    return c.json(eu(r.ctx));
-  });
-
-  app.post("/api/iesire", async (c) => {
-    const cookie = getCookie(c, COOKIE);
-    if (cookie) await iesire(o.db, cookie);
-    deleteCookie(c, COOKIE, { path: "/" });
-    return c.json({ ok: true });
-  });
-
-  /* ------------------------------------------------ de aici, doar cu cont */
-
-  app.use("/api/*", async (c, next) => {
-    const cookie = getCookie(c, COOKIE);
-    const ctx = cookie ? await contextDin(o.db, cookie) : null;
-    if (!ctx) return c.json({ eroare: "Nu ești conectat." }, 401);
-    c.set("ctx", ctx);
-    await next();
-  });
-
-  const inTenant = <T>(c: HonoCtx<Env>, lucru: (tx: Baza, ctx: Context) => Promise<T>): Promise<T> => {
-    const ctx = c.get("ctx");
-    return caTenant(o.db, ctx.tenantId, (tx) => lucru(tx, ctx));
-  };
+  const ctx: Context = { tenantId: o.tenantId, utilizatorId: null };
+  const inTenant = <T>(lucru: (tx: Baza, ctx: Context) => Promise<T>): Promise<T> =>
+    caTenant(o.db, ctx.tenantId, (tx) => lucru(tx, ctx));
   const ok = (c: HonoCtx<Env>) => c.json({ ok: true });
 
   app.route("/api", ruteModel(o.model ?? optiuniModelDinMediu({})));
 
-  app.get("/api/eu", (c) => c.json(eu(c.get("ctx"))));
-  app.get("/api/date", async (c) => c.json(await inTenant(c, (tx) => repo.dateComune(tx))));
+  app.get("/api/stare", async (c) => {
+    const [t] = await o.db.select({ denumire: tenant.denumire }).from(tenant).where(eq(tenant.id, o.tenantId));
+    return c.json({ firma: t?.denumire ?? "" } satisfies Stare);
+  });
+  app.get("/api/date", async (c) => c.json(await inTenant((tx) => repo.dateComune(tx))));
 
-  app.get("/api/cereri", async (c) => c.json(await inTenant(c, (tx) => repo.listaCereri(tx))));
+  app.get("/api/cereri", async (c) => c.json(await inTenant((tx) => repo.listaCereri(tx))));
   app.get("/api/cereri/:id", async (c) => {
-    const r = await inTenant(c, (tx) => repo.citesteCerere(tx, c.req.param("id")));
+    const r = await inTenant((tx) => repo.citesteCerere(tx, c.req.param("id")));
     return r ? c.json(r) : c.json({ eroare: "Cererea nu există." }, 404);
   });
   app.put("/api/cereri/:id", async (c) => {
     const corp = CererePeFir.parse(await c.req.json());
     if (corp.id !== c.req.param("id")) throw new Refuz(400, "Id-ul cererii nu se potrivește.");
-    await inTenant(c, (tx, ctx) => repo.salveazaCerere(tx, ctx, corp as never));
+    await inTenant((tx, ctx) => repo.salveazaCerere(tx, ctx, corp as never));
     return ok(c);
   });
   app.delete("/api/cereri/:id", async (c) => {
-    await inTenant(c, (tx) => repo.stergeCerere(tx, c.req.param("id")));
+    await inTenant((tx) => repo.stergeCerere(tx, c.req.param("id")));
     return ok(c);
   });
 
   app.post("/api/cereri/:id/oferte", async (c) => {
     const corp = OfertaZ.parse(await c.req.json());
-    return c.json(await inTenant(c, (tx, ctx) => repo.salveazaOferta(tx, ctx, c.req.param("id"), corp as never)));
+    return c.json(await inTenant((tx, ctx) => repo.salveazaOferta(tx, ctx, c.req.param("id"), corp as never)));
   });
-  app.get("/api/cereri/:id/oferte", async (c) => c.json(await inTenant(c, (tx) => repo.versiuniOferta(tx, c.req.param("id")))));
+  app.get("/api/cereri/:id/oferte", async (c) => c.json(await inTenant((tx) => repo.versiuniOferta(tx, c.req.param("id")))));
 
   app.put("/api/santiere/:id", async (c) => {
     const corp = Plan.parse(await c.req.json());
     if (corp.id !== c.req.param("id")) throw new Refuz(400, "Id-ul șantierului nu se potrivește.");
-    await inTenant(c, (tx, ctx) => repo.puneSantier(tx, ctx, corp as never));
+    await inTenant((tx, ctx) => repo.puneSantier(tx, ctx, corp as never));
     return ok(c);
   });
   app.delete("/api/santiere/:id", async (c) => {
-    await inTenant(c, (tx) => repo.stergeSantier(tx, c.req.param("id")));
+    await inTenant((tx) => repo.stergeSantier(tx, c.req.param("id")));
     return ok(c);
   });
   app.post("/api/santiere/:id/situatii", async (c) => {
     const corp = SituatieZ.parse(await c.req.json());
-    await inTenant(c, (tx, ctx) => repo.adaugaSituatie(tx, ctx, c.req.param("id"), corp as never));
+    await inTenant((tx, ctx) => repo.adaugaSituatie(tx, ctx, c.req.param("id"), corp as never));
     return ok(c);
   });
   // Numarul spune care e ultima; id-ul, ca e aceeasi situatie pe care a vazut-o
   // omul: altfel, stearsa si scrisa din nou de un coleg, ar pleca a colegului.
   app.delete("/api/santiere/:id/situatii/:nr", async (c) => {
     const id = Id.parse(c.req.query("id"));
-    await inTenant(c, (tx) => repo.stergeSituatie(tx, c.req.param("id"), Number(c.req.param("nr")), id));
+    await inTenant((tx) => repo.stergeSituatie(tx, c.req.param("id"), Number(c.req.param("nr")), id));
     return ok(c);
   });
 
   app.post("/api/miscari", async (c) => {
     const corp = MiscareZ.parse(await c.req.json());
-    await inTenant(c, (tx, ctx) => repo.adaugaMiscare(tx, ctx, corp as never));
+    await inTenant((tx, ctx) => repo.adaugaMiscare(tx, ctx, corp as never));
     return ok(c);
   });
   app.put("/api/necesare/:id", async (c) => {
     const corp = NecesarZ.parse(await c.req.json());
     if (corp.id !== c.req.param("id")) throw new Refuz(400, "Id-ul necesarului nu se potrivește.");
-    await inTenant(c, (tx, ctx) => repo.puneNecesar(tx, ctx, corp as never));
+    await inTenant((tx, ctx) => repo.puneNecesar(tx, ctx, corp as never));
     return ok(c);
   });
   app.delete("/api/necesare/:id", async (c) => {
-    await inTenant(c, (tx) => repo.stergeNecesar(tx, c.req.param("id")));
+    await inTenant((tx) => repo.stergeNecesar(tx, c.req.param("id")));
     return ok(c);
   });
   app.put("/api/ambalaje", async (c) => {
     const corp = AmbalajZ.parse(await c.req.json());
-    await inTenant(c, (tx, ctx) => repo.puneAmbalaj(tx, ctx, corp.cheie, corp.ambalaj));
+    await inTenant((tx, ctx) => repo.puneAmbalaj(tx, ctx, corp.cheie, corp.ambalaj));
     return ok(c);
   });
 
   app.post("/api/masuratori", async (c) => {
     const corp = MasuratoareZ.parse(await c.req.json());
-    await inTenant(c, (tx, ctx) => repo.adaugaMasuratoare(tx, ctx, corp as never));
+    await inTenant((tx, ctx) => repo.adaugaMasuratoare(tx, ctx, corp as never));
     return ok(c);
   });
 
   app.post("/api/mutare", async (c) => {
     const corp = MutareZ.parse(await c.req.json());
-    return c.json(await inTenant(c, (tx, ctx) => repo.muta(tx, ctx, corp as never)));
+    return c.json(await inTenant((tx, ctx) => repo.muta(tx, ctx, corp as never)));
   });
 
   return app;
 }
 
-const eu = (ctx: Context): Eu => ({ nume: ctx.nume, email: ctx.email, rol: ctx.rol });

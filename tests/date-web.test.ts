@@ -22,7 +22,7 @@ beforeEach(() => {
     const metoda = init?.method ?? "GET";
     if (metoda !== "GET") cereri.push(`${metoda} ${url}`);
     expect(metoda === "GET" || (init?.headers as Record<string, string>)["x-izorep"] === "1").toBe(true);
-    if (url === "/api/eu") return raspuns(200, { nume: "Birou", email: "b@x.ro", rol: "birou" });
+    if (url === "/api/stare") return raspuns(200, { firma: "RADOIA" });
     if (url === "/api/date") return raspuns(200, date);
     if (url.split("?")[0]!.endsWith("/situatii/1") && metoda === "DELETE") return raspuns(409, { eroare: "se șterge doar ultima" });
     return raspuns(200, { ok: true });

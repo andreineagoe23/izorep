@@ -145,29 +145,28 @@ care nu o poți reproduce.
 
 ## Serverul (Faza 3, 9 octombrie 2026)
 
-`src/server/`, Hono pe Node. `creeazaServer({ db, trimiteLink, urlAplicatie,
-cookieSecure })` întoarce aplicația, deci testele o cheamă direct
-(`app.request`), fără rețea și fără SMTP. `npm run server` o pornește pe 8787.
+`src/server/`, Hono pe Node. `creeazaServer({ db, tenantId, model })` întoarce
+aplicația, deci testele o cheamă direct (`app.request`), fără rețea.
+`npm run server` o pornește pe 8787.
 
-- **Intrarea** (`intrare.ts`): token aleator, în bază doar sha256-ul lui; un
-  singur UPDATE îl marchează folosit și îl verifică, deci două clicuri nu fac
-  două sesiuni. Sesiunea e tot un hash, în cookie `izorep_sesiune`.
-- **Fără tenant la intrare.** Omul scrie doar emailul. Politicile
-  `utilizator_dupa_email`, `*_dupa_hash` lasă să se vadă doar rândul cu cheia
-  pusă în tranzacție (`cuCheie`). Așa nu e nevoie de `SECURITY DEFINER`, care
-  sub `FORCE` ar fi trebuit să ruleze ca un rol cu `BYPASSRLS`.
+- **Fără intrare** (scoasă pe 10 octombrie 2026, cerut de Andrei: încă nu e
+  nevoie de conturi). Un server servește o singură firmă: `TENANT_ID`, sau
+  singura din bază. Totul rulează tot în `caTenant`, deci RLS rămâne graniță.
+  `creat_de` rămâne gol. **Fără conturi, serverul ascultă doar pe 127.0.0.1**
+  (`HOST` îl deschide); nu se pune în internet până nu revin conturile.
+  Tabelele `utilizator`, `sesiune`, `token_intrare` și politicile „după cheie”
+  (migrarea 0006) au rămas în bază, nefolosite: intrarea cu link (commit-ul
+  `d6d2ab0`, `src/server/intrare.ts`) se poate pune la loc din git.
 - **CSRF:** orice metodă în afară de GET cere antetul `X-Izorep: 1`.
 - **Plafoane** (10 octombrie 2026): mărimea cererii după rută (`LIMITE`, 5 MB
-  implicit, 413 peste); cel mult 5 linkuri de intrare pe om în 15 minute,
-  numărate din `token_intrare`, cu același răspuns peste (nu se află dacă
-  adresa are cont).
+  implicit, 413 peste).
 - **Situația se șterge cu id-ul ei** (`DELETE …/situatii/<nr>?id=<id>`):
   numărul spune că e ultima, id-ul că e aceeași pe care a văzut-o omul.
 - **Pagina** o servește tot serverul, construită cu `npm run build:server`
   (`VITE_BASE=/`, `VITE_DATE=server`). Construită pentru Pages, serverul n-o
   servește și spune de ce.
-- **Modelul** (`model.ts`, 10 octombrie 2026): `/api/extrage` și `/api/poza`,
-  după intrare. Cheia din `OPENAI_API_KEY`; fără ea, „indisponibil”. Funcțiile
+- **Modelul** (`model.ts`, 10 octombrie 2026): `/api/extrage` și `/api/poza`
+  pe server. Cheia din `OPENAI_API_KEY`; fără ea, „indisponibil”. Funcțiile
   modelului se primesc în `creeazaServer({ model })`, deci testele nu ating
   OpenAI.
 - **Erorile** din trigger-e și chei (23001, 23503, 23505) ies 409, cu mesaj în
@@ -204,9 +203,8 @@ Trigger-ele lasă să treacă doar `purjare_permisa(tenant)`: setarea
 
 ## Ce lipsește
 
-- Jurnal de audit (cine a schimbat ce; azi doar `creat_de` pe rânduri),
-  permisiuni pe rol (rolurile se stabilesc cu firma).
-- SMTP de producție.
+- Conturile (scoase pe 10 octombrie 2026), jurnal de audit (cine a schimbat
+  ce), permisiuni pe rol. Toate înainte ca serverul să iasă din rețeaua firmei.
 - Restul tabelelor: deviz, contract, comandă, recepție, factură.
 - Regula după care se alege destinația unei lucrări. Coloana există și e
   populată; în aplicație segmentul se alege manual la import, dar nu se

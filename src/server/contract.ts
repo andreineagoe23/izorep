@@ -9,11 +9,19 @@ import type { StareDepozit } from "../../web/depozit-local.js";
 import type { CerereOferta } from "../../web/oferta.js";
 import type { PlanSantier } from "../lucrari/situatii.js";
 
-export interface Eu {
-  nume: string;
-  email: string;
-  /** birou | contabilitate — rolurile provizorii, ambele cu acces la tot. */
-  rol: string;
+/** Raspunsul la `GET /api/stare`: serverul exista si a cui firma e. */
+export interface Stare {
+  firma: string;
+}
+
+/**
+ * In ce context ruleaza o cerere. Fara intrare (scoasa pe 10 octombrie 2026,
+ * cerut de Andrei: inca nu e nevoie de conturi), serverul serveste o singura
+ * firma, iar `creat_de` ramane gol.
+ */
+export interface Context {
+  tenantId: string;
+  utilizatorId: string | null;
 }
 
 /** Tot ce citesc ecranele sincron; se ia la fiecare schimbare de ecran. */

@@ -17,11 +17,11 @@
  * ecranul tine inca lista veche, iar ce lipseste din ea fata de copia noua
  * (situatia scrisa de un coleg) ar pleca la server ca stergere.
  *
- * Modul se alege la pornire: `/api/eu` raspunde → server; nu exista → browser.
+ * Modul se alege la pornire: `/api/stare` raspunde → server; nu exista → browser.
  * `VITE_DATE=server` la build il impune: o aplicatie de productie cu serverul
  * picat nu trebuie sa scrie pe tacute in browser.
  */
-import type { Eu, DateComune, CererePeFir, Mutare, RezultatMutare, OfertaSalvata } from "../src/server/contract.js";
+import type { Stare, DateComune, CererePeFir, Mutare, RezultatMutare, OfertaSalvata } from "../src/server/contract.js";
 import type { PlanSantier, Situatie } from "../src/lucrari/situatii.js";
 import type { Miscare } from "../src/stoc/registru.js";
 import * as dep from "./depozit-local.js";
@@ -33,7 +33,7 @@ import type { CerereOferta } from "./oferta.js";
 export type Mod = "browser" | "server";
 
 let mod: Mod = "browser";
-let eu: Eu | null = null;
+let stare: Stare | null = null;
 let copie: DateComune = { planuri: [], depozit: { miscari: [], necesare: [] }, oferte: {} };
 /** Cererile al caror fisier e deja pe server: la salvare pleaca doar lucrul omului. */
 const cuFisier = new Set<string>();
@@ -44,7 +44,8 @@ let ascultaReimprospatare: () => void = () => undefined;
 let invechit = false;
 
 export const modDate = (): Mod => mod;
-export const euCurent = (): Eu | null => eu;
+/** Firma servita, cand datele stau pe server. */
+export const firmaServita = (): string | null => stare?.firma ?? null;
 export const laEroare = (f: (mesaj: string) => void): void => { ascultaEroare = f; };
 export const laReimprospatare = (f: () => void): void => { ascultaReimprospatare = f; };
 
@@ -85,20 +86,16 @@ function trimite(f: () => Promise<unknown>): void {
 
 /* ------------------------------------------------------------- pornirea */
 
-/**
- * `browser`: nu exista server (linkul demo). `server`: omul a intrat.
- * `intrare`: exista server, dar omul trebuie sa intre cu link pe email.
- */
-export async function porneste(): Promise<"browser" | "server" | "intrare"> {
+/** `browser`: nu exista server (linkul demo). `server`: datele stau pe server. */
+export async function porneste(): Promise<Mod> {
   const impus = (import.meta as { env?: Record<string, string | undefined> }).env?.["VITE_DATE"];
   if (impus === "browser") return (mod = "browser");
   try {
-    eu = await api<Eu>("/api/eu");
+    stare = await api<Stare>("/api/stare");
     mod = "server";
     await reimprospateaza();
     return "server";
-  } catch (e) {
-    if (e instanceof EroareServer && e.status === 401) { mod = "server"; return "intrare"; }
+  } catch {
     if (impus === "server") throw new Error("Serverul nu răspunde. Încearcă din nou peste câteva minute.");
     return (mod = "browser");
   }
@@ -116,22 +113,6 @@ export async function reimprospateaza(): Promise<void> {
 function refuzaInvechit(): boolean {
   if (invechit) ascultaEroare("Pagina s-a reîncărcat cu datele de pe server: fă din nou ultima modificare.");
   return invechit;
-}
-
-export async function cereLink(email: string): Promise<void> {
-  await api("/api/intrare", "POST", { email });
-}
-
-export async function confirmaLink(token: string): Promise<void> {
-  eu = await api<Eu>("/api/intrare/confirma", "POST", { token });
-  mod = "server";
-  await reimprospateaza();
-}
-
-export async function iesi(): Promise<void> {
-  await coada;
-  await api("/api/iesire", "POST");
-  eu = null;
 }
 
 /* ------------------------------------------------- santierele (Lucrari) */

@@ -105,17 +105,18 @@ Regulile pe care le respectă `style.css`:
 - tokenii sunt numiți după rol (`--accent`, `--linie-tare`), nu după culoare
 - ambele teme sunt definite pe tokeni; un ecran nu scrie niciodată o culoare
 
-## Datele pe server, intrarea (9 octombrie 2026)
+## Datele pe server (9 octombrie 2026)
 
 `web/date.ts` e singurul loc din care ecranele citesc și scriu date
-(planuri, depozit, oferte, importuri). La pornire alege: server (cu cont) sau
-browser (linkul de pe Pages). Pe server, `navigheaza` ia datele la fiecare
-schimbare de ecran, deci ce a scris un coleg se vede la următorul clic.
+(planuri, depozit, oferte, importuri). La pornire alege: server (`/api/stare`
+răspunde) sau browser (linkul de pe Pages). Pe server, `navigheaza` ia datele
+la fiecare schimbare de ecran, deci ce a scris un coleg se vede la următorul
+clic.
 
-- **Intrarea**: un câmp de email și „Trimite-mi linkul”; apoi „Verifică
-  emailul”. Linkul deschide aplicația pe `#/intrare/<token>`. Cât omul n-a
-  intrat, meniul și butonul lui sunt ascunse (`data-intrare` pe `:root`).
-- **Antetul** are în dreapta numele omului și „Ieși” (`#cont`).
+- **Fără intrare** (10 octombrie 2026, cerut de Andrei): aplicația se deschide
+  direct. Ecranul de email, linkul `#/intrare/<token>` și „Ieși” au plecat.
+  Cu serverul picat, pagina spune „Serverul nu răspunde”, fără meniu
+  (`data-fara-meniu` pe `:root`).
 - **Mesajele serverului** stau deasupra ecranului (`#mesaje`): o scriere
   refuzată („Nu s-a salvat pe server: …”, cu „Am înțeles”) și cardul „Datele
   din acest browser” / „Mută datele pe server”. După un refuz ecranul se
@@ -636,7 +637,7 @@ ieșit o poziție.
 
 Stratul cu model **nu** rulează în browser, dar importul și Măsurătorile îl
 folosesc când e disponibil: serverul (`src/server/model.ts`) expune
-`/api/extrage` și `/api/poza` după intrare, iar ecranele întreabă ruta cu un GET
+`/api/extrage` și `/api/poza`, iar ecranele întreabă ruta cu un GET
 înainte s-o folosească (POST-ul poartă `X-Izorep`, ca orice scriere). Cu
 `npm start` și cheia în `.env`, pipeline-ul e complet; pe Pages ruta lipsește
 și ecranele cad curat pe stratul determinist, respectiv pe scris de mână.

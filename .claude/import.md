@@ -131,8 +131,8 @@ atunci când cineva strică regula.
 CLI: `npm run import -- <fisier.xlsx>`.
 
 În aplicație: serverul (`src/server/model.ts`, din 10 octombrie 2026) expune
-`POST /api/extrage` și `POST /api/poza`, **doar după intrare**, în dev (prin
-proxy-ul lui vite) ca în producție. Ecranul de import întreabă întâi
+`POST /api/extrage` și `POST /api/poza`, în dev (prin proxy-ul lui vite) ca în
+producție. Ecranul de import întreabă întâi
 ruta cu un GET; dacă răspunde, trimite acolo liniile reziduale și primește
 înapoi parametrii extrași, apoi tarifează determinist în browser.
 

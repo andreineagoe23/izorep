@@ -92,9 +92,9 @@ o cauză scrisă.
 Pe ramura `faza-3`, peste `faza-1-2`. Detaliile în `.claude/stare.md`
 (9 octombrie 2026, Faza 3) și `.claude/backend.md`. Pe scurt:
 
-- **Serverul** (`src/server/`, Hono): intrare cu link pe email (Mailpit local,
-  http://localhost:8025), cookie de sesiune 30 de zile, fiecare cerere în
-  `caTenant`. Conturile le dăm noi: `npm run om -- <email> "<nume>"`.
+- **Serverul** (`src/server/`, Hono): fiecare cerere în `caTenant`. Intrarea cu
+  link pe email s-a făcut, apoi s-a scos pe 10 octombrie (Andrei: încă nu e
+  nevoie de conturi); serverul ascultă doar local până revin.
 - **În bază** (migrările 0005, 0006): cererile cu fișierul clientului, ofertele
   pe versiuni (nu se modifică și nu se șterg), șantierele (planul se îngheață la
   prima situație), anexele, situațiile (se șterge doar ultima), măsurătorile cu
@@ -208,7 +208,7 @@ central, atelier, șantier.
    - alertele: lipsă pe șantier, pierdere peste 10%, comenzi nerecepționate;
    - cifrele la închiderea șantierului.
 
-   Pe email, odată cu linkul de intrare din Faza 3.
+   Pe email (de pus la loc odată cu conturile).
 
 **Gata când:** un șantier închis are stoc zero și un singur număr pentru costul
 materialului față de ofertă.
