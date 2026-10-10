@@ -15,7 +15,18 @@ Audit pe tot ce s-a făcut (Fazele 1–3). Reparat pe `faza-3`, fiecare cu test:
 | Linkuri pe email fără limită | cel mult 5 pe om în 15 minute; peste, același răspuns, fără email |
 | Build-ul pentru server | `npm run build:server` (`VITE_BASE=/`, `VITE_DATE=server`); `build:web` rămâne pentru Pages. Serverul refuză să servească un `dist-web` construit pentru Pages |
 
-**432 de teste.** Rămase din audit, pentru mai târziu:
+**432 de teste.** Verificat după reparații, față de răspunsurile firmei și
+exemple: regulile din `docs/intrebari-firma.md` aplicate direct pe cod (inox
+0,4; aluminiu 0,8 unde rândul are mai multe grosimi, altfel cea din listă;
+rândul de sus la ø90 / ø160; piese 3 / 2 / 1 pe metru; exemplul ø114 + vată 30
+= 0,55 m²/ml; pierderi 10 / 10 / 0 %; tabla în kg; rotunjirea la ambalaj),
+cei 13 furnizori din S25, listele regenerate din fișierele firmei identice cu
+`data/price-lists/`. Cap-coadă cu Playwright, pe `build:server`, fără model:
+TRANSAVIA 99 / 99, după „Confirmă toate” 94.575,06 € pe ecran, în `.xlsx` și
+pe server; deschisă pe al doilea browser la aceeași valoare; stocul văzut de
+amândoi; zero derulare laterală la 390–1920 px.
+
+Rămase din audit, pentru mai târziu:
 
 - **Modelul nu e pe server**: `/api/extrage` și `/api/poza` există doar în `vite dev`. Pe serverul de producție importul merge doar pe reguli (tot 0 fără preț), dar Măsurătorile din poze nu merg. Condiție pentru producție și pentru Faza 4.8 (avizul citit cu modelul).
 - Cererea și necesarul se salvează „ultimul câștigă”: doi oameni pe același import se suprascriu.
