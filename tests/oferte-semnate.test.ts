@@ -90,7 +90,7 @@ const CAZURI: Caz[] = [
   },
   {
     fisier: "oferta-284-transavia-abur.xlsx",
-    semnat: 94575.06, peOferta: 85, generat: 75611.04,
+    semnat: 94575.06, peOferta: 99, generat: 94575.06,
     deCe: "79% din oferta semnată. Două schimbări au urcat-o de la 25%: extragerea deterministă a "
         + "început să construiască `straturi_extra` (jachetele nu se tarifau deloc), iar firma a "
         + "confirmat pe 11 sep 2026 regula „cot/teu de vată sub ø60 nu intră în preț” — cele 24 de "
@@ -107,7 +107,9 @@ const CAZURI: Caz[] = [
         + "de abur (2.296,70, echipament la comandă). Toate cele 98 de prețuri calculate sunt exacte. "
         + "Pe 8 oct 2026, și distribuitorul are preț: suprafața lui × prețul pe mp × factorul dedus din chiar "
         + "oferta asta (2.296,70, exact), la „De validat”. Toate cele 99 de prețuri sunt exacte; după "
-        + "confirmare, totalul e 94.575,06.",
+        + "confirmare, totalul e 94.575,06. Pe 10 oct 2026, CRESCUT (85 → 99): celula dedusă (exactă aici) "
+        + "și echipamentul (exact aici) sunt reguli dovedite, deci nu mai cer confirmare: oferta iese "
+        + "94.575,06 direct, fără niciun clic.",
   },
   {
     fisier: "oferta-manopera-anexa-contract-2024.xlsx",
@@ -308,8 +310,10 @@ describe("prețul pus de om închide oferta semnată", () => {
     if (!existsSync(CERERE)) return;
     const fara = await importaFisier(CERERE, { faraModel: true, stoc: stocInMemorie() });
     const distribuitor = fara.linii.find((l) => /DISTRIBUITOR ABUR/.test(l.bruta.text))!;
-    // Are preț din regula echipamentului, dar merge la om: o singură valoare semnată.
-    expect(distribuitor.necesitaValidare).toBe(true);
+    // Are preț din regula echipamentului, exact cel semnat, deci e „Gata” (din 10 oct 2026).
+    expect(distribuitor.necesitaValidare).toBe(false);
+    expect(distribuitor.pret!.pret_unitar).toBe(2296.70);
+    expect(totalOferta(imparte(fara.linii).oferta)).toBe(94575.06);
 
     const cerere = await importaFisier(CERERE, {
       faraModel: true, stoc: stocInMemorie(), preturiManuale: new Map([[distribuitor.extras.index, 2296.70]]),
@@ -335,8 +339,11 @@ describe("confirmarea din ecran nu scoate prețul pozițiilor care depind de tex
     if (!existsSync(CERERE)) return;
     const opt = { stoc: stocInMemorie() };
     const rez = await proceseazaRegistru(await parseFoi(CERERE), opt);
-    const deConfirmat = rez.linii.filter((l) => l.pret && l.necesitaValidare).map((l) => l.extras.index);
-    expect(deConfirmat).toHaveLength(14);
+    // Din 10 oct 2026 nimic nu mai e de confirmat aici; omul poate confirma
+    // totusi tot (sau corecta un rand), iar pretul nu trebuie sa se miste.
+    expect(rez.linii.filter((l) => l.pret && l.necesitaValidare)).toHaveLength(0);
+    const deConfirmat = rez.linii.filter((l) => l.pret).map((l) => l.extras.index);
+    expect(deConfirmat).toHaveLength(99);
     confirma(deConfirmat, rez.rezolvate);
     reevalueaza(rez, opt);
     const { oferta, deValidat, netarifate } = imparte(rez.linii);
@@ -344,4 +351,39 @@ describe("confirmarea din ecran nu scoate prețul pozițiilor care depind de tex
     expect(deValidat).toEqual([]);
     expect(totalOferta(oferta)).toBe(94575.06);
   });
+});
+
+describe("ce e „Gata” pe o ofertă semnată are prețul semnat", () => {
+  // Din 10 octombrie 2026 regulile dovedite (`MOTIVE_DOVEDITE`) nu mai cer
+  // confirmare. Garantia lor e asta: pe ofertele semnate, fiecare pozitie
+  // „Gata” iese exact ca semnat. Exceptiile sunt doar unde semnatul s-a abatut
+  // de la regula spusa de firma (randul de sus la ø90 / ø160, 5 octombrie).
+  const ABATERI_DE_LA_REGULA_FIRMEI = new Set(["oferta-118-nisal.xlsx|Termice+Sanitare|59", "oferta-118-nisal.xlsx|Termice+Sanitare|78",
+    "oferta-118-nisal.xlsx|Ventilatie|4", "oferta-118-nisal.xlsx|Ventilatie|8"]);
+  const PU: Record<string, Record<string, number>> = {
+    "oferta-284-transavia-abur.xlsx": { Izolatii: 5 },
+    "oferta-118-nisal.xlsx": { "Termice+Sanitare": 7, Ventilatie: 7 },
+    "oferta-118-1-matari-goluri-foc.xlsx": { Matari: 7 },
+  };
+
+  for (const [fisier, coloane] of Object.entries(PU)) {
+    it(fisier, async () => {
+      const cale = `${DIR}/${fisier}`;
+      if (!existsSync(cale)) return;
+      const ExcelJS = (await import("exceljs")).default;
+      const wb = new ExcelJS.Workbook();
+      await wb.xlsx.readFile(cale);
+      const { oferta } = imparte((await importaFisier(cale, { faraModel: true, stoc: stocInMemorie() })).linii);
+      const diferite: string[] = [];
+      for (const l of oferta) {
+        const cheie = `${fisier}|${l.bruta.foaie}|${l.bruta.rand}`;
+        const v = wb.getWorksheet(l.bruta.foaie)!.getRow(l.bruta.rand).getCell(coloane[l.bruta.foaie]!).value;
+        const semnat = Number(v && typeof v === "object" && "result" in v ? v.result : v);
+        if (Math.abs(semnat - l.pret!.pret_unitar) >= 0.005 && !ABATERI_DE_LA_REGULA_FIRMEI.has(cheie)) {
+          diferite.push(`${cheie}: semnat ${semnat}, noi ${l.pret!.pret_unitar}`);
+        }
+      }
+      expect(diferite).toEqual([]);
+    });
+  }
 });

@@ -1048,7 +1048,7 @@ function construiesteLinii(
       bruta: b, extras: deTarifat, sursa,
       ...(avertismente.length ? { avertismente } : {}),
       necesitaValidare: sursa !== "om" && extras.sistem !== null
-        && (extras.incredere < prag || avertismente.length > 0 || cuPropunere || schimbata),
+        && (extras.incredere < prag || avertismente.length > 0 || schimbata),
     };
 
     // Textul intra in regulile de forma si straturi doar cand nu e linia
@@ -1139,8 +1139,9 @@ function construiesteLinii(
     // tubul de 2 m, pretul e jumatate. Nicio oferta semnata n-are izolatie
     // dreapta in bucati, deci nu exista regula de dedus: pretul ramane pe ml,
     // dar pozitia merge la om.
+    // Echipamentul se tarifeaza chiar pe bucata (suprafata lui), deci nu intra aici.
     if (t.pret && sursa !== "om" && extras.forma === null && deTarifat.sistem !== "goluri_foc"
-        && b.um && RE_UM_BUCATA.test(b.um.trim())) {
+        && b.um && RE_UM_BUCATA.test(b.um.trim()) && !("suprafata_mp" in t.pret)) {
       const n = `UM-ul e "${b.um.trim()}", dar textul nu numeste nicio piesa: pretul e pe metru liniar`;
       t.pret.note = [...(t.pret.note ?? []), n];
       t.pret.noteDeVerificat = [...(t.pret.noteDeVerificat ?? []), n];
@@ -1155,8 +1156,15 @@ function construiesteLinii(
     // Nu si pe "om": confirmarea ESTE raspunsul la nota. Fara exceptia asta, o
     // pozitie confirmata ramanea marcata la nesfarsit si nu ajungea niciodata
     // pe foaia `Ofertă` — butonul de confirmare n-avea niciun efect pe ea.
-    if (sursa !== "om" && t.pret?.noteDeVerificat?.length) {
+    if (sursa !== "om" && t.pret?.noteDeVerificat?.length && cereOchi(t.pret.motiveDeVerificat)) {
       proc.necesitaValidare = true;
+    }
+    // Regulile de citire au lasat randul incomplet, dar o regula dovedita l-a
+    // completat (golul de la aceeasi teava, grosimea cea mai apropiata, D si L
+    // la echipament): pretul e al regulii, deci nu mai cere ochi.
+    if (sursa === "regex" && t.pret && !avertismente.length && !schimbata
+        && t.pret.motiveDeVerificat?.length && !cereOchi(t.pret.motiveDeVerificat)) {
+      proc.necesitaValidare = false;
     }
     if (t.eroare !== undefined) {
       proc.eroare = t.eroare;
@@ -1183,6 +1191,43 @@ function construiesteLinii(
   }
   return linii;
 }
+
+/**
+ * Motivele care NU mai opresc pozitia la „De verificat” (10 octombrie 2026,
+ * Andrei: scopul e sa nu verifice omul linie cu linie). Pretul iese dintr-o
+ * regula dovedita; nota ramane pe pozitie, ca sa se vada de unde vine.
+ *
+ * Opresc in continuare doar: ce firma a spus ca decide omul (protectia la foc,
+ * Conlit / Techrock), ce e ambiguu in textul clientului (interval de grosime,
+ * bucati fara piesa numita, DN contrazis), ce contrazice o oferta semnata
+ * (livrarea tevii NISAL; golurile EI180 fara dimensiuni de la Matari, lasate
+ * fara pret in oferta semnata; formula peste lista, cu 0,13 € sub SPIRO ø250 /
+ * ø315 si PEHD D250 din NISAL), extrapolarile fara dovada si citirile nesigure
+ * ale modelului. Un motiv intra aici doar cu dovada scrisa langa el: fiecare
+ * pozitie „Gata” din ofertele semnate iese exact ca semnat (sau pe regula
+ * spusa de firma, unde semnatul s-a abatut de la ea: ø90 / ø160, randul de sus).
+ */
+export const MOTIVE_DOVEDITE: ReadonlySet<MotivVerificare> = new Set<MotivVerificare>([
+  // Oferta 284: 7,90 € dedus, exact ca semnat.
+  "celula_dedusa",
+  // Oferta 284: distribuitorul, 2.296,70 € exact.
+  "echipament_suprafata",
+  // Tabelul de grosimi uzuale al firmei (11 septembrie) si grosimea conductei
+  // de acelasi diametru (casetele din Oferta 284, 24 din 24).
+  "grosime_propusa",
+  // Grosimea cea mai apropiata din lista (20 → 19 la elastomer, 3 din 3 in ofertele
+  // semnate; „min 0,5 mm” → 0,6, cea mai subtire care o acopera).
+  "grosime_apropiata",
+  "grosime_jacheta_apropiata",
+  // Tabla pe mp: 0,8 e identic in ambele liste, deci pretul pe mp nu depinde de segment.
+  "mp_din_celalalt_segment",
+  // Seria de cupru din registrul de conversie al firmei.
+  "serie_cupru",
+]);
+
+/** Pozitia cere ochi daca are macar un motiv nedovedit (sau o nota fara motiv). */
+export const cereOchi = (motive: readonly MotivVerificare[] | undefined): boolean =>
+  !motive?.length || motive.some((m) => !MOTIVE_DOVEDITE.has(m));
 
 /** Partea de `Statistici` care se recalculeaza intotdeauna din `linii`. */
 /** „- manopera :" din antetele de sectiune ale ofertelor de manopera. */

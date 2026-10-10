@@ -99,7 +99,7 @@ describe("prețul pe mp, când lista segmentului nu-l are", () => {
   it("tablă 0,6 mm pe rezidențial: prețul pe mp din lista industrială (0,8 e identic în amândouă)", () => {
     const r = tarifeazaPeMp({ straturi: [{ sistem: "tabla", grosime_mm: 0.6 }], cantitate: 1 });
     expect(r.pret_unitar).toBe(45);
-    expect(r.motiveDeVerificat).toContain("segment_diferit");
+    expect(r.motiveDeVerificat).toContain("mp_din_celalalt_segment");
   });
 
   it("elastomer 40 mm pe mp (spitalul): extrapolat din 25 și 32 mm, de verificat", () => {

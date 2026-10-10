@@ -161,7 +161,11 @@ export type MotivVerificare =
   /** Golul n-are dimensiuni pe rand: luate de la aceeasi teava din acelasi fisier. */
   | "gol_de_la_aceeasi_teava"
   /** Banda autoadeziva pe armaturi: pretul celei mai subtiri izolatii de elastomer. */
-  | "banda_armaturi";
+  | "banda_armaturi"
+  /** Tabla: pretul pe mp al grosimii vine din lista celuilalt segment (0,8 e identic in amandoua). */
+  | "mp_din_celalalt_segment"
+  /** Celula lipsa din lista industriala: rezidential × raportul celor doua liste pe grosime. */
+  | "celula_din_rezidential";
 
 /**
  * De ce nu s-a putut tarifa o pozitie, ca valoare STABILA.

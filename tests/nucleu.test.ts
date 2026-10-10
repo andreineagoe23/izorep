@@ -262,7 +262,9 @@ describe("grosimea de la conducta de acelasi diametru", () => {
     expect(l.pret!.note!.join(" ")).toContain("conducta de acelasi diametru");
   });
 
-  it("doua grosimi pe acelasi diametru: caseta ia grosimea mai mare, de verificat", async () => {
+  // Din 10 octombrie 2026 grosimea de la conducta e regula dovedita (`MOTIVE_DOVEDITE`):
+  // nota ramane pe pozitie, dar pozitia e „Gata”.
+  it("doua grosimi pe acelasi diametru: caseta ia grosimea mai mare, cu nota", async () => {
     const rez = await proceseazaRegistru(await parseFoi(await registru([
       ANTET,
       [1, CASETA, "buc", 1],
@@ -273,10 +275,10 @@ describe("grosimea de la conducta de acelasi diametru", () => {
     expect(l.extras.grosime_mm).toBe(80);
     expect(l.pret).toBeDefined();
     expect(l.pret!.motiveDeVerificat).toContain("grosime_propusa");
-    expect(l.necesitaValidare).toBe(true);
+    expect(l.necesitaValidare).toBe(false);
   });
 
-  it("nicio conducta de acelasi diametru: grosimea conductei celei mai apropiate, de verificat", async () => {
+  it("nicio conducta de acelasi diametru: grosimea conductei celei mai apropiate, cu nota", async () => {
     const rez = await proceseazaRegistru(await parseFoi(await registru([
       ANTET,
       [1, "Caseta izolatie armaturi cu flanse DN150 din tabla aluminiu si vata minerala", "buc", 1],
@@ -285,7 +287,7 @@ describe("grosimea de la conducta de acelasi diametru", () => {
     const l = rez.linii.find((x) => x.bruta.text.includes("Caseta"))!;
     expect(l.extras.grosime_mm).toBe(50);
     expect(l.pret!.noteDeVerificat!.join(" ")).toContain("cea mai apropiata");
-    expect(l.necesitaValidare).toBe(true);
+    expect(l.necesitaValidare).toBe(false);
   });
 
   it("nu ia grosimea altui material: fara vata in lista, grosimea uzuala a vatei", async () => {
@@ -489,13 +491,13 @@ describe("grosimile propuse", () => {
   // Textul real de pe cererea Abur: clientul nu scrie grosimea vatei.
   const CASETA = "Caseta izolatie armaturi cu flanse DN50 din tabla aluminiu si vata minerala";
 
-  it("intra in pret, dar linia ramane de validat si nu devine a omului", async () => {
+  it("intra in pret, linia e „Gata” (tabelul firmei), dar nu devine a omului", async () => {
     const rez = await proceseazaRegistru(await parseFoi(await registru([ANTET, [1, CASETA, "buc", 6]])), { stoc: stocInMemorie() });
     // Fara nimic pe rand si fara conducte in lista: grosimea uzuala (DN50 → 50 mm), de verificat.
     const uzuala = rez.linii.find((l) => l.bruta.text.includes("Caseta"))!;
     expect(uzuala.extras.grosime_mm).toBe(50);
     expect(uzuala.pret).toBeDefined();
-    expect(uzuala.necesitaValidare).toBe(true);
+    expect(uzuala.necesitaValidare).toBe(false);
     const fara = uzuala;
 
     reevalueaza(rez, { stoc: stocInMemorie(), grosimiPropuse: new Map([[fara.extras.index, 40]]) });
@@ -503,7 +505,7 @@ describe("grosimile propuse", () => {
     expect(cu.extras.grosime_mm).toBe(40);
     expect(cu.pret).toBeDefined();
     expect(cu.sursa).not.toBe("om");
-    expect(cu.necesitaValidare).toBe(true);
+    expect(cu.necesitaValidare).toBe(false);
     expect(cu.pret!.noteDeVerificat?.join(" ")).toContain("propusa");
     // Nimic scris in `rezolvate`: grosimea nu se da drept extrasa din text.
     expect(rez.rezolvate.get(cu.extras.index)!.extras.grosime_mm).toBeNull();
@@ -646,13 +648,13 @@ describe("seria tevii dupa material", () => {
     expect(DN_TO_OD_CUPRU).toEqual(cupru);
   });
 
-  it("DN15 de cupru se cauta pe randul 18, nu pe 22, si merge la om", async () => {
+  it("DN15 de cupru se cauta pe randul 18, nu pe 22 (seria din registrul firmei), cu nota", async () => {
     const l = await pe("Izolatie elastomer 13 mm pe teava de cupru DN15");
     const rand18 = tarifeaza({ diametru: { valoare: 18, tip: "exterior" }, straturi: [{ sistem: "elastomer", grosime_mm: 13 }], forma: "ml", cantitate: 1 });
     expect((l.pret as RezultatTarifare).straturi[0]!.rand_lista).toBe(18);
     expect(l.pret!.pret_unitar).toBe(rand18.pret_unitar);
     expect(l.pret!.motiveDeVerificat).toContain("serie_cupru");
-    expect(l.necesitaValidare).toBe(true);
+    expect(l.necesitaValidare).toBe(false);
   });
 
   it("la DN80 seria cuprului e chiar ISO: nimic de schimbat, nimic de marcat", async () => {

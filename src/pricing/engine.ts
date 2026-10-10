@@ -238,7 +238,9 @@ function pretPeMp(
     const alta = listaPe(sistem, d)?.per_mp[String(grosime)];
     if (alta !== undefined) {
       return {
-        pret: alta, motiv: "segment_diferit",
+        // La tabla preturile pe mp nu depind de segment (0,8 e identic); la
+        // izolatii industrialul e ×1,20–1,25, deci acolo ramane de verificat.
+        pret: alta, motiv: sistem === "tabla" ? "mp_din_celalalt_segment" : "segment_diferit",
         nota: `${sistem} ${grosime} mm: pret pe mp din lista ${ADJECTIV_DEST[d].toUpperCase()}; lista ${ADJECTIV_DEST[dest]} ` +
           `n-are grosimea asta pe mp`,
       };
@@ -668,7 +670,7 @@ function tarifeazaDinMatrice(cerere: CerereTarifare): RezultatTarifare {
             `pret rezidential × ${r.raport.toFixed(3)} (raportul celor doua liste pe ${grosime} mm): ${bani(r.pret)} €`;
           note.push(n);
           noteDeVerificat.push(n);
-          motive.add("celula_dedusa");
+          motive.add("celula_din_rezidential");
         } else if (d === null) {
           p = cauta(strat.sistem, rand, grosime, listaStrat); // arunca `grosime_inexistenta`
         } else {

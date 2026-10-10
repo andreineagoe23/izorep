@@ -201,6 +201,8 @@ export const MOTIV: Record<CodMotiv, string> = {
   echipament_suprafata: "Echipament: preț din suprafața lui",
   gol_de_la_aceeasi_teava: "Golul luat de la aceeași țeavă din fișier",
   banda_armaturi: "Bandă pe armături: preț de elastomer 9 mm",
+  mp_din_celalalt_segment: "Tablă pe m²: preț din lista celuilalt tip de ofertă (identic la 0,8 mm)",
+  celula_din_rezidential: "Combinația lipsește din lista industrială: dedusă din cea rezidențială",
   grosime_necitata: "Grosimea nu apare în text",
   gol_necitat: "Dimensiunea golului nu apare în text",
   grosime_in_afara_listei: "Grosime neobișnuită pentru material",
