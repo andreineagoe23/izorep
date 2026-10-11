@@ -28,8 +28,7 @@ import {
   citesteDepozit, citestePlanuri, deschideLaIntrare, idCurent, idNou, incarca, listeaza, puneCurent,
   salveaza, salveazaOferta, scrieDepozit, scriePlanuri, sterge, uitaOferta,
 } from "../date.js";
-import type { EditareCelula, IntrareIstoric, OrigineImport, SesiuneImport } from "../istoric.js";
-import { FOAIE_ADAUGATE, type PozitieAdaugata } from "../../src/import/adaugate.js";
+import type { EditareCelula, IntrareIstoric, SesiuneImport } from "../istoric.js";
 import {
   actiuniLista, antetVerificare, cardPozitie, comutaExcel, ecranProgres, ecranStart, editorPozitie,
   baraFoi, filtreMotiv, filtreStare, numaraMotive, pasi, patchDinFormular, randStrat, toast,
@@ -276,7 +275,7 @@ export const ecran: Ecran = {
         pagina.innerHTML = ecranStart({ destinatie, istoric, stergeDe, eroare: eroareStart });
         legaDrop();
       } else if (vedere === "fisier") {
-        pagina.innerHTML = baraFisier(sesiune.meta.nume, sesiune.meta.origine) + paginaVerificare(sesiune);
+        pagina.innerHTML = baraFisier(sesiune.meta.nume) + paginaVerificare(sesiune);
       } else {
         pagina.innerHTML = paginaOfertaSesiune(sesiune);
       }
@@ -300,7 +299,7 @@ export const ecran: Ecran = {
           const campuri = editeaza ? campuriLinie(s, l) : undefined;
           return pozitieOferta(p, { linie: l, propunere: propunere(l), editeaza, cuFoaie, ...(campuri ? { campuri } : {}) });
         },
-        fisier: { nume: s.meta.nume, cand: s.meta.cand, origine: s.meta.origine },
+        fisier: { nume: s.meta.nume, cand: s.meta.cand },
         destinatie, filtru,
         deasupra: alerte(s) + filtreMotiv(motive, motiv) + actiuniLista({
           deConfirmat: filtru === "de_validat" ? lista.length : 0,
@@ -426,7 +425,7 @@ export const ecran: Ecran = {
     function deschideSesiune(s: Sesiune): void {
       sesiune = s;
       pas = 2; vedere = "oferta"; filtru = "toate"; motiv = null; foaie = foaieInitiala(s); editIdx = null;
-      dateOferta = dateNoi(s.meta.origine?.tip === "izolatie_foaie" ? s.meta.origine.fisier : s.meta.nume);
+      dateOferta = dateNoi(s.meta.nume);
       ajustare = 0;
       // Latimea se masoara DUPA plierea barei, altfel ar decide pe locul pe
       // care il ocupa inca meniul. Sub prag, foaia 1:1 n-ar incapea fara
@@ -617,7 +616,7 @@ export const ecran: Ecran = {
       if (!restaurat) arataMesaj(`Ai deschis ${s.nume}.`);
     }
 
-    async function proceseaza(fisier: File, predare?: Predare, origine?: OrigineImport): Promise<void> {
+    async function proceseaza(fisier: File, predare?: Predare): Promise<void> {
       deIzolat = null;
       pas = 2;
       elPasi.innerHTML = pasi(2, { 1: true, 2: false });
@@ -701,7 +700,6 @@ export const ecran: Ecran = {
             id: `${Date.now()}-${fisier.name}`, nume: fisier.name, marime: fisier.size,
             cand: new Date().toISOString(), model: info?.model ?? null, fisier: buf,
             pozitii: 0, tarifate: 0, valoare: 0, extrase: [], editari: [],
-            ...((origine ?? predare?.origine) ? { origine: (origine ?? predare?.origine)! } : {}),
           },
         });
       } catch (e) {
@@ -711,46 +709,6 @@ export const ecran: Ecran = {
         eroareStart = `<strong>Fișierul nu a putut fi citit.</strong> ${esc(fisierNecitit(fisier.name))}`;
         deseneaza();
       }
-    }
-
-    /**
-     * „Adaugă poziție": randul scris de om intra in foaia „Adăugate de mână"
-     * (`cuAdaugate`), iar importul se reface fara model, cu tot ce a lucrat omul
-     * pana acum. Pozitia noua trece prin aceeasi citire si acelasi pret.
-     */
-    async function adaugaPozitie(form: HTMLFormElement): Promise<void> {
-      const s = sesiune;
-      if (!s) return;
-      const date = new FormData(form);
-      const noua: PozitieAdaugata = {
-        text: String(date.get("text") ?? "").replace(/\s+/g, " ").trim(),
-        um: String(date.get("um") ?? "").trim() || "buc",
-        cantitate: Number(String(date.get("cantitate") ?? "").replace(",", ".")),
-      };
-      if (noua.text.length < 12 || !(noua.cantitate > 0)) return;
-      const vechi = s.meta.adaugate ?? [];
-      await refaCuAdaugate(s, [...vechi, noua]);
-      const ultima = sesiune!.rez.linii.filter((l) => l.bruta.foaie === FOAIE_ADAUGATE).at(-1);
-      const idx = ultima?.extras.index ?? null;
-      deseneaza();
-      if (idx !== null) {
-        const el = pagina.querySelector<HTMLElement>(`.imp-poz[data-idx="${idx}"]`);
-        el?.scrollIntoView({ block: "center" });
-        focuseaza(idx);
-      }
-      arataMesaj(ultima?.extras.sistem ? "Poziția a fost adăugată în ofertă." : "Poziția a fost adăugată, dar nu s-a putut citi: deschide „Modifică”.",
-        () => { void refaCuAdaugate(sesiune!, vechi).then(deseneaza); });
-    }
-
-    async function refaCuAdaugate(s: Sesiune, adaugate: PozitieAdaugata[]): Promise<void> {
-      const { redeschideImport } = await import("../../src/import/redeschide.js");
-      const extrase = [...s.rez.rezolvate].map(([index, r]) => ({
-        index, extras: r.extras, sursa: r.sursa, ...(r.text !== undefined ? { text: r.text } : {}),
-      }));
-      const meta: SesiuneImport = { ...s.meta, adaugate };
-      const rez = await redeschideImport({ fisier: meta.fisier, editari: s.editari, extrase, adaugate }, optiuni());
-      sesiune = { ...s, foi: rez.foi, rez, meta };
-      await salveazaAcum();
     }
 
     /**
@@ -779,7 +737,7 @@ export const ecran: Ecran = {
       deIzolat = null;
       await proceseaza(new File([buf], `${titlu} - izolatie pe foaie.xlsx`, {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      }), undefined, { tip: "izolatie_foaie", fisier: d.fisier.name });
+      }));
     }
 
     /** Antetul ofertei din formularul pasului 3; același pentru ofertă și pentru șantier. */
@@ -1126,7 +1084,6 @@ export const ecran: Ecran = {
       e.preventDefault();
       if (form.id === "antet-oferta") { void genereazaOferta(form); return; }
       if (form.id === "izolatie-foaie") { void faListaDeIzolatii(form); return; }
-      if (form.id === "adauga-pozitie") { void adaugaPozitie(form); return; }
       if (!form.classList.contains("imp-editor")) return;
       const idx = Number(form.dataset["idx"]);
       salveazaEditor(form, idx);

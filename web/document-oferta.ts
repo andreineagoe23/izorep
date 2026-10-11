@@ -6,7 +6,6 @@ import {
   type AntetOferta, type CerereOferta,
 } from "./oferta.js";
 import { motiveLinie, stareLinie, type CodMotiv, type Stare } from "./import/text.js";
-import { FOAIE_ADAUGATE } from "../src/import/adaugate.js";
 
 /**
  * Oferta ca date: același document pentru orice cerere.
@@ -98,9 +97,6 @@ export const NOTA_FOC = [
 ];
 
 /* ------------------------------------------------------------ capitolele */
-
-/** Titlul capitolului cu pozițiile adăugate de mână, cum îl vede și clientul. */
-export const CAPITOL_ADAUGATE = "Alte lucrări";
 
 /**
  * Secțiunea citită e de fapt antetul documentului, nu un capitol. Pe NISAL,
@@ -234,8 +230,7 @@ function golul(l: LinieProcesata): PozitieOferta["gol"] {
 export function documentOferta(c: CerereOferta): DocumentOferta {
   const linii = cuAjustare(c.linii, c.antet.ajustareProcent ?? 0)
     .filter((l) => l.extras.sistem !== null);
-  // Foaia „Adăugate de mână” e a noastră: nu face din foaia unică a clientului un capitol cu nume.
-  const foi = new Set(linii.map((l) => l.bruta.foaie).filter((f) => f !== FOAIE_ADAUGATE));
+  const foi = new Set(linii.map((l) => l.bruta.foaie));
 
   const capitole: CapitolOferta[] = [];
   let cheie: string | null = null;
@@ -245,8 +240,7 @@ export function documentOferta(c: CerereOferta): DocumentOferta {
     const k = `${l.bruta.foaie}\u0000${sect ?? ""}`;
     if (k !== cheie) {
       cheie = k;
-      const titlu = l.bruta.foaie === FOAIE_ADAUGATE ? CAPITOL_ADAUGATE : sect ?? (foi.size > 1 ? l.bruta.foaie : null);
-      capitole.push({ titlu, pozitii: [], subtotal: 0 });
+      capitole.push({ titlu: sect ?? (foi.size > 1 ? l.bruta.foaie : null), pozitii: [], subtotal: 0 });
     }
     const stare = stareLinie(l);
     const pret = l.pret;

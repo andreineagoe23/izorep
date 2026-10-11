@@ -1063,15 +1063,6 @@ button.filtru[aria-pressed="true"] .hint, button.filtru.activ .hint { color: inh
   .imp-of-stanga .imp-poz-inteles { align-self: center; }
 }
 
-.imp-of-adauga summary { display: flex; align-items: center; min-height: 44px; margin: -8px 0; font-weight: 600; cursor: pointer; }
-.imp-of-adauga[open] summary { margin-bottom: 8px; }
-.imp-of-adauga-form { display: grid; gap: 12px; }
-.imp-of-adauga-form .hint { margin: 0; }
-.imp-of-adauga-form label { display: block; font-size: 14px; color: var(--slab); }
-.imp-of-adauga-form textarea, .imp-of-adauga-form input { margin-top: 6px; min-height: 44px; font-size: 16px; color: var(--text); }
-.imp-of-adauga-rand { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
-.imp-of-adauga .imp-formular-butoane { margin-top: 0; }
-
 /* Foaia clientului, ca referință: drumul înapoi la ofertă și rândul căutat. */
 .imp-of-referinta {
   position: sticky; top: 0; z-index: 6;

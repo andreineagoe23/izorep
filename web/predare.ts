@@ -1,6 +1,5 @@
 import type { Destinatie } from "../src/pricing/lists.js";
 import type { Potrivire } from "../src/lucrari/potrivire.js";
-import type { OrigineImport } from "./istoric.js";
 
 /**
  * Un fisier dat de un ecran altui ecran, in aceeasi pagina.
@@ -15,8 +14,6 @@ export interface Predare {
   destinatie: Destinatie;
   /** Randurile cu „(pret dublu)" primesc de doua ori pretul din lista. */
   pretDublu: boolean;
-  /** Registrul e facut de aplicatie: ecranul arata de unde vine, nu fisierul. */
-  origine?: OrigineImport;
 }
 
 let asteptare: Predare | null = null;

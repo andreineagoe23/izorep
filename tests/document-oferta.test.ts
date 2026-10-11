@@ -281,29 +281,3 @@ describe("pe toate cererile: documentul, registrul și planul spun același lucr
     }
   });
 });
-
-describe("pozițiile adăugate de mână", () => {
-  it("trec prin import ca orice rând și intră la „Alte lucrări”, după capitolele clientului", async () => {
-    const { cuAdaugate, FOAIE_ADAUGATE } = await import("../src/import/adaugate.js");
-    const { proceseazaRegistru } = await import("../src/import/nucleu.js");
-    const foaie = (nume: string, randuri: (string | number)[][]) => ({
-      nume, coloane: 3,
-      randuri: randuri.map((r, i) => ({ rand: i + 1, celule: r.map((v) => ({ v, span: 1 })) })),
-    });
-    const { construiesteLinie } = await import("../src/import/rand.js");
-    const client = foaie("Izolatii", [["Izolatii cu vata minerala si protectie cu tabla de aluminiu Di114, g50 - ML", "ml", 10]]);
-    client.randuri.forEach((r, i) => {
-      const l = construiesteLinie(r.celule.map((c) => c.v), { index: i, foaie: "Izolatii", rand: r.rand });
-      if (l) (r as { linie?: unknown }).linie = l;
-    });
-    const foi = cuAdaugate([client], [{ text: "Izolatie vata minerala 50 mm si tabla aluminiu Di114 - COT", um: "buc", cantitate: 2 }]);
-    expect(foi.map((f) => f.nume)).toEqual(["Izolatii", FOAIE_ADAUGATE]);
-    const rez = await proceseazaRegistru(foi, { stoc: stocInMemorie() });
-    const d = documentOferta(cerere(rez.linii));
-    expect(d.capitole.map((c) => c.titlu)).toEqual([null, "Alte lucrări"]);
-    const [a, b] = pozitii(d);
-    expect(a!.nr).toBe(1);
-    expect(b).toMatchObject({ nr: 2, um: "buc", cantitate: 2, stare: "gata" });
-    expect(b!.pretUnitar).toBeGreaterThan(0);
-  });
-});

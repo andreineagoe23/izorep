@@ -4,7 +4,6 @@ import type { DocumentOferta, PozitieOferta } from "../document-oferta.js";
 import { cate, dataScurta, esc, eur } from "../ecrane/tip.js";
 import type { CampuriRand } from "../../src/import/editare.js";
 import { inteles, STARE } from "./text.js";
-import type { OrigineImport } from "../istoric.js";
 import {
   SEGMENT, actiuniPozitie, alegereSegment, detaliuValoare, editorPozitie, starePozitie, type FiltruStare,
 } from "./vizual.js";
@@ -86,7 +85,7 @@ export interface OptiuniPaginaOferta {
   /** Pozițiile de desenat, deja trecute prin filtre: `null` = toate. */
   vizibile: ReadonlySet<number> | null;
   pozitie: (p: PozitieOferta) => string;
-  fisier: { nume: string; cand: string; origine?: OrigineImport | undefined };
+  fisier: { nume: string; cand: string };
   destinatie: Destinatie;
   filtru: FiltruStare;
   /** Alertele, filtrele pe motiv și acțiunile în masă, gata desenate. */
@@ -165,7 +164,7 @@ export function paginaOferta(o: OptiuniPaginaOferta): string {
     if (vazute.length === 0) return "";
     const gata = c.pozitii.filter((p) => p.nr !== null).length;
     const titlu = cuTitluri
-      ? `<header class="imp-of-capitol-antet"><h2 id="cap-${i}">${esc(c.titlu ?? "Pozițiile din cerere")}</h2>
+      ? `<header class="imp-of-capitol-antet"><h2 id="cap-${i}">${esc(c.titlu ?? "Fără capitol")}</h2>
           <span>${pozitii(c.pozitii.length)}${gata < c.pozitii.length ? `, ${gata} în ofertă` : ""} · ${eur(c.subtotal)}</span></header>`
       : "";
     return `<section class="imp-of-capitol"${cuTitluri ? ` aria-labelledby="cap-${i}"` : ""}>${titlu}
@@ -177,67 +176,28 @@ export function paginaOferta(o: OptiuniPaginaOferta): string {
       d.numarate.de_validat ? `<span>${d.numarate.de_validat} de verificat</span>` : ""}
       <button type="button" class="legatura" data-act="la-panou">Datele și descărcarea</button></div>
     <div class="imp-of-stanga">
-      <section class="imp-card imp-of-antet">${antetSursa(o.fisier)}</section>
+      <section class="imp-card imp-of-antet">
+        <div class="imp-antet-fisier">
+          ${ICOANA_FISIER}
+          <div>
+            <strong>${esc(o.fisier.nume)}</strong>
+            <span>${esc(dataScurta(o.fisier.cand))} · <button type="button" class="legatura" data-act="schimba-fisier">Schimbă fișierul</button>
+              · <button type="button" class="legatura" data-act="vezi-fisier">Vezi fișierul clientului</button></span>
+          </div>
+        </div>
+      </section>
       ${o.deasupra}
       ${capitole}
-      ${formAdauga()}
       ${o.detalii}
     </div>
     ${panou(o)}
   </div>`;
 }
 
-/**
- * De unde vine oferta. Un fișier de client se numește ca fișierul; registrul
- * făcut de aplicație (paginile din carnet, lista de țevi cu izolația aleasă pe
- * foaie) nu: omul n-a încărcat niciun „… - masuratori santier.xlsx”.
- */
-function antetSursa(f: OptiuniPaginaOferta["fisier"]): string {
-  const titlu = f.origine?.tip === "masuratori" ? "Măsurători din carnet"
-    : f.origine?.tip === "izolatie_foaie" ? f.origine.fisier : f.nume;
-  const detaliu = f.origine?.tip === "masuratori" ? ` · ${f.origine.pagini === 1 ? "o pagină" : cate(f.origine.pagini, "pagini")}`
-    : f.origine?.tip === "izolatie_foaie" ? " · izolația aleasă pe foaie" : "";
-  const referinta = f.origine ? "Vezi rândurile citite" : "Vezi fișierul clientului";
-  return `<div class="imp-antet-fisier">
-      ${ICOANA_FISIER}
-      <div>
-        <strong>${esc(titlu)}</strong>
-        <span>${esc(dataScurta(f.cand) + detaliu)} · <button type="button" class="legatura" data-act="schimba-fisier">${
-          f.origine ? "Alt import" : "Schimbă fișierul"}</button>
-          · <button type="button" class="legatura" data-act="vezi-fisier">${referinta}</button></span>
-      </div>
-    </div>`;
-}
-
-/**
- * „Adaugă poziție”: o lucrare pe care clientul n-a scris-o. Se scrie ca un rând
- * de cerere și trece pe același drum (citire, preț, editor), la capitolul
- * „Adăugate de mână”.
- */
-export function formAdauga(): string {
-  return `<details class="imp-card imp-of-adauga" id="of-adauga">
-    <summary>Adaugă poziție</summary>
-    <form class="imp-of-adauga-form" id="adauga-pozitie">
-      <p class="hint">Scrie ca într-o cerere: materialul, grosimea, diametrul și ce e (cot, teu, casetă).
-        O citim ca pe orice rând; ce lipsește completezi apoi la „Modifică”.</p>
-      <label>Descriere<textarea name="text" rows="2" required minlength="12" spellcheck="false"
-        placeholder="Izolatie vata minerala 50 mm si tabla aluminiu DN100 - COT"></textarea></label>
-      <div class="imp-of-adauga-rand">
-        <label>UM<input name="um" value="ml" list="adauga-um" required autocomplete="off" />
-          <datalist id="adauga-um"><option value="ml"></option><option value="buc"></option><option value="mp"></option></datalist></label>
-        <label>Cantitate<input name="cantitate" type="number" inputmode="decimal" step="any" min="0" required /></label>
-      </div>
-      <div class="imp-formular-butoane"><button type="submit" class="primar">Adaugă în ofertă</button></div>
-    </form>
-  </details>`;
-}
-
 /** Bara de deasupra foii clientului, în vederea de referință: drumul înapoi la ofertă. */
-export function baraFisier(nume: string, origine?: OrigineImport): string {
-  const ce = origine ? `<strong>Rândurile citite</strong> · ${origine.tip === "masuratori" ? "din paginile carnetului" : "din lista de țevi, cu izolația aleasă"}`
-    : `<strong>Fișierul clientului</strong> · ${esc(nume)}`;
+export function baraFisier(nume: string): string {
   return `<section class="imp-card imp-of-referinta">
-    <p>${ce}. Aici corectezi direct în celule; oferta se reface singură.</p>
+    <p><strong>Fișierul clientului</strong> · ${esc(nume)}. Aici corectezi direct în celule; oferta se reface singură.</p>
     <button type="button" class="primar" data-act="la-oferta">Înapoi la ofertă</button>
   </section>`;
 }
