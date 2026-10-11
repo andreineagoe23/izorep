@@ -6,6 +6,15 @@
 > Cifrele de mai jos sunt măsurate pe fișierele din `../attachments/clienti/`
 > și pe codul de pe ramura `faza-4`.
 
+> **Starea, 11 octombrie 2026 (seara):** pașii 0–3 sunt făcuți, pe ramura
+> `import-sablon` (detalii în `.claude/stare.md`). Rămân pasul 4 („Cum am citit
+> foaia”) și pasul 5 (curățenia). Abateri de la plan, fiecare cu motivul:
+> coloana „Cod” apare doar când clientul are coduri (Matari n-are, 118.1 n-o
+> are); numerotarea e doar pe pozițiile „Gata”, ca planul de șantier (118.1 a
+> numerotat 1–53 exact pozițiile cu preț); pe ecran pozițiile sunt rânduri-card
+> pe aceeași grilă, nu un tabel cu coloane fixe (încap la 390 px fără derulare);
+> pozițiile adăugate de mână apar la capitolul „Alte lucrări”.
+
 ## Ideea, într-un paragraf
 
 Nu putem schimba ce trimite clientul. Putem schimba ce vedem noi după import:
