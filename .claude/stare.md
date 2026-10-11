@@ -1,37 +1,7 @@
 # Stare curentă
 
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
-> Ultima actualizare: 11 octombrie 2026 (seara).
-
-## 11 octombrie 2026 (seara): importul în șablonul ofertei
-
-Pașii 0–3 din `docs/plan-import.md`, pe ramura `import-sablon`. **551 de teste.**
-
-| Pas | Ce | Unde |
-|---|---|---|
-| 0 | **Oferta ca date**: `documentOferta` face din liniile oricărui import documentul firmei: capitolele (foile și secțiunile clientului, fără antetul documentului), numerotarea (doar „Gata”, aceeași cu planul de șantier), codul clientului (din text sau din prima celulă: NISAL, Book15), specificația noastră doar unde textul nu spune tot ce s-a tarifat, golul la foc, totalul cu ajustare, adaos și discount | `web/document-oferta.ts` |
-| 1 | **Excelul din document**: foaia „Ofertă” cu coloanele după conținut (Cod doar cu coduri, golul doar la foc), capitole cu titlu și subtotal, specificația cu roșu, nota firmei (și notele de foc la 118.1), semnătura. Proveniența și pozițiile rămase afară stau pe foaia „Pentru noi”; foaia clientului nu mai are nimic intern | `web/registru-oferta.ts` |
-| 2 | **Ecranul în doi pași**: Fișierul, apoi Oferta. În stânga capitolele cu pozițiile (număr, cod, textul clientului, „Ofertăm: …”, ce am înțeles, preț, stare, acțiune); în dreapta totalul, filtrele, tipul ofertei, datele, „Descarcă oferta”, „Creează șantierul”, materialele. Foaia clientului e la un clic („Vezi fișierul clientului”, sau „rândul 114” pe fiecare poziție), cu corectura în celule | `web/import/oferta-vizual.ts`, `web/ecrane/import.ts` |
-| 3 | **„Adaugă poziție”**: rândul scris de om intră într-o foaie „Adăugate de mână” construită în memorie (`cuAdaugate`), deci aceeași citire și același preț; în ofertă, la capitolul „Alte lucrări”. Măsurătorile și lista de țevi cu izolația pe foaie se arată după origine („Măsurători din carnet · 4 pagini”), nu după fișierul intermediar | `src/import/adaugate.ts`, `OrigineImport` în `web/istoric.ts` |
-
-Dovada, în `tests/document-oferta.test.ts`: cererea TRANSAVIA dă Oferta 284
-rând cu rând (cod, UM, cantitate, P.U., valoare, 94.575,06 / 91.737,81 cu 3 %),
-iar specificația e **exact textul roșu** al firmei pe cele 24 de casete și nulă
-pe țevi; Matari dă capitolele EI30 / EI60 / EI120 / EI180 (16 / 12 / 25 / 12),
-numerele 1–53 și 12.692,04; NISAL dă cele două foi ca capitole și codul
-clientului pe fiecare din cele 58 de rânduri. Pe toate cele 12 fișiere:
-documentul, registrul și planul de șantier au aceleași poziții, numere și total.
-
-Verificat cu Playwright pe build-ul de Pages: 12 fișiere × 390 / 768 / 1024 /
-1440 / 1920 px × două teme, zero derulare laterală, zero erori; filtrele,
-confirmarea cu anulare, editorul, saltul la rândul clientului, ajustarea și
-discountul (totalul se schimbă la tastă, datele scrise rămân), descărcarea,
-„Creează șantierul” (91.737,81 în Lucrări), „Adaugă poziție” (Di114 cot ×2 =
-+152,86, rămâne după reîncărcare), CET prin izolația pe foaie, Măsurători scrise
-de mână → Oferta.
-
-Rămas din plan: pasul 4 („Cum am citit foaia”, rolurile coloanelor alese de om)
-și pasul 5 (curățenia: `import.ts` are 1.237 de linii).
+> Ultima actualizare: 11 octombrie 2026.
 
 ## 11 octombrie 2026 (după-amiază): Faza 4 terminată, izolația pe foaie
 

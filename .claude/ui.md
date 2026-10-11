@@ -263,40 +263,7 @@ Tot ce ține de depozit e best-effort. În fereastră privată sau cu stocarea
 blocată, fiecare apel eșuează tăcut și ecranul se poartă ca înainte. Istoricul e
 o comoditate; documentele adevărate vor sta în bază.
 
-## Ecranul de import: doi pași (11 octombrie 2026)
-
-```
-① Fișierul        ② Oferta
-```
-
-Pasul 2 e **oferta în șablonul firmei**, aceeași pentru orice fișier
-(`documentOferta`, `web/import/oferta-vizual.ts`): ce se vede e ce se
-descarcă. Așezarea 70 / 30 (`--imp-coloane`):
-
-- **Stânga**: fișierul („Schimbă fișierul” · „Vezi fișierul clientului”),
-  alertele, filtrele pe motiv și acțiunile în masă (doar sub un filtru), apoi
-  capitolele. O poziție: numărul din ofertă (sau „nu intră în ofertă”), codul
-  clientului, cantitatea, „rândul 114” (sare în foaia clientului, cu rândul
-  marcat), textul clientului, „Ofertăm: …” (specificația, cu roșu în Excel), ce
-  am înțeles, prețul, starea, „Confirmă” / „Pune X mm” / „Modifică”. Editorul e
-  cel de dinainte. Jos, „Adaugă poziție” (pliat).
-- **Dreapta** (lipită sus; se derulează singură dacă e mai înaltă decât
-  ecranul): totalul (cu discountul și totalul general), filtrele pe stare ca
-  patru butoane cu numere, tipul ofertei, datele ofertei, „Descarcă oferta”,
-  „Creează șantierul”, „Materiale de comandat” (pliat, `cardNecesar(…, {
-  inPanou })`). Datele scrise rămân la orice redesenare (`DateOferta`);
-  ajustarea și discountul schimbă totalul la tastă, iar pozițiile la `change`.
-- **Sub 1000 px** de ecran de import panoul coboară sub poziții, iar o bară
-  lipită sus ține totalul și „Datele și descărcarea”.
-- Pozițiile se așază după lățimea coloanei din stânga (`container: impof`),
-  nu a ecranului: card pe telefon, două coloane de la 620 px, rând de la 1000.
-- **Foaia clientului** (`vedere: "fisier"`) e verificarea de dinainte, cu bara
-  lipită „Înapoi la ofertă”. Pentru registrul făcut de aplicație (carnet,
-  izolația pe foaie) bara spune „Rândurile citite”, iar antetul arată originea.
-
-Ce urmează e mai jos, ca istoric al pasului de verificare.
-
-## Ecranul de import: trei pași (istoric, până la 11 octombrie 2026)
+## Ecranul de import: trei pași
 
 Refăcut pe 13 septembrie 2026 pentru oamenii care îl folosesc — birou și
 șantier, nu IT — după ce varianta cu grila 1:1 a fost găsită „prea încărcată".
