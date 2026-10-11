@@ -8,8 +8,8 @@
 > blochează nimic.
 >
 > Starea: fazele 1–4 sunt făcute (Faza 4 pe 11 octombrie 2026, 540 de teste).
-> Următorul pas propus e restructurarea ecranului de import
-> (`docs/plan-import.md`), apoi Faza 5. Pe 5
+> Exportul ofertei într-un singur fel e făcut (11 octombrie 2026, pașii 0–1
+> din `docs/plan-import.md`); ecranul de import rămâne cum era. Următorul: Faza 5. Pe 5
 > octombrie au venit evidența de achiziții, o comandă cu aviz și factură și lista
 > K-Flex: deciziile de mai jos marcate „11 oct.” sunt luate din ele.
 

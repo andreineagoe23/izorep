@@ -1,7 +1,26 @@
 # Stare curentă
 
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
-> Ultima actualizare: 11 octombrie 2026.
+> Ultima actualizare: 11 octombrie 2026 (seara).
+
+## 11 octombrie 2026 (seara): exportul într-un singur fel
+
+Decis de Andrei: **ecranul de import rămâne cum era**, cu foaia clientului ca
+în Excel și cei trei pași. Ce trebuie uniformizat e **exportul**: oricum vine
+cererea, oferta descărcată are aceeași structură. Ecranul nou din planul de
+import (doi pași, oferta pe carduri, panou în dreapta, „Adaugă poziție”) a fost
+făcut și scos (revert pe `import-sablon`). Au rămas pașii 0 și 1:
+
+| Ce | Unde |
+|---|---|
+| **Oferta ca date**: capitolele din foile și secțiunile clientului (fără antetul documentului), numerotarea pe pozițiile „Gata” (aceeași cu planul de șantier), codul clientului (din text sau din prima celulă), specificația noastră doar unde textul nu spune tot ce s-a tarifat, golul la foc, totalul cu ajustare, adaos și discount | `web/document-oferta.ts` |
+| **Excelul într-un singur fel**: foaia „Ofertă” cu Nr., Cod (doar cu coduri), Denumire, UM, Cantitate, golul (doar la foc), P.U., Valoare; capitole cu subtotal, specificația cu roșu, nota firmei, semnătura. Proveniența și pozițiile rămase afară, pe foaia „Pentru noi” | `web/registru-oferta.ts`, folosit de „Descarcă oferta” |
+
+Dovada (`tests/document-oferta.test.ts`): cererea TRANSAVIA dă Oferta 284 rând
+cu rând, iar specificația e exact textul roșu al firmei pe cele 24 de casete;
+Matari dă capitolele EI30–EI180 și 12.692,04; NISAL, două capitole și codul pe
+fiecare rând; pe toate cele 12 fișiere documentul, registrul și planul de
+șantier au aceleași poziții și total. **549 de teste.**
 
 ## 11 octombrie 2026 (după-amiază): Faza 4 terminată, izolația pe foaie
 

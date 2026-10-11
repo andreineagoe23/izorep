@@ -6,6 +6,12 @@
 > Cifrele de mai jos sunt măsurate pe fișierele din `../attachments/clienti/`
 > și pe codul de pe ramura `faza-4`.
 
+> **Decizie, 11 octombrie 2026 (seara), Andrei:** ecranul rămâne foaia
+> clientului ca în Excel, cu cei trei pași; uniformă trebuie să fie **oferta
+> exportată**. Din plan au rămas pașii 0 (oferta ca date) și 1 (Excelul din
+> document). Pașii 2–3 (ecranul nou) au fost făcuți și scoși; 4–5 nu se mai fac
+> în forma de mai jos.
+
 ## Ideea, într-un paragraf
 
 Nu putem schimba ce trimite clientul. Putem schimba ce vedem noi după import:
