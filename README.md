@@ -125,6 +125,7 @@ deocamdată. Când apare serverul, intră în `docker-compose.yml` și `npm star
 | `npm run golden -- <fisier.xlsx>` | înregistrează ieșirea modelului pe un fișier |
 | `npm run golden -- --verifica` | re-cheamă modelul și caută deriva |
 | `npm run compara-poze -- <model> … [--repetari N]` | compară modelele pe pozele de șantier (`../attachments/santier/`) |
+| `npm run preturi-furnizori -- ../attachments` | reface `data/preturi-furnizori.json` (lista K-Flex și ultimele facturi din evidență), prețurile de pe ciorna comenzii |
 | `npm run mapare -- <fisier.xlsx>` | înregistrează rolurile de coloană ale foilor |
 | `npm run mapare -- --lista` | ce mapări sunt în cache |
 

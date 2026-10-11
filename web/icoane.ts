@@ -19,6 +19,8 @@ const CAI: Record<string, string> = {
   preturi: '<path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0l-7-7A2 2 0 0 1 3 12.2V5a2 2 0 0 1 2-2h7.2a2 2 0 0 1 1.4.6l7 7a2 2 0 0 1 0 2.8Z"/><circle cx="7.6" cy="7.6" r="1.4"/>',
   /* Un carnet cu spirala: notitele de pe santier. */
   masuratori: '<rect x="5" y="3" width="15" height="18" rx="2"/><path d="M5 7H3M5 12H3M5 17H3"/><path d="M9 8h7M9 12h7M9 16h4"/>',
+  /* Un clipboard cu bifa: comanda la furnizor. */
+  comenzi: '<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="M8.5 12.5l2.2 2.2 4.8-4.8"/>',
   /* Un raft cu cutii: depozitul. */
   stoc: '<path d="M3 21V8l9-5 9 5v13"/><path d="M3 21h18"/><rect x="7" y="13" width="4" height="4" rx=".6"/><rect x="13" y="13" width="4" height="4" rx=".6"/><rect x="10" y="8.5" width="4" height="4" rx=".6"/>',
   /* Bara laterala insasi: un panou cu marginea din stanga ingrosata. */

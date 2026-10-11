@@ -192,7 +192,7 @@ export function cardPagina(p: PaginaSantier, nr: number, o: { editeaza: string |
  * oferta (clientii din apropiere) sau ce s-a executat, pentru situatie.
  * Citirea si verificarea sunt aceleasi; difera unde pleaca randurile.
  */
-export type Scop = "oferta" | "situatie";
+export type Scop = "oferta" | "situatie" | "comanda";
 
 /** Un santier in alegerea „Pentru situatie”. */
 export interface SantierAles {
@@ -202,17 +202,19 @@ export interface SantierAles {
 }
 
 function alegereScop(scop: Scop): string {
-  const optiuni: [Scop, string][] = [["oferta", "Pentru ofertă"], ["situatie", "Pentru situație de lucrări"]];
+  const optiuni: [Scop, string][] = [
+    ["oferta", "Pentru ofertă"], ["situatie", "Pentru situație de lucrări"], ["comanda", "Pentru comanda de material"],
+  ];
   return `<fieldset class="imp-segment"><legend>Pentru ce sunt măsurătorile</legend><div>${optiuni.map(([v, t]) =>
     `<label><input type="radio" name="scop" value="${v}"${v === scop ? " checked" : ""} /><span>${t}</span></label>`).join("")}</div></fieldset>`;
 }
 
-function alegereSantier(santiere: SantierAles[], ales: string): string {
+function alegereSantier(santiere: SantierAles[], ales: string, scop: Scop): string {
   if (santiere.length === 0) {
     return `<p class="hint" style="margin:0">Niciun șantier încă. Șantierul se face din ofertă: în
       <a href="#/import">Import Excel</a>, la pasul „Oferta”, „Creează șantierul”.</p>`;
   }
-  return `<label>Șantierul (situația se face pe pozițiile ofertei lui)
+  return `<label>Șantierul (${scop === "comanda" ? "materialul vine pe el" : "situația se face pe pozițiile ofertei lui"})
     <select name="plan"><option value="">— alege șantierul —</option>${santiere.map((x) =>
       `<option value="${esc(x.id)}"${x.id === ales ? " selected" : ""}>${esc(x.denumire)}${x.client && x.client !== x.denumire ? ` · ${esc(x.client)}` : ""}</option>`).join("")}</select>
   </label>`;
@@ -224,7 +226,7 @@ export function cardIncarca(o: {
   return `<section class="imp-card imp-incarca">
     <div class="imp-campuri">
       ${alegereScop(o.scop)}
-      ${o.scop === "oferta" ? alegereSegment(o.destinatie) : alegereSantier(o.santiere, o.planAles)}
+      ${o.scop === "oferta" ? alegereSegment(o.destinatie) : alegereSantier(o.santiere, o.planAles, o.scop)}
     </div>
     <label class="imp-drop" id="drop" for="poze">
       <span class="imp-drop-buton">Alege pozele</span>
@@ -241,7 +243,7 @@ export interface ListaClient { id: string; nume: string }
 
 export function cardTrimite(o: {
   pagini: PaginaSantier[]; titlu: string; scop?: Scop; santier?: SantierAles | null; lucreaza?: boolean;
-  liste?: ListaClient[]; comparaCu?: string;
+  liste?: ListaClient[]; comparaCu?: string; mesaj?: string;
 }): string {
   if (o.pagini.length === 0) return "";
   const neverificate = o.pagini.filter((p) => !p.verificata).length;
@@ -250,8 +252,24 @@ export function cardTrimite(o: {
   const dinPagini = `${randuri} rânduri din ${o.pagini.length === 1 ? "o pagină" : `${o.pagini.length} pagini`}`;
   const lipsa = neverificate > 0
     ? `<p class="imp-oferta-lipsa">Mai ${neverificate === 1 ? "e o pagină neverificată" : `sunt ${neverificate} pagini neverificate`}.
-      ${o.scop === "situatie" ? "În situație intră" : "Oferta se face"} doar din pagini verificate.</p>`
+      ${o.scop === "situatie" ? "În situație intră" : o.scop === "comanda" ? "Comanda se face" : "Oferta se face"} doar din pagini verificate.</p>`
     : "";
+  if (o.scop === "comanda") {
+    const oprit = neverificate > 0 || randuri === 0 || !o.santier || o.lucreaza;
+    return `<form class="imp-card imp-formular" id="trimite">
+    <h2>Fă comanda pentru ce s-a măsurat</h2>
+    <p class="hint">${dinPagini}. ${o.santier
+      ? `Materialul pentru rândurile măsurate se calculează ca la ofertă (pierderi, tuburi până la prag, piese în metri),
+        apoi se scade ce e acum pe șantierul „${esc(o.santier.denumire)}” și ce e comandat și n-a sosit. Ce rămâne se
+        rotunjește la ambalaj și devine câte o ciornă pe furnizor, cu prețul lui, în Comenzi. O verifici și o trimiți de acolo.`
+      : "Alege șantierul, sus."}</p>
+    ${lipsa}
+    ${o.mesaj ? `<p class="hint" role="status">${esc(o.mesaj)}</p>` : ""}
+    <div class="imp-formular-butoane">
+      <button type="submit" class="primar"${oprit ? " disabled" : ""}>${o.lucreaza ? "Se calculează materialele…" : "Fă ciornele comenzii"}</button>
+    </div>
+  </form>`;
+  }
   if (o.scop === "situatie") {
     const oprit = neverificate > 0 || randuri === 0 || !o.santier || o.lucreaza;
     return `<form class="imp-card imp-formular" id="trimite">

@@ -13,6 +13,8 @@
  * ce e mai jos, deci apelantii vechi nu se schimba.
  */
 
+import { esteContinuare } from "./continuare.js";
+
 export interface LinieBruta {
   index: number;
   foaie: string;
@@ -99,11 +101,14 @@ export function construiesteLinie(
   const texte = brute.filter((c): c is string => typeof c === "string" && c.trim().length > 3);
   if (texte.length === 0) return null;
   const text = texte.join(" | ").trim();
-  if (text.length < 12) return null;
 
   const iUm = brute.findIndex((c) => typeof c === "string" && UM.test(c.trim()));
   const um = iUm >= 0 ? String(brute[iUm]).trim() : undefined;
   const q = cantitate(brute, iUm);
+  // Un rand scurt e de obicei o eticheta. Nu si „idem DN20” cu UM si cantitate
+  // (SRU Craiova, 14 randuri de teava izolata): e o pozitie care mosteneste
+  // descrierea de deasupra (`aplicaContinuare`).
+  if (text.length < 12 && !(esteContinuare(text) && um !== undefined && q !== undefined)) return null;
 
   return {
     index: id.index, foaie: id.foaie, rand: id.rand, text, celule: brute,

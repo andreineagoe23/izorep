@@ -577,6 +577,7 @@ button.filtru[aria-pressed="true"] .hint, button.filtru.activ .hint { color: inh
   padding: var(--imp-gap); box-shadow: var(--umbra); min-width: 0;
 }
 .imp-card h2 { margin: 0 0 var(--imp-gap); font-size: 17px; }
+.imp-card h3 { margin: var(--imp-gap) 0 8px; font-size: 15px; }
 .imp-card > h3:not([class]) { margin: var(--imp-gap) 0 8px; font-size: 15px; }
 
 /* ---- pasii */
@@ -985,8 +986,19 @@ button.filtru[aria-pressed="true"] .hint, button.filtru.activ .hint { color: inh
 @container imp (min-width: 620px) { .imp-campuri { grid-template-columns: 1fr 1fr; } }
 .imp-campuri label { font-size: 14px; color: var(--slab); }
 .imp-campuri input, .imp-campuri select { min-height: 48px; margin-top: 6px; font-size: 16px; color: var(--text); }
+/* Bifele din formular: eticheta pe acelasi rand, tinta de 44 px pe toata eticheta. */
+.imp-campuri label:has(> input[type="checkbox"]) { display: flex; align-items: center; gap: 10px; min-height: 44px; color: var(--text); font-size: 15px; }
+.imp-campuri input[type="checkbox"] { min-height: 0; width: 22px; height: 22px; margin: 0; flex: none; accent-color: var(--accent); }
+
+/* Izolatia pe foaie: o foaie = un card, legenda e titlul lui. */
+.imp-izolatie-foaie { display: grid; gap: var(--imp-gap); min-width: 0; }
+.imp-izolatie-foaie fieldset.imp-card { margin: 0; min-width: 0; }
+.imp-izolatie-foaie legend { float: left; width: 100%; padding: 0; margin-bottom: 4px; font-size: 17px; }
+.imp-izolatie-foaie legend + * { clear: both; }
 .imp-formular .alerta { margin: var(--imp-gap) 0 0; }
-.imp-formular-butoane { display: flex; margin-top: var(--imp-gap); }
+.imp-formular-butoane { display: flex; flex-wrap: wrap; gap: 8px; margin-top: var(--imp-gap); }
+/* Cantitatile scrise in tabel (comanda, receptia): incape 12.345,67 fara sa taie. */
+.tabelwrap td.n input[type="number"] { width: 11ch; }
 .imp-formular-butoane .primar { flex: 1 1 auto; min-height: 52px; font-size: 16px; }
 @container imp (min-width: 620px) { .imp-formular-butoane .primar { flex: 0 0 auto; } }
 

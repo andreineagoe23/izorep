@@ -7,8 +7,8 @@
 import { esc, tabel } from "./ecrane/tip.js";
 import { MATERIAL } from "./import/text.js";
 import type { Sistem } from "../src/pricing/types.js";
-import type { Necesar } from "../src/stoc/necesar.js";
-import { articolDin, type UM } from "../src/stoc/registru.js";
+import type { Categorie, Necesar } from "../src/stoc/necesar.js";
+import { articolDin, formaArticol, type UM } from "../src/stoc/registru.js";
 
 /** 50 → „50", 0.8 → „0,8", 12.345 → „12,35". */
 export const cifra = (n: number): string => n.toLocaleString("ro-RO", { maximumFractionDigits: 2 });
@@ -17,16 +17,23 @@ export const unitate = (um: UM): string => (um === "ml" ? "ml" : "m²");
 
 export const cantitate = (n: number, um: UM): string => `${cifra(n)} ${unitate(um)}`;
 
+/** Cum se numește forma în care se cumpără, pentru om. */
+const NUME_FORMA: Record<Categorie, string> = { tub: "tub", saltea: "saltea, m²", placa: "placă, m²", tabla: "m²" };
+
 /**
- * „Vată minerală 50 mm · tub ø114", „Vată minerală 50 mm · plăci, m²",
- * „Tablă aluminiu 0,8 mm · m²". Izolația cu ø e tub; fără ø se comandă pe
- * suprafață (plăci, saltele, tablă în coli sau rolă).
+ * „Vată minerală 50 mm · tub ø114", „Vată minerală 50 mm · saltea, m²",
+ * „Elastomer 19 mm · placă, m²", „Tablă aluminiu 0,8 mm · m²". Cochilia de
+ * vată și tubul de elastomer au ø; saltelele, plăcile și tabla se cumpără pe
+ * suprafață.
  */
-export function numeArticol(a: { sistem: string; grosime_mm: number | null; rand: number | null; marca?: string }): string {
+export function numeArticol(a: {
+  sistem: string; grosime_mm: number | null; rand: number | null; marca?: string; forma?: Categorie; categorie?: Categorie;
+}): string {
   const material = MATERIAL[a.sistem as Sistem] ?? a.sistem;
   const grosime = a.grosime_mm !== null ? ` ${cifra(a.grosime_mm)} mm` : "";
-  const izolatie = a.sistem === "elastomer" || a.sistem === "vata_minerala";
-  return `${material}${grosime} · ${a.rand !== null ? `tub ø${a.rand}` : izolatie ? "plăci, m²" : "m²"}${a.marca ? ` · ${a.marca}` : ""}`;
+  const forma = a.categorie ?? formaArticol(a);
+  const cum = forma === "tub" && a.rand !== null ? `tub ø${a.rand}` : NUME_FORMA[forma];
+  return `${material}${grosime} · ${cum}${a.marca ? ` · ${a.marca}` : ""}`;
 }
 
 /** Pragul tub / placă: până la ce diametru se comandă tuburi (S12). */
@@ -55,12 +62,19 @@ export function cardNecesar(n: Necesar): string {
   });
   const fara = n.faraNecesar.length;
   const presupuse = n.materiale.some((m) => m.piesePresupuse > 0);
-  const camp = (cat: "tabla" | "placa" | "tub", eticheta: string): string =>
+  const camp = (cat: Categorie, eticheta: string): string =>
     `<label>${eticheta}<input type="number" inputmode="decimal" min="0" max="100" step="1" data-act="pierdere" data-cat="${cat}" value="${procent(n.pierderi[cat])}" /></label>`;
+  // Peste prag, firma comandă de obicei saltea sau placă; pe unele lucrări tot
+  // tub (TRANSAVIA: cochilii ø116, ø140, ø168). Alegerea e pe diametru.
+  const pestePrag = n.pestePrag.length > 0 ? `<fieldset class="imp-segment">
+      <legend>Peste prag, comandă tot tuburi la</legend>
+      <div>${n.pestePrag.map((d) => `<label><input type="checkbox" data-act="tub-peste" value="${d}"${
+        n.tuburiPeste.includes(d) ? " checked" : ""} /><span>ø${d}</span></label>`).join("")}</div>
+    </fieldset>` : "";
   return `<section class="imp-card" id="necesar">
     <h2>Materiale de comandat</h2>
     <p class="hint">Pentru pozițiile din ofertă. Până la pragul de mai jos se comandă tuburi, pe diametru și grosime;
-      peste el, plăci în m². Coturile, teurile, flanșele și casetele sunt incluse, trecute în metri de țeavă (3 piese pe
+      peste el, saltele de vată sau plăci de elastomer, în m². Coturile, teurile, flanșele și casetele sunt incluse, trecute în metri de țeavă (3 piese pe
       metru până la ø140, 2 la ø159–168, una de la ø219). Tabla, în m² și în kg.${presupuse
         ? " Sub 3 țoli și peste ø273 regula pieselor e presupusă: verifică la prima comandă." : ""}</p>
     <div class="imp-campuri">
@@ -69,9 +83,11 @@ export function cardNecesar(n: Necesar): string {
           `<option value="${v}"${v === n.pragTub ? " selected" : ""}>${t}</option>`).join("")}</select>
       </label>
       ${camp("tabla", "Pierderi la tablă (%)")}
+      ${camp("saltea", "Pierderi la saltele (%)")}
       ${camp("placa", "Pierderi la plăci (%)")}
       ${camp("tub", "Pierderi la tuburi (%)")}
     </div>
+    ${pestePrag}
     ${n.materiale.length
       ? tabel(["Material", "Se comandă", "Metri de țeavă", "Din piese"], randuri, ["", "n", "n", "n"])
       : `<p class="nota">Nicio poziție cu preț din liste: nu e nimic de calculat.</p>`}

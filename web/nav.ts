@@ -9,7 +9,7 @@ export interface GrupMeniu {
 }
 
 /**
- * Meniul contine doar destinatii care exista. Opt intrari, doua grupuri:
+ * Meniul contine doar destinatii care exista. Zece intrari, doua grupuri:
  * fluxul zilnic sus, nomenclatoarele care se ating rar dedesubt.
  *
  * Varianta anterioara amesteca ecrane livrate cu module viitoare in cinci
@@ -26,6 +26,7 @@ export const MENIU: GrupMeniu[] = [
     { id: "import", eticheta: "Import Excel" },
     { id: "masuratori", eticheta: "Măsurători" },
     { id: "stoc", eticheta: "Depozit și stoc" },
+    { id: "comenzi", eticheta: "Comenzi" },
   ]},
   { titlu: "Date de bază", itemi: [
     { id: "clienti", eticheta: "Clienți" },

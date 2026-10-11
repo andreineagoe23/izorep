@@ -1,6 +1,6 @@
 import { liniile, type FoaieBruta, type LinieBruta } from "./rand.js";
 import type { Destinatie } from "../pricing/lists.js";
-import { amprentaFoaie, aplicaMapare } from "./mapare.js";
+import { amprentaFoaie, aplicaCantitateDinAntet, aplicaMapare } from "./mapare.js";
 // Type-only: precedentul e in mapari-statice.ts. `cache-mapari.ts` scrie pe
 // disc cu `node:fs` — importat ca valoare aici, ar trage Node in bundle-ul de
 // browser. Ca tip, dispare la compilare si nu ramane nimic in JS emis.
@@ -458,9 +458,10 @@ const ECHIVALENTE: Partial<Record<string, Record<number, number>>> = {
 
 function cuEchivalente<T extends { sistem: string; grosime_mm?: number }>(
   straturi: T[], destinatie: Destinatie, forma: LinieExtrasa["forma"],
-): { straturi: T[]; note: string[]; deVerificat: string[] } {
+): { straturi: T[]; note: string[]; deVerificat: string[]; pesteLista: boolean } {
   const note: string[] = [];
   const deVerificat: string[] = [];
+  let pesteLista = false;
   const out = straturi.map((s) => {
     if (s.grosime_mm === undefined) return s;
     const g = ECHIVALENTE[s.sistem]?.[s.grosime_mm];
@@ -479,12 +480,18 @@ function cuEchivalente<T extends { sistem: string; grosime_mm?: number }>(
     if (forma === "mp" && s.grosime_mm > Math.max(...grosimi)) return s;
     const scrisa = s.grosime_mm;
     const aproape = [...grosimi].sort((a, b) => Math.abs(a - scrisa) - Math.abs(b - scrisa) || b - a)[0]!;
-    const n = `${s.sistem} ${scrisa} mm nu exista in lista; tarifat ca ${aproape} mm, cea mai apropiata grosime`;
+    // Peste cea mai groasa din lista nu e o rotunjire (20 → 19), e alta
+    // lucrare: doua straturi sau alt material. Pretul e propus, nu dovedit.
+    const peste = scrisa > Math.max(...grosimi);
+    pesteLista ||= peste;
+    const n = peste
+      ? `${s.sistem} ${scrisa} mm e peste cea mai groasa din lista (${Math.max(...grosimi)} mm); tarifat ca ${aproape} mm`
+      : `${s.sistem} ${scrisa} mm nu exista in lista; tarifat ca ${aproape} mm, cea mai apropiata grosime`;
     note.push(n);
     deVerificat.push(n);
     return { ...s, grosime_mm: aproape };
   });
-  return { straturi: out, note, deVerificat };
+  return { straturi: out, note, deVerificat, pesteLista };
 }
 
 /**
@@ -569,7 +576,7 @@ function tarifeazaIzolatie(
     }
     // Fara sistem linia nu e pozitie de izolatie: nimic de tarifat, nicio cauza.
     if (extras.sistem === null) return {};
-    const { straturi, note: echivalente, deVerificat: apropiate } = cuEchivalente(jachetaLaExterior([
+    const { straturi, note: echivalente, deVerificat: apropiate, pesteLista } = cuEchivalente(jachetaLaExterior([
       { sistem: extras.sistem, ...(extras.grosime_mm !== null ? { grosime_mm: extras.grosime_mm } : {}) },
       ...extras.straturi_extra.map((s) => ({
         sistem: s.sistem, ...(s.grosime_mm !== null ? { grosime_mm: s.grosime_mm } : {}),
@@ -579,7 +586,7 @@ function tarifeazaIzolatie(
       const out: R = echivalente.length ? { ...r, note: [...echivalente, ...(r.note ?? [])] } : r;
       if (apropiate.length) {
         out.noteDeVerificat = [...(out.noteDeVerificat ?? []), ...apropiate];
-        out.motiveDeVerificat = [...(out.motiveDeVerificat ?? []), "grosime_apropiata"];
+        out.motiveDeVerificat = [...(out.motiveDeVerificat ?? []), pesteLista ? "grosime_peste_lista" : "grosime_apropiata"];
       }
       return out;
     };
@@ -1267,6 +1274,20 @@ function statisticiDeterministe(
 }
 
 /**
+ * L1 pe fiecare foaie: maparea cunoscuta, altfel doar coloana de cantitate din
+ * antet (`aplicaCantitateDinAntet`). Intoarce cate foi au avut mapare.
+ */
+function mapeazaFoi(foi: FoaieBruta[], o: OptiuniNucleu): number {
+  let foiMapate = 0;
+  for (const foaie of foi) {
+    const m = o.mapari?.get(amprentaFoaie(foaie));
+    if (m) { aplicaMapare(foaie, m.mapare); foiMapate++; }
+    else aplicaCantitateDinAntet(foaie);
+  }
+  return foiMapate;
+}
+
+/**
  * L0-L4 peste un registru deja parsat (`FoaieBruta[]`), pana la tarifare.
  *
  * Ordinea e cea din pipeline-ul de CLI de dinainte de nucleu, plus randurile
@@ -1285,15 +1306,7 @@ export async function proceseazaRegistru(foi: FoaieBruta[], o: OptiuniNucleu): P
 
   // L1 - maparea de coloane, daca layoutul foii e deja cunoscut. Muta datele
   // PE LOC (`aplicaMapare`), inainte de contextul de sectiune si de extragere.
-  let foiMapate = 0;
-  if (o.mapari) {
-    for (const foaie of foi) {
-      const m = o.mapari.get(amprentaFoaie(foaie));
-      if (!m) continue;
-      aplicaMapare(foaie, m.mapare);
-      foiMapate++;
-    }
-  }
+  const foiMapate = mapeazaFoi(foi, o);
   o.laProgres?.({ faza: "mapare", gata: foiMapate, total: foi.length });
 
   // L0b + randurile de continuare ("Same - O125 mm" din cerere-de-oferta-book15.xlsx): fara ele,
@@ -1419,15 +1432,7 @@ export async function proceseazaRegistru(foi: FoaieBruta[], o: OptiuniNucleu): P
 export function reevalueaza(rez: Rezultat, o: OptiuniNucleu): void {
   const prag = o.prag ?? 0.85;
 
-  let foiMapate = 0;
-  if (o.mapari) {
-    for (const foaie of rez.foi) {
-      const m = o.mapari.get(amprentaFoaie(foaie));
-      if (!m) continue;
-      aplicaMapare(foaie, m.mapare);
-      foiMapate++;
-    }
-  }
+  const foiMapate = mapeazaFoi(rez.foi, o);
 
   const brute = aplicaContinuare(adaugaSectiuni(liniile(rez.foi)));
   rez.brute = brute;

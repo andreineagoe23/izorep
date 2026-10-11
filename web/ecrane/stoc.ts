@@ -11,15 +11,21 @@
  */
 import { esc, eur, indicator, stare, tabel, type Ecran } from "./tip.js";
 import { SANTIERE } from "../date/seed.js";
-import { citestePlanuri, citesteDepozit, idNou, modDate, scrieDepozit } from "../date.js";
+import { citestePlanuri, citesteDepozit, idNou, modDate, puneComanda, scrieDepozit } from "../date.js";
 import { MATERIALE, MATERIAL } from "../import/text.js";
 import { cantitate, cifra, numeArticol, unitate } from "../stoc-vizual.js";
 import type { NecesarLucrare, StareDepozit } from "../depozit-local.js";
 import {
-  CERE, articolDin, deComandat, esteAnulata, faraExemple, miscariDeExemplu, pretMediu,
+  CERE, articolDin, esteAnulata, faraExemple, miscariDeExemplu, pretMediu,
   solduri, storno, valideazaMiscare, type Ambalaj, type Articol, type Miscare, type TipMiscare,
 } from "../../src/stoc/registru.js";
-import { materialManual } from "../../src/stoc/necesar.js";
+import { materialManual, type Categorie } from "../../src/stoc/necesar.js";
+import { ciorneDinRamas, deComandatSantier, type DeComandatSantier } from "../../src/stoc/comenzi.js";
+import { pretPropus } from "../../src/stoc/preturi-furnizori.js";
+
+/** Forma aleasa in formular; cu ø ramane tub, fara alegere ramane cea implicita. */
+const formaAleasa = (v: string, rand: number | null): Categorie | undefined =>
+  rand === null && (v === "saltea" || v === "placa") ? v : undefined;
 
 /** Ambalajele uzuale (S13): tuburile în cutii, vata în saci sau pachete, tabla la kg. */
 const UNITATI_AMBALAJ = ["cutie", "sac", "pachet", "rolă", "coală", "kg"];
@@ -46,16 +52,22 @@ const TIPURI: [TipMiscare, string][] = [
 ];
 const TIP: Record<TipMiscare, string> = Object.fromEntries(TIPURI) as Record<TipMiscare, string>;
 
-/** Depozitele în care se caută materialul pentru un necesar: centralul și șantierul lui. */
-export const depoziteNecesar = (n: NecesarLucrare): string[] => [CENTRAL, ...(n.santier ? [n.santier] : [])];
+/** Depozitul în care vine materialul unui necesar: al șantierului; nelegat, centralul. */
+export const depozitNecesar = (n: NecesarLucrare): string => n.santier ?? CENTRAL;
+
+/**
+ * Rămas de comandat pe fiecare material al unui necesar (Faza 4): necesar −
+ * adus pe șantier − comandat nesosit. Centralul și celelalte șantiere apar ca
+ * propunere de transfer, nu se scad.
+ */
+export function ramasPeNecesar(s: StareDepozit, n: NecesarLucrare): DeComandatSantier[] {
+  const alte = s.necesare.filter((x) => x.id !== n.id && x.santier).map((x) => ({ depozit: x.santier!, materiale: x.materiale }));
+  return deComandatSantier(n.materiale, s.miscari, s.comenzi ?? [], depozitNecesar(n), s.ambalaje, alte);
+}
 
 /** Câte materiale mai sunt de comandat, pe fiecare necesar. Folosit și de tabloul de bord. */
 export function deComandatPeNecesar(s: StareDepozit): { necesar: NecesarLucrare; articole: number }[] {
-  const sold = solduri(s.miscari);
-  return s.necesare.map((n) => ({
-    necesar: n,
-    articole: deComandat(n.materiale, sold, depoziteNecesar(n), s.ambalaje).filter((d) => d.deComandat > 0).length,
-  }));
+  return s.necesare.map((n) => ({ necesar: n, articole: ramasPeNecesar(s, n).filter((d) => d.ramas > 0).length }));
 }
 
 const titluNecesar = (n: NecesarLucrare): string => n.obiectiv || n.fisier;
@@ -135,58 +147,83 @@ export const ecran: Ecran = {
           pasul „Oferta” calculează materialele din ofertă și, cu „Creează șantierul”, le trimite aici.</p></section>`;
       }
       return st.necesare.map((n) => {
-        const r = deComandat(n.materiale, sold, depoziteNecesar(n), st.ambalaje);
+        const r = ramasPeNecesar(st, n);
+        const peMaterial = new Map(r.map((d) => [d.material, d]));
         let cost = 0;
         let faraPret = 0;
         let inOferta = 0;
         let inOfertaCuCost = 0;
         let deCumparat = 0;
-        const randuri = r.map((d, i) => {
-          const m = n.materiale[i]!;
-          const pm = d.alClientului ? null : pretMediu(st.miscari, d.articol.cheie);
-          const c = pm === null ? null : pm * d.necesar;
-          if (!d.alClientului) { deCumparat++; if (c === null) faraPret++; else cost += c; }
-          const v = d.alClientului ? 0 : m.valoareOferta ?? 0;
+        const transferuri: string[] = [];
+        const randuri = n.materiale.map((m, i) => {
+          const d = peMaterial.get(m);
+          const a = d?.articol ?? articolDin(m);
+          const necesar = d?.necesar ?? (a.um === "ml" ? m.ml : m.m2);
+          const pm = m.alClientului ? null : pretMediu(st.miscari, a.cheie);
+          const c = pm === null ? null : pm * necesar;
+          if (!m.alClientului) { deCumparat++; if (c === null) faraPret++; else cost += c; }
+          const v = m.alClientului ? 0 : m.valoareOferta ?? 0;
           inOferta += v;
           if (c !== null) inOfertaCuCost += v;
           const kgPeUm = m.kg !== undefined && m.m2 > 0 ? m.kg / m.m2 : null;
-          const comanda = d.alClientului ? stare("al clientului", "neutru")
-            : d.deComandat === 0 ? stare("acoperit", "ok")
+          const ramas = !d ? stare("al clientului", "neutru")
+            : d.ramas === 0 ? stare(d.comandat > 0 ? "comandat" : "acoperit", "ok")
               : d.ambalaje
                 ? `<strong>${cifra(d.ambalaje.cate)} × ${esc(d.ambalaje.ambalaj.unitate)}</strong><br><span class="hint">${
-                  cantitate(d.ambalaje.cantitate, d.articol.um)}${d.ambalaje.rest > 0 ? `; rămân ${cantitate(d.ambalaje.rest, d.articol.um)} în depozit` : ""}</span>`
-                : `<strong>${cantitate(d.deComandat, d.articol.um)}</strong>${kgPeUm ? `<br><span class="hint">${cifra(d.deComandat * kgPeUm)} kg</span>` : ""}`;
+                  cantitate(d.ambalaje.cantitate, a.um)}${d.ambalaje.rest > 0 ? `; rămân ${cantitate(d.ambalaje.rest, a.um)} în depozit` : ""}${
+                  d.ambalaje.dinEvidenta ? `; ${esc(d.ambalaje.ambalaj.unitate)} de ${cantitate(d.ambalaje.ambalaj.continut, a.um)}, ca în evidența de cumpărări` : ""}</span>`
+                : `<strong>${cantitate(d.ramas, a.um)}</strong>${kgPeUm ? `<br><span class="hint">${cifra(d.ramas * kgPeUm)} kg</span>` : ""}`;
+          if (d && d.ramas > 0) {
+            for (const x of d.disponibil) {
+              const q = Math.min(x.cantitate, d.ramas);
+              transferuri.push(`<tr><td>${esc(numeArticol(a))}</td><td>${esc(numeDepozit(x.depozit))}</td>
+                <td class="n">${cantitate(x.cantitate, a.um)}</td>
+                <td class="fix"><button type="button" class="secundar" data-act="transfer" data-id="${esc(n.id)}" data-i="${i}"
+                  data-din="${esc(x.depozit)}" data-q="${q}">Mută ${cantitate(q, a.um)} pe șantier</button></td></tr>`);
+            }
+          }
           const nota = [
             m.manual ? `adăugat de mână: ${esc(m.manual)}` : "",
             m.piese > 0 ? `${cifra(m.piese)} piese incluse${m.piesePresupuse > 0 ? ` (${cifra(m.piesePresupuse)} pe regulă presupusă)` : ""}` : "",
           ].filter(Boolean).join(" · ");
           return `<tr>
-          <td>${esc(numeArticol(d.articol))}${nota ? `<br><span class="hint">${nota}</span>` : ""}</td>
-          <td class="n">${cantitate(d.necesar, d.articol.um)}</td>
-          <td class="n">${d.alClientului ? "—" : cantitate(d.inStoc, d.articol.um)}</td>
-          <td class="n">${comanda}</td>
-          <td class="n">${c === null ? "—" : `${eur(c)}<br><span class="hint">${eur(pm!)} / ${unitate(d.articol.um)}</span>`}</td>
+          <td>${esc(numeArticol(a))}${nota ? `<br><span class="hint">${nota}</span>` : ""}</td>
+          <td class="n">${cantitate(necesar, a.um)}</td>
+          <td class="n">${d ? cantitate(d.adus, a.um) : "—"}</td>
+          <td class="n">${d && d.comandat > 0 ? cantitate(d.comandat, a.um) : "—"}</td>
+          <td class="n">${ramas}</td>
+          <td class="n">${c === null ? "—" : `${eur(c)}<br><span class="hint">${eur(pm!)} / ${unitate(a.um)}</span>`}</td>
           <td class="n">${v > 0 ? eur(v) : "—"}</td>
           <td class="fix">${m.manual
             ? `<button type="button" class="secundar" data-act="scoate-material" data-id="${esc(n.id)}" data-i="${i}">Scoate</button>`
-            : `<button type="button" class="secundar" data-act="client" data-id="${esc(n.id)}" data-i="${i}">${d.alClientului ? "Îl cumpărăm noi" : "Îl dă clientul"}</button>`}</td>
+            : `<button type="button" class="secundar" data-act="client" data-id="${esc(n.id)}" data-i="${i}">${m.alClientului ? "Îl cumpărăm noi" : "Îl dă clientul"}</button>`}</td>
         </tr>`;
         });
+        const deComandat = r.filter((d) => d.ramas > 0).length;
         const optiuni = santiere().map((s) =>
           `<option value="${esc(s.id)}"${s.id === n.santier ? " selected" : ""}>${esc(s.denumire)}</option>`).join("");
         const p = n.pierderi;
-        const calcul = p ? ` · pierderi la croit: tablă ${cifra(p.tabla * 100)} %, plăci ${cifra(p.placa * 100)} %, tuburi ${cifra(p.tub * 100)} %` : "";
+        const calcul = p ? ` · pierderi la croit: tablă ${cifra(p.tabla * 100)} %, saltele ${cifra((p.saltea ?? p.placa) * 100)} %, plăci ${cifra(p.placa * 100)} %, tuburi ${cifra(p.tub * 100)} %` : "";
         return `<section class="imp-card">
           <h2>Necesar: ${esc(titluNecesar(n))}</h2>
           <p class="hint" style="margin:0 0 12px">Din ${esc(n.fisier)}${calcul}${
             n.faraNecesar > 0 ? ` · ${n.faraNecesar} ${n.faraNecesar === 1 ? "poziție" : "poziții"} fără necesar calculat (adaugă-le materialul de mână, mai jos)` : ""}</p>
           <div class="imp-campuri">
-            <label>Șantierul lucrării (stocul lui se socotește alături de depozitul central)
+            <label>Șantierul lucrării (aici vine materialul comandat)
               <select data-act="santier" data-id="${esc(n.id)}"><option value="">— nelegat —</option>${optiuni}</select>
             </label>
           </div>
-          ${tabel(["Material", "Necesar", "În stoc", "De comandat", "Cost achiziție", "În ofertă", ""], randuri,
-            ["", "n", "n", "n", "n", "n", ""])}
+          ${tabel(["Material", "Necesar", "Adus pe șantier", "Comandat, nesosit", "Rămas de comandat", "Cost achiziție", "În ofertă", ""], randuri,
+            ["", "n", "n", "n", "n", "n", "n", ""])}
+          ${transferuri.length ? `<h3>Material care există deja</h3>
+            <p class="hint" style="margin:0 0 12px">Înainte de comandă: materialul din depozitul central, sau adus pe alt șantier peste
+              ce-i trebuie lui. Nu se scade singur din comandă; dacă îl muți, scade.</p>
+            ${tabel(["Material", "Unde e", "Liber", ""], transferuri, ["", "", "n", ""])}` : ""}
+          <div class="imp-formular-butoane">
+            ${deComandat > 0
+              ? `<button type="button" class="primar" data-act="fa-comenzi" data-id="${esc(n.id)}">Fă comenzile pentru ${deComandat} ${deComandat === 1 ? "material" : "materiale"}</button>`
+              : `<span class="hint">Tot materialul e adus sau comandat. Vezi <a href="#/comenzi">Comenzi</a>.</span>`}
+          </div>
           <p class="hint">În ofertă: ${eur(inOferta)} (cât plătește clientul, material și manoperă, cu ajustarea și discountul) · cost material
             ${deCumparat === 0 ? "zero: tot materialul îl dă clientul" : faraPret === deCumparat ? "necunoscut: nicio intrare cu preț" : `${eur(cost)}${faraPret ? `, fără ${faraPret} ${faraPret === 1 ? "material" : "materiale"} încă fără preț` : ""}`}${faraPret < deCumparat ? ` · rămân ${eur(inOfertaCuCost - cost)} pentru manoperă și profit${faraPret ? ", pe materialele cu preț" : ""}` : ""}.
             Costul e prețul mediu al intrărilor cu preț, pe toate mărcile.</p>
@@ -197,6 +234,8 @@ export const ecran: Ecran = {
                 `<option value="${m}">${esc(MATERIAL[m])}</option>`).join("")}</select></label>
               <label>Grosime (mm)<input name="grosime" type="number" inputmode="decimal" step="any" min="0" /></label>
               <label>Diametrul tubului, ø mm (gol pentru plăci sau tablă, în m²)<input name="rand" type="number" inputmode="numeric" step="1" min="1" /></label>
+              <label>Formă<select name="forma"><option value="">după diametru (tub; fără ø: saltea de vată, placă de elastomer, tablă)</option>
+                <option value="saltea">saltea de vată, m²</option><option value="placa">placă, m²</option></select></label>
               <label>Cantitate (ml la tub, m² altfel)<input name="cantitate" type="number" inputmode="decimal" step="any" min="0" required /></label>
               <label>Pentru ce<input name="motiv" autocomplete="off" placeholder="de ex. goluri la foc, poziția 12" required /></label>
               <div class="imp-formular-butoane"><button type="submit" class="secundar">Adaugă</button></div>
@@ -276,6 +315,9 @@ export const ecran: Ecran = {
             <input name="grosime" type="number" inputmode="decimal" step="any" min="0" /></label>
           <label data-camp="alt">Diametrul tubului, ø mm (gol pentru plăci sau tablă, în m²)
             <input name="rand" type="number" inputmode="numeric" step="1" min="1" /></label>
+          <label data-camp="alt">Formă
+            <select name="forma"><option value="">după diametru (tub; fără ø: saltea de vată, placă de elastomer, tablă)</option>
+                <option value="saltea">saltea de vată, m²</option><option value="placa">placă, m²</option></select></label>
           <label data-camp="pret">Marcă (opțional: Armaflex, K-Flex, Rockwool …)
             <input name="marca" autocomplete="off" /></label>
           <label>Cantitate${tipAles === "ajustare" ? " (cu minus, dacă la inventar e mai puțin)" : ""}
@@ -339,7 +381,8 @@ export const ecran: Ecran = {
       if (val("articol") === "__alt" || !articol) {
         const g = val("grosime") === "" ? null : Number(val("grosime").replace(",", "."));
         const r = val("rand") === "" ? null : Number(val("rand"));
-        articol = articolDin({ sistem: val("sistem"), grosime_mm: g, rand: r });
+        const forma = formaAleasa(val("forma"), r);
+        articol = articolDin({ sistem: val("sistem"), grosime_mm: g, rand: r, ...(forma ? { forma } : {}) });
       }
       // Marca se scrie la intrare: de acolo materialul are producătorul lui.
       if (tip === "intrare" && val("marca")) articol = articolDin(articol, val("marca"));
@@ -382,6 +425,28 @@ export const ecran: Ecran = {
           break;
         }
         case "scoate-necesar": st = { ...st, necesare: st.necesare.filter((n) => n.id !== b.dataset["id"]) }; break;
+        case "transfer": {
+          const n = st.necesare.find((x) => x.id === b.dataset["id"]);
+          const m = n?.materiale[Number(b.dataset["i"])];
+          const q = Number(b.dataset["q"]);
+          if (!n || !m || !(q > 0)) return;
+          st = { ...st, miscari: [...st.miscari, {
+            id: idNou(), data: new Date().toISOString(), tip: "transfer", articol: articolDin(m), cantitate: q,
+            din: b.dataset["din"]!, spre: depozitNecesar(n), nota: `pentru ${titluNecesar(n)}`,
+          }] };
+          break;
+        }
+        case "fa-comenzi": {
+          const n = st.necesare.find((x) => x.id === b.dataset["id"]);
+          if (!n) return;
+          const firma = citestePlanuri().find((p) => p.id === n.santier)?.firma ?? "RADOIA ISOLIRUNG SRL";
+          const ciorne = ciorneDinRamas(ramasPeNecesar(st, n),
+            { firma, spre: depozitNecesar(n), ...(n.santier ? { santier: n.santier } : {}) }, idNou, new Date().toISOString(),
+            (a, f) => pretPropus(a, f, st.miscari));
+          for (const c of ciorne) puneComanda(c);
+          location.hash = "#/comenzi";
+          return;
+        }
         case "client":
         case "scoate-material": {
           const i = Number(b.dataset["i"]);
@@ -434,7 +499,8 @@ export const ecran: Ecran = {
       if (f.dataset["form"] === "manual") {
         const cant = numar("cantitate");
         if (cant === null || !(cant > 0)) return;
-        const m = materialManual(val("sistem"), numar("grosime"), numar("rand"), cant, val("motiv"));
+        const forma = formaAleasa(val("forma"), numar("rand"));
+        const m = materialManual(val("sistem"), numar("grosime"), numar("rand"), cant, val("motiv"), ...(forma ? [forma] : []));
         st = { ...st, necesare: st.necesare.map((n) => (n.id === f.dataset["id"] ? { ...n, materiale: [...n.materiale, m] } : n)) };
         salveaza();
         deseneaza();

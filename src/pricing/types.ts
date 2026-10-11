@@ -148,6 +148,8 @@ export type MotivVerificare =
   | "grosime_jacheta_apropiata"
   /** Grosimea scrisa de client nu e in lista: s-a luat cea mai apropiata. */
   | "grosime_apropiata"
+  /** Grosimea scrisa trece de cea mai groasa din lista: doua straturi sau alt material, decide omul. */
+  | "grosime_peste_lista"
   /** Grosimea trece de ultima coloana a listei: pret pe mp extrapolat din ultimele doua. */
   | "grosime_extrapolata"
   /** Clientul a dat grosimea ca interval: s-a luat capatul de sus. */

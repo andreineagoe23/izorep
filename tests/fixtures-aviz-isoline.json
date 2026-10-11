@@ -1,0 +1,40 @@
+{
+ "aviz": {
+  "tip": "aviz",
+  "serie": "CS",
+  "numar": "20261262",
+  "data": "2026-07-17",
+  "furnizor": "S.C. ISOLINE S.R.L.",
+  "moneda": null,
+  "curs": null,
+  "transport": null,
+  "linii": [
+   {
+    "cod": "CCA140050",
+    "denumire": "COCHILTECH AL. 140 X 50",
+    "cantitate": 350,
+    "um": "ML",
+    "pret_unitar": null
+   }
+  ]
+ },
+ "factura": {
+  "tip": "factura",
+  "serie": "CS",
+  "numar": "202627295",
+  "data": "2026-07-20",
+  "furnizor": "S.C. ISOLINE S.R.L.",
+  "moneda": "RON",
+  "curs": 5.31,
+  "transport": null,
+  "linii": [
+   {
+    "cod": null,
+    "denumire": "COCHILTECH AL. 140 X 50",
+    "cantitate": 350,
+    "um": "ML",
+    "pret_unitar": 39.7719
+   }
+  ]
+ }
+}

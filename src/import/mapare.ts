@@ -303,3 +303,87 @@ export function aplicaMapare(foaie: FoaieBruta, m: MapareFoaie): number {
   }
   return rafinate;
 }
+
+/**
+ * Coloana de cantitate citita din antet, fara model: pentru foile fara mapare.
+ *
+ * Euristica din `construiesteLinie` ia primul numar de dupa UM. Pe doua
+ * cereri primite pe 5 octombrie 2026 numarul ala nu e cantitatea:
+ *  - SRU Craiova: „Cantitate | Cantitate AT | CANTITATE TOTALA”. Euristica lua
+ *    prima coloana (32.199 m² din 64.379), adica jumatate din lucrare;
+ *  - CET Constanta: „QTY. | Unit | Pcs. in Set | … | Price Unit (lei)”, cu UM
+ *    dupa cantitate: lua pretul (5 lei) drept cantitate, pe fiecare rand.
+ *
+ * Regula: o singura coloana de cantitate in antet → ea; mai multe → cea cu
+ * „total”. Cantitatea pe unitate („Cantitate / unitate”) nu e candidat. Unde
+ * celula totalului e goala (SRU, r54 „idem DN300”: doar prima coloana), se
+ * aduna celelalte coloane de cantitate, dar numai daca pe foaia asta totalul e
+ * chiar suma lor pe toate randurile care le au pe toate. Altfel randul ramane pe
+ * euristica.
+ */
+const RE_COL_CANTITATE = /^(?:cantit|cant\.?\b|qty|quantit|menge|anzahl)/i;
+const RE_COL_PE_UNITATE = /unit|per\b|\/\s*buc/i;
+
+export interface ColoaneCantitate {
+  /** Coloana din care se citeste cantitatea. */
+  coloana: number;
+  /** Celelalte coloane de cantitate, daca totalul e suma lor (verificat pe foaie). */
+  parti: number[];
+}
+
+export function coloaneCantitate(foaie: FoaieBruta): ColoaneCantitate | null {
+  if (!foaie.antet) return null;
+  const candidati: { col: number; eticheta: string }[] = [];
+  let c = 0;
+  for (const cel of foaie.antet.celule) {
+    const t = typeof cel.v === "string" ? cel.v.trim() : "";
+    if (RE_COL_CANTITATE.test(t) && !RE_COL_PE_UNITATE.test(t)) candidati.push({ col: c, eticheta: t });
+    c += cel.span;
+  }
+  if (candidati.length === 0) return null;
+  if (candidati.length === 1) return { coloana: candidati[0]!.col, parti: [] };
+  const totaluri = candidati.filter((x) => /total/i.test(x.eticheta));
+  if (totaluri.length !== 1) return null;
+  const coloana = totaluri[0]!.col;
+  const parti = candidati.filter((x) => x.col !== coloana).map((x) => x.col);
+
+  // Totalul e suma partilor? Pe fiecare rand care le are pe toate.
+  const start = foaie.randuri.indexOf(foaie.antet) + 1;
+  let verificate = 0;
+  for (const r of foaie.randuri.slice(start)) {
+    const t = numar(laColoana(r.celule, coloana));
+    const p = parti.map((i) => numar(laColoana(r.celule, i)));
+    if (t === undefined || p.some((x) => x === undefined)) continue;
+    const suma = p.reduce<number>((s, x) => s + x!, 0);
+    if (Math.abs(suma - t) > 0.01) return { coloana, parti: [] };
+    verificate++;
+  }
+  return { coloana, parti: verificate > 0 ? parti : [] };
+}
+
+/** Cantitatea unui rand din coloanele de mai sus, sau undefined (ramane euristica). */
+export function cantitateDinColoane(r: RandBrut, cc: ColoaneCantitate): number | undefined {
+  const t = numar(laColoana(r.celule, cc.coloana));
+  if (t !== undefined) return t;
+  const p = cc.parti.map((i) => numar(laColoana(r.celule, i))).filter((x): x is number => x !== undefined);
+  if (p.length > 0) return Math.round(p.reduce((s, x) => s + x, 0) * 1e6) / 1e6;
+  // Un 0 scris in coloana de cantitate e cantitatea (SRU, „idem DN350 | m | 0”).
+  // Lasat euristicii, randul lua numarul curent (15) drept metri.
+  const zero = [cc.coloana, ...cc.parti].some((i) => laColoana(r.celule, i) === 0);
+  return zero ? 0 : undefined;
+}
+
+/** Pune cantitatea din antet pe randurile foii. Intoarce cate randuri s-au schimbat. */
+export function aplicaCantitateDinAntet(foaie: FoaieBruta): number {
+  const cc = coloaneCantitate(foaie);
+  if (!cc || !foaie.antet) return 0;
+  let schimbate = 0;
+  for (const r of foaie.randuri.slice(foaie.randuri.indexOf(foaie.antet) + 1)) {
+    if (!r.linie) continue;
+    const q = cantitateDinColoane(r, cc);
+    if (q === undefined || q === r.linie.cantitate) continue;
+    r.linie.cantitate = q;
+    schimbate++;
+  }
+  return schimbate;
+}

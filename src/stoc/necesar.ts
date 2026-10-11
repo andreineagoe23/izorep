@@ -43,14 +43,46 @@ export const PRAG_TUB_MM = 90;
 /** π al firmei („3,14"), acelasi ca in regula de pret peste lista. */
 export const PI_FIRMA = 3.14;
 
-/** Cum se comanda materialul: tub pe ø, placa pe m², tabla (sau PVC) pe m². */
-export type Categorie = "tub" | "placa" | "tabla";
+/**
+ * Forma in care se cumpara materialul. Firma (S12): saltelele, placile si vata
+ * cu folie se tin si se comanda separat. Formele vin din evidenta lor de
+ * achizitii, 2024–2026 (`../attachments/achizitii/`):
+ *
+ * - **tub**: cochilia de vata (COCHILTECH AL, 411 randuri) si tubul de
+ *   elastomer (ARMAFLEX ACE TUBES, K-FLEX, NMC), pe ø si grosime, in ml;
+ * - **saltea**: vata lamelara caserata cu aluminiu (LM ECO ALU M, 36.851 m²,
+ *   cel mai cumparat articol; Klimamat, Larock ALS, Prorox), pe grosime, in m².
+ *   Asa se izoleaza vata peste 3 toli, nu cu placi;
+ * - **placa**: placa de elastomer (ARMAFLEX ACE PLACA, K-FLEX ST, NMC) si placa
+ *   de vata pentru protectia la foc (Conlit, Techrock), pe grosime, in m²;
+ * - **tabla**: jacheta (aluminiu si inox la kg, PVC in folie), in m² si kg.
+ */
+export type Categorie = "tub" | "saltea" | "placa" | "tabla";
 
 /** Pierderea la croit, pe categorie, ca fractie (0,1 = 10 %). */
 export type Pierderi = Record<Categorie, number>;
 
-/** Firma, 5 octombrie 2026: tabla 10 % (S15), placile 10 % (S16); tuburile nu se croiesc. */
-export const PIERDERI_IMPLICITE: Pierderi = { tub: 0, placa: 0.1, tabla: 0.1 };
+/**
+ * Firma, 5 octombrie 2026: tabla 10 % (S15), placile 10 % (S16); tuburile nu se
+ * croiesc. Saltelele se croiesc ca placile, deci tot 10 %.
+ */
+export const PIERDERI_IMPLICITE: Pierderi = { tub: 0, saltea: 0.1, placa: 0.1, tabla: 0.1 };
+
+const JACHETE = new Set(["tabla", "tabla_inox", "pvc"]);
+
+/**
+ * Forma unui material fara ø (pe suprafata): vata pe teava sau tubulatura e
+ * saltea, cea de protectie la foc e placa, elastomerul e placa, jacheta e tabla.
+ */
+export function formaPeSuprafata(sistem: string, foc = false): Categorie {
+  if (JACHETE.has(sistem)) return "tabla";
+  if (sistem === "vata_minerala") return foc ? "placa" : "saltea";
+  return "placa";
+}
+
+/** Forma unui material dupa ce se stie despre el: tub cand are ø, altfel pe suprafata. */
+export const formaImplicita = (sistem: string, rand: number | null): Categorie =>
+  JACHETE.has(sistem) ? "tabla" : rand !== null ? "tub" : formaPeSuprafata(sistem);
 
 /**
  * kg pe m² pe fiecare mm de grosime: aluminiu 2,70, inox 7,93 (densitatea, in
@@ -59,13 +91,21 @@ export const PIERDERI_IMPLICITE: Pierderi = { tub: 0, placa: 0.1, tabla: 0.1 };
 export const KG_PE_MP_PE_MM: Partial<Record<string, number>> = { tabla: 2.7, tabla_inox: 7.93 };
 
 export interface OptiuniNecesar {
-  pierderi?: Pierderi;
+  /** Lipsa unei forme = cea implicita; saltelele lipsa iau pierderea placilor. */
+  pierderi?: Partial<Pierderi>;
   /**
    * Pana la ce diametru se comanda tuburi (cochilii, tub de elastomer). Firma:
    * 3 toli, dar „se pot comanda si cochilii peste 3 toli, in functie de nevoia
    * santierului" (S12). `Infinity` = toate in tuburi.
    */
   pragTub?: number;
+  /**
+   * Diametrele de teava (randul din lista) peste prag care se comanda tot ca
+   * tub. TRANSAVIA Abur: firma a cumparat cochilii ø116, ø140 si ø168
+   * (`evidenta-achizitii-radoia-2017-2026.xlsx`, iulie–septembrie 2026), deci
+   * alegerea e pe lucrare si pe diametru, nu doar un prag pe tot necesarul.
+   */
+  tuburiPeste?: readonly number[];
   /** Scade din `valoareOferta` ce scade si din totalul ofertei. */
   discountProcent?: number;
 }
@@ -79,7 +119,7 @@ export interface PePozitie {
 }
 
 export interface MaterialNecesar {
-  /** sistem|grosime|rand — aceeasi cheie ca articolul din stoc, fara marca. */
+  /** sistem|forma|grosime|rand — aceeasi cheie ca articolul din stoc, fara marca. */
   cheie: string;
   sistem: string;
   grosime_mm: number | null;
@@ -124,11 +164,23 @@ export interface FaraNecesar {
 export interface Necesar {
   pierderi: Pierderi;
   pragTub: number;
+  /** Diametrele peste prag comandate ca tub (`OptiuniNecesar.tuburiPeste`). */
+  tuburiPeste: number[];
+  /** Diametrele de teava din oferta care trec de prag: ecranul le ofera ca tub. */
+  pestePrag: number[];
   materiale: MaterialNecesar[];
   faraNecesar: FaraNecesar[];
 }
 
-export const cheieMaterial = (sistem: string, grosime: number | null, rand: number | null): string =>
+export const cheieMaterial = (
+  sistem: string, forma: Categorie, grosime: number | null, rand: number | null,
+): string => `${sistem}|${forma}|${grosime ?? "-"}|${rand ?? "-"}`;
+
+/**
+ * Cheia de dinainte de 11 octombrie 2026, fara forma (`sistem|grosime|rand`).
+ * Ambalajele salvate atunci se gasesc si pe ea.
+ */
+export const cheieFaraForma = (sistem: string, grosime: number | null, rand: number | null): string =>
   `${sistem}|${grosime ?? "-"}|${rand ?? "-"}`;
 
 const rotunjit = (n: number): number => Math.round((n + Number.EPSILON) * 100) / 100;
@@ -154,7 +206,6 @@ export function piesePeMetru(teava: number): number {
 /** Regula de piese nu e spusa de firma pentru diametrul asta. */
 export const regulaPresupusa = (teava: number): boolean => teava <= PRAG_TUB_MM || teava > 274;
 
-const PE_SUPRAFATA = new Set(["tabla", "tabla_inox", "pvc"]);
 const ORDINE = ["elastomer", "vata_minerala", "tabla", "tabla_inox", "pvc"];
 const estePeMatrice = (p: LinieProcesata["pret"]): p is RezultatTarifare =>
   p !== undefined && "straturi" in p && !p.manual;
@@ -166,8 +217,11 @@ const estePeMatrice = (p: LinieProcesata["pret"]): p is RezultatTarifare =>
  * planul de santier (`planDinOferta` le numeroteaza in aceeasi ordine).
  */
 export function necesarDinLinii(linii: LinieProcesata[], o: OptiuniNecesar = {}): Necesar {
-  const pierderi = o.pierderi ?? PIERDERI_IMPLICITE;
+  // Un necesar salvat inainte de saltele n-are pierderea lor: ia pe a placilor.
+  const pierderi: Pierderi = { ...PIERDERI_IMPLICITE, ...(o.pierderi?.placa !== undefined ? { saltea: o.pierderi.placa } : {}), ...o.pierderi };
   const pragTub = o.pragTub ?? PRAG_TUB_MM;
+  const tuburiPeste = new Set(o.tuburiPeste ?? []);
+  const pestePrag = new Set<number>();
   const discountProcent = o.discountProcent ?? 0;
   type Acc = MaterialNecesar & { brutMl: number; brutM2: number; pe: Map<number, number> };
   const acc = new Map<string, Acc>();
@@ -189,7 +243,12 @@ export function necesarDinLinii(linii: LinieProcesata[], o: OptiuniNecesar = {})
     const cantitate = l.bruta.cantitate ?? l.pret.cantitate;
     const forma = l.extras.forma ?? "ml";
     const teava = l.pret.straturi[0]!.diametru_geometric;
-    const pePlaca = teava > pragTub;
+    const randTeava = randStrat(l.pret.straturi[0]!);
+    const pesteprag = teava > pragTub && forma !== "mp" && l.pret.suprafata_mp === undefined;
+    if (pesteprag) pestePrag.add(randTeava);
+    const pePlaca = teava > pragTub && !tuburiPeste.has(randTeava);
+    // Protectia la foc a tubulaturii se face cu placa (Conlit, Techrock), nu cu saltea.
+    const foc = l.pret.motiveDeVerificat?.includes("protectie_foc") ?? false;
     // O piesa e un metru de teava impartit la cate piese ies din el.
     const piesa = forma !== "ml" && forma !== "mp";
     const metri = piesa ? cantitate / piesePeMetru(teava) : cantitate;
@@ -200,12 +259,12 @@ export function necesarDinLinii(linii: LinieProcesata[], o: OptiuniNecesar = {})
     const sumaLista = l.pret.straturi.reduce((t, s) => t + dinLista(s), 0);
     const valoareLinie = l.pret.pret_unitar * l.pret.cantitate * (1 - discountProcent / 100);
     for (const s of l.pret.straturi) {
-      const jacheta = PE_SUPRAFATA.has(s.sistem);
+      const jacheta = JACHETE.has(s.sistem);
       const peSuprafata = forma === "mp" || s.diametru_geometric === 0 || jacheta || pePlaca
         || l.pret.suprafata_mp !== undefined;
       const rand = peSuprafata ? null : randStrat(s);
-      const categorie: Categorie = jacheta ? "tabla" : rand === null ? "placa" : "tub";
-      const cheie = cheieMaterial(s.sistem, s.grosime_mm, rand);
+      const categorie: Categorie = jacheta ? "tabla" : rand === null ? formaPeSuprafata(s.sistem, foc) : "tub";
+      const cheie = cheieMaterial(s.sistem, categorie, s.grosime_mm, rand);
       const m = acc.get(cheie) ?? {
         cheie, sistem: s.sistem, grosime_mm: s.grosime_mm, rand, categorie,
         ml: 0, m2: 0, piese: 0, piesePresupuse: 0, pierdere: pierderi[categorie], pozitii: 0, pePozitie: [],
@@ -249,8 +308,12 @@ export function necesarDinLinii(linii: LinieProcesata[], o: OptiuniNecesar = {})
     })
     .sort((a, b) => ORDINE.indexOf(a.sistem) - ORDINE.indexOf(b.sistem)
       || (a.rand === null ? 1 : 0) - (b.rand === null ? 1 : 0)
-      || (a.grosime_mm ?? 0) - (b.grosime_mm ?? 0) || (a.rand ?? 0) - (b.rand ?? 0));
-  return { pierderi, pragTub, materiale, faraNecesar };
+      || (a.grosime_mm ?? 0) - (b.grosime_mm ?? 0) || a.categorie.localeCompare(b.categorie)
+      || (a.rand ?? 0) - (b.rand ?? 0));
+  return {
+    pierderi, pragTub, tuburiPeste: [...tuburiPeste].sort((a, b) => a - b),
+    pestePrag: [...pestePrag].sort((a, b) => a - b), materiale, faraNecesar,
+  };
 }
 
 /**
@@ -268,11 +331,12 @@ function randStrat(s: StratTarifat): number {
  */
 export function materialManual(
   sistem: string, grosime_mm: number | null, rand: number | null, cantitate: number, motiv: string,
+  forma: Categorie = formaImplicita(sistem, rand),
 ): MaterialNecesar {
-  const categorie: Categorie = PE_SUPRAFATA.has(sistem) ? "tabla" : rand === null ? "placa" : "tub";
+  const categorie = forma;
   const kgPeMp = KG_PE_MP_PE_MM[sistem];
   return {
-    cheie: cheieMaterial(sistem, grosime_mm, rand), sistem, grosime_mm, rand, categorie,
+    cheie: cheieMaterial(sistem, categorie, grosime_mm, rand), sistem, grosime_mm, rand, categorie,
     ml: rand === null ? 0 : cantitate, m2: rand === null ? cantitate : 0,
     ...(kgPeMp !== undefined && grosime_mm !== null && rand === null ? { kg: rotunjit(cantitate * kgPeMp * grosime_mm) } : {}),
     piese: 0, piesePresupuse: 0, pierdere: 0, pozitii: 0, pePozitie: [], valoareOferta: 0, manual: motiv,

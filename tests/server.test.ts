@@ -79,7 +79,7 @@ const cerereMica = (id: string): CererePeFir => ({
 
 const miscareMica = (id: string, extra: Partial<Miscare> = {}): Miscare => ({
   id, data: "2026-10-09T08:00:00.000Z", tip: "intrare", cantitate: 12.5, spre: "central",
-  articol: { cheie: "elastomer|19|22|Armaflex", sistem: "elastomer", grosime_mm: 19, rand: 22, um: "ml", marca: "Armaflex" },
+  articol: { cheie: "elastomer|tub|19|22|Armaflex", sistem: "elastomer", grosime_mm: 19, rand: 22, forma: "tub", um: "ml", marca: "Armaflex" },
   pret: { valoare: 3.1 }, ...extra,
 });
 
@@ -243,9 +243,9 @@ describe("mutarea datelor din browser", () => {
       },
     };
     const r1 = (await cere("/api/mutare", "A", { method: "POST", body: d })).corp as RezultatMutare;
-    expect(r1).toEqual({ cereri: 1, oferte: 1, santiere: 1, situatii: 1, miscari: 1, necesare: 1, ambalaje: 1, oferteFaraCerere: 1 });
+    expect(r1).toEqual({ cereri: 1, oferte: 1, santiere: 1, situatii: 1, miscari: 1, necesare: 1, ambalaje: 1, comenzi: 0, oferteFaraCerere: 1 });
     const r2 = (await cere("/api/mutare", "A", { method: "POST", body: d })).corp as RezultatMutare;
-    expect(r2).toEqual({ cereri: 0, oferte: 0, santiere: 0, situatii: 0, miscari: 0, necesare: 0, ambalaje: 0, oferteFaraCerere: 1 });
+    expect(r2).toEqual({ cereri: 0, oferte: 0, santiere: 0, situatii: 0, miscari: 0, necesare: 0, ambalaje: 0, comenzi: 0, oferteFaraCerere: 1 });
 
     const dupa = (await cere("/api/date", "A")).corp as DateComune;
     expect(dupa.oferte["mut-c1"]).toMatchObject({ numar: "RAD9", valoare: 1234.5 });
@@ -312,5 +312,123 @@ describe("stratul cu model pe server: ieșirea verificată", () => {
     expect((await cere("/api/extrage", "A")).corp).toMatchObject({ disponibil: false });
     expect((await cere("/api/extrage", "A", { method: "POST", body: { linii: linii(1) } })).status).toBe(503);
     expect((await cere("/api/poza", "A")).corp).toMatchObject({ disponibil: false });
+  });
+});
+
+describe("comenzile și recepția (Faza 4): operații, nu diferențe de stare", () => {
+  const cochilie = { cheie: "vata_minerala|tub|50|140", sistem: "vata_minerala", grosime_mm: 50, rand: 140, forma: "tub" as const, um: "ml" as const };
+  const ciorna = (id: string, cantitate = 350) => ({
+    id, creat: "2026-07-13T10:37:00.000Z", furnizor: "Isoline", firma: "RADOIA ISOLIRUNG SRL",
+    santier: "S-TR", spre: "S-TR", linii: [{ id: "L1", articol: cochilie, cantitate }],
+  });
+  const aviz = (ids: string[]) => ({
+    document: { tip: "aviz", serie: "CS", numar: "20261262", data: "2026-07-17" },
+    linii: [{ linie: "L1", cantitate: 350 }], ids, data: "2026-07-17T08:00:00.000Z",
+  });
+  const date = async (f: Firma = "A") => (await cere("/api/date", f)).corp as DateComune;
+
+  daca()("ciorna se scrie și se rescrie; trimisă, nu se mai schimbă și nu se șterge", async () => {
+    expect((await cere("/api/comenzi/co-1", "A", { method: "PUT", body: ciorna("co-1", 300) })).status).toBe(200);
+    expect((await cere("/api/comenzi/co-1", "A", { method: "PUT", body: ciorna("co-1") })).status).toBe(200);
+    expect((await cere("/api/comenzi/co-1/trimite", "A", { method: "POST", body: { cand: "2026-07-13T10:40:00.000Z" } })).status).toBe(200);
+    const c = (await date()).depozit.comenzi!.find((x) => x.id === "co-1")!;
+    expect([c.linii[0]!.cantitate, c.trimisa]).toEqual([350, "2026-07-13T10:40:00.000Z"]);
+    const din = await cere("/api/comenzi/co-1", "A", { method: "PUT", body: ciorna("co-1", 1) });
+    expect(din.status).toBe(409);
+    expect((await cere("/api/comenzi/co-1", "A", { method: "DELETE" })).status).toBe(409);
+    // Nici pe lângă aplicație: trigger-ul din baza refuză.
+    await expect(caTenant(app$.db, tenantA, (tx) => tx.execute(sql`update comanda set continut = '{}' where id = 'co-1'`)))
+      .rejects.toThrow();
+    // Firma B nu vede comanda firmei A.
+    expect((await date("B")).depozit.comenzi).toEqual([]);
+  });
+
+  daca()("avizul pune marfa pe șantier; trimis de două ori, nu se dublează", async () => {
+    await cere("/api/comenzi/co-2", "A", { method: "PUT", body: ciorna("co-2") });
+    expect((await cere("/api/comenzi/co-2/receptii", "A", { method: "POST", body: aviz(["r-1"]) })).corp)
+      .toEqual({ eroare: "Comanda nu a fost trimisă: trimite-o întâi." });
+    await cere("/api/comenzi/co-2/trimite", "A", { method: "POST", body: { cand: "2026-07-13T10:40:00.000Z" } });
+    expect((await cere("/api/comenzi/co-2/receptii", "A", { method: "POST", body: aviz(["r-1"]) })).corp).toEqual({ scrise: 1 });
+    expect((await cere("/api/comenzi/co-2/receptii", "A", { method: "POST", body: aviz(["r-1"]) })).corp).toEqual({ scrise: 0 });
+    const m = (await date()).depozit.miscari.find((x) => x.id === "r-1")!;
+    expect(m).toMatchObject({ tip: "intrare", spre: "S-TR", cantitate: 350, comanda: { id: "co-2", linie: "L1" }, furnizor: "Isoline" });
+    expect(m.document).toEqual({ tip: "aviz", serie: "CS", numar: "20261262", data: "2026-07-17" });
+  });
+
+  daca()("factura înlocuiește avizul: storno și intrare cu prețul ei, în lei și euro", async () => {
+    const r = await cere("/api/comenzi/co-2/facturi", "A", { method: "POST", body: {
+      aviz: "20261262", ids: ["f-s", "f-1"], data: "2026-07-20T08:00:00.000Z",
+      factura: { document: { tip: "factura", serie: "CS", numar: "202627295", data: "2026-07-20" }, curs: 5.31,
+        preturi: { L1: { valoare: 39.7719, moneda: "RON" } } },
+    } });
+    expect(r.corp).toEqual({ scrise: 2 });
+    const d = await date();
+    expect(d.depozit.miscari.find((x) => x.id === "f-s")!.anuleaza).toBe("r-1");
+    expect(d.depozit.miscari.find((x) => x.id === "f-1")!.pret).toEqual({ valoare: 7.49, lei: 39.7719, curs: 5.31 });
+    // A doua oară avizul nu mai are intrări: nimic de înlocuit.
+    const iar = await cere("/api/comenzi/co-2/facturi", "A", { method: "POST", body: {
+      aviz: "20261262", ids: ["g-s", "g-1"], data: "2026-07-20T08:00:00.000Z",
+      factura: { document: { tip: "factura", numar: "202627295", data: "2026-07-20" }, curs: 5.31, preturi: {} },
+    } });
+    expect(iar.status).toBe(409);
+  });
+
+  daca()("anularea oprește comanda; nu se mai recepționează pe ea", async () => {
+    await cere("/api/comenzi/co-3", "A", { method: "PUT", body: ciorna("co-3") });
+    await cere("/api/comenzi/co-3/trimite", "A", { method: "POST", body: { cand: "2026-07-14T00:00:00.000Z" } });
+    await cere("/api/comenzi/co-3/anuleaza", "A", { method: "POST", body: { cand: "2026-07-15T00:00:00.000Z" } });
+    expect((await date()).depozit.comenzi!.find((x) => x.id === "co-3")!.anulata).toBe("2026-07-15T00:00:00.000Z");
+    expect((await cere("/api/comenzi/co-3/receptii", "A", { method: "POST", body: aviz(["r-9"]) })).corp)
+      .toEqual({ eroare: "Comanda e anulată." });
+  });
+
+  daca()("returul la furnizor: din stoc, pe linia comenzii; nu mai mult decât a venit", async () => {
+    // co-2 are factura de mai sus: 350 ml pe S-TR, 7,49 €/ml.
+    const retur = (id: string, cantitate: number) => ({ linie: "L1", cantitate, din: "S-TR", motiv: "strivite", id, data: "2026-07-25T00:00:00.000Z" });
+    expect((await cere("/api/comenzi/co-2/retururi", "A", { method: "POST", body: retur("ret-1", 400) })).corp)
+      .toEqual({ eroare: "Se returnează mai mult decât a venit pe linia asta." });
+    expect((await cere("/api/comenzi/co-2/retururi", "A", { method: "POST", body: retur("ret-1", 20) })).corp).toEqual({ scrise: 1 });
+    expect((await cere("/api/comenzi/co-2/retururi", "A", { method: "POST", body: retur("ret-1", 20) })).corp).toEqual({ scrise: 0 });
+    const m = (await date()).depozit.miscari.find((x) => x.id === "ret-1")!;
+    expect(m).toMatchObject({ tip: "retur", din: "S-TR", furnizor: "Isoline", cantitate: 20, comanda: { id: "co-2", linie: "L1" },
+      pret: { valoare: 7.49, lei: 39.7719, curs: 5.31 } });
+    expect(m.spre).toBeUndefined();
+    // Baza nu primește un retur fără depozit de sosire și fără furnizor.
+    await expect(caTenant(app$.db, tenantA, (tx) => tx.execute(sql`insert into miscare (tenant_id, id, data, tip, articol_cheie, cantitate, din)
+      values (${tenantA}, 'ret-x', now(), 'retur', 'vata_minerala|tub|50|140', 1, 'S-TR')`))).rejects.toThrow();
+  });
+
+  daca()("avizul atașat se păstrează și se deschide; nu se schimbă", async () => {
+    const pdf = `data:application/pdf;base64,${Buffer.from("%PDF-1.4 aviz").toString("base64")}`;
+    const doc = { id: "doc-1", tip: "aviz", numar: "CS 20261262", nume: "A-CS-20261262.PDF", fisier: pdf };
+    expect((await cere("/api/comenzi/co-1/documente", "A", { method: "POST", body: { ...doc, fisier: "nu" } })).status).toBe(400);
+    expect((await cere("/api/comenzi/co-2/documente", "A", { method: "POST", body: doc })).status).toBe(200);
+    expect((await date()).depozit.documente).toEqual([{ id: "doc-1", comanda: "co-2", tip: "aviz", numar: "CS 20261262", nume: "A-CS-20261262.PDF" }]);
+    const r = await servere.A.request("/api/documente/doc-1");
+    expect(r.headers.get("content-type")).toBe("application/pdf");
+    expect(Buffer.from(await r.arrayBuffer()).toString()).toBe("%PDF-1.4 aviz");
+    expect((await servere.B.request("/api/documente/doc-1")).status).toBe(404);
+    await expect(caTenant(app$.db, tenantA, (tx) => tx.execute(sql`delete from document_furnizor where id = 'doc-1'`))).rejects.toThrow();
+    // Pe o ciornă nu se atașează nimic: avizul vine după trimitere.
+    await cere("/api/comenzi/co-4", "A", { method: "PUT", body: ciorna("co-4") });
+    expect((await cere("/api/comenzi/co-4/documente", "A", { method: "POST", body: { ...doc, id: "doc-2" } })).status).toBe(409);
+  });
+
+  daca()("avizul citit de model trece prin schemă înainte să ajungă la ecran", async () => {
+    const citire = JSON.parse(readFileSync("tests/fixtures-aviz-isoline.json", "utf8")).aviz;
+    const server = serverPentru(tenantA, { model: { cheie: "t", model: "m", modelPoze: "m-poze", prag: 0.85, lot: 25, concurenta: 4,
+      citesteAviz: async () => ({ ...citire, model: "m-poze" }) } });
+    const post = (corp: unknown) => server.request("/api/aviz", {
+      method: "POST", body: JSON.stringify(corp), headers: { "content-type": "application/json", [ANTET_CSRF]: "1" },
+    });
+    expect(await (await server.request("/api/aviz")).json()).toEqual({ disponibil: true, model: "m-poze" });
+    expect((await post({ fisier: "data:text/plain;base64,AA==" })).status).toBe(400);
+    const r = await post({ fisier: "data:application/pdf;base64,AA==", nume: "aviz.pdf" });
+    expect(await r.json()).toMatchObject({ tip: "aviz", numar: "20261262", linii: [{ denumire: "COCHILTECH AL. 140 X 50", cantitate: 350 }] });
+    const stricat = serverPentru(tenantA, { model: { cheie: "t", model: "m", modelPoze: "m", prag: 0.85, lot: 25, concurenta: 4,
+      citesteAviz: async () => ({ tip: "chitanta" }) as never } });
+    expect((await stricat.request("/api/aviz", { method: "POST", body: JSON.stringify({ fisier: "data:image/png;base64,AA==" }),
+      headers: { "content-type": "application/json", [ANTET_CSRF]: "1" } })).status).toBe(502);
+    expect((await cere("/api/aviz", "A")).corp).toMatchObject({ disponibil: false });
   });
 });

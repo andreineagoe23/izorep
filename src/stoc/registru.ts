@@ -13,7 +13,8 @@
  * Pur, fara I/O: ruleaza la fel in browser si in teste. Pastrarea e a
  * apelantului (`web/depozit-local.ts` in prototip, baza de date mai tarziu).
  */
-import { cheieMaterial, type MaterialNecesar } from "./necesar.js";
+import { ambalajImplicit } from "./ambalaje.js";
+import { cheieFaraForma, cheieMaterial, formaImplicita, type Categorie, type MaterialNecesar } from "./necesar.js";
 
 export type TipMiscare = "intrare" | "transfer" | "consum" | "retur" | "ajustare";
 export type UM = "ml" | "m2";
@@ -25,6 +26,11 @@ export interface Articol {
   grosime_mm: number | null;
   /** Randul din lista (ø). Null = material pe suprafata. */
   rand: number | null;
+  /**
+   * Tub, saltea, placa sau tabla (`Categorie`). Lipseste la articolele scrise
+   * inainte de 11 octombrie 2026: atunci e cea implicita (`formaImplicita`).
+   */
+  forma?: Categorie;
   um: UM;
   /**
    * Producatorul (Armaflex, K-Flex, Rockwool …). Firma (S11): marca deosebeste
@@ -35,9 +41,13 @@ export interface Articol {
   marca?: string;
 }
 
+/** Forma articolului, si la cele scrise fara ea. */
+export const formaArticol = (a: Pick<Articol, "sistem" | "rand" | "forma">): Categorie =>
+  a.forma ?? formaImplicita(a.sistem, a.rand);
+
 /** Materialul fara marca: pe ea se potriveste stocul cu necesarul. */
-export const cheieBaza = (a: Pick<Articol, "sistem" | "grosime_mm" | "rand">): string =>
-  cheieMaterial(a.sistem, a.grosime_mm, a.rand);
+export const cheieBaza = (a: Pick<Articol, "sistem" | "grosime_mm" | "rand" | "forma">): string =>
+  cheieMaterial(a.sistem, formaArticol(a), a.grosime_mm, a.rand);
 
 /** Cum se cumpara un articol: ambalajul si cat contine, in unitatea articolului (S13). */
 export interface Ambalaj {
@@ -57,7 +67,10 @@ export interface Miscare {
   cantitate: number;
   /** Depozitul din care iese materialul (transfer, consum, retur). */
   din?: string;
-  /** Depozitul in care intra (intrare, transfer, retur, ajustare). */
+  /**
+   * Depozitul in care intra (intrare, transfer, retur, ajustare). Lipseste la
+   * returul la furnizor (`laFurnizor`): marfa iese din firma.
+   */
   spre?: string;
   lucrareId?: string;
   nota?: string;
@@ -67,11 +80,20 @@ export interface Miscare {
   anuleaza?: string;
   /** Pretul de achizitie pe unitate (ml sau m²), la intrare, de pe factura furnizorului. */
   pret?: PretAchizitie;
+  /** Intrarea dintr-o comanda (receptia, Faza 4): comanda si linia ei. */
+  comanda?: { id: string; linie: string };
+  /** Avizul sau factura cu care a venit marfa (S31). */
+  document?: { tip: "aviz" | "factura"; serie?: string; numar: string; data: string };
+  furnizor?: string;
 }
 
 export interface PretAchizitie {
-  /** EUR pe unitate. Lei nu: cursul nu e inca in aplicatie (vezi `stare.md`, „De retinut"). */
+  /** EUR pe unitate: lei / cursul de pe document (asa e evidenta firmei). */
   valoare: number;
+  /** Lei pe unitate, cand factura e in lei. */
+  lei?: number;
+  /** Cursul cu care s-a trecut in euro (lei pentru 1 €), de pe document. */
+  curs?: number;
 }
 
 /**
@@ -98,14 +120,17 @@ export interface Sold {
   negativ: boolean;
 }
 
-/** Tabla, inoxul si PVC-ul se masoara pe suprafata; izolatia pe teava, in metri. */
-export function articolDin(m: Pick<MaterialNecesar, "sistem" | "grosime_mm" | "rand">, marca?: string): Articol {
-  const pesuprafata = m.rand === null || m.sistem === "tabla" || m.sistem === "tabla_inox" || m.sistem === "pvc";
+/** Tubul se masoara in metri; saltelele, placile si tabla pe suprafata. */
+export function articolDin(
+  m: Pick<MaterialNecesar, "sistem" | "grosime_mm" | "rand"> & { categorie?: Categorie; forma?: Categorie },
+  marca?: string,
+): Articol {
+  const forma = m.categorie ?? m.forma ?? formaImplicita(m.sistem, m.rand);
   const brand = marca?.trim();
   return {
-    cheie: cheieMaterial(m.sistem, m.grosime_mm, m.rand) + (brand ? `|${brand}` : ""),
-    sistem: m.sistem, grosime_mm: m.grosime_mm, rand: m.rand,
-    um: pesuprafata ? "m2" : "ml",
+    cheie: cheieMaterial(m.sistem, forma, m.grosime_mm, m.rand) + (brand ? `|${brand}` : ""),
+    sistem: m.sistem, grosime_mm: m.grosime_mm, rand: m.rand, forma,
+    um: forma === "tub" ? "ml" : "m2",
     ...(brand ? { marca: brand } : {}),
   };
 }
@@ -114,6 +139,14 @@ export function articolDin(m: Pick<MaterialNecesar, "sistem" | "grosime_mm" | "r
 export const cantitateNecesara = (m: MaterialNecesar, a: Articol = articolDin(m)): number =>
   a.um === "ml" ? m.ml : m.m2;
 
+/**
+ * Returul la furnizor (S32, rar): marfa pleaca din depozit inapoi la cel care
+ * a vandut-o, deci n-are depozit de sosire. E tot un `retur`, ca baza sa nu
+ * aiba un tip nou; il deosebeste furnizorul scris pe el.
+ */
+export const laFurnizor = (m: Pick<Miscare, "tip" | "spre" | "furnizor">): boolean =>
+  m.tip === "retur" && !m.spre && Boolean(m.furnizor);
+
 /** De ce nu e valida o miscare; null = valida. */
 export function valideazaMiscare(m: Omit<Miscare, "id" | "data">): string | null {
   if (!Number.isFinite(m.cantitate) || m.cantitate === 0) return "Cantitatea trebuie să fie un număr diferit de zero.";
@@ -121,7 +154,7 @@ export function valideazaMiscare(m: Omit<Miscare, "id" | "data">): string | null
   if (m.pret && (!Number.isFinite(m.pret.valoare) || m.pret.valoare < 0)) return "Prețul trebuie să fie un număr pozitiv.";
   const cere = CERE[m.tip];
   if (cere.din && !m.din) return "Alege depozitul din care iese materialul.";
-  if (cere.spre && !m.spre) return "Alege depozitul în care intră materialul.";
+  if (cere.spre && !m.spre && !laFurnizor(m)) return "Alege depozitul în care intră materialul.";
   if (m.din && m.spre && m.din === m.spre) return "Depozitul de plecare și cel de sosire sunt același.";
   return null;
 }
@@ -187,7 +220,7 @@ export interface DeComandat {
   inStoc: number;
   deComandat: number;
   /** Cand articolul are ambalaj: cate ambalaje intregi se comanda. */
-  ambalaje?: { cate: number; ambalaj: Ambalaj; cantitate: number; rest: number };
+  ambalaje?: { cate: number; ambalaj: Ambalaj; cantitate: number; rest: number; dinEvidenta?: true };
   /** Materialul il da clientul: nu se comanda. */
   alClientului?: true;
 }
@@ -220,10 +253,11 @@ export function deComandat(
       .filter((s) => cheieBaza(s.articol) === articol.cheie && depozite.includes(s.depozit) && s.cantitate > 0)
       .reduce((t, s) => t + s.cantitate, 0);
     const rest = Math.max(0, Math.round((necesar - inStoc) * 100) / 100);
-    const a = ambalaje[articol.cheie];
+    const scris = ambalaje[articol.cheie] ?? ambalaje[cheieFaraForma(m.sistem, m.grosime_mm, m.rand)];
+    const a = scris ?? ambalajImplicit(m);
     return {
       articol, necesar, inStoc: Math.round(inStoc * 100) / 100, deComandat: rest,
-      ...(a && rest > 0 ? { ambalaje: laAmbalaj(rest, a) } : {}),
+      ...(a && rest > 0 ? { ambalaje: { ...laAmbalaj(rest, a), ...(scris ? {} : { dinEvidenta: true as const }) } } : {}),
     };
   });
 }

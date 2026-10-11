@@ -578,3 +578,49 @@ real acolo.
   nu copiază coloanele clientului, ci le citește după rol: codul de rând
   („IZOLATII”, „01.82.02.01A”) merge în Identificare_Norma, descrierea în
   Denumire (`web/oferta.ts`, `codRand`).
+- **SRU Craiova (HVAC, 5 octombrie 2026)** — „Tubulatura *rectangulara* din
+  tabla zincata … izolatie elastomerica 13 mm”: adjectivul ținea tabla departe
+  de regula de material, deci elastomerul primea jachetă. „fara izolatie” /
+  „neizolata” erau poziții de tablă. „grunduire” din lista costurilor incluse
+  respingea țeava izolată ca altă meserie. „idem DN20” avea sub 12 caractere și
+  nu devenea rând. Trei coloane de cantitate, cu total. Toate în
+  `tests/cereri-octombrie.test.ts`.
+- **CET Constanța (motoare termice)** — lista de țevi și fitinguri a
+  instalatorului, fără izolație pe rând: „stainless”, „PVC-C” erau materialul
+  țevii, citite ca jachetă; UM-ul stă înaintea prețului unitar (5 lei), deci
+  euristica lua prețul drept cantitate. Acum 0 poziții. Izolația ei vine din
+  specificație, pe sistem (foaie), cu grosimea după temperatură: se ofertează
+  prin „izolația pe foaie”, mai jos.
+- **Grosimea scrisă peste listă** — „vata minerala 110 mm” (CET, la cald)
+  nu se citea (`RE_GROSIME` cere „g”, „gr.”, „S=” sau „grosimea de”), iar
+  `grosimiDeLaConducte` punea 100 mm de la conducta de același diametru:
+  „Gata” la altă grosime decât cea cerută. Acum `grosimeScrisa` prinde și
+  grosimea lipită de material, iar peste ultima grosime din listă poziția ia
+  motivul `grosime_peste_lista`, nedovedit. A/B pe toate fișierele: identic.
+
+## Izolația pe foaie (11 octombrie 2026)
+
+`src/import/izolatie-foaie.ts`. Pentru cererile care sunt **lista de țevi a
+instalatorului**, fără izolație pe rând (CET Constanța: o foaie pe sistem, cu
+țevi, fitinguri, flanșe, robineți, șuruburi, suporți). Izolația e în
+specificația proiectantului, pe sistem, iar grosimea după diametru și
+temperatură.
+
+- **Recunoașterea foii**: un antet cu descriere, DN, cantitate și UM în primele
+  30 de rânduri (`tevileFoii`). Elementul din descriere, în engleză, română și
+  germană (`elementDin`): țeavă, cot, teu, reducție, flanșă, robinet; ce e
+  prindere, etanșare sau aparat de măsură nu se izolează. Diametrul din
+  descriere întâi („21.3x2.0”, „Da63”, „- DN65”), apoi din coloana DN.
+- **Alegerea e a omului**, pe foaie: material, grosime (tabel sau fixă),
+  protecție, piese, armături. Tabelele din specificația CET sunt în cod, cu
+  sursa: protecția la atingere (cap. 6), DIN 4140 D.2 pe temperaturi, D.4 la
+  5 °C. Grosimea urcă la următoarea din listă (specificația cere un minim).
+- **Nicio a doua cale de preț**: rândurile se scriu ca cele din carnet
+  (`RandSantier` → `spreCerere` → `registruCerere`) și trec prin importul
+  obișnuit. Ecranul face un fișier nou („… - izolatie pe foaie.xlsx”).
+- **Piesele fără protecție sub ø60** nu se pun: lista n-are coeficient pe
+  banda 18–60, deci sunt în prețul pe metru (regula 4 din `pricing.md`).
+- Ce nu face: amestecul pe același fișier de foi cu izolație scrisă și foi cu
+  țevi (pasul apare doar când fișierul n-are nicio poziție); tabele de grosime
+  scrise de om; rândul 64 de elastomer, care nu cade în nicio bandă.
+

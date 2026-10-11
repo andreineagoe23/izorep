@@ -24,6 +24,10 @@
 import type { Stare, DateComune, CererePeFir, Mutare, RezultatMutare, OfertaSalvata } from "../src/server/contract.js";
 import type { PlanSantier, Situatie } from "../src/lucrari/situatii.js";
 import type { Miscare } from "../src/stoc/registru.js";
+import {
+  inlocuiesteCuFactura, intrariDinReceptie, returLaFurnizor, valideazaReceptie, valideazaRetur,
+  type Comanda, type DocumentAtasat, type Factura, type Receptie, type Retur,
+} from "../src/stoc/comenzi.js";
 import * as dep from "./depozit-local.js";
 import * as luc from "./lucrari-local.js";
 import * as of from "./oferte-local.js";
@@ -157,7 +161,8 @@ export const iaDeDeschis = luc.iaDeDeschis;
 export const citesteDepozit = (): dep.StareDepozit => (mod === "server" ? clona(copie.depozit) : dep.citesteDepozit());
 
 export function scrieDepozit(s: dep.StareDepozit): boolean {
-  if (mod !== "server") return dep.scrieDepozit(s);
+  // Comenzile se schimba doar prin operatiile lor (mai jos), nu din lista ecranului.
+  if (mod !== "server") return dep.scrieDepozit({ ...s, comenzi: dep.citesteDepozit().comenzi ?? [] });
   if (refuzaInvechit()) return true;
   const v = copie.depozit;
   const aveau = new Set(v.miscari.map((m) => m.id));
@@ -178,9 +183,132 @@ export function scrieDepozit(s: dep.StareDepozit): boolean {
       trimite(() => api("/api/ambalaje", "PUT", { cheie, ambalaj: ambNoi[cheie] ?? null }));
     }
   }
-  copie = { ...copie, depozit: clona({ ...s, miscari: s.miscari.filter((m) => !m.exemplu) }) };
+  // Comenzile au operatiile lor (mai jos): o lista veche din ecran nu le rescrie.
+  copie = { ...copie, depozit: clona({
+    ...s, miscari: s.miscari.filter((m) => !m.exemplu), comenzi: copie.depozit.comenzi ?? [],
+    ...(copie.depozit.documente ? { documente: copie.depozit.documente } : {}),
+  }) };
   return true;
 }
+
+/* ------------------------------------------------------------- comenzile */
+
+/*
+ * Faza 4: comenzile au operatii proprii — scrie ciorna, trimite, anuleaza,
+ * receptioneaza, trece factura —, nu diferenta de stare de la `scrieDepozit`
+ * (de acolo venise bugul cu situatiile, 10 octombrie 2026). Fiecare operatie
+ * schimba copia pe loc, ca ecranul sa se redeseneze imediat, si pleaca la
+ * server in coada; refuzata, copia se reia de pe server.
+ *
+ * Intrarile receptiei au id-urile facute aici: serverul le recalculeaza din
+ * comanda lui cu aceleasi id-uri, deci o receptie trimisa de doua ori nu se
+ * dubleaza, iar copia si baza au aceleasi miscari.
+ */
+
+/** Starea depozitului cu o schimbare, oriunde ar sta datele. */
+function schimbaDepozit(f: (s: dep.StareDepozit) => dep.StareDepozit): void {
+  if (mod === "server") copie = { ...copie, depozit: f(clona(copie.depozit)) };
+  else dep.scrieDepozit(f(dep.citesteDepozit()));
+}
+
+const comenziDin = (s: dep.StareDepozit): Comanda[] => s.comenzi ?? [];
+const cuComanda = (s: dep.StareDepozit, c: Comanda): dep.StareDepozit =>
+  ({ ...s, comenzi: [c, ...comenziDin(s).filter((x) => x.id !== c.id)] });
+const gasita = (id: string): Comanda | undefined => comenziDin(citesteDepozit()).find((c) => c.id === id);
+
+/** Ciorna noua sau schimbata. Trimisa nu se mai schimba (o spune si serverul). */
+export function puneComanda(c: Comanda): string | null {
+  const v = gasita(c.id);
+  if (v?.trimisa || v?.anulata) return "Comanda a fost trimisă: nu se mai modifică.";
+  schimbaDepozit((s) => cuComanda(s, c));
+  if (mod === "server") trimite(() => api(`/api/comenzi/${enc(c.id)}`, "PUT", c));
+  return null;
+}
+
+export function stergeComanda(id: string): string | null {
+  if (gasita(id)?.trimisa) return "Comanda a fost trimisă: nu se șterge, se anulează.";
+  schimbaDepozit((s) => ({ ...s, comenzi: comenziDin(s).filter((c) => c.id !== id) }));
+  if (mod === "server") trimite(() => api(`/api/comenzi/${enc(id)}`, "DELETE"));
+  return null;
+}
+
+export function trimiteComanda(id: string, cand = new Date().toISOString()): void {
+  const c = gasita(id);
+  if (!c || c.trimisa || c.anulata) return;
+  schimbaDepozit((s) => cuComanda(s, { ...c, trimisa: cand }));
+  if (mod === "server") trimite(() => api(`/api/comenzi/${enc(id)}/trimite`, "POST", { cand }));
+}
+
+export function anuleazaComanda(id: string, cand = new Date().toISOString()): void {
+  const c = gasita(id);
+  if (!c || c.anulata) return;
+  schimbaDepozit((s) => cuComanda(s, { ...c, anulata: cand }));
+  if (mod === "server") trimite(() => api(`/api/comenzi/${enc(id)}/anuleaza`, "POST", { cand }));
+}
+
+/** Receptia pe liniile comenzii. Intoarce motivul refuzului, sau null. */
+export function receptioneaza(id: string, r: Omit<Receptie, "comanda">): string | null {
+  const c = gasita(id);
+  if (!c) return "Comanda nu mai există.";
+  const gresit = valideazaReceptie({ ...r, comanda: c });
+  if (gresit) return gresit;
+  const data = new Date().toISOString();
+  const intrari = intrariDinReceptie({ ...r, comanda: c }, idNou, data);
+  schimbaDepozit((s) => ({ ...s, miscari: [...s.miscari, ...intrari] }));
+  if (mod === "server") {
+    const ids = intrari.map((m) => m.id);
+    trimite(() => api(`/api/comenzi/${enc(id)}/receptii`, "POST", { ...r, ids, data }));
+  }
+  return null;
+}
+
+/** Factura venita dupa aviz: inlocuieste intrarile avizului (storno + intrari cu pret). */
+export function treceFactura(id: string, aviz: string, f: Factura): string | null {
+  const c = gasita(id);
+  if (!c) return "Comanda nu mai există.";
+  if (!f.document.numar.trim()) return "Scrie numărul facturii.";
+  if (Object.values(f.preturi).some((p) => p.moneda === "RON") && !(f.curs && f.curs > 0)) {
+    return "Prețul e în lei: scrie cursul de pe factură.";
+  }
+  const data = new Date().toISOString();
+  const noi = inlocuiesteCuFactura(c, citesteDepozit().miscari, aviz, f, idNou, data);
+  if (noi.length === 0) return `Avizul ${aviz} nu are intrări pe comanda asta.`;
+  schimbaDepozit((s) => ({ ...s, miscari: [...s.miscari, ...noi] }));
+  if (mod === "server") {
+    const ids = noi.map((m) => m.id);
+    trimite(() => api(`/api/comenzi/${enc(id)}/facturi`, "POST", { aviz, factura: f, ids, data }));
+  }
+  return null;
+}
+
+/** Returul la furnizor, pe o linie a comenzii (S32). */
+export function returneaza(id: string, r: Omit<Retur, "comanda">): string | null {
+  const c = gasita(id);
+  if (!c) return "Comanda nu mai există.";
+  const miscari = citesteDepozit().miscari;
+  const gresit = valideazaRetur({ ...r, comanda: c }, miscari);
+  if (gresit) return gresit;
+  const data = new Date().toISOString();
+  const m = returLaFurnizor({ ...r, comanda: c }, miscari, idNou, data);
+  schimbaDepozit((s) => ({ ...s, miscari: [...s.miscari, m] }));
+  if (mod === "server") trimite(() => api(`/api/comenzi/${enc(id)}/retururi`, "POST", { ...r, id: m.id, data }));
+  return null;
+}
+
+/**
+ * Poza sau PDF-ul avizului, atasat comenzii (S31). Doar pe server: pe linkul
+ * demo fisierul nu are unde sta. Intoarce false cand nu se pastreaza.
+ */
+export function ataseazaDocument(d: DocumentAtasat & { fisier: string }): boolean {
+  if (mod !== "server") return false;
+  const { fisier, ...fara } = d;
+  schimbaDepozit((s) => ({ ...s, documente: [...(s.documente ?? []).filter((x) => x.id !== d.id), fara] }));
+  trimite(() => api(`/api/comenzi/${enc(d.comanda)}/documente`, "POST", { id: d.id, tip: d.tip, numar: d.numar, nume: d.nume, fisier }));
+  return true;
+}
+
+/** Linkul de deschis documentul atasat (se deschide in alta fila). */
+export const linkDocument = (id: string): string => `${location.pathname.replace(/[^/]*$/, "")}api/documente/${enc(id)}`;
 
 export const idNou = dep.idNou;
 
@@ -284,7 +412,7 @@ export async function sterge(id: string): Promise<void> {
 /* ------------------------------------------------------- masuratorile */
 
 /** Paginile din carnet, cu poza, cand pleaca spre oferta sau situatie. Pe browser nu se pastreaza. */
-export function salveazaMasuratori(scop: "oferta" | "situatie", santierId: string | undefined, pagini: { poza?: string; randuri: unknown }[]): void {
+export function salveazaMasuratori(scop: "oferta" | "situatie" | "comanda", santierId: string | undefined, pagini: { poza?: string; randuri: unknown }[]): void {
   if (mod !== "server") return;
   for (const p of pagini) {
     trimite(() => api("/api/masuratori", "POST", { scop, ...(santierId ? { santierId } : {}), ...p }));

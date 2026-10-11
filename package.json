@@ -26,7 +26,8 @@
     "compara": "tsx scripts/compara-modele.ts",
     "compara-poze": "tsx scripts/compara-poze.ts",
     "golden": "tsx scripts/golden.ts",
-    "mapare": "tsx scripts/mapare.ts"
+    "mapare": "tsx scripts/mapare.ts",
+    "preturi-furnizori": "tsx scripts/preturi-furnizori.ts"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.1",

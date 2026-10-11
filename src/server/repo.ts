@@ -11,10 +11,16 @@
 import { and, asc, desc, eq, max, sql } from "drizzle-orm";
 import type { Baza } from "../db/client.js";
 import {
-  ambalaj, articol, cerere, depozit, firma, masuratoare, miscare, necesar, oferta, santier, situatie,
+  ambalaj, articol, cerere, comanda, depozit, documentFurnizor, firma, masuratoare, miscare, necesar, oferta, santier,
+  situatie,
 } from "../db/schema.js";
 import type { Situatie, PlanSantier } from "../lucrari/situatii.js";
 import { valideazaMiscare, type Ambalaj, type Miscare } from "../stoc/registru.js";
+import type { Categorie } from "../stoc/necesar.js";
+import {
+  inlocuiesteCuFactura, intrariDinReceptie, returLaFurnizor, valideazaReceptie, valideazaRetur,
+  type Comanda, type DocumentAtasat, type Factura, type Receptie, type Retur,
+} from "../stoc/comenzi.js";
 import { valoareOferta } from "../../web/oferta.js";
 import type { NecesarLucrare, StareDepozit } from "../../web/depozit-local.js";
 import type { OfertaEmisa } from "../../web/oferte-local.js";
@@ -57,6 +63,7 @@ async function stareDepozit(tx: Baza): Promise<StareDepozit> {
     id: m.id, data: iso(m.data), tip: m.tip as Miscare["tip"],
     articol: {
       cheie: a.cheie, sistem: a.sistem, grosime_mm: nr(a.grosimeMm), rand: nr(a.rand), um: a.um as "ml" | "m2",
+      ...(a.forma ? { forma: a.forma as Categorie } : {}),
       ...(a.marca ? { marca: a.marca } : {}),
     },
     cantitate: Number(m.cantitate),
@@ -65,7 +72,12 @@ async function stareDepozit(tx: Baza): Promise<StareDepozit> {
     ...(m.lucrareId ? { lucrareId: m.lucrareId } : {}),
     ...(m.nota ? { nota: m.nota } : {}),
     ...(m.anuleaza ? { anuleaza: m.anuleaza } : {}),
-    ...(m.pret !== null ? { pret: { valoare: Number(m.pret) } } : {}),
+    ...(m.pret !== null ? {
+      pret: { valoare: Number(m.pret), ...(m.pretLei !== null ? { lei: Number(m.pretLei) } : {}), ...(m.curs !== null ? { curs: Number(m.curs) } : {}) },
+    } : {}),
+    ...(m.comandaId && m.comandaLinie ? { comanda: { id: m.comandaId, linie: m.comandaLinie } } : {}),
+    ...(m.document ? { document: m.document as NonNullable<Miscare["document"]> } : {}),
+    ...(m.furnizor ? { furnizor: m.furnizor } : {}),
   }));
   const nec = await tx.select().from(necesar).orderBy(desc(sql`${necesar.continut}->>'creat'`));
   const amb = await tx.select().from(ambalaj);
@@ -73,7 +85,27 @@ async function stareDepozit(tx: Baza): Promise<StareDepozit> {
     miscari,
     necesare: nec.map((n) => n.continut as NecesarLucrare),
     ambalaje: Object.fromEntries(amb.map((a) => [a.cheieBaza, { unitate: a.unitate, continut: Number(a.continut) }])),
+    comenzi: await comenzi(tx),
+    documente: await documente(tx),
   };
+}
+
+/** Lista documentelor atasate, fara fisiere: ecranul le cere unul cate unul. */
+async function documente(tx: Baza): Promise<DocumentAtasat[]> {
+  const rows = await tx.select({
+    id: documentFurnizor.id, comanda: documentFurnizor.comandaId, tip: documentFurnizor.tip,
+    numar: documentFurnizor.numar, nume: documentFurnizor.nume,
+  }).from(documentFurnizor).orderBy(asc(documentFurnizor.creatLa));
+  return rows.map((r) => ({ ...r, tip: r.tip as DocumentAtasat["tip"] }));
+}
+
+async function comenzi(tx: Baza): Promise<Comanda[]> {
+  const rows = await tx.select().from(comanda).orderBy(desc(comanda.creatLa));
+  return rows.map((r) => ({
+    ...(r.continut as Comanda),
+    ...(r.trimisaLa ? { trimisa: iso(r.trimisaLa) } : {}),
+    ...(r.anulataLa ? { anulata: iso(r.anulataLa) } : {}),
+  }));
 }
 
 async function ultimeleOferte(tx: Baza): Promise<Record<string, OfertaEmisa>> {
@@ -232,13 +264,16 @@ export async function adaugaMiscare(tx: Baza, ctx: Context, m: Miscare): Promise
   if (gresit) throw new Refuz(400, gresit);
   const a = m.articol;
   await tx.insert(articol).values({
-    tenantId: ctx.tenantId, cheie: a.cheie, sistem: a.sistem, um: a.um, marca: a.marca ?? null,
+    tenantId: ctx.tenantId, cheie: a.cheie, sistem: a.sistem, um: a.um, marca: a.marca ?? null, forma: a.forma ?? null,
     grosimeMm: a.grosime_mm === null ? null : String(a.grosime_mm), rand: a.rand === null ? null : String(a.rand),
   }).onConflictDoNothing();
   const nou = await tx.insert(miscare).values({
     tenantId: ctx.tenantId, id: m.id, data: new Date(m.data), tip: m.tip, articolCheie: a.cheie,
     cantitate: String(m.cantitate), din: m.din ?? null, spre: m.spre ?? null, lucrareId: m.lucrareId ?? null,
     nota: m.nota ?? null, anuleaza: m.anuleaza ?? null, pret: m.pret ? String(m.pret.valoare) : null,
+    pretLei: m.pret?.lei !== undefined ? String(m.pret.lei) : null, curs: m.pret?.curs !== undefined ? String(m.pret.curs) : null,
+    comandaId: m.comanda?.id ?? null, comandaLinie: m.comanda?.linie ?? null,
+    document: m.document ?? null, furnizor: m.furnizor ?? null,
     creatDe: ctx.utilizatorId,
   }).onConflictDoNothing().returning({ id: miscare.id });
   return nou.length > 0;
@@ -283,7 +318,9 @@ export async function adaugaMasuratoare(tx: Baza, ctx: Context, m: MasuratoareDe
  * Datele de exemplu nu pleaca.
  */
 export async function muta(tx: Baza, ctx: Context, d: Mutare): Promise<RezultatMutare> {
-  const r: RezultatMutare = { cereri: 0, oferte: 0, santiere: 0, situatii: 0, miscari: 0, necesare: 0, ambalaje: 0, oferteFaraCerere: 0 };
+  const r: RezultatMutare = {
+    cereri: 0, oferte: 0, santiere: 0, situatii: 0, miscari: 0, necesare: 0, ambalaje: 0, comenzi: 0, oferteFaraCerere: 0,
+  };
 
   for (const c of d.cereri) {
     if (!c.fisier) continue;
@@ -336,10 +373,136 @@ export async function muta(tx: Baza, ctx: Context, d: Mutare): Promise<RezultatM
     r.necesare += nou.length;
   }
 
+  for (const c of d.depozit.comenzi ?? []) {
+    const { trimisa, anulata, ...continut } = c;
+    const nou = await tx.insert(comanda).values({
+      tenantId: ctx.tenantId, id: c.id, continut, creatDe: ctx.utilizatorId,
+      trimisaLa: trimisa ? new Date(trimisa) : null, anulataLa: anulata ? new Date(anulata) : null,
+    }).onConflictDoNothing().returning({ id: comanda.id });
+    r.comenzi += nou.length;
+  }
   for (const [cheie, a] of Object.entries(d.depozit.ambalaje ?? {})) {
     const nou = await tx.insert(ambalaj).values({ tenantId: ctx.tenantId, cheieBaza: cheie, unitate: a.unitate, continut: String(a.continut) })
       .onConflictDoNothing().returning({ c: ambalaj.cheieBaza });
     r.ambalaje += nou.length;
   }
   return r;
+}
+
+/* ------------------------------------------------------------- comenzile */
+
+async function comandaDinBaza(tx: Baza, id: string): Promise<Comanda> {
+  const [r] = await tx.select().from(comanda).where(eq(comanda.id, id));
+  if (!r) throw new Refuz(404, "Comanda nu există.");
+  return {
+    ...(r.continut as Comanda),
+    ...(r.trimisaLa ? { trimisa: iso(r.trimisaLa) } : {}),
+    ...(r.anulataLa ? { anulata: iso(r.anulataLa) } : {}),
+  };
+}
+
+/** Ciorna: se scrie sau se rescrie cat nu e trimisa (trigger-ul o tine si el). */
+export async function puneComanda(tx: Baza, ctx: Context, c: Comanda): Promise<void> {
+  const [exista] = await tx.select({ t: comanda.trimisaLa, a: comanda.anulataLa }).from(comanda).where(eq(comanda.id, c.id));
+  if (exista?.t || exista?.a) throw new Refuz(409, "Comanda a fost trimisă: nu se mai modifică. Fă o comandă suplimentară.");
+  if (c.linii.length === 0) throw new Refuz(400, "Comanda nu are nicio linie.");
+  if (c.linii.some((l) => !(l.cantitate > 0))) throw new Refuz(400, "Cantitățile de pe comandă trebuie să fie pozitive.");
+  const { trimisa: _t, anulata: _a, ...continut } = c;
+  await tx.insert(comanda).values({ tenantId: ctx.tenantId, id: c.id, continut, creatDe: ctx.utilizatorId })
+    .onConflictDoUpdate({ target: [comanda.tenantId, comanda.id], set: { continut } });
+}
+
+export async function stergeComanda(tx: Baza, id: string): Promise<void> {
+  const c = await comandaDinBaza(tx, id);
+  if (c.trimisa) throw new Refuz(409, "Comanda a fost trimisă: nu se șterge, se anulează.");
+  await tx.delete(comanda).where(eq(comanda.id, id));
+}
+
+export async function trimiteComanda(tx: Baza, id: string, cand: string): Promise<void> {
+  const c = await comandaDinBaza(tx, id);
+  if (c.anulata) throw new Refuz(409, "Comanda e anulată.");
+  if (c.trimisa) return; // a doua apasare nu schimba nimic
+  await tx.update(comanda).set({ trimisaLa: new Date(cand) }).where(eq(comanda.id, id));
+}
+
+export async function anuleazaComanda(tx: Baza, id: string, cand: string): Promise<void> {
+  const c = await comandaDinBaza(tx, id);
+  if (c.anulata) return;
+  await tx.update(comanda).set({ anulataLa: new Date(cand) }).where(eq(comanda.id, id));
+}
+
+/** Id-urile vin de la browser: aceeasi receptie trimisa de doua ori nu se dubleaza. */
+const dinLista = (ids: readonly string[]): (() => string) => {
+  let i = 0;
+  return () => {
+    const id = ids[i++];
+    if (!id) throw new Refuz(400, "Lipsesc id-urile mișcărilor.");
+    return id;
+  };
+};
+
+/**
+ * Receptia: intrarile se calculeaza aici, din comanda din baza (nu din ce
+ * crede browserul ca e pe ea), si se scriu toate sau niciuna.
+ */
+export async function receptioneaza(
+  tx: Baza, ctx: Context, id: string, r: Omit<Receptie, "comanda">, ids: string[], data: string,
+): Promise<number> {
+  const c = await comandaDinBaza(tx, id);
+  const receptie: Receptie = { ...r, comanda: c };
+  const gresit = valideazaReceptie(receptie);
+  if (gresit) throw new Refuz(400, gresit);
+  let scrise = 0;
+  for (const m of intrariDinReceptie(receptie, dinLista(ids), data)) if (await adaugaMiscare(tx, ctx, m)) scrise++;
+  return scrise;
+}
+
+/** Factura venita dupa aviz: storno pe intrarile avizului si intrari noi, cu pretul ei. */
+export async function treceFactura(
+  tx: Baza, ctx: Context, id: string, aviz: string, f: Factura, ids: string[], data: string,
+): Promise<number> {
+  const c = await comandaDinBaza(tx, id);
+  if (!f.document.numar.trim()) throw new Refuz(400, "Scrie numărul facturii.");
+  const { miscari } = await stareDepozit(tx);
+  const noi = inlocuiesteCuFactura(c, miscari, aviz, f, dinLista(ids), data);
+  if (noi.length === 0) throw new Refuz(409, `Avizul ${aviz} nu are intrări pe comanda asta (sau a fost deja înlocuit).`);
+  if (Object.values(f.preturi).some((p) => p.moneda === "RON") && !(f.curs && f.curs > 0)) {
+    throw new Refuz(400, "Prețul e în lei: scrie cursul de pe factură.");
+  }
+  let scrise = 0;
+  for (const m of noi) if (await adaugaMiscare(tx, ctx, m)) scrise++;
+  return scrise;
+}
+
+/** Returul la furnizor: calculat aici, din comanda si miscarile din baza. */
+export async function returneaza(
+  tx: Baza, ctx: Context, id: string, r: Omit<Retur, "comanda">, idMiscare: string, data: string,
+): Promise<number> {
+  const c = await comandaDinBaza(tx, id);
+  const { miscari } = await stareDepozit(tx);
+  // Retrimis (aceeasi miscare deja scrisa), nu se mai valideaza: s-ar socoti cu el inclus.
+  if (miscari.some((m) => m.id === idMiscare)) return 0;
+  const gresit = valideazaRetur({ ...r, comanda: c }, miscari);
+  if (gresit) throw new Refuz(400, gresit);
+  return (await adaugaMiscare(tx, ctx, returLaFurnizor({ ...r, comanda: c }, miscari, () => idMiscare, data))) ? 1 : 0;
+}
+
+/** Poza sau PDF-ul avizului, atasat la comanda trimisa. Retrimis, nu se dubleaza. */
+export async function ataseazaDocument(
+  tx: Baza, ctx: Context, d: DocumentAtasat & { fisier: string },
+): Promise<void> {
+  const c = await comandaDinBaza(tx, d.comanda);
+  if (!c.trimisa) throw new Refuz(409, "Documentul se atașează după ce comanda a fost trimisă.");
+  const f = d.fisier.match(/^data:([^;]+);base64,(.*)$/s);
+  if (!f) throw new Refuz(400, "Fișierul nu are forma așteptată.");
+  await tx.insert(documentFurnizor).values({
+    tenantId: ctx.tenantId, id: d.id, comandaId: d.comanda, tip: d.tip, numar: d.numar, nume: d.nume,
+    tipFisier: f[1]!, fisier: Buffer.from(f[2]!, "base64"), creatDe: ctx.utilizatorId,
+  }).onConflictDoNothing();
+}
+
+export async function fisierDocument(tx: Baza, id: string): Promise<{ nume: string; tip: string; fisier: Buffer } | null> {
+  const [r] = await tx.select({ nume: documentFurnizor.nume, tip: documentFurnizor.tipFisier, fisier: documentFurnizor.fisier })
+    .from(documentFurnizor).where(eq(documentFurnizor.id, id));
+  return r ?? null;
 }

@@ -18,6 +18,7 @@ const ECRANE: Record<string, () => Promise<{ ecran: Ecran }>> = {
   import: () => import("./ecrane/import.js"),
   masuratori: () => import("./ecrane/santier.js"),
   stoc: () => import("./ecrane/stoc.js"),
+  comenzi: () => import("./ecrane/comenzi.js"),
   clienti: () => import("./ecrane/clienti.js"),
   preturi: () => import("./ecrane/preturi.js"),
 };

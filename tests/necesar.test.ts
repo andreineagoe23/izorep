@@ -85,16 +85,16 @@ describe("necesarul de materiale", () => {
     expect(vata.piesePresupuse).toBe(3);
   });
 
-  it("fără rezervă; pierderile la croit sunt pe categorie: tablă și plăci 10 %, tuburi 0 (S15, S16)", async () => {
+  it("fără rezervă; pierderile la croit sunt pe categorie: tablă, saltele și plăci 10 %, tuburi 0 (S15, S16)", async () => {
     const l = await linii([
       [1, "Izolatii cu vata minerala si protectie cu tabla de aluminiu Di114, g30 - ML", "ml", 100],
       [2, "Izolatii cu vata minerala si protectie cu tabla de aluminiu Di60, g40 - ML", "ml", 20],
     ]);
     const n = necesarDinLinii(l);
     expect(n.pierderi).toEqual(PIERDERI_IMPLICITE);
-    const placa = n.materiale.find((m) => m.sistem === "vata_minerala" && m.rand === null)!;
+    const saltea = n.materiale.find((m) => m.sistem === "vata_minerala" && m.rand === null)!;
     const tub = n.materiale.find((m) => m.sistem === "vata_minerala" && m.rand === 60)!;
-    expect([placa.categorie, placa.m2]).toEqual(["placa", 60.5]);
+    expect([saltea.categorie, saltea.m2]).toEqual(["saltea", 60.5]);
     expect([tub.categorie, tub.ml]).toEqual(["tub", 20]);
     expect(n.materiale.find((m) => m.sistem === "tabla")!.pierdere).toBe(0.1);
   });
@@ -110,6 +110,33 @@ describe("necesarul de materiale", () => {
     const l = await linii([[1, "Izolatii cu vata minerala si protectie cu tabla de aluminiu Di114, g30 - ML", "ml", 100]]);
     const vata = necesarDinLinii(l, { ...FARA, pragTub: 114 }).materiale.find((m) => m.sistem === "vata_minerala")!;
     expect([vata.rand, vata.ml, vata.categorie]).toEqual([114, 100, "tub"]);
+  });
+
+  it("forma peste prag vine din ce cumpără firma: vata e saltea, elastomerul placă, focul placă", async () => {
+    // Evidența de achiziții 2024–2026: LM ECO ALU M (saltea lamelară) e articolul
+    // de vată cel mai cumpărat; plăcile de vată (Conlit, Techrock) sunt la foc.
+    const l = await linii([
+      [1, "Izolatii cu vata minerala si protectie cu tabla de aluminiu Di114, g50 - ML", "ml", 10],
+      [2, "Izolatie elastomerica 19 mm teava DN150", "ml", 10],
+      [3, "Protectie la foc EI 60 pentru tubulatura rectangulara, vata minerala 60 mm", "mp", 10],
+    ]);
+    const forme = necesarDinLinii(l, FARA).materiale.filter((m) => m.sistem !== "tabla")
+      .map((m) => `${m.sistem} ${m.grosime_mm} ${m.categorie}`);
+    expect(forme).toEqual(["elastomer 19 placa", "vata_minerala 50 saltea", "vata_minerala 60 placa"]);
+  });
+
+  it("tub peste prag pe un diametru ales (TRANSAVIA: cochilii ø116–ø168), restul saltea", async () => {
+    const l = await linii([
+      [1, "Izolatii cu vata minerala si protectie cu tabla de aluminiu Di140, g50 - ML", "ml", 100],
+      [2, "Izolatii cu vata minerala si protectie cu tabla de aluminiu Di169, g50 - ML", "ml", 50],
+      [3, "Izolatii cu vata minerala si protectie cu tabla de aluminiu Di140, g50 - COT", "buc", 6],
+    ]);
+    const n = necesarDinLinii(l, { ...FARA, tuburiPeste: [140] });
+    expect(n.pestePrag).toEqual([140, 168]);
+    expect(n.tuburiPeste).toEqual([140]);
+    const vata = n.materiale.filter((m) => m.sistem === "vata_minerala").map((m) => [m.categorie, m.rand, m.ml]);
+    // ø140: 100 m + 6 coturi / 3 pe metru = 102 m de cochilie; ø168 rămâne saltea.
+    expect(vata).toEqual([["tub", 140, 102], ["saltea", null, 50]]);
   });
 
   it("necesarul pe poziție: cât material intră într-o unitate a fiecărei poziții din plan", async () => {

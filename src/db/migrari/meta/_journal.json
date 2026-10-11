@@ -50,6 +50,27 @@
       "when": 1791533743844,
       "tag": "0006_imutabile_si_purjare",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791708293919,
+      "tag": "0007_forma_articol",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791708872239,
+      "tag": "0008_comenzi",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1791719502524,
+      "tag": "0009_documente_furnizor",
+      "breakpoints": true
     }
   ]
 }

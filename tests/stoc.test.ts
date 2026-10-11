@@ -15,6 +15,47 @@ const sold = (ms: Miscare[], depozit: string, cheie = vata.cheie): number =>
 
 const baza = { piese: 0, piesePresupuse: 0, pierdere: 0, pozitii: 2, pePozitie: [], valoareOferta: 0 };
 
+describe("forma e în cheia articolului (11 octombrie 2026)", () => {
+  it("tubul și salteaua aceleiași vate sunt articole diferite", () => {
+    const tub = articolDin({ sistem: "vata_minerala", grosime_mm: 50, rand: 140 });
+    const saltea = articolDin({ sistem: "vata_minerala", grosime_mm: 50, rand: null });
+    expect([tub.cheie, tub.um]).toEqual(["vata_minerala|tub|50|140", "ml"]);
+    expect([saltea.cheie, saltea.um]).toEqual(["vata_minerala|saltea|50|-", "m2"]);
+    expect(articolDin({ sistem: "vata_minerala", grosime_mm: 60, rand: null, categorie: "placa" }).cheie)
+      .toBe("vata_minerala|placa|60|-");
+  });
+
+  it("stocul scris fără formă se potrivește tot, iar ambalajul vechi se găsește pe cheia veche", () => {
+    // Articolele și ambalajele salvate înainte aveau cheia `sistem|grosime|rand`.
+    const vechi = { cheie: "vata_minerala|50|-", sistem: "vata_minerala", grosime_mm: 50, rand: null, um: "m2" as const };
+    const nec = [materialManual("vata_minerala", 50, null, 12, "x")];
+    const ms = [m({ tip: "intrare", cantitate: 5, spre: "central", articol: vechi })];
+    const [r] = deComandat(nec, solduri(ms), ["central"], { "vata_minerala|50|-": { unitate: "rolă", continut: 4 } });
+    expect([r!.inStoc, r!.deComandat, r!.ambalaje?.cate]).toEqual([5, 7, 2]);
+  });
+});
+
+describe("ambalajul din evidența de cumpărări, când omul n-a scris altul", () => {
+  it("saltea de vată la rolă după grosime, tub de elastomer de 2 m, cochilie de 1 m", () => {
+    // LM ECO ALU M 60X1000X4000: rolă de 4 m². TRANSAVIA a cumpărat 36 m² = 9 role.
+    const nec = [
+      materialManual("vata_minerala", 60, null, 42.31, "x"),
+      materialManual("elastomer", 19, 48, 101, "x"),
+      materialManual("vata_minerala", 50, 140, 640.2, "x"),
+      materialManual("tabla", 0.8, null, 100, "x"),
+    ];
+    const r = deComandat(nec, [], ["central"]);
+    expect(r.map((x) => x.ambalaje && [x.ambalaje.cate, x.ambalaje.ambalaj.unitate, x.ambalaje.cantitate, x.ambalaje.dinEvidenta]))
+      .toEqual([[11, "rolă", 44, true], [51, "tub", 102, true], [641, "cochilie", 641, true], undefined]);
+  });
+
+  it("ambalajul scris de om bate evidența", () => {
+    const nec = [materialManual("vata_minerala", 60, null, 10, "x")];
+    const [r] = deComandat(nec, [], ["central"], { [nec[0]!.cheie]: { unitate: "pachet", continut: 3 } });
+    expect([r!.ambalaje!.cate, r!.ambalaje!.ambalaj.unitate, r!.ambalaje!.dinEvidenta]).toEqual([4, "pachet", undefined]);
+  });
+});
+
 describe("registrul de stoc", () => {
   it("soldul e suma mișcărilor: intrare, transfer pe șantier, consum, retur", () => {
     const ms = [

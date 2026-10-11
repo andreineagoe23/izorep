@@ -1,0 +1,2155 @@
+{
+ "generat": "2026-10-11",
+ "surse": [
+  "lista K-Flex ST de la Banda Tech, 24.06.2026",
+  "evidența de achiziții RADOIA și ISORAD, facturile din 2025-01-01"
+ ],
+ "preturi": {
+  "elastomer|placa|10|-": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 25.872,
+    "moneda": "RON",
+    "data": "2026-05-12",
+    "sursa": "factura 202617094 din 12.05.2026",
+    "curs": 5.28
+   }
+  ],
+  "elastomer|placa|12|-": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 33.453,
+    "moneda": "RON",
+    "data": "2026-07-02",
+    "sursa": "factura 202617479 din 02.07.2026",
+    "curs": 5.31
+   }
+  ],
+  "elastomer|placa|13|-": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 25.8505,
+    "moneda": "RON",
+    "data": "2026-08-28",
+    "sursa": "factura 202617884 din 28.08.2026",
+    "curs": 5.33
+   }
+  ],
+  "elastomer|placa|19|-": [
+   {
+    "furnizor": "Ravago Rom",
+    "valoare": 330,
+    "moneda": "RON",
+    "data": "2026-09-09",
+    "sursa": "factura 105007139 din 09.09.2026"
+   },
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 30.914,
+    "moneda": "RON",
+    "data": "2026-08-28",
+    "sursa": "factura 202617884 din 28.08.2026",
+    "curs": 5.33
+   }
+  ],
+  "elastomer|placa|25|-": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 51.4008,
+    "moneda": "RON",
+    "data": "2026-08-19",
+    "sursa": "factura 202617824 din 19.08.2026",
+    "curs": 5.31
+   },
+   {
+    "furnizor": "Ravago Rom",
+    "valoare": 41.1383,
+    "moneda": "RON",
+    "data": "2025-04-17",
+    "sursa": "factura 250403843 din 17.04.2025"
+   }
+  ],
+  "elastomer|placa|32|-": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 67.4778,
+    "moneda": "RON",
+    "data": "2026-08-28",
+    "sursa": "factura 202617885 din 28.08.2026",
+    "curs": 5.33
+   }
+  ],
+  "elastomer|placa|50|-": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 152.44,
+    "moneda": "RON",
+    "data": "2025-12-08",
+    "sursa": "factura 202516105 din 08.12.2025",
+    "curs": 5.15
+   }
+  ],
+  "elastomer|placa|6|-": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 18.3563,
+    "moneda": "RON",
+    "data": "2026-05-06",
+    "sursa": "factura 202617045 din 06.05.2026",
+    "curs": 5.29
+   }
+  ],
+  "elastomer|placa|9|-": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 28.4616,
+    "moneda": "RON",
+    "data": "2026-07-22",
+    "sursa": "factura 202617624 din 22.07.2026",
+    "curs": 5.31
+   }
+  ],
+  "elastomer|tub|13|10": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 0.3512,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|13|102": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 3.0275,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|13|108": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 3.1122,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|13|114": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 3.415,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|13|125": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 4.4322,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|13|133": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 5.1467,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|13|140": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 5.2315,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|13|15": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 0.4359,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|13|159": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 5.5584,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|13|18": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 3.5112,
+    "moneda": "RON",
+    "data": "2026-08-21",
+    "sursa": "factura 202617846 din 21.08.2026",
+    "curs": 5.32
+   }
+  ],
+  "elastomer|tub|13|22": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 2.5819,
+    "moneda": "RON",
+    "data": "2026-08-28",
+    "sursa": "factura 202617885 din 28.08.2026",
+    "curs": 5.33
+   }
+  ],
+  "elastomer|tub|13|28": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 2.9315,
+    "moneda": "RON",
+    "data": "2026-08-28",
+    "sursa": "factura 202617885 din 28.08.2026",
+    "curs": 5.33
+   }
+  ],
+  "elastomer|tub|13|35": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 3.1623,
+    "moneda": "RON",
+    "data": "2026-08-28",
+    "sursa": "factura 202617884 din 28.08.2026",
+    "curs": 5.33
+   }
+  ],
+  "elastomer|tub|13|42": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 3.8083,
+    "moneda": "RON",
+    "data": "2026-08-28",
+    "sursa": "factura 202617884 din 28.08.2026",
+    "curs": 5.33
+   }
+  ],
+  "elastomer|tub|13|48": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 7.0224,
+    "moneda": "RON",
+    "data": "2026-08-21",
+    "sursa": "factura 202617846 din 21.08.2026",
+    "curs": 5.32
+   },
+   {
+    "furnizor": "Ravago Rom",
+    "valoare": 4.6,
+    "moneda": "RON",
+    "data": "2025-09-18",
+    "sursa": "factura 105001796 din 18.09.2025"
+   }
+  ],
+  "elastomer|tub|13|54": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 8.4429,
+    "moneda": "RON",
+    "data": "2026-08-17",
+    "sursa": "factura 202617804 din 17.08.2026",
+    "curs": 5.31
+   }
+  ],
+  "elastomer|tub|13|6": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 0.3512,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|13|60": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 6.929,
+    "moneda": "RON",
+    "data": "2026-08-28",
+    "sursa": "factura 202617884 din 28.08.2026",
+    "curs": 5.33
+   }
+  ],
+  "elastomer|tub|13|64": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 9.593,
+    "moneda": "RON",
+    "data": "2026-06-26",
+    "sursa": "factura 202617443 din 26.06.2026",
+    "curs": 5.3
+   }
+  ],
+  "elastomer|tub|13|70": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 1.7317,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|13|76": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 11.6289,
+    "moneda": "RON",
+    "data": "2026-08-19",
+    "sursa": "factura 202617825 din 19.08.2026",
+    "curs": 5.31
+   }
+  ],
+  "elastomer|tub|13|80": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 1.9619,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|13|89": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 12.0006,
+    "moneda": "RON",
+    "data": "2026-07-20",
+    "sursa": "factura 202617607 din 20.07.2026",
+    "curs": 5.31
+   }
+  ],
+  "elastomer|tub|19|10": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 0.7266,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|19|102": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 4.6745,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|19|108": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 4.7229,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|19|114": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 5.302,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|19|125": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 5.3041,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|19|133": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 5.4373,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|19|140": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 5.6311,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|19|15": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 0.8962,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|19|159": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 6.4909,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|19|18": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 0.9446,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|19|22": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 0.9688,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|19|28": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 1.0173,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|19|35": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 1.211,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|19|42": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 1.4169,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|19|48": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 14.63,
+    "moneda": "RON",
+    "data": "2026-08-03",
+    "sursa": "factura 202617708 din 03.08.2026",
+    "curs": 5.32
+   },
+   {
+    "furnizor": "Ravago Rom",
+    "valoare": 10.105,
+    "moneda": "RON",
+    "data": "2025-04-04",
+    "sursa": "factura 250401013 din 04.04.2025"
+   }
+  ],
+  "elastomer|tub|19|54": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 2.1919,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   },
+   {
+    "furnizor": "Ravago Rom",
+    "valoare": 11.66,
+    "moneda": "RON",
+    "data": "2025-08-19",
+    "sursa": "factura 105001296 din 19.08.2025"
+   }
+  ],
+  "elastomer|tub|19|6": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 0.7266,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|19|60": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 13.3812,
+    "moneda": "RON",
+    "data": "2026-08-13",
+    "sursa": "factura 202617790 din 13.08.2026",
+    "curs": 5.31
+   },
+   {
+    "furnizor": "Ravago Rom",
+    "valoare": 12.665,
+    "moneda": "RON",
+    "data": "2025-04-04",
+    "sursa": "factura 250401013 din 04.04.2025"
+   }
+  ],
+  "elastomer|tub|19|64": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 2.6279,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|19|70": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 2.979,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|19|76": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 16.006,
+    "moneda": "RON",
+    "data": "2026-07-27",
+    "sursa": "factura 202617648 din 27.07.2026",
+    "curs": 5.3
+   },
+   {
+    "furnizor": "MTM Izolatii",
+    "valoare": 21.2,
+    "moneda": "RON",
+    "data": "2025-03-25",
+    "sursa": "factura 252588 din 25.03.2025"
+   },
+   {
+    "furnizor": "Ravago Rom",
+    "valoare": 15.9,
+    "moneda": "RON",
+    "data": "2025-02-12",
+    "sursa": "factura 2502020888 din 12.02.2025"
+   }
+  ],
+  "elastomer|tub|19|8": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 0.7266,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|19|80": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 3.2091,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|19|89": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 25.122,
+    "moneda": "RON",
+    "data": "2026-08-14",
+    "sursa": "factura 202617797 din 14.08.2026",
+    "curs": 5.3
+   },
+   {
+    "furnizor": "Ravago Rom",
+    "valoare": 17.655,
+    "moneda": "RON",
+    "data": "2025-08-19",
+    "sursa": "factura 105001296 din 19.08.2025"
+   }
+  ],
+  "elastomer|tub|25|108": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 7.1206,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|25|114": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 7.5808,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|25|140": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 8.3195,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|25|18": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 1.429,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|25|22": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 1.6227,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|25|28": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 1.8528,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|25|35": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 2.2646,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|25|42": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 2.7247,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|25|48": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 2.8943,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|25|54": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 26.21,
+    "moneda": "RON",
+    "data": "2026-08-19",
+    "sursa": "factura 202617823 din 19.08.2026",
+    "curs": 5.31
+   }
+  ],
+  "elastomer|tub|25|60": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 19.928,
+    "moneda": "RON",
+    "data": "2026-07-06",
+    "sursa": "factura 202617501 din 06.07.2026",
+    "curs": 5.3
+   }
+  ],
+  "elastomer|tub|25|64": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 4.0084,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|25|70": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 4.408,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|25|76": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 4.5896,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|25|89": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 27.878,
+    "moneda": "RON",
+    "data": "2026-07-06",
+    "sursa": "factura 202617501 din 06.07.2026",
+    "curs": 5.3
+   }
+  ],
+  "elastomer|tub|32|102": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 7.6414,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|32|108": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 8.6706,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|32|114": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 9.5547,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|32|133": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 11.2864,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|32|140": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 12.3642,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|32|15": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 1.9496,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|32|159": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 13.6963,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|32|18": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 2.1314,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|32|22": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 2.4341,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|32|28": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 2.7126,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|32|35": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 2.7974,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|32|42": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 3.5725,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|32|48": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 3.9599,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|32|54": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 4.8924,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|32|60": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 5.1709,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|32|64": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 5.6916,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|32|70": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 6.1519,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|32|76": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 6.2003,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|32|80": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 6.6362,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|32|89": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 7.3508,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|40|114": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 11.9646,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|40|140": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 18.9278,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|40|169": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 24.1108,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|40|22": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 5.728,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|40|28": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 5.958,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|40|35": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 6.3698,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|40|42": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 6.5273,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|40|48": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 6.8421,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|40|60": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 8.4406,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|40|76": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 10.8384,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|40|89": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 11.02,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|50|133": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 58.5635,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|50|22": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 9.4215,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|50|28": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 12.013,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|50|35": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 15.0163,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|50|42": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 17.8379,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|50|48": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 22.8393,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|50|54": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 23.1783,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|50|60": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 25.116,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|50|64": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 30.0083,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|50|76": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 31.8127,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|50|89": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 37.2501,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|6|10": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 0.218,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|6|15": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 0.2664,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|6|18": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 0.2785,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|6|22": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 2.6068,
+    "moneda": "RON",
+    "data": "2026-08-03",
+    "sursa": "factura 202617707 din 03.08.2026",
+    "curs": 5.32
+   }
+  ],
+  "elastomer|tub|6|28": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 2.9792,
+    "moneda": "RON",
+    "data": "2026-08-03",
+    "sursa": "factura 202617707 din 03.08.2026",
+    "curs": 5.32
+   }
+  ],
+  "elastomer|tub|6|35": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 0.4723,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|6|6": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 0.2059,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|6|8": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 0.218,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|9|10": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 0.2906,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|9|102": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 2.4704,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|9|108": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 3.3666,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|9|114": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 4.0447,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|9|140": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 4.2142,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|9|15": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 0.3512,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|9|159": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 4.6503,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|9|18": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 2.7612,
+    "moneda": "RON",
+    "data": "2026-08-17",
+    "sursa": "factura 202617804 din 17.08.2026",
+    "curs": 5.31
+   }
+  ],
+  "elastomer|tub|9|22": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 2.7612,
+    "moneda": "RON",
+    "data": "2026-08-17",
+    "sursa": "factura 202617803 din 17.08.2026",
+    "curs": 5.31
+   }
+  ],
+  "elastomer|tub|9|28": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 2.9736,
+    "moneda": "RON",
+    "data": "2026-08-17",
+    "sursa": "factura 202617803 din 17.08.2026",
+    "curs": 5.31
+   }
+  ],
+  "elastomer|tub|9|35": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 3.5046,
+    "moneda": "RON",
+    "data": "2026-07-22",
+    "sursa": "factura 202617624 din 22.07.2026",
+    "curs": 5.31
+   }
+  ],
+  "elastomer|tub|9|42": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 4.0356,
+    "moneda": "RON",
+    "data": "2026-08-13",
+    "sursa": "factura 202617783 din 13.08.2026",
+    "curs": 5.31
+   }
+  ],
+  "elastomer|tub|9|48": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 5.0445,
+    "moneda": "RON",
+    "data": "2026-07-20",
+    "sursa": "factura 202617599 din 20.07.2026",
+    "curs": 5.31
+   }
+  ],
+  "elastomer|tub|9|54": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 0.993,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|9|6": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 0.2664,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|9|60": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 6.8499,
+    "moneda": "RON",
+    "data": "2026-08-19",
+    "sursa": "factura 202617823 din 19.08.2026",
+    "curs": 5.31
+   }
+  ],
+  "elastomer|tub|9|64": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 7.5933,
+    "moneda": "RON",
+    "data": "2026-08-19",
+    "sursa": "factura 202617823 din 19.08.2026",
+    "curs": 5.31
+   }
+  ],
+  "elastomer|tub|9|70": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 1.5743,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|9|76": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 9.2394,
+    "moneda": "RON",
+    "data": "2026-08-17",
+    "sursa": "factura 202617803 din 17.08.2026",
+    "curs": 5.31
+   }
+  ],
+  "elastomer|tub|9|8": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 0.2785,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|9|80": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 2.1919,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "elastomer|tub|9|89": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 2.2767,
+    "moneda": "EUR",
+    "data": "2026-06-24",
+    "sursa": "lista K-Flex ST, 24.06.2026"
+   }
+  ],
+  "tabla|tabla|0.6|-": [
+   {
+    "furnizor": "STEELMET Romania",
+    "valoare": 23.6,
+    "moneda": "RON",
+    "data": "2026-08-14",
+    "sursa": "factura 91301115 din 14.08.2026"
+   },
+   {
+    "furnizor": "Metal DM Automotive",
+    "valoare": 26.3,
+    "moneda": "RON",
+    "data": "2026-07-22",
+    "sursa": "factura 14837 din 22.07.2026"
+   },
+   {
+    "furnizor": "Color Metal",
+    "valoare": 19.66,
+    "moneda": "RON",
+    "data": "2026-02-05",
+    "sursa": "factura 13092284 din 05.02.2026"
+   }
+  ],
+  "tabla|tabla|0.8|-": [
+   {
+    "furnizor": "STEELMET Romania",
+    "valoare": 23.63,
+    "moneda": "RON",
+    "data": "2026-09-08",
+    "sursa": "factura 91301355 din 08.09.2026",
+    "curs": 5.2508
+   },
+   {
+    "furnizor": "Metal DM Automotive",
+    "valoare": 26.3,
+    "moneda": "RON",
+    "data": "2026-07-31",
+    "sursa": "factura 14890 din 31.07.2026"
+   },
+   {
+    "furnizor": "Color Metal",
+    "valoare": 18.81,
+    "moneda": "RON",
+    "data": "2025-10-27",
+    "sursa": "factura 21172176 din 27.10.2025"
+   }
+  ],
+  "vata_minerala|placa|100|-": [
+   {
+    "furnizor": "Ravago Rom",
+    "valoare": 80,
+    "moneda": "RON",
+    "data": "2025-05-21",
+    "sursa": "factura 250504380 din 21.05.2025"
+   }
+  ],
+  "vata_minerala|placa|40|-": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 35.046,
+    "moneda": "RON",
+    "data": "2026-08-19",
+    "sursa": "factura 202617824 din 19.08.2026",
+    "curs": 5.31
+   },
+   {
+    "furnizor": "Ravago Rom",
+    "valoare": 31.94444,
+    "moneda": "RON",
+    "data": "2025-10-22",
+    "sursa": "factura 105002408 din 22.10.2025"
+   }
+  ],
+  "vata_minerala|placa|60|-": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 51.1252,
+    "moneda": "RON",
+    "data": "2026-08-03",
+    "sursa": "factura 202617695 din 03.08.2026",
+    "curs": 5.32
+   }
+  ],
+  "vata_minerala|saltea|100|-": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 45.135,
+    "moneda": "RON",
+    "data": "2026-08-03",
+    "sursa": "factura 202617699 din 03.08.2026",
+    "curs": 5.31
+   },
+   {
+    "furnizor": "Ravago Rom",
+    "valoare": 71,
+    "moneda": "RON",
+    "data": "2025-10-13",
+    "sursa": "factura 105002212 din 13.10.2025"
+   }
+  ],
+  "vata_minerala|saltea|20|-": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 16.461,
+    "moneda": "RON",
+    "data": "2026-08-19",
+    "sursa": "factura 202617826 din 19.08.2026",
+    "curs": 5.31
+   },
+   {
+    "furnizor": "MTM Izolatii",
+    "valoare": 17.8292,
+    "moneda": "RON",
+    "data": "2026-03-19",
+    "sursa": "factura 264969 din 19.03.2026",
+    "curs": 5.15
+   },
+   {
+    "furnizor": "Ravago Rom",
+    "valoare": 18.1666,
+    "moneda": "RON",
+    "data": "2026-03-05",
+    "sursa": "factura 105004047 din 05.03.2026"
+   }
+  ],
+  "vata_minerala|saltea|30|-": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 19.152,
+    "moneda": "RON",
+    "data": "2026-09-08",
+    "sursa": "factura 202617965 din 08.09.2026",
+    "curs": 5.32
+   },
+   {
+    "furnizor": "MTM Izolatii",
+    "valoare": 21.55875,
+    "moneda": "RON",
+    "data": "2026-08-24",
+    "sursa": "factura 271323 din 24.08.2026"
+   },
+   {
+    "furnizor": "Ravago Rom",
+    "valoare": 19.5,
+    "moneda": "RON",
+    "data": "2026-06-22",
+    "sursa": "factura 105005719 din 22.06.2026"
+   }
+  ],
+  "vata_minerala|saltea|40|-": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 24.8976,
+    "moneda": "RON",
+    "data": "2026-09-09",
+    "sursa": "factura 202617973 din 09.09.2026",
+    "curs": 5.32
+   },
+   {
+    "furnizor": "Ravago Rom",
+    "valoare": 33.6,
+    "moneda": "RON",
+    "data": "2026-09-08",
+    "sursa": "factura 105007095 din 08.09.2026"
+   }
+  ],
+  "vata_minerala|saltea|50|-": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 26.3872,
+    "moneda": "RON",
+    "data": "2026-09-08",
+    "sursa": "factura 202617965 din 08.09.2026",
+    "curs": 5.32
+   },
+   {
+    "furnizor": "MTM Izolatii",
+    "valoare": 28.848,
+    "moneda": "RON",
+    "data": "2026-08-20",
+    "sursa": "factura 271206 din 20.08.2026"
+   },
+   {
+    "furnizor": "Ravago Rom",
+    "valoare": 28.5333,
+    "moneda": "RON",
+    "data": "2026-07-08",
+    "sursa": "factura 85008729 din 08.07.2026"
+   }
+  ],
+  "vata_minerala|saltea|60|-": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 34.58,
+    "moneda": "RON",
+    "data": "2026-09-08",
+    "sursa": "factura 202617970 din 08.09.2026",
+    "curs": 5.32
+   }
+  ],
+  "vata_minerala|saltea|70|-": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 33.8688,
+    "moneda": "RON",
+    "data": "2025-02-17",
+    "sursa": "factura 202514219 din 17.02.2025",
+    "curs": 5.04
+   }
+  ],
+  "vata_minerala|saltea|80|-": [
+   {
+    "furnizor": "MTM Izolatii",
+    "valoare": 122.59,
+    "moneda": "RON",
+    "data": "2026-09-09",
+    "sursa": "factura 272049 din 09.09.2026"
+   },
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 33.516,
+    "moneda": "RON",
+    "data": "2026-05-25",
+    "sursa": "factura 202617200 din 25.05.2026",
+    "curs": 5.32
+   }
+  ],
+  "vata_minerala|tub|20|15": [
+   {
+    "furnizor": "Isoline",
+    "valoare": 5.9508,
+    "moneda": "RON",
+    "data": "2025-06-02",
+    "sursa": "factura 202524736 din 02.06.2025",
+    "curs": 5.13
+   }
+  ],
+  "vata_minerala|tub|20|18": [
+   {
+    "furnizor": "Isoline",
+    "valoare": 6.2658,
+    "moneda": "RON",
+    "data": "2026-05-21",
+    "sursa": "factura 202626948 din 21.05.2026",
+    "curs": 5.31
+   }
+  ],
+  "vata_minerala|tub|20|22": [
+   {
+    "furnizor": "Isoline",
+    "valoare": 6.7437,
+    "moneda": "RON",
+    "data": "2026-05-21",
+    "sursa": "factura 202626948 din 21.05.2026",
+    "curs": 5.31
+   }
+  ],
+  "vata_minerala|tub|20|28": [
+   {
+    "furnizor": "Isoline",
+    "valoare": 7.434,
+    "moneda": "RON",
+    "data": "2026-05-21",
+    "sursa": "factura 202626948 din 21.05.2026",
+    "curs": 5.31
+   }
+  ],
+  "vata_minerala|tub|20|35": [
+   {
+    "furnizor": "Isoline",
+    "valoare": 8.48,
+    "moneda": "RON",
+    "data": "2026-05-20",
+    "sursa": "factura 202626942 din 20.05.2026",
+    "curs": 5.3
+   }
+  ],
+  "vata_minerala|tub|20|42": [
+   {
+    "furnizor": "Isoline",
+    "valoare": 9.699,
+    "moneda": "RON",
+    "data": "2026-05-20",
+    "sursa": "factura 202626942 din 20.05.2026",
+    "curs": 5.3
+   }
+  ],
+  "vata_minerala|tub|20|48": [
+   {
+    "furnizor": "Isoline",
+    "valoare": 10.6,
+    "moneda": "RON",
+    "data": "2026-05-20",
+    "sursa": "factura 202626942 din 20.05.2026",
+    "curs": 5.3
+   }
+  ],
+  "vata_minerala|tub|20|60": [
+   {
+    "furnizor": "Isoline",
+    "valoare": 12.773,
+    "moneda": "RON",
+    "data": "2026-05-20",
+    "sursa": "factura 202626942 din 20.05.2026",
+    "curs": 5.3
+   }
+  ],
+  "vata_minerala|tub|25|28": [
+   {
+    "furnizor": "Isoline",
+    "valoare": 1.93,
+    "moneda": "RON",
+    "data": "2025-10-31",
+    "sursa": "factura 3238 din 31.10.2025"
+   }
+  ],
+  "vata_minerala|tub|30|108": [
+   {
+    "furnizor": "Isoline",
+    "valoare": 24.0505,
+    "moneda": "RON",
+    "data": "2025-11-10",
+    "sursa": "factura 202525694 din 10.11.2025",
+    "curs": 5.15
+   }
+  ],
+  "vata_minerala|tub|30|18": [
+   {
+    "furnizor": "Isoline",
+    "valoare": 8.8312,
+    "moneda": "RON",
+    "data": "2026-06-08",
+    "sursa": "factura 202627016 din 08.06.2026",
+    "curs": 5.32
+   }
+  ],
+  "vata_minerala|tub|30|22": [
+   {
+    "furnizor": "Isoline",
+    "valoare": 9.6642,
+    "moneda": "RON",
+    "data": "2026-07-16",
+    "sursa": "factura 202627272 din 16.07.2026",
+    "curs": 5.31
+   }
+  ],
+  "vata_minerala|tub|30|28": [
+   {
+    "furnizor": "Isoline",
+    "valoare": 10.7133,
+    "moneda": "RON",
+    "data": "2026-08-28",
+    "sursa": "factura 202627538 din 28.08.2026",
+    "curs": 5.33
+   },
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 10.6731,
+    "moneda": "RON",
+    "data": "2026-08-12",
+    "sursa": "factura 202627445 din 12.08.2026",
+    "curs": 5.31
+   }
+  ],
+  "vata_minerala|tub|30|35": [
+   {
+    "furnizor": "Isoline",
+    "valoare": 11.9392,
+    "moneda": "RON",
+    "data": "2026-08-28",
+    "sursa": "factura 202627538 din 28.08.2026",
+    "curs": 5.33
+   },
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 11.8944,
+    "moneda": "RON",
+    "data": "2026-08-12",
+    "sursa": "factura 202627445 din 12.08.2026",
+    "curs": 5.31
+   }
+  ],
+  "vata_minerala|tub|30|42": [
+   {
+    "furnizor": "Isoline",
+    "valoare": 13.3783,
+    "moneda": "RON",
+    "data": "2026-08-31",
+    "sursa": "factura 202627569 din 31.08.2026",
+    "curs": 5.33
+   },
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 12.9516,
+    "moneda": "RON",
+    "data": "2026-04-07",
+    "sursa": "factura 202626700 din 07.04.2026",
+    "curs": 5.16
+   }
+  ],
+  "vata_minerala|tub|30|48": [
+   {
+    "furnizor": "Isoline",
+    "valoare": 14.7641,
+    "moneda": "RON",
+    "data": "2026-08-31",
+    "sursa": "factura 202627569 din 31.08.2026",
+    "curs": 5.33
+   },
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 14.7087,
+    "moneda": "RON",
+    "data": "2026-08-12",
+    "sursa": "factura 202627445 din 12.08.2026",
+    "curs": 5.31
+   }
+  ],
+  "vata_minerala|tub|30|54": [
+   {
+    "furnizor": "Isoline",
+    "valoare": 12.978,
+    "moneda": "RON",
+    "data": "2025-11-10",
+    "sursa": "factura 202525694 din 10.11.2025",
+    "curs": 5.15
+   }
+  ],
+  "vata_minerala|tub|30|60": [
+   {
+    "furnizor": "Isoline",
+    "valoare": 17.2044,
+    "moneda": "RON",
+    "data": "2026-07-16",
+    "sursa": "factura 202627272 din 16.07.2026",
+    "curs": 5.31
+   }
+  ],
+  "vata_minerala|tub|30|76": [
+   {
+    "furnizor": "Isoline",
+    "valoare": 17.4699,
+    "moneda": "RON",
+    "data": "2026-07-16",
+    "sursa": "factura 202627272 din 16.07.2026",
+    "curs": 5.31
+   }
+  ],
+  "vata_minerala|tub|30|89": [
+   {
+    "furnizor": "Isoline",
+    "valoare": 19.7532,
+    "moneda": "RON",
+    "data": "2026-07-13",
+    "sursa": "factura 202627242 din 13.07.2026",
+    "curs": 5.31
+   },
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 19.1952,
+    "moneda": "RON",
+    "data": "2026-04-07",
+    "sursa": "factura 202626700 din 07.04.2026",
+    "curs": 5.16
+   }
+  ],
+  "vata_minerala|tub|40|22": [
+   {
+    "furnizor": "Isoline",
+    "valoare": 13.2468,
+    "moneda": "RON",
+    "data": "2026-09-03",
+    "sursa": "factura 202627579 din 03.09.2026",
+    "curs": 5.32
+   }
+  ],
+  "vata_minerala|tub|40|28": [
+   {
+    "furnizor": "Isoline",
+    "valoare": 14.522,
+    "moneda": "RON",
+    "data": "2026-07-13",
+    "sursa": "factura 202627245 din 13.07.2026",
+    "curs": 5.3
+   }
+  ],
+  "vata_minerala|tub|40|35": [
+   {
+    "furnizor": "Isoline",
+    "valoare": 15.96,
+    "moneda": "RON",
+    "data": "2026-09-03",
+    "sursa": "factura 202627579 din 03.09.2026",
+    "curs": 5.32
+   }
+  ],
+  "vata_minerala|tub|40|42": [
+   {
+    "furnizor": "Isoline",
+    "valoare": 17.556,
+    "moneda": "RON",
+    "data": "2026-06-03",
+    "sursa": "factura 202627001 din 03.06.2026",
+    "curs": 5.32
+   }
+  ],
+  "vata_minerala|tub|40|48": [
+   {
+    "furnizor": "Isoline",
+    "valoare": 19.3116,
+    "moneda": "RON",
+    "data": "2026-06-03",
+    "sursa": "factura 202627001 din 03.06.2026",
+    "curs": 5.32
+   }
+  ],
+  "vata_minerala|tub|40|54": [
+   {
+    "furnizor": "Isoline",
+    "valoare": 20.5738,
+    "moneda": "RON",
+    "data": "2026-08-28",
+    "sursa": "factura 202627538 din 28.08.2026",
+    "curs": 5.33
+   }
+  ],
+  "vata_minerala|tub|40|60": [
+   {
+    "furnizor": "Isoline",
+    "valoare": 22.078,
+    "moneda": "RON",
+    "data": "2026-09-03",
+    "sursa": "factura 202627579 din 03.09.2026",
+    "curs": 5.32
+   }
+  ],
+  "vata_minerala|tub|40|76": [
+   {
+    "furnizor": "Isoline",
+    "valoare": 23.2578,
+    "moneda": "RON",
+    "data": "2026-08-13",
+    "sursa": "factura 202627450 din 13.08.2026",
+    "curs": 5.31
+   }
+  ],
+  "vata_minerala|tub|40|89": [
+   {
+    "furnizor": "Isoline",
+    "valoare": 25.97,
+    "moneda": "RON",
+    "data": "2026-07-13",
+    "sursa": "factura 202627245 din 13.07.2026",
+    "curs": 5.3
+   }
+  ],
+  "vata_minerala|tub|50|114": [
+   {
+    "furnizor": "Isoline",
+    "valoare": 39.2084,
+    "moneda": "RON",
+    "data": "2026-07-31",
+    "sursa": "factura 202627377 din 31.07.2026",
+    "curs": 5.32
+   }
+  ],
+  "vata_minerala|tub|50|140": [
+   {
+    "furnizor": "Isoline",
+    "valoare": 47.4544,
+    "moneda": "RON",
+    "data": "2026-09-03",
+    "sursa": "factura 202627580 din 03.09.2026",
+    "curs": 5.32
+   }
+  ],
+  "vata_minerala|tub|50|168": [
+   {
+    "furnizor": "Isoline",
+    "valoare": 58.4668,
+    "moneda": "RON",
+    "data": "2026-08-20",
+    "sursa": "factura 202627488 din 20.08.2026",
+    "curs": 5.32
+   }
+  ],
+  "vata_minerala|tub|50|22": [
+   {
+    "furnizor": "Isoline",
+    "valoare": 16.995,
+    "moneda": "RON",
+    "data": "2026-02-27",
+    "sursa": "factura 202626521 din 27.02.2026",
+    "curs": 5.15
+   }
+  ],
+  "vata_minerala|tub|50|28": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 18.7974,
+    "moneda": "RON",
+    "data": "2026-08-12",
+    "sursa": "factura 202627445 din 12.08.2026",
+    "curs": 5.31
+   },
+   {
+    "furnizor": "Isoline",
+    "valoare": 15.141,
+    "moneda": "RON",
+    "data": "2025-11-10",
+    "sursa": "factura 202525694 din 10.11.2025",
+    "curs": 5.15
+   }
+  ],
+  "vata_minerala|tub|50|35": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 20.709,
+    "moneda": "RON",
+    "data": "2026-08-12",
+    "sursa": "factura 202627445 din 12.08.2026",
+    "curs": 5.31
+   },
+   {
+    "furnizor": "Isoline",
+    "valoare": 20.085,
+    "moneda": "RON",
+    "data": "2026-02-27",
+    "sursa": "factura 202626521 din 27.02.2026",
+    "curs": 5.15
+   }
+  ],
+  "vata_minerala|tub|50|42": [
+   {
+    "furnizor": "Isoline",
+    "valoare": 22.8861,
+    "moneda": "RON",
+    "data": "2026-06-19",
+    "sursa": "factura 202627094 din 19.06.2026",
+    "curs": 5.31
+   }
+  ],
+  "vata_minerala|tub|50|48": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 24.4791,
+    "moneda": "RON",
+    "data": "2026-08-12",
+    "sursa": "factura 202627445 din 12.08.2026",
+    "curs": 5.31
+   },
+   {
+    "furnizor": "Isoline",
+    "valoare": 15.9854,
+    "moneda": "RON",
+    "data": "2025-11-17",
+    "sursa": "factura 202525758 din 17.11.2025",
+    "curs": 5.14
+   }
+  ],
+  "vata_minerala|tub|50|54": [
+   {
+    "furnizor": "Isoline",
+    "valoare": 286.74,
+    "moneda": "RON",
+    "data": "2026-06-19",
+    "sursa": "factura 202627094 din 19.06.2026",
+    "curs": 5.31
+   }
+  ],
+  "vata_minerala|tub|50|60": [
+   {
+    "furnizor": "Banda Tech",
+    "valoare": 28.0899,
+    "moneda": "RON",
+    "data": "2026-08-12",
+    "sursa": "factura 202627445 din 12.08.2026",
+    "curs": 5.31
+   },
+   {
+    "furnizor": "Isoline",
+    "valoare": 28.1428,
+    "moneda": "RON",
+    "data": "2026-07-31",
+    "sursa": "factura 202627376 din 31.07.2026",
+    "curs": 5.32
+   }
+  ],
+  "vata_minerala|tub|50|76": [
+   {
+    "furnizor": "Isoline",
+    "valoare": 29.7388,
+    "moneda": "RON",
+    "data": "2026-06-03",
+    "sursa": "factura 202627001 din 03.06.2026",
+    "curs": 5.32
+   }
+  ],
+  "vata_minerala|tub|50|89": [
+   {
+    "furnizor": "Isoline",
+    "valoare": 32.7712,
+    "moneda": "RON",
+    "data": "2026-09-03",
+    "sursa": "factura 202627579 din 03.09.2026",
+    "curs": 5.32
+   }
+  ],
+  "vata_minerala|tub|60|54": [
+   {
+    "furnizor": "Isoline",
+    "valoare": 16.6725,
+    "moneda": "RON",
+    "data": "2025-06-02",
+    "sursa": "factura 202524736 din 02.06.2025",
+    "curs": 5.13
+   }
+  ],
+  "vata_minerala|tub|60|60": [
+   {
+    "furnizor": "Isoline",
+    "valoare": 35.2584,
+    "moneda": "RON",
+    "data": "2026-07-20",
+    "sursa": "factura 202627297 din 20.07.2026",
+    "curs": 5.31
+   }
+  ],
+  "vata_minerala|tub|80|60": [
+   {
+    "furnizor": "Isoline",
+    "valoare": 37.222,
+    "moneda": "RON",
+    "data": "2025-01-09",
+    "sursa": "factura 202524036 din 09.01.2025",
+    "curs": 5.03
+   }
+  ],
+  "vata_minerala|tub|80|76": [
+   {
+    "furnizor": "Isoline",
+    "valoare": 41.4472,
+    "moneda": "RON",
+    "data": "2025-01-09",
+    "sursa": "factura 202524036 din 09.01.2025",
+    "curs": 5.03
+   }
+  ],
+  "vata_minerala|tub|80|89": [
+   {
+    "furnizor": "Isoline",
+    "valoare": 46.0748,
+    "moneda": "RON",
+    "data": "2025-01-09",
+    "sursa": "factura 202524036 din 09.01.2025",
+    "curs": 5.03
+   }
+  ]
+ }
+}

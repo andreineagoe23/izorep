@@ -16,6 +16,8 @@ import { z } from "zod";
 import { extrageCuModel, MODEL_IMPLICIT } from "../import/extract-llm.js";
 import { RaspunsModel, type LinieExtrasa } from "../import/schema.js";
 import { citestePoza, MODEL_POZE_IMPLICIT, type RezultatPoza } from "../santier/extrage-poza.js";
+import { CitireAviz } from "../stoc/aviz.js";
+import { citesteAviz } from "../stoc/aviz-model.js";
 
 /** Plafon per cerere: un fisier de 3.000 de randuri nu porneste 3.000 de extrageri dintr-un clic gresit. */
 export const MAX_LINII = 400;
@@ -33,6 +35,7 @@ export interface OptiuniModel {
   /** Inlocuibile in teste: fara retea, fara OpenAI. */
   extrage?: (linii: LinieDeExtras[], o: { apiKey: string; model: string; dimensiuneLot: number; concurenta: number }) => Promise<LinieExtrasa[]>;
   citeste?: (imagine: string, o: { apiKey: string; model: string }) => Promise<Pick<RezultatPoza, "termeni" | "note" | "model">>;
+  citesteAviz?: (fisier: string, o: { apiKey: string; model: string; nume?: string }) => Promise<CitireAviz & { model: string }>;
 }
 
 /** Din mediu, cu aceleasi variabile si implicite ca CLI-ul si `vite dev` de pana acum. */
@@ -59,6 +62,9 @@ const CerereExtragere = z.object({
   })),
 });
 const CererePoza = z.object({ imagine: z.string().startsWith("data:image/") });
+const CerereAviz = z.object({
+  fisier: z.string().regex(/^data:(image\/[\w.+-]+|application\/pdf);base64,/), nume: z.string().max(200).optional(),
+});
 
 /** Rutele, de montat sub `/api` dupa verificarea intrarii. */
 export function ruteModel(o: OptiuniModel): Hono {
@@ -92,6 +98,22 @@ export function ruteModel(o: OptiuniModel): Hono {
     console.info(`model: citesc o poza de santier (${o.modelPoze})`);
     const r = await citeste(imagine, { apiKey: o.cheie, model: o.modelPoze });
     return c.json({ termeni: r.termeni, note: r.note, model: r.model });
+  });
+
+  /*
+   * Avizul sau factura furnizorului (S31), cu modelul pozelor: citeste mai bine
+   * scrisul si tabelele. Pe avizul si factura ISOLINE din TRANSAVIA, 4 s si
+   * 3 s, totul exact (`tests/fixtures-aviz-isoline.json`).
+   */
+  app.get("/aviz", (c) => c.json({ disponibil: Boolean(o.cheie), model: o.modelPoze }));
+  app.post("/aviz", async (c) => {
+    if (!o.cheie) return c.json({ eroare: "Citirea cu model nu e pornită pe server." }, 503);
+    const { fisier, nume } = CerereAviz.parse(await c.req.json());
+    console.info(`model: citesc un aviz de furnizor (${o.modelPoze})`);
+    const r = await (o.citesteAviz ?? citesteAviz)(fisier, { apiKey: o.cheie, model: o.modelPoze, ...(nume ? { nume } : {}) });
+    const verificat = CitireAviz.safeParse(r);
+    if (!verificat.success) return c.json({ eroare: "Modelul a răspuns în altă formă decât cea cerută." }, 502);
+    return c.json({ ...verificat.data, model: r.model });
   });
 
   return app;

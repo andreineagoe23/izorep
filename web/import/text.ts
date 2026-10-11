@@ -196,6 +196,7 @@ export const MOTIV: Record<CodMotiv, string> = {
   grosime_jacheta_apropiata: "Tabla: grosimea uzuală lipsește, s-a luat cea mai apropiată",
   grosime_extrapolata: "Grosime peste listă: preț pe m² calculat",
   grosime_apropiata: "Grosimea scrisă nu e în listă: s-a luat cea mai apropiată",
+  grosime_peste_lista: "Grosimea scrisă e peste cea mai groasă din listă: două straturi sau alt material",
   protectie_foc: "Protecție la foc: 48 €/m², ca în oferta semnată NISAL",
   doar_izolatia: "Livrare de țeavă: s-a pus doar izolația",
   echipament_suprafata: "Echipament: preț din suprafața lui",

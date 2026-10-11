@@ -1,7 +1,123 @@
 # Stare curentă
 
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
-> Ultima actualizare: 10 octombrie 2026.
+> Ultima actualizare: 11 octombrie 2026.
+
+## 11 octombrie 2026 (după-amiază): Faza 4 terminată, izolația pe foaie
+
+Ce rămăsese din Faza 4 și „izolația pe foaie” pentru CET. **540 de teste.**
+
+| Ce | Cum | Unde |
+|---|---|---|
+| **Prețul pe ciornă** | cel mai nou preț al furnizorului ales: o factură trecută în aplicație, altfel `data/preturi-furnizori.json` (lista K-Flex ST de la Banda Tech, 24.06.2026, în €/ml, și ultima factură din evidență pe furnizor și articol, din 2025, în lei cu cursul ei; 202 articole). Pe ciornă: preț fără TVA pe unitatea documentului (kg la tablă), cu sursa sub el, și valoarea așteptată pe monedă. Alt furnizor ales → prețurile propuse se iau de la el; cele scrise de mână rămân. Fără preț la cel ales: hint cu cine l-a vândut („STEELMET Romania: 23,63 lei”) | `src/stoc/preturi-furnizori.ts`, `npm run preturi-furnizori` |
+| **Avizul citit din poză sau PDF** (S31) | modelul pozelor (`gpt-5.5-2026-04-23`) transcrie antetul și liniile; `receptieDinCitire` le pune pe liniile comenzii după articol (`articolDinDenumire`, ca la evidență); omul vede formularul completat și înregistrează el. Rândurile care nu sunt pe comandă sau au altă UM apar separat. Fișierul rămâne atașat la comandă (doar pe server), cu link pe card. Pe avizul și factura reale ISOLINE: 4 s și 3 s, totul exact (`tests/fixtures-aviz-isoline.json`) | `src/stoc/aviz.ts`, `aviz-model.ts`, `POST /api/aviz`, `POST /api/comenzi/:id/documente`, `GET /api/documente/:id` |
+| **Returul la furnizor** (S32) | o mișcare `retur` fără depozit de sosire, cu furnizorul și linia comenzii (`laFurnizor`). Primitul pe comandă rămâne; scade „adus pe șantier”, deci materialul de înlocuit reapare la „Rămas de comandat”. Cu prețul mediu al liniei; în evidență iese cu minus | `returLaFurnizor` în `comenzi.ts`, `POST /api/comenzi/:id/retururi` |
+| **Comanda din măsurători** (S2) | Măsurători → „Pentru comanda de material”: rândurile din carnet trec prin import și prin `necesarDinLinii` (aceleași pierderi și praguri ca necesarul șantierului), apoi se scade ce e **acum** pe șantier (sold, nu „adus”: ce s-a pus pe țeavă nu mai e acolo) și ce e comandat nesosit; restul, la ambalaj, devine ciornă pe furnizor, cu preț | `src/stoc/din-masuratori.ts`, `deComandatSantier(..., "sold")` |
+| **Izolația pe foaie** (CET) | un fișier fără nicio poziție, dar cu liste de țevi (antet cu descriere, DN, cantitate, UM), deschide un pas nou: pe fiecare foaie omul alege izolația (vată / elastomer / fără), grosimea (tabelul de protecție la atingere din specificație, DIN 4140 D.2 la o temperatură, D.4 la rece, sau fixă), protecția și dacă intră piesele și armăturile. Codul citește țevile, coturile, teurile, reducțiile, flanșele și robineții (șuruburile, suporții și aparatele nu) și le scrie ca rândurile din carnet, prin același import | `src/import/izolatie-foaie.ts`, `web/import/izolatie-vizual.ts` |
+
+Pe CET, cu OMS pe vată + tablă la atingere și PWS pe elastomer la rece: **20 de
+poziții, toate „Gata”, 32.999,59 €** (`tests/izolatie-foaie.test.ts`). Grosimea
+din tabel urcă la următoarea din listă (14 → 19 mm la elastomer). Coturile,
+teurile și reducțiile fără protecție sub ø60 nu se pun separat: lista n-are
+coeficient pe banda 18–60, deci intră în prețul pe metru (regula 4, confirmată
+de firmă). Ce rămâne fără preț pe CET, cu alte alegeri, e real: grosimi care nu
+se oferă la acel diametru (vată 80 mm la ø60) și robinetul de PE ø63, unde
+rândul 64 al listei nu cade în nicio bandă de multiplicatori.
+
+**Bug reparat pe drum:** o grosime scrisă peste listă („vată minerală 110 mm”)
+nu era citită, iar grosimea se lua de la conducta de același diametru (100 mm),
+cu poziția „Gata”. Acum se citește (`grosimeScrisa` prinde grosimea lipită de
+material) și iese „De verificat”, cu motivul nou `grosime_peste_lista` (nu e în
+`MOTIVE_DOVEDITE`: peste listă înseamnă două straturi sau alt material). A/B pe
+toate fișierele de client, pe ambele segmente: niciun număr schimbat.
+
+Migrarea 0009: `document_furnizor` (doar se adaugă), returul legat de comandă
+(`miscare_comanda_chk`, `miscare_retur_chk`), scopul `comanda` la măsurători.
+
+Verificat cu Playwright pe `build:server`, cu modelul real doar pe aviz și
+factură: CET (pasul nou, 20 „Gata”), TRANSAVIA → șantier cu ø114/140/168 ca tub
+→ ciornele cu prețuri → trimisă → avizul PDF citit și recepționat (350 ml pe
+ø140) → factura PDF citită (39,7719 lei, curs 5,31) → cele două PDF-uri atașate
+și deschise → retur 6 ml → evidența descărcată; Măsurători „Pentru comandă” cu
+pozele simulate → ciornă Banda Tech doar cu tabla etapei (cochiliile erau deja
+comandate). Linkul demo: CET și recepția merg, fără zona de document. 390 și
+1440 px: zero derulare laterală, zero erori.
+
+## 11 octombrie 2026: hârtiile firmei, pasul 0 și Faza 4
+
+Adrian a adus de la firmă (5 octombrie) 8 emailuri; atașamentele sunt în
+`../attachments/` (`achizitii/` nou și două cereri în `clienti/`), descrise în
+`../attachments/README.md`. Ce a ieșit din ele:
+
+**Importul, pe cele două cereri noi** (`tests/cereri-octombrie.test.ts`). SRU
+Craiova ieșea 9,6 mil. €, cu 3 poziții greșite „Gata”:
+
+| Problemă | Acum |
+|---|---|
+| „Tubulatura rectangulara din tabla zincata … elastomer 13 mm” primea și jacheta (80,06 €/m² în loc de 20,55) | `TABLA_E_TUBULATURA` acceptă adjectivul dintre tubulatură și „din tablă” |
+| „… fara izolatie”, „neizolata” ieșeau tablă la 59,51 €/m² (45.643 m²) | `FARA_IZOLATIE`: nu e poziție |
+| 45 de rânduri „Teava … izolatie elastomerica 19mm … grunduire etc” respinse ca altă meserie | „grunduire” respinge doar fără material de izolație numit (`GRUNDUIRE`); aparatele de aer condiționat din Book15 rămân respinse |
+| „idem DN20” (9 caractere) nu era rând deloc | un marcaj de continuare cu UM și cantitate e poziție (`rand.ts`) |
+| Cantitatea: prima din „Cantitate · Cantitate AT · CANTITATE TOTALA” | `aplicaCantitateDinAntet` (`mapare.ts`): pe foile fără mapare, coloana de cantitate din antet, „total” dacă sunt mai multe; totalul gol = suma celorlalte, doar dacă așa e pe toată foaia; un 0 scris rămâne 0 |
+| CET Constanța: fitinguri și aparate de inox / PVC ieșeau jachetă, cu prețul (5 lei) drept cantitate | materialul țevii fără niciun cuvânt de izolație sau jachetă nu e poziție; coloana QTY. dă cantitatea |
+
+A/B pe cele 10 fișiere vechi: niciun preț mișcat; o poziție nouă la Book15
+(r164, distribuitorul-colector izolat, „De verificat”). SRU: 48 de poziții, 0
+fără preț. **CET rămâne 0 poziții**: e lista de țevi a instalatorului, iar
+izolația vine din specificație pe sistem, cu grosimea după temperatură (clasele
+din PDF). Îi trebuie „izolația pe foaie”, aleasă de om — nefăcută.
+
+**Evidența de achiziții** (2017–2026, ambele firme) a dat dovezile pentru:
+
+| Ce | Dovada | În cod |
+|---|---|---|
+| Formele articolului: tub, saltea, placă, tablă | 2024–2026: LM ECO ALU M (saltea lamelară) 36.851 m², cel mai cumpărat; plăcile de vată sunt Conlit/Techrock, la foc | `Categorie` în `necesar.ts`; forma intră în cheia articolului (`sistem|forma|grosime|ø`) |
+| Pragul de 3 țoli rămâne implicit | 93 % din metrii de cochilie și 99,9 % din tubul de elastomer sunt ≤ ø89 | `PRAG_TUB_MM` neschimbat |
+| Peste prag, tub pe diametrul ales | TRANSAVIA: cochilii ø116 / 140 / 168 (iul.–sep. 2026) | `tuburiPeste`; pastilele „Peste prag, comandă tot tuburi la” din cardul „Materiale de comandat” |
+| Ambalajele | tub elastomer 2 m (96 %), cochilie 1 m, placă elastomer 2 m² (97 %), saltea pe rolă după grosime (20 → 10 m² … 100 → 2,5 m²) | `src/stoc/ambalaje.ts`, folosite când omul n-a scris alt ambalaj |
+| Euro = lei / cursul de pe document, fără marjă | 3.191 din 3.191 de rânduri 2025–2026 | `comenzi.ts`; înlocuiește decizia „BNR + 2 %” |
+| Furnizorul propus | Isoline 239 rânduri la cochilii; Banda Tech la elastomer, saltele, foc; Direct Line la inox | `furnizorPropus` |
+
+Necesarul TRANSAVIA față de ce s-a cumpărat (fără pierderi): ø140 641 ml
+calculat / 635 cumpărat, ø114 193 / 200, ø168 161 / 200, ø89 97 / 140; sub 3 țoli
+s-a cumpărat mult mai puțin decât metrii din ofertă (ø22: 60 față de 136 ml fără
+piese), deci restul a venit din stoc. **Regula pieselor sub 3 țoli rămâne
+nelămurită**: datele nu o pot dovedi.
+
+Articolele și ambalajele salvate înainte (cheie fără formă) se citesc mai
+departe: forma se deduce (`formaImplicita`), ambalajul se găsește și pe cheia
+veche. Migrarea 0007 adaugă `articol.forma`.
+
+**Faza 4, comanda și recepția** (`src/stoc/comenzi.ts`, `tests/comenzi.test.ts`):
+
+- **Rămas de comandat** = necesar − adus pe șantier − comandat nesosit.
+  Centralul și surplusul altor șantiere apar ca propunere de transfer („Mută …
+  pe șantier”), nu se mai scad din fiecare șantier: problema 2 din audit.
+- „Fă comenzile” face ciornele, una pe furnizor, la ambalaj întreg. Ecranul nou
+  **Comenzi**: ciornă (cantități, furnizor, notă), „Trimite comanda” (o
+  îngheață; textul de email după comanda reală TRANSAVIA și Excelul), recepția
+  pe aviz sau factură, „Trece factura” pe un aviz fără preț, anularea. Comanda
+  nouă de mână, pe un șantier, cere motivul (S28).
+- **Recepția e intrarea în stoc**: miscarea poartă comanda, linia, documentul și
+  furnizorul; primitul se socotește din miscări. Factura venită după aviz face
+  storno pe intrările avizului și le scrie din nou, cu preț (lanțul real
+  ISOLINE: aviz CS 20261262 → factura CS 202627295, 39,7719 lei / 5,31 = 7,49 €,
+  13.920,17 lei fără TVA, ca în evidența firmei). Tabla vine la kg și intră în
+  m². Transportul se împarte pe linii după valoare.
+- **Evidența cumpărărilor** se descarcă cu coloanele Excelului firmei
+  (Faza 8.4, adusă înainte): rândul facturii de mai sus iese ca în evidența lor.
+- Pe server, operații proprii (`/api/comenzi/...`), nu diferențe de stare;
+  trimisă, comanda nu se schimbă nici direct în bază (trigger, migrarea 0008).
+  Serverul recalculează intrările din comanda lui, cu id-urile browserului, deci
+  o recepție trimisă de două ori nu se dublează.
+
+Verificat cu Playwright pe `build:server` (TRANSAVIA: import, ø114/140/168 ca
+tub, șantier, „Fă comenzile”, trimite, aviz, factură, evidența) și pe linkul
+demo (datele în browser, după reîncărcare); 390 / 768 / 1440 / 1920 px, ambele
+teme: zero derulare laterală, zero erori. **494 de teste.**
+
+Rămas din Faza 4 atunci: comanda din măsurători, avizul din poză, prețurile pe
+ciornă și returul — făcute în aceeași zi, mai sus.
 
 ## 10 octombrie 2026: „De verificat” doar unde chiar trebuie; fără intrare
 

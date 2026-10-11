@@ -46,6 +46,8 @@ export const LIMITE: readonly [RegExp, number][] = [
   [/^\/api\/cereri\/[^/]+$/, 25 * MB],
   [/^\/api\/masuratori$/, 15 * MB],
   [/^\/api\/poza$/, 15 * MB],
+  [/^\/api\/aviz$/, 15 * MB],
+  [/^\/api\/comenzi\/[^/]+\/documente$/, 15 * MB],
 ];
 export const LIMITA_IMPLICITA = 5 * MB;
 const limitaPentru = (cale: string): number => LIMITE.find(([r]) => r.test(cale))?.[1] ?? LIMITA_IMPLICITA;
@@ -75,11 +77,48 @@ const OfertaZ = z.object({
   continut: z.object({ linii: z.array(Obiect), antet: Obiect, provenienta: Obiect }).passthrough(),
 });
 const MasuratoareZ = z.object({
-  scop: z.enum(["oferta", "situatie"]), santierId: z.string().optional(), poza: z.string().optional(), randuri: z.unknown(),
+  scop: z.enum(["oferta", "situatie", "comanda"]), santierId: z.string().optional(), poza: z.string().optional(), randuri: z.unknown(),
 });
+const PretZ = z.object({ valoare: z.number().nonnegative(), moneda: z.enum(["EUR", "RON"]) });
+const ArticolZ = z.object({ cheie: Id, sistem: z.string(), um: z.enum(["ml", "m2"]), grosime_mm: z.number().nullable(), rand: z.number().nullable() }).passthrough();
+const ComandaZ = z.object({
+  id: Id, creat: z.string(), furnizor: z.string().min(1), firma: z.string().min(1), santier: z.string().optional(), spre: Id,
+  linii: z.array(z.object({
+    id: Id, articol: ArticolZ, cantitate: z.number().positive(),
+    pret: PretZ.extend({ sursa: z.string().optional(), curs: z.number().positive().optional() }).optional(),
+  }).passthrough()).min(1),
+  suplimentara: z.string().optional(), nota: z.string().optional(),
+}).passthrough();
+const DocumentZ = z.object({ tip: z.enum(["aviz", "factura"]), serie: z.string().optional(), numar: z.string().min(1), data: z.string() });
+const CandZ = z.object({ cand: z.string() });
+const ReceptieZ = z.object({
+  document: DocumentZ, curs: z.number().positive().optional(), transport: PretZ.optional(), spre: Id.optional(),
+  linii: z.array(z.object({ linie: Id, cantitate: z.number().nonnegative(), pret: PretZ.optional(), marca: z.string().optional() })).min(1),
+  ids: z.array(Id).min(1), data: z.string(),
+});
+const FacturaZ = z.object({
+  aviz: z.string().min(1),
+  factura: z.object({
+    document: DocumentZ.extend({ tip: z.literal("factura") }), curs: z.number().positive().optional(),
+    transport: PretZ.optional(), preturi: z.record(PretZ),
+  }),
+  ids: z.array(Id).min(1), data: z.string(),
+});
+const DocumentAtasatZ = z.object({
+  id: Id, tip: z.enum(["aviz", "factura"]), numar: z.string().min(1), nume: z.string().min(1).max(200),
+  fisier: z.string().regex(/^data:(image\/[\w.+-]+|application\/pdf);base64,/),
+});
+const ReturZ = z.object({
+  linie: Id, cantitate: z.number().positive(), din: Id, motiv: z.string().min(1), document: DocumentZ.optional(),
+  id: Id, data: z.string(),
+});
+
 const MutareZ = z.object({
   cereri: z.array(CererePeFir), oferte: z.record(Obiect), planuri: z.array(Plan),
-  depozit: z.object({ miscari: z.array(Obiect), necesare: z.array(NecesarZ), ambalaje: z.record(Obiect).optional() }).passthrough(),
+  depozit: z.object({
+    miscari: z.array(Obiect), necesare: z.array(NecesarZ), ambalaje: z.record(Obiect).optional(),
+    comenzi: z.array(ComandaZ.extend({ trimisa: z.string().optional(), anulata: z.string().optional() })).optional(),
+  }).passthrough(),
 });
 
 export function creeazaServer(o: OptiuniServer): Hono<Env> {
@@ -184,6 +223,57 @@ export function creeazaServer(o: OptiuniServer): Hono<Env> {
     const corp = AmbalajZ.parse(await c.req.json());
     await inTenant((tx, ctx) => repo.puneAmbalaj(tx, ctx, corp.cheie, corp.ambalaj));
     return ok(c);
+  });
+
+  /* Comenzile (Faza 4): operatii proprii, nu diferente de stare. */
+  app.put("/api/comenzi/:id", async (c) => {
+    const corp = ComandaZ.parse(await c.req.json());
+    if (corp.id !== c.req.param("id")) throw new Refuz(400, "Id-ul comenzii nu se potrivește.");
+    await inTenant((tx, ctx) => repo.puneComanda(tx, ctx, corp as never));
+    return ok(c);
+  });
+  app.delete("/api/comenzi/:id", async (c) => {
+    await inTenant((tx) => repo.stergeComanda(tx, c.req.param("id")));
+    return ok(c);
+  });
+  app.post("/api/comenzi/:id/trimite", async (c) => {
+    const { cand } = CandZ.parse(await c.req.json());
+    await inTenant((tx) => repo.trimiteComanda(tx, c.req.param("id"), cand));
+    return ok(c);
+  });
+  app.post("/api/comenzi/:id/anuleaza", async (c) => {
+    const { cand } = CandZ.parse(await c.req.json());
+    await inTenant((tx) => repo.anuleazaComanda(tx, c.req.param("id"), cand));
+    return ok(c);
+  });
+  app.post("/api/comenzi/:id/receptii", async (c) => {
+    const { ids, data, ...r } = ReceptieZ.parse(await c.req.json());
+    const scrise = await inTenant((tx, ctx) => repo.receptioneaza(tx, ctx, c.req.param("id"), r as never, ids, data));
+    return c.json({ scrise });
+  });
+  app.post("/api/comenzi/:id/facturi", async (c) => {
+    const { aviz, factura, ids, data } = FacturaZ.parse(await c.req.json());
+    const scrise = await inTenant((tx, ctx) => repo.treceFactura(tx, ctx, c.req.param("id"), aviz, factura as never, ids, data));
+    return c.json({ scrise });
+  });
+  app.post("/api/comenzi/:id/retururi", async (c) => {
+    const { id, data, ...r } = ReturZ.parse(await c.req.json());
+    const scrise = await inTenant((tx, ctx) => repo.returneaza(tx, ctx, c.req.param("id"), r as never, id, data));
+    return c.json({ scrise });
+  });
+
+  app.post("/api/comenzi/:id/documente", async (c) => {
+    const corp = DocumentAtasatZ.parse(await c.req.json());
+    await inTenant((tx, ctx) => repo.ataseazaDocument(tx, ctx, { ...corp, comanda: c.req.param("id") }));
+    return ok(c);
+  });
+  app.get("/api/documente/:id", async (c) => {
+    const d = await inTenant((tx) => repo.fisierDocument(tx, c.req.param("id")));
+    if (!d) return c.json({ eroare: "Documentul nu există." }, 404);
+    return c.body(new Uint8Array(d.fisier), 200, {
+      "Content-Type": d.tip,
+      "Content-Disposition": `inline; filename*=UTF-8''${encodeURIComponent(d.nume)}`,
+    });
   });
 
   app.post("/api/masuratori", async (c) => {

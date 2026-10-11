@@ -47,7 +47,7 @@ export interface OfertaSalvata {
 }
 
 export interface MasuratoareDeSalvat {
-  scop: "oferta" | "situatie";
+  scop: "oferta" | "situatie" | "comanda";
   santierId?: string;
   /** Poza ca data URL (`data:image/jpeg;base64,...`). */
   poza?: string;
@@ -71,6 +71,7 @@ export interface RezultatMutare {
   miscari: number;
   necesare: number;
   ambalaje: number;
+  comenzi: number;
   /** Ofertele a caror cerere nu mai era in browser (istoricul tine 10). */
   oferteFaraCerere: number;
 }

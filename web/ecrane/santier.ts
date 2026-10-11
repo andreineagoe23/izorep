@@ -1,10 +1,11 @@
+import { micsoreaza, modelPornit, rutaModel } from "../imagine.js";
 import { agrega, type RandSantier } from "../../src/santier/agrega.js";
 import { RaspunsPoza, type Element, type Izolatie, type Jacheta } from "../../src/santier/schema.js";
 import { spreCerere } from "../../src/santier/spre-cerere.js";
 import { registruCerere } from "../../src/santier/registru.js";
 import type { Destinatie } from "../../src/pricing/lists.js";
 import { preda, predaSituatie } from "../predare.js";
-import { citestePlanuri, modDate, salveazaMasuratori } from "../date.js";
+import { citesteDepozit, citestePlanuri, modDate, puneComanda, salveazaMasuratori } from "../date.js";
 import {
   cardComparatie, cardIncarca, cardPagina, cardTrimite, type ListaClient, type PaginaSantier, type SantierAles, type Scop,
 } from "../santier-vizual.js";
@@ -33,11 +34,9 @@ import type { Ecran } from "./tip.js";
  * Starea sta la nivel de modul: plecat pe alt ecran si intors, munca e tot
  * acolo. La reincarcarea paginii se pierde — pozele nu se pastreaza in browser.
  */
-const RUTA_POZA = location.pathname.replace(/[^/]*$/, "") + "api/poza";
+const RUTA_POZA = rutaModel("poza");
 /** Cate pagini se citesc deodata. Fiecare apel dureaza secunde; doua tin progresul vizibil. */
 const CONCURENTA = 2;
-/** Latura maxima trimisa modelului. API-ul oricum reduce la 2048; mai mult e doar upload. */
-const LATURA = 2048;
 
 let pagini: PaginaSantier[] = [];
 /** Pozele, pastrate ca „Citește din nou" sa aiba ce trimite. */
@@ -63,28 +62,13 @@ let urmator = 0;
 /** Importul din istoric cu care se compara masuratorile, si rezultatul. */
 let comparaCu = "";
 let comparatie: { lista: string; c: Comparatie } | null = null;
+/** Ce a ieșit la „Fă ciornele comenzii” când n-a fost nimic de comandat. */
+let mesajComanda = "";
 
 const idNou = (): string => `${Date.now().toString(36)}-${(urmator++).toString(36)}`;
 
-async function micsoreaza(f: File): Promise<string> {
-  const bmp = await createImageBitmap(f, { imageOrientation: "from-image" });
-  const k = Math.min(1, LATURA / Math.max(bmp.width, bmp.height));
-  const c = document.createElement("canvas");
-  c.width = Math.round(bmp.width * k);
-  c.height = Math.round(bmp.height * k);
-  c.getContext("2d")!.drawImage(bmp, 0, 0, c.width, c.height);
-  bmp.close();
-  return c.toDataURL("image/jpeg", 0.85);
-}
-
 async function modelDisponibil(): Promise<boolean> {
-  try {
-    const r = await fetch(RUTA_POZA, { signal: AbortSignal.timeout(3000) });
-    if (!r.ok) return false;
-    return Boolean(((await r.json()) as { disponibil?: boolean }).disponibil);
-  } catch {
-    return false;
-  }
+  return modelPornit("poza");
 }
 
 /** Id-urile randurilor unice pe pagina, ca editarea sa stie ce rand e. */
@@ -117,7 +101,7 @@ export const ecran: Ecran = {
     const santiere = (): SantierAles[] => citestePlanuri().map((p) => ({ id: p.id, denumire: p.denumire, client: p.client }));
     /** Pe situatie, tipul ofertei e al santierului, nu cel ales sus. */
     const destinatiaPaginii = (): Destinatie =>
-      scop === "situatie" ? ((citestePlanuri().find((p) => p.id === planAles)?.destinatie as Destinatie | undefined) ?? destinatie) : destinatie;
+      scop !== "oferta" ? ((citestePlanuri().find((p) => p.id === planAles)?.destinatie as Destinatie | undefined) ?? destinatie) : destinatie;
     const incarca = (): string => cardIncarca({ scop, destinatie, santiere: santiere(), planAles, eroare, trimisa });
 
     const deseneaza = (): void => {
@@ -131,6 +115,7 @@ export const ecran: Ecran = {
       gazda.querySelector("#sant-trimite")!.innerHTML = cardTrimite({
         pagini, titlu, scop, lucreaza, santier: santiere().find((x) => x.id === planAles) ?? null,
         ...(scop === "oferta" ? { liste, comparaCu } : {}),
+        ...(scop === "comanda" && mesajComanda ? { mesaj: mesajComanda } : {}),
       });
       gazda.querySelector("#sant-comparatie")!.innerHTML =
         comparatie && scop === "oferta" && pagini.length > 0 ? cardComparatie(comparatie.c, comparatie.lista) : "";
@@ -226,7 +211,7 @@ export const ecran: Ecran = {
       const t = e.target as HTMLInputElement;
       if (t.id === "poze" && t.files) void adaugaPoze([...t.files]);
       if (t.name === "segment") { destinatie = t.value as Destinatie; deseneaza(); }
-      if (t.name === "scop") { scop = t.value as Scop; trimisa = ""; deseneaza(); }
+      if (t.name === "scop") { scop = t.value as Scop; trimisa = ""; mesajComanda = ""; deseneaza(); }
       if (t.name === "plan") { planAles = t.value; deseneaza(); }
       if (t.name === "compara-cu") { comparaCu = t.value; comparatie = null; deseneazaTrimite(); }
     });
@@ -418,9 +403,61 @@ export const ecran: Ecran = {
       location.hash = "#/lucrari";
     }
 
+    /**
+     * Comanda etapei din masuratori (S2): materialul randurilor masurate, ca la
+     * oferta, minus ce e acum pe santier si ce e comandat nesosit, rotunjit la
+     * ambalaj. Ciornele pleaca in Comenzi; nimic nu se trimite singur.
+     */
+    async function faComanda(): Promise<void> {
+      const plan = citestePlanuri().find((p) => p.id === planAles);
+      if (!plan || lucreaza) return;
+      lucreaza = true;
+      mesajComanda = "";
+      deseneazaTrimite();
+      try {
+        const [{ necesarDinMasuratori }, { ciorneDinRamas, deComandatSantier }, { pretPropus }] = await Promise.all([
+          import("../../src/stoc/din-masuratori.js"), import("../../src/stoc/comenzi.js"), import("../../src/stoc/preturi-furnizori.js"),
+        ]);
+        const dep = citesteDepozit();
+        const al = dep.necesare.find((n) => n.santier === plan.id);
+        const nec = await necesarDinMasuratori(pagini.flatMap((p) => p.randuri), plan.destinatie as Destinatie, {
+          ...(al?.pierderi ? { pierderi: al.pierderi } : {}), ...(al?.pragTub !== undefined ? { pragTub: al.pragTub } : {}),
+          ...(al?.tuburiPeste ? { tuburiPeste: al.tuburiPeste } : {}),
+        });
+        const alte = dep.necesare.filter((n) => n.santier && n.santier !== plan.id).map((n) => ({ depozit: n.santier!, materiale: n.materiale }));
+        const ramas = deComandatSantier(nec.materiale, dep.miscari, dep.comenzi ?? [], plan.id, dep.ambalaje, alte, "sold");
+        const data = new Date().toLocaleDateString("ro-RO");
+        const ciorne = ciorneDinRamas(ramas, {
+          firma: plan.firma, santier: plan.id, spre: plan.id,
+          nota: `Din măsurătorile de pe teren din ${data} (${pagini.length === 1 ? "o pagină" : `${pagini.length} pagini`}).`,
+        }, idNou, new Date().toISOString(), (a, f) => pretPropus(a, f, dep.miscari));
+        const fara = nec.faraNecesar.length;
+        if (ciorne.length === 0) {
+          lucreaza = false;
+          mesajComanda = `Nimic de comandat: ce s-a măsurat e acoperit de ce e pe șantier sau deja comandat.${
+            fara ? ` ${fara === 1 ? "Un rând n-a dat" : `${fara} rânduri n-au dat`} material (fără preț în liste).` : ""}`;
+          deseneazaTrimite();
+          return;
+        }
+        for (const c of ciorne) puneComanda(c);
+        await pastreazaPagini(plan.id);
+      } catch (e) {
+        console.error(e);
+        eroare = "Materialele nu s-au putut calcula. Încearcă din nou.";
+        lucreaza = false;
+        deseneaza();
+        return;
+      }
+      lucreaza = false;
+      golesteDupaTrimitere();
+      trimisa = `Ultimele măsurători au făcut ciornele de comandă pentru „${plan.denumire}”, în Comenzi.`;
+      location.hash = "#/comenzi";
+    }
+
     async function trimite(): Promise<void> {
       if (pagini.some((p) => !p.verificata)) return;
       if (scop === "situatie") return puneInSituatie();
+      if (scop === "comanda") return faComanda();
       const linii = spreCerere(pagini.flatMap((p) => p.randuri));
       if (linii.length === 0) return;
       const nume = titlu.trim() || "Măsurători de șantier";

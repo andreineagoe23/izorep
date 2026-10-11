@@ -7,8 +7,11 @@
 > promise (comanda, avizul, factura, listele furnizorilor), devin teste. Nu
 > blochează nimic.
 >
-> Starea: fazele 1–3 sunt făcute (9 octombrie 2026, 429 de teste). Următoarea
-> e Faza 4, comanda și recepția.
+> Starea: fazele 1–4 sunt făcute (Faza 4 pe 11 octombrie 2026, 540 de teste).
+> Următorul pas propus e restructurarea ecranului de import
+> (`docs/plan-import.md`), apoi Faza 5. Pe 5
+> octombrie au venit evidența de achiziții, o comandă cu aviz și factură și lista
+> K-Flex: deciziile de mai jos marcate „11 oct.” sunt luate din ele.
 
 ## Deciziile luate fără firmă
 
@@ -23,12 +26,13 @@
 | Goluri la foc (S19), distribuitor (S20) | Linie de material adăugată de mână pe necesar, cu cantitatea pusă de om | S20: „în funcție de dimensiune”. Azi ies la „fără necesar” |
 | Verifică cineva stocul înainte de comandă (S24) | Aplicația arată resturile din depozit și de pe alte șantiere ca propunere de transfer. Omul decide | S10: materialul e al firmei și se redistribuie. S1: problema e marfa rămasă |
 | Costul materialului pe șantier (S44) | Prețul intrărilor făcute pentru șantier. Pentru ce vine din depozit sau de pe alt șantier: prețul mediu | S5: se comandă pe șantier, uneori și din stocul general |
-| Curs: „BNR + 1–2 %” | Setare, pornim cu 2% | Costul ușor mai mare e varianta prudentă. Se schimbă dintr-un câmp |
+| Curs: „BNR + 1–2 %” | **11 oct.:** euro = lei / cursul de pe document, fără marjă | Evidența firmei: PRET EURO = PRET RON / CURS pe 3.191 din 3.191 de rânduri (2025–2026); marja e deja în cursul facturii (ISOLINE: 5,31) |
 | PVC pe industrial | Rămâne pe lista rezidențială, „De verificat”. Nota spune că la tablă industrialul e cu ~10% mai mare | Din listele lor nu reiese un raport sigur (elastomer +20/25%, vată +25%, tablă +10%) |
 | ROB, „preț dublu”, „× 2” | Rămân citite cum sunt azi (casetă de robinet, de două ori prețul, grupul de două ori) | Se verifică singure când vine oferta Ecoterm |
 | Diferența de 0,13 € la SPIRO ø250 / ø315 | Încercăm întâi ipoteza „grosime + 1 mm” (dă 16,35 / 20,29 față de 16,36 / 20,30 semnat). Dacă nicio regulă nu iese la ±0,01, formula lor rămâne, iar SPIRO peste listă rămâne „De verificat” | Oferta 27.04.2026. Firma: la SPIRO diametrul e exterior |
 | Tabla în kg (S13) | kg/m² = densitate × grosime: aluminiu 2,70, inox 7,93 (0,8 mm Al = 2,16 kg/m²) | Fizică, nu de întrebat |
-| Ambalajele (S13, S14) | Unitate de cumpărare și factor pe articol, completate din listele furnizorilor când vin. Până atunci factorul e 1 (fără rotunjire) | Listele Banda Tech și Isoline sunt promise |
+| Ambalajele (S13, S14) | **11 oct.:** tub elastomer 2 m, cochilie 1 m, placă elastomer 2 m², saltea pe rolă după grosime; tabla fără (kg). Ambalajul scris de om bate | Cantitățile cumpărate în evidență: 96 % / 100 % / 97 % multipli; rola e în denumire (LM ECO ALU M 50X1000X5000) |
+| Formele vatei (S12) | **11 oct.:** tub (cochilie), saltea lamelară (vata peste prag), placă (elastomer; vata doar la foc), tablă. Prag implicit 3 țoli; peste, tub pe diametrul ales | Evidența 2024–2026: saltelele LM ECO, 36.851 m²; 93 % din cochilii ≤ ø89; TRANSAVIA cumpărată în cochilii până la ø168 |
 | Atelierul (S36) | Tabla rămâne în m² și când e croită. Piesele nu se urmăresc ca articole separate | Aplicație mică. Ce contează e unde stă tabla și pentru ce șantier |
 
 ## Faza 1. Prețurile: nicio poziție fără preț — făcută, 8 octombrie 2026
@@ -134,7 +138,15 @@ tehnic și de la contabilitate (S47). Datele nu mai pot sta în browser.
 **Gata când:** TRANSAVIA salvată pe un calculator se deschide pe altul la
 94.575,06 €, iar o intrare în stoc scrisă pe unul se vede pe celălalt.
 
-## Faza 4. Comanda și recepția
+## Faza 4. Comanda și recepția — făcută, 11 octombrie 2026
+
+Toate cele nouă puncte, detaliile în `.claude/stare.md` (11 octombrie 2026,
+ambele secțiuni). Prețul pe ciornă vine din lista K-Flex și din ultima factură
+din evidență; cursul e cel de pe document (decizia din 11 octombrie, nu „BNR +
+marjă”). Avizul se citește din poză sau PDF cu modelul și rămâne atașat.
+Comanda din măsurători scade ce e acum pe șantier, nu tot ce s-a adus.
+
+Ce a cerut faza:
 
 Aici e problema lor principală (S1): rămâne marfă când se comandă totul dintr-o
 dată.
@@ -232,8 +244,8 @@ manoperă), rafinăria, rolurile noi, aplicația pe telefon.
 
 | Hârtia | Devine |
 |---|---|
-| Comanda, avizul, factura și certificatul pe aceeași lucrare | Test: necesarul calculat față de ce s-a comandat; prețul de achiziție pe intrare |
-| Listele furnizorilor (Banda Tech, Isoline) | Ambalajele și unitățile de cumpărare (Faza 2.6), prețurile din Faza 4.7 |
-| Excelul lor de evidență | Ordinea coloanelor pe ecranul șantierului |
+| Comanda, avizul, factura și certificatul pe aceeași lucrare | **Venit 5 oct. (TRANSAVIA, cochilii ø140):** testul lanțului comandă → aviz → factură, la ban (`tests/comenzi.test.ts`). Necesarul față de cumpărat e în `stare.md`: peste 3 țoli se potrivește, sub 3 țoli nu se poate dovedi |
+| Listele furnizorilor (Banda Tech, Isoline) | **K-Flex ST de la Banda Tech, venită 5 oct.:** încărcată ca prețuri pe ciornă (`data/preturi-furnizori.json`), alături de ultima factură din evidență pe furnizor și articol. Lista Isoline lipsește: la cochilii prețul vine din facturi |
+| Excelul lor de evidență | **Venit 5 oct.:** formele, ambalajele, cursul și furnizorul propus (mai sus); „Descarcă evidența” scrie intrările cu coloanele lui |
 | Oferta Ecoterm, alte poze din carnet | Testul pentru ROB, „preț dublu” și „× 2” |
 | O situație de lucrări a lor | Formatul din `web/situatie.ts` |

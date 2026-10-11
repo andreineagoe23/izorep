@@ -446,6 +446,8 @@ export const articol = pgTable("articol", {
   sistem: text("sistem").notNull(),
   grosimeMm: numeric("grosime_mm", { precision: 8, scale: 2 }),
   rand: numeric("rand", { precision: 8, scale: 2 }),
+  /** tub | saltea | placa | tabla. Null la articolele de dinainte de 11 octombrie 2026. */
+  forma: text("forma"),
   /** ml | m2 */
   um: text("um").notNull(),
   marca: text("marca"),
@@ -501,12 +503,61 @@ export const miscare = pgTable("miscare", {
   anuleaza: text("anuleaza"),
   /** Pretul de achizitie pe unitate, EUR. */
   pret: numeric("pret", { precision: 14, scale: 4 }),
+  /** Pretul in lei pe unitate si cursul cu care s-a trecut in euro, de pe document (Faza 4). */
+  pretLei: numeric("pret_lei", { precision: 14, scale: 4 }),
+  curs: numeric("curs", { precision: 10, scale: 4 }),
+  /** Receptia: comanda si linia ei, documentul (aviz sau factura), furnizorul. */
+  comandaId: text("comanda_id"),
+  comandaLinie: text("comanda_linie"),
+  document: jsonb("document"),
+  furnizor: text("furnizor"),
   creatDe: uuid("creat_de").references(() => utilizator.id, { onDelete: "set null" }),
   creatLa: timestamp("creat_la", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
   primaryKey({ columns: [t.tenantId, t.id] }),
   foreignKey({ columns: [t.tenantId, t.articolCheie], foreignColumns: [articol.tenantId, articol.cheie] }).onDelete("restrict"),
+  index("miscare_comanda_idx").on(t.tenantId, t.comandaId),
   doarTenantul("miscare_tenant"),
+]);
+
+/**
+ * Comanda la furnizor (Faza 4), ca `Comanda` din `src/stoc/comenzi.ts`. Ciorna
+ * se editeaza si se sterge; trimisa, nu se mai schimba (trigger), se poate doar
+ * anula. Ce s-a primit nu sta aici: se socoteste din intrarile cu `comanda_id`.
+ */
+export const comanda = pgTable("comanda", {
+  tenantId: uuid("tenant_id").notNull().references(() => tenant.id, { onDelete: "restrict" }),
+  id: text("id").notNull(),
+  continut: jsonb("continut").notNull(),
+  trimisaLa: timestamp("trimisa_la", { withTimezone: true }),
+  anulataLa: timestamp("anulata_la", { withTimezone: true }),
+  creatDe: uuid("creat_de").references(() => utilizator.id, { onDelete: "set null" }),
+  creatLa: timestamp("creat_la", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  primaryKey({ columns: [t.tenantId, t.id] }),
+  doarTenantul("comanda_tenant"),
+]);
+
+/**
+ * Avizul sau factura furnizorului, cum a venit: poza sau PDF-ul atasat la
+ * receptie (S31). Doar se adauga (trigger): documentul primit nu se schimba.
+ */
+export const documentFurnizor = pgTable("document_furnizor", {
+  tenantId: uuid("tenant_id").notNull().references(() => tenant.id, { onDelete: "restrict" }),
+  id: text("id").notNull(),
+  comandaId: text("comanda_id").notNull(),
+  /** aviz | factura */
+  tip: text("tip").notNull(),
+  numar: text("numar").notNull(),
+  nume: text("nume").notNull(),
+  tipFisier: text("tip_fisier").notNull(),
+  fisier: bytea("fisier").notNull(),
+  creatDe: uuid("creat_de").references(() => utilizator.id, { onDelete: "set null" }),
+  creatLa: timestamp("creat_la", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  primaryKey({ columns: [t.tenantId, t.id] }),
+  foreignKey({ columns: [t.tenantId, t.comandaId], foreignColumns: [comanda.tenantId, comanda.id] }).onDelete("restrict"),
+  doarTenantul("document_furnizor_tenant"),
 ]);
 
 /** Furnizorii (S25). Comanda din Faza 4 ii foloseste. */

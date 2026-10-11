@@ -201,11 +201,47 @@ Trigger-ele lasă să treacă doar `purjare_permisa(tenant)`: setarea
 `purjeazaTenant(dbProprietar, id)`, pentru testele care își fac tenanții lor.
 `db:seed` nu mai șterge tenantul: completează ce lipsește și reface listele.
 
+### Comenzile (Faza 4, 11 octombrie 2026)
+
+Migrarea 0008. `comanda` ține `Comanda` din `src/stoc/comenzi.ts` în
+`continut`, plus `trimisa_la` și `anulata_la`. Ciorna se rescrie și se șterge;
+trimisă, trigger-ul `comanda_trimisa_inghetata` refuză orice schimbare în afară
+de anulare, și ștergerea. Recepția **nu are tabel**: e intrarea în `miscare`,
+cu coloanele noi `comanda_id`, `comanda_linie`, `document` (jsonb: aviz sau
+factură), `furnizor`, `pret_lei`, `curs`. Verificare în bază: doar intrarea
+poartă comandă, și atunci poartă și linia.
+
+Rutele sunt operații, nu diferențe de stare: `PUT /api/comenzi/:id` (ciorna),
+`DELETE`, `POST …/trimite`, `…/anuleaza`, `…/receptii`, `…/facturi`. La
+recepție și factură serverul recalculează intrările din comanda **din bază**
+(`intrariDinReceptie`, `inlocuiesteCuFactura`), cu id-urile trimise de browser:
+retrimisă, nu se dublează (`on conflict do nothing`). Migrarea 0007 adaugă
+`articol.forma`; articolele de dinainte rămân cu ea nulă.
+
+### Documentele, returul, prețurile (Faza 4, 11 octombrie 2026, după-amiază)
+
+Migrarea 0009. `document_furnizor`: poza sau PDF-ul avizului / facturii,
+atașat comenzii trimise (`POST /api/comenzi/:id/documente`, 15 MB), deschis cu
+`GET /api/documente/:id`; doar se adaugă (trigger `doar_adaugare`). În
+`/api/date` vine doar lista, fără fișiere (`StareDepozit.documente`).
+`POST /api/aviz` e ruta modelului pentru aviz și factură, lângă `/api/poza`,
+cu același model; răspunsul trece prin `CitireAviz` (502 dacă nu).
+
+Returul la furnizor: `POST /api/comenzi/:id/retururi`, calculat pe server din
+comanda și mișcările din bază, cu id-ul trimis de browser (retrimis, nu se
+dublează). În bază e o `miscare` `retur` fără `spre`, cu `furnizor` și linia
+comenzii: `miscare_comanda_chk` permite acum comanda și pe retur, iar
+`miscare_retur_chk` cere `spre` sau `furnizor`.
+
+Prețurile de achiziție pe ciornă nu sunt în bază: `data/preturi-furnizori.json`,
+importat static ca listele de vânzare (`npm run preturi-furnizori`), plus
+facturile trecute în aplicație. Ciorna le poartă pe linie (`pret` cu `sursa`).
+
 ## Ce lipsește
 
 - Conturile (scoase pe 10 octombrie 2026), jurnal de audit (cine a schimbat
   ce), permisiuni pe rol. Toate înainte ca serverul să iasă din rețeaua firmei.
-- Restul tabelelor: deviz, contract, comandă, recepție, factură.
+- Restul tabelelor: deviz, contract, factura de vânzare.
 - Regula după care se alege destinația unei lucrări. Coloana există și e
   populată; în aplicație segmentul se alege manual la import, dar nu se
   deduce de nicăieri și nu se scrie încă pe o lucrare din bază (întrebarea 12).

@@ -119,3 +119,39 @@ describe("web/date.ts pe server: pleacă doar diferența", () => {
     expect(await d.porneste()).toBe("browser");
   });
 });
+
+describe("comenzile pleacă la server ca operații, nu ca diferență", () => {
+  const cochilie = { cheie: "vata_minerala|tub|50|140", sistem: "vata_minerala", grosime_mm: 50, rand: 140, forma: "tub" as const, um: "ml" as const };
+  const comanda = { id: "C1", creat: "2026-07-13T00:00:00.000Z", furnizor: "Isoline", firma: "RADOIA ISOLIRUNG SRL",
+    spre: "S-1", santier: "S-1", linii: [{ id: "L1", articol: cochilie, cantitate: 350 }] };
+
+  it("ciornă, trimite, aviz, factură: câte o cerere fiecare, cu aceleași id-uri ca în copie", async () => {
+    const d = await import("../web/date.js");
+    await d.porneste();
+    expect(d.puneComanda(comanda)).toBeNull();
+    d.trimiteComanda("C1", "2026-07-13T10:40:00.000Z");
+    expect(d.receptioneaza("C1", { document: { tip: "aviz", serie: "CS", numar: "20261262", data: "2026-07-17" },
+      linii: [{ linie: "L1", cantitate: 350 }] })).toBeNull();
+    expect(d.treceFactura("C1", "20261262", { document: { tip: "factura", numar: "202627295", data: "2026-07-20" },
+      curs: 5.31, preturi: { L1: { valoare: 39.7719, moneda: "RON" } } })).toBeNull();
+    // Copia se vede imediat: comanda trimisă, avizul înlocuit de factură.
+    const s = d.citesteDepozit();
+    expect(s.comenzi?.[0]?.trimisa).toBe("2026-07-13T10:40:00.000Z");
+    expect(s.miscari.map((m) => (m.anuleaza ? "storno" : m.document?.tip))).toEqual(["aviz", "storno", "factura"]);
+    // O scriere a ecranului cu lista veche nu rescrie comenzile și nu retrimite mișcările.
+    d.scrieDepozit({ ...s, comenzi: [] });
+    await d.reimprospateaza();
+    expect(cereri).toEqual([
+      "PUT /api/comenzi/C1", "POST /api/comenzi/C1/trimite", "POST /api/comenzi/C1/receptii", "POST /api/comenzi/C1/facturi",
+    ]);
+  });
+
+  it("trimisă, comanda nu se mai schimbă nici din browser", async () => {
+    const d = await import("../web/date.js");
+    await d.porneste();
+    d.puneComanda(comanda);
+    d.trimiteComanda("C1");
+    expect(d.puneComanda({ ...comanda, linii: [] })).toBe("Comanda a fost trimisă: nu se mai modifică.");
+    expect(d.stergeComanda("C1")).toBe("Comanda a fost trimisă: nu se șterge, se anulează.");
+  });
+});

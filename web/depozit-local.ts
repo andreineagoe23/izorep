@@ -11,6 +11,7 @@
  */
 import type { Ambalaj, Miscare } from "../src/stoc/registru.js";
 import type { MaterialNecesar, Pierderi } from "../src/stoc/necesar.js";
+import type { Comanda, DocumentAtasat } from "../src/stoc/comenzi.js";
 
 export const CHEIE_DEPOZIT = "izorep-depozit";
 
@@ -29,6 +30,8 @@ export interface NecesarLucrare {
   pierderi?: Pierderi;
   /** Pragul tub / placa, in mm. */
   pragTub?: number;
+  /** Diametrele peste prag comandate tot ca tub (din 11 octombrie 2026). */
+  tuburiPeste?: number[];
   /** Rezerva peste calcul, la necesarurile vechi; firma nu tine rezerva (S21). */
   adaos?: number;
   materiale: MaterialNecesar[];
@@ -44,6 +47,10 @@ export interface StareDepozit {
    * furnizorilor, cand vin. Lipsa = se comanda exact cat iese din calcul.
    */
   ambalaje?: Record<string, Ambalaj>;
+  /** Comenzile la furnizori (Faza 4). Lipsesc la datele de dinainte de 11 octombrie 2026. */
+  comenzi?: Comanda[];
+  /** Avizele si facturile atasate la receptie, fara fisier (doar pe server). */
+  documente?: DocumentAtasat[];
 }
 
 export const GOL: StareDepozit = { miscari: [], necesare: [] };
@@ -69,6 +76,7 @@ export function citesteDepozit(d?: Storage): StareDepozit {
         ? s.necesare.map((n) => ({ ...n, materiale: n.materiale.map((m) => Object.assign({ piese: 0, piesePresupuse: 0, pePozitie: [] }, m)) }))
         : [],
       ...(s.ambalaje && typeof s.ambalaje === "object" ? { ambalaje: s.ambalaje } : {}),
+      ...(Array.isArray(s.comenzi) ? { comenzi: s.comenzi } : {}),
     };
   } catch {
     return { miscari: [], necesare: [] };

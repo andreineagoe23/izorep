@@ -71,7 +71,10 @@ const CONTEXT_FOC = /\bfoc\b|\bEI\s*\d{2,3}\b/i;
  * sau tubulatura ca subiect, iar `TABLA_E_JACHETA` bate oricum.
  */
 const TABLA_E_TUBULATURA =
-  /(?:realizat|executat|confec[țt]ionat)\w*\s+din\s+tabl|made\s+of\s+(?:[\w-]+\s+){0,3}sheet|tubulatur\w*\s+din\s+tabl/i;
+  // „Tubulatura rectangulara din tabla zincata” (SRU Craiova): adjectivul
+  // tubulaturii sta intre ea si material. Fara el, elastomerul de 13 mm al
+  // tubulaturii primea si jacheta: 80,06 €/m² in loc de pretul elastomerului.
+  /(?:realizat|executat|confec[țt]ionat)\w*\s+din\s+tabl|made\s+of\s+(?:[\w-]+\s+){0,3}sheet|tubulatur\w*(?:\s+[a-zăâîșț]+){0,2}\s+din\s+tabl/i;
 /**
  * Semnalele de jacheta care raman jacheta chiar langa tabla tubulaturii:
  * "protectie mecanica a izolatiilor ... din tabla zincata", "protejata la
@@ -98,7 +101,30 @@ export function esteTeavaDeInox(text: string): boolean {
 
 /** Alte meserii din caietul de sarcini: se resping explicit, nu se ghicesc. */
 const ALTE_MESERII =
-  /gril[aă]|difuzor|clapet[aă]|demont|dismant|relocare|relocation|ventilator|cazan|boiler|chiller|\bAHU\b|centrala de tratare|vas de expansiune|grundu|priming|swirl|anemostat|plenum|recuperator|air\s+conditioning\s+unit/i;
+  /gril[aă]|difuzor|clapet[aă]|demont|dismant|relocare|relocation|ventilator|cazan|boiler|chiller|\bAHU\b|centrala de tratare|vas de expansiune|swirl|anemostat|plenum|recuperator|air\s+conditioning\s+unit/i;
+
+/**
+ * Grunduirea e alta meserie doar cand randul nu numeste izolatia. SRU Craiova:
+ * „Teava din otel neagra ... prevazuta cu izolatie elastomerica cu grosimea de
+ * 19mm ... (material marunt, ... vopsire, grunduire etc)” — „grunduire” e in
+ * lista costurilor incluse, nu lucrarea randului; respinse, ieseau 0 din 45 de
+ * randuri de teava izolata. Doar grunduirea: o lista mai larga lasa sa treaca
+ * aparatele de aer conditionat din Book15 (r274–275, „insulated with
+ * elastomeric tube”), „Gata” la pretul tubului pe bucata de aparat.
+ */
+const GRUNDUIRE = /grundu|priming/i;
+const MATERIAL_IZOLATIE = /elastomer|armaflex|k-?flex|kaiflex|vat[aă]\s+mineral|mineral\s+wool|cochil/i;
+
+/**
+ * Randul spune ca NU se izoleaza: SRU Craiova, „Tubulatura rectangulara din
+ * tabla zincata ... fara izolatie”, „... neizolata”, „piese speciale ...
+ * neizolate”. Erau 4 pozitii de tabla la 59,51 €/m² pe 45.643 m², adica
+ * 2,7 milioane € pentru o lucrare pe care n-o facem.
+ */
+const FARA_IZOLATIE = /f[aă]r[aă]\s+izola|neizolat|uninsulated|without\s+insulation|ohne\s+d[aä]mmung/i;
+
+/** Cuvintele unei jachete, cand materialul ei e numit fara izolatie (inox, PVC). */
+const SEMN_JACHETA = /tabl|jachet|jacket|cladding|mantel|blech|caset|protec[țt]i|protejat|manta|sheet|folie/i;
 
 /**
  * Livrarea tubulaturii in sine, nu izolarea ei.
@@ -124,7 +150,7 @@ const LIVRARE_TUBULATURA =
  * daca spune "sistem", iar "Supply and installation of aluminum sheet
  * jacketing" e tot a noastra.
  */
-const SEMN_IZOLATIE = /izola[țt]|izolatii|insulat|d[aä]mmung|jachet|jacket|armaflex|elastomer|vat[aă]\s+mineral|mineral\s+wool/i;
+const SEMN_IZOLATIE = /izola[țt]|izolatii|insulat|d[aä]mmung|jachet|jacket|armaflex|elastomer|vat[aă]\s+mineral|mineral\s+wool|protec[țt]i\w*\s+mecanic/i;
 
 /**
  * Numarul se termina la prima non-cifra, nu la granita de cuvant: "flanse
@@ -216,12 +242,19 @@ const RE_GROSIME_COMPACT = /\bg\s?(\d{2,3})\b/;
  * avem" — la a doua, nimic nu are voie sa completeze in locul clientului.
  */
 export function scrieGrosime(text: string): boolean {
-  return RE_GROSIME.test(text) || RE_GROSIME_COMPACT.test(text);
+  return RE_GROSIME.test(text) || RE_GROSIME_COMPACT.test(text) || RE_GROSIME_DUPA_MATERIAL.test(text);
 }
+
+/**
+ * „vata minerala 110 mm”: grosimea lipita de material, chiar peste lista.
+ * Fara ea, CET Constanta (specificatia cere 110 mm la ø168) ieșea „Gata” la
+ * 100 mm, cu grosimea luata de la conducta (11 octombrie 2026).
+ */
+const RE_GROSIME_DUPA_MATERIAL = /(?:vat[aă]\s+mineral[aă]|elastomer\w*|mineral\s+wool)\s+(?:de\s+)?(\d{2,3})\s*mm/i;
 
 /** Grosimea de izolatie scrisa pe rand, chiar una care nu e in lista („g48"). */
 export function grosimeScrisa(text: string): number | null {
-  const m = text.match(RE_GROSIME) ?? text.match(RE_GROSIME_COMPACT);
+  const m = text.match(RE_GROSIME) ?? text.match(RE_GROSIME_COMPACT) ?? text.match(RE_GROSIME_DUPA_MATERIAL);
   return m ? Number(m[1]) : null;
 }
 const RE_MM = /(\d{1,3})\s*mm\b/g;
@@ -511,8 +544,12 @@ export function extrageDeterminist(
     straturi_extra: [], incredere: 0, motiv: "",
   };
 
-  if (ALTE_MESERII.test(text)) {
+  if (ALTE_MESERII.test(text) || (GRUNDUIRE.test(text) && !MATERIAL_IZOLATIE.test(text))) {
     return { linie: { ...gol, incredere: 0.95, motiv: "alta meserie, nu se oferteaza" }, complet: true };
+  }
+
+  if (FARA_IZOLATIE.test(text) && !MATERIAL_IZOLATIE.test(text)) {
+    return { linie: { ...gol, incredere: 0.95, motiv: "fara izolatie: nu e lucrarea noastra" }, complet: true };
   }
 
   // Livrare de tubulatura, fara niciun cuvant de izolatie pe rand: materialul
@@ -554,6 +591,15 @@ export function extrageDeterminist(
       },
       complet: true,
     };
+  }
+  // Lista de tevi a instalatorului: materialul e al tevii sau al piesei, nu
+  // jacheta noastra. CET Constanta: „Hexagonal nipple EN 10241 … stainless”,
+  // „Pipe PVC-C grey … 25x2.8”, „Manometer NG100 …”. Ieseau 31 de pozitii de
+  // tabla de inox si PVC, la 29–79 € bucata. Fara niciun cuvant de izolatie
+  // sau de jacheta pe rand, nu e lucrarea noastra.
+  if (toate.length > 0 && toate.every((s) => s === "tabla_inox" || s === "pvc")
+    && !SEMN_IZOLATIE.test(text) && !SEMN_JACHETA.test(text)) {
+    return { linie: { ...gol, incredere: 0.95, motiv: "materialul tevii sau al piesei, nu izolatie" }, complet: true };
   }
   const sistem = toate[0] ?? null;
   // Ce mai e numit pe rand, peste primul strat. O descriere ca "Izolatii cu

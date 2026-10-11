@@ -550,6 +550,64 @@ pe materialele care au preț de achiziție. Piesele fără regulă de material
 (flanșe, casete, coturi sub 3 țoli) apar sub necesar ca „+ N buc.” și nu intră
 în „De comandat”; un rând care are doar piese e „de stabilit”, nu „acoperit”.
 
+## Comenzi la furnizori (11 octombrie 2026)
+
+`web/ecrane/comenzi.ts`, în meniu după „Depozit și stoc”. Logica în
+`src/stoc/comenzi.ts`, datele prin operațiile din `web/date.ts` (`puneComanda`,
+`trimiteComanda`, `receptioneaza`, `treceFactura` …), nu prin `scrieDepozit`.
+
+- **Depozit și stoc**, pe fiecare necesar: „Adus pe șantier”, „Comandat,
+  nesosit”, „Rămas de comandat” (la ambalaj întreg; „ca în evidența de
+  cumpărări” când ambalajul e cel implicit). Dedesubt, „Material care există
+  deja”: centralul și surplusul altor șantiere, cu „Mută … pe șantier”.
+  „Fă comenzile pentru N materiale” face ciornele și deschide Comenzi.
+- **Comenzi**: filtru Deschise / Toate (deschisă = are ceva de primit sau un
+  aviz fără factură). Ciorna: cantitate pe linie (tabla și în kg), „Scoate”,
+  furnizor, notă; „Trimite comanda”, „Salvează ciorna”, „Șterge ciorna”.
+  Trimisă: textul de email (cu „Copiază textul”) și „Descarcă Excel”, apoi
+  „Recepție” (aviz sau factură, serie, număr, dată, monedă, curs, transport,
+  unde a ajuns, primit și preț pe linie; tabla la kg) și, pe fiecare aviz fără
+  preț, „Trece factura”. Anularea cere a doua apăsare. Jos: comandă nouă de
+  mână (cu motiv pe un șantier) și „Descarcă evidența”.
+- Cardul „Materiale de comandat” din import: pierderi și la saltele, plus
+  pastilele „Peste prag, comandă tot tuburi la ø114 · ø140 …”.
+- `.imp-formular-butoane` are acum spațiu între butoane și se rupe pe rânduri;
+  câmpurile numerice din tabele au 11ch.
+
+Verificat cu Playwright: server și demo, 390 / 768 / 1440 / 1920 px, ambele
+teme, zero derulare laterală.
+
+**11 octombrie 2026, după-amiază.** Pe ciornă, coloana „Preț fără TVA”
+(câmp + lei / €, sursa dedesubt: „lista K-Flex ST, 24.06.2026”, „factura … din
+…”, „scris de mână”, sau cine are preț când furnizorul ales n-are) și
+„Valoare așteptată” sub tabel; schimbarea furnizorului ia prețurile de la el.
+La recepție și la „Trece factura”, sus, zona „Citește avizul / factura din
+poză sau PDF” (`.imp-drop`, mai mică): completează formularul, iar sub ea scrie
+ce s-a completat și ce nu e pe comandă; fișierul se atașează la înregistrare și
+apare pe card („Atașate: avizul CS 20261262 · factura …”). Fără model pe server
+zona doar atașează; pe linkul demo nu apare. Prețul așteptat stă ca placeholder
+în câmpurile de preț, nu ca valoare. „Retur la furnizor” (pliat) pe comenzile
+cu marfă primită; tabelul capătă coloana „Returnat”.
+
+## Măsurători: „Pentru comanda de material” (11 octombrie 2026)
+
+Al treilea scop, lângă ofertă și situație: alegi șantierul, încarci pozele,
+le verifici, apoi „Fă ciornele comenzii”. Se deschide Comenzi, cu ciornele noi
+(nota spune din ce măsurători vin). Dacă nimic nu trebuie comandat, mesajul o
+spune sub buton, cu câte rânduri n-au dat material.
+
+## Import: „Izolația pe foaie” (11 octombrie 2026)
+
+Un fișier fără nicio poziție de izolație, dar cu liste de țevi (CET
+Constanța), nu mai cade pe „nu are poziții”: pasul 1 arată câte un card pe
+foaie (`web/import/izolatie-vizual.ts`), cu ce s-a găsit („4 țevi · 10 coturi,
+teuri, reducții · 4 robineți și flanșe · 5 rânduri care nu se izolează”) și
+alegerea izolației. Câmpurile apar doar când contează (fără izolație = un
+singur câmp; temperatura doar la „la cald”, mm doar la „aceeași grosime”), fără
+redesenare. „Fă lista de izolații” scrie registrul și îl importă ca pe orice
+fișier; „Alt fișier” se întoarce la start. Bifele din `.imp-campuri` au
+eticheta pe același rând și ținta de 44 px.
+
 ## Lucrări: șantierele din oferte (29 septembrie 2026)
 
 `web/ecrane/lucrari.ts`; logica în `src/lucrari/situatii.ts`, datele în

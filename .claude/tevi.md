@@ -169,6 +169,13 @@ Regula firmei, din apelul din 29 septembrie 2026:
   firma a spus că echivalența din listă e doar pentru ofertă. Adrian a corectat
   pe foaia din 5 octombrie „119–123” în „219–273 → 1:1”, cum citea deja codul.
 
+**Ce se cumpără, din evidența de achiziții** (11 octombrie 2026): peste prag,
+vata e **saltea lamelară caserată** (LM ECO ALU M), nu placă; placa de vată e
+doar la protecția la foc (Conlit, Techrock), iar elastomerul e placă. Pragul de
+3 țoli se confirmă: 93 % din metrii de cochilie și 99,9 % din tubul de elastomer
+cumpărate în 2024–2026 sunt ≤ ø89. Pe unele lucrări se cumpără tub și peste
+(TRANSAVIA: cochilii până la ø168): alegerea e pe diametru (`tuburiPeste`).
+
 Lista de prețuri include manopera, deci necesarul e mai mic decât oferta.
 Scopul lui e să nu rămână material pe stoc: rezerva peste calcul e zero. Din 9
 octombrie 2026 rămân doar pierderile la croit, pe categorie (tablă și plăci

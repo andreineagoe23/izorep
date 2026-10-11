@@ -36,6 +36,10 @@ import { celuleExtrase, grilaFoaie } from "../import/grila.js";
 import { FARA_POZITII, fisierNecitit, motiveLinie, stareLinie, type CodMotiv } from "../import/text.js";
 import { preia, type Predare } from "../predare.js";
 import { MARCA_PRET_DUBLU } from "../../src/santier/spre-cerere.js";
+import { randuriIzolate, tevileFoii, type TeviFoaie } from "../../src/import/izolatie-foaie.js";
+import {
+  ALEGERE_INITIALA, alegereDin, campuriVizibile, ecranIzolatieFoaie, izolatieDin, type AlegereFoaie,
+} from "../import/izolatie-vizual.js";
 import { bani } from "../../src/pricing/engine.js";
 
 /**
@@ -123,6 +127,8 @@ export const ecran: Ecran = {
     /** Adaosul pentru coturi si fitinguri din cardul „Materiale necesare". */
     let pierderi: Pierderi = { ...PIERDERI_IMPLICITE };
     let pragTub = PRAG_TUB_MM;
+    /** Diametrele peste prag comandate tot ca tub (cochilii, ca la TRANSAVIA). */
+    let tuburiPeste: number[] = [];
     /** Ajustarea tehnicului pe toate prețurile, din pasul „Oferta" (procente). */
     let ajustare = 0;
     let detaliiDeschise = false;
@@ -140,6 +146,11 @@ export const ecran: Ecran = {
       if (deInvatat) invataDinCorectie(deInvatat, stoc);
       deInvatat = null;
     };
+    /**
+     * Fisierul fara nicio pozitie, dar cu liste de tevi (CET Constanta): omul
+     * alege izolatia pe fiecare foaie, iar lista de izolatii trece prin import.
+     */
+    let deIzolat: { fisier: File; tevi: TeviFoaie[]; alegeri: AlegereFoaie[]; eroare?: string } | null = null;
     let ceasMesaj: ReturnType<typeof setTimeout> | undefined;
     let ceasSalvare: ReturnType<typeof setTimeout> | undefined;
 
@@ -233,7 +244,18 @@ export const ecran: Ecran = {
       // bara laterala se pliaza (temporar, fara sa schimbe preferinta omului).
       ceriSpatiu(gazda, areSesiune && pas !== 1);
       elPasi.innerHTML = pasi(pas, { 1: true, 2: areSesiune, 3: areSesiune });
-      if (pas === 1 || !sesiune) {
+      if (pas === 1 && deIzolat) {
+        const d = deIzolat;
+        pagina.innerHTML = ecranIzolatieFoaie({
+          fisier: d.fisier.name, alegeri: d.alegeri, ...(d.eroare ? { eroare: d.eroare } : {}),
+          foi: d.tevi.map((t) => ({
+            nume: t.foaie, ignorate: t.ignorate,
+            tevi: t.tevi.filter((x) => x.element === "ml").length,
+            piese: t.tevi.filter((x) => x.element === "cot" || x.element === "teu" || x.element === "reductie").length,
+            armaturi: t.tevi.filter((x) => x.element === "robinet" || x.element === "flansa").length,
+          })),
+        });
+      } else if (pas === 1 || !sesiune) {
         pagina.innerHTML = ecranStart({ destinatie, istoric, stergeDe, eroare: eroareStart });
         legaDrop();
       } else if (pas === 2) {
@@ -552,6 +574,7 @@ export const ecran: Ecran = {
     }
 
     async function proceseaza(fisier: File, predare?: Predare): Promise<void> {
+      deIzolat = null;
       pas = 2;
       elPasi.innerHTML = pasi(2, { 1: true, 2: false, 3: false });
       pagina.innerHTML = ecranProgres(`Se citește ${fisier.name}…`, null);
@@ -600,6 +623,14 @@ export const ecran: Ecran = {
         descrieriSchimbate = new Set();
         preturiManuale = new Map();
         const rez = await proceseazaRegistru(foi, { ...optiuni(), ...(extractor ? { extrage: extractor } : {}) });
+        // Lista de tevi a instalatorului, fara izolatie pe rand: izolatia se alege pe foaie.
+        const tevi = rez.linii.some((l) => l.extras.sistem !== null) ? [] : foi.map(tevileFoii).filter((t) => t.tevi.length >= 3);
+        if (tevi.length > 0) {
+          pas = 1;
+          deIzolat = { fisier, tevi, alegeri: tevi.map(() => ({ ...ALEGERE_INITIALA })) };
+          deseneaza();
+          return;
+        }
         if (rez.linii.length === 0) {
           pas = 1;
           eroareStart = `<strong>${esc(fisier.name)} nu are poziții.</strong> ${esc(FARA_POZITII)}`;
@@ -637,6 +668,35 @@ export const ecran: Ecran = {
       }
     }
 
+    /**
+     * Din alegerile de pe foi, lista de izolatii: aceleasi randuri ca din
+     * carnet (`spreCerere`), intr-un registru nou, citit apoi ca orice fisier.
+     */
+    async function faListaDeIzolatii(form: HTMLFormElement): Promise<void> {
+      const d = deIzolat;
+      if (!d) return;
+      const date = new FormData(form);
+      d.alegeri = d.tevi.map((_, i) => alegereDin(date, i));
+      const randuri = d.tevi.flatMap((t, i) => {
+        const a = izolatieDin(d.alegeri[i]!);
+        return a ? randuriIzolate(t, a).randuri : [];
+      });
+      if (randuri.length === 0) {
+        d.eroare = "Alege izolația pe cel puțin o foaie.";
+        deseneaza();
+        return;
+      }
+      const [{ spreCerere }, { registruCerere }] = await Promise.all([
+        import("../../src/santier/spre-cerere.js"), import("../../src/santier/registru.js"),
+      ]);
+      const titlu = d.fisier.name.replace(/\.xlsx$/i, "");
+      const buf = await registruCerere(spreCerere(randuri), `${titlu} - izolatia pe foaie`);
+      deIzolat = null;
+      await proceseaza(new File([buf], `${titlu} - izolatie pe foaie.xlsx`, {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      }));
+    }
+
     /** Antetul ofertei din formularul pasului 3; același pentru ofertă și pentru șantier. */
     /**
      * Materialele pentru exact pozitiile din oferta, cu preturile ei: aceleasi
@@ -660,7 +720,7 @@ export const ecran: Ecran = {
     }
 
     function necesarOferta(s: Sesiune, discountProcent = 0): ReturnType<typeof necesarDinLinii> {
-      return necesarDinLinii(imparte(cuAjustare(s.rez.linii, ajustare)).oferta, { pierderi, pragTub, discountProcent });
+      return necesarDinLinii(imparte(cuAjustare(s.rez.linii, ajustare)).oferta, { pierderi, pragTub, tuburiPeste, discountProcent });
     }
 
     function cerereDinFormular(s: Sesiune, form: HTMLFormElement): CerereOferta {
@@ -745,7 +805,7 @@ export const ecran: Ecran = {
       const vechiNecesar = st.necesare.find((x) => x.fisier === s.meta.nume);
       const nou = {
         id: vechiNecesar?.id ?? idNou(), creat: new Date().toISOString(), fisier: s.meta.nume,
-        obiectiv: plan.denumire, pierderi: n.pierderi, pragTub: n.pragTub, materiale: n.materiale,
+        obiectiv: plan.denumire, pierderi: n.pierderi, pragTub: n.pragTub, tuburiPeste: n.tuburiPeste, materiale: n.materiale,
         faraNecesar: n.faraNecesar.length, santier: plan.id,
       };
       scrieDepozit({ ...st, necesare: [nou, ...st.necesare.filter((x) => x !== vechiNecesar)] });
@@ -813,6 +873,7 @@ export const ecran: Ecran = {
           return;
         }
         case "schimba-fisier": pas = 1; editIdx = null; deseneaza(); scrollTo({ top: 0 }); return;
+        case "renunta-izolatie": deIzolat = null; deseneaza(); scrollTo({ top: 0 }); return;
         case "la-verificare": pas = 2; deseneaza(); scrollTo({ top: 0 }); return;
         case "creeaza-santier": creeazaSantier(); return;
         case "excel": excel = !excel; editIdx = null; deseneaza(); return;
@@ -896,6 +957,19 @@ export const ecran: Ecran = {
       }
     });
 
+    // Izolatia pe foaie: se arata doar campurile care conteaza pentru alegere.
+    gazda.addEventListener("change", (e) => {
+      const form = (e.target as HTMLElement).closest<HTMLFormElement>("#izolatie-foaie");
+      if (!form || !deIzolat) return;
+      const date = new FormData(form);
+      deIzolat.tevi.forEach((_, i) => {
+        for (const [camp, vizibil] of Object.entries(campuriVizibile(alegereDin(date, i)))) {
+          const el = form.querySelector<HTMLElement>(`[data-camp="${camp}-${i}"]`);
+          if (el) el.hidden = !vizibil;
+        }
+      });
+    });
+
     gazda.addEventListener("change", (e) => {
       const t = e.target as HTMLInputElement | HTMLSelectElement;
       if (t.id === "fisier") {
@@ -909,10 +983,14 @@ export const ecran: Ecran = {
         if (pas !== 1) deseneaza();
         return;
       }
-      if ((t.id === "prag-tub" || t.dataset["act"] === "pierdere") && sesiune) {
+      if ((t.id === "prag-tub" || t.dataset["act"] === "pierdere" || t.dataset["act"] === "tub-peste") && sesiune) {
         // Doar cardul: o redesenare a pasului ar sterge datele ofertei deja scrise.
         if (t.id === "prag-tub") pragTub = Number(t.value);
-        else {
+        else if (t.dataset["act"] === "tub-peste") {
+          const d = Number(t.value);
+          const bifat = (t as HTMLInputElement).checked;
+          tuburiPeste = bifat ? [...new Set([...tuburiPeste, d])] : tuburiPeste.filter((x) => x !== d);
+        } else {
           const v = Number(t.value.replace(",", "."));
           if (Number.isFinite(v) && v >= 0) pierderi = { ...pierderi, [t.dataset["cat"] as keyof Pierderi]: v / 100 };
         }
@@ -940,6 +1018,7 @@ export const ecran: Ecran = {
       const form = e.target as HTMLFormElement;
       e.preventDefault();
       if (form.id === "antet-oferta") { void genereazaOferta(form); return; }
+      if (form.id === "izolatie-foaie") { void faListaDeIzolatii(form); return; }
       if (!form.classList.contains("imp-editor")) return;
       const idx = Number(form.dataset["idx"]);
       salveazaEditor(form, idx);
