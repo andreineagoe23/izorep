@@ -1,0 +1,1 @@
+ALTER TABLE "miscare" ADD COLUMN "motiv" text;

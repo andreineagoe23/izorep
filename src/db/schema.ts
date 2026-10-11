@@ -500,6 +500,8 @@ export const miscare = pgTable("miscare", {
   spre: text("spre"),
   lucrareId: text("lucrare_id"),
   nota: text("nota"),
+  /** De ce: ajustarea la inventar, restul de la inchiderea santierului. */
+  motiv: text("motiv"),
   anuleaza: text("anuleaza"),
   /** Pretul de achizitie pe unitate, EUR. */
   pret: numeric("pret", { precision: 14, scale: 4 }),

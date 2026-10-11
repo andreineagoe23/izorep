@@ -71,6 +71,7 @@ async function stareDepozit(tx: Baza): Promise<StareDepozit> {
     ...(m.spre ? { spre: m.spre } : {}),
     ...(m.lucrareId ? { lucrareId: m.lucrareId } : {}),
     ...(m.nota ? { nota: m.nota } : {}),
+    ...(m.motiv ? { motiv: m.motiv } : {}),
     ...(m.anuleaza ? { anuleaza: m.anuleaza } : {}),
     ...(m.pret !== null ? {
       pret: { valoare: Number(m.pret), ...(m.pretLei !== null ? { lei: Number(m.pretLei) } : {}), ...(m.curs !== null ? { curs: Number(m.curs) } : {}) },
@@ -290,7 +291,7 @@ export async function adaugaMiscare(tx: Baza, ctx: Context, m: Miscare): Promise
   const nou = await tx.insert(miscare).values({
     tenantId: ctx.tenantId, id: m.id, data: new Date(m.data), tip: m.tip, articolCheie: a.cheie,
     cantitate: String(m.cantitate), din: m.din ?? null, spre: m.spre ?? null, lucrareId: m.lucrareId ?? null,
-    nota: m.nota ?? null, anuleaza: m.anuleaza ?? null, pret: m.pret ? String(m.pret.valoare) : null,
+    nota: m.nota ?? null, motiv: m.motiv ?? null, anuleaza: m.anuleaza ?? null, pret: m.pret ? String(m.pret.valoare) : null,
     pretLei: m.pret?.lei !== undefined ? String(m.pret.lei) : null, curs: m.pret?.curs !== undefined ? String(m.pret.curs) : null,
     comandaId: m.comanda?.id ?? null, comandaLinie: m.comanda?.linie ?? null,
     document: m.document ?? null, furnizor: m.furnizor ?? null,

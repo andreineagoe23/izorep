@@ -71,6 +71,13 @@
       "when": 1791719502524,
       "tag": "0009_documente_furnizor",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791755096929,
+      "tag": "0010_motiv_miscare",
+      "breakpoints": true
     }
   ]
 }

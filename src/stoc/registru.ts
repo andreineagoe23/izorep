@@ -74,6 +74,11 @@ export interface Miscare {
   spre?: string;
   lucrareId?: string;
   nota?: string;
+  /**
+   * De ce: la ajustare (inventar, Faza 8) si la restul de la inchiderea
+   * santierului (pierdut, furat, reciclat; Faza 7).
+   */
+  motiv?: string;
   /** Pusa de „Incarca date de exemplu": nu e o miscare reala. */
   exemplu?: true;
   /** Storno: id-ul miscarii pe care o anuleaza. Efectul e cel al ei, cu semn schimbat. */
