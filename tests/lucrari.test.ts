@@ -9,9 +9,11 @@
  */
 import { describe, it, expect } from "vitest";
 import ExcelJS from "exceljs";
+import { registruOferta } from "../web/registru-oferta.js";
+import { citesteOferta, totalul } from "./registru-citit.js";
 import { existsSync } from "node:fs";
 import {
-  adaosFocIndustrial, cuAjustare, imparte, planDinOferta, registruOferta, totalCuAdaos, totalOferta,
+  adaosFocIndustrial, cuAjustare, imparte, planDinOferta, totalCuAdaos, totalOferta,
   type AntetOferta, type Provenienta,
 } from "../web/oferta.js";
 import { registruSituatie } from "../web/situatie.js";
@@ -132,13 +134,9 @@ describe("ajustarea tehnicului și închiderile la foc pe industrial", () => {
     expect(adaosFocIndustrial(oferta, "rezidential")).toBe(0);
     expect(totalCuAdaos(oferta, "industrial")).toBe(15230.45);
 
-    const wb = new ExcelJS.Workbook();
-    await wb.xlsx.load(await registruOferta({ linii: l, antet: ANTET, provenienta: prov("industrial") }));
-    const ws = wb.getWorksheet("Ofertă")!;
-    const randuri: [string, number][] = [];
-    ws.eachRow((r) => { randuri.push([String(r.getCell(1).value ?? ""), Number(r.getCell(6).value)]); });
-    expect(randuri.find(([t]) => t.startsWith("ADAOS INCHIDERI"))![1]).toBe(2538.41);
-    expect(randuri.find(([t]) => t.startsWith("TOTAL LUCRARI"))![1]).toBe(15230.45);
+    const o = await citesteOferta(await registruOferta({ linii: l, antet: ANTET, provenienta: prov("industrial") }));
+    expect(totalul(o, "ADAOS INCHIDERI")).toBe(2538.41);
+    expect(totalul(o, "TOTAL LUCRARI")).toBe(15230.45);
   });
 });
 

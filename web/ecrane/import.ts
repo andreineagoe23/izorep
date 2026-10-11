@@ -15,7 +15,7 @@ import { anuleaza, confirma, potrivit } from "../validare.js";
 import { cate, esc, eur, type Ecran } from "./tip.js";
 import { FIRME } from "../date/seed.js";
 import {
-  adaosFocIndustrial, clientPropus, cuAjustare, dataAzi, imparte, planDinOferta, registruOferta, totalCuAdaos, valoareOferta,
+  adaosFocIndustrial, clientPropus, cuAjustare, dataAzi, imparte, planDinOferta, totalCuAdaos, valoareOferta,
   type AntetOferta, type CerereOferta,
 } from "../oferta.js";
 
@@ -757,6 +757,7 @@ export const ecran: Ecran = {
       buton.textContent = "Se pregătește…";
       form.querySelector(".alerta")?.remove();
       try {
+        const { registruOferta } = await import("../registru-oferta.js");
         const buf = await registruOferta(cerere);
         // Salvata INAINTE de descarcare: ce pleaca la client e exact ce s-a
         // salvat. Pe server e o versiune noua; in browser, doar sumarul.

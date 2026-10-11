@@ -24,8 +24,11 @@
  * rulează, nu verifică nimic despre ele și spun asta.
  */
 import { describe, it, expect } from "vitest";
+import { registruOferta } from "../web/registru-oferta.js";
+import { citesteOferta, totalul } from "./registru-citit.js";
+import type { CellValue, Row } from "exceljs";
 import { existsSync } from "node:fs";
-import { imparte, registruOferta, totalOferta, type AntetOferta, type Provenienta } from "../web/oferta.js";
+import { imparte, totalOferta, type AntetOferta, type Provenienta } from "../web/oferta.js";
 import { importaFisier } from "../src/import/pipeline.js";
 import { stocInMemorie } from "../src/import/memorie.js";
 import { proceseazaRegistru, reevalueaza } from "../src/import/nucleu.js";
@@ -166,29 +169,12 @@ describe("acoperirea față de ofertele semnate", () => {
     // ce ajunge CHIAR in fisierul care pleaca la client. Intre ele stau
     // scrierea randurilor si randul de TOTAL, adica exact locul unde o pozitie
     // se poate pierde fara ca vreun contor sa se miste.
-    const ExcelJS = (await import("exceljs")).default;
     for (const caz of prezente) {
       const { raport } = await ruleaza(caz);
-      const buf = await registruOferta({ linii: raport.linii, antet: ANTET, provenienta: PROV });
-      const wb = new ExcelJS.Workbook();
-      await wb.xlsx.load(buf);
-      const ws = wb.getWorksheet("Ofertă")!;
-
-      const valori: number[] = [];
-      let randTotal = 0;
-      ws.eachRow((r, n) => {
-        if (n < 16) return;
-        if (String(r.getCell(1).value ?? "").startsWith("TOTAL")) { randTotal = n; return; }
-        const v = r.getCell(6).value;
-        if (typeof v === "number" && !randTotal) valori.push(v);
-      });
-
-      expect(valori, caz.fisier).toHaveLength(caz.peOferta);
-      if (caz.peOferta > 0) {
-        expect(Number(ws.getCell(`F${randTotal}`).value), caz.fisier).toBeCloseTo(caz.generat, 2);
-        expect(Math.round(valori.reduce((s, v) => s + v, 0) * 100) / 100, caz.fisier)
-          .toBeCloseTo(caz.generat, 2);
-      }
+      const o = await citesteOferta(await registruOferta({ linii: raport.linii, antet: ANTET, provenienta: PROV }));
+      expect(o.pozitii, caz.fisier).toHaveLength(caz.peOferta);
+      expect(totalul(o, "TOTAL LUCRARI"), caz.fisier).toBeCloseTo(caz.generat, 2);
+      expect(Math.round(o.pozitii.reduce((s, p) => s + p.valoare, 0) * 100) / 100, caz.fisier).toBeCloseTo(caz.generat, 2);
     }
   });
 
@@ -263,43 +249,36 @@ describe("registrul generat din cererea TRANSAVIA are rândurile Ofertei 284", (
   const CERERE = `${DIR}/cerere-de-oferta-transavia-abur.xlsx`;
   const OFERTA = `${DIR}/oferta-284-transavia-abur.xlsx`;
 
-  it("după „Confirmă toate”: aceleași coloane și numere, rând cu rând, și totalul semnat", async () => {
+  it("după „Confirmă toate”: aceleași coduri, UM, cantități și prețuri, rând cu rând, roșul de pe casete și totalul semnat", async () => {
     if (!existsSync(CERERE) || !existsSync(OFERTA)) return;
     const cerere = await importaFisier(CERERE, { faraModel: true, stoc: stocInMemorie() });
-    // „Confirmă toate cele 13” din ecran: pozițiile cu preț nu mai cer validare.
+    // „Confirmă toate” din ecran: pozițiile cu preț nu mai cer validare.
     const confirmate = cerere.linii.map((l) => (l.pret ? { ...l, necesitaValidare: false } : l));
-    const buf = await registruOferta({ linii: confirmate, antet: ANTET, provenienta: PROV });
+    const o = await citesteOferta(await registruOferta({ linii: confirmate, antet: ANTET, provenienta: PROV }));
+
     const ExcelJS = (await import("exceljs")).default;
     const wb = new ExcelJS.Workbook();
-    await wb.xlsx.load(buf);
-    const ws = wb.getWorksheet("Ofertă")!;
+    await wb.xlsx.readFile(OFERTA);
+    const ws = wb.getWorksheet("Izolatii")!;
+    const semnate: Row[] = [];
+    ws.eachRow((r, n) => { if (n > 15 && typeof r.getCell(5).value === "number") semnate.push(r); });
+    const rezultat = (v: CellValue) => (v && typeof v === "object" && "result" in v ? v.result : v);
+    const rosu = (v: CellValue) => (v && typeof v === "object" && "richText" in v
+      ? v.richText.filter((p) => p.font?.color?.argb === "FFFF0000").map((p) => p.text).join("").trim() : "");
 
-    const semnate = (await importaFisier(OFERTA, { faraModel: true, stoc: stocInMemorie() })).linii
-      .filter((l) => l.extras.sistem !== null)
-      .map((l) => l.bruta.celule);
-    const generate: unknown[][] = [];
-    ws.eachRow((r, n) => {
-      if (n > 15 && typeof r.getCell(6).value === "number" && !String(r.getCell(1).value).startsWith("TOTAL")) {
-        generate.push([1, 2, 3, 4, 5, 6].map((c) => r.getCell(c).value));
-      }
-    });
-
-    expect(generate).toHaveLength(semnate.length);
-    generate.forEach((g, i) => {
+    expect(o.pozitii).toHaveLength(semnate.length);
+    o.pozitii.forEach((g, i) => {
       const s = semnate[i]!;
-      const cum = `rândul ${i + 16}: ${String(g[1])}`;
-      expect(g[0], cum).toBe(s[0]);                                   // Identificare_Norma
-      expect(g[2], cum).toBe(s[2]);                                   // UM
-      expect(g[3], cum).toBe(s[3]);                                   // cantitate
-      expect(g[4], cum).toBe(s[4]);                                   // preț unitar
-      expect(g[5] as number, cum).toBeCloseTo(s[5] as number, 4);     // total pe linie, exact ca în ofertă
-      const gr = /gr\. (\d+) mm/.exec(String(s[1]));
-      if (gr) expect(String(g[1]), cum).toContain(`gr. ${gr[1]} mm`);
+      const cum = `rândul ${s.number}: ${g.denumire}`;
+      expect(g.cod, cum).toBe(s.getCell(1).value);
+      expect(g.um, cum).toBe(s.getCell(3).value);
+      expect(g.cantitate, cum).toBe(s.getCell(4).value);
+      expect(g.pretUnitar, cum).toBe(s.getCell(5).value);
+      expect(g.valoare, cum).toBeCloseTo(rezultat(s.getCell(6).value) as number, 4);
+      const r = rosu(s.getCell(2).value);
+      expect(g.rosu, cum).toBe(/gr\. \d+ mm/.test(r) ? r : "");
     });
-
-    let total = 0;
-    ws.eachRow((r) => { if (String(r.getCell(1).value).startsWith("TOTAL LUCRARI")) total = Number(r.getCell(6).value); });
-    expect(total).toBe(94575.06);
+    expect(totalul(o, "TOTAL LUCRARI")).toBe(94575.06);
   });
 });
 

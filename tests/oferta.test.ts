@@ -20,12 +20,10 @@
  * fel ca la restul suitelor care ating `../attachments/`.
  */
 import { describe, it, expect } from "vitest";
-import ExcelJS from "exceljs";
 import { existsSync } from "node:fs";
-import {
-  imparte, registruOferta, totalOferta,
-  type AntetOferta, type Provenienta,
-} from "../web/oferta.js";
+import { imparte, totalOferta, type AntetOferta, type Provenienta } from "../web/oferta.js";
+import { registruOferta } from "../web/registru-oferta.js";
+import { citesteOferta, totalul } from "./registru-citit.js";
 import type { LinieProcesata } from "../src/import/nucleu.js";
 import type { LinieExtrasa } from "../src/import/schema.js";
 
@@ -88,18 +86,6 @@ const linie = (p: {
   return l;
 };
 
-/** Recitește registrul generat, ca să verificăm ce ajunge chiar în fișier. */
-async function citeste(buf: ArrayBuffer): Promise<ExcelJS.Workbook> {
-  const wb = new ExcelJS.Workbook();
-  await wb.xlsx.load(buf);
-  return wb;
-}
-
-const text = (ws: ExcelJS.Worksheet, cel: string): string => {
-  const v = ws.getCell(cel).value;
-  return v === null || v === undefined ? "" : String(v);
-};
-
 describe("imparte", () => {
   it("desparte cele trei grămezi după preț și marcaj", () => {
     const curata = linie({ unitar: 10 });
@@ -144,174 +130,104 @@ describe("registrul generat", () => {
     linie({ text: "Cot vata Di21", codEroare: "fara_coeficient_de_forma" }),
     linie({ extras: { sistem: null }, text: "TOTAL CAPITOL" }),
   ];
+  const genereaza = (linii = set(), p: Partial<Provenienta> = {}) =>
+    registruOferta({ linii, antet: ANTET, provenienta: { ...PROV, ...p } }).then(citesteOferta);
 
-  it("pe foaia Ofertă stau doar pozițiile cu preț și nemarcate", async () => {
-    const ws = (await citeste(await registruOferta({
-      linii: set(), antet: ANTET, provenienta: PROV,
-    }))).getWorksheet("Ofertă")!;
-
-    expect(text(ws, "B16")).toBe("Izolatie elastomer DN50 gr. 13 mm");
-    expect(text(ws, "B17")).toBe("Izolatie elastomer DN80 gr. 19 mm");
-    // A treia poziție e marcată, a patra n-are preț, a cincea nu e poziție.
-    expect(text(ws, "B18")).toBe("");
+  it("pe foaia Ofertă stau doar pozițiile cu preț și nemarcate, numerotate", async () => {
+    const o = await genereaza();
+    expect(o.pozitii.map((p) => [p.nr, p.denumire])).toEqual([
+      [1, "Izolatie elastomer DN50 gr. 13 mm"],
+      [2, "Izolatie elastomer DN80 gr. 19 mm"],
+    ]);
   });
 
   it("o poziție marcată NU apare pe foaia Ofertă, oricât de bun ar arăta prețul", async () => {
     // Regula, nu formatarea: SPIRO DN125 are un preț perfect plauzibil (13,74)
-    // și complet greșit. Dacă s-ar strecura pe foaia 1, exact capcana pe care
-    // etapa A o face vizibilă ar ajunge semnată la client.
-    const wb = await citeste(await registruOferta({ linii: set(), antet: ANTET, provenienta: PROV }));
-    const oferta = wb.getWorksheet("Ofertă")!;
-    const validat = wb.getWorksheet("De validat")!;
-
-    let gasitInOferta = false;
-    oferta.eachRow((r) => {
-      if (String(r.getCell(2).value ?? "").includes("SPIRO")) gasitInOferta = true;
-    });
-    expect(gasitInOferta).toBe(false);
-    expect(text(validat, "B2")).toBe("SPIRO DN 125, Armaflex 13mm");
+    // și complet greșit. Pe foaia clientului ar fi un preț nevalidat semnat.
+    const o = await genereaza();
+    expect(o.text).not.toContain("SPIRO");
+    expect(o.intern).toContain("SPIRO DN 125, Armaflex 13mm");
   });
 
-  it("totalul e suma coloanei de total, la bănuț", async () => {
+  it("totalul e suma coloanei de valoare, la bănuț", async () => {
     const linii = set();
-    const ws = (await citeste(await registruOferta({
-      linii, antet: ANTET, provenienta: PROV,
-    }))).getWorksheet("Ofertă")!;
-
-    // Două poziții pe foaie (r16, r17), rând gol, apoi TOTAL pe r19.
-    expect(text(ws, "A19")).toContain("TOTAL LUCRARI IZOLATII TERMICE");
-    expect(ws.getCell("F19").value).toBe(10 * 5 + 20 * 2);
-    expect(ws.getCell("F19").value).toBe(totalOferta(imparte(linii).oferta));
+    const o = await genereaza(linii);
+    expect(totalul(o, "TOTAL LUCRARI IZOLATII TERMICE")).toBe(10 * 5 + 20 * 2);
+    expect(totalul(o, "TOTAL LUCRARI")).toBe(totalOferta(imparte(linii).oferta));
   });
 
-  it("foaia De validat spune de ce e marcată fiecare poziție", async () => {
-    const ws = (await citeste(await registruOferta({
-      linii: set(), antet: ANTET, provenienta: PROV,
-    }))).getWorksheet("De validat")!;
-
-    expect(text(ws, "G1")).toBe("De ce e marcată");
-    // Eticheta umană, nu codul și nu mesajul brut al validatorului.
-    expect(text(ws, "G2")).toBe("scrie DN, dar materialul dă diametrul exterior");
-    expect(text(ws, "G2")).not.toContain("notatie_contrazice_materialul");
-    expect(text(ws, "G2")).not.toBe("brut");
+  it("foaia Pentru noi spune de ce a rămas afară fiecare poziție, cu vorbe de om", async () => {
+    const o = await genereaza();
+    expect(o.intern).toContain("scrie DN, dar materialul dă diametrul exterior");
+    expect(o.intern).not.toContain("notatie_contrazice_materialul");
+    expect(o.intern).toContain("niciun strat n-are coeficient pe banda lui (întrebarea 9 către firmă)");
   });
 
-  it("o poziție netarifată poartă eticheta umană a cauzei, nu textul brut", async () => {
-    const ws = (await citeste(await registruOferta({
-      linii: set(), antet: ANTET, provenienta: PROV,
-    }))).getWorksheet("Netarifate")!;
-
-    expect(text(ws, "E1")).toBe("Ce blochează poziția");
-    expect(text(ws, "E2")).toBe(
-      "niciun strat n-are coeficient pe banda lui (întrebarea 9 către firmă)");
+  it("secțiunea clientului devine titlul capitolului, nu un cod pe rând", async () => {
+    const o = await genereaza();
+    expect(o.coloane).not.toContain("Cod");
+    expect(o.randuri.find((r) => r.rand === 16)?.text).toBe("TERMICE");
   });
 
-  it("secțiunea din fișierul sursă ajunge în Identificare_Norma, altfel IZOLATII", async () => {
-    const ws = (await citeste(await registruOferta({
-      linii: set(), antet: ANTET, provenienta: PROV,
-    }))).getWorksheet("Ofertă")!;
-
-    expect(text(ws, "A16")).toBe("TERMICE");
-    expect(text(ws, "A17")).toBe("IZOLATII");
+  it("proveniența stă pe foaia Pentru noi, nu pe cea a clientului", async () => {
+    const o = await genereaza(set(), { model: "gpt-4.1-2025-04-14" });
+    for (const t of ["Cum a fost calculată oferta", PROV.generatLa, "rezidential", "gpt-4.1-2025-04-14", "sesiune-de-test", "test.xlsx"]) {
+      expect(o.intern).toContain(t);
+      expect(o.text).not.toContain(t);
+    }
+    // Și câte poziții au rămas pe dinafară: fără ele, foaia clientului arată completă.
+    expect(o.intern).toContain("1 de verificat, 1 fără preț");
   });
 
-  it("zona de proveniență face oferta reproductibilă peste un an", async () => {
-    const ws = (await citeste(await registruOferta({
-      linii: set(), antet: ANTET,
-      provenienta: { ...PROV, model: "gpt-4.1-2025-04-14" },
-    }))).getWorksheet("Ofertă")!;
-
-    const tot: string[] = [];
-    ws.eachRow((r) => r.eachCell((c) => tot.push(String(c.value ?? ""))));
-    const intreg = tot.join(" | ");
-
-    expect(intreg).toContain("Cum a fost calculată oferta");
-    expect(intreg).toContain(PROV.generatLa);
-    expect(intreg).toContain("rezidential");
-    expect(intreg).toContain("gpt-4.1-2025-04-14");
-    expect(intreg).toContain("sesiune-de-test");
-    expect(intreg).toContain("test.xlsx");
-    // Și câte poziții au rămas pe dinafară: fără ele, foaia 1 arată completă.
-    expect(intreg).toContain("1 de validat, 1 netarifate");
-  });
-
-  it("importul determinist, fără model, se scrie ca atare", async () => {
-    const ws = (await citeste(await registruOferta({
-      linii: set(), antet: ANTET, provenienta: PROV,
-    }))).getWorksheet("Ofertă")!;
-    const tot: string[] = [];
-    ws.eachRow((r) => r.eachCell((c) => tot.push(String(c.value ?? ""))));
-    expect(tot.join(" | ")).toContain("niciunul (doar stratul determinist)");
+  it("nota și semnătura firmei, ca în ofertele semnate", async () => {
+    const o = await genereaza();
+    expect(o.text).toContain("Preturile sunt exprimate in Euro si nu contin TVA");
+    expect(o.text).toContain("Plata lucrarilor se face pe baza cantitatilor real executate");
+    expect(o.text).toContain(ANTET.firma);
   });
 
   it("un import fără nicio poziție tarifată dă un registru valid, cu total zero", async () => {
-    // Cazul care ar fi crăpat cel mai ușor: fără rânduri, `randTotal` cade pe
-    // primul rând de date. Registrul trebuie să existe și să spună zero, nu să
-    // arunce — omul are dreptul să vadă că nu s-a tarifat nimic.
-    const ws = (await citeste(await registruOferta({
-      linii: [linie({ codEroare: "grosime_inexistenta" })], antet: ANTET, provenienta: PROV,
-    }))).getWorksheet("Ofertă")!;
-    expect(ws.getCell("F17").value).toBe(0);
+    const o = await genereaza([linie({ codEroare: "grosime_inexistenta" })]);
+    expect(o.pozitii).toEqual([]);
+    expect(totalul(o, "TOTAL LUCRARI")).toBe(0);
   });
 });
 
 describe("discountul comercial", () => {
-  const cuDiscount = (procent?: number) => registruOferta({
-    linii: [linie({ unitar: 10, cantitate: 5 }), linie({ unitar: 20, cantitate: 2 })],
-    antet: { ...ANTET, ...(procent === undefined ? {} : {
-      discountProcent: procent,
-      discountConditie: "PENTRU PLATA FACTURII FISCALE IN TERMEN DE 5-7 ZILE",
-    }) },
-    provenienta: PROV,
-  });
+  const cuDiscount = (procent?: number, linii = [linie({ unitar: 10, cantitate: 5 }), linie({ unitar: 20, cantitate: 2 })]) =>
+    registruOferta({
+      linii,
+      antet: { ...ANTET, ...(procent === undefined ? {} : {
+        discountProcent: procent,
+        discountConditie: "PENTRU PLATA FACTURII FISCALE IN TERMEN DE 5-7 ZILE",
+      }) },
+      provenienta: PROV,
+    }).then(citesteOferta);
+  const totaluri = (o: Awaited<ReturnType<typeof cuDiscount>>) =>
+    o.randuri.filter((r) => /^(TOTAL|DISCOUNT)/.test(r.text));
 
-  it("fără discount, registrul are un singur rând de total, ca înainte", async () => {
-    const ws = (await citeste(await cuDiscount())).getWorksheet("Ofertă")!;
-    const totaluri: string[] = [];
-    ws.eachRow((r) => {
-      const a = String(r.getCell(1).value ?? "");
-      if (a.startsWith("TOTAL") || a.startsWith("DISCOUNT")) totaluri.push(a.split(" ").slice(0, 2).join(" "));
-    });
-    expect(totaluri).toEqual(["TOTAL LUCRARI"]);
+  it("fără discount, registrul are un singur rând de total", async () => {
+    expect(totaluri(await cuDiscount()).map((r) => r.text.split(" ").slice(0, 2).join(" "))).toEqual(["TOTAL LUCRARI"]);
   });
 
   it("cu discount, reproduce structura ofertei 284: total, discount, total general", async () => {
-    const ws = (await citeste(await cuDiscount(3))).getWorksheet("Ofertă")!;
-    const randuri: { a: string; f: unknown }[] = [];
-    ws.eachRow((r) => {
-      const a = String(r.getCell(1).value ?? "");
-      if (a.startsWith("TOTAL") || a.startsWith("DISCOUNT")) randuri.push({ a, f: r.getCell(6).value });
-    });
-
-    expect(randuri).toHaveLength(3);
-    expect(randuri[0]!.a).toContain("TOTAL LUCRARI");
-    expect(randuri[0]!.f).toBe(90);            // 10x5 + 20x2
-    expect(randuri[1]!.a).toContain("DISCOUNT 3 %");
-    expect(randuri[1]!.a).toContain("PENTRU PLATA FACTURII");
-    expect(randuri[1]!.f).toBe(2.7);           // VALOAREA reducerii, ca in oferta reala
-    expect(randuri[2]!.a).toContain("TOTAL GENERAL");
-    expect(randuri[2]!.f).toBe(87.3);
+    const r = totaluri(await cuDiscount(3));
+    expect(r).toHaveLength(3);
+    expect(r[0]!.text).toContain("TOTAL LUCRARI");
+    expect(r[0]!.valoare).toBe(90);            // 10x5 + 20x2
+    expect(r[1]!.text).toContain("DISCOUNT 3 %");
+    expect(r[1]!.text).toContain("PENTRU PLATA FACTURII");
+    expect(r[1]!.valoare).toBe(2.7);           // VALOAREA reducerii, ca in oferta reala
+    expect(r[2]!.text).toContain("TOTAL GENERAL");
+    expect(r[2]!.valoare).toBe(87.3);
   });
 
   it("discountul trece prin bani(), spre deosebire de oferta reală", async () => {
-    // In oferta 284 semnata scrie `DISCOUNT = 2837.25189` si
-    // `TOTAL GENERAL = 91737.81111` — cinci zecimale intr-un document semnat,
-    // adica exact ce se intampla fara rotunjire.
-    const ws = (await citeste(await registruOferta({
-      linii: [linie({ unitar: 47.41, cantitate: 49 })],
-      antet: { ...ANTET, discountProcent: 3 },
-      provenienta: PROV,
-    }))).getWorksheet("Ofertă")!;
-
-    const val: number[] = [];
-    ws.eachRow((r) => {
-      const a = String(r.getCell(1).value ?? "");
-      if (a.startsWith("TOTAL") || a.startsWith("DISCOUNT")) val.push(Number(r.getCell(6).value));
-    });
+    // In oferta 284 semnata scrie `DISCOUNT = 2837.25189`: cinci zecimale.
+    const val = totaluri(await cuDiscount(3, [linie({ unitar: 47.41, cantitate: 49 })])).map((r) => r.valoare!);
     for (const v of val) expect(String(v), `${v} are mai mult de 2 zecimale`).toMatch(/^\d+(\.\d{1,2})?$/);
     expect(val).toEqual([2323.09, 69.69, 2253.40]);
   });
-
 });
 
 /* ------------------------------------------------------------------ *
@@ -321,67 +237,49 @@ describe("discountul comercial", () => {
 const MATARI = "../attachments/clienti/oferta-118-1-matari-goluri-foc.xlsx";
 
 describe("cap-coadă pe oferta semnată 118.1", () => {
-  it("53 de poziții pe foaia Ofertă, total 12.692,04 € — exact totalul semnat", async () => {
-    // Fara `describe.runIf`: fisierele firmei nu-s commit-uite, deci in CI ar
-    // fi o suita SARITA — iar CI pica deliberat pe orice suita sarita, fiindca
-    // una sarita arata exact ca una care trece. Testul ruleaza mereu si iese
-    // devreme cand n-are pe ce lucra, ca in `golden.test.ts`.
+  it("53 de poziții pe capitolele EI30 … EI120, cu golul, total 12.692,04 € — exact totalul semnat", async () => {
+    // Fara `describe.runIf`: in CI ar fi o suita SARITA, iar CI pica pe orice
+    // suita sarita. Testul ruleaza mereu si iese devreme fara fisier.
     if (!existsSync(MATARI)) return;
-    // Fișierul se tarifează 100% determinist, fără niciun apel la model, deci
-    // testul e reproductibil bit cu bit. Dacă numărul ăsta se mișcă, registrul
-    // generat nu mai reproduce oferta pe care firma a trimis-o clientului.
     const { importaFisier } = await import("../src/import/pipeline.js");
     const { stocInMemorie } = await import("../src/import/memorie.js");
     const raport = await importaFisier(MATARI, { faraModel: true, stoc: stocInMemorie() });
-
-    const buf = await registruOferta({
+    const o = await citesteOferta(await registruOferta({
       linii: raport.linii,
       antet: { ...ANTET, numar: "118.1", client: "NISAL SRL", obiectiv: "XXXLutz+Momax Balotesti" },
       provenienta: { ...PROV, fisierSursa: "oferta-118-1-matari-goluri-foc.xlsx" },
-    });
-    const ws = (await citeste(buf)).getWorksheet("Ofertă")!;
+    }));
 
-    const randuri: number[] = [];
-    ws.eachRow((r, n) => { if (n >= 16 && typeof r.getCell(6).value === "number") randuri.push(n); });
-    // 53 de poziții plus rândul de TOTAL, care e tot numeric în coloana F.
-    expect(randuri).toHaveLength(54);
-
-    const randTotal = randuri.at(-1)!;
-    expect(String(ws.getCell(`A${randTotal}`).value)).toContain("TOTAL");
-    expect(ws.getCell(`F${randTotal}`).value).toBe(12692.04);
-
-    // Și e chiar suma coloanei, nu un număr scris separat.
-    const suma = randuri.slice(0, -1).reduce((s, n) => s + Number(ws.getCell(`F${n}`).value), 0);
-    expect(Math.round(suma * 100) / 100).toBe(12692.04);
+    expect(o.coloane).toEqual(["Nr.", "Denumire", "UM", "Cantitate", "Dimensiune gol", "Suprafata (mp)", "Pret unitar Euro", "Pret total Euro"]);
+    expect(o.pozitii).toHaveLength(53);
+    expect(o.pozitii[0]).toMatchObject({ nr: 1, denumire: "Teava OL/OLZN DN15 | 130/130", gol: "130/130", pretUnitar: 23.05 });
+    // EI180 a rămas fără preț, ca în oferta semnată: capitolul nu apare la client.
+    expect(o.randuri.filter((r) => /^Teceri/.test(r.text) && r.valoare === null).map((r) => /EI\d+/.exec(r.text)![0]))
+      .toEqual(["EI30", "EI60", "EI120"]);
+    expect(o.text).toContain("banda wrap");
+    expect(totalul(o, "TOTAL LUCRARI")).toBe(12692.04);
+    expect(Math.round(o.pozitii.reduce((s, p) => s + p.valoare, 0) * 100) / 100).toBe(12692.04);
   });
 });
 
-describe("coloanele Identificare_Norma și Denumire", () => {
-  it("codul clientului de la începutul rândului merge în Identificare_Norma, nu în denumire", async () => {
+describe("codul și denumirea", () => {
+  it("codul clientului de la începutul rândului merge în coloana Cod, nu în denumire", async () => {
     // Cererea TRANSAVIA: „IZOLATII | Caseta izolatie ...”; oferta semnată are
     // IZOLATII în coloana A și doar descrierea în B.
-    const l = linie({ text: "IZOLATII | Caseta izolatie armaturi cu flanse DN100 vata minerala gr. 13 mm", unitar: 121.67 });
-    const wb = await citeste(await registruOferta({ linii: [l], antet: ANTET, provenienta: PROV }));
-    const ws = wb.getWorksheet("Ofertă")!;
-    expect(text(ws, "A16")).toBe("IZOLATII");
-    expect(text(ws, "B16")).toBe("Caseta izolatie armaturi cu flanse DN100 vata minerala gr. 13 mm");
+    const l = linie({ text: "IZOLATII | Caseta izolatie armaturi cu flanse DN100 vata minerala gr. 13 mm", unitar: 121.67,
+      extras: { sistem: "vata_minerala", grosime_mm: 13 } });
+    const o = await citesteOferta(await registruOferta({ linii: [l], antet: ANTET, provenienta: PROV }));
+    expect(o.pozitii[0]).toMatchObject({ cod: "IZOLATII", denumire: "Caseta izolatie armaturi cu flanse DN100 vata minerala gr. 13 mm" });
   });
 
-  it("o descriere care începe cu text obișnuit nu e tratată drept cod", async () => {
-    const l = linie({ text: "Teava OL/OLZN DN15 | 130/130", unitar: 23.05, sectiune: "Treceri EI30" });
-    const wb = await citeste(await registruOferta({ linii: [l], antet: ANTET, provenienta: PROV }));
-    const ws = wb.getWorksheet("Ofertă")!;
-    expect(text(ws, "A16")).toBe("Treceri EI30");
-    expect(text(ws, "B16")).toContain("Teava OL/OLZN DN15");
-  });
-
-  it("grosimea pe care clientul n-a scris-o apare în denumire, ca în Oferta 284", async () => {
+  it("grosimea pe care clientul n-a scris-o apare cu roșu după denumire, ca în Oferta 284", async () => {
     const l = linie({
       text: "IZOLATII | Caseta izolatie armaturi cu flanse DN100 din tabla aluminiu si vata minerala",
-      unitar: 121.67, extras: { sistem: "vata_minerala", grosime_mm: 50 },
+      unitar: 121.67, extras: { sistem: "vata_minerala", grosime_mm: 50, straturi_extra: [{ sistem: "tabla", grosime_mm: null }] },
     });
-    const wb = await citeste(await registruOferta({ linii: [l], antet: ANTET, provenienta: PROV }));
-    expect(text(wb.getWorksheet("Ofertă")!, "B16"))
-      .toBe("Caseta izolatie armaturi cu flanse DN100 din tabla aluminiu si vata minerala, gr. 50 mm");
+    const o = await citesteOferta(await registruOferta({ linii: [l], antet: ANTET, provenienta: PROV }));
+    expect(o.pozitii[0]!.rosu).toBe("vata minerala gr. 50 mm si protectie cu tabla de aluminiu");
+    expect(o.pozitii[0]!.denumire)
+      .toBe("Caseta izolatie armaturi cu flanse DN100 din tabla aluminiu si vata minerala vata minerala gr. 50 mm si protectie cu tabla de aluminiu");
   });
 });

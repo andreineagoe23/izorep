@@ -69,6 +69,8 @@ export interface DocumentOferta {
   coloaneGol: boolean;
   /** Totalul pozițiilor „Gata”, fără adaos. */
   totalPozitii: number;
+  /** Totalul închiderilor la foc „Gata”: baza adaosului de pe industrial. */
+  bazaFoc: number;
   /** +20 % pe închiderile la foc, pe oferta industrială. */
   adaosFoc: number;
   /** TOTAL LUCRARI IZOLATII TERMICE (fara TVA): pozițiile plus adaosul. */
@@ -283,6 +285,7 @@ export function documentOferta(c: CerereOferta): DocumentOferta {
     coloanaCod: toate.some((p) => p.cod !== null),
     coloaneGol: foc,
     totalPozitii,
+    bazaFoc: totalOferta(oferta.filter((l) => l.extras.sistem === "goluri_foc")),
     adaosFoc,
     total,
     discount,
