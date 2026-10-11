@@ -51,6 +51,8 @@ export interface StareDepozit {
   comenzi?: Comanda[];
   /** Avizele si facturile atasate la receptie, fara fisier (doar pe server). */
   documente?: DocumentAtasat[];
+  /** Cine raspunde de material in fiecare loc (S34), pe id-ul depozitului. Faza 5. */
+  responsabili?: Record<string, string>;
 }
 
 export const GOL: StareDepozit = { miscari: [], necesare: [] };
@@ -77,6 +79,7 @@ export function citesteDepozit(d?: Storage): StareDepozit {
         : [],
       ...(s.ambalaje && typeof s.ambalaje === "object" ? { ambalaje: s.ambalaje } : {}),
       ...(Array.isArray(s.comenzi) ? { comenzi: s.comenzi } : {}),
+      ...(s.responsabili && typeof s.responsabili === "object" ? { responsabili: s.responsabili } : {}),
     };
   } catch {
     return { miscari: [], necesare: [] };

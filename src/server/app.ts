@@ -219,6 +219,11 @@ export function creeazaServer(o: OptiuniServer): Hono<Env> {
     await inTenant((tx) => repo.stergeNecesar(tx, c.req.param("id")));
     return ok(c);
   });
+  app.put("/api/depozite/:id", async (c) => {
+    const corp = z.object({ responsabil: z.string().max(200) }).parse(await c.req.json());
+    await inTenant((tx, ctx) => repo.puneResponsabil(tx, ctx, c.req.param("id"), corp.responsabil.trim()));
+    return ok(c);
+  });
   app.put("/api/ambalaje", async (c) => {
     const corp = AmbalajZ.parse(await c.req.json());
     await inTenant((tx, ctx) => repo.puneAmbalaj(tx, ctx, corp.cheie, corp.ambalaj));

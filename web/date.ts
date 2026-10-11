@@ -183,6 +183,13 @@ export function scrieDepozit(s: dep.StareDepozit): boolean {
       trimite(() => api("/api/ambalaje", "PUT", { cheie, ambalaj: ambNoi[cheie] ?? null }));
     }
   }
+  const respVechi = v.responsabili ?? {};
+  const respNoi = s.responsabili ?? {};
+  for (const id of new Set([...Object.keys(respVechi), ...Object.keys(respNoi)])) {
+    if ((respVechi[id] ?? "") !== (respNoi[id] ?? "")) {
+      trimite(() => api(`/api/depozite/${enc(id)}`, "PUT", { responsabil: respNoi[id] ?? "" }));
+    }
+  }
   // Comenzile au operatiile lor (mai jos): o lista veche din ecran nu le rescrie.
   copie = { ...copie, depozit: clona({
     ...s, miscari: s.miscari.filter((m) => !m.exemplu), comenzi: copie.depozit.comenzi ?? [],

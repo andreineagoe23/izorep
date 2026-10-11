@@ -1,7 +1,32 @@
 # Stare curentă
 
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
-> Ultima actualizare: 11 octombrie 2026 (seara).
+> Ultima actualizare: 11 octombrie 2026 (noaptea).
+
+## 11 octombrie 2026 (noaptea): Faza 5, locurile, atelierul, transferurile
+
+Pe ramura `faza-5`. **557 de teste.** Totul în ecranul „Depozit și stoc”, trei
+carduri noi în stilul celor de acolo, fără altă așezare.
+
+| Ce | Cum | Unde |
+|---|---|---|
+| **Locurile** (S33, S34) | centralul, „Atelier București”, apoi șantierele; fiecare cu firma (centralul și atelierul: RADOIA, ca în seed; șantierul: firma ofertei) și responsabilul, scris în tabel (pe server în `depozit.responsabil`, `PUT /api/depozite/:id`; centralul și atelierul se fac la nevoie) | `locuri()` în `src/stoc/locuri.ts`, cardul „Locurile” |
+| **Atelierul** (S36, răspunsul 4) | „Trimite material la atelier”: pentru ce șantier, ce a cerut șeful de șantier („10 ml ø100, 3 coturi, 10 carcase”), cât, din ce depozit. E un transfer în atelier cu `lucrareId` = șantierul, deci nimic nou în registru sau în bază. În atelier tabla stă „pusă deoparte” pe șantier, separat de cea liberă; „Trimite pe șantier” o mută cu tot cu cererea în notă. Tabla rămâne în m² (decizia „Atelierul”) | `inAtelier()`, cardul „Atelierul” |
+| **Șantier → șantier** (S37) | transferul exista; „Mișcare nouă” are acum și atelierul | — |
+| **Între firme** (S46) | un transfer între depozitele a două firme e spus în formular înainte de înregistrare și marcat „între firme” în jurnal și în drum | `intreFirme()` |
+| **Drumul materialului** (gata când) | material + șantier → furnizor → central → atelier → șantier, pe toate mărcile | `drumul()`, cardul „Drumul materialului” |
+
+Verificat cu Playwright pe build-ul de Pages, servit static (fără `/api`):
+tabla de 0,8 intră în central de la ISOLINE, 12 m² trec în atelier pentru
+TRANSAVIA cu cererea șefului de șantier, pleacă pe șantier, iar drumul arată
+cei trei pași; transferul TRANSAVIA → Hala ISORAD e semnalat; responsabilul
+rămâne după reîncărcare; 390–1920 px, ambele teme, zero derulare, zero erori.
+
+**Atenție la verificare:** `vite preview` moștenește proxy-ul din
+`vite.config.ts`, deci cu `npm start` pornit scrie în baza locală. Azi au ajuns
+acolo date de test (importuri, ofertele RAD285 / RAD286 / RAD1, mișcări de tablă,
+șantierul TRANSAVIA redenumit „Hala ISORAD”). Baza locală avea oricum doar date
+de test din 11 octombrie; `npm run db:reset` o golește.
 
 ## 11 octombrie 2026 (seara): exportul într-un singur fel
 

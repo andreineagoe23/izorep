@@ -432,3 +432,34 @@ describe("comenzile și recepția (Faza 4): operații, nu diferențe de stare", 
     expect((await cere("/api/aviz", "A")).corp).toMatchObject({ disponibil: false });
   });
 });
+
+describe("Faza 5: atelierul și responsabilii, pe server", () => {
+  daca()("tabla pusă deoparte în atelier pentru un șantier se vede pe alt calculator al firmei", async () => {
+    const tabla: Miscare["articol"] = { cheie: "tabla|tabla|0.8|", sistem: "tabla", grosime_mm: 0.8, rand: null, forma: "tabla", um: "m2" };
+    const intrare = miscareMica("f5-intrare", { articol: tabla, cantitate: 40, furnizor: "ISOLINE" });
+    const atelier = miscareMica("f5-atelier", {
+      tip: "transfer", articol: tabla, cantitate: 12, din: "central", spre: "atelier", lucrareId: "S-f5", nota: "10 ml ø100, 3 coturi, 10 carcase",
+    });
+    delete (atelier as Partial<Miscare>).pret;
+    for (const m of [intrare, atelier]) expect((await cere("/api/miscari", "A", { method: "POST", body: m })).status).toBe(200);
+    const d = (await cere("/api/date", "A2")).corp as { depozit: { miscari: Miscare[] } };
+    const { inAtelier } = await import("../src/stoc/locuri.js");
+    expect(inAtelier(d.depozit.miscari).map((x) => [x.pentru, x.cantitate, x.cereri]))
+      .toEqual([["S-f5", 12, ["10 ml ø100, 3 coturi, 10 carcase"]]]);
+  });
+
+  daca()("responsabilul centralului și al atelierului se scrie; un șantier necunoscut e refuzat", async () => {
+    expect((await cere("/api/depozite/atelier", "A", { method: "PUT", body: { responsabil: "Marius" } })).status).toBe(200);
+    expect((await cere("/api/depozite/central", "A", { method: "PUT", body: { responsabil: "Ana" } })).status).toBe(200);
+    expect((await cere("/api/depozite/nu-exista", "A", { method: "PUT", body: { responsabil: "X" } })).status).toBe(404);
+    const d = (await cere("/api/date", "A2")).corp as { depozit: { responsabili: Record<string, string> } };
+    expect(d.depozit.responsabili).toMatchObject({ atelier: "Marius", central: "Ana" });
+    // Șters: rămâne fără responsabil.
+    await cere("/api/depozite/central", "A", { method: "PUT", body: { responsabil: "" } });
+    const d2 = (await cere("/api/date", "A2")).corp as { depozit: { responsabili: Record<string, string> } };
+    expect(d2.depozit.responsabili["central"]).toBeUndefined();
+    // Altă firmă nu vede nimic.
+    const b = (await cere("/api/date", "B")).corp as { depozit: { responsabili: Record<string, string> } };
+    expect(b.depozit.responsabili).toEqual({});
+  });
+});

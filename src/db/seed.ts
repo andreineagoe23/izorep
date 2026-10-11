@@ -132,6 +132,9 @@ async function main(): Promise<void> {
       // Depozitul central e al firmei RADOIA (S46: stocul e in principiu separat pe firme).
       await tx.insert(depozit).values({ tenantId, id: "central", denumire: "Depozit central", tip: "central", firmaId: central })
         .onConflictDoNothing();
+      // Atelierul din București (răspunsul 4): tabla se croiește acolo pentru șantiere (Faza 5).
+      await tx.insert(depozit).values({ tenantId, id: "atelier", denumire: "Atelier București", tip: "atelier", firmaId: central })
+        .onConflictDoNothing();
       await tx.insert(furnizor).values(FURNIZORI.map(([denumire, vinde]) => ({ tenantId, denumire, vinde })))
         .onConflictDoNothing();
 

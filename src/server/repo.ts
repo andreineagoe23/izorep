@@ -87,7 +87,27 @@ async function stareDepozit(tx: Baza): Promise<StareDepozit> {
     ambalaje: Object.fromEntries(amb.map((a) => [a.cheieBaza, { unitate: a.unitate, continut: Number(a.continut) }])),
     comenzi: await comenzi(tx),
     documente: await documente(tx),
+    responsabili: Object.fromEntries((await tx.select({ id: depozit.id, r: depozit.responsabil }).from(depozit))
+      .filter((d) => d.r).map((d) => [d.id, d.r!])),
   };
+}
+
+/**
+ * Cine răspunde de un loc (S34). Centralul și atelierul se fac la nevoie (o
+ * bază de dinainte de Faza 5 n-are atelier); depozitul unui șantier există
+ * doar cu șantierul lui.
+ */
+export async function puneResponsabil(tx: Baza, ctx: Context, id: string, responsabil: string): Promise<void> {
+  const r = responsabil || null;
+  if (id === "central" || id === "atelier") {
+    const firmaId = await firmaDupa(tx, "denumire", "RADOIA ISOLIRUNG SRL");
+    await tx.insert(depozit).values({
+      tenantId: ctx.tenantId, id, denumire: id === "central" ? "Depozit central" : "Atelier București", tip: id, firmaId, responsabil: r,
+    }).onConflictDoUpdate({ target: [depozit.tenantId, depozit.id], set: { responsabil: r } });
+    return;
+  }
+  const gasite = await tx.update(depozit).set({ responsabil: r }).where(eq(depozit.id, id)).returning({ id: depozit.id });
+  if (gasite.length === 0) throw new Refuz(404, "Depozitul nu e pe server: șantierul nu a fost creat din ofertă.");
 }
 
 /** Lista documentelor atasate, fara fisiere: ecranul le cere unul cate unul. */

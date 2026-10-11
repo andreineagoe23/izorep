@@ -589,6 +589,16 @@ zona doar atașează; pe linkul demo nu apare. Prețul așteptat stă ca placeho
 în câmpurile de preț, nu ca valoare. „Retur la furnizor” (pliat) pe comenzile
 cu marfă primită; tabelul capătă coloana „Returnat”.
 
+## Depozit și stoc: locurile, atelierul, drumul (Faza 5, 11 octombrie 2026)
+
+Trei carduri noi, în ordinea ecranului: „Atelierul” (după „Stocul pe
+depozite”: ce e pus deoparte pe șantier, cu „Trimite pe șantier”, și pliat
+„Trimite material la atelier”), „Drumul materialului” (după „Mișcare nouă”:
+material + șantier, tabelul pașilor) și „Locurile” (înaintea jurnalului: loc,
+firmă, responsabil scris direct în tabel, salvat la `change`). „Mișcare nouă”
+spune sub câmpuri când transferul e între firme. Jurnalul marchează „între
+firme” și „pentru șantierul X” la tabla trecută în atelier.
+
 ## Măsurători: „Pentru comanda de material” (11 octombrie 2026)
 
 Al treilea scop, lângă ofertă și situație: alegi șantierul, încarci pozele,

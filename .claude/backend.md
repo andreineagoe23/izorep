@@ -237,6 +237,14 @@ Prețurile de achiziție pe ciornă nu sunt în bază: `data/preturi-furnizori.j
 importat static ca listele de vânzare (`npm run preturi-furnizori`), plus
 facturile trecute în aplicație. Ciorna le poartă pe linie (`pret` cu `sursa`).
 
+### Locurile (Faza 5, 11 octombrie 2026)
+
+Fără migrare: `depozit` avea deja `tip` (central | atelier | santier),
+`firma_id` și `responsabil`. Seed-ul adaugă atelierul. `PUT /api/depozite/:id`
+scrie responsabilul (centralul și atelierul se creează la nevoie; un șantier
+necunoscut, 404); `/api/date` îl întoarce în `StareDepozit.responsabili`.
+Tabla pusă deoparte în atelier e o `miscare` `transfer` cu `lucrare_id`.
+
 ## Ce lipsește
 
 - Conturile (scoase pe 10 octombrie 2026), jurnal de audit (cine a schimbat

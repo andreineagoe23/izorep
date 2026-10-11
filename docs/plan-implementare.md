@@ -9,7 +9,8 @@
 >
 > Starea: fazele 1–4 sunt făcute (Faza 4 pe 11 octombrie 2026, 540 de teste).
 > Exportul ofertei într-un singur fel e făcut (11 octombrie 2026, pașii 0–1
-> din `docs/plan-import.md`); ecranul de import rămâne cum era. Următorul: Faza 5. Pe 5
+> din `docs/plan-import.md`); ecranul de import rămâne cum era. Faza 5 făcută
+> pe 11 octombrie 2026. Următorul: Faza 6. Pe 5
 > octombrie au venit evidența de achiziții, o comandă cu aviz și factură și lista
 > K-Flex: deciziile de mai jos marcate „11 oct.” sunt luate din ele.
 
@@ -177,7 +178,13 @@ dată.
 **Gata când:** pe un șantier se văd comandat, primit și rămas de primit, iar
 „De comandat” scade singur resturile.
 
-## Faza 5. Depozitele, atelierul, transferurile
+## Faza 5. Depozitele, atelierul, transferurile — făcută, 11 octombrie 2026
+
+Detaliile în `.claude/stare.md`. Pe scurt: locurile cu firma și responsabilul,
+atelierul ca transfer „pentru șantier” (tabla pusă deoparte, apoi trimisă),
+transferul între firme marcat, drumul materialului de la furnizor la șantier.
+
+Ce a cerut faza:
 
 1. **Locurile:** depozitul central, atelierul din București și câte un depozit
    pe fiecare șantier, cu un responsabil (șeful de șantier desemnat, S34).

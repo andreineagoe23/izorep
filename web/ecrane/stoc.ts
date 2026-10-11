@@ -22,6 +22,7 @@ import {
 import { materialManual, type Categorie } from "../../src/stoc/necesar.js";
 import { ciorneDinRamas, deComandatSantier, type DeComandatSantier } from "../../src/stoc/comenzi.js";
 import { pretPropus } from "../../src/stoc/preturi-furnizori.js";
+import { ATELIER, drumul, inAtelier, intreFirme, locuri, type Loc } from "../../src/stoc/locuri.js";
 
 /** Forma aleasa in formular; cu ø ramane tub, fara alegere ramane cea implicita. */
 const formaAleasa = (v: string, rand: number | null): Categorie | undefined =>
@@ -32,16 +33,16 @@ const UNITATI_AMBALAJ = ["cutie", "sac", "pachet", "rolă", "coală", "kg"];
 
 export const CENTRAL = "central";
 
-/** Șantierele: cele făcute din oferte, apoi cele din datele firmei. */
-export const santiere = (): { id: string; denumire: string }[] => [
-  ...citestePlanuri().map((p) => ({ id: p.id, denumire: p.denumire })),
+/** Șantierele: cele făcute din oferte (cu firma lor), apoi cele din datele firmei. */
+export const santiere = (): { id: string; denumire: string; firma?: string }[] => [
+  ...citestePlanuri().map((p) => ({ id: p.id, denumire: p.denumire, firma: p.firma })),
   ...SANTIERE,
 ];
 
-export const depozite = (): { id: string; nume: string }[] => [
-  { id: CENTRAL, nume: "Depozit central" },
-  ...santiere().map((s) => ({ id: s.id, nume: `Șantier ${s.denumire}` })),
-];
+/** Locurile cu material (Faza 5): centralul, atelierul, șantierele; cu firma și responsabilul. */
+export const locurile = (): Loc[] => locuri(santiere(), citesteDepozit().responsabili ?? {});
+
+export const depozite = (): { id: string; nume: string }[] => locurile().map((l) => ({ id: l.id, nume: l.nume }));
 
 const TIPURI: [TipMiscare, string][] = [
   ["intrare", "Intrare de la furnizor"],
@@ -99,12 +100,18 @@ export const ecran: Ecran = {
     let eroare = "";
     let tipAles: TipMiscare = "intrare";
     let DEPOZITE = depozite();
+    let LOCURI = locurile();
+    /** „Drumul materialului”: materialul și șantierul alese. */
+    let drumMaterial = "";
+    let drumSantier = "";
+    let eroareAtelier = "";
     const numeDepozit = (id?: string): string => DEPOZITE.find((d) => d.id === id)?.nume ?? "—";
 
     const salveaza = (): void => { pastrat = scrieDepozit(st); };
 
     function deseneaza(): void {
       DEPOZITE = depozite();
+      LOCURI = locurile();
       const sold = solduri(st.miscari);
       const cuExemple = st.miscari.some((m) => m.exemplu);
       const peNecesar = deComandatPeNecesar(st);
@@ -134,7 +141,10 @@ export const ecran: Ecran = {
         ${sectiuneNecesar(sold)}
         ${sectiuneAmbalaje()}
         ${sectiuneStoc(sold)}
+        ${sectiuneAtelier()}
         ${formularMiscare()}
+        ${sectiuneDrum()}
+        ${sectiuneLocuri(sold)}
         ${jurnal()}
       </div>`;
       arataDepozitele();
@@ -293,6 +303,105 @@ export const ecran: Ecran = {
       </section>`;
     }
 
+    /**
+     * Atelierul (răspunsul 4 al firmei): ce a cerut șeful de șantier, tabla
+     * trecută din central și pusă deoparte pentru el, apoi „Trimite pe șantier”.
+     */
+    function sectiuneAtelier(): string {
+      const a = inAtelier(st.miscari);
+      // Întâi tabla care chiar e în central (cea mai multă sus): de acolo pleacă la atelier.
+      const sold = solduri(st.miscari);
+      const inCentral = (x: Articol): number => sold.find((y) => y.depozit === CENTRAL && y.articol.cheie === x.cheie)?.cantitate ?? 0;
+      const tabla = articoleCunoscute(st).filter((x) => x.sistem === "tabla" || x.sistem === "tabla_inox")
+        .sort((x, y) => inCentral(y) - inCentral(x));
+      const restul = articoleCunoscute(st).filter((x) => !tabla.includes(x));
+      const randuri = a.map((x) => `<tr>
+        <td>${x.pentru ? esc(numeDepozit(x.pentru)) : stare("liberă", "neutru")}</td>
+        <td>${esc(numeArticol(x.articol))}</td>
+        <td class="n">${cantitate(x.cantitate, x.articol.um)}</td>
+        <td>${x.cereri.length ? esc(x.cereri.join(" · ")) : "—"}</td>
+        <td class="fix">${x.pentru
+          ? `<button type="button" class="secundar" data-act="atelier-trimite" data-cheie="${esc(x.articol.cheie)}"
+              data-pentru="${esc(x.pentru)}" data-q="${x.cantitate}">Trimite pe șantier</button>` : ""}</td>
+      </tr>`);
+      const optiuniSantier = santiere().map((s) => `<option value="${esc(s.id)}">${esc(s.denumire)}</option>`).join("");
+      return `<section class="imp-card"><h2>Atelierul</h2>
+        <p class="hint" style="margin:0 0 12px">Șeful de șantier cere la atelier ce îi trebuie (de ex. 10 ml ø100, 3 coturi și 10 carcase).
+          Tabla trece din central în atelier și stă pusă deoparte pentru șantierul lui până pleacă. Rămâne în m² și croită.</p>
+        ${a.length ? tabel(["Pentru", "Material", "Cantitate", "Ce se face", ""], randuri, ["", "", "n", "", ""])
+          : `<p class="hint" style="margin:0 0 12px">În atelier nu e nimic acum.</p>`}
+        <details class="imp-card"${eroareAtelier ? " open" : ""}>
+          <summary>Trimite material la atelier</summary>
+          <form class="imp-campuri" data-form="atelier">
+            <label>Pentru șantierul<select name="pentru" required><option value="">— alege —</option>${optiuniSantier}</select></label>
+            <label>Ce a cerut șeful de șantier<input name="cerere" autocomplete="off" required placeholder="10 ml ø100, 3 coturi, 10 carcase" /></label>
+            <label>Material<select name="articol">${[...tabla, ...restul].map((x) =>
+              `<option value="${esc(x.cheie)}">${esc(numeArticol(x))}</option>`).join("")}
+              <option value="__tabla"${tabla.length ? "" : " selected"}>Tablă aluminiu 0,8 mm (m²)</option></select></label>
+            <label>Cantitate (m² la tablă, ml la tub)<input name="cantitate" type="number" inputmode="decimal" step="any" min="0" required /></label>
+            <label>Din depozitul<select name="din">${LOCURI.filter((l) => l.id !== ATELIER).map((l) =>
+              `<option value="${esc(l.id)}"${l.id === CENTRAL ? " selected" : ""}>${esc(l.nume)}</option>`).join("")}</select></label>
+            ${eroareAtelier ? `<p class="alerta" role="alert">${esc(eroareAtelier)}</p>` : ""}
+            <div class="imp-formular-butoane"><button type="submit" class="primar">Trece în atelier</button></div>
+          </form>
+        </details>
+      </section>`;
+    }
+
+    /** Drumul unui material spre un șantier: furnizor, central, atelier, șantier (gata când-ul Fazei 5). */
+    function sectiuneDrum(): string {
+      const materiale = materialeDeBaza(st).filter((a) => st.miscari.some((m) => articolDin(m.articol).cheie === a.cheie));
+      if (materiale.length === 0) return "";
+      const sant = santiere();
+      // Implicit: materialul și șantierul ultimei mișcări care ajunge pe un șantier.
+      const ultima = [...st.miscari].reverse().find((m) => sant.some((x) => [m.lucrareId, m.spre, m.din].includes(x.id)));
+      if (!materiale.some((a) => a.cheie === drumMaterial)) {
+        drumMaterial = ultima ? articolDin(ultima.articol).cheie : materiale[0]!.cheie;
+      }
+      if (!sant.some((x) => x.id === drumSantier)) {
+        drumSantier = sant.find((x) => ultima && [ultima.lucrareId, ultima.spre, ultima.din].includes(x.id))?.id ?? sant[0]?.id ?? "";
+      }
+      const pasi = drumSantier ? drumul(st.miscari, drumMaterial, drumSantier) : [];
+      const art = materiale.find((a) => a.cheie === drumMaterial)!;
+      const nume = (id: string): string => (DEPOZITE.some((d) => d.id === id) ? numeDepozit(id) : id);
+      const randuri = pasi.map((p) => {
+        const firme = intreFirme(p.miscare, LOCURI);
+        return `<tr>
+          <td class="fix">${esc(new Date(p.data).toLocaleDateString("ro-RO"))}</td>
+          <td>${esc(nume(p.din))} → ${esc(nume(p.spre))}${firme ? ` ${stare("între firme", "atentie")}` : ""}${
+            p.miscare.nota ? `<br><span class="hint">${esc(p.miscare.nota)}</span>` : ""}</td>
+          <td class="n">${cantitate(p.cantitate, p.miscare.articol.um)}</td>
+        </tr>`;
+      });
+      return `<section class="imp-card"><h2>Drumul materialului</h2>
+        <p class="hint" style="margin:0 0 12px">De unde a venit un material și pe unde a trecut până pe șantier: furnizor, depozit, atelier, șantier.</p>
+        <div class="imp-campuri">
+          <label>Material<select data-act="drum-material">${materiale.map((a) =>
+            `<option value="${esc(a.cheie)}"${a.cheie === drumMaterial ? " selected" : ""}>${esc(numeArticol(a))}</option>`).join("")}</select></label>
+          <label>Șantierul<select data-act="drum-santier">${sant.map((s) =>
+            `<option value="${esc(s.id)}"${s.id === drumSantier ? " selected" : ""}>${esc(s.denumire)}</option>`).join("")}</select></label>
+        </div>
+        ${pasi.length ? tabel(["Data", "Drumul", "Cantitate"], randuri, ["", "", "n"])
+          : `<p class="hint" style="margin:12px 0 0">${esc(numeArticol(art))} n-a ajuns încă pe acest șantier.</p>`}
+      </section>`;
+    }
+
+    /** Locurile: firma fiecăruia și cine răspunde de material (S34, S46). */
+    function sectiuneLocuri(sold: ReturnType<typeof solduri>): string {
+      const randuri = LOCURI.map((l) => `<tr>
+        <td>${esc(l.nume)}</td>
+        <td>${esc(l.firma)}</td>
+        <td><input data-act="responsabil" data-id="${esc(l.id)}" value="${esc(l.responsabil ?? "")}" autocomplete="off"
+          placeholder="${l.tip === "santier" ? "șeful de șantier" : "cine răspunde"}" aria-label="Responsabil ${esc(l.nume)}" /></td>
+        <td class="n">${cifra(new Set(sold.filter((x) => x.depozit === l.id && x.cantitate > 0).map((x) => x.articol.cheie)).size)}</td>
+      </tr>`);
+      return `<section class="imp-card"><h2>Locurile</h2>
+        <p class="hint" style="margin:0 0 12px">Unde stă materialul și cine răspunde de el. Stocul e separat pe firme; un transfer
+          între depozitele a două firme apare în jurnal ca „între firme”.</p>
+        ${tabel(["Loc", "Firma", "Responsabil", "Materiale"], randuri, ["", "", "", "n"])}
+      </section>`;
+    }
+
     function formularMiscare(): string {
       const articole = articoleCunoscute(st);
       const alegeDepozit = (nume: string, eticheta: string): string => `<label data-camp="${nume}">${eticheta}
@@ -329,6 +438,7 @@ export const ecran: Ecran = {
           <label>Notă (furnizor, factură, cine a luat materialul)
             <input name="nota" autocomplete="off" /></label>
         </div>
+        <p class="imp-oferta-lipsa" data-camp="firme" hidden></p>
         ${eroare ? `<p class="alerta" role="alert" style="margin-top:16px">${esc(eroare)}</p>` : ""}
         <div class="imp-formular-butoane"><button type="submit" class="primar">Înregistrează</button></div>
       </form>`;
@@ -339,11 +449,17 @@ export const ecran: Ecran = {
       const randuri = [...st.miscari].reverse().map((m) => {
         const anulata = esteAnulata(m, st.miscari);
         const traseu = [m.din, m.spre].filter(Boolean).map((d) => esc(numeDepozit(d))).join(" → ");
-        const eticheta = m.anuleaza ? stare("anulare", "neutru") : anulata ? stare("anulată", "neutru") : "";
+        const firme = intreFirme(m, LOCURI);
+        const eticheta = [
+          m.anuleaza ? stare("anulare", "neutru") : anulata ? stare("anulată", "neutru") : "",
+          firme ? stare("între firme", "atentie") : "",
+        ].join(" ");
+        const pentru = m.lucrareId && m.spre === ATELIER ? ` · pentru ${esc(numeDepozit(m.lucrareId))}` : "";
         return `<tr>
           <td class="fix">${esc(new Date(m.data).toLocaleDateString("ro-RO"))}</td>
           <td>${esc(TIP[m.tip])} ${eticheta} ${m.exemplu ? stare("exemplu", "atentie") : ""}
-            <br><span class="hint">${esc(numeArticol(m.articol))}${m.nota && !m.exemplu ? ` · ${esc(m.nota)}` : ""}${
+            <br><span class="hint">${esc(numeArticol(m.articol))}${pentru}${m.nota && !m.exemplu ? ` · ${esc(m.nota)}` : ""}${
+              firme ? ` · ${esc(firme.din)} → ${esc(firme.spre)}` : ""}${
               m.pret ? ` · ${eur(m.pret.valoare)} / ${unitate(m.articol.um)}` : ""}</span></td>
           <td class="n">${m.anuleaza ? "−" : ""}${cantitate(m.cantitate, m.articol.um)}<br><span class="hint">${traseu}</span></td>
           <td class="fix">${!m.anuleaza && !anulata
@@ -371,6 +487,11 @@ export const ecran: Ecran = {
       if (!spre.value && (tip === "intrare" || tip === "retur" || tip === "ajustare")) spre.value = CENTRAL;
       const din = f.elements.namedItem("din") as HTMLSelectElement;
       if (!din.value && tip === "transfer") din.value = CENTRAL;
+      // Între firme (S46: „se mai amestecă”): se spune înainte de înregistrare, nu doar în jurnal.
+      const firme = intreFirme({ tip, din: din.value, spre: spre.value }, LOCURI);
+      const aviz = f.querySelector<HTMLElement>('[data-camp="firme"]')!;
+      aviz.hidden = !firme || !CERE[tip].din || !CERE[tip].spre;
+      aviz.textContent = firme ? `Transfer între firme: din stocul ${firme.din} în stocul ${firme.spre}. Așa apare și în jurnal.` : "";
     }
 
     function inregistreaza(f: HTMLFormElement): void {
@@ -425,6 +546,15 @@ export const ecran: Ecran = {
           break;
         }
         case "scoate-necesar": st = { ...st, necesare: st.necesare.filter((n) => n.id !== b.dataset["id"]) }; break;
+        case "atelier-trimite": {
+          const a = inAtelier(st.miscari).find((x) => x.articol.cheie === b.dataset["cheie"] && x.pentru === b.dataset["pentru"]);
+          if (!a || !a.pentru) return;
+          st = { ...st, miscari: [...st.miscari, {
+            id: idNou(), data: new Date().toISOString(), tip: "transfer", articol: a.articol, cantitate: a.cantitate,
+            din: ATELIER, spre: a.pentru, lucrareId: a.pentru, nota: a.cereri.length ? `din atelier: ${a.cereri.join(" · ")}` : "din atelier",
+          }] };
+          break;
+        }
         case "transfer": {
           const n = st.necesare.find((x) => x.id === b.dataset["id"]);
           const m = n?.materiale[Number(b.dataset["i"])];
@@ -485,7 +615,16 @@ export const ecran: Ecran = {
         deseneaza();
         return;
       }
-      if (t.name === "tip" || t.name === "articol") arataDepozitele();
+      if (t.dataset["act"] === "drum-material") { drumMaterial = t.value; deseneaza(); return; }
+      if (t.dataset["act"] === "drum-santier") { drumSantier = t.value; deseneaza(); return; }
+      if (t.dataset["act"] === "responsabil") {
+        const id = t.dataset["id"]!;
+        const { [id]: _v, ...rest } = st.responsabili ?? {};
+        st = { ...st, responsabili: t.value.trim() ? { ...rest, [id]: t.value.trim() } : rest };
+        salveaza();
+        return;
+      }
+      if (t.name === "tip" || t.name === "articol" || t.name === "din" || t.name === "spre") arataDepozitele();
       if (t.name === "tip") tipAles = t.value as TipMiscare;
     });
 
@@ -502,6 +641,21 @@ export const ecran: Ecran = {
         const forma = formaAleasa(val("forma"), numar("rand"));
         const m = materialManual(val("sistem"), numar("grosime"), numar("rand"), cant, val("motiv"), ...(forma ? [forma] : []));
         st = { ...st, necesare: st.necesare.map((n) => (n.id === f.dataset["id"] ? { ...n, materiale: [...n.materiale, m] } : n)) };
+        salveaza();
+        deseneaza();
+      }
+      if (f.dataset["form"] === "atelier") {
+        const cant = numar("cantitate");
+        const pentru = val("pentru");
+        let articol = articoleCunoscute(st).find((a) => a.cheie === val("articol"));
+        if (!articol) articol = articolDin({ sistem: "tabla", grosime_mm: 0.8, rand: null });
+        const noua: Omit<Miscare, "id" | "data"> = {
+          tip: "transfer", articol, cantitate: cant ?? 0, din: val("din"), spre: ATELIER, lucrareId: pentru, nota: val("cerere"),
+        };
+        const problema = !pentru ? "Alege șantierul pentru care se croiește." : valideazaMiscare(noua);
+        if (problema) { eroareAtelier = problema; deseneaza(); return; }
+        eroareAtelier = "";
+        st = { ...st, miscari: [...st.miscari, { ...noua, id: idNou(), data: new Date().toISOString() }] };
         salveaza();
         deseneaza();
       }
