@@ -12,10 +12,17 @@ export type Baza = PostgresJsDatabase<typeof schema>;
  * inclusiv cu FORCE ROW LEVEL SECURITY. Cu el, politicile din schema.ts n-ar
  * bloca nimic si testele de izolare ar trece fals. Vezi migrarea 0002.
  */
-export const URL_IMPLICIT = "postgres://izorep_app:izorep_app@localhost:5433/izorep";
+/**
+ * Numele bazei locale. `IZOREP_DB` da fiecarei copii de lucru baza ei: doua
+ * ramuri cu migrari diferite pe aceeasi baza se strica una pe alta (drizzle
+ * aplica doar migrarile mai noi decat ultima aplicata).
+ */
+const BAZA = process.env["IZOREP_DB"] ?? "izorep";
+
+export const URL_IMPLICIT = `postgres://izorep_app:izorep_app@localhost:5433/${BAZA}`;
 
 /** Proprietarul schemei. Doar pentru migrari si pentru seed-ul local. */
-export const URL_PROPRIETAR = "postgres://izorep:izorep@localhost:5433/izorep";
+export const URL_PROPRIETAR = `postgres://izorep:izorep@localhost:5433/${BAZA}`;
 
 /**
  * Conexiunea la baza.
