@@ -462,12 +462,12 @@ export const ecran: Ecran = {
               firme ? ` · ${esc(firme.din)} → ${esc(firme.spre)}` : ""}${
               m.pret ? ` · ${eur(m.pret.valoare)} / ${unitate(m.articol.um)}` : ""}</span></td>
           <td class="n">${m.anuleaza ? "−" : ""}${cantitate(m.cantitate, m.articol.um)}<br><span class="hint">${traseu}</span></td>
-          <td class="fix">${!m.anuleaza && !anulata
+          <td class="fix">${!m.anuleaza && !anulata && !m.situatieId
             ? `<button type="button" class="secundar" data-act="storno" data-id="${esc(m.id)}">Anulează</button>` : ""}</td>
         </tr>`;
       });
       return `<section class="imp-card"><h2>Jurnalul mișcărilor</h2>
-        <p class="hint" style="margin:0 0 12px">Nimic din jurnal nu se șterge. „Anulează” adaugă un rând care o anulează pe cea greșită, ca să se vadă ce s-a întâmplat.</p>
+        <p class="hint" style="margin:0 0 12px">Nimic din jurnal nu se șterge. „Anulează” adaugă un rând care o anulează pe cea greșită, ca să se vadă ce s-a întâmplat. Consumul scris de o situație de lucrări se anulează ștergând situația, în Lucrări.</p>
         ${tabel(["Data", "Mișcare", "Cantitate", ""], randuri, ["", "", "n", ""])}
       </section>`;
     }

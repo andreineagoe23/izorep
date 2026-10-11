@@ -502,6 +502,8 @@ export const miscare = pgTable("miscare", {
   nota: text("nota"),
   /** De ce: ajustarea la inventar, restul de la inchiderea santierului. */
   motiv: text("motiv"),
+  /** Consumul calculat dintr-o situatie de lucrari (Faza 6): situatia lui. Fara cheie straina: situatia se poate sterge, consumul ramane, anulat. */
+  situatieId: text("situatie_id"),
   anuleaza: text("anuleaza"),
   /** Pretul de achizitie pe unitate, EUR. */
   pret: numeric("pret", { precision: 14, scale: 4 }),

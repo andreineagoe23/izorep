@@ -17,6 +17,7 @@ import {
 import type { Situatie, PlanSantier } from "../lucrari/situatii.js";
 import { valideazaMiscare, type Ambalaj, type Miscare } from "../stoc/registru.js";
 import type { Categorie } from "../stoc/necesar.js";
+import { anuleazaConsumSituatie, consumDinSituatie } from "../stoc/consum.js";
 import {
   inlocuiesteCuFactura, intrariDinReceptie, returLaFurnizor, valideazaReceptie, valideazaRetur,
   type Comanda, type DocumentAtasat, type Factura, type Receptie, type Retur,
@@ -72,6 +73,7 @@ async function stareDepozit(tx: Baza): Promise<StareDepozit> {
     ...(m.lucrareId ? { lucrareId: m.lucrareId } : {}),
     ...(m.nota ? { nota: m.nota } : {}),
     ...(m.motiv ? { motiv: m.motiv } : {}),
+    ...(m.situatieId ? { situatieId: m.situatieId } : {}),
     ...(m.anuleaza ? { anuleaza: m.anuleaza } : {}),
     ...(m.pret !== null ? {
       pret: { valoare: Number(m.pret), ...(m.pretLei !== null ? { lei: Number(m.pretLei) } : {}), ...(m.curs !== null ? { curs: Number(m.curs) } : {}) },
@@ -258,7 +260,16 @@ export async function stergeSantier(tx: Baza, id: string): Promise<void> {
   await tx.delete(depozit).where(and(eq(depozit.id, id), eq(depozit.tip, "santier")));
 }
 
-export async function adaugaSituatie(tx: Baza, ctx: Context, santierId: string, s: Situatie): Promise<void> {
+/**
+ * Situatia noua si, in aceeasi tranzactie, consumul ei (Faza 6): calculat aici,
+ * din planul, necesarul si miscarile din baza (`consumDinSituatie`), cu id-uri
+ * facute din situatie, deci aceleasi ca in browser. Intoarce cate miscari de
+ * consum s-au scris. La mutarea din browser (`consum: false`) consumul se
+ * completeaza la final, dupa miscari (`muta`).
+ */
+export async function adaugaSituatie(
+  tx: Baza, ctx: Context, santierId: string, s: Situatie, o: { consum: boolean } = { consum: true },
+): Promise<number> {
   const [ultima] = await tx.select({ v: max(situatie.nr) }).from(situatie).where(eq(situatie.santierId, santierId));
   if (s.nr !== (ultima?.v ?? 0) + 1) {
     throw new Refuz(409, `Situația ${s.nr} nu urmează după ultima de pe server (${ultima?.v ?? 0}): a scris-o cineva între timp. Ecranul arată acum ce e pe server.`);
@@ -267,13 +278,30 @@ export async function adaugaSituatie(tx: Baza, ctx: Context, santierId: string, 
     tenantId: ctx.tenantId, santierId, nr: s.nr, id: s.id, data: new Date(s.data), cantitati: s.cantitati,
     nota: s.nota ?? null, creatDe: ctx.utilizatorId,
   });
+  return o.consum ? scrieConsum(tx, ctx, santierId, s) : 0;
 }
 
-export async function stergeSituatie(tx: Baza, santierId: string, nrSit: number, id: string): Promise<void> {
+/** Consumul situatiei `s` (deja in baza): diferenta fata de ce au scris situatiile de dinainte. */
+async function scrieConsum(tx: Baza, ctx: Context, santierId: string, s: Situatie): Promise<number> {
+  const plan = (await planuri(tx)).find((p) => p.id === santierId);
+  const [n] = await tx.select({ c: necesar.continut }).from(necesar).where(eq(necesar.santierId, santierId)).limit(1);
+  if (!plan || !n) return 0;
+  const { miscari } = await stareDepozit(tx);
+  let scrise = 0;
+  for (const m of consumDinSituatie(plan, (n.c as NecesarLucrare).materiale, miscari, s)) {
+    if (await adaugaMiscare(tx, ctx, m)) scrise++;
+  }
+  return scrise;
+}
+
+/** Se sterge doar ultima situatie; consumul ei se anuleaza cu storno, in aceeasi tranzactie. */
+export async function stergeSituatie(tx: Baza, ctx: Context, santierId: string, nrSit: number, id: string, cand: string): Promise<void> {
   const sterse = await tx.delete(situatie)
     .where(and(eq(situatie.santierId, santierId), eq(situatie.nr, nrSit), eq(situatie.id, id)))
     .returning({ nr: situatie.nr });
   if (sterse.length === 0) throw new Refuz(409, `Situația ${nrSit} s-a schimbat pe server între timp. Ecranul arată acum ce e pe server.`);
+  const { miscari } = await stareDepozit(tx);
+  for (const m of anuleazaConsumSituatie({ id, nr: nrSit }, miscari, cand)) await adaugaMiscare(tx, ctx, m);
 }
 
 /* ------------------------------------------------------------- stocul */
@@ -291,7 +319,7 @@ export async function adaugaMiscare(tx: Baza, ctx: Context, m: Miscare): Promise
   const nou = await tx.insert(miscare).values({
     tenantId: ctx.tenantId, id: m.id, data: new Date(m.data), tip: m.tip, articolCheie: a.cheie,
     cantitate: String(m.cantitate), din: m.din ?? null, spre: m.spre ?? null, lucrareId: m.lucrareId ?? null,
-    nota: m.nota ?? null, motiv: m.motiv ?? null, anuleaza: m.anuleaza ?? null, pret: m.pret ? String(m.pret.valoare) : null,
+    nota: m.nota ?? null, motiv: m.motiv ?? null, situatieId: m.situatieId ?? null, anuleaza: m.anuleaza ?? null, pret: m.pret ? String(m.pret.valoare) : null,
     pretLei: m.pret?.lei !== undefined ? String(m.pret.lei) : null, curs: m.pret?.curs !== undefined ? String(m.pret.curs) : null,
     comandaId: m.comanda?.id ?? null, comandaLinie: m.comanda?.linie ?? null,
     document: m.document ?? null, furnizor: m.furnizor ?? null,
@@ -376,7 +404,7 @@ export async function muta(tx: Baza, ctx: Context, d: Mutare): Promise<RezultatM
     }
     const [ultima] = await tx.select({ v: max(situatie.nr) }).from(situatie).where(eq(situatie.santierId, p.id));
     for (const s of p.situatii.filter((x) => x.nr > (ultima?.v ?? 0))) {
-      await adaugaSituatie(tx, ctx, p.id, s);
+      await adaugaSituatie(tx, ctx, p.id, s, { consum: false });
       r.situatii++;
     }
   }
@@ -406,6 +434,14 @@ export async function muta(tx: Baza, ctx: Context, d: Mutare): Promise<RezultatM
     const nou = await tx.insert(ambalaj).values({ tenantId: ctx.tenantId, cheieBaza: cheie, unitate: a.unitate, continut: String(a.continut) })
       .onConflictDoNothing().returning({ c: ambalaj.cheieBaza });
     r.ambalaje += nou.length;
+  }
+
+  // Consumul din situatii (Faza 6), dupa ce au intrat miscarile: cel scris deja
+  // in browser are aceleasi id-uri si nu se dubleaza; o situatie de dinainte de
+  // Faza 6 isi primeste consumul acum, pe stocul mutat.
+  for (const p of d.planuri) {
+    const ultima = p.situatii.at(-1);
+    if (ultima) await scrieConsum(tx, ctx, p.id, ultima);
   }
   return r;
 }

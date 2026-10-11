@@ -191,21 +191,23 @@ export function creeazaServer(o: OptiuniServer): Hono<Env> {
     await inTenant((tx) => repo.stergeSantier(tx, c.req.param("id")));
     return ok(c);
   });
+  // Situatia scrie si consumul ei, in aceeasi tranzactie (Faza 6).
   app.post("/api/santiere/:id/situatii", async (c) => {
     const corp = SituatieZ.parse(await c.req.json());
-    await inTenant((tx, ctx) => repo.adaugaSituatie(tx, ctx, c.req.param("id"), corp as never));
-    return ok(c);
+    const consum = await inTenant((tx, ctx) => repo.adaugaSituatie(tx, ctx, c.req.param("id"), corp as never));
+    return c.json({ ok: true, consum });
   });
   // Numarul spune care e ultima; id-ul, ca e aceeasi situatie pe care a vazut-o
   // omul: altfel, stearsa si scrisa din nou de un coleg, ar pleca a colegului.
   app.delete("/api/santiere/:id/situatii/:nr", async (c) => {
     const id = Id.parse(c.req.query("id"));
-    await inTenant((tx) => repo.stergeSituatie(tx, c.req.param("id"), Number(c.req.param("nr")), id));
+    await inTenant((tx, ctx) => repo.stergeSituatie(tx, ctx, c.req.param("id"), Number(c.req.param("nr")), id, new Date().toISOString()));
     return ok(c);
   });
 
   app.post("/api/miscari", async (c) => {
     const corp = MiscareZ.parse(await c.req.json());
+    if (corp["situatieId"] !== undefined) throw new Refuz(400, "Consumul din situații îl scrie serverul, la salvarea situației.");
     await inTenant((tx, ctx) => repo.adaugaMiscare(tx, ctx, corp as never));
     return ok(c);
   });

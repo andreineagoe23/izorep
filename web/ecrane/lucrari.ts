@@ -10,7 +10,11 @@
 import { data as dataRo, esc, eur, indicator, nota, progres, stare, tabel, type Ecran } from "./tip.js";
 import { LUCRARI, client, santier, type Lucrare, type StareLucrare } from "../date/seed.js";
 import { vedeCosturi } from "../nav.js";
-import { citesteDepozit, citestePlanuri, iaDeDeschis, idNou, modDate, scrieDepozit, scriePlanuri } from "../date.js";
+import {
+  citesteDepozit, citestePlanuri, iaDeDeschis, idNou, modDate, salveazaSituatie, scrieDepozit, scriePlanuri, stergeUltimaSituatie,
+} from "../date.js";
+import { cardConsum, consumPlan } from "../consum-vizual.js";
+import { dinMarci } from "../../src/stoc/consum.js";
 import { deComandat, solduri } from "../../src/stoc/registru.js";
 import { cifra } from "../stoc-vizual.js";
 import { descarca } from "../descarca.js";
@@ -18,7 +22,7 @@ import { numeSituatie, registruSituatie } from "../situatie.js";
 import { preiaSituatie } from "../predare.js";
 import type { Potrivire } from "../../src/lucrari/potrivire.js";
 import {
-  faraUltimaSituatie, progresPlan, randuriSituatie, situatieNoua, totalSituatie, valideazaSituatie, valoareOferta,
+  progresPlan, randuriSituatie, situatieNoua, totalSituatie, valideazaSituatie, valoareOferta,
   type PlanSantier, type Situatie,
 } from "../../src/lucrari/situatii.js";
 
@@ -81,6 +85,8 @@ export const ecran: Ecran = {
     let eroare = "";
     let stergeDe: string | null = null;
     let mesaj = "";
+    /** Ce a facut ultima salvare (consumul scris): informatie, nu eroare. */
+    let info = "";
     /** Situatia in lucru a venit din „Măsurători”: ce s-a pus, ce e de ales, ce nu e in oferta. */
     let dinPoze: Potrivire | null = null;
 
@@ -152,6 +158,7 @@ export const ecran: Ecran = {
       return `
         <p style="margin:0"><button type="button" class="legatura" data-act="inapoi">← Toate lucrările</button></p>
         ${mesaj ? `<p class="alerta" role="alert">${esc(mesaj)}</p>` : ""}
+        ${info ? `<p class="hint" role="status" style="margin:0">${esc(info)}</p>` : ""}
         <div class="stats">
           ${indicator(eur(v.total), "Valoare ofertă", p.oferta || p.fisier)}
           ${indicator(eur(executat?.total ?? 0), "Executat, cumulat", `${progresPlan(p)} % din ofertă`)}
@@ -169,6 +176,7 @@ export const ecran: Ecran = {
         ${inLucru && dinPoze ? cardDinPoze(p, inLucru, dinPoze) : ""}
         ${inLucru ? formularSituatie(p, inLucru) : ""}
         ${istoric(p)}
+        ${cardConsum(consumPlan(p, dep))}
         <section class="imp-card"><h2>Planul de șantier</h2>
           <p class="hint" style="margin:0 0 12px">Pozițiile ofertei, cu prețurile trimise clientului. Nu se schimbă
             dacă se schimbă listele de prețuri.</p>
@@ -300,6 +308,7 @@ export const ecran: Ecran = {
       if (!b) return;
       const p = plan();
       mesaj = "";
+      info = "";
       switch (b.dataset["act"]) {
         case "deschide": deschis = b.dataset["id"] ?? null; inLucru = null; dinPoze = null; stergeDe = null; break;
         case "inapoi": deschis = null; inLucru = null; dinPoze = null; stergeDe = null; break;
@@ -334,8 +343,9 @@ export const ecran: Ecran = {
         }
         case "scoate-situatie":
           if (!p) return;
-          planuri = planuri.map((x) => (x === p ? faraUltimaSituatie(p) : x));
-          salveaza();
+          // Consumul situatiei se anuleaza odata cu ea (Faza 6).
+          mesaj = stergeUltimaSituatie(p.id) ?? "";
+          planuri = citestePlanuri();
           break;
         case "descarca": {
           const s = p?.situatii.find((x) => x.id === b.dataset["id"]);
@@ -375,18 +385,38 @@ export const ecran: Ecran = {
       e.preventDefault();
       const f = e.target as HTMLFormElement;
       const p = plan();
+      if (f.id === "consum-mana" && p) { consumDeMana(p, f); return; }
       if (f.id !== "situatie" || !p || !inLucru) return;
       citesteFormular(f);
       const problema = valideazaSituatie(p, inLucru);
       if (problema) { eroare = problema; deseneaza(); return; }
-      const salvata = inLucru;
-      planuri = planuri.map((x) => (x === p ? { ...p, situatii: [...p.situatii, salvata] } : x));
+      // Situatia scrie si consumul de material (Faza 6).
+      const r = salveazaSituatie(p.id, inLucru);
+      if ("eroare" in r) { eroare = r.eroare; deseneaza(); return; }
+      planuri = citestePlanuri();
+      info = r.consum ? `Situația a scris consumul pe ${r.consum === 1 ? "un material" : `${r.consum} materiale`}.` : "";
       inLucru = null;
       dinPoze = null;
       eroare = "";
-      salveaza();
       deseneaza();
     });
+
+    /** Consumul notat de mână (S7 b), din stocul șantierului, pe mărcile de acolo. */
+    function consumDeMana(p: PlanSantier, f: HTMLFormElement): void {
+      const date = new FormData(f);
+      const cant = Number(String(date.get("cantitate") ?? "").replace(",", "."));
+      const dep = citesteDepozit();
+      const m = consumPlan(p, dep).materiale.find((x) => x.cheie === date.get("cheie"));
+      if (!m || !(cant > 0)) return;
+      const nota = String(date.get("nota") ?? "").trim();
+      const data = new Date().toISOString();
+      const noi = dinMarci(m.articol, cant, dep.miscari, p.id).map((x) => ({
+        id: idNou(), data, tip: "consum" as const, articol: x.articol, cantitate: x.cantitate, din: p.id, lucrareId: p.id,
+        nota: nota ? `notat de mână · ${nota}` : "notat de mână",
+      }));
+      if (!scrieDepozit({ ...dep, miscari: [...dep.miscari, ...noi] })) mesaj = "Browserul nu permite salvarea: modificarea se pierde la reîncărcare.";
+      deseneaza();
+    }
 
     deseneaza();
   },

@@ -28,6 +28,7 @@ import {
   inlocuiesteCuFactura, intrariDinReceptie, returLaFurnizor, valideazaReceptie, valideazaRetur,
   type Comanda, type DocumentAtasat, type Factura, type Receptie, type Retur,
 } from "../src/stoc/comenzi.js";
+import { anuleazaConsumSituatie, consumDinSituatie } from "../src/stoc/consum.js";
 import * as dep from "./depozit-local.js";
 import * as luc from "./lucrari-local.js";
 import * as of from "./oferte-local.js";
@@ -151,6 +152,54 @@ export function scriePlanuri(planuri: PlanSantier[]): boolean {
   for (const p of copie.planuri.filter((x) => !raman.has(x.id))) trimite(() => api(`/api/santiere/${enc(p.id)}`, "DELETE"));
   copie = { ...copie, planuri: clona(planuri) };
   return true;
+}
+
+/*
+ * Faza 6: situatia salvata scrie si consumul de material (`consumDinSituatie`),
+ * iar stearsa il anuleaza cu storno. Operatii proprii, nu diferenta de stare:
+ * pe server situatia si consumul intra in aceeasi tranzactie, calculat acolo
+ * din baza, cu aceleasi id-uri ca aici (facute din situatie); pe linkul demo,
+ * aici, in browser. Intoarce cate miscari de consum s-au scris, sau motivul
+ * refuzului.
+ */
+export function salveazaSituatie(planId: string, s: Situatie): { consum: number } | { eroare: string } {
+  if (mod === "server" && refuzaInvechit()) return { consum: 0 };
+  const planuri = citestePlanuri();
+  const p = planuri.find((x) => x.id === planId);
+  if (!p) return { eroare: "Șantierul nu mai există." };
+  const plan = { ...p, situatii: [...p.situatii, s] };
+  const st = citesteDepozit();
+  const necesar = st.necesare.find((n) => n.santier === planId);
+  const consum = necesar ? consumDinSituatie(plan, necesar.materiale, st.miscari, s) : [];
+  const toate = planuri.map((x) => (x.id === planId ? plan : x));
+  if (mod === "server") {
+    copie = { ...copie, planuri: clona(toate), depozit: { ...copie.depozit, miscari: [...copie.depozit.miscari, ...consum] } };
+    trimite(() => api(`/api/santiere/${enc(planId)}/situatii`, "POST", s));
+    return { consum: consum.length };
+  }
+  if (!luc.scriePlanuri(toate)) return { eroare: "Browserul nu permite salvarea: situația se pierde la reîncărcare." };
+  dep.scrieDepozit({ ...dep.citesteDepozit(), miscari: [...st.miscari, ...consum] });
+  return { consum: consum.length };
+}
+
+/** Scoate ultima situatie a santierului si anuleaza consumul ei. */
+export function stergeUltimaSituatie(planId: string): string | null {
+  if (mod === "server" && refuzaInvechit()) return null;
+  const planuri = citestePlanuri();
+  const p = planuri.find((x) => x.id === planId);
+  const s = p?.situatii.at(-1);
+  if (!p || !s) return null;
+  const toate = planuri.map((x) => (x.id === planId ? { ...p, situatii: p.situatii.slice(0, -1) } : x));
+  const st = citesteDepozit();
+  const anulari = anuleazaConsumSituatie(s, st.miscari, new Date().toISOString());
+  if (mod === "server") {
+    copie = { ...copie, planuri: clona(toate), depozit: { ...copie.depozit, miscari: [...copie.depozit.miscari, ...anulari] } };
+    trimite(() => api(`/api/santiere/${enc(planId)}/situatii/${s.nr}?id=${enc(s.id)}`, "DELETE"));
+    return null;
+  }
+  if (!luc.scriePlanuri(toate)) return "Browserul nu permite salvarea: modificarea se pierde la reîncărcare.";
+  dep.scrieDepozit({ ...dep.citesteDepozit(), miscari: [...st.miscari, ...anulari] });
+  return null;
 }
 
 export const deschideLaIntrare = luc.deschideLaIntrare;

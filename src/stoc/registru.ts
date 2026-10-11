@@ -79,6 +79,11 @@ export interface Miscare {
    * santierului (pierdut, furat, reciclat; Faza 7).
    */
   motiv?: string;
+  /**
+   * Consumul calculat dintr-o situatie de lucrari (Faza 6): id-ul situatiei.
+   * Cand situatia se sterge, consumul ei se anuleaza cu storno (`src/stoc/consum.ts`).
+   */
+  situatieId?: string;
   /** Pusa de „Incarca date de exemplu": nu e o miscare reala. */
   exemplu?: true;
   /** Storno: id-ul miscarii pe care o anuleaza. Efectul e cel al ei, cu semn schimbat. */

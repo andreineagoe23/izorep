@@ -1,8 +1,9 @@
 import { atentionare, card, esc, eur, indicator, nota, nr, progres, stare, tabel, type Ecran } from "./tip.js";
 import { DOCUMENTE, LUCRARI, client, santier, type StareLucrare } from "../date/seed.js";
 import { vedeCosturi } from "../nav.js";
-import { citesteDepozit } from "../date.js";
+import { citesteDepozit, citestePlanuri } from "../date.js";
 import { deComandatPeNecesar } from "./stoc.js";
+import { santiereCuPierdere, textPierdere } from "../consum-vizual.js";
 
 /** Eticheta afisata si tonul indicatorului `stare()`, per stare de lucrare. */
 const ETICHETA_STARE: Record<StareLucrare, { text: string; ton: "ok" | "atentie" | "neutru" }> = {
@@ -95,6 +96,9 @@ function sectiuneAtentie(): string {
         ? "e un material" : `sunt <b>${nr(articole)}</b> materiale`} de comandat.`,
     });
   }
+
+  // Faza 6: pierderea peste 10 % pe total (S42).
+  for (const x of santiereCuPierdere(citestePlanuri(), citesteDepozit())) itemi.push({ href: "#/lucrari", html: textPierdere(x) });
 
   if (itemi.length === 0) return "";
 
