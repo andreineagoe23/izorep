@@ -28,6 +28,9 @@ import {
   inlocuiesteCuFactura, intrariDinReceptie, returLaFurnizor, valideazaReceptie, valideazaRetur,
   type Comanda, type DocumentAtasat, type Factura, type Receptie, type Retur,
 } from "../src/stoc/comenzi.js";
+import {
+  ajustariInventar, intrareDePornire, valideazaInventar, type Inventar, type Pornire,
+} from "../src/stoc/inventar.js";
 import * as dep from "./depozit-local.js";
 import * as luc from "./lucrari-local.js";
 import * as of from "./oferte-local.js";
@@ -300,6 +303,46 @@ export function returneaza(id: string, r: Omit<Retur, "comanda">): string | null
   schimbaDepozit((s) => ({ ...s, miscari: [...s.miscari, m] }));
   if (mod === "server") trimite(() => api(`/api/comenzi/${enc(id)}/retururi`, "POST", { ...r, id: m.id, data }));
   return null;
+}
+
+/* -------------------------------------- pornirea si inventarul (Faza 8) */
+
+/**
+ * Stocul de pornire: materialul care era deja in central sau in atelier, ca
+ * intrare marcata. Pe server, aceeasi intrare se socoteste din nou din baza
+ * (pretul din ultima cumparare), cu id-ul de aici. Intoarce motivul refuzului.
+ */
+export function treceStocDePornire(p: Pornire): string | null {
+  const id = idNou();
+  const data = new Date().toISOString();
+  let m: Miscare;
+  try { m = intrareDePornire(p, citesteDepozit().miscari, id, data); } catch (e) { return (e as Error).message; }
+  schimbaDepozit((s) => ({ ...s, miscari: [...s.miscari, m] }));
+  if (mod === "server") {
+    const { depozit, ...rest } = p;
+    trimite(() => api(`/api/depozite/${enc(depozit)}/pornire`, "POST", { ...rest, id, data }));
+  }
+  return null;
+}
+
+/**
+ * Inventarul unui loc (S45): ajustarile care aduc fiecare material numarat la
+ * cifra numarata, cu motivul ales. Ce nu s-a numarat nu se atinge. Pe server
+ * se socotesc din nou fata de soldul din baza, cu id-urile de aici (cate unul
+ * pe linie), deci retrimis nu se dubleaza.
+ */
+export function inregistreazaInventar(inv: Inventar): { ajustari: Miscare[] } | string {
+  const gresit = valideazaInventar(inv);
+  if (gresit) return gresit;
+  const ids = inv.numarat.map(() => idNou());
+  const data = new Date().toISOString();
+  const ajustari = ajustariInventar(citesteDepozit().miscari, inv, (i) => ids[i]!, data);
+  schimbaDepozit((s) => ({ ...s, miscari: [...s.miscari, ...ajustari] }));
+  if (mod === "server") {
+    const { depozit, ...rest } = inv;
+    trimite(() => api(`/api/depozite/${enc(depozit)}/inventar`, "POST", { ...rest, ids, data }));
+  }
+  return { ajustari };
 }
 
 /**

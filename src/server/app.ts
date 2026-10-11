@@ -113,6 +113,15 @@ const ReturZ = z.object({
   id: Id, data: z.string(),
 });
 
+const PornireZ = z.object({
+  id: Id, data: z.string(), articol: ArticolZ, cantitate: z.number().positive(),
+  pret: z.number().nonnegative().optional(), nota: z.string().max(500).optional(),
+});
+const InventarZ = z.object({
+  numarat: z.array(z.object({ articol: ArticolZ, cantitate: z.number().nonnegative(), motiv: z.string().max(200).optional() })).min(1),
+  motiv: z.string().max(200), nota: z.string().max(500).optional(), ids: z.array(Id).min(1), data: z.string(),
+});
+
 const MutareZ = z.object({
   cereri: z.array(CererePeFir), oferte: z.record(Obiect), planuri: z.array(Plan),
   depozit: z.object({
@@ -223,6 +232,17 @@ export function creeazaServer(o: OptiuniServer): Hono<Env> {
     const corp = z.object({ responsabil: z.string().max(200) }).parse(await c.req.json());
     await inTenant((tx, ctx) => repo.puneResponsabil(tx, ctx, c.req.param("id"), corp.responsabil.trim()));
     return ok(c);
+  });
+  /* Faza 8: stocul de pornire si inventarul, calculate pe server din miscarile din baza. */
+  app.post("/api/depozite/:id/pornire", async (c) => {
+    const { id, data, ...p } = PornireZ.parse(await c.req.json());
+    const scrise = await inTenant((tx, ctx) => repo.treceStocDePornire(tx, ctx, c.req.param("id"), p as never, id, data));
+    return c.json({ scrise });
+  });
+  app.post("/api/depozite/:id/inventar", async (c) => {
+    const { ids, data, ...inv } = InventarZ.parse(await c.req.json());
+    const scrise = await inTenant((tx, ctx) => repo.inventariaza(tx, ctx, c.req.param("id"), inv as never, ids, data));
+    return c.json({ scrise });
   });
   app.put("/api/ambalaje", async (c) => {
     const corp = AmbalajZ.parse(await c.req.json());
