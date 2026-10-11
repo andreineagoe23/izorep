@@ -195,7 +195,7 @@ const cantitatea = (l: LinieProcesata): number => l.bruta.cantitate ?? 1;
 
 /** Textul poziției, pe un singur rând: descrierile din fișiere sunt multi-linie. */
 /** Textele de pe rând, în ordinea coloanelor (`LinieBruta.text` le leagă cu „ | "). */
-const segmente = (l: LinieProcesata): string[] =>
+export const segmente = (l: LinieProcesata): string[] =>
   l.bruta.text.split(" | ").map((t) => t.replace(/\s+/g, " ").trim()).filter(Boolean);
 
 /**
@@ -204,7 +204,7 @@ const segmente = (l: LinieProcesata): string[] =>
  * cifre și punctuație de cod, scurt, fără diametru — „Teava OL/OLZN DN15”
  * (Matari) e descriere, nu cod.
  */
-function codRand(l: LinieProcesata): string | null {
+export function codRand(l: LinieProcesata): string | null {
   const s = segmente(l);
   if (s.length < 2) return null;
   const primul = s[0]!;

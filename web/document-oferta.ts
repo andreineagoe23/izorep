@@ -1,0 +1,293 @@
+import type { LinieProcesata } from "../src/import/nucleu.js";
+import type { Sistem } from "../src/pricing/types.js";
+import { bani } from "../src/pricing/engine.js";
+import {
+  adaosFocIndustrial, codRand, cuAjustare, imparte, segmente, totalOferta, valoareLinie,
+  type AntetOferta, type CerereOferta,
+} from "./oferta.js";
+import { motiveLinie, stareLinie, type CodMotiv, type Stare } from "./import/text.js";
+
+/**
+ * Oferta ca date: același document pentru orice cerere.
+ *
+ * Clienții trimit cererea în ce formă vor (12 fișiere, 12 forme), dar ofertele
+ * semnate ale firmei au un singur cadru: titlu, număr, beneficiar, un tabel cu
+ * cod, denumire, UM, cantitate, preț unitar și valoare, totalul, nota și
+ * semnătura (284, 118, 118.1). Modulul ăsta traduce liniile oricărui import în
+ * cadrul ăla. Din el se fac ecranul, Excelul, planul de șantier și necesarul,
+ * ca ordinea, numerotarea și capitolele să le hotărască un singur loc.
+ *
+ * Pur, fără DOM, ca motorul: se testează în Node pe ofertele semnate
+ * (`tests/document-oferta.test.ts`).
+ */
+
+export interface PozitieOferta {
+  /** Numărul din ofertă. Doar pozițiile „Gata” au număr: celelalte nu pleacă la client. */
+  nr: number | null;
+  /** Codul clientului de pe rând („IZOLATII”, „01.82.02.01A”), altfel gol. */
+  cod: string | null;
+  /** Textul clientului, fără cod, pe un rând. */
+  textClient: string;
+  /**
+   * Ce ofertăm, cu vorbele firmei: „vata minerala gr. 50 mm si protectie cu
+   * tabla de aluminiu”. Doar când textul clientului nu spune tot ce am tarifat;
+   * Oferta 284 a scris-o cu roșu pe exact cele 24 de casete fără grosime.
+   */
+  specificatie: string | null;
+  um: string;
+  cantitate: number;
+  /** Prețul unitar, cu ajustarea tehnicului. Gol fără preț. */
+  pretUnitar: number | null;
+  /** Preț × cantitate, exact (`valoareLinie`). Gol fără preț. */
+  valoare: number | null;
+  stare: Stare;
+  motive: CodMotiv[];
+  /** De unde vine rândul: „rândul 114 din foaia Izolatii”. */
+  sursa: { foaie: string; rand: number };
+  /** `extras.index` al liniei: editorul de poziție lucrează pe ea. */
+  linie: number;
+  /** Închiderile la foc: dimensiunea golului și suprafața, ca în oferta 118.1. */
+  gol: { dimensiune: string; suprafata: number } | null;
+  manual: boolean;
+}
+
+export interface CapitolOferta {
+  /** Foaia sau secțiunea clientului. Gol când oferta are un singur capitol fără nume. */
+  titlu: string | null;
+  pozitii: PozitieOferta[];
+  /** Suma valorilor exacte ale pozițiilor „Gata”, rotunjită o dată. */
+  subtotal: number;
+}
+
+export interface DocumentOferta {
+  antet: AntetOferta;
+  destinatie: string;
+  capitole: CapitolOferta[];
+  /** Coloana „Cod” apare doar când clientul are coduri (284, NISAL); Matari n-are. */
+  coloanaCod: boolean;
+  /** Coloanele „Dimensiune gol” și „Suprafață” apar doar la închiderile la foc (118.1). */
+  coloaneGol: boolean;
+  /** Totalul pozițiilor „Gata”, fără adaos. */
+  totalPozitii: number;
+  /** +20 % pe închiderile la foc, pe oferta industrială. */
+  adaosFoc: number;
+  /** TOTAL LUCRARI IZOLATII TERMICE (fara TVA): pozițiile plus adaosul. */
+  total: number;
+  discount: number;
+  /** Ce plătește clientul; egal cu `total` fără discount. */
+  totalGeneral: number;
+  numarate: Record<Stare, number>;
+  /** Nota de sub total, rând cu rând, ca în ofertele semnate. */
+  note: string[];
+}
+
+/** Nota de pe toate ofertele semnate (284, 118, 118.1), cuvânt cu cuvânt. */
+export const NOTA = [
+  "Preturile sunt exprimate in Euro si nu contin TVA . Plata se face in Lei la cursul BNR din ziua facturarii.",
+  "Plata lucrarilor se face pe baza cantitatilor real executate si aprobate in situatii de lucrari.",
+];
+
+/** Notele 1 și 2 din oferta 118.1, doar când oferta are închideri la foc. */
+export const NOTA_FOC = [
+  "In pretul inchiderilor golurilor la foc nu sunt incluse colierele si banda wrap.",
+  "Daca inchiderile golurilor la foc necesita banda wrap, pretul acestora va fi constituit din pretul "
+    + "inchiderii golului la foc + pretul benzii wrap.",
+];
+
+/* ------------------------------------------------------------ capitolele */
+
+/**
+ * Secțiunea citită e de fapt antetul documentului, nu un capitol. Pe NISAL,
+ * cele 50 de poziții de pe „Termice+Sanitare” stau sub rândul îmbinat
+ * „Obiectiv : XXXLutz+Momax Balotesti”; pe 284, sub titlul „OFERTA LUCRARI
+ * IZOLATII TERMICE”. Ca titlu de capitol ar fi zgomot.
+ */
+const ANTET_DOCUMENT = /^(oferta|cerere)\b|^(obiectiv|beneficiar|client|proiect|santier|șantier|lucrare|adresa|data|nr\.?|in atentia|în atenția)\b\s*:?/i;
+
+const sectiunea = (l: LinieProcesata): string | null => {
+  const s = (l.bruta as { sectiune?: string }).sectiune?.replace(/\s+/g, " ").trim();
+  return s && !ANTET_DOCUMENT.test(s) ? s : null;
+};
+
+/* ---------------------------------------------------------------- codul */
+
+/** Un cod de articol: scurt, fără spații, cu cifre și puncte sau litere („E3.1.1.2”, „01.82.02.01A”). */
+const COD = /^(?=.*[.\-_/A-Za-z])[A-Za-z0-9][A-Za-z0-9.\-_/]{1,19}$/;
+
+/**
+ * Codul clientului. Întâi cel scris în text (`codRand`: „IZOLATII” în
+ * TRANSAVIA), apoi prima celulă a rândului, când e un cod și nu un număr
+ * curent: pe foile cu coloane recunoscute, codul NISAL („01.82.02.01A”) stă în
+ * coloana lui, nu în text. Numerele curente (1, 2, 3 la Matari) nu sunt coduri:
+ * oferta are numerotarea ei.
+ */
+function codClient(l: LinieProcesata): string | null {
+  const dinText = codRand(l);
+  if (dinText) return dinText;
+  const prima = l.bruta.celule.find((c) => c !== null && String(c).trim() !== "");
+  if (typeof prima !== "string") return null;
+  const t = prima.trim();
+  return COD.test(t) && !/^\d+$/.test(t) && t.length > 1 ? t : null;
+}
+
+/** Textul clientului, fără cod; segmentele repetate (Book15: „Same - Ø125 mm” de două ori) o singură dată. */
+function textClient(l: LinieProcesata): string {
+  const s = segmente(l);
+  const fara = codRand(l) ? s.slice(1) : s;
+  return [...new Set(fara)].join(" | ");
+}
+
+/* --------------------------------------------------------- specificația */
+
+const NUME: Record<Exclude<Sistem, "goluri_foc">, string> = {
+  vata_minerala: "vata minerala",
+  elastomer: "elastomer",
+  tabla: "tabla de aluminiu",
+  tabla_inox: "tabla de inox",
+  pvc: "manta PVC",
+};
+
+/** Cuvintele după care se recunoaște materialul în textul clientului. */
+const NUMIT: Record<Exclude<Sistem, "goluri_foc">, RegExp> = {
+  vata_minerala: /vat[aă]|mineral|wool|rockwool|cochil/i,
+  elastomer: /elastomer|cauciuc|kautschuk|armaflex|k-?flex|rubber/i,
+  tabla: /tabl|alumin|blech|sheet|jacket/i,
+  tabla_inox: /inox|stainless|edelstahl/i,
+  pvc: /pvc/i,
+};
+
+const JACHETE = new Set<Sistem>(["tabla", "tabla_inox", "pvc"]);
+
+const numar = (g: number): string => String(g).replace(".", ",");
+
+/** Grosimea apare deja în text: „g50”, „gr. 50 mm”, „S=50mm”, „50 mm”; „Ø50mm” e diametrul, nu grosimea. */
+function scrieGrosimea(text: string, g: number): boolean {
+  const n = String(g).replace(".", "[.,]");
+  return new RegExp(`(?:\\bg|gr\\.?|grosime(?:a)?(?:\\s+de)?|S\\s*=|d\\s*=)\\s*${n}\\b|(?<![øØ]\\s?)\\b${n}\\s*mm\\b`, "i").test(text);
+}
+
+/**
+ * Specificația noastră, scrisă ca firma pe casetele Ofertei 284:
+ * „vata minerala gr. 50 mm si protectie cu tabla de aluminiu”.
+ *
+ * Apare doar când textul clientului nu spune tot ce am tarifat: o grosime de
+ * izolație pe care n-a scris-o (casetele TRANSAVIA, luată de la conductă), sau
+ * alta decât cea scrisă (NISAL: „S=20mm” ofertat 19 mm, scris de firmă în
+ * descriere), ori un material pe care nu-l numește. Rândurile complete
+ * („… tabla de aluminiu Di114, g50 - COT”) rămân cum le-a scris clientul.
+ *
+ * Grosimea tablei de aluminiu nu se scrie (284 n-o scrie); la inox da, fiindcă
+ * lista are trei grosimi la fiecare diametru și alegerea schimbă prețul.
+ */
+export function specificatie(l: LinieProcesata): string | null {
+  const e = l.extras;
+  if (e.sistem === null || e.sistem === "goluri_foc") return null;
+  if (l.pret && "manual" in l.pret && l.pret.manual) return null;
+  // Protecția la foc a tubulaturii are prețul ei pe m² (48 €), nu straturi de
+  // izolație: stratul din rezultat e doar purtătorul prețului.
+  if (l.pret?.motiveDeVerificat?.includes("protectie_foc")) return null;
+  const straturi: { sistem: Sistem; grosime: number | null }[] = l.pret && "straturi" in l.pret
+    ? l.pret.straturi.map((s) => ({ sistem: s.sistem, grosime: s.grosime_mm }))
+    : [{ sistem: e.sistem, grosime: e.grosime_mm }, ...e.straturi_extra.map((s) => ({ sistem: s.sistem, grosime: s.grosime_mm }))];
+  const text = l.bruta.text;
+  const lipsa = straturi.some((s) => s.sistem !== "goluri_foc" && (
+    !NUMIT[s.sistem].test(text)
+    || ((!JACHETE.has(s.sistem) || s.sistem === "tabla_inox") && s.grosime !== null && !scrieGrosimea(text, s.grosime))));
+  if (!lipsa) return null;
+
+  const izolatii = straturi.filter((s) => !JACHETE.has(s.sistem) && s.sistem !== "goluri_foc");
+  const jachete = straturi.filter((s) => JACHETE.has(s.sistem));
+  const parti = izolatii.map((s) =>
+    `${NUME[s.sistem as keyof typeof NUME]}${s.grosime !== null ? ` gr. ${numar(s.grosime)} mm` : ""}`);
+  const protectie = jachete.map((s) =>
+    `${NUME[s.sistem as keyof typeof NUME]}${s.sistem === "tabla_inox" && s.grosime !== null ? ` gr. ${numar(s.grosime)} mm` : ""}`);
+  if (parti.length === 0) return protectie.length ? `protectie cu ${protectie.join(" si ")}` : null;
+  return parti.join(" + ") + (protectie.length ? ` si protectie cu ${protectie.join(" si ")}` : "");
+}
+
+/* ------------------------------------------------------------- documentul */
+
+function golul(l: LinieProcesata): PozitieOferta["gol"] {
+  const { gol_latime_mm: w, gol_inaltime_mm: h } = l.extras;
+  if (l.extras.sistem !== "goluri_foc" || w === null || h === null) return null;
+  return { dimensiune: `${numar(w)}/${numar(h)}`, suprafata: Math.round(w * h / 10000) / 100 };
+}
+
+/**
+ * Documentul ofertei din liniile importului.
+ *
+ * - Pozițiile rămân în ordinea clientului; capitolele sunt foile și secțiunile
+ *   lui, ca rânduri consecutive (118.1: EI30 … EI180; NISAL: cele două foi).
+ *   O singură foaie fără secțiuni = un capitol fără titlu (284).
+ * - Toate pozițiile de izolație intră în document, la locul lor; doar cele
+ *   „Gata” au număr și intră în total, exact ca foaia `Ofertă` (`imparte`).
+ *   Numerotarea e cea a planului de șantier (`planDinOferta`).
+ * - Totalul e cel din `valoareOferta`: ajustarea, adaosul de foc pe industrial,
+ *   discountul.
+ */
+export function documentOferta(c: CerereOferta): DocumentOferta {
+  const linii = cuAjustare(c.linii, c.antet.ajustareProcent ?? 0)
+    .filter((l) => l.extras.sistem !== null);
+  const foi = new Set(linii.map((l) => l.bruta.foaie));
+
+  const capitole: CapitolOferta[] = [];
+  let cheie: string | null = null;
+  let nr = 0;
+  for (const l of linii) {
+    const sect = sectiunea(l);
+    const k = `${l.bruta.foaie}\u0000${sect ?? ""}`;
+    if (k !== cheie) {
+      cheie = k;
+      capitole.push({ titlu: sect ?? (foi.size > 1 ? l.bruta.foaie : null), pozitii: [], subtotal: 0 });
+    }
+    const stare = stareLinie(l);
+    const pret = l.pret;
+    capitole[capitole.length - 1]!.pozitii.push({
+      nr: stare === "gata" ? ++nr : null,
+      cod: codClient(l),
+      textClient: textClient(l),
+      specificatie: specificatie(l),
+      um: l.bruta.um ?? "",
+      cantitate: l.bruta.cantitate ?? 1,
+      pretUnitar: pret ? bani(pret.pret_unitar) : null,
+      valoare: pret ? valoareLinie(l) : null,
+      stare,
+      motive: motiveLinie(l),
+      sursa: { foaie: l.bruta.foaie, rand: l.bruta.rand },
+      linie: l.extras.index,
+      gol: golul(l),
+      manual: Boolean(pret && "manual" in pret && pret.manual),
+    });
+  }
+
+  const gataDin = (ls: LinieProcesata[]) => imparte(ls).oferta;
+  const peIndex = new Map(linii.map((l) => [l.extras.index, l]));
+  for (const cap of capitole) {
+    cap.subtotal = totalOferta(gataDin(cap.pozitii.map((p) => peIndex.get(p.linie)!)));
+  }
+
+  const oferta = gataDin(linii);
+  const totalPozitii = totalOferta(oferta);
+  const adaosFoc = adaosFocIndustrial(oferta, c.provenienta.destinatie);
+  const total = bani(totalPozitii + adaosFoc);
+  const discount = bani(total * (c.antet.discountProcent ?? 0) / 100);
+  const toate = capitole.flatMap((cap) => cap.pozitii);
+  const numarate: Record<Stare, number> = { gata: 0, de_validat: 0, netarifate: 0 };
+  for (const p of toate) numarate[p.stare]++;
+  const foc = toate.some((p) => p.gol !== null || peIndex.get(p.linie)!.extras.sistem === "goluri_foc");
+
+  return {
+    antet: c.antet,
+    destinatie: c.provenienta.destinatie,
+    capitole,
+    coloanaCod: toate.some((p) => p.cod !== null),
+    coloaneGol: foc,
+    totalPozitii,
+    adaosFoc,
+    total,
+    discount,
+    totalGeneral: bani(total - discount),
+    numarate,
+    note: foc ? [...NOTA, ...NOTA_FOC] : NOTA,
+  };
+}
