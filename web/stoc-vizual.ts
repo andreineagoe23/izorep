@@ -49,7 +49,12 @@ const procent = (x: number): string => cifra(Math.round(x * 1000) / 10);
  * Cardul din pasul „Oferta": cât material cere oferta, strat cu strat, după
  * regulile firmei, și butonul care face șantierul din ofertă.
  */
-export function cardNecesar(n: Necesar): string {
+/**
+ * `inPanou`: cardul stă în panoul din dreapta al ofertei, pliat sub „Materiale
+ * de comandat”: fără titlu (îl dă eticheta pliabilă) și fără „Creează
+ * șantierul” (butonul e deja în panou, lângă „Descarcă oferta”).
+ */
+export function cardNecesar(n: Necesar, o: { inPanou?: boolean } = {}): string {
   const randuri = n.materiale.map((m) => {
     const um = articolDin(m).um;
     const seComanda = um === "ml" ? m.ml : m.m2;
@@ -71,8 +76,8 @@ export function cardNecesar(n: Necesar): string {
       <div>${n.pestePrag.map((d) => `<label><input type="checkbox" data-act="tub-peste" value="${d}"${
         n.tuburiPeste.includes(d) ? " checked" : ""} /><span>ø${d}</span></label>`).join("")}</div>
     </fieldset>` : "";
-  return `<section class="imp-card" id="necesar">
-    <h2>Materiale de comandat</h2>
+  return `<section class="${o.inPanou ? "imp-necesar-panou" : "imp-card"}" id="necesar">
+    ${o.inPanou ? "" : "<h2>Materiale de comandat</h2>"}
     <p class="hint">Pentru pozițiile din ofertă. Până la pragul de mai jos se comandă tuburi, pe diametru și grosime;
       peste el, saltele de vată sau plăci de elastomer, în m². Coturile, teurile, flanșele și casetele sunt incluse, trecute în metri de țeavă (3 piese pe
       metru până la ø140, 2 la ø159–168, una de la ø219). Tabla, în m² și în kg.${presupuse
@@ -93,10 +98,10 @@ export function cardNecesar(n: Necesar): string {
       : `<p class="nota">Nicio poziție cu preț din liste: nu e nimic de calculat.</p>`}
     ${fara > 0 ? `<p class="hint">${fara === 1 ? "O poziție nu are" : `${fara} poziții nu au`} necesar calculat
       (preț pus de mână sau închideri la foc): materialul lor se adaugă de mână, în „Depozit și stoc”.</p>` : ""}
-    <p class="hint">„Creează șantierul” face șantierul din ofertă (pozițiile, cantitățile și prețurile ei, cu ajustarea
+    ${o.inPanou ? "" : `<p class="hint">„Creează șantierul” face șantierul din ofertă (pozițiile, cantitățile și prețurile ei, cu ajustarea
       și discountul de mai sus). Materialele ajung în „Depozit și stoc”, iar pe șantier se fac situațiile de lucrări.</p>
     <div class="imp-formular-butoane">
       <button type="button" class="primar" data-act="creeaza-santier">Creează șantierul</button>
-    </div>
+    </div>`}
   </section>`;
 }

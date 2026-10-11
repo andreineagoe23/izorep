@@ -966,12 +966,110 @@ button.filtru[aria-pressed="true"] .hint, button.filtru.activ .hint { color: inh
 .imp-detalii ul { margin: 0; padding-left: 18px; line-height: 1.8; }
 .imp-detalii strong { color: var(--text); font-variant-numeric: tabular-nums; }
 
-/* ---- pasul 3 */
-.imp-oferta { display: grid; gap: var(--imp-gap); }
-@container imp (min-width: 900px) {
-  .imp-oferta { grid-template-columns: minmax(240px, 1fr) minmax(0, 2fr); align-items: start; }
-  .imp-oferta-rezumat { position: sticky; top: 16px; }
+/* ---- pasul „Oferta”: șablonul în stânga, panoul în dreapta
+ *
+ * Aceleași coloane pentru orice fișier (11 octombrie 2026): pozițiile ofertei,
+ * pe capitole, nu foaia clientului. Panoul ține totalul, filtrele, datele,
+ * descărcarea și șantierul. Sub 1000 px de ecran de import coboară sub
+ * poziții, iar totalul rămâne lipit sus (`.imp-of-lipit`).
+ */
+.imp-of { display: grid; gap: var(--imp-gap); min-width: 0; }
+.imp-of-stanga {
+  container: impof / inline-size; display: grid; gap: var(--imp-gap); min-width: 0; align-content: start;
 }
+.imp-of-panou { display: grid; gap: var(--imp-gap); min-width: 0; align-content: start; }
+.imp-of-lipit {
+  position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px;
+  padding: 10px var(--imp-gap); border: 1px solid var(--linie); border-radius: 12px;
+  background: var(--panou); box-shadow: var(--umbra);
+}
+.imp-of-lipit span { font-size: 14px; color: var(--slab); }
+.imp-of-lipit strong { font-size: 19px; font-variant-numeric: tabular-nums; }
+.imp-of-lipit .legatura { margin-left: auto; min-height: 32px; padding: 0; font-size: 14px; }
+@container imp (min-width: 1000px) {
+  .imp-of { grid-template-columns: var(--imp-coloane); align-items: start; }
+  .imp-of-lipit { display: none; }
+  /* Tot panoul rămâne la vedere; dacă e mai înalt decât ecranul, se derulează el. */
+  .imp-of-panou {
+    position: sticky; top: 16px; max-height: calc(100dvh - 32px); overflow-y: auto; overscroll-behavior: contain;
+    padding: 2px; margin: -2px;
+  }
+}
+.imp-of-antet .imp-antet-fisier span { gap: 0 6px; }
+
+.imp-of-filtre { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: var(--imp-gap); }
+.imp-of-filtru {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; padding: 8px 12px;
+  border: 1px solid var(--linie-tare); border-radius: 10px; background: var(--panou); color: var(--text);
+  font: inherit; font-size: 14.5px; text-align: left; cursor: pointer;
+}
+.imp-of-filtru span { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+.imp-of-filtru[data-stare] span::before { content: ""; flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--c); }
+.imp-of-filtru b { font-variant-numeric: tabular-nums; }
+.imp-of-filtru:hover { background: var(--accent-slab); }
+.imp-of-filtru[aria-pressed="true"] { border-color: var(--accent-fill); box-shadow: inset 0 0 0 1px var(--accent-fill); background: var(--accent-slab); }
+.imp-of-panou .imp-campuri { grid-template-columns: minmax(0, 1fr); margin-top: var(--imp-gap); }
+.imp-of-campuri .imp-ajutor { margin: -8px 0 0; }
+.imp-of-butoane > * { flex: 1 1 100%; }
+.imp-oferta-suma b { color: var(--text); font-variant-numeric: tabular-nums; }
+.imp-of-materiale summary {
+  display: flex; align-items: center; min-height: 44px; margin: -8px 0; font-weight: 600; cursor: pointer;
+}
+.imp-of-materiale[open] summary { margin-bottom: 8px; }
+.imp-necesar-panou { display: grid; gap: 12px; min-width: 0; }
+.imp-necesar-panou .hint { margin: 0; }
+.imp-necesar-panou .imp-campuri { margin-top: 0; }
+
+.imp-of-capitol { display: grid; gap: 12px; min-width: 0; }
+.imp-of-capitol-antet { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 12px; padding: 0 4px; }
+.imp-of-capitol-antet h2 { margin: 0; font-size: 17px; overflow-wrap: anywhere; }
+.imp-of-capitol-antet span { font-size: 14px; color: var(--slab); font-variant-numeric: tabular-nums; }
+.imp-poz-nr { margin: 0 0 4px; font-size: 14px; color: var(--slab); }
+.imp-poz-nr b {
+  display: inline-grid; place-items: center; min-width: 26px; height: 22px; padding: 0 6px; border-radius: 6px;
+  background: var(--panou-2); color: var(--text); font-variant-numeric: tabular-nums;
+}
+.imp-poz-cod { font-weight: 600; color: var(--text); }
+.imp-poz-spec {
+  margin: 6px 0 0; padding: 4px 10px; border-left: 3px solid var(--accent-fill); border-radius: 0 6px 6px 0;
+  background: var(--accent-slab); font-size: 14.5px; overflow-wrap: anywhere;
+}
+.imp-poz-spec span { font-weight: 600; }
+.imp .imp-poz-sursa { min-height: 28px; padding: 0; font-size: 14px; }
+
+/* Pozițiile se așază după lățimea coloanei din stânga, nu a întregului ecran. */
+.imp-of-stanga .imp-poz {
+  align-items: stretch; grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "text text" "inteles inteles" "stare pret" "actiuni actiuni" "editor editor";
+}
+.imp-of-stanga .imp-poz-stare { flex-direction: row; align-items: center; }
+.imp-of-stanga .imp-poz-inteles { align-self: end; align-items: flex-start; }
+.imp-of-stanga .imp-poz-actiuni { flex-wrap: wrap; justify-content: flex-start; }
+.imp-of-stanga .imp-poz-actiuni > * { flex: 1 1 120px; }
+@container impof (min-width: 620px) {
+  .imp-of-stanga .imp-poz { grid-template-areas: "text pret" "text stare" "inteles actiuni" "editor editor"; }
+  .imp-of-stanga .imp-poz-stare { justify-content: flex-end; text-align: right; }
+  .imp-of-stanga .imp-poz-actiuni { justify-content: flex-end; align-self: end; }
+  .imp-of-stanga .imp-poz-actiuni > * { flex: 0 0 auto; }
+}
+@container impof (min-width: 1000px) {
+  .imp-of-stanga .imp-poz {
+    align-items: center;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr) minmax(130px, 180px) 110px auto;
+    grid-template-areas: "text inteles stare pret actiuni" "editor editor editor editor editor";
+  }
+  .imp-of-stanga .imp-poz-stare { flex-direction: column; align-items: flex-start; text-align: left; }
+  .imp-of-stanga .imp-poz-actiuni { flex-wrap: nowrap; align-self: center; }
+  .imp-of-stanga .imp-poz-inteles { align-self: center; }
+}
+
+/* Foaia clientului, ca referință: drumul înapoi la ofertă și rândul căutat. */
+.imp-of-referinta {
+  position: sticky; top: 0; z-index: 6;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;
+}
+.imp-of-referinta p { margin: 0; flex: 1 1 260px; }
+.imp-excel tr.imp-tinta td { background: var(--accent-slab); }
 .imp-oferta-suma { display: grid; gap: 2px; margin: 0; }
 .imp-oferta-suma span { font-size: 15px; color: var(--slab); }
 .imp-oferta-suma strong { font-size: 30px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
@@ -981,7 +1079,6 @@ button.filtru[aria-pressed="true"] .hint, button.filtru.activ .hint { color: inh
   background: color-mix(in srgb, var(--atentie) 10%, var(--panou));
   border: 1px solid color-mix(in srgb, var(--atentie) 40%, transparent); color: var(--atentie);
 }
-.imp-oferta-afara { margin: var(--imp-gap) 0 0; padding-top: var(--imp-gap); border-top: 1px solid var(--linie); font-size: 15px; }
 .imp-campuri { display: grid; gap: 14px 16px; }
 @container imp (min-width: 620px) { .imp-campuri { grid-template-columns: 1fr 1fr; } }
 .imp-campuri label { font-size: 14px; color: var(--slab); }

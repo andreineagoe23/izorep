@@ -22,7 +22,7 @@ import {
  * CSS-ul intinde acelasi marcaj pe coloane — un singur marcaj, nu doua.
  */
 
-export type Pas = 1 | 2 | 3;
+export type Pas = 1 | 2;
 export type FiltruStare = "toate" | Stare;
 
 const SEGMENTE: { id: Exclude<Destinatie, "rafinarie">; eticheta: string }[] = [
@@ -43,7 +43,7 @@ const pozitii = (n: number): string => (n === 1 ? "1 poziție" : cate(n, "poziț
 
 /* ------------------------------------------------------------------ pasii */
 
-const PASI: [Pas, string][] = [[1, "Fișierul"], [2, "Verificare"], [3, "Oferta"]];
+const PASI: [Pas, string][] = [[1, "Fișierul"], [2, "Oferta"]];
 
 /** Unde e omul in drum. Pasii la care se poate sari sunt butoane. */
 export function pasi(activ: Pas, disponibil: Record<Pas, boolean>): string {
@@ -455,23 +455,7 @@ export function toast(text: string, cuAnulare: boolean): string {
     cuAnulare ? ` <button type="button" class="legatura" data-act="anuleaza">Anulează</button>` : ""}</div>`;
 }
 
-/* -------------------------------------------------------------- pasul 3 */
-
-export interface OptiuniOferta {
-  gata: number;
-  valoare: number;
-  /** Adaosul de 20 % pe închiderile la foc, pe o ofertă industrială; inclus în `valoare`. */
-  adaosFoc: number;
-  /** Ajustarea tehnicului pe toate prețurile, în procente. */
-  ajustare: number;
-  deVerificat: number;
-  faraPret: number;
-  destinatie: Destinatie;
-  client: string;
-  data: string;
-  firme: readonly { id: string; denumire: string; serieOferta: string }[];
-  eroare: string;
-}
+/* ----------------------------------------------------------- oferta */
 
 /** Sub valoarea ofertei: ce e inclus în ea, dincolo de prețurile din liste. */
 export function detaliuValoare(adaosFoc: number, ajustare: number): string {
@@ -480,41 +464,4 @@ export function detaliuValoare(adaosFoc: number, ajustare: number): string {
     adaosFoc > 0 ? `include ${eur(adaosFoc)}: +20 % pe totalul închiderilor la foc (ofertă industrială)` : "",
   ].filter(Boolean);
   return parti.length ? esc(parti.join(" · ")) : "Prețurile din liste, neajustate.";
-}
-
-export function ecranOferta(o: OptiuniOferta): string {
-  const camp = (nume: string, eticheta: string, valoare: string, extra = ""): string =>
-    `<label>${eticheta}<input name="${nume}" value="${esc(valoare)}" ${extra} /></label>`;
-  const afara = o.deVerificat + o.faraPret;
-  return `<div class="imp-oferta">
-    <section class="imp-card imp-oferta-rezumat">
-      <p class="imp-oferta-suma"><span>Intră în ofertă</span><strong id="valoare-oferta">${eur(o.valoare)}</strong>
-        <span>${pozitii(o.gata)} · ofertă ${SEGMENT[o.destinatie]}</span></p>
-      <p class="hint" id="detaliu-valoare">${detaliuValoare(o.adaosFoc, o.ajustare)}</p>
-      ${afara > 0 ? `<p class="imp-oferta-afara">Nu intră: ${o.deVerificat} de verificat, ${o.faraPret} fără preț.
-        <button type="button" class="legatura" data-act="la-verificare">Înapoi la verificare</button></p>` : ""}
-    </section>
-    <form class="imp-card imp-formular" id="antet-oferta">
-      <h2>Datele ofertei</h2>
-      <div class="imp-campuri">
-        <label>Firma<select name="firma">${o.firme.map((f) =>
-          `<option value="${esc(f.id)}">${esc(f.denumire)}</option>`).join("")}</select></label>
-        ${camp("numar", "Număr ofertă", "", 'required inputmode="numeric" autocomplete="off"')}
-        ${camp("data", "Data", o.data, "required")}
-        ${camp("client", "Beneficiar", o.client, "required")}
-        ${camp("obiectiv", "Obiectiv", "")}
-        ${camp("persoana", "În atenția", "")}
-        ${camp("localitate", "Localitate", "PALTINIS", "required")}
-        ${camp("ajustare", "Ajustare prețuri (%): 10 = toate cu 10 % mai mari, −5 = mai mici", String(o.ajustare),
-          'type="number" inputmode="decimal" min="-50" max="100" step="any"')}
-        ${camp("discount", "Discount (%)", "0", 'type="number" inputmode="decimal" min="0" max="100" step="any"')}
-      </div>
-      ${o.eroare ? `<p class="alerta" role="alert">${esc(o.eroare)}</p>` : ""}
-      ${afara > 0 ? `<p class="imp-oferta-lipsa">Oferta descărcată nu va conține ${pozitii(afara)}: ${o.deVerificat} de verificat
-        și ${o.faraPret} fără preț. Dacă trebuie să fie în ofertă, rezolvă-le întâi la verificare.</p>` : ""}
-      <div class="imp-formular-butoane">
-        <button type="submit" class="primar">Descarcă oferta</button>
-      </div>
-    </form>
-  </div>`;
 }

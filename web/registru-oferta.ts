@@ -89,10 +89,15 @@ function foaiaOferta(ws: Worksheet, d: DocumentOferta): void {
   ws.getCell("A5").alignment = { horizontal: "center" };
   intins(7, `Nr. ${d.antet.serie}${d.antet.numar} / ${d.antet.data}`);
   ws.getCell("A7").alignment = { horizontal: "center" };
-  ws.getCell("A10").value = `In atentia d-lui ${d.antet.persoana}`;
-  ws.getCell("A11").value = `Beneficiar : ${d.antet.client}`;
-  ws.getCell("A12").value = `Obiectiv : ${d.antet.obiectiv}`;
-  for (const r of [10, 11, 12]) ws.getCell(`A${r}`).font = { bold: true };
+  // Un rând gol nu se scrie: „Obiectiv : ” fără obiectiv arată ca o ofertă neterminată.
+  const randuri: [number, string, string][] = [
+    [10, "In atentia d-lui ", d.antet.persoana], [11, "Beneficiar : ", d.antet.client], [12, "Obiectiv : ", d.antet.obiectiv],
+  ];
+  for (const [r, eticheta, valoare] of randuri) {
+    if (!valoare.trim()) continue;
+    ws.getCell(`A${r}`).value = eticheta + valoare;
+    ws.getCell(`A${r}`).font = { bold: true };
+  }
 
   const antet = ws.getRow(15);
   antet.values = col.map((c) => c.titlu);

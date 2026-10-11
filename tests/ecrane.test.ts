@@ -10,6 +10,8 @@ import { describe, expect, it } from "vitest";
 import type { LinieProcesata } from "../src/import/nucleu.js";
 import type { RandSantier } from "../src/santier/agrega.js";
 import { cardPozitie } from "../web/import/vizual.js";
+import { pozitieOferta } from "../web/import/oferta-vizual.js";
+import { documentOferta } from "../web/document-oferta.js";
 import { cardPagina, cardTrimite, poateFiVerificata, type PaginaSantier } from "../web/santier-vizual.js";
 
 const INJECTIE = `<img src=x onerror="alert(1)">`;
@@ -34,6 +36,25 @@ describe("textul venit din afara nu injecteaza HTML", () => {
       sursa: "regex", necesitaValidare: false,
     } as LinieProcesata;
     const html = cardPozitie(linie, { propunere: null, editeaza: false, cuFoaie: true });
+    expect(html).not.toContain(INJECTIE);
+  });
+
+  it("codul, textul și foaia clientului, în poziția ofertei", () => {
+    const linie = {
+      bruta: { index: 4, foaie: INJECTIE, rand: 12, text: `${INJECTIE} | Izolatie vata DN100`, um: "ml", cantitate: 6, celule: ["E3.1.<b>"] },
+      extras: {
+        index: 4, sistem: "vata_minerala", diametru_valoare: 100, diametru_tip: "DN", grosime_mm: 50, forma: "ml",
+        gol_latime_mm: null, gol_inaltime_mm: null, straturi_extra: [], incredere: 0.99, motiv: "",
+      },
+      sursa: "regex", necesitaValidare: false,
+    } as LinieProcesata;
+    const doc = documentOferta({
+      linii: [linie],
+      antet: { serie: "RAD", numar: "1", data: "", persoana: "", client: "", obiectiv: "", firma: "", localitate: "" },
+      provenienta: { generatLa: "", destinatie: "rezidential", model: null, sesiune: "", fisierSursa: "" },
+    });
+    const html = pozitieOferta(doc.capitole[0]!.pozitii[0]!, { linie, propunere: null, editeaza: false, cuFoaie: true });
+    expect(html).toContain("Izolatie vata DN100");
     expect(html).not.toContain(INJECTIE);
   });
 
