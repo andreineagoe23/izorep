@@ -11,16 +11,19 @@ import { parseFoiBuffer } from "./parse-workbook.js";
 import { reconstruieste, scrieCelula } from "./editare.js";
 import { proceseazaRegistru, reevalueaza, type OptiuniNucleu, type Rezultat } from "./nucleu.js";
 import type { LinieExtrasa, Sursa } from "./schema.js";
+import { cuAdaugate, type PozitieAdaugata } from "./adaugate.js";
 
 /** Ce trebuie dintr-un import salvat ca sa fie refacut. */
 export interface ImportSalvat {
   fisier: ArrayBuffer;
   editari: { foaie: string; rand: number; cel: number; v: string | number | null }[];
   extrase: { index: number; extras: LinieExtrasa; sursa: Sursa; text?: string }[];
+  /** Pozițiile adăugate de mână în ofertă (`cuAdaugate`). */
+  adaugate?: PozitieAdaugata[];
 }
 
 export async function redeschideImport(s: ImportSalvat, optiuni: OptiuniNucleu): Promise<Rezultat> {
-  const foi = await parseFoiBuffer(s.fisier);
+  const foi = cuAdaugate(await parseFoiBuffer(s.fisier), s.adaugate ?? []);
   // Corecturile de celula se aplica INAINTE de extragere; extragerile salvate
   // (inclusiv ale modelului) se pun peste, fara sa se recheme modelul.
   for (const e of s.editari) {

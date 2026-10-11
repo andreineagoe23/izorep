@@ -465,7 +465,7 @@ export const ecran: Ecran = {
       const fisier = new File([buf], `${nume.replace(/[\\/:*?"<>|]+/g, " ").trim()} - masuratori santier.xlsx`, {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       });
-      preda({ fisier, destinatie, pretDublu: true });
+      preda({ fisier, destinatie, pretDublu: true, origine: { tip: "masuratori", pagini: pagini.length } });
       await pastreazaPagini();
       golesteDupaTrimitere();
       trimisa = `Ultima listă a plecat la import: ${fisier.name}. O găsești la „Import Excel”, în importurile recente.`;

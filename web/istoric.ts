@@ -1,3 +1,4 @@
+import type { PozitieAdaugata } from "../src/import/adaugate.js";
 import type { LinieExtrasa, Sursa } from "../src/import/schema.js";
 import type { Destinatie } from "../src/pricing/lists.js";
 
@@ -65,7 +66,20 @@ export interface SesiuneImport extends IntrareIstoric {
   descrieriSchimbate?: number[];
   /** Preturile unitare puse de om, `[index, EUR]`. Vezi `OptiuniNucleu.preturiManuale`. */
   preturiManuale?: [number, number][];
+  /** Pozitiile adaugate de mana in oferta. Vezi `src/import/adaugate.ts`. */
+  adaugate?: PozitieAdaugata[];
+  /** Registrul facut de aplicatie, nu primit de la client. Vezi `OrigineImport`. */
+  origine?: OrigineImport;
 }
+
+/**
+ * De unde vine registrul, cand nu e fisierul clientului: paginile din carnet
+ * (Masuratori) sau lista de tevi cu izolatia aleasa pe foaie. Ecranul spune
+ * asta in locul numelui fisierului facut de aplicatie.
+ */
+export type OrigineImport =
+  | { tip: "masuratori"; pagini: number }
+  | { tip: "izolatie_foaie"; fisier: string };
 
 /**
  * Ce iese din istoric cand se depaseste plafonul: cele mai vechi.
