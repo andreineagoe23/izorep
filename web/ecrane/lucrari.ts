@@ -10,13 +10,15 @@
 import { data as dataRo, esc, eur, indicator, nota, progres, stare, tabel, type Ecran } from "./tip.js";
 import { LUCRARI, client, santier, type Lucrare, type StareLucrare } from "../date/seed.js";
 import { vedeCosturi } from "../nav.js";
-import { citesteDepozit, citestePlanuri, iaDeDeschis, idNou, modDate, scrieDepozit, scriePlanuri } from "../date.js";
+import { citesteDepozit, citestePlanuri, iaDeDeschis, idNou, inchideSantier, modDate, scrieDepozit, scriePlanuri } from "../date.js";
 import { deComandat, solduri } from "../../src/stoc/registru.js";
 import { cifra } from "../stoc-vizual.js";
 import { descarca } from "../descarca.js";
 import { numeSituatie, registruSituatie } from "../situatie.js";
 import { preiaSituatie } from "../predare.js";
 import type { Potrivire } from "../../src/lucrari/potrivire.js";
+import { cifreInchidere, materialSantier, valideazaInchidere } from "../../src/lucrari/inchidere.js";
+import { cardInchis, cardMaterial, formularInchidere, randuriInchidere, restulPeSantier } from "../inchidere-vizual.js";
 import {
   faraUltimaSituatie, progresPlan, randuriSituatie, situatieNoua, totalSituatie, valideazaSituatie, valoareOferta,
   type PlanSantier, type Situatie,
@@ -60,10 +62,10 @@ function lucrariExemplu(): string {
     ${tabel(capete, LUCRARI.map(randTabel), clase)}
   </section>
   ${nota(
-    `Urmează: când se termină o lucrare, aplicația va întreba ce faci cu materialul rămas pe șantier — îl ` +
-      `aduci înapoi în depozit, îl scoți ca pierdere sau îl facturezi clientului. Materialul de pe fiecare ` +
-      `șantier se vede în <a href="#/stoc">Depozit și stoc</a>.`,
-  )}`;
+    `Când se termină o lucrare, șantierul se închide din pagina lui: șeful de lucrare numără ce a rămas, iar fiecare ` +
+      `material pleacă înapoi în depozit, pe alt șantier, la furnizor, sau se scrie ca pierdut, furat ori reciclat. ` +
+      `Materialul de pe fiecare șantier se vede și în <a href="#/stoc">Depozit și stoc</a>.`,
+  )}`
 }
 
 const zi = (iso: string): string => new Date(iso).toLocaleDateString("ro-RO");
@@ -81,12 +83,17 @@ export const ecran: Ecran = {
     let eroare = "";
     let stergeDe: string | null = null;
     let mesaj = "";
+    /** Inchiderea (Faza 7): ce a scris omul, eroarea, a doua apasare, cardul deschis. */
+    let inchidere = { scris: {} as Record<string, { numarat?: string; unde?: string }>, eroare: "", confirma: false, deschis: false };
     /** Situatia in lucru a venit din „Măsurători”: ce s-a pus, ce e de ales, ce nu e in oferta. */
     let dinPoze: Potrivire | null = null;
 
     const venita = preiaSituatie();
     const tinta = venita && planuri.find((p) => p.id === venita.plan);
-    if (venita && tinta) {
+    if (venita && tinta?.inchis) {
+      deschis = tinta.id;
+      mesaj = "Șantierul e închis: nu mai primește situații de lucrări.";
+    } else if (venita && tinta) {
       deschis = tinta.id;
       inLucru = {
         ...situatieNoua(tinta, idNou(), new Date().toISOString()),
@@ -110,7 +117,7 @@ export const ecran: Ecran = {
       const randuri = planuri.map((p) => {
         const v = valoareOferta(p);
         return `<tr>
-          <td><b>${esc(p.denumire)}</b><br><span class="hint">${esc(p.client || "—")}</span></td>
+          <td><b>${esc(p.denumire)}</b>${p.inchis ? ` ${stare("închis", "ok")}` : ""}<br><span class="hint">${esc(p.client || "—")}</span></td>
           <td>${esc(p.oferta || "—")}<br><span class="hint">${esc(zi(p.creat))}</span></td>
           <td class="n">${eur(v.total)}</td>
           <td>${progres(progresPlan(p))}</td>
@@ -138,6 +145,12 @@ export const ecran: Ecran = {
         ? deComandat(necesar.materiale, solduri(dep.miscari), ["central", p.id]).filter((d) => d.deComandat > 0).length
         : 0;
       const cumulat = ultima ? randuriSituatie(p, ultima) : null;
+      const materiale = dep.necesare.filter((n) => n.santier === p.id).flatMap((n) => n.materiale);
+      // Faza 7: ce vede directorul (S9) sau, inchis, cifrele lui; inventarul de inchidere, dupa situatii.
+      const material = p.inchis
+        ? cardInchis(cifreInchidere(p, materiale, dep.miscari))
+        : cardMaterial(materialSantier(p, materiale, dep.miscari, dep.comenzi ?? []));
+      const inchide = p.inchis ? "" : formularInchidere({ ...restulPeSantier(p, planuri, dep), ...inchidere });
 
       const randuriPlan = p.pozitii.map((poz, i) => {
         const c = cumulat?.[i];
@@ -166,20 +179,22 @@ export const ecran: Ecran = {
             p.adaosFocProcent ? ` · +${p.adaosFocProcent} % pe închiderile la foc` : ""}</p>
           <p class="hint">Materialele: <a href="#/stoc">Depozit și stoc</a>, la necesarul acestui șantier.</p>
         </section>
+        ${material}
         ${inLucru && dinPoze ? cardDinPoze(p, inLucru, dinPoze) : ""}
         ${inLucru ? formularSituatie(p, inLucru) : ""}
         ${istoric(p)}
+        ${inchide}
         <section class="imp-card"><h2>Planul de șantier</h2>
           <p class="hint" style="margin:0 0 12px">Pozițiile ofertei, cu prețurile trimise clientului. Nu se schimbă
             dacă se schimbă listele de prețuri.</p>
           ${tabel(["Poziția", "Cant. ofertă", "Preț unitar", "Executat"], randuriPlan, ["", "n", "n", "n"])}
         </section>
-        <section class="imp-card"><h2>Șterge șantierul</h2>
+        ${p.inchis ? "" : `<section class="imp-card"><h2>Șterge șantierul</h2>
           <p class="hint" style="margin:0 0 12px">Scoate planul, situațiile lui și necesarul din depozit.
             Mișcările de stoc rămân.</p>
           <div class="imp-formular-butoane"><button type="button" class="secundar" data-act="sterge" data-id="${esc(p.id)}">${
             stergeDe === p.id ? "Sigur ștergi?" : "Șterge șantierul"}</button></div>
-        </section>`;
+        </section>`}`;
     }
 
     function istoric(p: PlanSantier): string {
@@ -192,7 +207,7 @@ export const ecran: Ecran = {
           <td class="n">${eur(t.curent.total)}</td>
           <td class="n">${eur(t.cumulat.total)}</td>
           <td class="fix"><button type="button" class="secundar" data-act="descarca" data-id="${esc(s.id)}">Descarcă</button>${
-            ultima ? ` <button type="button" class="legatura pericol" data-act="scoate-situatie">Șterge</button>` : ""}</td>
+            ultima && !p.inchis ? ` <button type="button" class="legatura pericol" data-act="scoate-situatie">Șterge</button>` : ""}</td>
         </tr>`;
       });
       return `<section class="imp-card"><h2>Situații de lucrări</h2>
@@ -200,7 +215,7 @@ export const ecran: Ecran = {
           ? `<p class="hint" style="margin:0 0 12px">Nicio situație încă. O situație spune cât s-a executat într-o
             perioadă; valoarea e cantitatea × prețul din ofertă.</p>`
           : tabel(["Nr.", "Data", "În perioadă", "Cumulat", ""], randuri, ["n", "", "n", "n", ""])}
-        ${inLucru ? "" : `<div class="imp-formular-butoane">
+        ${inLucru || p.inchis ? "" : `<div class="imp-formular-butoane">
           <button type="button" class="primar" data-act="situatie-noua">Situație nouă</button></div>`}
       </section>`;
     }
@@ -301,9 +316,9 @@ export const ecran: Ecran = {
       const p = plan();
       mesaj = "";
       switch (b.dataset["act"]) {
-        case "deschide": deschis = b.dataset["id"] ?? null; inLucru = null; dinPoze = null; stergeDe = null; break;
+        case "deschide": deschis = b.dataset["id"] ?? null; inLucru = null; dinPoze = null; stergeDe = null; inchidere = { scris: {}, eroare: "", confirma: false, deschis: false }; break;
         case "inapoi": deschis = null; inLucru = null; dinPoze = null; stergeDe = null; break;
-        case "situatie-noua": if (p) { inLucru = situatieNoua(p, idNou(), new Date().toISOString()); eroare = ""; } break;
+        case "situatie-noua": if (p && !p.inchis) { inLucru = situatieNoua(p, idNou(), new Date().toISOString()); eroare = ""; } break;
         case "renunta": inLucru = null; dinPoze = null; eroare = ""; break;
         case "pune-la": {
           const i = Number(b.dataset["i"]);
@@ -362,6 +377,13 @@ export const ecran: Ecran = {
     // Totalul situației se actualizează la fiecare tastă, fără să redeseneze
     // formularul (s-ar pierde cursorul).
     root.addEventListener("input", (e) => {
+      // Schimbat ceva in inventar dupa prima apasare: confirmarea se cere din nou.
+      const fi = (e.target as HTMLElement).closest<HTMLFormElement>("#form-inchidere");
+      if (fi && inchidere.confirma) {
+        inchidere = { ...inchidere, confirma: false };
+        fi.querySelector("button[type=submit]")!.textContent = "Închide șantierul";
+        fi.querySelector("button[type=submit] + .hint")?.remove();
+      }
       const f = (e.target as HTMLElement).closest<HTMLFormElement>("#situatie");
       const p = plan();
       if (!f || !p || !inLucru) return;
@@ -375,6 +397,28 @@ export const ecran: Ecran = {
       e.preventDefault();
       const f = e.target as HTMLFormElement;
       const p = plan();
+      if (f.id === "form-inchidere" && p && !p.inchis) {
+        // Inventarul de la sfarsit (Faza 7): prima apasare verifica, a doua inchide.
+        const dep = citesteDepozit();
+        const { stoc } = restulPeSantier(p, planuri, dep);
+        const scris: typeof inchidere.scris = {};
+        for (const el of f.querySelectorAll<HTMLInputElement | HTMLSelectElement>("[data-cheie]")) {
+          const k = el.dataset["cheie"]!;
+          scris[k] = { ...scris[k], [el.name === "numarat" ? "numarat" : "unde"]: el.value };
+        }
+        const inventar = randuriInchidere(stoc, scris);
+        const nume = (cheie: string): string => stoc.find((r) => r.cheie === cheie)?.nume ?? cheie;
+        const gresit = valideazaInchidere({ santier: p.id, inventar }, dep.miscari, nume);
+        if (gresit) inchidere = { scris, eroare: gresit, confirma: false, deschis: true };
+        else if (!inchidere.confirma) inchidere = { scris, eroare: "", confirma: true, deschis: true };
+        else {
+          const refuz = inchideSantier(p.id, inventar, nume);
+          inchidere = refuz ? { scris, eroare: refuz, confirma: false, deschis: true } : { scris: {}, eroare: "", confirma: false, deschis: false };
+          if (!refuz) planuri = citestePlanuri();
+        }
+        deseneaza();
+        return;
+      }
       if (f.id !== "situatie" || !p || !inLucru) return;
       citesteFormular(f);
       const problema = valideazaSituatie(p, inLucru);

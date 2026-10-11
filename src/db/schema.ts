@@ -367,6 +367,11 @@ export const santier = pgTable("santier", {
   /** Seful de santier desemnat (S34). */
   responsabil: text("responsabil"),
   creat: timestamp("creat", { withTimezone: true }).notNull(),
+  /**
+   * Faza 7: cand s-a inchis, cu stocul la zero. Inchis, nu mai primeste
+   * situatii si nici miscari pe depozitul lui (trigger, migrarea 0012).
+   */
+  inchisLa: timestamp("inchis_la", { withTimezone: true }),
 }, (t) => [
   primaryKey({ columns: [t.tenantId, t.id] }),
   doarTenantul("santier_tenant"),

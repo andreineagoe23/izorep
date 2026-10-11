@@ -8,7 +8,7 @@
  * `src/stoc/` si ecranele lucreaza deja cu numere rotunjite la bani. Totalul
  * ofertei se verifica pe server din liniile ei (`salveazaOferta`).
  */
-import { and, asc, desc, eq, max, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull, max, sql } from "drizzle-orm";
 import type { Baza } from "../db/client.js";
 import {
   ambalaj, articol, cerere, comanda, depozit, documentFurnizor, firma, masuratoare, miscare, necesar, oferta, santier,
@@ -48,6 +48,7 @@ async function planuri(tx: Baza): Promise<PlanSantier[]> {
   const sit = await tx.select().from(situatie).orderBy(asc(situatie.nr));
   return sant.map((s) => ({
     ...(s.plan as Omit<PlanSantier, "situatii">),
+    ...(s.inchisLa ? { inchis: iso(s.inchisLa) } : {}),
     situatii: sit.filter((x) => x.santierId === s.id).map((x): Situatie => ({
       id: x.id, nr: x.nr, data: iso(x.data), cantitati: x.cantitati as Record<number, number>,
       ...(x.nota ? { nota: x.nota } : {}),
@@ -55,7 +56,7 @@ async function planuri(tx: Baza): Promise<PlanSantier[]> {
   }));
 }
 
-async function stareDepozit(tx: Baza): Promise<StareDepozit> {
+export async function stareDepozit(tx: Baza): Promise<StareDepozit> {
   const rows = await tx.select({ m: miscare, a: articol }).from(miscare)
     .innerJoin(articol, and(eq(articol.tenantId, miscare.tenantId), eq(articol.cheie, miscare.articolCheie)))
     .orderBy(asc(miscare.data), asc(miscare.creatLa));
@@ -229,10 +230,20 @@ export async function versiuniOferta(tx: Baza, cerereId: string): Promise<unknow
 
 /* -------------------------------------------------------- santierele */
 
-const planFara = (p: PlanSantier): Omit<PlanSantier, "situatii"> => {
-  const { situatii: _s, ...rest } = p;
+const planFara = (p: PlanSantier): Omit<PlanSantier, "situatii" | "inchis"> => {
+  // Inchiderea sta in `santier.inchis_la` (Faza 7), nu in plan.
+  const { situatii: _s, inchis: _i, ...rest } = p;
   return rest;
 };
+
+/** Santierul inchis dintre cei dati, daca e vreunul (Faza 7): nu mai primeste nimic. */
+export async function santierInchis(tx: Baza, ids: readonly (string | undefined)[]): Promise<string | null> {
+  const cauta = ids.filter((x): x is string => Boolean(x));
+  if (cauta.length === 0) return null;
+  const [s] = await tx.select({ denumire: santier.denumire }).from(santier)
+    .where(and(inArray(santier.id, cauta), isNotNull(santier.inchisLa))).limit(1);
+  return s?.denumire ?? null;
+}
 
 /** Santierul si depozitul lui. Planul se schimba doar cat n-are situatii (trigger). */
 export async function puneSantier(tx: Baza, ctx: Context, p: PlanSantier): Promise<void> {
@@ -259,6 +270,8 @@ export async function stergeSantier(tx: Baza, id: string): Promise<void> {
 }
 
 export async function adaugaSituatie(tx: Baza, ctx: Context, santierId: string, s: Situatie): Promise<void> {
+  const inchis = await santierInchis(tx, [santierId]);
+  if (inchis) throw new Refuz(409, `Șantierul ${inchis} e închis: nu mai primește situații.`);
   const [ultima] = await tx.select({ v: max(situatie.nr) }).from(situatie).where(eq(situatie.santierId, santierId));
   if (s.nr !== (ultima?.v ?? 0) + 1) {
     throw new Refuz(409, `Situația ${s.nr} nu urmează după ultima de pe server (${ultima?.v ?? 0}): a scris-o cineva între timp. Ecranul arată acum ce e pe server.`);
@@ -283,6 +296,13 @@ export async function adaugaMiscare(tx: Baza, ctx: Context, m: Miscare): Promise
   if (m.exemplu) throw new Refuz(400, "Datele de exemplu nu se scriu pe server.");
   const gresit = valideazaMiscare(m);
   if (gresit) throw new Refuz(400, gresit);
+  const inchis = await santierInchis(tx, [m.din, m.spre]);
+  if (inchis) {
+    // Retrimisa (aceeasi miscare, scrisa inainte de inchidere) nu e o miscare noua.
+    const [exista] = await tx.select({ id: miscare.id }).from(miscare).where(eq(miscare.id, m.id));
+    if (exista) return false;
+    throw new Refuz(409, `Șantierul ${inchis} e închis: nu mai primește mișcări.`);
+  }
   const a = m.articol;
   await tx.insert(articol).values({
     tenantId: ctx.tenantId, cheie: a.cheie, sistem: a.sistem, um: a.um, marca: a.marca ?? null, forma: a.forma ?? null,

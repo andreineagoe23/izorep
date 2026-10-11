@@ -75,6 +75,11 @@ export interface PlanSantier {
   adaosFocProcent: number;
   pozitii: PozitiePlan[];
   situatii: Situatie[];
+  /**
+   * ISO, cand s-a inchis santierul (Faza 7, `src/lucrari/inchidere.ts`): cu
+   * stocul la zero. Inchis, nu mai primeste situatii si nici miscari.
+   */
+  inchis?: string;
 }
 
 export interface Totaluri {

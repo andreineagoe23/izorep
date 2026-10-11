@@ -1,8 +1,10 @@
 import { atentionare, card, esc, eur, indicator, nota, nr, progres, stare, tabel, type Ecran } from "./tip.js";
 import { DOCUMENTE, LUCRARI, client, santier, type StareLucrare } from "../date/seed.js";
 import { vedeCosturi } from "../nav.js";
-import { citesteDepozit } from "../date.js";
+import { citesteDepozit, citestePlanuri } from "../date.js";
 import { deComandatPeNecesar } from "./stoc.js";
+import { alerte, listaSaptamanala, santiereInchise } from "../../src/lucrari/rapoarte.js";
+import { alerteAtentie, cardInchise, cardSaptamana } from "../rapoarte-vizual.js";
 
 /** Eticheta afisata si tonul indicatorului `stare()`, per stare de lucrare. */
 const ETICHETA_STARE: Record<StareLucrare, { text: string; ton: "ok" | "atentie" | "neutru" }> = {
@@ -96,6 +98,9 @@ function sectiuneAtentie(): string {
     });
   }
 
+  // Faza 7 (S49): lipsa pe santier, pierderea peste 10 % (Faza 6), comenzile nereceptionate.
+  itemi.push(...alerteAtentie(alerte(citestePlanuri(), citesteDepozit(), new Date().toISOString())));
+
   if (itemi.length === 0) return "";
 
   return card(
@@ -122,6 +127,16 @@ function tabelDerulare(): string {
   return card("Lucrări în derulare", tabel(["Lucrare", "Client / Șantier", "Progres", "Stare"], randuri));
 }
 
+/** Faza 7 (S49): lista săptămânală și cifrele la închiderea șantierelor. */
+function rapoarte(): string {
+  const planuri = citestePlanuri();
+  if (planuri.length === 0) return "";
+  const d = citesteDepozit();
+  const inchise = cardInchise(santiereInchise(planuri, d), vedeCosturi());
+  return card("Ultimele 7 zile pe șantiere", cardSaptamana(listaSaptamanala(planuri, d, new Date().toISOString()), vedeCosturi()))
+    + (inchise ? card("Șantiere închise", inchise) : "");
+}
+
 function notaCurs(): string {
   return nota(
     `Prețurile din oferte sunt în euro, fără TVA. Plata se face în lei, la cursul BNR din ziua facturii. ` +
@@ -134,6 +149,6 @@ export const ecran: Ecran = {
   titlu: "Tablou de bord",
   subtitlu: "Situația curentă a lucrărilor, ofertelor trimise și cererilor nerezolvate.",
   render(root) {
-    root.innerHTML = `${randIndicatori()}${sectiuneAtentie()}${tabelDerulare()}${notaCurs()}`;
+    root.innerHTML = `${randIndicatori()}${sectiuneAtentie()}${rapoarte()}${tabelDerulare()}${notaCurs()}`;
   },
 };
