@@ -15,7 +15,7 @@ import {
 } from "../date.js";
 import { cardConsum, consumPlan } from "../consum-vizual.js";
 import { dinMarci } from "../../src/stoc/consum.js";
-import { deComandat, solduri } from "../../src/stoc/registru.js";
+import { ramasPeNecesar } from "./stoc.js";
 import { cifra } from "../stoc-vizual.js";
 import { descarca } from "../descarca.js";
 import { numeSituatie, registruSituatie } from "../situatie.js";
@@ -140,9 +140,9 @@ export const ecran: Ecran = {
       const executat = ultima ? totalSituatie(p, ultima).cumulat : null;
       const dep = citesteDepozit();
       const necesar = dep.necesare.find((n) => n.santier === p.id);
-      const deCumparat = necesar
-        ? deComandat(necesar.materiale, solduri(dep.miscari), ["central", p.id]).filter((d) => d.deComandat > 0).length
-        : 0;
+      // Ca in Depozit (Faza 4): necesar − adus − comandat. Nu stocul de acum: din Faza 6
+      // consumul din situatii scade stocul, iar materialul pus nu se mai comanda.
+      const deCumparat = necesar ? ramasPeNecesar(dep, necesar).filter((d) => d.ramas > 0).length : 0;
       const cumulat = ultima ? randuriSituatie(p, ultima) : null;
 
       const randuriPlan = p.pozitii.map((poz, i) => {
