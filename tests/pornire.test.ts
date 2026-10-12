@@ -14,6 +14,7 @@
  *    pe server, iar ce e calculat pe server nu se dublează la retrimitere.
  */
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { bazaDisponibila } from "./conditii.js";
 import { sql } from "drizzle-orm";
 import {
   MOTIV_PORNIRE, ajustariInventar, estePornire, intrareDePornire, rezumatInventar, ultimulPretCumparat,
@@ -231,7 +232,7 @@ describe("evidența materialului pe șantierul TRANSAVIA, în Excel", () => {
 
 const app$ = conecteaza();
 const prop = conecteaza(URL_PROPRIETAR);
-const disponibila = await app$.db.execute(sql`select 1`).then(() => true, () => false);
+const disponibila = bazaDisponibila(await app$.db.execute(sql`select 1`).then(() => true, () => false), "testele pornirii pe server");
 const daca = () => (disponibila ? it : it.skip);
 let tenantId = "";
 let server: ReturnType<typeof creeazaServer>;

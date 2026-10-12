@@ -10,7 +10,7 @@
  * `consum`, cât cere necesarul.
  */
 import { describe, it, expect } from "vitest";
-import { existsSync } from "node:fs";
+import { CLIENTI, cuClienti } from "./conditii.js";
 import { importaFisier } from "../src/import/pipeline.js";
 import { stocInMemorie } from "../src/import/memorie.js";
 import { necesarDinLinii, type MaterialNecesar } from "../src/stoc/necesar.js";
@@ -29,7 +29,7 @@ import {
 import { alerteAtentie, cardInchise, cardSaptamana } from "../web/rapoarte-vizual.js";
 import { consumSantier } from "../src/stoc/consum.js";
 
-const CALE = "../attachments/clienti/cerere-de-oferta-transavia-abur.xlsx";
+const CALE = `${CLIENTI}/cerere-de-oferta-transavia-abur.xlsx`;
 const ZI0 = "2026-07-13T08:00:00.000Z";
 
 let n = 0;
@@ -155,8 +155,7 @@ describe("închiderea șantierului", () => {
     verificaInchiderea(planMic, materialeMici);
   });
 
-  it("TRANSAVIA: stoc zero și un singur număr pentru costul materialului față de ofertă", async () => {
-    if (!existsSync(CALE)) return;
+  cuClienti("TRANSAVIA: stoc zero și un singur număr pentru costul materialului față de ofertă", async () => {
     const l = (await importaFisier(CALE, { faraModel: true, stoc: stocInMemorie() })).linii
       .map((x) => (x.pret ? { ...x, necesitaValidare: false } : x));
     const plan = planDinOferta({

@@ -8,7 +8,7 @@
 > blochează nimic.
 >
 > Starea: toate cele opt faze sunt făcute. Fazele 1–5 pe 11 octombrie 2026,
-> fazele 6–8 unite pe 12 octombrie 2026 (604 teste). Exportul ofertei într-un
+> fazele 6–8 unite pe 12 octombrie 2026 (605 teste). Exportul ofertei într-un
 > singur fel e făcut (11 octombrie 2026, pașii 0–1 din `docs/plan-import.md`);
 > ecranul de import rămâne cum era. Înainte de folosirea reală: conturile și
 > rolurile, locul serverului și backup-ul (`docs/productie.md`). Pe 5

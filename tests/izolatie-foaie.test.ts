@@ -5,7 +5,7 @@
  * grosimea, din tabelele ei (`cerere-de-oferta-cet-constanta-clase-izolatie.pdf`).
  */
 import { describe, it, expect } from "vitest";
-import { existsSync } from "node:fs";
+import { CLIENTI, cuClienti } from "./conditii.js";
 import {
   diametruDin, elementDin, grosimeDinTabel, grosimeInLista, piesaInclusaInMetri, randuriIzolate, TABELE, tabelDin4140Cald,
   tevileFoii,
@@ -17,9 +17,7 @@ import { spreCerere } from "../src/santier/spre-cerere.js";
 import { registruCerere } from "../src/santier/registru.js";
 import { imparte, valoareLinie } from "../web/oferta.js";
 
-const CET = "../attachments/clienti/cerere-de-oferta-cet-constanta-motoare-termice.xlsx";
-const areFisier = existsSync(CET);
-const cuFisier = areFisier ? it : it.skip;
+const CET = `${CLIENTI}/cerere-de-oferta-cet-constanta-motoare-termice.xlsx`;
 
 describe("ce se izolează de pe lista instalatorului", () => {
   it.each([
@@ -85,7 +83,7 @@ describe("grosimea, din tabelele specificației", () => {
 });
 
 describe("CET Constanța: din lista de țevi, oferta", () => {
-  cuFisier("pe fiecare foaie de sistem se citesc țevile și piesele; restul se lasă", async () => {
+  cuClienti("pe fiecare foaie de sistem se citesc țevile și piesele; restul se lasă", async () => {
     const foi = await parseFoi(CET);
     const pe = Object.fromEntries(foi.map((f) => [f.nume, tevileFoii(f).tevi.length]));
     expect(pe["CENT"]).toBe(0);
@@ -95,7 +93,7 @@ describe("CET Constanța: din lista de țevi, oferta", () => {
     expect(oms.tevi.filter((t) => t.element === "ml").map((t) => [t.diametru_valoare, t.cantitate])).toEqual([[60.3, 162.94], [76.1, 187.48]]);
   });
 
-  cuFisier("OMS cu vată și tablă la atingere, PWS cu elastomer la rece: 20 de poziții, toate „Gata”", async () => {
+  cuClienti("OMS cu vată și tablă la atingere, PWS cu elastomer la rece: 20 de poziții, toate „Gata”", async () => {
     const foi = await parseFoi(CET);
     const oms = randuriIzolate(tevileFoii(foi.find((f) => f.nume === "OMS")!), {
       izolatie: "vata_minerala", grosime: { tabel: TABELE.atingere.tabel }, jacheta: "aluminiu", piese: true, armaturi: true,
@@ -113,7 +111,7 @@ describe("CET Constanța: din lista de țevi, oferta", () => {
     expect(Math.round(oferta.reduce((t, l) => t + valoareLinie(l), 0) * 100) / 100).toBe(32999.59);
   });
 
-  cuFisier("grosimea peste listă (110 mm la ø168) nu iese „Gata” la 100 mm", async () => {
+  cuClienti("grosimea peste listă (110 mm la ø168) nu iese „Gata” la 100 mm", async () => {
     const foi = await parseFoi(CET);
     const hws = randuriIzolate(tevileFoii(foi.find((f) => f.nume === "HWS")!), {
       izolatie: "vata_minerala", grosime: { tabel: tabelDin4140Cald(100) }, jacheta: "aluminiu", piese: false, armaturi: false,

@@ -8,7 +8,8 @@
  * ofertă. Restul ține câte o regulă, pe rândul real din care a ieșit.
  */
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { existsSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
+import { CLIENTI, cuClienti } from "./conditii.js";
+import { mkdtempSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import ExcelJS from "exceljs";
@@ -20,7 +21,7 @@ import { tarifeaza, tarifeazaPeMp } from "../src/pricing/engine.js";
 import type { RezultatTarifare } from "../src/pricing/types.js";
 import type { LinieExtrasa } from "../src/import/schema.js";
 
-const DIR = "../attachments/clienti";
+const DIR = CLIENTI;
 
 let dir: string;
 beforeEach(() => { dir = mkdtempSync(join(tmpdir(), "izorep-fara-pret-")); });
@@ -46,8 +47,7 @@ const motive = (p: unknown): string[] => (p as RezultatTarifare | undefined)?.mo
 
 describe("cererile de ofertă ale clienților", () => {
   for (const destinatie of ["rezidential", "industrial"] as const) {
-    it(`pe ${destinatie}: nicio poziție fără preț, în niciun fișier`, async () => {
-      if (!existsSync(DIR)) return;
+    cuClienti(`pe ${destinatie}: nicio poziție fără preț, în niciun fișier`, async () => {
       const fara: string[] = [];
       for (const f of readdirSync(DIR).filter((x) => x.endsWith(".xlsx"))) {
         const r = await importaFisier(join(DIR, f), { faraModel: true, destinatie, stoc: stocInMemorie() });
@@ -85,9 +85,8 @@ describe("tabla fără grosime scrisă", () => {
 });
 
 describe("Transavia inox pe rezidențial", () => {
-  it("inoxul nu trimite nicio poziție la verificat; rămân doar cele cu motivul lor", async () => {
+  cuClienti("inoxul nu trimite nicio poziție la verificat; rămân doar cele cu motivul lor", async () => {
     const f = join(DIR, "cerere-de-oferta-transavia-inox.xlsx");
-    if (!existsSync(f)) return;
     const r = await importaFisier(f, { faraModel: true, destinatie: "rezidential", stoc: stocInMemorie() });
     const cuPret = r.linii.filter((l) => l.extras.sistem !== null && l.pret);
     expect(cuPret).toHaveLength(72);

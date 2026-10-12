@@ -17,8 +17,9 @@
  * pe linii construite aici rulează oricum.
  */
 import { describe, it, expect } from "vitest";
+import { CLIENTI, cuClienti } from "./conditii.js";
 import ExcelJS from "exceljs";
-import { existsSync, readdirSync } from "node:fs";
+import { readdirSync } from "node:fs";
 import { documentOferta, specificatie, NOTA, type DocumentOferta } from "../web/document-oferta.js";
 import { imparte, planDinOferta, valoareOferta, type AntetOferta, type CerereOferta, type Provenienta } from "../web/oferta.js";
 import { importaFisier } from "../src/import/pipeline.js";
@@ -26,7 +27,7 @@ import { stocInMemorie } from "../src/import/memorie.js";
 import type { LinieProcesata } from "../src/import/nucleu.js";
 import type { LinieExtrasa } from "../src/import/schema.js";
 
-const DIR = "../attachments/clienti";
+const DIR = CLIENTI;
 
 const ANTET: AntetOferta = {
   serie: "RAD", numar: "284", data: "27.05.2026", persoana: "Vlad Emil",
@@ -178,8 +179,7 @@ describe("cererea TRANSAVIA în șablon = Oferta 284", () => {
   const CERERE = "cerere-de-oferta-transavia-abur.xlsx";
   const OFERTA = `${DIR}/oferta-284-transavia-abur.xlsx`;
 
-  it("99 de poziții, rând cu rând, totalul cu discount și textul roșu de pe casete", async () => {
-    if (!existsSync(`${DIR}/${CERERE}`) || !existsSync(OFERTA)) return;
+  cuClienti("99 de poziții, rând cu rând, totalul cu discount și textul roșu de pe casete", async () => {
     const d = documentOferta(cerere(await importa(CERERE), { discountProcent: 3 }));
     expect(d.capitole).toHaveLength(1);
     expect(d.capitole[0]!.titlu).toBeNull();
@@ -226,8 +226,7 @@ describe("cererea TRANSAVIA în șablon = Oferta 284", () => {
 describe("Matari în șablon = Oferta 118.1", () => {
   const F = "oferta-118-1-matari-goluri-foc.xlsx";
 
-  it("capitolele EI30 … EI180, numerotarea, golul și totalul semnat", async () => {
-    if (!existsSync(`${DIR}/${F}`)) return;
+  cuClienti("capitolele EI30 … EI180, numerotarea, golul și totalul semnat", async () => {
     const d = documentOferta(cerere(await importa(F)));
     expect(d.capitole.map((c) => [/EI\d+/.exec(c.titlu ?? "")?.[0], c.pozitii.length]))
       .toEqual([["EI30", 16], ["EI60", 12], ["EI120", 25], ["EI180", 12]]);
@@ -246,8 +245,7 @@ describe("Matari în șablon = Oferta 118.1", () => {
 describe("NISAL în șablon = Oferta 118", () => {
   const F = "oferta-118-nisal.xlsx";
 
-  it("cele două foi sunt două capitole, cu codurile clientului pe fiecare rând", async () => {
-    if (!existsSync(`${DIR}/${F}`)) return;
+  cuClienti("cele două foi sunt două capitole, cu codurile clientului pe fiecare rând", async () => {
     const d = documentOferta(cerere(await importa(F)));
     expect(d.capitole.map((c) => [c.titlu, c.pozitii.length])).toEqual([["Termice+Sanitare", 50], ["Ventilatie", 8]]);
 
@@ -265,8 +263,7 @@ describe("NISAL în șablon = Oferta 118", () => {
 });
 
 describe("pe toate cererile: documentul, registrul și planul spun același lucru", () => {
-  it("aceleași poziții, același total, aceeași numerotare ca planul de șantier", async () => {
-    if (!existsSync(DIR)) return;
+  cuClienti("aceleași poziții, același total, aceeași numerotare ca planul de șantier", async () => {
     for (const f of readdirSync(DIR).filter((x) => x.endsWith(".xlsx"))) {
       const c = cerere(await importa(f), { discountProcent: 3, ajustareProcent: 5 });
       const d = documentOferta(c);

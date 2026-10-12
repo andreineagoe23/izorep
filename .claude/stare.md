@@ -1,7 +1,28 @@
 # Stare curentă
 
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
-> Ultima actualizare: 11 octombrie 2026 (noaptea).
+> Ultima actualizare: 12 octombrie 2026.
+
+## 12 octombrie 2026: fazele 6–8 unite, testele în CI
+
+Fazele 6, 7 și 8 sunt pe `main` (secțiunile de mai jos; legăturile dintre ele
+sunt la Faza 7, „Legate la unirea fazelor 6–8”). **605 teste.** Migrările
+0010 → 0011 → 0012, `drizzle-kit generate` fără schimbări.
+
+**CI-ul era roșu din 11 octombrie** și, mai rău, mințea pe dos: 30 de teste
+pe fișierele clienților ieșeau cu `return` când lipsea `../attachments`, deci în
+CI treceau fără să verifice nimic, printre ele „gata când”-urile fazelor 6 și
+7 și reproducerea ofertelor semnate. Doar cele 3 din `izolatie-foaie` erau
+`it.skip`, și ele țineau CI-ul roșu. Fișierele clienților nu urcă în repo (date
+reale), deci acum (`tests/conditii.ts`):
+
+- `cuClienti` în loc de `return`: fără fișiere, testul e **sărit vizibil**.
+  În CI: 572 trec, 33 sărite, iar pasul „Ce nu a rulat în CI” le numără într-un
+  avertisment. Orice alt test sărit pică pasul.
+- `bazaDisponibila`: în CI (`CI` setat) o bază care nu răspunde **pică**
+  testele, nu le sare. Local se sar, ca înainte, cu mesajul de pornire.
+- Local, cu `../attachments`, nu se sare nimic: CI verde nu înlocuiește
+  `npm test` local înainte de push.
 
 ## 11 octombrie 2026: Faza 6, consumul
 

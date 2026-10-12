@@ -16,11 +16,11 @@
  * Testul de la final e cel care contează cel mai mult: `Oferta 27.04.2026
  * Matari.xlsx` importat determinist trebuie să dea un registru al cărui total
  * e **12.692,04 €** — totalul ofertei semnate. Rulează doar dacă fișierele
- * firmei sunt pe disc (nu sunt commit-uite), deci în CI se sare peste el, la
- * fel ca la restul suitelor care ating `../attachments/`.
+ * firmei sunt pe disc (nu sunt commit-uite), deci în CI se sare, vizibil
+ * (`cuClienti` din `conditii.ts`).
  */
 import { describe, it, expect } from "vitest";
-import { existsSync } from "node:fs";
+import { CLIENTI, cuClienti } from "./conditii.js";
 import { imparte, totalOferta, type AntetOferta, type Provenienta } from "../web/oferta.js";
 import { registruOferta } from "../web/registru-oferta.js";
 import { citesteOferta, totalul } from "./registru-citit.js";
@@ -234,13 +234,10 @@ describe("discountul comercial", () => {
  * Cap-coadă, pe o ofertă semnată.
  * ------------------------------------------------------------------ */
 
-const MATARI = "../attachments/clienti/oferta-118-1-matari-goluri-foc.xlsx";
+const MATARI = `${CLIENTI}/oferta-118-1-matari-goluri-foc.xlsx`;
 
 describe("cap-coadă pe oferta semnată 118.1", () => {
-  it("53 de poziții pe capitolele EI30 … EI120, cu golul, total 12.692,04 € — exact totalul semnat", async () => {
-    // Fara `describe.runIf`: in CI ar fi o suita SARITA, iar CI pica pe orice
-    // suita sarita. Testul ruleaza mereu si iese devreme fara fisier.
-    if (!existsSync(MATARI)) return;
+  cuClienti("53 de poziții pe capitolele EI30 … EI120, cu golul, total 12.692,04 € — exact totalul semnat", async () => {
     const { importaFisier } = await import("../src/import/pipeline.js");
     const { stocInMemorie } = await import("../src/import/memorie.js");
     const raport = await importaFisier(MATARI, { faraModel: true, stoc: stocInMemorie() });

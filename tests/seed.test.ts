@@ -12,11 +12,11 @@
  * despre ele și nu se sare.
  */
 import { describe, it, expect } from "vitest";
-import { existsSync } from "node:fs";
+import { CLIENTI, cuClienti } from "./conditii.js";
 import ExcelJS from "exceljs";
 import { DOCUMENTE, LUCRARI } from "../web/date/seed.js";
 
-const DIR = "../attachments/clienti";
+const DIR = CLIENTI;
 
 async function totalSemnat(fisier: string): Promise<number> {
   const wb = new ExcelJS.Workbook();
@@ -40,11 +40,10 @@ async function totalSemnat(fisier: string): Promise<number> {
 }
 
 describe("datele demo au valorile ofertelor semnate", () => {
-  it("fiecare ofertă cu fișier are exact totalul semnat, iar lucrarea ei la fel", async () => {
+  cuClienti("fiecare ofertă cu fișier are exact totalul semnat, iar lucrarea ei la fel", async () => {
     const oferte = DOCUMENTE.filter((d) => d.tip === "oferta" && d.valoare !== null);
     expect(oferte.length).toBeGreaterThan(0);
     for (const d of oferte) {
-      if (!existsSync(`${DIR}/${d.fisierSursa}`)) continue;
       expect(d.valoare, d.fisierSursa).toBe(await totalSemnat(d.fisierSursa));
       const lucrare = LUCRARI.find((l) => l.id === d.lucrareId);
       if (lucrare) expect(lucrare.contractat, lucrare.id).toBe(d.valoare);

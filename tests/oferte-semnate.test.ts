@@ -24,10 +24,10 @@
  * rulează, nu verifică nimic despre ele și spun asta.
  */
 import { describe, it, expect } from "vitest";
+import { CLIENTI, cuClienti } from "./conditii.js";
 import { registruOferta } from "../web/registru-oferta.js";
 import { citesteOferta, totalul } from "./registru-citit.js";
 import type { CellValue, Row } from "exceljs";
-import { existsSync } from "node:fs";
 import { imparte, totalOferta, type AntetOferta, type Provenienta } from "../web/oferta.js";
 import { importaFisier } from "../src/import/pipeline.js";
 import { stocInMemorie } from "../src/import/memorie.js";
@@ -36,7 +36,7 @@ import { parseFoi } from "../src/import/parse-workbook.js";
 import { confirma } from "../web/validare.js";
 import { bani } from "../src/pricing/engine.js";
 
-const DIR = "../attachments/clienti";
+const DIR = CLIENTI;
 
 const ANTET: AntetOferta = {
   serie: "RAD", numar: "0", data: "07.09.2026", persoana: "—",
@@ -123,8 +123,6 @@ const CAZURI: Caz[] = [
   },
 ];
 
-const prezente = CAZURI.filter((c) => existsSync(`${DIR}/${c.fisier}`));
-
 const ruleaza = async (caz: Caz) => {
   const raport = await importaFisier(`${DIR}/${caz.fisier}`, {
     faraModel: true, stoc: stocInMemorie(),
@@ -148,28 +146,28 @@ describe("acoperirea față de ofertele semnate", () => {
     }
   });
 
-  it("fiecare ofertă semnată duce exact atâtea poziții pe foaia Ofertă", async () => {
-    for (const caz of prezente) {
+  cuClienti("fiecare ofertă semnată duce exact atâtea poziții pe foaia Ofertă", async () => {
+    for (const caz of CAZURI) {
       const { oferta } = await ruleaza(caz);
       expect(oferta.length, `${caz.fisier} — dacă a CRESCUT, actualizează cifra; dacă a SCĂZUT, s-a stricat ceva. ${caz.deCe}`)
         .toBe(caz.peOferta);
     }
   });
 
-  it("totalul generat rămâne cel măsurat", async () => {
-    for (const caz of prezente) {
+  cuClienti("totalul generat rămâne cel măsurat", async () => {
+    for (const caz of CAZURI) {
       const { oferta } = await ruleaza(caz);
       expect(totalOferta(oferta), `${caz.fisier} (semnat: ${caz.semnat.toFixed(2)} €)`)
         .toBeCloseTo(caz.generat, 2);
     }
   });
 
-  it("registrul scris pe disc are exact totalul calculat", async () => {
+  cuClienti("registrul scris pe disc are exact totalul calculat", async () => {
     // Nu e redundant cu testul de mai sus: acolo se verifica functia pura, aici
     // ce ajunge CHIAR in fisierul care pleaca la client. Intre ele stau
     // scrierea randurilor si randul de TOTAL, adica exact locul unde o pozitie
     // se poate pierde fara ca vreun contor sa se miste.
-    for (const caz of prezente) {
+    for (const caz of CAZURI) {
       const { raport } = await ruleaza(caz);
       const o = await citesteOferta(await registruOferta({ linii: raport.linii, antet: ANTET, provenienta: PROV }));
       expect(o.pozitii, caz.fisier).toHaveLength(caz.peOferta);
@@ -178,35 +176,32 @@ describe("acoperirea față de ofertele semnate", () => {
     }
   });
 
-  it("Matari reproduce oferta semnată la bănuț", async () => {
+  cuClienti("Matari reproduce oferta semnată la bănuț", async () => {
     // Singurul caz la 100%, si de-aia e scris separat: e dovada ca lantul
     // import -> tarifare -> registru chiar poate reproduce un document semnat.
     // Celelalte trei masoara cat mai lipseste pana acolo.
     const caz = CAZURI.find((c) => c.fisier.includes("matari"))!;
     expect(caz.generat).toBe(caz.semnat);
 
-    if (!existsSync(`${DIR}/${caz.fisier}`)) return;
     const { oferta } = await ruleaza(caz);
     expect(totalOferta(oferta)).toBe(caz.semnat);
   });
 
-  it("oferta de manoperă rămâne netarifată, și se vede de ce", async () => {
+  cuClienti("oferta de manoperă rămâne netarifată, și se vede de ce", async () => {
     // Cea mai scumpa regresie posibila din tot testul: „acoperirea a crescut de
     // la 0 la 100%" ar arata ca un progres si ar fi de fapt un pret de 2,5-3,8
     // ori mai mare, semnat si trimis.
     const anexa = `${DIR}/oferta-manopera-anexa-contract-2024.xlsx`;
-    if (!existsSync(anexa)) return;
     const raport = await importaFisier(anexa, { faraModel: true, stoc: stocInMemorie() });
     expect(raport.randuriManopera).toBeGreaterThan(0);
     expect(raport.tarifate).toBe(0);
     expect(raport.valoareTotala).toBe(0);
   });
 
-  it("niciun alt fișier de client nu se dă drept manoperă", async () => {
+  cuClienti("niciun alt fișier de client nu se dă drept manoperă", async () => {
     // Semnalul trebuie sa ramana ingust: aprins pe fisierele obisnuite, ar pune
     // o alerta rosie pe importuri perfect normale si n-ar mai fi citit.
     const matari = `${DIR}/oferta-118-1-matari-goluri-foc.xlsx`;
-    if (!existsSync(matari)) return;
     const raport = await importaFisier(matari, { faraModel: true, stoc: stocInMemorie() });
     expect(raport.randuriManopera).toBe(0);
   });
@@ -221,8 +216,7 @@ describe("cererea TRANSAVIA importată reproduce Oferta 284 semnată", () => {
   const CERERE = `${DIR}/cerere-de-oferta-transavia-abur.xlsx`;
   const OFERTA = `${DIR}/oferta-284-transavia-abur.xlsx`;
 
-  it("99 de prețuri exacte din 99, inclusiv distribuitorul de abur; niciun rând fără preț", async () => {
-    if (!existsSync(CERERE) || !existsSync(OFERTA)) return;
+  cuClienti("99 de prețuri exacte din 99, inclusiv distribuitorul de abur; niciun rând fără preț", async () => {
     const poz = async (f: string) => (await importaFisier(f, { faraModel: true, stoc: stocInMemorie() }))
       .linii.filter((l) => l.extras.sistem !== null);
     const cerere = await poz(CERERE);
@@ -249,8 +243,7 @@ describe("registrul generat din cererea TRANSAVIA are rândurile Ofertei 284", (
   const CERERE = `${DIR}/cerere-de-oferta-transavia-abur.xlsx`;
   const OFERTA = `${DIR}/oferta-284-transavia-abur.xlsx`;
 
-  it("după „Confirmă toate”: aceleași coduri, UM, cantități și prețuri, rând cu rând, roșul de pe casete și totalul semnat", async () => {
-    if (!existsSync(CERERE) || !existsSync(OFERTA)) return;
+  cuClienti("după „Confirmă toate”: aceleași coduri, UM, cantități și prețuri, rând cu rând, roșul de pe casete și totalul semnat", async () => {
     const cerere = await importaFisier(CERERE, { faraModel: true, stoc: stocInMemorie() });
     // „Confirmă toate” din ecran: pozițiile cu preț nu mai cer validare.
     const confirmate = cerere.linii.map((l) => (l.pret ? { ...l, necesitaValidare: false } : l));
@@ -285,8 +278,7 @@ describe("registrul generat din cererea TRANSAVIA are rândurile Ofertei 284", (
 describe("prețul pus de om închide oferta semnată", () => {
   const CERERE = `${DIR}/cerere-de-oferta-transavia-abur.xlsx`;
 
-  it("cererea TRANSAVIA + distribuitorul de abur pus de mână (2.296,70) = totalul Ofertei 284", async () => {
-    if (!existsSync(CERERE)) return;
+  cuClienti("cererea TRANSAVIA + distribuitorul de abur pus de mână (2.296,70) = totalul Ofertei 284", async () => {
     const fara = await importaFisier(CERERE, { faraModel: true, stoc: stocInMemorie() });
     const distribuitor = fara.linii.find((l) => /DISTRIBUITOR ABUR/.test(l.bruta.text))!;
     // Are preț din regula echipamentului, exact cel semnat, deci e „Gata” (din 10 oct 2026).
@@ -314,8 +306,7 @@ describe("confirmarea din ecran nu scoate prețul pozițiilor care depind de tex
   // rămânea „Lipsește diametrul”, iar oferta ieșea 92.278,36 în loc de 94.575,06.
   const CERERE = `${DIR}/cerere-de-oferta-transavia-abur.xlsx`;
 
-  it("TRANSAVIA, toate confirmate: 94.575,06 € și niciun rând fără preț", async () => {
-    if (!existsSync(CERERE)) return;
+  cuClienti("TRANSAVIA, toate confirmate: 94.575,06 € și niciun rând fără preț", async () => {
     const opt = { stoc: stocInMemorie() };
     const rez = await proceseazaRegistru(await parseFoi(CERERE), opt);
     // Din 10 oct 2026 nimic nu mai e de confirmat aici; omul poate confirma
@@ -346,9 +337,8 @@ describe("ce e „Gata” pe o ofertă semnată are prețul semnat", () => {
   };
 
   for (const [fisier, coloane] of Object.entries(PU)) {
-    it(fisier, async () => {
+    cuClienti(fisier, async () => {
       const cale = `${DIR}/${fisier}`;
-      if (!existsSync(cale)) return;
       const ExcelJS = (await import("exceljs")).default;
       const wb = new ExcelJS.Workbook();
       await wb.xlsx.readFile(cale);

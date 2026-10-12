@@ -124,8 +124,10 @@ alta.
 
 ## Ce nu face încă
 
-- Pozele nu se păstrează: la reîncărcarea paginii munca din ecran se pierde
-  (predarea spre import e salvată, ca orice import).
+- Pe server, paginile verificate se păstrează cu poza lor când pleacă (spre
+  ofertă, situație sau comandă: `/api/masuratori`, tabelul `masuratoare`). Ce
+  e încă în lucru pe ecran se pierde la reîncărcare. Pe linkul demo pozele nu
+  se păstrează deloc.
 - Situațiile de lucrări există din 29 septembrie 2026 (ecranul Lucrări), dar
   cantitățile executate se scriu de mână.
 

@@ -89,9 +89,7 @@ describe.runIf(fisiere.length > 0)("golden files", () => {
 /**
  * Testul asta ruleaza INTOTDEAUNA, si cu zero golden files inregistrate.
  *
- * Nu e cosmetic: CI pica daca vreo suita se sare (`it.skipIf`), fiindca o
- * suita sarita arata exact ca una care trece si asa s-ar putea ascunde o baza
- * care n-a pornit. Cu fisierele de client lipsa — un dezvoltator nou nu are
+ * Cu fisierele de client lipsa — in CI, sau la un dezvoltator nou fara
  * `../attachments/` — suitele de mai sus n-au ce rula, deci verificarea de
  * forma ramane singura, si trebuie sa treaca fara sa sara.
  */

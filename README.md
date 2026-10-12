@@ -172,7 +172,10 @@ din rădăcină și din fiecare modul.
 Echipa: **Andrei Neagoe**, **Adrian Popescu**.
 
 - Branch per task, PR către `main`. `main` rămâne mereu verde.
-- CI rulează la fiecare PR: typecheck + suita de teste a motorului de prețuri.
+- CI rulează la fiecare PR: typecheck + toată suita, pe Postgres. Fișierele
+  clienților (`../attachments`) nu sunt în repo, deci testele pe ofertele
+  semnate se sar acolo, vizibil, cu un avertisment care le numără. **Rulează
+  `npm test` local înainte de push**: acolo nu se sare nimic.
 - Modificările în `data/price-lists/` sunt semnalate explicit în PR — schimbă
   prețurile din toate ofertele viitoare, deci vrem să fie o decizie conștientă.
 - Fără trailere de atribuire în commit-uri (verificat în CI).

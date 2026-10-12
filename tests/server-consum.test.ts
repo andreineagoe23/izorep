@@ -5,6 +5,7 @@
  * nu dubleaza consumul si il completeaza pe situatiile de dinainte de faza.
  */
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { bazaDisponibila } from "./conditii.js";
 import { sql } from "drizzle-orm";
 import { caTenant, conecteaza, purjeazaTenant, URL_PROPRIETAR } from "../src/db/client.js";
 import { firma, tenant } from "../src/db/schema.js";
@@ -18,7 +19,7 @@ import type { NecesarLucrare } from "../web/depozit-local.js";
 
 const app$ = conecteaza();
 const prop = conecteaza(URL_PROPRIETAR);
-const disponibila = await app$.db.execute(sql`select 1`).then(() => true, () => false);
+const disponibila = bazaDisponibila(await app$.db.execute(sql`select 1`).then(() => true, () => false), "testele consumului pe server");
 const daca = () => (disponibila ? it : it.skip);
 
 let tenantId = "";

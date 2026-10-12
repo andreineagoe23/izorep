@@ -8,10 +8,10 @@
  * (Oferta 284: 91.737,81 după discount), iar istoricul nu se rescrie.
  */
 import { describe, it, expect } from "vitest";
+import { CLIENTI, cuClienti } from "./conditii.js";
 import ExcelJS from "exceljs";
 import { registruOferta } from "../web/registru-oferta.js";
 import { citesteOferta, totalul } from "./registru-citit.js";
-import { existsSync } from "node:fs";
 import {
   adaosFocIndustrial, cuAjustare, imparte, planDinOferta, totalCuAdaos, totalOferta,
   type AntetOferta, type Provenienta,
@@ -25,7 +25,7 @@ import {
   type PlanSantier,
 } from "../src/lucrari/situatii.js";
 
-const DIR = "../attachments/clienti";
+const DIR = CLIENTI;
 
 const ANTET: AntetOferta = {
   serie: "RAD", numar: "284", data: "27.05.2026", persoana: "Vlad Emil", client: "Grup Energoinstal SA",
@@ -113,9 +113,8 @@ describe("situațiile de lucrări", () => {
 });
 
 describe("ajustarea tehnicului și închiderile la foc pe industrial", () => {
-  it("ajustarea mută fiecare preț unitar, rotunjit la bani", async () => {
+  cuClienti("ajustarea mută fiecare preț unitar, rotunjit la bani", async () => {
     const cale = `${DIR}/cerere-de-oferta-transavia-abur.xlsx`;
-    if (!existsSync(cale)) return;
     const l = (await importaFisier(cale, { faraModel: true, stoc: stocInMemorie() })).linii;
     const [a, b] = [imparte(l).oferta, imparte(cuAjustare(l, 10)).oferta];
     expect(b.length).toBe(a.length);
@@ -124,9 +123,8 @@ describe("ajustarea tehnicului și închiderile la foc pe industrial", () => {
     expect(imparte(l).oferta[0]!.pret!.pret_unitar).toBe(a[0]!.pret!.pret_unitar);
   });
 
-  it("Matari pe industrial: prețul rezidențial pe produs, +20 % pe totalul închiderilor, rând separat", async () => {
+  cuClienti("Matari pe industrial: prețul rezidențial pe produs, +20 % pe totalul închiderilor, rând separat", async () => {
     const cale = `${DIR}/oferta-118-1-matari-goluri-foc.xlsx`;
-    if (!existsSync(cale)) return;
     const l = (await importaFisier(cale, { faraModel: true, stoc: stocInMemorie(), destinatie: "industrial" })).linii;
     const { oferta } = imparte(l);
     expect(totalOferta(oferta)).toBe(12692.04);
@@ -141,9 +139,8 @@ describe("ajustarea tehnicului și închiderile la foc pe industrial", () => {
 });
 
 describe("șantierul din Oferta 284", () => {
-  it("planul are pozițiile ofertei; o situație cu tot executat dă exact oferta trimisă, 91.737,81", async () => {
+  cuClienti("planul are pozițiile ofertei; o situație cu tot executat dă exact oferta trimisă, 91.737,81", async () => {
     const cale = `${DIR}/cerere-de-oferta-transavia-abur.xlsx`;
-    if (!existsSync(cale)) return;
     const f = await importaFisier(cale, { faraModel: true, stoc: stocInMemorie() });
     const distribuitor = f.linii.find((l) => /DISTRIBUITOR ABUR/.test(l.bruta.text))!;
     const cerere = await importaFisier(cale, {

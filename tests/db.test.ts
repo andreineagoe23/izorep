@@ -10,6 +10,7 @@
  * ar deveni imposibil de rulat fara Docker pornit.
  */
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { bazaDisponibila } from "./conditii.js";
 import { eq, sql } from "drizzle-orm";
 import { caTenant, conecteaza, type Baza } from "../src/db/client.js";
 import { client, listaPreturi, tenant } from "../src/db/schema.js";
@@ -31,7 +32,7 @@ let tenantB = "";
  * in beforeAll, toate testele ar fi sarite chiar si cu baza pornita — ceea
  * ce arata exact ca o suita care trece.
  */
-const disponibila = await db.execute(sql`select 1`).then(() => true, () => false);
+const disponibila = bazaDisponibila(await db.execute(sql`select 1`).then(() => true, () => false), "testele de baza");
 
 beforeAll(async () => {
   if (!disponibila) return;
@@ -70,9 +71,6 @@ afterAll(async () => {
 
 const daca = () => (disponibila ? it : it.skip);
 
-if (!disponibila) {
-  console.warn("Baza nu raspunde — testele de baza se sar. Porneste: npm run db:up && npm run db:migrate && npm run db:seed");
-}
 
 describe("izolarea intre tenanti e in baza, nu in cod", () => {
   daca()("fiecare tenant isi vede doar clientii lui", async () => {

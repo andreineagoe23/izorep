@@ -6,7 +6,7 @@
  * materialul santierului la „ramas” = cat s-a trimis peste necesar.
  */
 import { describe, it, expect } from "vitest";
-import { existsSync } from "node:fs";
+import { CLIENTI, cuClienti } from "./conditii.js";
 import { importaFisier } from "../src/import/pipeline.js";
 import { stocInMemorie } from "../src/import/memorie.js";
 import { cuAjustare, imparte, planDinOferta } from "../web/oferta.js";
@@ -157,9 +157,8 @@ describe("consumul real și pierderea (S42)", () => {
 });
 
 describe("gata când: TRANSAVIA, o situație cu tot executat", () => {
-  it("duce materialul șantierului la „rămas” = cât s-a trimis peste necesar", async () => {
-    const cale = "../attachments/clienti/cerere-de-oferta-transavia-abur.xlsx";
-    if (!existsSync(cale)) return;
+  cuClienti("duce materialul șantierului la „rămas” = cât s-a trimis peste necesar", async () => {
+    const cale = `${CLIENTI}/cerere-de-oferta-transavia-abur.xlsx`;
     const l = (await importaFisier(cale, { faraModel: true, stoc: stocInMemorie() })).linii
       .map((x) => (x.pret ? { ...x, necesitaValidare: false } : x));
     const p = planDinOferta({

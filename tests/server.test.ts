@@ -9,7 +9,8 @@
  * (`purjeazaTenant`): aplicatia n-ar putea, si asta e chiar ce se verifica.
  */
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { existsSync, readFileSync } from "node:fs";
+import { CLIENTI, areClienti, bazaDisponibila } from "./conditii.js";
+import { readFileSync } from "node:fs";
 import { sql } from "drizzle-orm";
 import { caTenant, conecteaza, purjeazaTenant, URL_PROPRIETAR } from "../src/db/client.js";
 import { firma, oferta, miscare, tenant } from "../src/db/schema.js";
@@ -23,9 +24,8 @@ import type { PlanSantier } from "../src/lucrari/situatii.js";
 
 const app$ = conecteaza();
 const prop = conecteaza(URL_PROPRIETAR);
-const disponibila = await app$.db.execute(sql`select 1`).then(() => true, () => false);
+const disponibila = bazaDisponibila(await app$.db.execute(sql`select 1`).then(() => true, () => false), "testele serverului");
 const daca = () => (disponibila ? it : it.skip);
-if (!disponibila) console.warn("Baza nu raspunde — testele serverului se sar. Porneste: npm run db:up && npm run db:migrate");
 
 const sufix = Date.now();
 let tenantA = "";
@@ -176,10 +176,9 @@ describe("ce nu se mai schimbă", () => {
 });
 
 describe("oferta TRANSAVIA salvată pe un calculator se deschide pe altul la 94.575,06 €", () => {
-  const CERERE = "../attachments/clienti/cerere-de-oferta-transavia-abur.xlsx";
+  const CERERE = `${CLIENTI}/cerere-de-oferta-transavia-abur.xlsx`;
 
-  daca()("salvată, versiune nouă la fiecare descărcare, valoarea socotită pe server din linii", async () => {
-    if (!existsSync(CERERE)) return;
+  it.skipIf(!disponibila || !areClienti)("salvată, versiune nouă la fiecare descărcare, valoarea socotită pe server din linii", async () => {
     const raport = await importaFisier(CERERE, { faraModel: true, stoc: stocInMemorie() });
     // „Confirmă toate cele 13” din ecran.
     const linii = raport.linii.map((l) => (l.pret ? { ...l, necesitaValidare: false } : l));

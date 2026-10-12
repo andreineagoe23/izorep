@@ -1,7 +1,11 @@
 # Izorep
 
 ERP pentru o firmă de izolații termice (SC RADOIA ISOLIRUNG SRL + R&F ISORAD
-SYSTEM SRL). Faza curentă: **motor de prețuri + import oferte de la clienți**.
+SYSTEM SRL). Făcute (12 octombrie 2026): motorul de prețuri, importul
+ofertelor de la clienți, măsurătorile din carnet, situațiile de lucrări și
+stocul pe șantiere (fazele 1–8 din `docs/plan-implementare.md`). Înainte de
+folosirea reală: conturile, rolurile, locul serverului și backup-ul
+(`docs/productie.md`).
 
 ## Ce face aplicația
 
@@ -88,10 +92,13 @@ python scripts/extract_conversii.py ../attachments     # regenerează seriile de
 
 Întrebări deschise către firmă, care schimbă arhitectura (nu doar implementarea):
 
-- Cine ține stocul oficial — aplicația sau Saga? Determină tot modulul de stoc.
-- Cine emite factura și cine o trimite în SPV?
-- La ø90 și ø160 ofertele istorice tarifează inconsecvent. Vezi blocul
-  „abateri cunoscute" din `tests/pricing.test.ts`.
+- ~~Cine ține stocul oficial, cine emite factura~~ — **Saga rămâne**
+  (`docs/productie.md`): contabilitatea, stocul oficial și facturile în SPV.
+  Aplicația ține stocul de lucru, pe depozite și șantiere, fără documente de
+  gestiune (NIR, bon de consum). Legătura cu Saga (import XML) e amânată.
+- ~~La ø90 și ø160 ofertele istorice tarifează inconsecvent~~ — firma a
+  răspuns pe 5 octombrie 2026: rândul de sus (`pricing.md`). Cazurile semnate
+  care au coborât rămân în „abateri cunoscute" din `tests/pricing.test.ts`.
 - Există listă de prețuri pentru elastomer peste ø219? Oferta 118 conține ø250
   și ø315, care nu sunt în nicio listă primită. Azi se aplică formula firmei pe
   mp, marcat pentru om.

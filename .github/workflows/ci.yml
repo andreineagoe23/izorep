@@ -56,20 +56,32 @@ jobs:
       # Suita reproduce oferte reale trimise clientilor. Daca pica, motorul
       # nu mai da aceleasi preturi ca ofertele istorice si nu se poate emite.
       - name: Teste
-        run: npm test
+        run: npx vitest run --reporter=default --reporter=json --outputFile=teste.json
 
-      # Plasa peste plasa: daca baza n-a pornit, testele ei s-ar sari in
-      # tacere si pasul de mai sus ar trece. Numarul trebuie sa creasca odata
-      # cu suita.
-      - name: Nicio suita sarita
+      # Fisierele clientilor (../attachments) nu sunt in repo, deci testele pe
+      # ofertele semnate se sar aici (`cuClienti` din tests/conditii.ts): CI
+      # verde nu inseamna ca ofertele semnate se reproduc — asta se vede doar
+      # local. Pasul le numara la vedere. Orice alt test sarit e o eroare: o
+      # baza care nu raspunde pica deja in teste (`bazaDisponibila`).
+      - name: Ce nu a rulat in CI
         run: |
-          iesire=$(npm test 2>&1)
-          if echo "$iesire" | grep -qE "[0-9]+ skipped"; then
-            echo "::error::Teste sarite in CI — probabil baza n-a pornit."
-            echo "$iesire" | grep -E "Tests |skipped"
-            exit 1
-          fi
-          echo "$iesire" | grep -E "Tests "
+          node -e '
+            const fs = require("fs");
+            const r = JSON.parse(fs.readFileSync("teste.json", "utf8"));
+            const clienti = [], altele = [];
+            for (const f of r.testResults) {
+              const cuFisiere = /\b(cuClienti|areClienti)\b/.test(fs.readFileSync(f.name, "utf8"));
+              for (const t of f.assertionResults)
+                if (t.status !== "passed" && t.status !== "failed")
+                  (cuFisiere ? clienti : altele).push(f.name.split("/tests/")[1] + ": " + t.title);
+            }
+            console.log(`Teste: ${r.numPassedTests} trecute, ${clienti.length} sarite fara fisierele clientilor`);
+            if (clienti.length) console.log(`::warning::${clienti.length} teste pe ofertele semnate n-au rulat in CI (fisierele clientilor nu sunt in repo). Ruleaza npm test local.`);
+            if (altele.length) {
+              console.log("::error::Teste sarite din alt motiv decat fisierele clientilor:\n" + altele.join("\n"));
+              process.exit(1);
+            }
+          '
 
   preturi-neschimbate:
     name: listele de preturi nu s-au schimbat accidental

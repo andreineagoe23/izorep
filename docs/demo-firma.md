@@ -2,6 +2,12 @@
 
 > Pentru Adrian, la întâlnirea cu firma. Întrebările de lăsat firmei sunt în
 > `docs/intrebari-firma.md`.
+>
+> **Scris pentru întâlnirea din 7 octombrie 2026**, pe aplicația de atunci.
+> Firul și cifrele de mai jos sunt cele de atunci. De atunci datele stau pe
+> server, iar stocul are comenzi, recepții, consum, închiderea șantierului și
+> inventar (fazele 3–8, `docs/plan-implementare.md`). Linkul de pe Pages a
+> rămas demo, cu datele în browser.
 
 **Unde:** <https://andreineagoe23.github.io/izorep/>. Merge din browser, fără
 instalare. Pe link, importul folosește doar regulile, fără AI, și dă exact
@@ -61,7 +67,7 @@ pierde la închidere. (În Safari, fereastra privată poate bloca salvarea.)
    - **Pentru ofertă** (clienții din apropiere, unde măsurați voi): pe link,
      rândurile se scriu de mână lângă poză: „Adaugă rând”, „Am verificat
      pagina”, „Trimite la ofertă”, și ajung în import ca un Excel. Citirea
-     automată a pozelor merge doar pe laptop, cu `npm run dev` și cheia: acolo
+     automată a pozelor merge doar pe server, cu `npm start` și cheia: acolo
      cele 4 pagini se citesc în ~1 minut, iar omul confirmă pagină cu pagină.
    - **Pentru situație de lucrări** (ce s-a executat): alegi șantierul
      TRANSAVIA făcut la pasul 7, o poză, „Adaugă rând”: ø114, vată 50 mm, tablă
@@ -78,12 +84,17 @@ pierde la închidere. (În Safari, fereastra privată poate bloca salvarea.)
 
 ## Ce e real și ce e prototip
 
-| Real, verificat pe ofertele lor | Prototip |
+Starea din 12 octombrie 2026.
+
+| Real, verificat pe ofertele lor | Doar pe linkul demo |
 |---|---|
-| Prețurile din import: 98 din 98 exacte față de Oferta 284; Oferta 118 și Matari la fel | Depozitul: datele stau doar în browserul în care au fost introduse |
+| Prețurile din import: 98 din 98 exacte față de Oferta 284; Oferta 118 și Matari la fel | Datele (importuri, oferte, șantiere, stoc) stau doar în browserul în care au fost introduse; pe server stau în bază |
 | Totalul și registrul Excel al ofertei | Datele de exemplu din stoc, marcate „exemplu” |
-| Necesarul de materiale (geometrie din pozițiile tarifate) | Lucrările, clienții și documentele: citite din fișiere, nu salvate în bază |
-| Rândurile din poze, după „Am verificat pagina”, trec prin același import și aceleași prețuri | Citirea automată a pozelor: doar pe laptop; pe link se scriu de mână |
+| Necesarul, comenzile, recepția, consumul din situații, închiderea șantierului, inventarul: pe server, în bază | Șantierul închis e oprit doar în formulare; pe server îl oprește și baza |
+| Rândurile din poze, după „Am verificat pagina”, trec prin același import și aceleași prețuri | Citirea automată a pozelor: doar pe server; pe link se scriu de mână |
+
+Încă nefăcute: clienții și documentele firmei din „Cereri și oferte” sunt
+citite din fișierele lor, nu salvate în bază; conturile și rolurile.
 
 ## Cifre de știut
 

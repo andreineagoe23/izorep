@@ -5,7 +5,8 @@
  * TRANSAVIA reala doar daca fisierul exista (nu e in repo).
  */
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { existsSync, mkdtempSync, rmSync } from "node:fs";
+import { CLIENTI, cuClienti } from "./conditii.js";
+import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import ExcelJS from "exceljs";
@@ -181,9 +182,8 @@ describe("necesarul de materiale", () => {
     expect(n.faraNecesar).toHaveLength(1);
   });
 
-  it("cererea TRANSAVIA: toți metrii de vată din ofertă ajung în necesar, distribuitorul pe suprafața lui", async () => {
-    const cale = "../attachments/clienti/cerere-de-oferta-transavia-abur.xlsx";
-    if (!existsSync(cale)) return;
+  cuClienti("cererea TRANSAVIA: toți metrii de vată din ofertă ajung în necesar, distribuitorul pe suprafața lui", async () => {
+    const cale = `${CLIENTI}/cerere-de-oferta-transavia-abur.xlsx`;
     const l = (await importaFisier(cale, { faraModel: true, stoc: stocInMemorie() })).linii;
     const n = necesarDinLinii(l, FARA);
     expect(n.faraNecesar).toEqual([]);
@@ -200,9 +200,8 @@ describe("necesarul de materiale", () => {
     expect(mlNecesar).toBeCloseTo(mlOferta, 1);
   });
 
-  it("cererea TRANSAVIA: necesarul pe poziție × cantitatea din planul șantierului = necesarul total", async () => {
-    const cale = "../attachments/clienti/cerere-de-oferta-transavia-abur.xlsx";
-    if (!existsSync(cale)) return;
+  cuClienti("cererea TRANSAVIA: necesarul pe poziție × cantitatea din planul șantierului = necesarul total", async () => {
+    const cale = `${CLIENTI}/cerere-de-oferta-transavia-abur.xlsx`;
     const l = (await importaFisier(cale, { faraModel: true, stoc: stocInMemorie() })).linii
       .map((x) => (x.pret ? { ...x, necesitaValidare: false } : x));
     const oferta = imparte(l).oferta;
