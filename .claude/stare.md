@@ -3,6 +3,22 @@
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
 > Ultima actualizare: 12 octombrie 2026.
 
+## 12 octombrie 2026 (seara): pregătit pentru Render
+
+Pe ramura `render`; **610 teste**. Planul până la demo (luni, 19) e în
+`docs/plan-demo.md`; deploy-ul în `docs/plan-deploy.md`, cu tot ce s-a
+schimbat și proba „ca pe Render”. Pe scurt:
+
+- `render.yaml`;
+- două conexiuni la bază (proprietar și `izorep_app`, cu parola din
+  variabilă);
+- parola comună pe site;
+- `tsx` la dependențele de rulare, Node ≥ 22.
+
+Proba, pe un Postgres 18 nou, cu un proprietar fără drepturi depline: cu
+`CREATEROLE` totul trece (610 teste, RLS ține, serverul închis fără parolă);
+fără `CREATEROLE`, 0002 pică. Pe Render, primul lucru de verificat.
+
 ## 12 octombrie 2026: fazele 6–8 unite, testele în CI
 
 Fazele 6, 7 și 8 sunt pe `main` (secțiunile de mai jos; legăturile dintre ele

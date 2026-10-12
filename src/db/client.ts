@@ -21,8 +21,33 @@ const BAZA = process.env["IZOREP_DB"] ?? "izorep";
 
 export const URL_IMPLICIT = `postgres://izorep_app:izorep_app@localhost:5433/${BAZA}`;
 
-/** Proprietarul schemei. Doar pentru migrari si pentru seed-ul local. */
-export const URL_PROPRIETAR = `postgres://izorep:izorep@localhost:5433/${BAZA}`;
+/**
+ * Proprietarul schemei: migrarile, seed-ul, purjarea din teste. Pe Render vine
+ * din `DATABASE_URL_PROPRIETAR`, separat de `DATABASE_URL` (aplicatia): cele
+ * doua roluri sunt chiar granita RLS (migrarea 0002).
+ */
+export const URL_PROPRIETAR = process.env["DATABASE_URL_PROPRIETAR"]
+  ?? `postgres://izorep:izorep@localhost:5433/${BAZA}`;
+
+/**
+ * Unde se conecteaza aplicatia: `DATABASE_URL`, daca e scris. Altfel, pe
+ * Render, aceeasi baza ca proprietarul, dar cu rolul `izorep_app` si parola
+ * lui (`IZOREP_APP_PAROLA`, pusa de `db:migrate`): `render.yaml` nu poate
+ * compune o adresa din doua variabile, deci o compunem aici. Local, rolul
+ * aplicatiei din docker-compose.
+ */
+export function urlAplicatie(mediu: NodeJS.ProcessEnv = process.env): string {
+  if (mediu["DATABASE_URL"]) return mediu["DATABASE_URL"];
+  const proprietar = mediu["DATABASE_URL_PROPRIETAR"];
+  const parola = mediu["IZOREP_APP_PAROLA"];
+  if (proprietar && parola) {
+    const u = new URL(proprietar);
+    u.username = "izorep_app";
+    u.password = parola;
+    return u.toString();
+  }
+  return URL_IMPLICIT;
+}
 
 /**
  * Conexiunea la baza.
@@ -32,7 +57,7 @@ export const URL_PROPRIETAR = `postgres://izorep:izorep@localhost:5433/${BAZA}`;
  * face `Number()` "ca sa fie mai comod", principiul 5 din arhitectura —
  * "bani niciodata in float" — e incalcat fara sa se vada.
  */
-export function conecteaza(url = process.env["DATABASE_URL"] ?? URL_IMPLICIT): {
+export function conecteaza(url = urlAplicatie()): {
   db: Baza;
   sql: postgres.Sql;
   inchide: () => Promise<void>;

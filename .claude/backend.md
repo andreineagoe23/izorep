@@ -293,9 +293,23 @@ s-a numărat dă 409; trimisă din nou, nu face nimic. `adaugaMiscare` și
 `/api/date` întoarce `PlanSantier.inchis` din coloană; în `plan` (jsonb) nu
 intră.
 
+### Pe Render (12 octombrie 2026)
+
+`render.yaml`, `docs/plan-deploy.md`. Două conexiuni: `DATABASE_URL_PROPRIETAR`
+(migrări, seed, teste; `URL_PROPRIETAR` îl citește) și aplicația cu
+`izorep_app`, a cărei adresă o compune `urlAplicatie` din cea a proprietarului
+și `IZOREP_APP_PAROLA`. `DATABASE_URL`, dacă e scris, bate. `db:migrate` pune
+parola rolului după migrări. Proprietarul de pe Render nu e superuser: cu
+`FORCE ROW LEVEL SECURITY` e și el supus politicilor (verificat pe o bază de
+probă). Are însă nevoie de `CREATEROLE` pentru 0002.
+
+Parola comună (`src/server/parola.ts`): Basic Auth pe tot site-ul, din
+`IZOREP_PAROLA`. `GET /api/viu` rămâne deschisă, pentru verificarea lui
+Render. `porneste.ts` refuză un `HOST` deschis fără parolă.
+
 ## Ce lipsește
 
-- Conturile (scoase pe 10 octombrie 2026), jurnal de audit (cine a schimbat
+- Conturile (scoase pe 10 octombrie 2026; până revin, parola comună), jurnal de audit (cine a schimbat
   ce), permisiuni pe rol. Toate înainte ca serverul să iasă din rețeaua firmei.
 - Restul tabelelor: deviz, contract, factura de vânzare.
 - Regula după care se alege destinația unei lucrări. Coloana există și e

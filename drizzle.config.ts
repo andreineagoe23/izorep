@@ -11,7 +11,7 @@ export default defineConfig({
   schema: "./src/db/schema.ts",
   out: "./src/db/migrari",
   dbCredentials: {
-    url: process.env["DATABASE_URL"] ?? `postgres://izorep:izorep@localhost:5433/${process.env["IZOREP_DB"] ?? "izorep"}`,
+    url: process.env["DATABASE_URL_PROPRIETAR"] ?? `postgres://izorep:izorep@localhost:5433/${process.env["IZOREP_DB"] ?? "izorep"}`,
   },
   casing: "snake_case",
   verbose: true,

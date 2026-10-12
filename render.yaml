@@ -1,0 +1,51 @@
+# Izorep pe Render (docs/plan-deploy.md): serverul, care serveste si pagina,
+# plus Postgres 18, amandoua in Frankfurt.
+#
+# Planurile nu sunt scrise: implicitele Render sunt chiar ce vrem (serverul
+# 0,5 CPU / 512 MB, mereu pornit; baza cea mai mica platita, cu backup).
+# Planul gratuit nu merge: serverul doarme dupa 15 minute, baza n-are backup.
+#
+# Secretele cu `sync: false` le cere Render o singura data, la creare.
+
+services:
+  - type: web
+    name: izorep
+    runtime: node
+    region: frankfurt
+    branch: main
+    # Doar dupa ce CI-ul de pe main e verde: o versiune care pica testele nu
+    # ajunge la firma.
+    autoDeployTrigger: checksPass
+    buildCommand: npm ci && npm run build:server
+    # Ca proprietar; pune si parola rolului izorep_app (IZOREP_APP_PAROLA).
+    preDeployCommand: npm run db:migrate
+    startCommand: npm run server
+    # Singura ruta fara parola; nu spune nimic despre firma.
+    healthCheckPath: /api/viu
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+      # Proprietarul schemei: migrarile si seed-ul. Aplicatia intra cu
+      # izorep_app, pe aceeasi baza (urlAplicatie din src/db/client.ts).
+      - key: DATABASE_URL_PROPRIETAR
+        fromDatabase:
+          name: izorep-db
+          property: connectionString
+      - key: IZOREP_APP_PAROLA
+        generateValue: true
+      # Parola comuna pe site, pana revin conturile. Fara ea serverul nu
+      # porneste cu HOST=0.0.0.0.
+      - key: IZOREP_PAROLA
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      # Contul OpenAI are 30.000 de tokeni pe minut pe gpt-4.1.
+      - key: IZOREP_CONCURENTA
+        value: "1"
+
+databases:
+  - name: izorep-db
+    region: frankfurt
+    postgresMajorVersion: "18"
+    databaseName: izorep
+    user: izorep

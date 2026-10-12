@@ -84,27 +84,49 @@ Tot de la pasul 1:
 - parola rolului `izorep_app` schimbată: migrarea 0002 o creează cu
   `'izorep_app'`, parolă scrisă în git (vezi pasul B, mai jos).
 
-## Ce schimbăm în cod
+## Ce s-a schimbat în cod (făcut pe 12 octombrie 2026)
 
-Puțin; restul e configurare.
+Pe ramura `render`; restul e configurare pe Render.
 
-1. **`render.yaml`** în repo, ca toată configurarea să fie în git: serviciul web
-   (Frankfurt, Starter, build `npm ci && npm run build:server`, înainte de
-   pornire `npm run db:migrate`, pornire `npm run server`, verificarea pe
-   `/api/stare`) și baza (Frankfurt, Postgres 18).
-2. **Variabilele:** `HOST=0.0.0.0`; `PORT` îl dă Render; `DATABASE_URL` cu
-   `izorep_app`; `DATABASE_URL_PROPRIETAR` pentru migrări (azi `migreaza.ts`
-   citește tot `DATABASE_URL`: trebuie despărțite); `OPENAI_API_KEY`;
-   `IZOREP_PAROLA`.
-3. **Parola lui `izorep_app`** pusă din variabilă după migrări (`ALTER ROLE`),
-   nu cea din 0002.
-4. **Parola comună** (pasul 1 de securitate), cu test.
+1. **`render.yaml`**: serverul și baza în Frankfurt, Postgres 18. Build
+   `npm ci && npm run build:server`, înainte de pornire `npm run db:migrate`,
+   pornire `npm run server`. Render verifică dacă serverul trăiește pe
+   `/api/viu`, singura rută fără parolă, care nu spune nimic despre firmă.
+   Deploy-ul pornește doar după ce CI-ul de pe `main` e verde
+   (`autoDeployTrigger: checksPass`). Planurile nu sunt scrise: implicitele
+   Render (0,5 CPU / 512 MB, baza cea mai mică plătită) sunt cele din tabelul de
+   mai sus.
+2. **Două conexiuni:**
+   - `DATABASE_URL_PROPRIETAR` (din baza Render) e pentru migrări, seed și
+     teste;
+   - aplicația intră cu `izorep_app`, pe aceeași bază, cu parola din
+     `IZOREP_APP_PAROLA` (generată de Render). Adresa ei o compune serverul
+     (`urlAplicatie` în `src/db/client.ts`).
+   - `db:migrate` pune parola rolului după migrări, deci cea din 0002 (scrisă
+     în git) nu mai ajunge pe Render.
+3. **Parola comună** (`src/server/parola.ts`, `tests/parola.test.ts`): Basic
+   Auth pe tot site-ul, din `IZOREP_PAROLA`. Cu `HOST` deschis și fără
+   parolă, serverul refuză să pornească.
+4. **`tsx` trecut la dependențele de rulare**: serverul pornește cu el, iar un
+   build de producție nu instalează dependențele de dezvoltare. Node fixat la
+   cel puțin 22 (`engines`): serverul citește `.env` cu o funcție din Node 21.
 5. **Seed-ul** citește doar din `data/`, deci merge și pe Render
    (`npm run db:seed` o dată, din consola Render).
 
-Ce **nu** e nevoie de schimbat: serverul servește deja pagina, `/api/stare` e
-verificarea de viață, colația ro-RO de local nu contează (nicio ordonare de
-text nu se face în bază).
+**Proba „ca pe Render”, făcută local** pe un Postgres 18 nou, cu un
+proprietar fără drepturi depline:
+
+- **fără `CREATEROLE`**, migrarea 0002 pică: nu poate crea `izorep_app`;
+- **cu `CREATEROLE`**, totul merge: migrările, seed-ul și cele 610 teste, cu
+  baza obligatorie;
+- aplicația intră ca `izorep_app`; fără context de firmă vede 0 liste de
+  prețuri, iar proprietarul la fel (`FORCE ROW LEVEL SECURITY`);
+- serverul construit pentru producție, cu `HOST=0.0.0.0`: fără parolă, 401
+  peste tot în afară de `/api/viu`; cu parolă, toate ecranele fără erori;
+- o scriere din browser trece cu antetul `X-Izorep` și e refuzată fără el.
+
+Ce **nu** a fost nevoie de schimbat: serverul servește deja pagina; colația
+ro-RO de local nu contează (nicio ordonare de text nu se face în bază).
 
 ## Pașii, fiecare cu „gata când”
 
@@ -114,12 +136,15 @@ trimis nimănui. Gata când: `andreineagoe23.github.io/izorep` dă 404.
 
 **B. Baza.** Postgres 18 în Frankfurt. Primul lucru de verificat: utilizatorul
 dat de Render poate face `CREATE ROLE`? Migrarea 0002 are nevoie de asta.
-- Dacă da: migrările, parola nouă pentru `izorep_app`, seed-ul.
-- Dacă nu: aplicația intră cu utilizatorul Render. Nu e superuser, iar
-  tabelele au `FORCE ROW LEVEL SECURITY`, deci politicile se aplică și lui.
+- Dacă da: merge ca în proba locală (mai sus).
+- Dacă nu: 0002 pică (verificat local). Atunci 0002 trebuie să sară crearea
+  rolului, iar aplicația intră cu utilizatorul Render. Proba locală arată că un
+  proprietar fără drepturi depline e supus RLS, deci izolarea ține și așa.
+  Costă câteva ore; alternativa e Railway.
 
-Gata când: `tests/db.test.ts`, rulat cu `DATABASE_URL` spre baza Render, trece,
-inclusiv testul care pică dacă izolarea nu ține.
+Gata când: suita, rulată de pe laptop cu `DATABASE_URL_PROPRIETAR` și
+`IZOREP_APP_PAROLA` de pe Render și `IZOREP_CERE_BAZA=1`, trece, inclusiv
+testul care pică dacă izolarea nu ține.
 
 **C. Serverul.** Din `render.yaml`, legat de `main`. Gata când: Adrian
 deschide linkul pe laptopul lui, fără Docker, intră cu parola, importă cererea

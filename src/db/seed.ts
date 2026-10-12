@@ -95,7 +95,7 @@ async function seedReferinte(db: Baza): Promise<{ serii: number; sectiuni: numbe
 }
 
 async function main(): Promise<void> {
-  const { db, inchide } = conecteaza(process.env["DATABASE_URL"] ?? URL_PROPRIETAR);
+  const { db, inchide } = conecteaza(URL_PROPRIETAR);
   try {
     const [existent] = await db.select().from(tenant).where(eq(tenant.denumire, NUME_TENANT));
     const tenantId = existent?.id

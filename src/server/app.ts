@@ -6,7 +6,8 @@
  * Fara intrare (scoasa pe 10 octombrie 2026, cerut de Andrei): un server
  * serveste o singura firma (`tenantId`), iar totul ruleaza in `caTenant`, deci
  * RLS vede doar firma lui. Fara conturi, serverul nu trebuie sa fie accesibil
- * din internet: `porneste.ts` asculta implicit doar pe 127.0.0.1.
+ * din internet: `porneste.ts` asculta implicit doar pe 127.0.0.1, iar in afara
+ * lui doar cu parola comuna (`parola.ts`).
  *
  * Orice cerere care schimba ceva trebuie sa poarte antetul `X-Izorep`: o
  * pagina de pe alt site nu poate pune un antet propriu fara acordul serverului
@@ -22,6 +23,7 @@ import { optiuniModelDinMediu, ruteModel, type OptiuniModel } from "./model.js";
 import * as repo from "./repo.js";
 import { Refuz } from "./repo.js";
 import { inchideSantier } from "./inchidere.js";
+import { parolaComuna, RUTA_VIATA } from "./parola.js";
 import type { Context, Stare } from "./contract.js";
 
 export const ANTET_CSRF = "x-izorep";
@@ -32,6 +34,8 @@ export interface OptiuniServer {
   tenantId: string;
   /** Stratul cu model. Lipsa = fara cheie: ecranele merg pe reguli. */
   model?: OptiuniModel;
+  /** Parola comuna pe tot site-ul (`parola.ts`). Lipsa = fara poarta: doar local. */
+  parola?: string;
 }
 
 type Env = { Variables: Record<string, never> };
@@ -146,6 +150,11 @@ const MutareZ = z.object({
 
 export function creeazaServer(o: OptiuniServer): Hono<Env> {
   const app = new Hono<Env>();
+
+  // Inaintea portii: Render o intreaba ca sa stie ca serverul traieste.
+  app.get(RUTA_VIATA, (c) => c.text("ok"));
+  // Prima, ca sa acopere si pagina, pe care porneste.ts o adauga dupa.
+  if (o.parola) app.use("*", parolaComuna(o.parola));
 
   app.onError((err, c) => {
     if (err instanceof Refuz) return c.json({ eroare: err.message }, err.cod);
