@@ -161,7 +161,7 @@ export function formularInchidere(f: FormularInchidere): string {
       <td class="n">${cantitate(r.scriptic, r.articol.um)}</td>
       <td class="n"><input name="numarat" data-cheie="${esc(r.cheie)}" type="number" inputmode="decimal" min="0" step="any"
         value="${esc(numarat)}" aria-label="Numărat, ${esc(numeArticol(r.articol))}" style="width:100%;max-width:9rem" /></td>
-      <td><select name="unde" data-cheie="${esc(r.cheie)}" aria-label="Unde pleacă, ${esc(numeArticol(r.articol))}">${
+      <td><select name="unde" data-cheie="${esc(r.cheie)}" style="width:100%;min-width:0" aria-label="Unde pleacă, ${esc(numeArticol(r.articol))}">${
         optiuni(r, s.unde ?? IMPLICIT)}</select></td>
     </tr>`;
   });
