@@ -14,8 +14,12 @@ import type { Comanda } from "../src/stoc/comenzi.js";
 import { cantitateComanda } from "../src/stoc/comenzi.js";
 import { denumireComanda, kgPeMp } from "../src/stoc/produse.js";
 import { esteAnulata, laFurnizor, type Miscare } from "../src/stoc/registru.js";
+import { estePornire } from "../src/stoc/inventar.js";
+import { bani } from "../src/pricing/engine.js";
 
-const dataRo = (iso: string): string => {
+export type Celula = string | number | null;
+
+export const dataRo = (iso: string): string => {
   const [a, l, z] = iso.slice(0, 10).split("-");
   return `${z}.${l}.${a}`;
 };
@@ -47,36 +51,50 @@ export const CAPETE_EVIDENTA = [
  * Un rand de evidenta pe fiecare intrare de la furnizor, neanulata. Tabla e la
  * kg, ca pe factura; restul in ml sau mp. `proiect` da numele lucrarii dupa
  * depozitul in care a intrat marfa. Returul la furnizor iese cu cantitatea si
- * valoarea cu minus, ca o factura storno in evidenta lor.
+ * valoarea cu minus, ca o factura storno in evidenta lor. Stocul de pornire
+ * (Faza 8) nu e o cumparare: nu intra.
  */
 export function randuriEvidenta(
   miscari: readonly Miscare[], proiect: (depozit: string | undefined) => string,
-): (string | number | null)[][] {
-  const out: (string | number | null)[][] = [];
+): Celula[][] {
+  const out: Celula[][] = [];
   for (const m of miscari) {
     const retur = laFurnizor(m);
-    if ((m.tip !== "intrare" && !retur) || m.anuleaza || m.exemplu || esteAnulata(m, miscari)) continue;
-    const kg = kgPeMp(m.articol);
-    const cant = (retur ? -1 : 1) * (kg !== null ? Math.round(m.cantitate * kg * 1000) / 1000 : m.cantitate);
-    const um = kg !== null ? "KG" : m.articol.um === "ml" ? "ML" : "MP";
-    // Pretul din stoc e pe unitatea articolului; in evidenta, pe unitatea de pe factura.
-    const peDoc = (v: number): number => (kg !== null ? v / kg : v);
-    const lei = m.pret?.lei !== undefined ? Math.round(peDoc(m.pret.lei) * 10000) / 10000 : null;
-    const eur = m.pret ? Math.round(peDoc(m.pret.valoare) * 10000) / 10000 : null;
-    const doc = m.document;
-    const factura = doc?.tip === "factura" ? doc : null;
-    const aviz = /\(aviz ([^)]+)\)/.exec(m.nota ?? "")?.[1] ?? (doc?.tip === "aviz" ? doc.numar : null);
-    out.push([
-      m.furnizor ?? null, proiect(retur ? m.din : m.spre), factura?.numar ?? doc?.numar ?? null, doc ? dataRo(doc.data) : dataRo(m.data),
-      denumireComanda(m.articol).toUpperCase(), cant, um, lei, m.pret?.curs ?? null, eur,
-      lei !== null ? Math.round(lei * cant * 100) / 100 : null, eur !== null ? Math.round(eur * cant * 100) / 100 : null,
-      aviz,
-    ]);
+    if ((m.tip !== "intrare" && !retur) || estePornire(m) || m.anuleaza || m.exemplu || esteAnulata(m, miscari)) continue;
+    out.push(randEvidenta(m, proiect(retur ? m.din : m.spre), retur ? -1 : 1));
   }
   return out;
 }
 
-export async function registruEvidenta(randuri: (string | number | null)[][]): Promise<ArrayBuffer> {
+/**
+ * Randul unei miscari cu coloanele `CAPETE_EVIDENTA`, cantitatea si valoarea
+ * cu semnul dat. Pretul e cel de pe document; fara el (transfer, consum,
+ * ajustare), `pretMediu` in euro, daca e dat (S44: ce vine din depozit sau de
+ * pe alt santier, la pretul mediu).
+ */
+export function randEvidenta(m: Miscare, proiect: string, semn: 1 | -1, pretMediu: number | null = null): Celula[] {
+  const kg = kgPeMp(m.articol);
+  const q = Math.abs(m.cantitate);
+  const cant = semn * (kg !== null ? Math.round(q * kg * 1000) / 1000 : q);
+  const um = kg !== null ? "KG" : m.articol.um === "ml" ? "ML" : "MP";
+  // Pretul din stoc e pe unitatea articolului; in evidenta, pe unitatea de pe factura.
+  const peDoc = (v: number): number => (kg !== null ? v / kg : v);
+  const r4 = (v: number): number => Math.round(v * 10000) / 10000;
+  const lei = m.pret?.lei !== undefined ? r4(peDoc(m.pret.lei)) : null;
+  const eurUnitate = m.pret ? m.pret.valoare : pretMediu;
+  const eur = eurUnitate !== null ? r4(peDoc(eurUnitate)) : null;
+  const doc = m.document;
+  const factura = doc?.tip === "factura" ? doc : null;
+  const aviz = /\(aviz ([^)]+)\)/.exec(m.nota ?? "")?.[1] ?? (doc?.tip === "aviz" ? doc.numar : null);
+  return [
+    m.furnizor ?? null, proiect, factura?.numar ?? doc?.numar ?? null, doc ? dataRo(doc.data) : dataRo(m.data),
+    denumireComanda(m.articol).toUpperCase(), cant, um, lei, m.pret?.curs ?? null, eur,
+    lei !== null ? bani(lei * cant) : null, eur !== null ? bani(eur * cant) : null,
+    aviz,
+  ];
+}
+
+export async function registruEvidenta(randuri: Celula[][]): Promise<ArrayBuffer> {
   const { default: ExcelJS } = await import("exceljs");
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet("top valoric-cantitativ");

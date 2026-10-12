@@ -257,6 +257,22 @@ aceleași cu ale browserului: retrimis sau mutat, consumul nu se dublează.
 `POST /api/miscari` refuză o mișcare cu `situatieId` (400). La mutare,
 situațiile intră fără consum, iar consumul ultimei se completează după mișcări.
 
+### Pornirea și inventarul (Faza 8, 11 octombrie 2026)
+
+Fără migrare: `miscare.motiv` exista (0010). Două operații, calculate pe
+server din mișcările din bază cu funcțiile din `src/stoc/inventar.ts`:
+
+- `POST /api/depozite/:id/pornire` `{ id, data, articol, cantitate, pret?, nota? }`:
+  intrarea `motiv = "stoc de pornire"`, doar pe `central` sau `atelier` (altfel
+  400), cu prețul ultimei cumpărări când lipsește. Retrimisă (același id), 0.
+- `POST /api/depozite/:id/inventar` `{ numarat: [{ articol, cantitate, motiv? }], motiv, nota?, ids, data }`:
+  câte un id pe linie numărată; ajustările se socotesc față de soldul din bază
+  (un coleg care a mutat ceva între timp e luat în calcul). Un id deja scris =
+  retrimis, 0. Loc necunoscut (șantier necreat) 404; fără motiv 400.
+
+`adaugaMiscare` refuză și pe `/api/miscari` o intrare „stoc de pornire” pe un
+șantier, ca regula S48 să nu se poată ocoli.
+
 ## Ce lipsește
 
 - Conturile (scoase pe 10 octombrie 2026), jurnal de audit (cine a schimbat

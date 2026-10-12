@@ -119,16 +119,18 @@ export interface Pas {
  * material în central sau direct pe șantier, transferurile făcute pentru el
  * (`lucrareId`) și orice transfer care ajunge pe șantier sau pleacă de pe el.
  * Mărcile nu despart drumul (`cheieBaza`). `din` / `spre` sunt id-uri de loc,
- * iar la intrare `din` e furnizorul (sau „furnizor”).
+ * iar la intrare `din` e furnizorul (sau motivul, „stoc de pornire”; altfel
+ * „furnizor”).
  */
 export function drumul(miscari: readonly Miscare[], material: string, santier: string): Pas[] {
   return miscari
     .filter((m) => !m.anuleaza && !esteAnulata(m, miscari) && cheieBaza(m.articol) === material)
-    .filter((m) => (m.tip === "intrare" && (m.spre === CENTRAL || m.spre === santier))
+    .filter((m) => (m.tip === "intrare" && (m.spre === CENTRAL || m.spre === ATELIER || m.spre === santier))
       || m.lucrareId === santier || m.spre === santier || m.din === santier)
     .map((m) => ({
       data: m.data,
-      din: m.tip === "intrare" ? (m.furnizor ?? "furnizor") : m.din ?? "",
+      // Stocul de pornire (Faza 8) nu vine de la un furnizor: drumul îl spune ca atare.
+      din: m.tip === "intrare" ? (m.furnizor ?? m.motiv ?? "furnizor") : m.din ?? "",
       spre: m.spre ?? (m.furnizor ? `${m.furnizor} (retur)` : ""),
       cantitate: m.cantitate,
       miscare: m,

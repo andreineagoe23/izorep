@@ -72,6 +72,52 @@ Lucrări (cu și fără formularul deschis), Tablou, Depozit: 390 / 768 / 1440 /
 folosesc `consumSantier`; consumul pe zone / parcele (S40) nu e făcut — se
 calculează pe tot șantierul.
 
+## 11 octombrie 2026: Faza 8, pornirea
+
+Pe ramura `faza-8`. **576 de teste** (19 noi, `tests/pornire.test.ts`). Totul
+în „Depozit și stoc”; nicio migrare (`miscare.motiv` exista din 0010).
+
+| Ce | Cum | Unde |
+|---|---|---|
+| **Doar șantierele noi** (S48) | fără stare nouă: pe server, locurile sunt centralul, atelierul și șantierele create din ofertă; șantierele din datele firmei (`SANTIERE` din seed, lucrări de dinainte) rămân doar pe linkul demo. Un șantier nou pornește gol: stocul de pornire nu se poate trece pe șantier (nici pe ruta lui, nici ca `/api/miscari`) | `santiere()` în `web/ecrane/stoc.ts`, `valideazaPornire` |
+| **Stocul de pornire** | o `intrare` cu `motiv: "stoc de pornire"` în central sau în atelier, din „Mișcare nouă” (tipul implicit cât depozitul e gol). Fără inventar complet: se trece ce se știe, oricând; tot așa intră restul care se întoarce de pe un șantier început înainte de aplicație (șantierul acela nu e în aplicație, deci nu e retur). În jurnal „Stoc de pornire”, în drum „stoc de pornire → Depozit central”; nu intră în evidența cumpărărilor | `intrareDePornire`, `POST /api/depozite/:id/pornire` |
+| **Prețul stocului de pornire** | scris de om, altfel ultimul preț de cumpărare cunoscut (factură din aplicație sau evidența firmei, cea mai nouă), în euro cu cursul documentului, tabla din kg în m²; sursa în notă. Cochilia ø140×50: Isoline 47,4544 lei / 5,32 = 8,92 €/ml. Un rând în lei fără curs nu se trece în euro | `ultimulPretCumparat` |
+| **Inventarul** (S45) | cardul „Inventar”: locul (orice loc), „Ce arată aplicația”, „Ce ai numărat”, diferența pe loc; motivul (diferență la numărătoare, pierdut, furat, deteriorat, dus la reciclat, găsit în plus, sau scris) e obligatoriu. Diferența devine `ajustare` cu motiv; ce nu se numără nu se atinge; „alt material găsit” adaugă. Ajustarea de mână din „Mișcare nouă” a ieșit (n-avea motiv) | `ajustariInventar`, `POST /api/depozite/:id/inventar` |
+| **Evidența pe șantier în Excel** | „Descarcă evidența” pe fiecare șantier din „Locurile”: foaia „Evidenta santier” cu cele 13 coloane ale Excelului firmei (intrarea iese identic cu „Descarcă evidența” din Comenzi) plus TIP MISCARE, DE UNDE / UNDE, MOTIV / NOTA; cantitate cu semn; fără document, prețul mediu (S44). Foaia „Sold pe material”: adus, consumat, plecat, ajustat, rămas = soldul aplicației | `web/evidenta-santier.ts` |
+
+**API-ul din `src/stoc/inventar.ts`** (pentru unirea cu Faza 7, care are un
+helper local pentru inventarul de la închidere):
+
+- `ajustariInventar(miscari, { depozit, numarat: [{ articol, cantitate, motiv? }], motiv, nota? }, id: (linie) => string, data): Miscare[]`
+  — pe orice loc; o ajustare pe fiecare linie numărată care diferă de sold
+  (`spre: depozit`, cantitate cu semn, `motiv` al liniei sau al inventarului,
+  nota „inventar: numărat X, aplicația arăta Y”). Numărat 0 = tot restul.
+  Nenumăratul nu se atinge. Aruncă dacă `valideazaInventar` refuză (fără
+  motiv, cifră negativă, același articol de două ori, nimic numărat).
+- `valideazaInventar(inv)`, `rezumatInventar(miscari, inv, ajustari)`,
+  `inAplicatie(miscari, depozit, cheie)`, `MOTIVE_INVENTAR`.
+- Pornirea: `intrareDePornire(p, miscari, id, data)`, `valideazaPornire`,
+  `ultimulPretCumparat`, `estePornire`, `MOTIV_PORNIRE`, `LOCURI_PORNIRE`.
+
+Pe server ambele rute recalculează din mișcările din bază: inventarul aduce
+locul la ce s-a numărat chiar dacă un coleg a mutat ceva între timp; id-urile
+vin din browser (unul pe linie numărată), deci retrimis nu dublează. În
+browser, `treceStocDePornire` și `inregistreazaInventar` din `web/date.ts`.
+
+Gata când (testat): pe central, stocul de pornire trecut fără inventar, apoi
+inventarul numărat (cochilie 112 din 120, motiv „furat”; tabla la fel; elastomerul
+nenumărat) → o ajustare de −8, soldul = numărat, elastomerul neatins; pe
+TRANSAVIA, lanțul ISOLINE + transfer + consum + retur + inventar dă Excelul
+cu rândul facturii ca în evidența firmei și „Sold pe material” = 85 ml, soldul
+aplicației.
+
+Verificat cu Playwright pe `build:server` (8808, baza `izorep_f8`) și pe
+build-ul de Pages servit static: stoc de pornire (preț 8,92 și 9,72 €/m² din
+evidență), inventar cu diferența pe loc și refuz fără motiv, transfer,
+reîncărcare, drumul, Excelul descărcat și recitit; 390 / 768 / 1440 / 1920 px,
+ambele teme, pe Depozit, Comenzi și Măsurători: zero derulare laterală, zero
+erori.
+
 ## 11 octombrie 2026 (noaptea): Faza 5, locurile, atelierul, transferurile
 
 Pe ramura `faza-5`. **557 de teste.** Totul în ecranul „Depozit și stoc”, trei

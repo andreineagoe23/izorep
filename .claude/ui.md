@@ -599,6 +599,29 @@ firmă, responsabil scris direct în tabel, salvat la `change`). „Mișcare nou
 spune sub câmpuri când transferul e între firme. Jurnalul marchează „între
 firme” și „pentru șantierul X” la tabla trecută în atelier.
 
+## Depozit și stoc: pornirea, inventarul, evidența (Faza 8, 11 octombrie 2026)
+
+- **„Mișcare nouă”** are tipul „Stoc de pornire: era deja în depozit” (implicit
+  cât depozitul e gol): aceleași câmpuri ca intrarea, dar șantierele nu se pot
+  alege (opțiunile lor se ascund), prețul gol înseamnă „ultimul preț cumpărat,
+  din evidență”, iar dedesubt un rând spune ce e și că intră doar șantierele
+  noi. „Ajustare la inventar” a ieșit din listă: o face cardul „Inventar”.
+- **Cardul „Inventar”** (după „Stocul pe depozite”): locul numărat, tabelul
+  Material · Ce arată aplicația · Ce ai numărat · Diferența (se schimbă la
+  fiecare tastă, fără redesenare), „Alt material găsit la numărat”, motivul
+  (listă cu „alt motiv…”, care deschide un câmp), „Cine a numărat”, „Trece
+  inventarul”. După: un rând „Trecut” cu câte ajustări, câte la fel, câte
+  nenumărate au rămas.
+- **Jurnalul**: „Stoc de pornire” în loc de „Intrare de la furnizor”; la
+  ajustări „motiv: …” și plusul pe cantitate.
+- **„Locurile”**: pe fiecare șantier „Descarcă evidența” (`web/evidenta-santier.ts`).
+- Pe server, locurile sunt doar centralul, atelierul și șantierele din oferte;
+  șantierele din datele firmei rămân pe linkul demo.
+- Starea goală a „Stocul pe depozite” trimite la stocul de pornire.
+
+Verificat cu Playwright pe server și pe demo: 390 / 768 / 1440 / 1920 px,
+ambele teme, zero derulare laterală, zero erori.
+
 ## Măsurători: „Pentru comanda de material” (11 octombrie 2026)
 
 Al treilea scop, lângă ofertă și situație: alegi șantierul, încarci pozele,

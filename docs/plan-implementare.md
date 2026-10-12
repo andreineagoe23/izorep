@@ -245,7 +245,31 @@ Ce a cerut faza:
 **Gata când:** un șantier închis are stoc zero și un singur număr pentru costul
 materialului față de ofertă.
 
-## Faza 8. Pornirea
+## Faza 8. Pornirea — făcută, 11 octombrie 2026
+
+Detaliile în `.claude/stare.md`. Pe scurt, deciziile luate din date:
+
+- **„Doar cele noi” (S48)** nu cere o stare nouă: aplicația pornește goală pe
+  server, iar un șantier intră doar creat din ofertă și pornește fără material.
+  Locurile de pe server sunt centralul, atelierul și șantierele din oferte;
+  stocul de pornire nu se poate trece pe un șantier.
+- **Stocul de pornire** e o intrare marcată („stoc de pornire”), în central sau
+  în atelier, oricând și fără inventar complet. Tot așa intră restul care se
+  întoarce de pe un șantier început înainte (S4, S8: se întoarce în depozit).
+  Nu e cumpărare, deci nu intră în evidența cumpărărilor. Prețul, dacă omul nu-l
+  scrie: ultima cumpărare cunoscută, cu cursul documentului (S44: fără preț,
+  materialul n-ar avea cost pe șantierul nou).
+- **Inventarul** pe orice loc: diferența numărat − aplicație devine ajustare,
+  cu motivul ales (S45; motivele din S4 și S43); ce nu se numără nu se atinge.
+- **Evidența pe șantier** în Excel: coloanele Excelului lor de evidență, plus
+  tipul mișcării, de unde / unde și motivul; o a doua foaie cu soldul.
+
+**Gata când** (`tests/pornire.test.ts`): pe central, stocul de pornire trecut
+fără inventar, apoi inventarul numărat aduce soldul la cifra numărată prin
+ajustări cu motiv, iar nenumăratul rămâne; pe TRANSAVIA, Excelul evidenței are
+rândul facturii ISOLINE ca în evidența firmei și soldul = cel al aplicației.
+
+Ce a cerut faza:
 
 1. **Pornim doar cu șantierele noi** (S48). Șantierele în curs nu intră.
 2. **Depozitul central:** stocul de pornire se poate trece ca intrare marcată.

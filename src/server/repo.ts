@@ -19,6 +19,10 @@ import { valideazaMiscare, type Ambalaj, type Miscare } from "../stoc/registru.j
 import type { Categorie } from "../stoc/necesar.js";
 import { anuleazaConsumSituatie, consumDinSituatie } from "../stoc/consum.js";
 import {
+  LOCURI_PORNIRE, ajustariInventar, estePornire, intrareDePornire, valideazaInventar, valideazaPornire,
+  type Inventar, type Pornire,
+} from "../stoc/inventar.js";
+import {
   inlocuiesteCuFactura, intrariDinReceptie, returLaFurnizor, valideazaReceptie, valideazaRetur,
   type Comanda, type DocumentAtasat, type Factura, type Receptie, type Retur,
 } from "../stoc/comenzi.js";
@@ -309,7 +313,7 @@ export async function stergeSituatie(tx: Baza, ctx: Context, santierId: string, 
 /** Miscarea, cu articolul ei. Una cu acelasi id deja scrisa nu se dubleaza. */
 export async function adaugaMiscare(tx: Baza, ctx: Context, m: Miscare): Promise<boolean> {
   if (m.exemplu) throw new Refuz(400, "Datele de exemplu nu se scriu pe server.");
-  const gresit = valideazaMiscare(m);
+  const gresit = valideazaMiscare(m) ?? (estePornire(m) ? valideazaPornire({ depozit: m.spre ?? "", cantitate: m.cantitate }) : null);
   if (gresit) throw new Refuz(400, gresit);
   const a = m.articol;
   await tx.insert(articol).values({
@@ -346,6 +350,52 @@ export async function puneAmbalaj(tx: Baza, ctx: Context, cheie: string, a: Amba
   const val = { unitate: a.unitate, continut: String(a.continut) };
   await tx.insert(ambalaj).values({ tenantId: ctx.tenantId, cheieBaza: cheie, ...val })
     .onConflictDoUpdate({ target: [ambalaj.tenantId, ambalaj.cheieBaza], set: val });
+}
+
+/* ------------------------------------------- pornirea si inventarul (Faza 8) */
+
+/** Locul exista: centralul si atelierul mereu, un santier doar creat din oferta. */
+async function locCunoscut(tx: Baza, id: string): Promise<void> {
+  if (id === "central" || id === "atelier") return;
+  const [d] = await tx.select({ id: depozit.id }).from(depozit).where(eq(depozit.id, id));
+  if (!d) throw new Refuz(404, "Locul nu e pe server: șantierul nu a fost creat din ofertă.");
+}
+
+/**
+ * Stocul de pornire: intrarea marcata, calculata aici (pretul din ultima
+ * cumparare, din miscarile din baza). Retrimisa, nu se dubleaza.
+ */
+export async function treceStocDePornire(
+  tx: Baza, ctx: Context, depozitId: string, p: Omit<Pornire, "depozit">, id: string, data: string,
+): Promise<number> {
+  if (!LOCURI_PORNIRE.includes(depozitId)) throw new Refuz(400, valideazaPornire({ ...p, depozit: depozitId })!);
+  const { miscari } = await stareDepozit(tx);
+  if (miscari.some((m) => m.id === id)) return 0;
+  let m: Miscare;
+  try { m = intrareDePornire({ ...p, depozit: depozitId }, miscari, id, data); } catch (e) { throw new Refuz(400, (e as Error).message); }
+  return (await adaugaMiscare(tx, ctx, m)) ? 1 : 0;
+}
+
+/**
+ * Inventarul unui loc: ajustarile se socotesc aici, fata de soldul din baza,
+ * deci aduc locul la ce s-a numarat chiar daca un coleg a miscat ceva intre
+ * timp. `ids[i]` e id-ul ajustarii liniei `i`: un inventar retrimis (id-urile
+ * deja scrise) nu mai scrie nimic.
+ */
+export async function inventariaza(
+  tx: Baza, ctx: Context, depozitId: string, inv: Omit<Inventar, "depozit">, ids: string[], data: string,
+): Promise<number> {
+  const tot: Inventar = { ...inv, depozit: depozitId };
+  const gresit = valideazaInventar(tot);
+  if (gresit) throw new Refuz(400, gresit);
+  if (ids.length !== inv.numarat.length) throw new Refuz(400, "Câte un id pe fiecare material numărat.");
+  await locCunoscut(tx, depozitId);
+  const { miscari } = await stareDepozit(tx);
+  const scrise = new Set(miscari.map((m) => m.id));
+  if (ids.some((x) => scrise.has(x))) return 0;
+  let n = 0;
+  for (const m of ajustariInventar(miscari, tot, (i) => ids[i]!, data)) if (await adaugaMiscare(tx, ctx, m)) n++;
+  return n;
 }
 
 /* ------------------------------------------------------- masuratorile */
