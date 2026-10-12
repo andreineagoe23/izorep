@@ -12,6 +12,9 @@ import {
 import type { PlanSantier } from "../src/lucrari/situatii.js";
 import { esteAnulata, type Articol, type Miscare } from "../src/stoc/registru.js";
 import { stareComanda, type Comanda } from "../src/stoc/comenzi.js";
+import { cheieBaza } from "../src/stoc/registru.js";
+import type { ConsumSantier } from "../src/stoc/consum.js";
+import { celulaPierdere, formularConsumMana, randPierdere } from "./consum-vizual.js";
 import { ATELIER, CENTRAL, inAtelier } from "../src/stoc/locuri.js";
 
 const zi = (iso: string): string => new Date(iso).toLocaleDateString("ro-RO");
@@ -26,12 +29,21 @@ function suma(eticheta: string, c: { cost: number; inOferta: number; procent: nu
   return `<p class="imp-oferta-suma"><span>${esc(eticheta)}</span><strong>${eur(c.cost)}</strong><span>${fata}${fara}</span></p>`;
 }
 
-/** S9: pe fiecare material, comandat, venit, pus, rămas și ce lipsește; jos, costul față de ofertă. */
-export function cardMaterial(m: MaterialSantier): string {
+/**
+ * S9: pe fiecare material, comandat, venit, pus, rămas și ce lipsește; jos,
+ * costul față de ofertă. Cu consumul Fazei 6 (`c`), și pierderea față de
+ * situații, pe material și pe tot șantierul, plus consumul notat de mână: un
+ * singur card pentru materialul șantierului, nu două cu aceleași coloane.
+ */
+export function cardMaterial(m: MaterialSantier, c?: ConsumSantier): string {
   if (m.randuri.length === 0) {
     return `<section class="imp-card"><h2>Materialul șantierului</h2>
       <p class="hint" style="margin:0">Șantierul nu are încă necesar de materiale și nici material adus.</p></section>`;
   }
+  const pierdere = (cheie: string): string => {
+    const x = c?.materiale.find((y) => y.cheie === cheie);
+    return x ? celulaPierdere(x) : "—";
+  };
   const randuri = m.randuri.map((r) => `<tr>
     <td>${esc(numeArticol(r.articol))}${r.alClientului ? `<br>${stare("îl dă clientul")}` : ""}</td>
     <td class="n">${cant(r.necesar, r.articol)}</td>
@@ -40,16 +52,22 @@ export function cardMaterial(m: MaterialSantier): string {
     <td class="n">${cant(r.pus, r.articol)}</td>
     <td class="n">${cant(r.ramas, r.articol)}</td>
     <td class="n">${r.lipsa > 0 ? `<strong>${cantitate(r.lipsa, r.articol.um)}</strong>` : stare("nimic", "ok")}</td>
+    ${c ? `<td class="n">${pierdere(cheieBaza(r.articol))}</td>` : ""}
   </tr>`);
   return `<section class="imp-card"><h2>Materialul șantierului</h2>
     <p class="hint" style="margin:0 0 12px">Comandat: pe comenzile trimise. Venit: ce a ajuns pe șantier. Pus: ce s-a pus pe
       țeavă. Rămas: ce e acum pe șantier. Lipsește: cât mai trebuie pentru ce n-a fost încă executat (după situații), peste ce e
-      pe șantier și ce e comandat și n-a venit.</p>
-    ${tabel(["Material", "Necesar", "Comandat", "Venit", "Pus", "Rămas", "Lipsește"], randuri, ["", "n", "n", "n", "n", "n", "n"])}
+      pe șantier și ce e comandat și n-a venit.${c ? ` Pierdere: cât s-a dus peste ce arată situațiile (venit, minus ce s-a
+      întors și ce a rămas, față de consumul scris la situații, care are deja pierderea la croit).` : ""}</p>
+    ${c ? randPierdere(c) : ""}
+    ${c
+      ? tabel(["Material", "Necesar", "Comandat", "Venit", "Pus", "Rămas", "Lipsește", "Pierdere"], randuri, ["", "n", "n", "n", "n", "n", "n", "n"])
+      : tabel(["Material", "Necesar", "Comandat", "Venit", "Pus", "Rămas", "Lipsește"], randuri, ["", "n", "n", "n", "n", "n", "n"])}
     ${suma("Costul materialului, până acum", m.cost)}
     <p class="hint">Costul e ce a rămas pe șantier (pus, pierdut sau încă acolo), la prețul cu care a venit: prețul facturii
       pentru ce s-a cumpărat pentru șantier, prețul mediu pentru ce a venit din depozit sau de pe alt șantier. „În ofertă” e
       cât plătește clientul pe aceste materiale, cu manopera.</p>
+    ${c ? formularConsumMana(c) : ""}
   </section>`;
 }
 

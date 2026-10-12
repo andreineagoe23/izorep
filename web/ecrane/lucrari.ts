@@ -14,7 +14,7 @@ import {
   citesteDepozit, citestePlanuri, iaDeDeschis, idNou, inchideSantier, modDate, salveazaSituatie, scrieDepozit, scriePlanuri,
   stergeUltimaSituatie,
 } from "../date.js";
-import { cardConsum, consumPlan } from "../consum-vizual.js";
+import { consumPlan } from "../consum-vizual.js";
 import { dinMarci } from "../../src/stoc/consum.js";
 import { ramasPeNecesar } from "./stoc.js";
 import { deComandat, solduri } from "../../src/stoc/registru.js";
@@ -157,7 +157,7 @@ export const ecran: Ecran = {
       // Faza 7: ce vede directorul (S9) sau, inchis, cifrele lui; inventarul de inchidere, dupa situatii.
       const material = p.inchis
         ? cardInchis(cifreInchidere(p, materiale, dep.miscari))
-        : cardMaterial(materialSantier(p, materiale, dep.miscari, dep.comenzi ?? []));
+        : cardMaterial(materialSantier(p, materiale, dep.miscari, dep.comenzi ?? []), consumPlan(p, dep));
       const inchide = p.inchis ? "" : formularInchidere({ ...restulPeSantier(p, planuri, dep), ...inchidere });
 
       const randuriPlan = p.pozitii.map((poz, i) => {
@@ -192,7 +192,6 @@ export const ecran: Ecran = {
         ${inLucru && dinPoze ? cardDinPoze(p, inLucru, dinPoze) : ""}
         ${inLucru ? formularSituatie(p, inLucru) : ""}
         ${istoric(p)}
-        ${cardConsum(consumPlan(p, dep))}
         ${inchide}
         <section class="imp-card"><h2>Planul de șantier</h2>
           <p class="hint" style="margin:0 0 12px">Pozițiile ofertei, cu prețurile trimise clientului. Nu se schimbă

@@ -7,10 +7,11 @@
 > promise (comanda, avizul, factura, listele furnizorilor), devin teste. Nu
 > blochează nimic.
 >
-> Starea: fazele 1–4 sunt făcute (Faza 4 pe 11 octombrie 2026, 540 de teste).
-> Exportul ofertei într-un singur fel e făcut (11 octombrie 2026, pașii 0–1
-> din `docs/plan-import.md`); ecranul de import rămâne cum era. Faza 5 făcută
-> pe 11 octombrie 2026. Următorul: Faza 6. Pe 5
+> Starea: toate cele opt faze sunt făcute. Fazele 1–5 pe 11 octombrie 2026,
+> fazele 6–8 unite pe 12 octombrie 2026 (604 teste). Exportul ofertei într-un
+> singur fel e făcut (11 octombrie 2026, pașii 0–1 din `docs/plan-import.md`);
+> ecranul de import rămâne cum era. Înainte de folosirea reală: conturile și
+> rolurile, locul serverului și backup-ul (`docs/productie.md`). Pe 5
 > octombrie au venit evidența de achiziții, o comandă cu aviz și factură și lista
 > K-Flex: deciziile de mai jos marcate „11 oct.” sunt luate din ele.
 

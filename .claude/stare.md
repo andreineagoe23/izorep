@@ -135,12 +135,18 @@ Pe ramura `faza-7`. **570 de teste** (13 noi: `tests/inchidere.test.ts`,
 | **Ecranul șantierului** (S9) | cardul „Materialul șantierului”: necesar, comandat (comenzi trimise), venit, pus (consumul), rămas, lipsește (materialul pozițiilor neexecutate, după ultima situație, cu pierderea la croit, minus ce e pe șantier și pe drum) și costul până acum | S9: „toate din exemple” |
 | **Tabloul** (S49) | „Ultimele 7 zile pe șantiere” (situații, material venit, comenzi trimise, închideri), „Șantiere închise” (cost, în ofertă, procent), iar la „Necesită atenția ta”: lipsa pe șantier (doar când necesarul e adus sau comandat tot, ca să nu repete „de comandat”) și comenzile trimise de 7 zile și nevenite | S49: „toate”. Pragul de 7 zile: comanda TRANSAVIA a venit în 4 (13 → 17 iulie) |
 
-**Ce rămâne legat la unire.** Alerta „pierdere peste 10 %” e a Fazei 6:
-`pierderiPestePrag` din `src/lucrari/rapoarte.ts` întoarce `[]`, marcat
-`TODO Faza 6`. Diferența de la inventar o scrie un ajutor local,
-`ajustareInventar` din `src/lucrari/inchidere.ts`, marcat „de unificat cu
-src/stoc/inventar.ts (Faza 8)”. „Pus” sunt mișcările `consum` existente; Faza 6
-le scrie din situații.
+**Legate la unirea fazelor 6–8 (12 octombrie 2026).** Alerta „pierdere peste
+10 %” vine din `consumSantier` (Faza 6), prin `pierderiPestePrag` din
+`src/lucrari/rapoarte.ts`, doar pe șantierele deschise; textul e cel al Fazei 6
+(„s-a consumat cu N % mai mult material decât arată situațiile”). Diferența de
+la inventarul de închidere o scrie `ajustariInventar` din `src/stoc/inventar.ts`
+(Faza 8), cu `lucrareId` pe șantier; inventarul rotunjește acum la miime, ca
+`miscare.cantitate`: la sutime, un rest de 10,125 lăsa 0,005 pe șantier și
+oprea închiderea. „Pus” sunt mișcările `consum`, scrise de Faza 6 din situații.
+Formularele (Mișcare nouă, Inventar, Atelier, necesarul, recepția și returul din
+Comenzi, Măsurători) nu mai oferă șantierele închise (`deschis()` din
+`web/ecrane/stoc.ts`); listele care doar arată le păstrează. Pe linkul demo nu
+există trigger-ul din bază: acolo oprirea e doar în formulare.
 
 **Testul „gata când”** (`tests/inchidere.test.ts`): pe cererea TRANSAVIA
 (planul și necesarul din import, cu discountul de 3 %), fiecare material adus

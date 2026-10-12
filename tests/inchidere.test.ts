@@ -27,6 +27,7 @@ import {
   cardInchis, cardMaterial, destinatieDin, formularInchidere, randuriInchidere, restulPeSantier, valoareDestinatie,
 } from "../web/inchidere-vizual.js";
 import { alerteAtentie, cardInchise, cardSaptamana } from "../web/rapoarte-vizual.js";
+import { consumSantier } from "../src/stoc/consum.js";
 
 const CALE = "../attachments/clienti/cerere-de-oferta-transavia-abur.xlsx";
 const ZI0 = "2026-07-13T08:00:00.000Z";
@@ -282,6 +283,7 @@ describe("marcajul (web/inchidere-vizual.ts, web/rapoarte-vizual.ts)", () => {
     const f = restulPeSantier(p, [p, { ...planMic, id: "S-2", denumire: INJECTIE }], d);
     const html = [
       cardMaterial(materialSantier(p, materialeMici, miscari)),
+      cardMaterial(materialSantier(p, materialeMici, miscari), consumSantier(p, materialeMici, miscari)),
       formularInchidere({ ...f, scris: {}, eroare: INJECTIE, confirma: true, deschis: true }),
       cardInchis(cifreInchidere({ ...p, inchis: ZI0 }, materialeMici, miscari)),
       cardSaptamana(listaSaptamanala([p], d, "2026-07-14T08:00:00.000Z"), true),
@@ -291,6 +293,23 @@ describe("marcajul (web/inchidere-vizual.ts, web/rapoarte-vizual.ts)", () => {
     ].join("");
     expect(html).not.toContain(INJECTIE);
     expect(html).toContain("Înapoi la &lt;img");
+  });
+
+  it("un singur card de material: cu consumul Fazei 6 are pierderea și consumul de mână", () => {
+    const a = articolDin(materialeMici[0]!);
+    const p: PlanSantier = { ...planMic, situatii: [{ id: "s1", nr: 1, data: ZI0, cantitati: { 1: 50 } }] };
+    const miscari: Miscare[] = [
+      { id: "i1", data: ZI0, tip: "intrare", articol: a, cantitate: 55, spre: p.id, pret: { valoare: 7.5 } },
+      { id: "c1", data: ZI0, tip: "consum", articol: a, cantitate: 50, din: p.id },
+    ];
+    const fara = cardMaterial(materialSantier(p, materialeMici, miscari));
+    // Doar vata a venit și s-a pus: pierderea pe șantier e a ei (50 puși pe 27,5 din situație).
+    const cu = cardMaterial(materialSantier(p, materialeMici, miscari), consumSantier(p, [materialeMici[0]!], miscari));
+    expect(fara).not.toContain("Pierdere");
+    expect(cu.match(/<h2>/g)).toHaveLength(1);
+    expect(cu).toContain("Pierdere pe tot șantierul");
+    expect(cu).toContain("peste prag");
+    expect(cu).toContain('id="consum-mana"');
   });
 
   it("formularul dă inventarul: numărat implicit cât e în registru, înapoi în central", () => {

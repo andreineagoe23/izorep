@@ -23,7 +23,7 @@ import {
   returneaza, stergeComanda, treceFactura, trimiteComanda,
 } from "../date.js";
 import { cantitate, cifra, numeArticol, unitate } from "../stoc-vizual.js";
-import { depozite } from "./stoc.js";
+import { depozite, deschis } from "./stoc.js";
 import { descarca } from "../descarca.js";
 import { caDataUrl, micsoreaza, modelPornit, rutaModel } from "../imagine.js";
 import { registruComanda, registruEvidenta, randuriEvidenta } from "../comanda-excel.js";
@@ -90,6 +90,8 @@ export const ecran: Ecran = {
     /** Cheia: id-ul comenzii, sau `id|aviz` pentru factura unui aviz. */
     const citite = new Map<string, Citit>();
     const DEPOZITE = depozite();
+    /** Unde se poate alege marfa: fără șantierele închise (Faza 7). */
+    const ALEGERI = DEPOZITE.filter((d) => deschis()(d.id));
     const numeDepozit = (id?: string): string => DEPOZITE.find((d) => d.id === id)?.nume ?? "—";
     const peServer = modDate() === "server";
 
@@ -285,7 +287,7 @@ export const ecran: Ecran = {
             <label>Moneda prețurilor<select name="moneda"><option value="RON"${sel("RON", r?.moneda ?? "RON")}>lei</option><option value="EUR"${sel("EUR", r?.moneda)}>euro</option></select></label>
             <label>Cursul de pe factură (lei pentru 1 €)<input name="curs" type="number" inputmode="decimal" step="any" min="0" value="${r?.curs ?? ""}" /></label>
             <label>Transport pe document (opțional, în moneda de mai sus)<input name="transport" type="number" inputmode="decimal" step="any" min="0" value="${r?.transport ?? ""}" /></label>
-            <label>Unde a ajuns marfa<select name="spre">${DEPOZITE.map((d) =>
+            <label>Unde a ajuns marfa<select name="spre">${ALEGERI.map((d) =>
               `<option value="${esc(d.id)}"${d.id === c.spre ? " selected" : ""}>${esc(d.nume)}</option>`).join("")}</select></label>
           </div>
           ${tabel(["Material", "Primit acum", "Preț unitar (gol pe aviz)"], linii, ["", "n", "n"])}
@@ -346,7 +348,7 @@ export const ecran: Ecran = {
             return `<option value="${esc(l.id)}">${esc(denumireComanda(l.articol))} · venit ${cifra(poate.valoare)} ${poate.um}</option>`;
           }).join("")}</select></label>
           <label>Cât (kg la tablă, altfel ml sau m²)<input name="cantitate" type="number" inputmode="decimal" step="any" min="0" required /></label>
-          <label>Din ce depozit pleacă<select name="din">${DEPOZITE.map((d) =>
+          <label>Din ce depozit pleacă<select name="din">${ALEGERI.map((d) =>
             `<option value="${esc(d.id)}"${d.id === c.spre ? " selected" : ""}>${esc(d.nume)}</option>`).join("")}</select></label>
           <label>De ce<input name="motiv" autocomplete="off" required placeholder="defect, alt diametru, în plus" /></label>
           <label>Avizul de retur (opțional)<input name="aviz" autocomplete="off" /></label>
@@ -368,7 +370,7 @@ export const ecran: Ecran = {
         <summary>Comandă nouă: stoc general sau ce lipsește pe un șantier</summary>
         <form class="imp-campuri" data-form="nou">
           <label>Furnizor<select name="furnizor">${FURNIZORI.map(([f]) => `<option>${esc(f)}</option>`).join("")}</select></label>
-          <label>Unde vine marfa<select name="spre">${DEPOZITE.map((d) => `<option value="${esc(d.id)}">${esc(d.nume)}</option>`).join("")}</select></label>
+          <label>Unde vine marfa<select name="spre">${ALEGERI.map((d) => `<option value="${esc(d.id)}">${esc(d.nume)}</option>`).join("")}</select></label>
           <label>Material<select name="articol">${lista.map((a) => `<option value="${esc(a.cheie)}">${esc(numeArticol(a))}</option>`).join("")}</select></label>
           <label>Cantitate (ml la tub, m² altfel)<input name="cantitate" type="number" inputmode="decimal" step="any" min="0" required /></label>
           <label>De ce, peste necesar (pe un șantier: lipsă, pierdere, lucrare în plus)<input name="motiv" autocomplete="off" /></label>

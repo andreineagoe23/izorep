@@ -658,13 +658,15 @@ eticheta pe același rând și ținta de 44 px.
 
 ## Lucrări: materialul pe șantier (Faza 6, 11 octombrie 2026)
 
-Card nou „Materialul pe șantier”, după „Situații de lucrări” (marcajul în
-`web/consum-vizual.ts`, logica în `src/stoc/consum.ts`): pe fiecare material
-Necesar, Venit, Întors, **Rămas**, Din situații, Consum real (cu „notat de
-mână” dedesubt) și Pierdere (cantitate, procent, „peste 10 %”). Deasupra,
-pierderea pe tot șantierul, după valoare, cu „peste prag”; fără situații, „Consumul
-se scrie la prima situație de lucrări”. Dedesubt, pliat, „Notează consum de
-mână” (material, cantitate, notă), din stocul șantierului.
+Pierderea și consumul de mână stau în cardul „Materialul șantierului” al Fazei
+7 (unite pe 12 octombrie 2026: erau două carduri cu necesar, venit și rămas
+repetate). Marcajul Fazei 6 e în `web/consum-vizual.ts` (`randPierdere`,
+`celulaPierdere`, `formularConsumMana`), logica în `src/stoc/consum.ts`: coloana
+Pierdere (cantitate, procent, „peste 10 %”), deasupra tabelului pierderea pe tot
+șantierul, după valoare, cu „peste prag” (fără situații: consumul se scrie
+singur la fiecare situație), iar sub cost, pliat, „Notează consum de mână”
+(material, cantitate, notă), din stocul șantierului. Șantierul închis nu-l mai
+are.
 
 Situația salvată și cea ștearsă trec prin `salveazaSituatie` /
 `stergeUltimaSituatie` din `web/date.ts` (operații, nu diferența de stare): după
@@ -698,7 +700,7 @@ testate); fără clase CSS noi.
   lipsă, cost). Dispar „Situație nouă”, ștergerea situației și a șantierului.
   În listă, șantierul are eticheta „închis”.
 - **Tabloul**: „Necesită atenția ta” primește lipsa pe șantier și comenzile
-  nevenite de 7 zile (și, la unire, pierderea peste 10 % a Fazei 6); carduri
+  nevenite de 7 zile și pierderea peste 10 % a Fazei 6; carduri
   noi „Ultimele 7 zile pe șantiere” și „Șantiere închise”. Banii ascultă de
   `vedeCosturi()`.
 

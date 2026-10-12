@@ -98,7 +98,7 @@ export const ecran: Ecran = {
     let liste: ListaClient[] = [];
     try { liste = (await listeazaImporturi()).map((x) => ({ id: x.id, nume: x.nume })); } catch { liste = []; }
 
-    const santiere = (): SantierAles[] => citestePlanuri().map((p) => ({ id: p.id, denumire: p.denumire, client: p.client }));
+    const santiere = (): SantierAles[] => citestePlanuri().filter((p) => !p.inchis).map((p) => ({ id: p.id, denumire: p.denumire, client: p.client }));
     /** Pe situatie, tipul ofertei e al santierului, nu cel ales sus. */
     const destinatiaPaginii = (): Destinatie =>
       scop !== "oferta" ? ((citestePlanuri().find((p) => p.id === planAles)?.destinatie as Destinatie | undefined) ?? destinatie) : destinatie;

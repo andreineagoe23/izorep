@@ -56,6 +56,17 @@ export const locurile = (): Loc[] => locuri(santiere(), citesteDepozit().respons
 export const depozite = (): { id: string; nume: string }[] => locurile().map((l) => ({ id: l.id, nume: l.nume }));
 
 /**
+ * Locul se mai poate alege: nu e un șantier închis (Faza 7). Listele care doar
+ * arată (jurnalul, „Locurile”, drumul) rămân întregi; formularele nu oferă
+ * șantierul închis, ca pe linkul demo, unde nu e trigger-ul din bază, să nu
+ * se poată scrie nimic pe el.
+ */
+export const deschis = (): ((id: string) => boolean) => {
+  const inchise = new Set(citestePlanuri().filter((p) => p.inchis).map((p) => p.id));
+  return (id) => !inchise.has(id);
+};
+
+/**
  * Ce se poate alege în „Mișcare nouă”. Ajustarea nu: o face cardul „Inventar”,
  * cu motiv (S45). Stocul de pornire e o intrare marcată (Faza 8).
  */
@@ -238,7 +249,7 @@ export const ecran: Ecran = {
         </tr>`;
         });
         const deComandat = r.filter((d) => d.ramas > 0).length;
-        const optiuni = santiere().map((s) =>
+        const optiuni = santiere().filter((s) => s.id === n.santier || deschis()(s.id)).map((s) =>
           `<option value="${esc(s.id)}"${s.id === n.santier ? " selected" : ""}>${esc(s.denumire)}</option>`).join("");
         const p = n.pierderi;
         const calcul = p ? ` · pierderi la croit: tablă ${cifra(p.tabla * 100)} %, saltele ${cifra((p.saltea ?? p.placa) * 100)} %, plăci ${cifra(p.placa * 100)} %, tuburi ${cifra(p.tub * 100)} %` : "";
@@ -338,7 +349,7 @@ export const ecran: Ecran = {
      * se atinge, deci nu trebuie numărat tot deodată.
      */
     function sectiuneInventar(sold: ReturnType<typeof solduri>): string {
-      if (!LOCURI.some((l) => l.id === invLoc)) invLoc = CENTRAL;
+      if (!LOCURI.some((l) => l.id === invLoc) || !deschis()(invLoc)) invLoc = CENTRAL;
       const aici = sold.filter((x) => x.depozit === invLoc)
         .sort((a, b) => numeArticol(a.articol).localeCompare(numeArticol(b.articol), "ro"));
       const altele = articoleCunoscute(st).filter((a) => !aici.some((x) => x.articol.cheie === a.cheie));
@@ -355,7 +366,7 @@ export const ecran: Ecran = {
           aplicația, se trece o ajustare cu motivul ales. Ce nu numeri rămâne cum e: nu trebuie numărat tot deodată.</p>
         <form data-form="inventar">
           <div class="imp-campuri">
-            <label>Locul numărat<select name="loc" data-act="inventar-loc">${LOCURI.map((l) =>
+            <label>Locul numărat<select name="loc" data-act="inventar-loc">${LOCURI.filter((l) => deschis()(l.id)).map((l) =>
               `<option value="${esc(l.id)}"${l.id === invLoc ? " selected" : ""}>${esc(l.nume)}</option>`).join("")}</select></label>
           </div>
           ${aici.length
@@ -405,7 +416,7 @@ export const ecran: Ecran = {
           ? `<button type="button" class="secundar" data-act="atelier-trimite" data-cheie="${esc(x.articol.cheie)}"
               data-pentru="${esc(x.pentru)}" data-q="${x.cantitate}">Trimite pe șantier</button>` : ""}</td>
       </tr>`);
-      const optiuniSantier = santiere().map((s) => `<option value="${esc(s.id)}">${esc(s.denumire)}</option>`).join("");
+      const optiuniSantier = santiere().filter((s) => deschis()(s.id)).map((s) => `<option value="${esc(s.id)}">${esc(s.denumire)}</option>`).join("");
       return `<section class="imp-card"><h2>Atelierul</h2>
         <p class="hint" style="margin:0 0 12px">Șeful de șantier cere la atelier ce îi trebuie (de ex. 10 ml ø100, 3 coturi și 10 carcase).
           Tabla trece din central în atelier și stă pusă deoparte pentru șantierul lui până pleacă. Rămâne în m² și croită.</p>
@@ -420,7 +431,7 @@ export const ecran: Ecran = {
               `<option value="${esc(x.cheie)}">${esc(numeArticol(x))}</option>`).join("")}
               <option value="__tabla"${tabla.length ? "" : " selected"}>Tablă aluminiu 0,8 mm (m²)</option></select></label>
             <label>Cantitate (m² la tablă, ml la tub)<input name="cantitate" type="number" inputmode="decimal" step="any" min="0" required /></label>
-            <label>Din depozitul<select name="din">${LOCURI.filter((l) => l.id !== ATELIER).map((l) =>
+            <label>Din depozitul<select name="din">${LOCURI.filter((l) => l.id !== ATELIER && deschis()(l.id)).map((l) =>
               `<option value="${esc(l.id)}"${l.id === CENTRAL ? " selected" : ""}>${esc(l.nume)}</option>`).join("")}</select></label>
             ${eroareAtelier ? `<p class="alerta" role="alert">${esc(eroareAtelier)}</p>` : ""}
             <div class="imp-formular-butoane"><button type="submit" class="primar">Trece în atelier</button></div>
@@ -489,7 +500,7 @@ export const ecran: Ecran = {
     function formularMiscare(): string {
       const articole = articoleCunoscute(st);
       const alegeDepozit = (nume: string, eticheta: string): string => `<label data-camp="${nume}">${eticheta}
-        <select name="${nume}"><option value="">— alege —</option>${LOCURI.map((d) =>
+        <select name="${nume}"><option value="">— alege —</option>${LOCURI.filter((d) => deschis()(d.id)).map((d) =>
           `<option value="${esc(d.id)}" data-loc="${d.tip}">${esc(d.nume)}</option>`).join("")}</select></label>`;
       return `<form class="imp-card" id="miscare">
         <h2>Mișcare nouă</h2>
