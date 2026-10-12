@@ -56,13 +56,15 @@ jobs:
       # Suita reproduce oferte reale trimise clientilor. Daca pica, motorul
       # nu mai da aceleasi preturi ca ofertele istorice si nu se poate emite.
       - name: Teste
+        env:
+          IZOREP_CERE_BAZA: "1"
         run: npx vitest run --reporter=default --reporter=json --outputFile=teste.json
 
       # Fisierele clientilor (../attachments) nu sunt in repo, deci testele pe
       # ofertele semnate se sar aici (`cuClienti` din tests/conditii.ts): CI
       # verde nu inseamna ca ofertele semnate se reproduc — asta se vede doar
       # local. Pasul le numara la vedere. Orice alt test sarit e o eroare: o
-      # baza care nu raspunde pica deja in teste (`bazaDisponibila`).
+      # baza care nu raspunde pica deja in teste (`IZOREP_CERE_BAZA`).
       - name: Ce nu a rulat in CI
         run: |
           node -e '

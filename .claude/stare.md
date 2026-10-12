@@ -19,8 +19,10 @@ reale), deci acum (`tests/conditii.ts`):
 - `cuClienti` în loc de `return`: fără fișiere, testul e **sărit vizibil**.
   În CI: 572 trec, 33 sărite, iar pasul „Ce nu a rulat în CI” le numără într-un
   avertisment. Orice alt test sărit pică pasul.
-- `bazaDisponibila`: în CI (`CI` setat) o bază care nu răspunde **pică**
-  testele, nu le sare. Local se sar, ca înainte, cu mesajul de pornire.
+- `bazaDisponibila`: în workflow-ul CI (`IZOREP_CERE_BAZA=1`) o bază care nu
+  răspunde **pică** testele, nu le sare. Local și în workflow-ul de Pages (fără
+  Postgres) se sar, ca înainte. Prima variantă se lega de `CI`, pe care GitHub
+  îl pune și în Pages: publicarea demo-ului a picat o dată.
 - Local, cu `../attachments`, nu se sare nimic: CI verde nu înlocuiește
   `npm test` local înainte de push.
 
