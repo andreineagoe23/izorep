@@ -3,6 +3,50 @@
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
 > Ultima actualizare: 11 octombrie 2026 (noaptea).
 
+## 11 octombrie 2026: Faza 7, închiderea șantierului și ce vede directorul
+
+Pe ramura `faza-7`. **570 de teste** (13 noi: `tests/inchidere.test.ts`,
+`tests/inchidere-server.test.ts`). Logica e pură, în `src/lucrari/inchidere.ts`
+și `src/lucrari/rapoarte.ts`; marcajul în `web/inchidere-vizual.ts` și
+`web/rapoarte-vizual.ts`.
+
+| Ce | Cum | De unde |
+|---|---|---|
+| **Inventarul de închidere** (S45) | pe pagina șantierului, „Închide șantierul” (pliat): fiecare material din registru, „Numărat” (implicit cât e în registru) și „Unde pleacă”. Diferența dintre registru și numărat devine ajustare cu motivul „inventar la închidere” | S45: „la un sfârșit de șantier, șeful de lucrare” |
+| **Destinațiile** (S4, S8, S43) | depozitul central, atelierul sau alt șantier deschis → transfer; „Înapoi la <furnizor>” (furnizorii care l-au adus pe șantier) → retur fără depozit de sosire, cu prețul de pe șantier, deci iese cu minus în evidența cumpărărilor; pierdut / furat / reciclat → ajustare cu minus, cu motivul. Clientul nu e destinație | S4: „nu există posibilitatea de a da materialele rămase la client” |
+| **Stoc zero** | se închide doar când pe șantier nu rămâne nimic (`stocZero`); a doua apăsare confirmă. Închis, nu mai primește situații sau mișcări (trigger, migrarea 0012), iar ecranul nu mai oferă „Situație nouă” | planul Fazei 7 |
+| **Aviz fără factură** | oprește închiderea: prețul lui ar lipsi din cost, iar după închidere factura n-ar mai avea unde intra | decis aici |
+| **Costul față de ofertă** | pe fiecare material, costul pe unitate pe șantier = media a ce a venit: intrarea cu prețul ei, transferul cu media intrărilor făcute pentru șantier, altfel prețul mediu al firmei. Costul = (venit − plecat înapoi) × costul pe unitate: pus, pierdut, reciclat. La închidere e un singur număr, lângă „În ofertă” (suma `valoareOferta` din necesar, ca în Depozit și stoc) și procentul | regula S44 din tabelul de decizii |
+| **Ecranul șantierului** (S9) | cardul „Materialul șantierului”: necesar, comandat (comenzi trimise), venit, pus (consumul), rămas, lipsește (materialul pozițiilor neexecutate, după ultima situație, cu pierderea la croit, minus ce e pe șantier și pe drum) și costul până acum | S9: „toate din exemple” |
+| **Tabloul** (S49) | „Ultimele 7 zile pe șantiere” (situații, material venit, comenzi trimise, închideri), „Șantiere închise” (cost, în ofertă, procent), iar la „Necesită atenția ta”: lipsa pe șantier (doar când necesarul e adus sau comandat tot, ca să nu repete „de comandat”) și comenzile trimise de 7 zile și nevenite | S49: „toate”. Pragul de 7 zile: comanda TRANSAVIA a venit în 4 (13 → 17 iulie) |
+
+**Ce rămâne legat la unire.** Alerta „pierdere peste 10 %” e a Fazei 6:
+`pierderiPestePrag` din `src/lucrari/rapoarte.ts` întoarce `[]`, marcat
+`TODO Faza 6`. Diferența de la inventar o scrie un ajutor local,
+`ajustareInventar` din `src/lucrari/inchidere.ts`, marcat „de unificat cu
+src/stoc/inventar.ts (Faza 8)”. „Pus” sunt mișcările `consum` existente; Faza 6
+le scrie din situații.
+
+**Testul „gata când”** (`tests/inchidere.test.ts`): pe cererea TRANSAVIA
+(planul și necesarul din import, cu discountul de 3 %), fiecare material adus
+cu 10 % peste necesar (unul din trei prin central, la prețul mediu), pus cât
+cere necesarul, apoi închis cu toate destinațiile și o lipsă la inventar: stoc
+zero, nimic fără preț, costul egal cu cel socotit separat, procentul față de
+„În ofertă”. Pe server (`tests/inchidere-server.test.ts`): aceleași mișcări cu
+id-urile browserului, retrimis nu dublează, numărătoarea veche e refuzată, iar
+după închidere situația, mișcarea, schimbarea planului și ștergerea primesc 409,
+și direct în bază trigger-ul le oprește.
+
+Verificat cu Playwright pe `build:server` (baza `izorep_f7`, portul 8807): două
+șantiere din TRANSAVIA, cu intrări, consum, situații și o comandă veche;
+închiderea TRANSAVIA din ecran (furnizor, alt șantier, reciclat, furat, o
+lipsă de 1 m²) → 14.627,99 €, 15,9 % din 91.737,81 €, la fel după reîncărcare și
+pe tablou; mișcările din bază sunt cele din ecran. Pe linkul demo (build-ul de
+Pages, servit static, datele în browser) același drum. 390 / 768 / 1440 /
+1920 px, ambele teme: zero derulare laterală, zero erori (pe demo, doar 404-ul
+așteptat al `/api/stare`). Pe telefon, alegerea destinației ieșea din rând
+(`min-width` al select-urilor din tabele): reparat.
+
 ## 11 octombrie 2026 (noaptea): Faza 5, locurile, atelierul, transferurile
 
 Pe ramura `faza-5`. **557 de teste.** Totul în ecranul „Depozit și stoc”, trei

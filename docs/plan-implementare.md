@@ -213,7 +213,21 @@ central, atelier, șantier.
 **Gata când:** pe TRANSAVIA, o situație cu tot executat duce materialul
 șantierului la „rămas” = cât s-a trimis peste necesar.
 
-## Faza 7. Închiderea șantierului și ce vede directorul
+## Faza 7. Închiderea șantierului și ce vede directorul — făcută, 11 octombrie 2026
+
+Detaliile în `.claude/stare.md`. Pe scurt: pe pagina șantierului, cardul
+„Materialul șantierului” (necesar, comandat, venit, pus, rămas, lipsește, costul
+până acum) și „Închide șantierul”: șeful de lucrare numără, diferența devine
+ajustare „inventar la închidere”, fiecare rest pleacă în depozit, pe alt
+șantier, la furnizor sau se scrie pierdut / furat / reciclat. Se închide doar cu
+stocul la zero; închis, nu mai primește situații sau mișcări (trigger, migrarea
+0012). Costul: (venit − plecat înapoi) × costul pe unitate pe șantier, după
+regula S44 din tabelul de sus, față de „În ofertă”. Tabloul: ultimele 7 zile,
+șantierele închise, alertele (lipsa pe șantier, comenzile nevenite de 7 zile;
+pierderea peste 10 % se leagă de Faza 6). Testul „gata când” e pe TRANSAVIA
+(`tests/inchidere.test.ts`).
+
+Ce a cerut faza:
 
 1. **Închiderea** pornește de la inventarul pe șantier, făcut de șeful de lucrare
    (S45). Fiecare rest primește o destinație: înapoi în depozit, alt șantier,
