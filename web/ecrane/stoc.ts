@@ -517,7 +517,7 @@ export const ecran: Ecran = {
             <input name="cantitate" type="number" inputmode="decimal" step="any" min="0" required /></label>
           ${alegeDepozit("din", "Din depozitul")}
           ${alegeDepozit("spre", "În depozitul")}
-          <label data-camp="pret">Preț de achiziție pe unitate, în euro (de pe factură; <span data-camp="pret-intrare">gol = fără preț</span><span
+          <label data-camp="pret">Preț de achiziție pe unitate, în euro (<span data-camp="pret-intrare">de pe factură; gol = fără preț</span><span
             data-camp="pret-pornire">gol = ultimul preț cumpărat, din evidență</span>)
             <input name="pret" type="number" inputmode="decimal" step="any" min="0" /></label>
           <label>Notă (furnizor, factură, cine a luat materialul)
@@ -525,8 +525,7 @@ export const ecran: Ecran = {
         </div>
         <p class="hint" data-camp="pornire" style="margin:12px 0 0">Material care era deja în depozitul central sau în atelier când ați
           început cu aplicația, sau care se întoarce de pe un șantier început înainte de ea. În aplicație intră doar șantierele noi,
-          care pornesc fără material, deci stocul de pornire nu se trece pe șantiere. Apare în jurnal ca „Stoc de pornire” și nu intră
-          în evidența cumpărărilor.</p>
+          care pornesc fără material, deci aici nu se aleg. Nu intră în evidența cumpărărilor.</p>
         <p class="imp-oferta-lipsa" data-camp="firme" hidden></p>
         ${eroare ? `<p class="alerta" role="alert" style="margin-top:16px">${esc(eroare)}</p>` : ""}
         <div class="imp-formular-butoane"><button type="submit" class="primar">Înregistrează</button></div>
