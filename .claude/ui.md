@@ -633,6 +633,25 @@ eticheta pe același rând și ținta de 44 px.
   dar e marcat „peste ofertă”. Se șterge doar ultima situație.
 - Pe telefon numărul poziției e lipit de denumire, ca textul să aibă lățimea.
 
+## Lucrări: materialul pe șantier (Faza 6, 11 octombrie 2026)
+
+Card nou „Materialul pe șantier”, după „Situații de lucrări” (marcajul în
+`web/consum-vizual.ts`, logica în `src/stoc/consum.ts`): pe fiecare material
+Necesar, Venit, Întors, **Rămas**, Din situații, Consum real (cu „notat de
+mână” dedesubt) și Pierdere (cantitate, procent, „peste 10 %”). Deasupra,
+pierderea pe tot șantierul, după valoare, cu „peste prag”; fără situații, „Consumul
+se scrie la prima situație de lucrări”. Dedesubt, pliat, „Notează consum de
+mână” (material, cantitate, notă), din stocul șantierului.
+
+Situația salvată și cea ștearsă trec prin `salveazaSituatie` /
+`stergeUltimaSituatie` din `web/date.ts` (operații, nu diferența de stare): după
+salvare, sus, ca informație (nu alertă), „Situația a scris consumul pe N
+materiale”. „Materiale de comandat” din cifrele de sus e acum „rămas de
+comandat”, ca în Depozit. În Tablou, la „Necesită atenția ta”: „Pe șantierul X
+s-a consumat cu N % mai mult material decât arată situațiile (normal până la
+10 %)”. În jurnalul din Depozit, consumul din situații n-are „Anulează”: se
+anulează ștergând situația.
+
 ## Măsurători: notițele din carnet (29 septembrie 2026)
 
 `web/ecrane/santier.ts` (ruta `#/masuratori`; `#/santier` e alias), marcajul în

@@ -3,6 +3,75 @@
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
 > Ultima actualizare: 11 octombrie 2026 (noaptea).
 
+## 11 octombrie 2026: Faza 6, consumul
+
+Pe ramura `faza-6`. **572 de teste** (557 + 15). Logica în `src/stoc/consum.ts`,
+pură; testul fazei e în `tests/consum.test.ts`.
+
+| Ce | Cum | Unde |
+|---|---|---|
+| **Consumul din situație** (S7 c, S41) | la salvarea situației se scrie, pe fiecare material al necesarului, consumul calculat până la ea minus ce au scris situațiile de dinainte. Calculat = necesarul × partea executată: Σ executat cumulat × `pePozitie` / Σ cantitate ofertată × `pePozitie`. Tot executat = exact necesarul, la ban, oricâte situații. Mișcarea e `consum`, din depozitul șantierului, cu `situatieId`; id-ul e `consum-<depozit>-<situație>-<articol>`, deci browserul și serverul scriu aceeași mișcare | `consumDinSituatie` |
+| **Ștearsă situația** | storno pe consumul ei (`anulare-<id>`), nimic nu se șterge. În jurnal, consumul din situație n-are „Anulează” | `anuleazaConsumSituatie` |
+| **Marca** | consumul se ia din mărcile de pe șantier, pe rând, cât are fiecare; ce lipsește iese sold negativ (marcat), pe ultima marcă sau pe materialul fără marcă | `dinMarci` |
+| **Consumul de mână** (S7 b) | „Mișcare nouă → Consum pe lucrare” rămâne; în plus, în Lucrări, „Notează consum de mână” pe cardul șantierului (aceleași mărci) | `web/consum-vizual.ts` |
+| **Consumul real și pierderea** (S42) | real = venit pe șantier − întors − rămas (soldul), deci cuprinde consumul de mână și ajustările la inventar. Pierderea = real − calculat; pe șantier, pe valoare (prețul mediu de achiziție, altfel cel din ofertă). Peste 10 % → „Necesită atenția ta” | `consumSantier` |
+
+**API pentru Faza 7** (`src/stoc/consum.ts`):
+
+- `consumSantier(plan, materiale, miscari, depozit = plan.id): ConsumSantier` →
+  `{ depozit, situatii, pierdereProcent, pestePrag, materiale: ConsumMaterial[] }`;
+  pe material (fără marcă, `cheie`): `necesar`, `trimis` (intrări pe șantier,
+  transferuri și retururi primite), `returnat` (transfer, retur, retur la
+  furnizor de pe șantier), `ramas` (= soldul), `consumCalculat`,
+  `consumScris: { situatii, mana }`, `consumReal`, `pierdere`,
+  `pierdereProcent` (null fără nimic calculat), `pret`.
+- `consumCalculat(plan, materiale, nr?)`, `parteExecutata(plan, material, nr)`,
+  `PRAG_PIERDERE` (0,1), `dinMarci(articol, cantitate, miscari, depozit)`.
+- În ecrane: `consumPlan(plan, stareDepozit)` și `santiereCuPierdere` din
+  `web/consum-vizual.ts`.
+
+**Deciziile, din date:**
+
+- **Pierderea la croit e consum, nu pierdere.** Necesarul o are deja (S15, S16:
+  tablă și plăci 10 %), resturile merg la reciclat (S43). Socotită pierdere,
+  tabla ar sta mereu la 10 % și pragul n-ar mai spune nimic. Deci o situație cu
+  tot executat consumă necesarul întreg, iar „rămas” = ce s-a trimis peste el.
+- **„10 % per total general”** (S42, răspunsul 6) e pe tot șantierul, pe
+  valoare: ml și m² nu se adună. Prețul e al intrărilor (S44), altfel cel din
+  ofertă. Pe material se vede și procentul lui.
+- **Necesarul micșorat după situații** nu scrie consum cu minus: corectura e la
+  inventar (Faza 7 / 8).
+- **Materialul clientului** (S38) și cel adăugat de mână pe necesar nu se
+  consumă din situații: n-au poziție în plan, respectiv nu sunt în stocul nostru.
+  Se notează de mână.
+- **Mutarea din browser**: situațiile intră fără consum, apoi, după mișcări,
+  consumul ultimei situații se completează (cel scris deja în browser are
+  aceleași id-uri și nu se dublează).
+
+**Pe drum:** indicatorul „Materiale de comandat” din Lucrări număra din stocul
+de acum: după o situație cu tot executat ar fi cerut din nou toate cele 12
+materiale TRANSAVIA. Acum e „rămas de comandat” ca în Depozit (necesar − adus −
+comandat nesosit).
+
+Migrarea **0011**: `miscare.situatie_id` (fără cheie străină: situația se
+șterge, consumul rămâne anulat) și `miscare_situatie_chk` (doar consumul o
+poartă). `POST /api/miscari` refuză o mișcare cu `situatieId`.
+
+Verificat cu Playwright pe `build:server` (8806, `izorep_f6`) și pe demo static
+(build-ul de Pages, servit separat): TRANSAVIA importată → „Creează șantierul” →
+material trimis = necesar + 2 pe fiecare din cele 12 → situație „Tot restul” →
+„Situația a scris consumul pe 12 materiale”, rămas 2 ml / 2 m² peste tot,
+pierdere 0 %, „Materiale de comandat” 0 → consum de mână 60 % din tabla de 0,8
+→ 20,3 %, „peste prag”, rândul în tabloul de bord → situația ștearsă → rămas =
+venit − consumul de mână. Pe server: 12 consumuri și 12 storno-uri în bază.
+Lucrări (cu și fără formularul deschis), Tablou, Depozit: 390 / 768 / 1440 /
+1920 px, ambele teme, zero derulare laterală, zero erori (pe demo, doar sonda
+`/api/stare`, care lipsește acolo).
+
+**Rămas:** închiderea șantierului, inventarul, costul față de ofertă (Faza 7)
+folosesc `consumSantier`; consumul pe zone / parcele (S40) nu e făcut — se
+calculează pe tot șantierul.
+
 ## 11 octombrie 2026 (noaptea): Faza 5, locurile, atelierul, transferurile
 
 Pe ramura `faza-5`. **557 de teste.** Totul în ecranul „Depozit și stoc”, trei

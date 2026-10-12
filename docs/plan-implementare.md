@@ -200,7 +200,20 @@ Ce a cerut faza:
 **Gata când:** pentru o bucată de tablă se vede drumul complet: furnizor,
 central, atelier, șantier.
 
-## Faza 6. Consumul
+## Faza 6. Consumul — făcută, 11 octombrie 2026
+
+Detaliile în `.claude/stare.md` (11 octombrie 2026, Faza 6). Pe scurt: situația
+salvată scrie consumul (necesarul × partea executată, cu pierderea la croit din
+necesar), ștearsă îl anulează cu storno; consumul de mână rămâne (și din
+Lucrări); consumul real = venit − întors − rămas, iar pierderea peste 10 % pe
+tot șantierul, pe valoare, apare la „Necesită atenția ta”. Testul „gata când”
+(`tests/consum.test.ts`): pe TRANSAVIA, trimis la ambalaj întreg, o situație cu
+tot executat lasă pe fiecare din cele 12 materiale exact restul ambalajului.
+Decis din date: pierderea la croit e consum, nu pierdere (S15, S16, S43);
+„10 % per total general” e pe valoare. Pentru Faza 7: `consumSantier` din
+`src/stoc/consum.ts`.
+
+Ce a cerut faza:
 
 1. **Consumul se calculează din situația de lucrări** (S7, răspunsul principal):
    executat × materialul poziției, scris automat ca mișcare „consum” la

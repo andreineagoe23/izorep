@@ -245,6 +245,18 @@ scrie responsabilul (centralul și atelierul se creează la nevoie; un șantier
 necunoscut, 404); `/api/date` îl întoarce în `StareDepozit.responsabili`.
 Tabla pusă deoparte în atelier e o `miscare` `transfer` cu `lucrare_id`.
 
+### Consumul din situații (Faza 6, 11 octombrie 2026)
+
+Migrarea 0011: `miscare.situatie_id` (text, fără cheie străină) și
+`miscare_situatie_chk` (doar `consum` o poartă). `POST /api/santiere/:id/situatii`
+scrie situația și, în aceeași tranzacție, consumul ei, calculat pe server din
+planul, necesarul și mișcările din bază (`consumDinSituatie`); răspunde
+`{ ok, consum }`. `DELETE …/situatii/:nr?id=` scrie storno-urile consumului, tot
+în tranzacție. Id-urile se fac din depozit, situație și articol, deci sunt
+aceleași cu ale browserului: retrimis sau mutat, consumul nu se dublează.
+`POST /api/miscari` refuză o mișcare cu `situatieId` (400). La mutare,
+situațiile intră fără consum, iar consumul ultimei se completează după mișcări.
+
 ## Ce lipsește
 
 - Conturile (scoase pe 10 octombrie 2026), jurnal de audit (cine a schimbat
