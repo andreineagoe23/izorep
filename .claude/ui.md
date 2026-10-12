@@ -675,6 +675,33 @@ s-a consumat cu N % mai mult material decât arată situațiile (normal până l
 10 %)”. În jurnalul din Depozit, consumul din situații n-are „Anulează”: se
 anulează ștergând situația.
 
+## Lucrări și tablou: închiderea șantierului (Faza 7, 11 octombrie 2026)
+
+Marcajul în `web/inchidere-vizual.ts` și `web/rapoarte-vizual.ts` (pure,
+testate); fără clase CSS noi.
+
+- **Pagina șantierului**, după antet: cardul „Materialul șantierului” (S9):
+  material, necesar, comandat, venit, pus, rămas, lipsește; dedesubt suma ca la
+  situație: „Costul materialului, până acum”, cu procentul din „În ofertă”.
+- După situații: „Închide șantierul” (pliat). Tabel: material, în registru,
+  numărat (câmp, implicit cât e în registru), unde pleacă (select: depozitul
+  central, atelierul, celelalte șantiere deschise; „Înapoi la <furnizor>” pentru
+  cei care l-au adus; pierdut, furat, reciclat). Deasupra, „De știut”: tabla
+  pusă deoparte în atelier pentru șantier și comenzile care n-au venit toate.
+  Prima apăsare verifică și cere confirmarea („Sigur închizi șantierul?”), a
+  doua închide; orice schimbare în formular cere din nou confirmarea. Pe
+  telefon select-ul are `width:100%; min-width:0` în linie (altfel `min-width:
+  13ch` din tabele îl scotea din rând).
+- **Închis**: în locul cardului de material, „Șantier închis pe …”, cu
+  „Materialul a costat X €”, procentul din ofertă, cât din cost e pierdere, și
+  tabelul pe material (venit, pus, înapoi sau mutat, la furnizor, pierdut sau
+  lipsă, cost). Dispar „Situație nouă”, ștergerea situației și a șantierului.
+  În listă, șantierul are eticheta „închis”.
+- **Tabloul**: „Necesită atenția ta” primește lipsa pe șantier și comenzile
+  nevenite de 7 zile (și, la unire, pierderea peste 10 % a Fazei 6); carduri
+  noi „Ultimele 7 zile pe șantiere” și „Șantiere închise”. Banii ascultă de
+  `vedeCosturi()`.
+
 ## Măsurători: notițele din carnet (29 septembrie 2026)
 
 `web/ecrane/santier.ts` (ruta `#/masuratori`; `#/santier` e alias), marcajul în

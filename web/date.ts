@@ -32,6 +32,7 @@ import { anuleazaConsumSituatie, consumDinSituatie } from "../src/stoc/consum.js
 import {
   ajustariInventar, intrareDePornire, valideazaInventar, type Inventar, type Pornire,
 } from "../src/stoc/inventar.js";
+import { miscariInchidere, valideazaInchidere, type RestNumarat } from "../src/lucrari/inchidere.js";
 import * as dep from "./depozit-local.js";
 import * as luc from "./lucrari-local.js";
 import * as of from "./oferte-local.js";
@@ -202,6 +203,29 @@ export function stergeUltimaSituatie(planId: string): string | null {
   }
   if (!luc.scriePlanuri(toate)) return "Browserul nu permite salvarea: modificarea se pierde la reîncărcare.";
   dep.scrieDepozit({ ...dep.citesteDepozit(), miscari: [...st.miscari, ...anulari] });
+  return null;
+}
+
+/**
+ * Inchiderea santierului (Faza 7): o operatie, ca receptia. Miscarile se fac
+ * aici, cu id-uri noi; serverul le recalculeaza din baza cu aceleasi id-uri si
+ * inchide santierul in aceeasi tranzactie. Intoarce motivul refuzului, sau null.
+ */
+export function inchideSantier(id: string, inventar: RestNumarat[], nume?: (cheie: string) => string): string | null {
+  const plan = citestePlanuri().find((p) => p.id === id);
+  if (!plan) return "Șantierul nu mai există.";
+  if (plan.inchis) return null;
+  const miscari = citesteDepozit().miscari;
+  const inc = { santier: id, inventar };
+  const gresit = valideazaInchidere(inc, miscari, nume);
+  if (gresit) return gresit;
+  const data = new Date().toISOString();
+  const noi = miscariInchidere(inc, miscari, idNou, data);
+  schimbaDepozit((s) => ({ ...s, miscari: [...s.miscari, ...noi] }));
+  const planuri = citestePlanuri().map((p) => (p.id === id ? { ...p, inchis: data } : p));
+  if (mod !== "server") { luc.scriePlanuri(planuri); return null; }
+  copie = { ...copie, planuri: clona(planuri) };
+  trimite(() => api(`/api/santiere/${enc(id)}/inchide`, "POST", { inventar, ids: noi.map((m) => m.id), data }));
   return null;
 }
 

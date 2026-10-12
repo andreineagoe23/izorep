@@ -54,7 +54,8 @@ export const LOCURI_PORNIRE: readonly string[] = [CENTRAL, ATELIER];
 export const estePornire = (m: Pick<Miscare, "tip" | "motiv">): boolean => m.tip === "intrare" && m.motiv === MOTIV_PORNIRE;
 
 /** Cantitățile se țin la centimetru (ml, m²), ca soldurile. */
-const r2 = (x: number): number => Math.round(x * 100) / 100;
+/** La miime, ca `miscare.cantitate` (numeric 14,3): la sutime, un rest de 10,125 ar lasa 0,005 in loc. */
+const r3 = (x: number): number => Math.round(x * 1000) / 1000;
 
 /* ------------------------------------------------------------- inventarul */
 
@@ -115,8 +116,8 @@ export function ajustariInventar(
   const out: Miscare[] = [];
   inv.numarat.forEach((l, i) => {
     const arata = sold.find((s) => s.depozit === inv.depozit && s.articol.cheie === l.articol.cheie)?.cantitate ?? 0;
-    const numarat = r2(l.cantitate);
-    const diferenta = r2(numarat - arata);
+    const numarat = r3(l.cantitate);
+    const diferenta = r3(numarat - arata);
     if (diferenta === 0) return;
     const cifra = (x: number): string => String(x).replace(".", ",");
     out.push({

@@ -21,6 +21,7 @@ import { tenant } from "../db/schema.js";
 import { optiuniModelDinMediu, ruteModel, type OptiuniModel } from "./model.js";
 import * as repo from "./repo.js";
 import { Refuz } from "./repo.js";
+import { inchideSantier } from "./inchidere.js";
 import type { Context, Stare } from "./contract.js";
 
 export const ANTET_CSRF = "x-izorep";
@@ -121,6 +122,19 @@ const InventarZ = z.object({
   numarat: z.array(z.object({ articol: ArticolZ, cantitate: z.number().nonnegative(), motiv: z.string().max(200).optional() })).min(1),
   motiv: z.string().max(200), nota: z.string().max(500).optional(), ids: z.array(Id).min(1), data: z.string(),
 });
+/** Inchiderea santierului (Faza 7): ce a numarat seful de lucrare si unde pleaca fiecare rest. */
+const DestinatieZ = z.discriminatedUnion("fel", [
+  z.object({ fel: z.literal("depozit"), depozit: Id }),
+  z.object({ fel: z.literal("furnizor"), furnizor: z.string().min(1) }),
+  z.object({ fel: z.enum(["pierdut", "furat", "reciclat"]) }),
+]);
+const InchidereZ = z.object({
+  inventar: z.array(z.object({
+    cheie: Id, scriptic: z.number(), numarat: z.number().nonnegative(),
+    destinatii: z.array(z.object({ unde: DestinatieZ, cantitate: z.number().positive() })),
+  })),
+  ids: z.array(Id), data: z.string(),
+});
 
 const MutareZ = z.object({
   cereri: z.array(CererePeFir), oferte: z.record(Obiect), planuri: z.array(Plan),
@@ -212,6 +226,12 @@ export function creeazaServer(o: OptiuniServer): Hono<Env> {
     const id = Id.parse(c.req.query("id"));
     await inTenant((tx, ctx) => repo.stergeSituatie(tx, ctx, c.req.param("id"), Number(c.req.param("nr")), id, new Date().toISOString()));
     return ok(c);
+  });
+
+  app.post("/api/santiere/:id/inchide", async (c) => {
+    const { inventar, ids, data } = InchidereZ.parse(await c.req.json());
+    const scrise = await inTenant((tx, ctx) => inchideSantier(tx, ctx, c.req.param("id"), inventar as never, ids, data));
+    return c.json({ scrise });
   });
 
   app.post("/api/miscari", async (c) => {

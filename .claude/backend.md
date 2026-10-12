@@ -273,6 +273,26 @@ server din mișcările din bază cu funcțiile din `src/stoc/inventar.ts`:
 `adaugaMiscare` refuză și pe `/api/miscari` o intrare „stoc de pornire” pe un
 șantier, ca regula S48 să nu se poată ocoli.
 
+### Închiderea șantierului (Faza 7, 11 octombrie 2026)
+
+Migrarea 0012: `santier.inchis_la`, plus trei trigger-e scrise de mână:
+`santier_inchis` (închis, nu se mai schimbă — nici planul, nici data — și nu se
+șterge), `situatie_santier_deschis` (nicio situație adăugată sau ștearsă pe un
+șantier închis) și `miscare_santier_deschis` (nicio mișcare cu `din` sau `spre`
+= depozitul șantierului închis; id-ul depozitului e id-ul șantierului).
+Intrările din central cu `lucrare_id` = șantierul rămân voie: factura lor poate
+veni după. Purjarea trece, ca la restul.
+
+`POST /api/santiere/:id/inchide` (`src/server/inchidere.ts`) primește
+inventarul (cheie, cât arăta registrul, numărat, destinații), id-urile și data;
+calculează mișcările din bază (`miscariInchidere`), le scrie, verifică stocul
+zero și pune `inchis_la`, totul într-o tranzacție. Un registru schimbat de când
+s-a numărat dă 409; trimisă din nou, nu face nimic. `adaugaMiscare` și
+`adaugaSituatie` refuză din aplicație, cu mesaj („Șantierul X e închis …”),
+înainte de trigger; o mișcare retrimisă, scrisă înainte de închidere, trece.
+`/api/date` întoarce `PlanSantier.inchis` din coloană; în `plan` (jsonb) nu
+intră.
+
 ## Ce lipsește
 
 - Conturile (scoase pe 10 octombrie 2026), jurnal de audit (cine a schimbat

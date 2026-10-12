@@ -68,15 +68,3 @@ export function cardConsum(c: ConsumSantier): string {
   </section>`;
 }
 
-/** Șantierele cu pierderea peste prag, pentru „Necesită atenția ta”. */
-export function santiereCuPierdere(planuri: readonly PlanSantier[], s: StareDepozit): { plan: PlanSantier; procent: number }[] {
-  return planuri.flatMap((p) => {
-    const c = consumPlan(p, s);
-    return c.pestePrag && c.pierdereProcent !== null ? [{ plan: p, procent: c.pierdereProcent }] : [];
-  });
-}
-
-/** Rândul din tabloul de bord. */
-export const textPierdere = (x: { plan: PlanSantier; procent: number }): string =>
-  `Pe șantierul <b>${esc(x.plan.denumire)}</b> s-a consumat cu <b>${cifra(x.procent)} %</b> mai mult material decât
-  arată situațiile (normal până la ${cifra(PRAG)} %).`;
