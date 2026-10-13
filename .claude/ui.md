@@ -265,6 +265,21 @@ Tot ce ține de depozit e best-effort. În fereastră privată sau cu stocarea
 blocată, fiecare apel eșuează tăcut și ecranul se poartă ca înainte. Istoricul e
 o comoditate; documentele adevărate vor sta în bază.
 
+## Importul în formatul ofertei (14 octombrie 2026)
+
+Decis de Andrei: pe pagină și la export, aceeași formă pentru orice cerere. La
+„Verificare”, vederea implicită e oferta (`web/import/oferta-vizual.ts`, din
+`documentOferta`): antetul ofertei (cu „Completează datele ofertei” spre pasul
+3), tabelul pe capitolele clientului cu subtotal, totalul cu discountul și
+nota. Pe fiecare rând, sub denumire: „Completat de noi: …” (în Excel cu roșu),
+„Excel: rândul N” și ce am înțeles; în dreapta starea și butonul care o
+rezolvă; editorul se deschide sub rând. Sub 980 px de document, fiecare poziție
+e un card cu aceleași câmpuri. Bara de deasupra: filtrele în stânga, „Mod de
+afișare: Ca în ofertă / Fișierul clientului” în dreapta, o pereche de mărimea
+tipului ofertei din antet (măsurat: 176 × 44, aceeași poziție). „Fișierul
+clientului” e grila de mai jos, cu taburile foilor. Lista de carduri veche
+(„Arată ca listă”) a ieșit: oferta pe telefon e deja carduri.
+
 ## Ecranul de import: trei pași
 
 Refăcut pe 13 septembrie 2026 pentru oamenii care îl folosesc — birou și
