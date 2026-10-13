@@ -1308,3 +1308,17 @@ main details.ajutor > .hint { margin: 0 0 8px; }
    pe telefon, „Responsabil” din „Locurile” iesea din card. */
 .tabelwrap td input:not([type="number"]):not([type="checkbox"]):not([type="radio"]) { width: 100%; min-width: 0; }
 .tabelwrap td select { max-width: 100%; }
+/* Un card pliat in alt card (recepția, returul) nu se lipeste de butoanele de deasupra. */
+.imp-card details.imp-card, .imp-card .imp-formular-butoane + details { margin-top: 12px; }
+
+/* Matricea de preturi pe telefon: cate trei grosimi pe rand, cu ø-ul ca titlu (era 7.000 px de pagina). */
+@container (max-width: 900px) {
+  .matrice table.stiva.lat th.diam::before { content: "ø "; font-weight: 400; color: var(--slab); }
+  .matrice table.stiva.lat td:not(:first-child) { flex: 1 1 26%; }
+  .matrice table.stiva.lat tr { padding: 10px 0; gap: 4px 12px; }
+}
+@container (max-width: 560px) {
+  .matrice table.stiva th.diam::before { content: "ø "; font-weight: 400; color: var(--slab); }
+  .matrice table.stiva td:not(:first-child) { flex: 1 1 26%; }
+  .matrice table.stiva tr { padding: 10px 0; gap: 4px 12px; }
+}
