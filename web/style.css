@@ -496,7 +496,7 @@ input, select, textarea {
 .strat { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 10px; }
 .strat select { flex: 1; }
 .strat .sterge {
-  flex: 0 0 auto; min-height: 40px; border: 1px solid var(--linie-tare); background: var(--panou);
+  flex: 0 0 auto; min-height: 44px; min-width: 44px; border: 1px solid var(--linie-tare); background: var(--panou);
   color: var(--text); border-radius: 8px; cursor: pointer; padding: 8px 13px; font: inherit;
 }
 .secundar {
@@ -1031,3 +1031,112 @@ button.filtru[aria-pressed="true"] .hint, button.filtru.activ .hint { color: inh
 .sant-nesigur { margin: 6px 0 0; }
 .sant-rand-nesigur > td { background: color-mix(in srgb, var(--atentie) 7%, var(--panou)); }
 .sant-zona .sant-actiuni { justify-content: flex-end; }
+
+/* ======================================================= sistemul comun
+ * 14 octombrie 2026, pentru demo (cerut de Andrei): aceleasi masuri pe toate
+ * ecranele, pentru oameni de birou si de santier, nu de IT. Regulile de aici
+ * vin la final ca sa bata variantele vechi, imprastiate pe ecrane.
+ *
+ *  - un singur card: 14 px colt, 20 px interior (16 pe telefon), 16 px intre carduri;
+ *  - titlul de card 17 px, textul de ajutor 14 px (13 px era greu de citit);
+ *  - orice control are cel putin 44 px: in formular, in tabel, in filtre;
+ *  - eticheta de stare e o pastila cu punct, nu un dreptunghi cu chenar: cu
+ *    chenar semana cu un buton si oamenii apasau pe „Ofertată”;
+ *  - stergerea nu e rosie: rosul inseamna doar eroare. A doua apasare confirma.
+ */
+:root { --gap: 16px; --colt: 14px; --pad: 20px; }
+
+.titlu-ecran h1 { font-size: 28px; font-weight: 700; }
+.titlu-ecran p { font-size: 16px; }
+
+.card, .imp-card { border-radius: var(--colt); }
+.card { padding: var(--pad); margin-bottom: var(--gap); }
+.card h2, .imp-card h2 { font-size: 17px; font-weight: 650; margin: 0 0 12px; letter-spacing: -0.005em; }
+main h2.sectiune { font-size: 17px; font-weight: 650; }
+.hint { font-size: 14px; line-height: 1.5; }
+.card > .hint, .imp-card > .hint { max-width: 100ch; }
+.nota { max-width: none; font-size: 14.5px; }
+
+/* Un tabel intr-un card: cardul e deja chenarul (Tablou, Liste de prețuri). */
+.card .tabelwrap { margin: 0; padding: 0; border: 0; border-radius: 0; box-shadow: none; background: none; }
+
+/* ---- cifrele de sus: o grila care umple randul, aliniata cu cardurile */
+.stats {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px; margin-bottom: var(--gap);
+}
+.stat { max-width: none; min-width: 0; padding: 16px 18px; border-radius: var(--colt); container-type: inline-size; }
+/* Suma nu se rupe („15.641,41 / €”): se micsoreaza cu cardul. */
+.stat b { font-size: clamp(18px, 12.5cqi, 28px); white-space: nowrap; font-weight: 700; line-height: 1.25; }
+.stat span { font-size: 14px; color: var(--text); margin-top: 6px; font-weight: 500; }
+.stat em { font-size: 13.5px; margin-top: 2px; }
+@media (max-width: 560px) {
+  .stats { grid-template-columns: 1fr 1fr; gap: 10px; }
+  /* Numar impar de cifre: ultima ia tot randul, nu sta singura pe jumatate. */
+  .stats > .stat:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .stat { padding: 14px; }
+}
+
+/* ---- eticheta de stare: pastila cu punct */
+.eticheta {
+  display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px 2px 8px; border: 0;
+  border-radius: 999px; font-size: 13px; font-weight: 600; line-height: 1.6;
+}
+.eticheta::before { content: ""; flex: none; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.ton-neutru { background: var(--panou-2); color: var(--slab); border: 0; }
+.ton-ok { background: color-mix(in srgb, var(--ok) 13%, var(--panou)); border: 0; }
+.ton-atentie { background: color-mix(in srgb, var(--atentie) 15%, var(--panou)); border: 0; }
+
+/* ---- controalele: 44 px peste tot */
+input, select, textarea { min-height: 44px; }
+.secundar, .chip, button.filtru { min-height: 44px; border-radius: 10px; }
+.chip, button.filtru { border-radius: 999px; padding: 8px 16px; }
+.secundar { padding: 10px 18px; font-size: 15px; }
+.tabelwrap input, .tabelwrap select { min-height: 44px; padding: 6px 10px; font-size: 15px; border-radius: 8px; }
+.legatura { min-height: 44px; }
+/* Stergerea: neutra, subliniata; a doua apasare („Sigur ștergi?”) e ingrosata. */
+.legatura.pericol { color: var(--text); font-weight: 600; }
+.ca-link { min-height: 44px; display: inline-flex; align-items: center; }
+.filtre { gap: 8px; }
+
+/* ---- sectiunile pliate: acelasi aspect peste tot */
+main details > summary {
+  display: flex; align-items: center; gap: 10px; min-height: 44px; cursor: pointer;
+  font-weight: 600; list-style: none;
+}
+main details > summary::-webkit-details-marker { display: none; }
+main details > summary::before {
+  content: ""; flex: none; width: 8px; height: 8px; margin: 0 4px 0 2px;
+  border-right: 2px solid var(--slab); border-bottom: 2px solid var(--slab);
+  transform: rotate(-45deg); transition: transform .15s ease;
+}
+main details[open] > summary::before { transform: rotate(45deg); }
+main details.imp-card[open] > summary { margin-bottom: 12px; }
+@media (prefers-reduced-motion: reduce) { main details > summary::before { transition: none; } }
+
+/* ---- tabelele pe telefon: fiecare rand e un card cu titlu */
+@container (max-width: 560px) {
+  table.stiva tr { gap: 8px 16px; padding: 14px 0; }
+  table.stiva td:first-child { flex-basis: 100%; font-weight: 600; }
+  table.stiva td:first-child[data-eticheta]::before { display: none; }
+  table.stiva td.n, table.stiva td.fix { text-align: left; white-space: normal; }
+}
+@container (max-width: 900px) {
+  table.stiva.lat tr { gap: 8px 16px; padding: 14px 0; }
+  table.stiva.lat td:first-child { flex-basis: 100%; font-weight: 600; }
+  table.stiva.lat td:first-child[data-eticheta]::before { display: none; }
+  table.stiva.lat td.n, table.stiva.lat td.fix { text-align: left; white-space: normal; }
+}
+
+/* ---- antetul: pe telefon, numele aplicatiei langa butonul de meniu */
+.antet-marca { display: none; font-weight: 700; font-size: 16px; letter-spacing: -0.01em; }
+.antet-marca span { font-weight: 400; color: var(--slab); font-size: 14px; margin-left: 6px; }
+@media (max-width: 860px) {
+  .antet-marca { display: block; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .continut > header { gap: 12px; }
+}
+@media (max-width: 560px) {
+  :root { --pad: 16px; }
+  main { padding-top: 20px; }
+  .titlu-ecran h1 { font-size: 24px; }
+}
