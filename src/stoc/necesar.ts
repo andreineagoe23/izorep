@@ -185,6 +185,25 @@ export const cheieFaraForma = (sistem: string, grosime: number | null, rand: num
 
 const rotunjit = (n: number): number => Math.round((n + Number.EPSILON) * 100) / 100;
 
+/**
+ * Valorile la ban, cu suma egala cu suma exacta rotunjita o data (resturile
+ * cele mai mari primesc banul). Rotunjite fiecare, materialele TRANSAVIA
+ * adunau un ban peste oferta, iar santierul arata „15.641,41 €” sus si
+ * „din 15.641,42 € în ofertă” dedesubt.
+ */
+function laBani(exacte: readonly number[]): number[] {
+  const bani = exacte.map((v) => Math.round((v + Number.EPSILON) * 100));
+  let rest = Math.round((exacte.reduce((t, v) => t + v, 0) + Number.EPSILON) * 100) - bani.reduce((t, v) => t + v, 0);
+  const ordine = exacte.map((v, i) => ({ i, r: v * 100 - bani[i]! }))
+    .sort((a, b) => (rest > 0 ? b.r - a.r : a.r - b.r));
+  for (const { i } of ordine) {
+    if (rest === 0) break;
+    bani[i]! += Math.sign(rest);
+    rest -= Math.sign(rest);
+  }
+  return bani.map((c) => c / 100);
+}
+
 /** m² pe metru liniar pentru un strat de grosime g pus pe φ: formula firmei, rotunjita la 2 zecimale. */
 export const m2PeMetru = (fi: number, grosime: number): number => rotunjit(((fi + 2 * grosime) / 1000) * PI_FIRMA);
 
@@ -295,13 +314,14 @@ export function necesarDinLinii(linii: LinieProcesata[], o: OptiuniNecesar = {})
     }
   }
 
+  const valori = laBani([...acc.values()].map((m) => m.valoareOferta));
   const materiale = [...acc.values()]
-    .map(({ brutMl, brutM2, pe, ...m }): MaterialNecesar => {
+    .map(({ brutMl, brutM2, pe, ...m }, i): MaterialNecesar => {
       const f = 1 + m.pierdere;
       const m2 = rotunjit(brutM2 * f);
       const kgPeMp = KG_PE_MP_PE_MM[m.sistem];
       return {
-        ...m, ml: rotunjit(brutMl * f), m2, valoareOferta: rotunjit(m.valoareOferta),
+        ...m, ml: rotunjit(brutMl * f), m2, valoareOferta: valori[i]!,
         pePozitie: [...pe].map(([pozitie, peUnitate]) => ({ pozitie, peUnitate: Math.round(peUnitate * 10000) / 10000 })),
         ...(kgPeMp !== undefined && m.grosime_mm !== null ? { kg: rotunjit(m2 * kgPeMp * m.grosime_mm) } : {}),
       };
