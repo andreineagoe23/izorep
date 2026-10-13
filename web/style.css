@@ -1295,3 +1295,16 @@ main details.ajutor > .hint { margin: 0 0 8px; }
 
 /* Masuratori: scopul (trei butoane) ia ~70 %, tipul ofertei sau santierul ~30 %. */
 @container imp (min-width: 620px) { .imp-campuri.sant-sus { grid-template-columns: var(--imp-coloane); align-items: start; } }
+
+/* „Sari la”: secțiunile unei pagini lungi (Depozit și stoc), ca butoane, nu ca linkuri:
+   rutarea e pe hash, iar un link „#sec-stoc” ar schimba ecranul. */
+.sari-la { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.sari-la .hint { margin-right: 4px; }
+.sectiune-pagina { scroll-margin-top: 16px; display: grid; gap: var(--imp-gap); }
+.sectiune-pagina:empty { display: none; }
+.sectiune-pagina h2:focus { outline: none; }
+
+/* Un camp de text intr-un tabel ia latimea celulei, nu 20 de caractere fixe:
+   pe telefon, „Responsabil” din „Locurile” iesea din card. */
+.tabelwrap td input:not([type="number"]):not([type="checkbox"]):not([type="radio"]) { width: 100%; min-width: 0; }
+.tabelwrap td select { max-width: 100%; }
