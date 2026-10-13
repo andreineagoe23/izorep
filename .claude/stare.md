@@ -1,7 +1,25 @@
 # Stare curentă
 
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
-> Ultima actualizare: 12 octombrie 2026.
+> Ultima actualizare: 13 octombrie 2026.
+
+## 13 octombrie 2026: primul deploy merge și fără `CREATEROLE`
+
+R0 și R1 din `docs/plan-pana-la-render.md`. **613 teste.**
+
+- **Proba ca o comandă:** `npm run ca-pe-render`, cu `--fara-createrole`,
+  `--teste`, `--fara-server`, `--opreste`.
+- **0002** creează `izorep_app` doar dacă proprietarul are voie; altfel
+  aplicația intră cu proprietarul (`alegeAplicatia`). Logul serverului spune
+  care variantă e.
+- **Garda** (`verificaRolul`): serverul nu pornește cu un rol care ocolește
+  RLS.
+- **Bug din 0006, găsit de probă, reparat în 0013:** `purjare_permisa`
+  întorcea NULL pentru proprietar, deci trigger-ele cu `NOT` nu-l opreau:
+  planul înghețat și lista de prețuri activă se puteau schimba din `psql`.
+
+Pe probă trec ambele variante. Fără `CREATEROLE`, un singur test se sare:
+purjarea rezervată altui rol decât aplicația, care acolo e proprietarul.
 
 ## 12 octombrie 2026 (seara): pregătit pentru Render
 

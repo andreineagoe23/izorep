@@ -11,7 +11,9 @@
  *
  * Variabile, toate cu implicit pentru local:
  *   DATABASE_URL   conexiunea, cu rolul izorep_app (NOBYPASSRLS), niciodata proprietarul;
- *                  pe Render se compune din DATABASE_URL_PROPRIETAR + IZOREP_APP_PAROLA
+ *                  pe Render se compune din DATABASE_URL_PROPRIETAR + IZOREP_APP_PAROLA,
+ *                  sau e chiar proprietarul, cand baza n-are izorep_app (fara CREATEROLE);
+ *                  un rol care ocoleste RLS (superuser, BYPASSRLS) e refuzat
  *   PORT           8787
  *   HOST           127.0.0.1
  *   IZOREP_PAROLA  parola comuna pe site; obligatorie cand HOST nu e local
@@ -21,7 +23,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { serve } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
-import { conecteaza } from "../db/client.js";
+import { alegeAplicatia, conecteaza, verificaRolul } from "../db/client.js";
 import { tenant } from "../db/schema.js";
 import { creeazaServer } from "./app.js";
 import { optiuniModelDinMediu } from "./model.js";
@@ -37,7 +39,17 @@ if (!local && !parola) {
   console.error(`HOST=${host} deschide serverul in afara calculatorului, iar fara conturi asta cere parola comuna: pune IZOREP_PAROLA.`);
   process.exit(1);
 }
-const { db } = conecteaza();
+const aplicatia = await alegeAplicatia();
+const { db } = conecteaza(aplicatia.url);
+try {
+  const rol = await verificaRolul(db);
+  console.log(aplicatia.cuProprietarul
+    ? `Baza: aplicatia intra cu proprietarul (${rol}); izorep_app nu exista, separarea firmelor o tine RLS-ul fortat`
+    : `Baza: aplicatia intra ca ${rol}`);
+} catch (e) {
+  console.error(e instanceof Error ? e.message : String(e));
+  process.exit(1);
+}
 
 /** Firma servita: din `TENANT_ID`, sau singura din baza. Cu mai multe, trebuie spus care. */
 async function firmaServita(): Promise<{ id: string; denumire: string }> {

@@ -50,6 +50,45 @@ export function urlAplicatie(mediu: NodeJS.ProcessEnv = process.env): string {
 }
 
 /**
+ * Adresa aplicatiei, la pornirea serverului. Ca `urlAplicatie`, cu o
+ * exceptie: pe o baza unde proprietarul n-a avut `CREATEROLE`, migrarea 0002
+ * n-a creat `izorep_app`, iar aplicatia intra cu proprietarul. Se afla din
+ * baza, nu dintr-o variabila: primul deploy pe Render merge in ambele cazuri,
+ * fara nimic de setat.
+ */
+export async function alegeAplicatia(
+  mediu: NodeJS.ProcessEnv = process.env,
+): Promise<{ url: string; cuProprietarul: boolean }> {
+  const proprietar = mediu["DATABASE_URL_PROPRIETAR"];
+  if (mediu["DATABASE_URL"] || !proprietar) return { url: urlAplicatie(mediu), cuProprietarul: false };
+  const p = postgres(proprietar, { max: 1, onnotice: () => {} });
+  try {
+    const [r] = await p<{ exista: boolean }[]>`select exists (select 1 from pg_roles where rolname = 'izorep_app') as exista`;
+    if (r?.exista && mediu["IZOREP_APP_PAROLA"]) return { url: urlAplicatie(mediu), cuProprietarul: false };
+    return { url: proprietar, cuProprietarul: true };
+  } finally {
+    await p.end();
+  }
+}
+
+/**
+ * Garda RLS: un rol care e superuser sau are BYPASSRLS ocoleste politicile
+ * (migrarea 0002), deci cu el separarea firmelor ar fi decor. Serverul nu
+ * porneste asa, oricare ar fi adresa care a dus la el.
+ */
+export async function verificaRolul(db: Baza): Promise<string> {
+  const [r] = await db.execute(sql`
+    select current_user as rol, rolsuper as superuser, rolbypassrls as ocoleste
+    from pg_roles where rolname = current_user`) as unknown as { rol: string; superuser: boolean; ocoleste: boolean }[];
+  if (!r) throw new Error("Rolul conexiunii nu se gaseste in pg_roles.");
+  if (r.superuser || r.ocoleste) {
+    throw new Error(`Aplicatia s-ar conecta ca ${r.rol}, care ${r.superuser ? "e superuser" : "are BYPASSRLS"}: ` +
+      "ar ocoli separarea firmelor (RLS). Foloseste izorep_app sau un proprietar fara aceste drepturi.");
+  }
+  return r.rol;
+}
+
+/**
  * Conexiunea la baza.
  *
  * `transform` nu e pus deliberat: driverul `postgres` intoarce coloanele

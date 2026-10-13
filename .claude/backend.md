@@ -303,6 +303,18 @@ parola rolului după migrări. Proprietarul de pe Render nu e superuser: cu
 `FORCE ROW LEVEL SECURITY` e și el supus politicilor (verificat pe o bază de
 probă). Are însă nevoie de `CREATEROLE` pentru 0002.
 
+**Fără `CREATEROLE`** (13 octombrie 2026): 0002 sare crearea rolului, iar
+`alegeAplicatia` vede din bază că `izorep_app` lipsește și dă aplicației
+adresa proprietarului. Fără nimic de configurat. `verificaRolul` refuză
+pornirea cu un rol superuser sau cu `BYPASSRLS`, oricare ar fi adresa.
+Proba: `npm run ca-pe-render [-- --fara-createrole] [--teste]`
+(`scripts/ca-pe-render.sh`, Postgres 18 pe 5434, serverul pe 8799).
+
+**0013:** `purjare_permisa` întorcea NULL pentru orice rol în afară de
+`izorep_app` fără `app.purjare`, deci `NOT purjare_permisa(...)` nu refuza
+nimic. Trigger-ele cu `IF purjare_permisa(...)` erau corecte; cele cu `NOT`
+(planul înghețat, lista activă) nu opreau proprietarul. Acum `coalesce(…, false)`.
+
 Parola comună (`src/server/parola.ts`): Basic Auth pe tot site-ul, din
 `IZOREP_PAROLA`. `GET /api/viu` rămâne deschisă, pentru verificarea lui
 Render. `porneste.ts` refuză un `HOST` deschis fără parolă.

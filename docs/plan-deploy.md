@@ -116,8 +116,10 @@ Pe ramura `render`; restul e configurare pe Render.
 **Proba „ca pe Render”, făcută local** pe un Postgres 18 nou, cu un
 proprietar fără drepturi depline:
 
-- **fără `CREATEROLE`**, migrarea 0002 pică: nu poate crea `izorep_app`;
-- **cu `CREATEROLE`**, totul merge: migrările, seed-ul și cele 610 teste, cu
+- **fără `CREATEROLE`**, migrarea 0002 pica pe 12 octombrie: nu putea crea
+  `izorep_app`. Din 13 octombrie sare rolul, iar aplicația intră cu
+  proprietarul (pasul B);
+- **cu `CREATEROLE`**, totul merge: migrările, seed-ul și toată suita, cu
   baza obligatorie;
 - aplicația intră ca `izorep_app`; fără context de firmă vede 0 liste de
   prețuri, iar proprietarul la fel (`FORCE ROW LEVEL SECURITY`);
@@ -134,17 +136,31 @@ ro-RO de local nu contează (nicio ordonare de text nu se face în bază).
 pe Pages (`pages.yml`) și ștergem site-ul. Până atunci, linkul să nu mai fie
 trimis nimănui. Gata când: `andreineagoe23.github.io/izorep` dă 404.
 
-**B. Baza.** Postgres 18 în Frankfurt. Primul lucru de verificat: utilizatorul
-dat de Render poate face `CREATE ROLE`? Migrarea 0002 are nevoie de asta.
-- Dacă da: merge ca în proba locală (mai sus).
-- Dacă nu: 0002 pică (verificat local). Atunci 0002 trebuie să sară crearea
-  rolului, iar aplicația intră cu utilizatorul Render. Proba locală arată că un
-  proprietar fără drepturi depline e supus RLS, deci izolarea ține și așa.
-  Costă câteva ore; alternativa e Railway.
+**B. Baza.** Postgres 18 în Frankfurt. Utilizatorul dat de Render poate face
+`CREATE ROLE`? Din 13 octombrie primul deploy merge în ambele cazuri; logul
+serverului spune care e:
+- **Da:** aplicația intră ca `izorep_app` („Baza: aplicatia intra ca
+  izorep_app”).
+- **Nu:** 0002 sare crearea rolului, iar aplicația intră cu proprietarul
+  („… intra cu proprietarul”). Proprietarul de pe Render nu e superuser, deci
+  e supus RLS. Serverul refuză să pornească dacă rolul cu care ar intra e
+  superuser sau are `BYPASSRLS` (`verificaRolul`).
+
+Ambele verificate pe proba ca pe Render (`npm run ca-pe-render`, cu și fără
+`--fara-createrole`): migrările, seed-ul și suita trec. Fără `CREATEROLE` un
+singur test se sare, cel care cere ca purjarea să fie interzisă aplicației:
+acolo aplicația e chiar proprietarul.
+
+Proba fără `CREATEROLE` a găsit un bug din 0006: `purjare_permisa` întorcea
+NULL pentru proprietar, deci trigger-ele scrise cu `NOT purjare_permisa(...)`
+nu-l mai opreau. Proprietarul putea schimba planul unui șantier cu situații și
+putea șterge o listă de prețuri activă. Reparat în 0013, cu test.
 
 Gata când: suita, rulată de pe laptop cu `DATABASE_URL_PROPRIETAR` și
 `IZOREP_APP_PAROLA` de pe Render și `IZOREP_CERE_BAZA=1`, trece, inclusiv
-testul care pică dacă izolarea nu ține.
+testul care pică dacă izolarea nu ține. Dacă logul spune „cu proprietarul”,
+se pune și `DATABASE_URL` = adresa proprietarului, ca testele să intre ca
+serverul.
 
 **C. Serverul.** Din `render.yaml`, legat de `main`. Gata când: Adrian
 deschide linkul pe laptopul lui, fără Docker, intră cu parola, importă cererea

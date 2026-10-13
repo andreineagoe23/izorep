@@ -26,6 +26,9 @@ const app$ = conecteaza();
 const prop = conecteaza(URL_PROPRIETAR);
 const disponibila = bazaDisponibila(await app$.db.execute(sql`select 1`).then(() => true, () => false), "testele serverului");
 const daca = () => (disponibila ? it : it.skip);
+const aplicatiaEProprietarul = disponibila && await app$.db.execute(sql`
+  select current_user = (select tableowner from pg_tables where tablename = 'miscare') as e`)
+  .then((r) => (r as unknown as { e: boolean }[])[0]!.e);
 
 const sufix = Date.now();
 let tenantA = "";
@@ -130,10 +133,15 @@ describe("ce nu se mai schimbă", () => {
     await expect(caTenant(app$.db, tenantA, (tx) => tx.update(miscare).set({ cantitate: "1" }).where(sql`id = 'imu-m1'`)))
       .rejects.toThrow();
     await expect(caTenant(app$.db, tenantA, (tx) => tx.delete(miscare).where(sql`id = 'imu-m1'`))).rejects.toThrow();
-    // Nici cu setarea de purjare pusa de aplicatie: e rezervata proprietarului.
+  });
+
+  // Fara `izorep_app` (baza unde proprietarul n-a avut CREATEROLE, 0002),
+  // aplicatia E proprietarul: purjarea nu se mai poate rezerva unui alt rol.
+  (aplicatiaEProprietarul ? it.skip : daca())("purjarea e rezervată proprietarului, nici cu setarea pusă de aplicație", async () => {
+    await cere("/api/miscari", "A", { method: "POST", body: miscareMica("imu-p1") });
     await expect(caTenant(app$.db, tenantA, async (tx) => {
       await tx.execute(sql`select set_config('app.purjare', ${tenantA}, true)`);
-      await tx.delete(miscare).where(sql`id = 'imu-m1'`);
+      await tx.delete(miscare).where(sql`id = 'imu-p1'`);
     })).rejects.toThrow();
   });
 

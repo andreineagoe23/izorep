@@ -12,7 +12,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { bazaDisponibila } from "./conditii.js";
 import { eq, sql } from "drizzle-orm";
-import { caTenant, conecteaza, type Baza } from "../src/db/client.js";
+import { caTenant, conecteaza, URL_PROPRIETAR, verificaRolul, type Baza } from "../src/db/client.js";
 import { client, listaPreturi, tenant } from "../src/db/schema.js";
 import { catalogDinBaza, ListaLipsa } from "../src/db/repo-preturi.js";
 import { serieDiametre } from "../src/db/schema.js";
@@ -105,6 +105,21 @@ describe("izolarea intre tenanti e in baza, nu in cod", () => {
         tx.insert(client).values({ tenantId: tenantB, denumire: "furisat" })),
     ).rejects.toThrow();
   });
+
+  daca()("serverul nu pornește cu un rol care ocolește RLS", async () => {
+    // Conexiunea testelor e cea a aplicatiei: trebuie sa treaca garda.
+    await expect(verificaRolul(db)).resolves.toBeTypeOf("string");
+    // Proprietarul local e superuser (imaginea Docker): garda il refuza. Pe
+    // proba ca pe Render nu e, deci acolo trece — exact ce decide garda.
+    const prop = conecteaza(URL_PROPRIETAR);
+    try {
+      const [r] = await prop.db.execute(sql`select rolsuper or rolbypassrls as ocoleste from pg_roles where rolname = current_user`) as unknown as { ocoleste: boolean }[];
+      if (r!.ocoleste) await expect(verificaRolul(prop.db)).rejects.toThrow(/ocoli separarea firmelor/);
+      else await expect(verificaRolul(prop.db)).resolves.toBeTypeOf("string");
+    } finally {
+      await prop.inchide();
+    }
+  });
 });
 
 describe("lista de preturi e imutabila dupa activare", () => {
@@ -152,6 +167,24 @@ describe("lista de preturi e imutabila dupa activare", () => {
     }).catch((e) => {
       if (!/duplicate key|unique/i.test(String(e))) throw e;
     });
+  });
+
+  daca()("nici proprietarul nu șterge o listă activă fără purjare", async () => {
+    // Pana la 0013, `NOT purjare_permisa(...)` era NULL pentru orice rol in
+    // afara de izorep_app, deci trigger-ul lasa proprietarul sa stearga.
+    const prop = conecteaza(URL_PROPRIETAR);
+    try {
+      await expect(caTenant(prop.db, tenantA, async (tx) => {
+        const [l] = await tx.insert(listaPreturi).values(listaDeProba("activa")).returning();
+        await tx.delete(listaPreturi).where(eq(listaPreturi.id, l!.id));
+        throw new Error("trigger-ul a lasat proprietarul sa stearga lista activa");
+      }).catch((e: unknown) => {
+        // drizzle pune mesajul bazei in `cause`, nu in mesajul erorii.
+        throw new Error(String((e as { cause?: unknown }).cause ?? e));
+      })).rejects.toThrow(/nu se sterge/);
+    } finally {
+      await prop.inchide();
+    }
   });
 });
 

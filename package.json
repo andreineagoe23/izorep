@@ -21,6 +21,7 @@
     "db:reset": "docker compose down -v && docker compose up -d && sleep 4 && npm run db:migrate && npm run db:seed",
     "db:generate": "drizzle-kit generate",
     "db:psql": "docker compose exec db psql -U izorep -d izorep",
+    "ca-pe-render": "bash scripts/ca-pe-render.sh",
     "import": "tsx src/import/cli.ts",
     "price": "tsx src/pricing/cli.ts",
     "compara": "tsx scripts/compara-modele.ts",

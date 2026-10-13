@@ -39,7 +39,7 @@ scripturi, doar cu adresa Render.
 Ordinea e ordinea în care le facem. Fiecare are un „gata când” care se poate
 verifica fără Render.
 
-### R0. Push și proba ca o comandă — marți
+### R0. Push și proba ca o comandă — făcut, 13 octombrie
 
 - Push pe `main`. CI-ul de pe GitHub rulează suita cu baza obligatorie;
   trebuie să fie verde înainte de primul deploy (`autoDeployTrigger:
@@ -50,7 +50,11 @@ verifica fără Render.
 **Gata când:** CI verde pe `main`; o singură comandă dă serverul gata de
 deschis, în ambele variante.
 
-### R1. Primul deploy merge și fără `CREATEROLE` — marți
+### R1. Primul deploy merge și fără `CREATEROLE` — făcut, 13 octombrie
+
+Pe probă trec ambele variante. Proba fără `CREATEROLE` a găsit și un bug
+vechi, reparat în 0013: trigger-ele scrise cu `NOT purjare_permisa(...)` nu
+opreau proprietarul. Detalii în `plan-deploy.md`, pasul B.
 
 Varianta de rezervă din `plan-deploy.md`, pasul B, făcută acum, nu la
 deploy:
@@ -63,9 +67,9 @@ deploy:
 - **Aplicația** intră cu `izorep_app` dacă rolul există. Altfel intră cu
   proprietarul și scrie asta în log. Nu e nimic de configurat.
 - **Garda:** dacă utilizatorul cu care intră aplicația e superuser sau are
-  `BYPASSRLS`, serverul refuză să pornească cu `HOST=0.0.0.0`. Cu un astfel de
-  utilizator, separarea firmelor e doar decor (vezi comentariul din 0002).
-  Local, cu `127.0.0.1`, merge ca acum.
+  `BYPASSRLS`, serverul refuză să pornească, oriunde ar asculta. Cu un astfel
+  de utilizator, separarea firmelor e doar decor (vezi comentariul din 0002).
+  Local aplicația intră oricum ca `izorep_app`, deci nu se schimbă nimic.
 
 **Gata când:** pe proba fără `CREATEROLE`, migrările, seed-ul și suita trec,
 inclusiv testul care pică dacă izolarea nu ține. Pe proba cu `CREATEROLE`
