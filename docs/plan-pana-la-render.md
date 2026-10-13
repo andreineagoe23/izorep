@@ -105,33 +105,40 @@ oprește odată cu Render.
 - în pachetul construit cu `build:server` nu apare „TRANSAVIA”. Asta
   verifică și că datele firmei nu mai pleacă în pagină.
 
-### R3. Starea de demo — miercuri
+### R3. Starea de demo — făcut, 13 octombrie
 
-`npm run demo -- <adresa bazei>`, rulat de pe laptopul nostru, unde sunt
-fișierele clienților. Conținutul e cel din `plan-demo.md`, direcția 2:
+`npm run demo -- <adresa bazei, ca proprietar>` (`scripts/demo.ts`), rulat de pe
+laptopul nostru, unde sunt fișierele clienților. Fără adresă, lucrează pe baza
+locală. **Golește întâi datele firmei**, deci e și resetarea: tot ce s-a lucrat
+pe baza aceea, în afară de listele de prețuri, furnizori, clienți și cele două
+depozite, dispare.
 
-- Oferta 284 (TRANSAVIA), Matari și NISAL, salvate ca oferte;
-- șantierul TRANSAVIA, cu:
-  - o comandă trimisă și recepționată din avizul ISOLINE;
-  - o situație cu consumul ei;
-  - o comandă nevenită de peste 7 zile, care dă alerta de pe tablou;
-- un șantier închis, cu costul față de ofertă;
-- stocul de pornire în central și o bucată de tablă pusă deoparte în atelier;
-- o pagină din carnet deja citită, pentru cazul în care modelul e lent la
-  demo.
+Scrie prin stratul de date al browserului (`web/date.ts`), legat de serverul
+pornit în proces. Fiecare pas trece deci prin aceleași funcții și verificări
+ca un clic pe ecran. Cronologia e relativă la ziua rulării:
 
-Cum lucrează:
-- Scrie prin funcțiile din `src/server/repo.ts`, în contextul firmei, deci
-  trece prin aceleași verificări ca serverul.
-- Întâi golește datele firmei, fără listele de prețuri, deci e și resetarea.
-  Golirea se face ca proprietar, cu `app.purjare` (0006), singura cale pe
-  care trigger-ele lasă ștergerea în tabelele care nu se modifică.
+| Ce | Cifra |
+|---|---|
+| Ofertele 118 (NISAL), 118.1 (Matari), 284 (TRANSAVIA, cu 3 % discount) | 163.979,93 · 12.692,04 · 91.737,81 € (284: 94.575,06 € înainte de discount) |
+| TRANSAVIA: comanda ISOLINE ø140 × 50, avizul CS 20261262 și factura CS 202627295 atașate | 350 ml, 39,7719 lei / 5,31 |
+| TRANSAVIA: tabla pentru zona 1 mutată din central, prima situație, consumul scris singur | 260 m² · 15.795,19 € · 17 % |
+| TRANSAVIA: restul tablei comandat la Banda Tech, nevenit | alerta „n-a venit de 9 zile” |
+| NISAL (XXXLutz + Momax), închis: comandat, primit pe facturi, executat tot, restul în central | cost material ~22 % din ofertă |
+| Stocul de pornire în central; tabla pusă deoparte în atelier pentru TRANSAVIA | 400 m² tablă 0,8 · 12 m² |
 
-**Gata când:**
-- rulat de două ori pe probă, dă aceeași stare: aceleași rânduri, fără
-  dubluri;
-- tabloul arată cifrele care vor intra în firul demo-ului;
-- importul TRANSAVIA dă 94.575,06 €.
+Prețurile de cumpărare sunt cele din evidența firmei. Unde firma n-a cumpărat
+chiar articolul (tabla de 0,6, cochilia ø114 × 40), scriptul ia cel mai
+apropiat articol cumpărat. Pe proba ca pe Render: `npm run ca-pe-render --
+--demo`.
+
+Verificat pe probă:
+- rulat de două ori, dă aceeași stare (rezumatul pe tabele e identic);
+- tabloul arată cifrele de mai sus;
+- toate ecranele merg fără erori și fără derulare laterală, la 1440 și 390 px;
+- cererea TRANSAVIA, redeschisă în Import, dă 94.575,06 €.
+
+**Mutat la R4:** „o pagină din carnet deja citită”. Paginile în lucru din
+Măsurători nu stau în bază, ci în browser, deci intră odată cu păstrarea lor.
 
 ### R4. Măsurătorile nu se pierd la reîncărcare — miercuri, în paralel
 
@@ -219,7 +226,8 @@ Tot ce rămâne, în ordine. Cam trei ore, dacă R0–R8 sunt gata.
 4. `npm run db:seed`, din consola serviciului.
 5. De pe laptop, cu adresa externă a bazei Render:
    - `tests/db.test.ts`, cu `IZOREP_CERE_BAZA=1`; trece și testul de izolare;
-   - `npm run demo -- <adresa>` (R3).
+   - `npm run demo -- <adresa externă a bazei>` (R3). Golește întâi datele
+     firmei de pe Render.
 6. Parcurgerea (R7) și ofertele semnate (R8), cu adresa Render. Aici se vede
    și dacă Render taie o poză din carnet.
 7. Backup: o restaurare de ieri deschide oferta de ieri.

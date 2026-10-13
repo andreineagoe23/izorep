@@ -7,6 +7,7 @@
 #   npm run ca-pe-render                        cu CREATEROLE: aplicatia intra ca izorep_app
 #   npm run ca-pe-render -- --fara-createrole   fara: aplicatia intra cu proprietarul (R1)
 #   npm run ca-pe-render -- --teste             ruleaza si suita pe baza asta, apoi porneste serverul
+#   npm run ca-pe-render -- --demo              pune si starea de demo (npm run demo)
 #   npm run ca-pe-render -- --fara-server       doar baza (si testele)
 #   npm run ca-pe-render -- --opreste           sterge containerul
 #
@@ -20,11 +21,12 @@ PORT_BAZA=5434
 PORT_SERVER=${PORT_SERVER:-8799}
 PAROLA_SITE=${IZOREP_PAROLA:-demo}
 
-createrole=1 teste=0 server=1
+createrole=1 teste=0 server=1 demo=0
 for a in "$@"; do
   case "$a" in
     --fara-createrole) createrole=0 ;;
     --teste) teste=1 ;;
+    --demo) demo=1 ;;
     --fara-server) server=0 ;;
     --opreste) docker rm -f "$CONTAINER" >/dev/null 2>&1 || true; echo "Proba oprita."; exit 0 ;;
     *) echo "Nu stiu ce e $a" >&2; exit 2 ;;
@@ -59,6 +61,8 @@ if [ "$teste" = 1 ]; then
   IZOREP_CERE_BAZA=1 npx vitest run
   unset DATABASE_URL
 fi
+
+[ "$demo" = 1 ] && npm run -s demo -- "$DATABASE_URL_PROPRIETAR"
 
 [ "$server" = 1 ] || { echo "Baza ramane pornita: $DATABASE_URL_PROPRIETAR"; exit 0; }
 

@@ -3,6 +3,21 @@
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
 > Ultima actualizare: 13 octombrie 2026.
 
+## 13 octombrie 2026: starea de demo (R3)
+
+`npm run demo -- [adresa bazei, ca proprietar]` (`scripts/demo.ts`). Golește
+datele firmei, fără listele de prețuri, furnizori, clienți, centralul și
+atelierul, ca proprietar cu `app.purjare`. Apoi pune starea de demo prin
+`web/date.ts`, cu `fetch` legat de `creeazaServer` în proces și ceasul fixat
+pe fiecare pas (`la`). Conținutul și cifrele sunt în
+`docs/plan-pana-la-render.md`, R3. Rulat de două ori, dă aceeași stare.
+
+Găsit pe drum, cu ochii pe ecran:
+- **tabla pentru prima situație:** fără ea, situația scrisă pe un șantier fără
+  tablă dădea „Rămas −249 m²”;
+- **kg-ul tablei la recepție, rotunjit în sus:** rotunjit la cel mai apropiat,
+  comanda rămânea „venită doar în parte”.
+
 ## 13 octombrie 2026: ecranele doar din bază (R2)
 
 Pe server, niciun ecran nu mai arată datele de exemplu din `web/date/seed.ts`:
