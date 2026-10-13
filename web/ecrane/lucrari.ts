@@ -131,7 +131,7 @@ export const ecran: Ecran = {
         const v = valoareOferta(p);
         return `<tr>
           <td><b>${esc(p.denumire)}</b>${p.inchis ? ` ${stare("închis", "ok")}` : ""}<br><span class="hint">${esc(p.client || "—")}</span></td>
-          <td>${esc(p.oferta || "—")}<br><span class="hint">${esc(zi(p.creat))}</span></td>
+          <td>${esc(p.oferta || "—")}${p.oferta?.includes(zi(p.creat)) ? "" : `<br><span class="hint">șantier din ${esc(zi(p.creat))}</span>`}</td>
           <td class="n">${eur(v.total)}</td>
           <td>${progres(progresPlan(p))}</td>
           <td class="n">${p.situatii.length}</td>
@@ -156,7 +156,9 @@ export const ecran: Ecran = {
       const necesar = dep.necesare.find((n) => n.santier === p.id);
       // Ca in Depozit (Faza 4): necesar − adus − comandat. Nu stocul de acum: din Faza 6
       // consumul din situatii scade stocul, iar materialul pus nu se mai comanda.
-      const deCumparat = necesar ? ramasPeNecesar(dep, necesar).filter((d) => d.ramas > 0).length : 0;
+      const ramas = necesar ? ramasPeNecesar(dep, necesar) : [];
+      const deCumparat = ramas.filter((d) => d.ramas > 0).length;
+      const peCiorne = ramas.filter((d) => d.ramas === 0 && d.inCiorna > 0).length;
       const cumulat = ultima ? randuriSituatie(p, ultima) : null;
       const materiale = dep.necesare.filter((n) => n.santier === p.id).flatMap((n) => n.materiale);
       // Faza 7: ce vede directorul (S9) sau, inchis, cifrele lui; inventarul de inchidere, dupa situatii.
@@ -175,40 +177,47 @@ export const ecran: Ecran = {
         </tr>`;
       });
 
+      const executatPlan = cumulat ? p.pozitii.filter((_, i) => (cumulat[i]?.cumulat ?? 0) > 0).length : 0;
       return `
         <p style="margin:0"><button type="button" class="legatura" data-act="inapoi">← Toate lucrările</button></p>
+        <header class="pagina-antet">
+          <div>
+            <h2>${esc(p.denumire)}${p.inchis ? ` ${stare("închis", "ok")}` : ""}</h2>
+            <p class="hint">${esc(p.client || "—")} · oferta ${esc(p.oferta || p.fisier)} · ${esc(p.firma)}${
+              p.ajustareProcent ? ` · prețuri ajustate cu ${cifra(p.ajustareProcent)} %` : ""}${
+              p.discountProcent ? ` · discount ${cifra(p.discountProcent)} %` : ""}${
+              p.adaosFocProcent ? ` · +${p.adaosFocProcent} % pe închiderile la foc` : ""}</p>
+          </div>
+          ${inLucru || p.inchis ? "" : `<button type="button" class="primar" data-act="situatie-noua">Situație nouă</button>`}
+        </header>
         ${mesaj ? `<p class="alerta" role="alert">${esc(mesaj)}</p>` : ""}
         ${info ? `<p class="hint" role="status" style="margin:0">${esc(info)}</p>` : ""}
         <div class="stats">
           ${indicator(eur(v.total), "Valoare ofertă", p.oferta || p.fisier)}
           ${indicator(eur(executat?.total ?? 0), "Executat, cumulat", `${progresPlan(p)} % din ofertă`)}
           ${indicator(String(p.situatii.length), "Situații de lucrări")}
-          ${indicator(String(deCumparat), "Materiale de comandat", necesar ? "din necesarul ofertei" : "fără necesar")}
+          ${indicator(String(deCumparat), "Materiale de comandat", !necesar ? "fără necesar"
+            : peCiorne ? `și ${peCiorne} pe ciorne netrimise` : "rămase din necesarul ofertei")}
         </div>
-        <section class="imp-card">
-          <h2>${esc(p.denumire)}</h2>
-          <p class="hint" style="margin:0">${esc(p.client || "—")} · ${esc(p.firma)} · făcut din ${esc(p.fisier)}
-            pe ${esc(zi(p.creat))}${p.ajustareProcent ? ` · prețuri ajustate cu ${cifra(p.ajustareProcent)} %` : ""}${
-            p.discountProcent ? ` · discount ${cifra(p.discountProcent)} %` : ""}${
-            p.adaosFocProcent ? ` · +${p.adaosFocProcent} % pe închiderile la foc` : ""}</p>
-          <p class="hint">Materialele: <a href="#/stoc">Depozit și stoc</a>, la necesarul acestui șantier.</p>
-        </section>
-        ${material}
         ${inLucru && dinPoze ? cardDinPoze(p, inLucru, dinPoze) : ""}
         ${inLucru ? formularSituatie(p, inLucru) : ""}
         ${istoric(p)}
-        ${inchide}
-        <section class="imp-card"><h2>Planul de șantier</h2>
+        ${material}
+        <details class="imp-card">
+          <summary>Planul de șantier · ${p.pozitii.length === 1 ? "o poziție" : `${p.pozitii.length} poziții`}${
+            cumulat ? ` · ${executatPlan} începute` : ""}</summary>
           <p class="hint" style="margin:0 0 12px">Pozițiile ofertei, cu prețurile trimise clientului. Nu se schimbă
-            dacă se schimbă listele de prețuri.</p>
+            dacă se schimbă listele de prețuri. Materialele lor sunt în <a href="#/stoc">Depozit și stoc</a>.</p>
           ${tabel(["Poziția", "Cant. ofertă", "Preț unitar", "Executat"], randuriPlan, ["", "n", "n", "n"])}
-        </section>
-        ${p.inchis ? "" : `<section class="imp-card"><h2>Șterge șantierul</h2>
+        </details>
+        ${inchide}
+        ${p.inchis ? "" : `<details class="imp-card"${stergeDe === p.id ? " open" : ""}>
+          <summary>Șterge șantierul</summary>
           <p class="hint" style="margin:0 0 12px">Scoate planul, situațiile lui și necesarul din depozit.
             Mișcările de stoc rămân.</p>
           <div class="imp-formular-butoane"><button type="button" class="secundar" data-act="sterge" data-id="${esc(p.id)}">${
             stergeDe === p.id ? "Sigur ștergi?" : "Șterge șantierul"}</button></div>
-        </section>`}`;
+        </details>`}`;
     }
 
     function istoric(p: PlanSantier): string {
@@ -216,8 +225,7 @@ export const ecran: Ecran = {
         const t = totalSituatie(p, s);
         const ultima = i === p.situatii.length - 1;
         return `<tr>
-          <td class="n">${s.nr}</td>
-          <td>${esc(zi(s.data))}${s.nota ? `<br><span class="hint">${esc(s.nota)}</span>` : ""}</td>
+          <td><b>Situația ${s.nr}</b> · ${esc(zi(s.data))}${s.nota ? `<br><span class="hint">${esc(s.nota)}</span>` : ""}</td>
           <td class="n">${eur(t.curent.total)}</td>
           <td class="n">${eur(t.cumulat.total)}</td>
           <td class="fix"><button type="button" class="secundar" data-act="descarca" data-id="${esc(s.id)}">Descarcă</button>${
@@ -228,9 +236,8 @@ export const ecran: Ecran = {
         ${p.situatii.length === 0
           ? `<p class="hint" style="margin:0 0 12px">Nicio situație încă. O situație spune cât s-a executat într-o
             perioadă; valoarea e cantitatea × prețul din ofertă.</p>`
-          : tabel(["Nr.", "Data", "În perioadă", "Cumulat", ""], randuri, ["n", "", "n", "n", ""])}
-        ${inLucru || p.inchis ? "" : `<div class="imp-formular-butoane">
-          <button type="button" class="primar" data-act="situatie-noua">Situație nouă</button></div>`}
+          : tabel(["Situația", "În perioadă", "Cumulat", ""], randuri, ["", "n", "n", ""])}
+
       </section>`;
     }
 

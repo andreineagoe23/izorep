@@ -1267,3 +1267,16 @@ main details.imp-card[open] > summary { margin-bottom: 12px; }
 /* Legaturile din antetul fisierului si „Tot textul”: tinta de 44 px, fara sa umfle randul. */
 .imp-antet-fisier .legatura, .of .of-tot { min-height: 44px; display: inline-flex; align-items: center; }
 .of .of-tot { margin: -6px 0; }
+
+/* ---- antetul unei pagini de detaliu (santierul): numele, ce e, actiunea principala */
+.pagina-antet { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; }
+.pagina-antet > div { flex: 1 1 320px; min-width: 0; }
+.pagina-antet h2 { margin: 0; font-size: 22px; letter-spacing: -0.015em; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.pagina-antet .hint { margin: 4px 0 0; font-size: 15px; }
+.pagina-antet .primar { flex: 0 0 auto; }
+@media (max-width: 560px) { .pagina-antet .primar { flex: 1 1 100%; } }
+
+/* „Ce înseamnă coloanele”: ajutorul care se citeste o data, pliat deasupra tabelului. */
+main details.ajutor { margin: -6px 0 8px; }
+main details.ajutor > summary { font-weight: 500; color: var(--slab); font-size: 14px; }
+main details.ajutor > .hint { margin: 0 0 8px; }

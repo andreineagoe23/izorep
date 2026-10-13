@@ -29,7 +29,7 @@ export function randPierdere(c: ConsumSantier): string {
     ? (c.situatii === 0 ? `Consumul se scrie singur la fiecare situație de lucrări: cât s-a executat × materialul poziției.` : "")
     : `Pierdere pe tot șantierul, după valoarea materialului: <strong>${cifra(c.pierdereProcent)} %</strong>
       (normal până la ${cifra(PRAG)} %)${c.pestePrag ? ` ${stare("peste prag", "atentie")}` : ""}.`;
-  return total ? `<p style="margin:0 0 12px">${total}</p>` : "";
+  return total ? `<p class="hint" style="margin:0 0 12px">${total}</p>` : "";
 }
 
 /** Consumul notat de mână (S7 b), pliat sub tabelul materialului. */

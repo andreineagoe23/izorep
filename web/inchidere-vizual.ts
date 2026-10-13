@@ -50,15 +50,20 @@ export function cardMaterial(m: MaterialSantier, c?: ConsumSantier): string {
     <td class="n">${cant(r.comandat, r.articol)}</td>
     <td class="n">${cant(r.venit, r.articol)}</td>
     <td class="n">${cant(r.pus, r.articol)}</td>
-    <td class="n">${cant(r.ramas, r.articol)}</td>
+    <td class="n">${r.ramas < 0 ? `${stare("sold negativ", "atentie")} −${cant(-r.ramas, r.articol)}` : cant(r.ramas, r.articol)}</td>
     <td class="n">${r.lipsa > 0 ? `<strong>${cantitate(r.lipsa, r.articol.um)}</strong>` : stare("nimic", "ok")}</td>
     ${c ? `<td class="n">${pierdere(cheieBaza(r.articol))}</td>` : ""}
   </tr>`);
+  // Definitiile coloanelor stau pliate: patru randuri de text gri deasupra
+  // tabelului le citea omul o data, apoi ii ascundeau tabelul de fiecare data.
   return `<section class="imp-card"><h2>Materialul șantierului</h2>
-    <p class="hint" style="margin:0 0 12px">Comandat: pe comenzile trimise. Venit: ce a ajuns pe șantier. Pus: ce s-a pus pe
+    <details class="ajutor">
+      <summary>Ce înseamnă coloanele</summary>
+      <p class="hint">Comandat: pe comenzile trimise. Venit: ce a ajuns pe șantier. Pus: ce s-a pus pe
       țeavă. Rămas: ce e acum pe șantier. Lipsește: cât mai trebuie pentru ce n-a fost încă executat (după situații), peste ce e
       pe șantier și ce e comandat și n-a venit.${c ? ` Pierdere: cât s-a dus peste ce arată situațiile (venit, minus ce s-a
       întors și ce a rămas, față de consumul scris la situații, care are deja pierderea la croit).` : ""}</p>
+    </details>
     ${c ? randPierdere(c) : ""}
     ${c
       ? tabel(["Material", "Necesar", "Comandat", "Venit", "Pus", "Rămas", "Lipsește", "Pierdere"], randuri, ["", "n", "n", "n", "n", "n", "n", "n"])
