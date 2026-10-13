@@ -132,11 +132,27 @@ function codClient(l: LinieProcesata): string | null {
   return COD.test(t) && !/^\d+$/.test(t) && t.length > 1 ? t : null;
 }
 
-/** Textul clientului, fără cod; segmentele repetate (Book15: „Same - Ø125 mm” de două ori) o singură dată. */
+/** Marcajul unui rând de continuare, ca în `src/import/continuare.ts`. */
+const CONTINUARE = /^(?:same|idem|ditto|as\s+above|ca\s+mai\s+sus)\b\s*[-–:,]?\s*/i;
+
+/**
+ * Textul clientului, fără cod; segmentele repetate (Book15: „Same - Ø125 mm” de
+ * două ori) o singură dată.
+ *
+ * Rândul de continuare moștenește descrierea poziției de deasupra (importul o
+ * lipește după el). În ofertă se scrie ca o poziție întreagă: descrierea, apoi
+ * ce are rândul în plus — „Circular spiro duct … — Ø125 mm”, nu „Same - Ø125 mm
+ * | Circular spiro duct …”, care pe hârtie nu spune ce e (Book15, SRU „idem DN20”).
+ */
 function textClient(l: LinieProcesata): string {
   const s = segmente(l);
-  const fara = codRand(l) ? s.slice(1) : s;
-  return [...new Set(fara)].join(" | ");
+  const fara = [...new Set(codRand(l) ? s.slice(1) : s)];
+  const [primul, ...rest] = fara;
+  if (primul && rest.length > 0 && CONTINUARE.test(primul)) {
+    const propriu = primul.replace(CONTINUARE, "").trim();
+    return rest.filter((x) => !CONTINUARE.test(x)).join(" | ") + (propriu ? ` — ${propriu}` : "");
+  }
+  return fara.join(" | ");
 }
 
 /* --------------------------------------------------------- specificația */

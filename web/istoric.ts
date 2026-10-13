@@ -65,6 +65,16 @@ export interface SesiuneImport extends IntrareIstoric {
   descrieriSchimbate?: number[];
   /** Preturile unitare puse de om, `[index, EUR]`. Vezi `OptiuniNucleu.preturiManuale`. */
   preturiManuale?: [number, number][];
+  /**
+   * Datele ofertei scrise la pasul „Oferta” (numar, beneficiar, discount…) si
+   * ajustarea preturilor. Pana pe 14 octombrie 2026 se pierdeau la reincarcare,
+   * iar „Creează șantierul” lua numele fisierului drept beneficiar.
+   */
+  antet?: {
+    firma: string; numar: string; data: string; client: string; obiectiv: string;
+    persoana: string; localitate: string; discount: number;
+  };
+  ajustare?: number;
 }
 
 /**

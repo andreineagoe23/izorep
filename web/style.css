@@ -1140,3 +1140,130 @@ main details.imp-card[open] > summary { margin-bottom: 12px; }
   main { padding-top: 20px; }
   .titlu-ecran h1 { font-size: 24px; }
 }
+
+/* ======================================== importul: verificarea ca in oferta
+ * 14 octombrie 2026. Acelasi tabel pentru orice fisier de client: coloanele
+ * Excelului de oferta (Nr., Cod, Denumire, UM, Cantitate, P.U., Valoare), pe
+ * capitolele clientului, plus starea si actiunea. Sub 980 px de document,
+ * fiecare pozitie devine un card, cu aceleasi campuri in aceeasi ordine.
+ */
+.imp-vedere { width: min(100%, calc(2 * var(--imp-control) + 8px)); }
+.imp-vedere legend { margin-bottom: 8px; font-size: 13px; font-weight: 600; }
+.imp-vedere > div { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.imp-vedere span {
+  justify-content: center; width: 100%; height: 44px; min-height: 0; padding: 0 10px; border-radius: 10px;
+  text-align: center; font-size: 14.5px; white-space: nowrap;
+}
+@container imp (max-width: 619px) { .imp-vedere { width: 100%; } }
+
+.of { container: of / inline-size; display: grid; gap: var(--imp-gap); padding: var(--pad); }
+.of-antet {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 16px; align-items: start;
+  padding-bottom: var(--imp-gap); border-bottom: 1px solid var(--linie);
+}
+.of-antet-titlu h2 { margin: 0; font-size: 19px; letter-spacing: -0.01em; }
+.of-antet-titlu p { margin: 2px 0 0; color: var(--slab); font-size: 15px; }
+.of-antet .secundar { white-space: nowrap; }
+.of-antet-date {
+  grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: 8px 16px; margin: 0;
+}
+.of-antet-date dt { font-size: 13px; color: var(--slab); }
+.of-antet-date dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+@container of (max-width: 619px) {
+  .of-antet { grid-template-columns: minmax(0, 1fr); }
+  .of-antet > .secundar { grid-column: 1; grid-row: auto; width: 100%; }
+}
+.of-gol { color: var(--slab); font-weight: 400; }
+.of-um-card { display: none; }
+/* Butonul sta in dreapta titlului, nu sub date pe toata latimea. */
+.of-antet > .secundar { grid-column: 2; grid-row: 1; }
+
+.of-tabelwrap { min-width: 0; }
+.of-tabel { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 14.5px; }
+.of-col-nr { width: 3.25rem; }
+.of-col-cod { width: 7.5rem; }
+.of-col-um { width: 3.75rem; }
+.of-col-n { width: 7.75rem; }
+.of-col-gol { width: 6.5rem; }
+.of-col-stare { width: 15.5rem; }
+.of-tabel th {
+  padding: 10px 10px 8px 0; font-size: 13px; color: var(--slab); font-weight: 600; text-align: left;
+  border-bottom: 2px solid var(--linie); white-space: normal; vertical-align: bottom;
+}
+.of-tabel th.n { text-align: right; }
+.of-tabel td { padding: 12px 10px 12px 0; border-top: 1px solid var(--linie); vertical-align: top; overflow-wrap: anywhere; }
+.of-tabel td.n { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; overflow-wrap: normal; }
+.of-tabel tbody tr.of-poz:hover { background: none; }
+/* Starea pe marginea din stanga a randului, ca in foaia clientului; textul o spune oricum. */
+.of-poz td:first-child { padding-left: 12px; box-shadow: inset 4px 0 0 var(--c); }
+.of-poz[data-afara] td { background: color-mix(in srgb, var(--panou-2) 55%, var(--panou)); }
+.of-nr { font-weight: 700; font-variant-numeric: tabular-nums; }
+.of-cod { font-size: 13.5px; color: var(--slab); }
+.of-valoare { font-weight: 600; }
+.of-text { margin: 0; font-weight: 500; line-height: 1.45; }
+.of-text.lung:not(.deschis) { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+.of .of-tot { min-height: 32px; padding: 2px 0; font-size: 14px; }
+.of-spec { margin: 6px 0 0; font-size: 14px; }
+.of-spec span { color: var(--slab); }
+.of-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 8px 0 0; font-size: 13px; color: var(--slab); }
+.of-inteles { padding: 1px 8px; border-radius: 999px; background: var(--panou-2); color: var(--text); }
+.of-stare .imp-poz-motiv { display: block; margin-top: 2px; font-size: 13.5px; }
+.of-actiuni { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.of-actiuni:empty { display: none; }
+.imp .of-actiuni button { min-height: 44px; padding: 8px 12px; font-size: 14px; }
+
+.of-capitol th {
+  padding: 12px; background: var(--panou-2); color: var(--text); font-size: 15px; font-weight: 650;
+  border-bottom: 0; border-top: 1px solid var(--linie);
+}
+.of-capitol span { margin-left: 8px; font-weight: 400; color: var(--slab); font-size: 13.5px; }
+.of-subtotal td { font-weight: 600; text-align: right; border-top: 1px solid var(--linie-tare); }
+.of-editor > td { padding: var(--imp-gap); background: var(--accent-slab); }
+.of-editor .imp-editor { margin-top: 0; max-width: 900px; }
+
+.of-totaluri { display: grid; justify-items: end; gap: 6px; }
+.of-total {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 24px; width: min(100%, 560px);
+  font-size: 15px;
+}
+.of-total strong { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.of-total-final { padding-top: 8px; border-top: 2px solid var(--linie-tare); font-weight: 650; }
+.of-total-final strong { font-size: 21px; }
+.of-afara {
+  width: min(100%, 560px); margin: 6px 0 0; padding: 10px 14px; border-radius: 9px; font-size: 14px;
+  background: color-mix(in srgb, var(--atentie) 10%, var(--panou));
+  border: 1px solid color-mix(in srgb, var(--atentie) 40%, transparent); color: var(--text);
+}
+.of-note { margin: 0; padding: 12px 0 0 18px; border-top: 1px solid var(--linie); color: var(--slab); font-size: 13.5px; }
+
+/* ---- sub 980 px: fiecare pozitie e un card */
+@container of (max-width: 979px) {
+  .of-tabel, .of-tabel tbody, .of-tabel tr, .of-tabel td, .of-tabel th { display: block; width: 100%; }
+  .of-tabel colgroup, .of-tabel thead { display: none; }
+  .of-tabel tr.of-poz {
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px;
+    padding: 14px 12px; border-top: 1px solid var(--linie); box-shadow: inset 4px 0 0 var(--c);
+  }
+  .of-poz[data-afara] { background: color-mix(in srgb, var(--panou-2) 55%, var(--panou)); }
+  .of-tabel tr.of-poz td { width: auto; padding: 0; border: 0; box-shadow: none; background: none; }
+  .of-poz td.of-nr, .of-poz td.of-cod { flex: 0 0 auto; }
+  .of-poz td.of-nr::before { content: "Nr. "; font-weight: 400; color: var(--slab); }
+  .of-poz td.of-den, .of-poz td.of-stare { flex: 1 1 100%; }
+  .of-poz td.of-um { display: none; }
+  .of-um-card { display: inline !important; }
+  .of-poz td.n, .of-poz td.of-gol-dim { flex: 1 1 5.5rem; text-align: left; white-space: normal; }
+  .of-poz td.n::before, .of-poz td.of-gol-dim::before {
+    content: attr(data-eticheta); display: block; font-size: 12.5px; color: var(--slab); font-weight: 400;
+  }
+  .of-capitol th { padding: 10px 12px; }
+  .of-subtotal { display: flex !important; justify-content: space-between; gap: 16px; padding: 10px 12px; border-top: 1px solid var(--linie-tare); }
+  .of-subtotal td { width: auto !important; padding: 0; border: 0; }
+  .of-subtotal td:empty { display: none; }
+  .of-total { width: 100%; }
+  .of-afara { width: 100%; }
+  .of-totaluri { justify-items: stretch; }
+}
+/* Legaturile din antetul fisierului si „Tot textul”: tinta de 44 px, fara sa umfle randul. */
+.imp-antet-fisier .legatura, .of .of-tot { min-height: 44px; display: inline-flex; align-items: center; }
+.of .of-tot { margin: -6px 0; }

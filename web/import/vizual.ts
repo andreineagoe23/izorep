@@ -141,60 +141,8 @@ export function antetVerificare(o: OptiuniAntet): string {
   </div>`;
 }
 
-export function filtreStare(numere: Record<FiltruStare, number>, activ: FiltruStare): string {
-  const buton = (f: FiltruStare, eticheta: string): string =>
-    `<button type="button" class="imp-filtru" data-filtru="${f}"${f === "toate" ? "" : ` data-stare="${f}"`}
-      aria-pressed="${f === activ}">${eticheta} <b>${numere[f]}</b></button>`;
-  return `<div class="imp-filtre" role="group" aria-label="Arată pozițiile">
-    ${buton("toate", "Toate")}${buton("gata", STARE.gata)}${buton("de_validat", STARE.de_validat)}${buton("netarifate", STARE.netarifate)}
-  </div>`;
-}
-
 /** O foaie a registrului, ca tab: numele si cate pozitii cer atentie pe ea. */
 export interface TabFoaie { nume: string; deRezolvat: number }
-
-const ETICHETE_FILTRU: [FiltruStare, string][] = [
-  ["toate", "Toate"], ["gata", STARE.gata], ["de_validat", STARE.de_validat], ["netarifate", STARE.netarifate],
-];
-
-/**
- * Bara de deasupra pozitiilor cand registrul are MAI MULTE foi: foile ca
- * taburi, ca jos in Excel, iar in dreapta starea (un dropdown) si comutatorul
- * de vedere. Cu o singura foaie ramane bara cu butoanele de stare.
- *
- * Tabul arata cate pozitii cer atentie pe foaia lui (de verificat + fara pret):
- * o singura foaie e pe ecran, iar ce e de facut pe celelalte nu are voie sa
- * dispara din vedere.
- */
-export function baraFoi(
-  foi: TabFoaie[], activa: string | null, numere: Record<FiltruStare, number>, filtru: FiltruStare, excel: boolean,
-): string {
-  const taburi = foi.map((f) =>
-    `<button type="button" class="imp-tab" data-act="foaie-tab" data-foaie="${esc(f.nume)}"
-      aria-pressed="${f.nume === activa}">${esc(f.nume)}${
-      f.deRezolvat > 0 ? ` <b title="${esc(pozitii(f.deRezolvat))} de rezolvat">${f.deRezolvat}</b>` : ""}</button>`).join("");
-  const optiuni = ETICHETE_FILTRU.map(([f, e]) =>
-    `<option value="${f}"${f === filtru ? " selected" : ""}>${esc(e)} · ${numere[f]}</option>`).join("");
-  // Fiecare control isi spune rostul deasupra lui: omul care verifica o
-  // oferta nu trebuie sa ghiceasca ce face un tab sau un dropdown.
-  return `<section class="imp-card imp-bara-foi">
-    <div class="imp-bara-stanga">
-      <p class="imp-eticheta-control" id="eticheta-foi">Foile din fișier
-        <span>· cifra arată câte poziții cer atenție pe foaie</span></p>
-      <div class="imp-taburi" role="group" aria-labelledby="eticheta-foi">${taburi}</div>
-    </div>
-    <div class="imp-bara-dreapta">
-      <label class="imp-control">
-        <span class="imp-eticheta-control">Arată pozițiile</span>
-        <span class="imp-filtru-select"><select data-act="filtru">${optiuni}</select></span>
-      </label>
-      <div class="imp-control">
-        <span class="imp-eticheta-control" id="eticheta-vedere">Mod de afișare</span>
-        ${comutaExcel(excel, "secundar").replace("<button ", '<button aria-describedby="eticheta-vedere" ')}
-      </div>
-    </div>
-  </section>`;
-}
 
 /** Cate pozitii are fiecare motiv, descrescator. */
 export function numaraMotive(linii: LinieProcesata[]): [CodMotiv, number][] {
@@ -228,15 +176,6 @@ export function actiuniLista(o: OptiuniActiuni): string {
     ${o.grosimi > 0 ? `<button type="button" class="secundar" data-act="grosimi">Pune grosimea uzuală la ${pozitii(o.grosimi)}</button>` : ""}
   </div>`;
 }
-
-/**
- * Comutatorul intre foaia ca in Excel (implicita: e forma pe care o cunosc
- * toti cei care primesc liste de cantitati) si lista de carduri, mai usor de
- * citit pe telefon.
- */
-export const comutaExcel = (excel: boolean, stil: "legatura" | "secundar" = "legatura"): string =>
-  `<button type="button" class="${stil} imp-comuta-excel" data-act="excel" data-excel="${excel ? "da" : "nu"}">${
-    excel ? "Arată ca listă" : "Arată ca în Excel"}</button>`;
 
 export interface OptiuniCard {
   /** Grosimea uzuala a firmei pentru linie, cand lipseste. */
@@ -467,17 +406,21 @@ export interface OptiuniOferta {
   deVerificat: number;
   faraPret: number;
   destinatie: Destinatie;
-  client: string;
-  data: string;
+  /** Ce a scris omul pe antet (păstrat în sesiune), sau ce s-a citit din fișier. */
+  antet: {
+    firma: string; numar: string; data: string; client: string; obiectiv: string;
+    persoana: string; localitate: string; discount: number;
+  };
   firme: readonly { id: string; denumire: string; serieOferta: string }[];
   eroare: string;
 }
 
 /** Sub valoarea ofertei: ce e inclus în ea, dincolo de prețurile din liste. */
-export function detaliuValoare(adaosFoc: number, ajustare: number): string {
+export function detaliuValoare(adaosFoc: number, ajustare: number, discount = 0): string {
   const parti = [
     ajustare ? `prețuri ajustate cu ${ajustare > 0 ? "+" : ""}${String(ajustare).replace(".", ",")} %` : "",
     adaosFoc > 0 ? `include ${eur(adaosFoc)}: +20 % pe totalul închiderilor la foc (ofertă industrială)` : "",
+    discount > 0 ? `după discountul de ${String(discount).replace(".", ",")} %` : "",
   ].filter(Boolean);
   return parti.length ? esc(parti.join(" · ")) : "Prețurile din liste, neajustate.";
 }
@@ -490,7 +433,7 @@ export function ecranOferta(o: OptiuniOferta): string {
     <section class="imp-card imp-oferta-rezumat">
       <p class="imp-oferta-suma"><span>Intră în ofertă</span><strong id="valoare-oferta">${eur(o.valoare)}</strong>
         <span>${pozitii(o.gata)} · ofertă ${SEGMENT[o.destinatie]}</span></p>
-      <p class="hint" id="detaliu-valoare">${detaliuValoare(o.adaosFoc, o.ajustare)}</p>
+      <p class="hint" id="detaliu-valoare">${detaliuValoare(o.adaosFoc, o.ajustare, o.antet.discount)}</p>
       ${afara > 0 ? `<p class="imp-oferta-afara">Nu intră: ${o.deVerificat} de verificat, ${o.faraPret} fără preț.
         <button type="button" class="legatura" data-act="la-verificare">Înapoi la verificare</button></p>` : ""}
     </section>
@@ -498,16 +441,17 @@ export function ecranOferta(o: OptiuniOferta): string {
       <h2>Datele ofertei</h2>
       <div class="imp-campuri">
         <label>Firma<select name="firma">${o.firme.map((f) =>
-          `<option value="${esc(f.id)}">${esc(f.denumire)}</option>`).join("")}</select></label>
-        ${camp("numar", "Număr ofertă", "", 'required inputmode="numeric" autocomplete="off"')}
-        ${camp("data", "Data", o.data, "required")}
-        ${camp("client", "Beneficiar", o.client, "required")}
-        ${camp("obiectiv", "Obiectiv", "")}
-        ${camp("persoana", "În atenția", "")}
-        ${camp("localitate", "Localitate", "PALTINIS", "required")}
-        ${camp("ajustare", "Ajustare prețuri (%): 10 = toate cu 10 % mai mari, −5 = mai mici", String(o.ajustare),
-          'type="number" inputmode="decimal" min="-50" max="100" step="any"')}
-        ${camp("discount", "Discount (%)", "0", 'type="number" inputmode="decimal" min="0" max="100" step="any"')}
+          `<option value="${esc(f.id)}"${f.id === o.antet.firma ? " selected" : ""}>${esc(f.denumire)}</option>`).join("")}</select></label>
+        ${camp("numar", "Număr ofertă", o.antet.numar, 'required inputmode="numeric" autocomplete="off"')}
+        ${camp("data", "Data", o.antet.data, "required")}
+        ${camp("client", "Beneficiar", o.antet.client, "required")}
+        ${camp("obiectiv", "Obiectiv", o.antet.obiectiv)}
+        ${camp("persoana", "În atenția", o.antet.persoana)}
+        ${camp("localitate", "Localitate", o.antet.localitate, "required")}
+        ${camp("ajustare", "Ajustare prețuri (%)", String(o.ajustare),
+          'type="number" inputmode="decimal" min="-50" max="100" step="any" aria-describedby="ajutor-ajustare"')}
+        ${camp("discount", "Discount (%)", String(o.antet.discount), 'type="number" inputmode="decimal" min="0" max="100" step="any"')}
+        <p class="imp-ajutor" id="ajutor-ajustare">Ajustarea mută toate prețurile: 10 = cu 10 % mai mari, −5 = mai mici.</p>
       </div>
       ${o.eroare ? `<p class="alerta" role="alert">${esc(o.eroare)}</p>` : ""}
       ${afara > 0 ? `<p class="imp-oferta-lipsa">Oferta descărcată nu va conține ${pozitii(afara)}: ${o.deVerificat} de verificat

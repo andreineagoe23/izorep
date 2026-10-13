@@ -264,6 +264,8 @@ export function planDinOferta(c: CerereOferta, id: string, sectiuni?: ReadonlyMa
 export function clientPropus(numeFisier: string): string {
   const fara = numeFisier
     .replace(/\.(xlsx|xls)$/i, "")
+    // Fisierele facute de noi din lista de tevi sau din carnet: sufixul e al nostru, nu al clientului.
+    .replace(/\s*-\s*(izolatie pe foaie|masuratori santier)\s*$/i, "")
     .replace(/\s*\(\d+\)\s*$/, "")
     .replace(/\b\d{1,2}[.\-/]\d{1,2}[.\-/]\d{2,4}\b/g, " ")
     .replace(/[_-]+/g, " ")
