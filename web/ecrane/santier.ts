@@ -13,6 +13,7 @@ import { incarca as incarcaImport, listeaza as listeazaImporturi } from "../date
 import { stocLocal } from "../stoc-local.js";
 import type { Comparatie } from "../../src/lucrari/comparatie.js";
 import type { Ecran } from "./tip.js";
+import { citesteLucru, paginaRefacuta, scrieLucru } from "../masuratori-local.js";
 
 /**
  * Măsurători: pozele carnetului -> randuri confirmate -> oferta sau situatia.
@@ -32,7 +33,8 @@ import type { Ecran } from "./tip.js";
  * oferta. Nicio a doua cale de pret.
  *
  * Starea sta la nivel de modul: plecat pe alt ecran si intors, munca e tot
- * acolo. La reincarcarea paginii se pierde — pozele nu se pastreaza in browser.
+ * acolo. Din 14 octombrie 2026 (R4) supravietuieste si reincarcarii: pozele si
+ * randurile stau in IndexedDB pana pleaca (`web/masuratori-local.ts`).
  */
 const RUTA_POZA = rutaModel("poza");
 /** Cate pagini se citesc deodata. Fiecare apel dureaza secunde; doua tin progresul vizibil. */
@@ -65,6 +67,41 @@ let comparatie: { lista: string; c: Comparatie } | null = null;
 /** Ce a ieșit la „Fă ciornele comenzii” când n-a fost nimic de comandat. */
 let mesajComanda = "";
 
+/** Lucrul din IndexedDB se reface o singura data, la prima deschidere dupa incarcarea paginii. */
+let refacut = false;
+let ceasSalvare: ReturnType<typeof setTimeout> | undefined;
+
+/** Scrie lucrul in browser, amanat: o citire, o corectura si un clic vin unul dupa altul. */
+function salveazaLucru(): void {
+  clearTimeout(ceasSalvare);
+  ceasSalvare = setTimeout(() => {
+    void scrieLucru({
+      scop, destinatie, planAles, titlu,
+      pagini: pagini.flatMap((p) => {
+        const poza = fisiere.get(p.id);
+        return poza ? [{
+          id: p.id, nume: p.nume, poza, stare: p.stare, eroare: p.eroare, randuri: p.randuri, note: p.note,
+          verificata: p.verificata, faraModel: p.faraModel,
+        }] : [];
+      }),
+    });
+  }, 300);
+}
+
+/** Paginile lasate la jumatate inainte de reincarcare, cu pozele lor. */
+async function refaLucrul(): Promise<void> {
+  if (refacut || pagini.length > 0) { refacut = true; return; }
+  refacut = true;
+  const l = await citesteLucru();
+  if (!l || l.pagini.length === 0) return;
+  ({ scop, destinatie, planAles, titlu } = l);
+  pagini = l.pagini.map((p) => {
+    const f = new File([p.poza], p.nume, { type: p.poza.type });
+    fisiere.set(p.id, f);
+    return paginaRefacuta(p, URL.createObjectURL(f));
+  });
+}
+
 const idNou = (): string => `${Date.now().toString(36)}-${(urmator++).toString(36)}`;
 
 async function modelDisponibil(): Promise<boolean> {
@@ -93,7 +130,7 @@ export const ecran: Ecran = {
       <div id="sant-comparatie"></div>
     </div>`;
     const gazda = root.querySelector<HTMLElement>(".sant")!;
-    const cuModel = await modelDisponibil();
+    const [cuModel] = await Promise.all([modelDisponibil(), refaLucrul()]);
     /** Importurile din istoric: listele clientilor cu care se pot compara masuratorile. */
     let liste: ListaClient[] = [];
     try { liste = (await listeazaImporturi()).map((x) => ({ id: x.id, nume: x.nume })); } catch { liste = []; }
@@ -110,6 +147,7 @@ export const ecran: Ecran = {
         .map((p, i) => `<div data-pagina="${p.id}">${cardPagina(p, i + 1, { editeaza, destinatie: destinatiaPaginii() })}</div>`).join("");
       deseneazaTrimite();
       legaDrop();
+      salveazaLucru();
     };
     const deseneazaTrimite = (): void => {
       gazda.querySelector("#sant-trimite")!.innerHTML = cardTrimite({
@@ -130,6 +168,7 @@ export const ecran: Ecran = {
       if (i < 0 || !loc) return deseneaza();
       loc.innerHTML = cardPagina(pagini[i]!, i + 1, { editeaza, destinatie: destinatiaPaginii() });
       deseneazaTrimite();
+      salveazaLucru();
     };
     redeseneaza = (id) => (id ? deseneazaPagina(id) : deseneaza());
 
@@ -180,6 +219,7 @@ export const ecran: Ecran = {
       const inainte = pagini.length;
       pagini.push(...noi.map((x) => x.p));
       for (const { f, p } of noi) fisiere.set(p.id, f);
+      salveazaLucru();
       gazda.querySelector("#sant-incarca")!.innerHTML = incarca();
       legaDrop();
       gazda.querySelector("#sant-pagini")!.insertAdjacentHTML("beforeend", noi.map(({ p }, k) =>
@@ -218,7 +258,7 @@ export const ecran: Ecran = {
 
     gazda.addEventListener("input", (e) => {
       const t = e.target as HTMLInputElement;
-      if (t.name === "titlu" && t.closest("#trimite")) titlu = t.value;
+      if (t.name === "titlu" && t.closest("#trimite")) { titlu = t.value; salveazaLucru(); }
     });
 
     gazda.addEventListener("click", (e) => {
@@ -322,6 +362,7 @@ export const ecran: Ecran = {
       titlu = "";
       editeaza = null;
       comparatie = null;
+      salveazaLucru();
     }
 
     /**

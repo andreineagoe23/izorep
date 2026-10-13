@@ -131,3 +131,17 @@ describe("pozele Ecoterm, transcrise, prin motor", () => {
     expect(new Set(izolatie.map((l) => sectiune.get(l.bruta.index)))).toEqual(new Set(linii.map((l) => l.zona)));
   });
 });
+
+describe("Măsurătorile în lucru, după reîncărcare (R4)", () => {
+  it("pagina se reface cu rândurile ei; o citire întreruptă se poate porni din nou", async () => {
+    const { paginaRefacuta } = await import("../web/masuratori-local.js");
+    const baza = {
+      id: "p1", nume: "santier1.jpeg", poza: new Blob(["x"], { type: "image/jpeg" }), eroare: "", note: [],
+      randuri: [], verificata: true, faraModel: false,
+    };
+    expect(paginaRefacuta({ ...baza, stare: "gata" }, "blob:1")).toMatchObject({ stare: "gata", verificata: true, url: "blob:1" });
+    const r = paginaRefacuta({ ...baza, stare: "citeste" }, "blob:2");
+    expect(r.stare).toBe("eroare");
+    expect(r.eroare).toMatch(/reîncărcat/);
+  });
+});
