@@ -15,7 +15,7 @@ import { importaFisier } from "../src/import/pipeline.js";
 import { stocInMemorie } from "../src/import/memorie.js";
 import { necesarDinLinii, type MaterialNecesar } from "../src/stoc/necesar.js";
 import { articolDin, cantitateNecesara, solduri, type Miscare } from "../src/stoc/registru.js";
-import type { Comanda } from "../src/stoc/comenzi.js";
+import { comandatNesosit, deComandatSantier, inlocuiesteCuFactura, intrariDinReceptie, type Comanda } from "../src/stoc/comenzi.js";
 import { imparte, planDinOferta } from "../web/oferta.js";
 import type { PlanSantier } from "../src/lucrari/situatii.js";
 import {
@@ -239,6 +239,54 @@ describe("rapoartele (S49)", () => {
     const a = alerte([planMic], { miscari: [], necesare: [], comenzi: [c("veche", "2026-10-01T08:00:00.000Z"), c("noua", "2026-10-10T08:00:00.000Z")] }, azi);
     expect(a).toEqual([{ fel: "comanda", comanda: "veche", furnizor: "Isoline", pentru: "Hala test", trimisa: "2026-10-01T08:00:00.000Z", zile: 10, partial: false }]);
     expect(ZILE_COMANDA).toBe(7);
+  });
+
+  it("comanda deschisă pe un șantier închis nu mai e alertă (13 octombrie 2026, starea de demo)", () => {
+    const vata = articolDin(materialeMici[0]!);
+    const c: Comanda = {
+      id: "veche", creat: "2026-10-01T08:00:00.000Z", trimisa: "2026-10-01T08:00:00.000Z", furnizor: "Isoline",
+      firma: "RADOIA ISOLIRUNG SRL", santier: planMic.id, spre: planMic.id, linii: [{ id: "L", articol: vata, cantitate: 10 }],
+    };
+    expect(alerte([{ ...planMic, inchis: "2026-10-05T08:00:00.000Z" }], { miscari: [], necesare: [], comenzi: [c] }, azi)).toEqual([]);
+    // Fără șantier, comanda pentru central rămâne alertă.
+    const central: Comanda = { ...c, id: "central", spre: "central" };
+    delete (central as Partial<Comanda>).santier;
+    expect(alerte([], { miscari: [], necesare: [], comenzi: [central] }, azi).map((a) => a.fel)).toEqual(["comanda"]);
+  });
+
+  it("factura care înlocuiește avizul nu e material venit: materialul a venit cu avizul", () => {
+    const vata = articolDin(materialeMici[0]!);
+    const c: Comanda = {
+      id: "C1", creat: "2026-09-25T08:00:00.000Z", trimisa: "2026-09-25T08:00:00.000Z", furnizor: "Isoline",
+      firma: "RADOIA ISOLIRUNG SRL", santier: planMic.id, spre: planMic.id, linii: [{ id: "L1", articol: vata, cantitate: 20 }],
+    };
+    let k = 0;
+    const nou = (): string => `r${++k}`;
+    const aviz = intrariDinReceptie({ comanda: c, document: { tip: "aviz", serie: "CS", numar: "20261262", data: "2026-10-01" },
+      linii: [{ linie: "L1", cantitate: 20 }] }, nou, "2026-10-01T09:00:00.000Z");
+    const factura = inlocuiesteCuFactura(c, aviz, "20261262", {
+      document: { tip: "factura", serie: "CS", numar: "202627295", data: "2026-10-09" }, preturi: { L1: { valoare: 7.49, moneda: "EUR" } },
+    }, nou, "2026-10-09T09:00:00.000Z");
+    const miscari = [...aviz, ...factura];
+    // Avizul e în afara celor 7 zile, factura înăuntru: nimic venit în perioadă.
+    expect(listaSaptamanala([planMic], { miscari, necesare: [] }, azi).randuri).toEqual([]);
+    // Cu avizul în perioadă, o singură livrare, la prețul facturii.
+    const r = listaSaptamanala([planMic], { miscari, necesare: [] }, "2026-10-05T12:00:00.000Z").randuri[0]!;
+    expect(r).toMatchObject({ livrari: 1, valoareVenita: 149.8 });
+  });
+
+  it("ciorna netrimisă nu e comandată: lipsa pe șantier se vede, dar nu se face a doua ciornă", () => {
+    const vata = articolDin(materialeMici[0]!);
+    const ciorna: Comanda = {
+      id: "C2", creat: ZI0, furnizor: "Banda Tech", firma: "RADOIA ISOLIRUNG SRL", santier: planMic.id, spre: planMic.id,
+      linii: [{ id: "L1", articol: vata, cantitate: 55 }],
+    };
+    const r = materialSantier(planMic, materialeMici, [], [ciorna]).randuri.find((x) => x.cheie === vata.cheie)!;
+    expect(r).toMatchObject({ comandat: 0, lipsa: 55 });
+    const d = deComandatSantier([materialeMici[0]!], [], [ciorna], planMic.id)[0]!;
+    expect(d).toMatchObject({ comandat: 0, inCiorna: 55, ramas: 0 });
+    expect(comandatNesosit([ciorna], [], planMic.id, vata.cheie)).toBe(0);
+    expect(comandatNesosit([{ ...ciorna, trimisa: ZI0 }], [], planMic.id, vata.cheie)).toBe(55);
   });
 
   it("lipsa pe șantier: doar când necesarul e adus tot și tot nu ajunge", () => {

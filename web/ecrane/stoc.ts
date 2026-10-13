@@ -216,6 +216,7 @@ export const ecran: Ecran = {
           if (c !== null) inOfertaCuCost += v;
           const kgPeUm = m.kg !== undefined && m.m2 > 0 ? m.kg / m.m2 : null;
           const ramas = !d ? stare("al clientului", "neutru")
+            : d.ramas === 0 && d.inCiorna > 0 ? stare("în ciornă, de trimis", "atentie")
             : d.ramas === 0 ? stare(d.comandat > 0 ? "comandat" : "acoperit", "ok")
               : d.ambalaje
                 ? `<strong>${cifra(d.ambalaje.cate)} × ${esc(d.ambalaje.ambalaj.unitate)}</strong><br><span class="hint">${
@@ -271,7 +272,9 @@ export const ecran: Ecran = {
           <div class="imp-formular-butoane">
             ${deComandat > 0
               ? `<button type="button" class="primar" data-act="fa-comenzi" data-id="${esc(n.id)}">Fă comenzile pentru ${deComandat} ${deComandat === 1 ? "material" : "materiale"}</button>`
-              : `<span class="hint">Tot materialul e adus sau comandat. Vezi <a href="#/comenzi">Comenzi</a>.</span>`}
+              : r.some((d) => d.inCiorna > 0)
+                ? `<span class="hint">Restul e pe ciorne care n-au fost trimise. Trimite-le din <a href="#/comenzi">Comenzi</a>.</span>`
+                : `<span class="hint">Tot materialul e adus sau comandat. Vezi <a href="#/comenzi">Comenzi</a>.</span>`}
           </div>
           <p class="hint">În ofertă: ${eur(inOferta)} (cât plătește clientul, material și manoperă, cu ajustarea și discountul) · cost material
             ${deCumparat === 0 ? "zero: tot materialul îl dă clientul" : faraPret === deCumparat ? "necunoscut: nicio intrare cu preț" : `${eur(cost)}${faraPret ? `, fără ${faraPret} ${faraPret === 1 ? "material" : "materiale"} încă fără preț` : ""}`}${faraPret < deCumparat ? ` · rămân ${eur(inOfertaCuCost - cost)} pentru manoperă și profit${faraPret ? ", pe materialele cu preț" : ""}` : ""}.
