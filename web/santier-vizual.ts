@@ -224,11 +224,12 @@ export function cardIncarca(o: {
   scop: Scop; destinatie: Destinatie; santiere: SantierAles[]; planAles: string; eroare: string; trimisa?: string;
 }): string {
   return `<section class="imp-card imp-incarca">
-    <div class="imp-campuri">
+    <div class="imp-campuri sant-sus">
       ${alegereScop(o.scop)}
       ${o.scop === "oferta" ? alegereSegment(o.destinatie) : alegereSantier(o.santiere, o.planAles, o.scop)}
     </div>
     <label class="imp-drop" id="drop" for="poze">
+      <svg aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="m21 16-5-5-8 8"/></svg>
       <span class="imp-drop-buton">Alege pozele</span>
       <span class="imp-drop-sub">sau trage-le aici · o poză pentru fiecare pagină de carnet</span>
       <input id="poze" type="file" accept="image/*" multiple />

@@ -1292,3 +1292,6 @@ main details.ajutor > .hint { margin: 0 0 8px; }
   .strat > label:nth-child(2) { flex: 1 1 auto !important; }
 }
 .exemple .hint { flex: 1 1 100%; }
+
+/* Masuratori: scopul (trei butoane) ia ~70 %, tipul ofertei sau santierul ~30 %. */
+@container imp (min-width: 620px) { .imp-campuri.sant-sus { grid-template-columns: var(--imp-coloane); align-items: start; } }
