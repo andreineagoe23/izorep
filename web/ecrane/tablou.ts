@@ -1,4 +1,4 @@
-import { atentionare, card, esc, eur, indicator, nota, nr, progres, stare, tabel, type Ecran } from "./tip.js";
+import { atentionare, card, cate, esc, eur, indicator, nota, nr, progres, stare, tabel, type Ecran } from "./tip.js";
 import { vedeCosturi } from "../nav.js";
 import { citesteDepozit, citesteOferte, citestePlanuri, listeaza, type IntrareIstoric } from "../date.js";
 import type { OfertaEmisa } from "../oferte-local.js";
@@ -65,7 +65,7 @@ function sectiuneAtentie(d: DateTablou): string {
   if (cerereMaiMare) {
     itemi.push({
       href: "#/documente",
-      html: `Cererea <b>${esc(cerereMaiMare.nume)}</b> are <b>${nr(cerereMaiMare.pozitii)}</b> poziții și încă n-are ofertă.`,
+      html: `Cererea <b>${esc(cerereMaiMare.nume)}</b> are <b>${cerereMaiMare.pozitii === 1 ? "o poziție" : cate(cerereMaiMare.pozitii, "poziții")}</b> și încă n-are ofertă.`,
     });
   }
 
