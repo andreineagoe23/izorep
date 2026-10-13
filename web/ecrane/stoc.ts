@@ -10,7 +10,7 @@
  * linkul demo, în browser (`web/depozit-local.ts`).
  */
 import { cate, esc, eur, indicator, stare, tabel, type Ecran } from "./tip.js";
-import { SANTIERE } from "../date/seed.js";
+import { exemple } from "../date/exemple.js";
 import {
   citestePlanuri, citesteDepozit, idNou, inregistreazaInventar, modDate, puneComanda, scrieDepozit, treceStocDePornire,
 } from "../date.js";
@@ -47,7 +47,7 @@ export const CENTRAL = "central";
  */
 export const santiere = (): { id: string; denumire: string; firma?: string }[] => [
   ...citestePlanuri().map((p) => ({ id: p.id, denumire: p.denumire, firma: p.firma })),
-  ...(modDate() === "server" ? [] : SANTIERE),
+  ...(exemple()?.SANTIERE ?? []),
 ];
 
 /** Locurile cu material (Faza 5): centralul, atelierul, șantierele; cu firma și responsabilul. */

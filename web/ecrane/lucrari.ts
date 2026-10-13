@@ -8,7 +8,8 @@
  * datele stau în browser (`web/lucrari-local.ts`), ca la depozit.
  */
 import { data as dataRo, esc, eur, indicator, nota, progres, stare, tabel, type Ecran } from "./tip.js";
-import { LUCRARI, client, santier, type Lucrare, type StareLucrare } from "../date/seed.js";
+import type { Lucrare, StareLucrare } from "../date/seed.js";
+import { exemple, type Exemple } from "../date/exemple.js";
 import { vedeCosturi } from "../nav.js";
 import {
   citesteDepozit, citestePlanuri, iaDeDeschis, idNou, inchideSantier, modDate, salveazaSituatie, scrieDepozit, scriePlanuri,
@@ -38,9 +39,9 @@ const ETICHETA_STARE: Record<StareLucrare, { text: string; ton: "ok" | "atentie"
   inchisa: { text: "Închisă", ton: "ok" },
 };
 
-function randTabel(l: Lucrare): string {
-  const c = client(l.clientId);
-  const s = santier(l.santierId);
+function randTabel(ex: Exemple, l: Lucrare): string {
+  const c = ex.client(l.clientId);
+  const s = ex.santier(l.santierId);
   const et = ETICHETA_STARE[l.stare];
 
   const coloaneBani = vedeCosturi()
@@ -57,22 +58,26 @@ function randTabel(l: Lucrare): string {
   </tr>`;
 }
 
-/** Lucrările din datele firmei (exemplu, citite din fișierele lor). */
+/** Lucrările din datele firmei (exemplu, citite din fișierele lor): doar pe linkul demo. */
 function lucrariExemplu(): string {
+  const ex = exemple();
+  if (!ex) return notaInchidere;
   const capete = [
     "Lucrare", "Client / Șantier", "Început", "Progres", ...(vedeCosturi() ? ["Contractat", "Facturat"] : []), "Stare",
   ];
   const clase = ["", "", "", "", ...(vedeCosturi() ? ["n", "n"] : []), ""];
   return `<section class="imp-card"><h2>Lucrările din datele firmei</h2>
     <p class="hint" style="margin:0 0 12px">Exemplu, citit din ofertele semnate: nu au plan de șantier în aplicație.</p>
-    ${tabel(capete, LUCRARI.map(randTabel), clase)}
+    ${tabel(capete, ex.LUCRARI.map((l) => randTabel(ex, l)), clase)}
   </section>
-  ${nota(
+  ${notaInchidere}`;
+}
+
+const notaInchidere = `${nota(
     `Când se termină o lucrare, șantierul se închide din pagina lui: șeful de lucrare numără ce a rămas, iar fiecare ` +
       `material pleacă înapoi în depozit, pe alt șantier, la furnizor, sau se scrie ca pierdut, furat ori reciclat. ` +
       `Materialul de pe fiecare șantier se vede și în <a href="#/stoc">Depozit și stoc</a>.`,
-  )}`
-}
+)}`;
 
 const zi = (iso: string): string => new Date(iso).toLocaleDateString("ro-RO");
 const cant = (n: number, um: string): string => `${cifra(n)}${um ? ` ${esc(um)}` : ""}`;

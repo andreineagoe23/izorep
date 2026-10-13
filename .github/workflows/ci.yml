@@ -50,6 +50,17 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      # Pe server, ce se vede vine din baza: datele de exemplu din
+      # web/date/seed.ts (clientii si sumele lor) nu au voie sa intre in pagina
+      # construita pentru server (web/date/exemple.ts).
+      - name: Pagina pentru server, fara datele de exemplu
+        run: |
+          npm run build:server
+          if grep -rlE "Energoinstal|TRANSAVIA|Regina Maria|170519" dist-web; then
+            echo "::error::Datele de exemplu din web/date/seed.ts au intrat in pagina pentru server."
+            exit 1
+          fi
+
       - name: Migrari si date
         run: npm run db:migrate && npm run db:seed
 

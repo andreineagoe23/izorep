@@ -3,6 +3,29 @@
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
 > Ultima actualizare: 13 octombrie 2026.
 
+## 13 octombrie 2026: ecranele doar din bază (R2)
+
+Pe server, niciun ecran nu mai arată datele de exemplu din `web/date/seed.ts`:
+
+- **Tabloul**: valoarea ofertelor salvate, șantierele deschise și închise,
+  pozițiile din cererile fără ofertă; la „Necesită atenția ta”, șantierele cu
+  tot executat, cea mai mare cerere fără ofertă, ofertele fără șantier.
+- **Clienții**: beneficiarul de pe antetul ofertelor salvate, cu ofertele și
+  șantierele lui (`clientiDinOferte`).
+- **Cereri și oferte, Lucrări, Depozit**: secțiunile cu exemple apar doar pe
+  linkul demo (`exemple()` din `web/date/exemple.ts`).
+- **Firmele** emitente au trecut în `web/date/firme.ts`: sunt antetul
+  ofertelor, nu exemple.
+
+Construit cu `build:server`, `seed.ts` nu mai intră în pachet. CI-ul o
+verifică: pică dacă „Energoinstal”, „TRANSAVIA” sau „170519” apar în
+`dist-web`. Verificat cu Playwright pe proba ca pe Render, cu baza goală după
+seed: cele 10 ecrane, la 1440 și 390 px, fără niciun nume de client, fără
+erori, fără derulare laterală.
+
+În pachet au rămas numele fișierelor din memoria de coloane a importului
+(`data/mapari/index.json`): sunt metadate și nu se afișează.
+
 ## 13 octombrie 2026: primul deploy merge și fără `CREATEROLE`
 
 R0 și R1 din `docs/plan-pana-la-render.md`. **613 teste.**

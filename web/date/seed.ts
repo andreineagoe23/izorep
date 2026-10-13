@@ -66,10 +66,7 @@ export interface Document {
 }
 
 /** Documentele pleaca de la doua firme. Sistemul e multi-firma din prima zi. */
-export const FIRME = [
-  { id: "radoia", denumire: "RADOIA ISOLIRUNG SRL", serieOferta: "RAD" },
-  { id: "isorad", denumire: "R&F ISORAD SYSTEM SRL", serieOferta: "ISO" },
-] as const;
+export { FIRME } from "./firme.js";
 
 export const CLIENTI: Client[] = [
   {
@@ -217,6 +214,22 @@ export const DOCUMENTE: Document[] = [
     fisierSursa: "cerere-de-oferta-flower-city.xlsx",
   },
 ];
+
+/** Legaturile reale dintre documente, altfel invizibile intr-un tabel plat. */
+export const LANT: Record<string, string> = {
+  "d-118": "↳ împreună cu 118.1: același șantier, alt tip de lucrare",
+  "d-118-1": "↳ împreună cu 118: același șantier",
+  "d-5997": "↳ devine Anexa 1 la contractul 5998",
+  "d-5998": "↳ conține oferta 5997 ca Anexa 1",
+  "d-6009": "↳ aceleași poziții ca Anexa 1 la contractul 5998, fără prețuri",
+  "d-transavia-abur": "↳ ofertată prin Oferta 284; importată în aplicație, dă exact oferta semnată",
+  "d-284": "↳ răspunsul la cererea TRANSAVIA",
+};
+
+/** Partea din legatura care spune bani: doar pentru rolurile care vad valori. */
+export const LANT_VALOARE: Record<string, string> = {
+  "d-284": ": 94.575,06 € − discount 3 %",
+};
 
 export const client = (id: string): Client | undefined => CLIENTI.find((c) => c.id === id);
 export const santier = (id: string): Santier | undefined => SANTIERE.find((s) => s.id === id);

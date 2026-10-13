@@ -15,7 +15,7 @@ import { amprenta } from "../src/lucrari/amprenta.js";
 
 /** Antetul ofertei: ce completează omul înainte de descărcare. */
 export interface AntetOferta {
-  /** Seria firmei emitente (`RAD`, `ISO`) — din `FIRME`, `web/date/seed.ts`. */
+  /** Seria firmei emitente (`RAD`, `ISO`) — din `FIRME`, `web/date/firme.ts`. */
   serie: string;
   numar: string;
   /** Data ofertei, scrisă cum apare în document: `27.05.2026`. */

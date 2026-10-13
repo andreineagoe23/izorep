@@ -75,7 +75,11 @@ deploy:
 inclusiv testul care pică dacă izolarea nu ține. Pe proba cu `CREATEROLE`
 nimic nu se schimbă. Pornit cu un superuser pe `0.0.0.0`, serverul refuză.
 
-### R2. Ecranele doar din bază — marți după-amiază, miercuri
+### R2. Ecranele doar din bază — făcut, 13 octombrie
+
+Verificat pe proba ca pe Render, cu baza goală după seed: cele 10 ecrane, la
+1440 și 390 px, fără niciun nume de client. CI-ul pică dacă datele de exemplu
+intră în pachetul pentru server.
 
 Direcția 2 din `plan-demo.md`. În modul server, niciun ecran nu mai importă
 `web/date/seed.ts`:

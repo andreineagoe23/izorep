@@ -13,7 +13,7 @@ import { stocLocal } from "../stoc-local.js";
 import { ceriSpatiu } from "../meniu-stare.js";
 import { anuleaza, confirma, potrivit } from "../validare.js";
 import { cate, esc, eur, type Ecran } from "./tip.js";
-import { FIRME } from "../date/seed.js";
+import { FIRME } from "../date/firme.js";
 import {
   adaosFocIndustrial, clientPropus, cuAjustare, dataAzi, imparte, planDinOferta, totalCuAdaos, valoareOferta,
   type AntetOferta, type CerereOferta,

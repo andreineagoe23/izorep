@@ -14,7 +14,8 @@ web/nav.ts            definiția meniului, modulele viitoare și rolurile
 web/meniu-stare.ts    preferința de bară pliată (localStorage, best-effort)
 web/icoane.ts         pictogramele meniului, pentru bara pliată
 web/style.css         tot CSS-ul. Ecranele NU adaugă clase noi.
-web/date/seed.ts      datele demo-ului
+web/date/seed.ts      datele de exemplu, doar pe linkul demo (`exemple()`, web/date/exemple.ts)
+web/date/firme.ts     cele două firme emitente, antetul ofertelor
 web/ecrane/tip.ts     contractul de ecran + helperele de randare
 web/ecrane/*.ts       câte un ecran per fișier
 ```
@@ -135,7 +136,8 @@ e un rând, cu oferta descărcată din el (`web/oferte-local.ts`, scrisă la
 cu „Șantier făcut” când există un plan pe fișierul lui. „Deschide” pune importul
 curent și duce la import; „Șterge” (a doua apăsare confirmă) șterge importul și
 oferta lui, ca și „Șterge” din import. Dedesubt, **„Documentele firmei”**:
-documentele reale din `web/date/seed.ts`, ca exemple, cu filtrele lor.
+documentele reale din `web/date/seed.ts`, ca exemple, cu filtrele lor. Din 13
+octombrie 2026, doar pe linkul demo: pe server ecranul arată numai ce e în bază.
 Înainte pagina arăta doar exemplele, deci ce ștergea omul nu dispărea de
 nicăieri (Andrei, 3 octombrie 2026). Cardul de explicații și cele trei note de
 jos au plecat: erau pentru prezentare, nu pentru lucru.

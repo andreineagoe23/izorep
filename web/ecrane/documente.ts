@@ -3,7 +3,9 @@ import { dataScurta, esc, eur, nr, stare, tabel } from "./tip.js";
 import { citesteOferte, citestePlanuri, listeaza, puneCurent, sterge, uitaOferta } from "../date.js";
 import type { IntrareIstoric } from "../istoric.js";
 import type { OfertaEmisa } from "../oferte-local.js";
-import { DOCUMENTE, FIRME, client, type Document } from "../date/seed.js";
+import type { Document } from "../date/seed.js";
+import { FIRME } from "../date/firme.js";
+import { exemple, type Exemple } from "../date/exemple.js";
 import { vedeCosturi } from "../nav.js";
 
 /**
@@ -38,26 +40,10 @@ const STARE_INFO: Record<Document["stare"], { text: string; ton: "ok" | "atentie
   confirmata: { text: "Confirmată", ton: "ok" },
 };
 
-/** Legaturile reale dintre documente, altfel invizibile intr-un tabel plat. */
-const LANT: Record<string, string> = {
-  "d-118": "↳ împreună cu 118.1: același șantier, alt tip de lucrare",
-  "d-118-1": "↳ împreună cu 118: același șantier",
-  "d-5997": "↳ devine Anexa 1 la contractul 5998",
-  "d-5998": "↳ conține oferta 5997 ca Anexa 1",
-  "d-6009": "↳ aceleași poziții ca Anexa 1 la contractul 5998, fără prețuri",
-  "d-transavia-abur": "↳ ofertată prin Oferta 284; importată în aplicație, dă exact oferta semnată",
-  "d-284": "↳ răspunsul la cererea TRANSAVIA",
-};
-
-/** Partea din legatura care spune bani: doar pentru rolurile care vad valori. */
-const LANT_VALOARE: Record<string, string> = {
-  "d-284": ": 94.575,06 € − discount 3 %",
-};
-
-function randuri(lista: Document[], arataValoare: boolean): string[] {
+function randuri(ex: Exemple, lista: Document[], arataValoare: boolean): string[] {
   return lista.map((doc) => {
-    const c = client(doc.clientId);
-    const hint = LANT[doc.id] && LANT[doc.id] + (arataValoare ? LANT_VALOARE[doc.id] ?? "" : "");
+    const c = ex.client(doc.clientId);
+    const hint = ex.LANT[doc.id] && ex.LANT[doc.id] + (arataValoare ? ex.LANT_VALOARE[doc.id] ?? "" : "");
     // O cerere ofertata nu e „trimisa": a primit o oferta.
     const st = doc.tip === "cerere" && doc.stare === "ofertata" ? { text: "Ofertată", ton: "ok" as const } : STARE_INFO[doc.stare];
     // Numarul contine si data ("118 / 27.04.2026"); data are coloana ei.
@@ -116,9 +102,11 @@ export const ecran: Ecran = {
       "", "",
     ];
 
+    // Pe server doar ce e in baza; documentele firmei sunt exemple, doar pe linkul demo.
+    const ex = exemple();
     root.innerHTML = `<div class="imp">
       <section class="imp-card" id="cererile-tale"></section>
-      <section class="imp-card">
+      ${ex ? `<section class="imp-card">
         <h2>Documentele firmei</h2>
         <p class="hint" style="margin:0 0 12px">Cererile și ofertele reale primite de la firmă, pe care am verificat
           aplicația. Sunt exemple: nu se schimbă din aplicație.</p>
@@ -126,7 +114,7 @@ export const ecran: Ecran = {
           ${FILTRE.map((f) => `<button class="filtru" data-f="${f.id}" aria-pressed="${f.id === "toate"}">${esc(f.eticheta)}</button>`).join("")}
         </div>
         <div id="tabel-documente"></div>
-      </section>
+      </section>` : ""}
     </div>`;
 
     const tale = root.querySelector<HTMLElement>("#cererile-tale")!;
@@ -169,11 +157,12 @@ export const ecran: Ecran = {
     });
     void deseneazaTale();
 
+    if (!ex) return;
     const gazda = root.querySelector<HTMLElement>("#tabel-documente")!;
     const deseneaza = (f: Filtru): void => {
-      const lista = f === "toate" ? DOCUMENTE : DOCUMENTE.filter((d) => d.tip === f);
+      const lista = f === "toate" ? ex.DOCUMENTE : ex.DOCUMENTE.filter((d) => d.tip === f);
       gazda.innerHTML = lista.length
-        ? tabel(capete, randuri(lista, arataValoare), clase)
+        ? tabel(capete, randuri(ex, lista, arataValoare), clase)
         : `<p class="nota">Niciun document de acest tip.</p>`;
     };
 
