@@ -18,7 +18,7 @@
  */
 import { bani } from "../pricing/engine.js";
 import { CERE, cheieBaza, pretMediu, type Miscare } from "../stoc/registru.js";
-import { adus, comandatNesosit, dataSosirii, inCiorna, stareComanda, type Comanda } from "../stoc/comenzi.js";
+import { adus, comandatNesosit, dataSosirii, stareComanda, type Comanda } from "../stoc/comenzi.js";
 import type { MaterialNecesar } from "../stoc/necesar.js";
 import { consumSantier } from "../stoc/consum.js";
 import { cifreInchidere, materialSantier, type CifreInchidere } from "./inchidere.js";
@@ -150,8 +150,9 @@ export function lipsaPeSantier(p: PlanSantier, d: DateRapoarte): number {
   const comenzi = d.comenzi ?? [];
   return materialSantier(p, necesar, d.miscari, comenzi).randuri.filter((r) => {
     if (r.lipsa <= 0 || r.necesar <= 0) return false;
-    const deComandat = r.necesar - adus(d.miscari, p.id, r.cheie) - comandatNesosit(comenzi, d.miscari, p.id, r.cheie)
-      - inCiorna(comenzi, p.id, r.cheie);
+    // Ce sta pe o ciorna netrimisa nu e „comandat”: e inca de comandat, iar
+    // ciorna se vede in Comenzi. Lipsa e doar dupa ce a plecat comanda.
+    const deComandat = r.necesar - adus(d.miscari, p.id, r.cheie) - comandatNesosit(comenzi, d.miscari, p.id, r.cheie);
     return deComandat <= 0.005;
   }).length;
 }
