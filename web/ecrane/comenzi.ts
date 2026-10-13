@@ -117,7 +117,7 @@ export const ecran: Ecran = {
           <button class="filtru" data-filtru="toate" aria-pressed="${filtru === "toate"}">Toate · ${comenzi.length}</button>
         </div>
         ${vizibile.length === 0 ? `<section class="imp-card"><p class="hint" style="margin:0">${comenzi.length === 0
-          ? `Nicio comandă încă. În <a href="#/stoc">Depozit și stoc</a>, pe necesarul unui șantier, „Fă comenzile” face ciornele din ce a rămas de comandat; în <a href="#/masuratori">Măsurători</a>, „Pentru comandă” le face din ce s-a măsurat pe teren. Pentru stocul general sau o lipsă, folosește „Comandă nouă”, mai jos.`
+          ? `Nicio comandă încă. În <a href="#/stoc">Depozit și stoc</a>, pe necesarul unui șantier, „Fă comenzile” face ciornele din ce a rămas de comandat; în <a href="#/masuratori">Măsurători</a>, „Pentru comandă” le face din ce s-a măsurat pe teren.${comandaNoua() ? " Pentru stocul general sau o lipsă, folosește „Comandă nouă”, mai jos." : ""}`
           : "Nicio comandă deschisă: tot ce s-a comandat a venit sau a fost anulat."}</p></section>` : ""}
         ${vizibile.map((c) => cardComanda(c, stari.get(c.id)!)).join("")}
         ${comandaNoua()}
