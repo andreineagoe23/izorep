@@ -168,7 +168,7 @@ export const ecran: Ecran = {
         const furnizori = [...new Set([c.furnizor, ...FURNIZORI.map(([f]) => f)])];
         return `<form class="imp-card" data-form="ciorna" data-id="${esc(c.id)}">
           ${antet}
-          ${tabel(["Material", "Cantitate", "Preț fără TVA", ""], randuri, ["", "n", "n", ""])}
+          ${tabel(["Material", "Cantitate", "Preț fără TVA", ""], randuri, ["", "n", "n", ""], true)}
           ${v ? `<p class="hint">Valoare așteptată: ${esc(v)}. Prețul vine din lista furnizorului sau din ultima lui factură; îl poți schimba.</p>` : ""}
           <div class="imp-campuri">
             <label>Furnizor<select name="furnizor" data-act="furnizor">${furnizori.map((f) =>
@@ -290,7 +290,7 @@ export const ecran: Ecran = {
             <label>Unde a ajuns marfa<select name="spre">${ALEGERI.map((d) =>
               `<option value="${esc(d.id)}"${d.id === c.spre ? " selected" : ""}>${esc(d.nume)}</option>`).join("")}</select></label>
           </div>
-          ${tabel(["Material", "Primit acum", "Preț unitar (gol pe aviz)"], linii, ["", "n", "n"])}
+          ${tabel(["Material", "Primit acum", "Preț unitar (gol pe aviz)"], linii, ["", "n", "n"], true)}
           <p class="hint">Pe aviz, prețul rămâne gol: îl aduce factura („Trece factura”, apare după recepție). Prețul în lei se trece în euro
             cu cursul de pe factură, ca în evidența voastră.</p>
           <div class="imp-formular-butoane"><button type="submit" class="primar">Înregistrează recepția</button></div>
@@ -331,7 +331,7 @@ export const ecran: Ecran = {
             <label>Cursul de pe factură (lei pentru 1 €)<input name="curs" type="number" inputmode="decimal" step="any" min="0" value="${r?.curs ?? ""}" /></label>
             <label>Transport pe factură (opțional)<input name="transport" type="number" inputmode="decimal" step="any" min="0" value="${r?.transport ?? ""}" /></label>
           </div>
-          ${tabel(["Material", "Pe aviz", "Preț unitar fără TVA"], linii, ["", "n", "n"])}
+          ${tabel(["Material", "Pe aviz", "Preț unitar fără TVA"], linii, ["", "n", "n"], true)}
           <p class="hint">Cantitățile rămân cele de pe aviz. În jurnal, intrarea de pe aviz apare anulată și înlocuită de cea de pe factură, cu preț.</p>
           <div class="imp-formular-butoane"><button type="submit" class="primar">Trece factura</button></div>
         </form>
