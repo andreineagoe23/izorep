@@ -1284,3 +1284,11 @@ main details.ajutor > .hint { margin: 0 0 8px; }
 /* Pe card (tabelul stivuit) titlul nu se taie cu „…”: e chiar ce cauta omul. */
 @container (max-width: 900px) { table.stiva.lat span.desc { white-space: normal; overflow: visible; } }
 @container (max-width: 560px) { table.stiva span.desc { white-space: normal; overflow: visible; } }
+
+/* Calcul deviz: materialul are nevoie de loc, grosimea nu („elastomer (Arm…” pe telefon). */
+@media (max-width: 480px) {
+  .strat { flex-wrap: wrap; }
+  .strat > label:first-child { flex: 1 1 100% !important; }
+  .strat > label:nth-child(2) { flex: 1 1 auto !important; }
+}
+.exemple .hint { flex: 1 1 100%; }
