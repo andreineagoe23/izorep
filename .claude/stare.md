@@ -39,6 +39,8 @@ același tabel, Excelul descărcat are aceleași rânduri ca ecranul.
 | Factura care înlocuiește avizul număra material venit a doua oară | se numără la data avizului (`dataSosirii`); textul de sub titlu o spune |
 | „15.641,41 €” sus, „din 15.641,42 €” jos, pe același șantier | valorile pe materiale se rotunjesc ca suma lor să fie oferta (`laBani`) |
 | R4: Măsurătorile se pierdeau la reîncărcare | paginile în lucru, cu poza, în IndexedDB până pleacă (`web/masuratori-local.ts`) |
+| Măsurători: fără model (link demo, server fără `OPENAI_API_KEY`), pozele treceau pe tăcute la „De verificat”, fără nicio citire | sus scrie „Pozele nu se citesc automat” și de ce, cu „Verifică din nou”; pagina are „Scrii de mână”, iar cu modelul pornit între timp, „Citește poza acum” (`stareModel`) |
+| Tooltipul meniului pliat ieșea sub carduri | bara pliată are `z-index` |
 | R6: avertismentul de Node 20 în CI | `checkout` și `setup-node` v5 |
 | favicon 404 în consolă; „Comandă nouă, mai jos” când formularul e ascuns; „1 poziții” | reparate |
 

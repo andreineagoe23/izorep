@@ -1352,3 +1352,10 @@ main details.ajutor > .hint { margin: 0 0 8px; }
   .matrice table.stiva td:not(:first-child) { flex: 1 1 26%; }
   .matrice table.stiva tr { padding: 10px 0; gap: 4px 12px; }
 }
+
+/* Măsurători: de ce nu se citesc pozele, cand nu se citesc. */
+.sant-model {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: var(--imp-gap);
+  padding: 10px 14px; border-radius: 10px; background: var(--panou-2);
+}
+.sant-model p { flex: 1 1 32ch; margin: 0; }
