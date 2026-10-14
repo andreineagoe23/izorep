@@ -18,7 +18,7 @@
  */
 import { bani } from "../pricing/engine.js";
 import { CERE, cheieBaza, pretMediu, type Miscare } from "../stoc/registru.js";
-import { adus, comandatNesosit, stareComanda, type Comanda } from "../stoc/comenzi.js";
+import { adus, comandatNesosit, dataSosirii, stareComanda, type Comanda } from "../stoc/comenzi.js";
 import type { MaterialNecesar } from "../stoc/necesar.js";
 import { consumSantier } from "../stoc/consum.js";
 import { cifreInchidere, materialSantier, type CifreInchidere } from "./inchidere.js";
@@ -90,7 +90,10 @@ export function listaSaptamanala(planuri: readonly PlanSantier[], d: DateRapoart
     let livrari = 0;
     let valoare = 0;
     for (const m of d.miscari) {
-      if (m.anuleaza || anulate.has(m.id) || m.spre !== p.id || !CERE[m.tip].spre || m.tip === "ajustare" || !inPerioada(m.data)) continue;
+      // Avizul inlocuit de factura e anulat, iar factura poarta data avizului:
+      // materialul a venit o singura data, cand a venit avizul.
+      if (m.anuleaza || anulate.has(m.id) || m.spre !== p.id || !CERE[m.tip].spre || m.tip === "ajustare"
+        || !inPerioada(dataSosirii(m, d.miscari))) continue;
       livrari++;
       const pret = m.tip === "intrare" && m.pret ? m.pret.valoare : pretMediu(d.miscari, cheieBaza(m.articol));
       valoare += (pret ?? 0) * m.cantitate;
@@ -147,6 +150,8 @@ export function lipsaPeSantier(p: PlanSantier, d: DateRapoarte): number {
   const comenzi = d.comenzi ?? [];
   return materialSantier(p, necesar, d.miscari, comenzi).randuri.filter((r) => {
     if (r.lipsa <= 0 || r.necesar <= 0) return false;
+    // Ce sta pe o ciorna netrimisa nu e „comandat”: e inca de comandat, iar
+    // ciorna se vede in Comenzi. Lipsa e doar dupa ce a plecat comanda.
     const deComandat = r.necesar - adus(d.miscari, p.id, r.cheie) - comandatNesosit(comenzi, d.miscari, p.id, r.cheie);
     return deComandat <= 0.005;
   }).length;
@@ -161,9 +166,13 @@ export function alerte(planuri: readonly PlanSantier[], d: DateRapoarte, azi: st
   }
   out.push(...pierderiPestePrag(planuri, d));
   const nume = new Map(planuri.map((p) => [p.id, p.denumire]));
+  // Santierul inchis nu mai asteapta nimic: comanda ramasa deschisa pe el se
+  // vede pe cardul ei din Comenzi (de anulat sau de receptionat in central),
+  // nu ca alerta pe un santier care nu mai exista pe teren.
+  const inchise = new Set(planuri.filter((p) => p.inchis).map((p) => p.id));
   const comenzi = [...(d.comenzi ?? [])].sort((a, b) => (a.trimisa ?? "").localeCompare(b.trimisa ?? ""));
   for (const c of comenzi) {
-    if (!c.trimisa || c.anulata) continue;
+    if (!c.trimisa || c.anulata || (c.santier && inchise.has(c.santier))) continue;
     const st = stareComanda(c, d.miscari);
     if (st !== "trimisa" && st !== "partial") continue;
     const zile = zileIntre(c.trimisa, azi);

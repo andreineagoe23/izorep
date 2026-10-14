@@ -44,11 +44,11 @@ export function cardSaptamana(l: ListaSaptamanala, bani: boolean): string {
   const randuri = l.randuri.map((r) => `<tr>
     <td><b>${esc(r.denumire)}</b>${r.inchis ? `<br><span class="hint">închis în perioada asta</span>` : ""}</td>
     <td class="n">${r.situatii || "—"}${bani && r.situatii ? `<br><span class="hint">${eur(r.executat)}</span>` : ""}</td>
-    <td class="n">${r.livrari || "—"}${bani && r.livrari ? `<br><span class="hint">${eur(r.valoareVenita)}</span>` : ""}</td>
+    <td class="n">${r.livrari ? (r.livrari === 1 ? "o livrare" : `${r.livrari} livrări`) : "—"}${bani && r.livrari ? `<br><span class="hint">${eur(r.valoareVenita)}</span>` : ""}</td>
     <td class="n">${r.comenziTrimise || "—"}</td>
   </tr>`);
-  return `<p class="hint" style="margin:0 0 12px">${esc(perioada)}. Valoarea situațiilor e cea din perioadă; materialul venit, la
-      prețul facturii sau la prețul mediu.</p>
+  return `<p class="hint" style="margin:0 0 12px">${esc(perioada)}. Valoarea situațiilor e cea din perioadă. Materialul venit
+      se numără la data avizului: factura care vine după aviz nu aduce material nou, pune doar prețul.</p>
     ${tabel(["Șantier", "Situații", "Material venit", "Comenzi trimise"], randuri, ["", "n", "n", "n"])}`;
 }
 

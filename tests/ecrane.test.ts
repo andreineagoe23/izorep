@@ -70,3 +70,63 @@ describe("pagina de santier ajunge in oferta doar verificata", () => {
     expect(html).not.toContain("<img");
   });
 });
+
+describe("importul în formatul ofertei (web/import/oferta-vizual.ts)", async () => {
+  const { documentPeEcran, antetDinFisier } = await import("../web/import/oferta-vizual.js");
+  const { documentOferta } = await import("../web/document-oferta.js");
+  const linie = (index: number, text: string, cod: string | null, pret: number | null, necesitaValidare = false): LinieProcesata => ({
+    bruta: { index, foaie: "Foaia 1", rand: 10 + index, text: cod ? `${cod} | ${text}` : text, um: "ml", cantitate: 10, celule: cod ? [cod, text] : [text] },
+    extras: {
+      index, sistem: "elastomer", diametru_valoare: 50, diametru_tip: "DN", grosime_mm: 13, forma: "ml",
+      gol_latime_mm: null, gol_inaltime_mm: null, straturi_extra: [], incredere: 0.99, motiv: "",
+    },
+    sursa: "regex", necesitaValidare,
+    ...(pret === null ? { codEroare: "fara_diametru" as const } : { pret: { pret_unitar: pret, cantitate: 10, total: pret * 10 } as LinieProcesata["pret"] }),
+  }) as LinieProcesata;
+  const cerere = (linii: LinieProcesata[]) => ({
+    linii,
+    antet: { serie: "RAD", numar: "", data: "14.10.2026", persoana: INJECTIE, client: INJECTIE, obiectiv: "", firma: "RADOIA ISOLIRUNG SRL", localitate: "PALTINIS" },
+    provenienta: { generatLa: "", destinatie: "rezidential", model: null, sesiune: "s", fisierSursa: "x.xlsx" },
+  });
+
+  it("textul, codul și antetul din fișier nu injectează HTML", () => {
+    const linii = [linie(1, `Izolatie elastomer 13 mm DN50 ${INJECTIE}`, "E3.1.1.1", 8.84)];
+    const html = documentPeEcran(documentOferta(cerere(linii)), {
+      linii: new Map(linii.map((l) => [l.extras.index, l])), vizibile: null, editIdx: null, propunere: () => null, cuFoaie: true,
+    });
+    expect(html).not.toContain(INJECTIE);
+  });
+
+  it("aceeași numerotare și același total ca documentul din care se scrie Excelul", () => {
+    const linii = [linie(1, "Izolatie elastomer 13 mm DN50", null, 8.84), linie(2, "Izolatie elastomer DN50", null, null),
+      linie(3, "Izolatie elastomer 13 mm DN50", null, 8.84)];
+    const d = documentOferta(cerere(linii));
+    const html = documentPeEcran(d, {
+      linii: new Map(linii.map((l) => [l.extras.index, l])), vizibile: null, editIdx: null, propunere: () => null, cuFoaie: false,
+    });
+    // Poziția fără preț stă la locul ei, fără număr; a treia e a doua în ofertă.
+    expect([...html.matchAll(/class="of-nr"[^>]*>(\d+|<span)/g)].map((m) => m[1])).toEqual(["1", "<span", "2"]);
+    expect(html).toContain("176,80 €");
+    expect(html).toMatch(/Nu intră încă în ofertă: 0 de verificat și 1 fără preț/);
+  });
+
+  it("rândul de continuare iese întreg: descrierea, apoi ce are el în plus (Book15)", () => {
+    const l = linie(1, "Same - Ø125 mm | Circular spiro duct, insulated with 30mm mineral wool", null, 10.87);
+    const p = documentOferta(cerere([l])).capitole[0]!.pozitii[0]!;
+    expect(p.textClient).toBe("Circular spiro duct, insulated with 30mm mineral wool — Ø125 mm");
+  });
+
+  it("beneficiarul și obiectivul se citesc din antetul fișierului", () => {
+    const celula = (v: string) => ({ v, span: 1 });
+    const foaie = {
+      nume: "Izolatii", coloane: 4,
+      antet: { rand: 4, celule: ["Nr.", "Denumire", "UM", "Cantitate"].map(celula) },
+      randuri: [
+        { rand: 1, celule: [celula("Lista de cantitati - Hala Chitila")] },
+        { rand: 2, celule: [celula("Beneficiar: Construct Nord SRL")] },
+        { rand: 3, celule: [celula("Obiectiv"), celula("Hala Logistica Chitila")] },
+      ],
+    } as unknown as Parameters<typeof antetDinFisier>[0][number];
+    expect(antetDinFisier([foaie])).toEqual({ client: "Construct Nord SRL", obiectiv: "Hala Logistica Chitila" });
+  });
+});

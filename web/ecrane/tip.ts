@@ -84,16 +84,17 @@ export const stare = (text: string, ton: "ok" | "atentie" | "neutru" = "neutru")
  * Pe ecran ingust tabelul nu se deruleaza lateral (preferinta din `ui.md`):
  * fiecare rand devine un card, iar fiecare celula isi poarta numele coloanei
  * (`data-eticheta`), scris deasupra valorii. Tabelele late (6+ coloane) trec
- * pe carduri mai devreme — vezi `table.stiva` in `style.css`.
+ * pe carduri mai devreme — vezi `table.stiva` in `style.css`. `lat` se poate
+ * cere si pentru un tabel cu putine coloane, dar cu campuri in celule (ciorna).
  */
-export const tabel = (capete: string[], randuri: string[], clase: string[] = []): string => {
+export const tabel = (capete: string[], randuri: string[], clase: string[] = [], lat = capete.length >= 6): string => {
   const etichetate = randuri.map((r) => {
     let i = 0;
     return r.replace(/<t([dh])\b/g, (_, t: string) => `<t${t} data-eticheta="${esc(capete[i++] ?? "")}"`);
   });
   return `
   <div class="tabelwrap" tabindex="0">
-    <table class="stiva${capete.length >= 6 ? " lat" : ""}">
+    <table class="stiva${lat ? " lat" : ""}">
       <thead><tr>${capete
         .map((c, i) => `<th scope="col" class="${clase[i] ?? ""}">${esc(c)}</th>`)
         .join("")}</tr></thead>

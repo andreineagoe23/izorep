@@ -1,7 +1,65 @@
 # Stare curentă
 
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
-> Ultima actualizare: 13 octombrie 2026.
+> Ultima actualizare: 14 octombrie 2026.
+
+## 14 octombrie 2026: sesiunea de cloud, design și bug-uri (ramura `cloud-design`)
+
+Cerut de Andrei, pentru demo (19 octombrie): aplicația să arate profesional și
+să fie ușor de folosit de oameni de birou și de șantier, plus bug-urile din
+`docs/sesiune-cloud.md`. Pe ramură, cu PR spre `main`, neunit.
+
+**Importul, în formatul ofertei** (decis de Andrei pe 13 octombrie seara,
+peste decizia din 11 octombrie): „cererile vin în structuri diferite, dar pe
+pagină și la export trebuie să aibă același format”. Pasul „Verificare” arată
+`documentOferta`, adică exact documentul din care se scrie Excelul: aceleași
+coloane pentru orice fișier (Nr., Cod doar cu coduri, Denumire, UM, Cantitate,
+golul doar la foc, Preț unitar, Valoare), capitolele clientului cu subtotal,
+totalul, discountul și nota. Pozițiile „De verificat” și „Fără preț” stau la
+locul lor, fără număr. Cei trei pași rămân. După prima privire a lui Andrei,
+tot pe 14: vederea implicită e „Fișierul clientului” (grila), cu „Ca în ofertă”
+alături; descrierea se vede întreagă, fără „Tot textul”; „Stare” are lățime
+fixă, lipită de marginea din dreapta, descrierea ia cel mai mult din rest, iar
+observațiile puțin; sub 1100 px rândurile devin carduri (`ui.md`). `web/import/oferta-vizual.ts`. Verificat pe
+Book15, Flower City, CET (prin izolația pe foaie) și o cerere scrisă de noi:
+același tabel, Excelul descărcat are aceleași rânduri ca ecranul.
+
+- Datele ofertei (număr, beneficiar, obiectiv, discount, ajustare) stau în
+  sesiune (`SesiuneImport.antet`): la reîncărcare nu se mai pierd, iar
+  „Creează șantierul” nu mai ia numele fișierului drept beneficiar. Beneficiarul
+  și obiectivul se propun din antetul fișierului („Beneficiar : …”).
+- Rândurile de continuare („Same - Ø125 mm”, „idem DN20”) se scriu în ofertă ca
+  descrierea poziției de deasupra urmată de dimensiune (`textClient`).
+- „ø114 în listă” în loc de „rândul 114”: lângă „Excel: rândul 13” se citea
+  ca rând din fișier.
+
+**Bug-uri:**
+
+| Ce | Acum |
+|---|---|
+| Ciorna netrimisă era „comandat, nesosit” (`comandatNesosit`): șantierul arăta „Lipsește: nimic” pe material necomandat | doar comenzile trimise sunt comandate; ciornele apar „în ciornă, de trimis” și nu se dublează (`inCiorna`) |
+| Comanda deschisă pe un șantier închis era alertă | nu mai e (`alerte`) |
+| Factura care înlocuiește avizul număra material venit a doua oară | se numără la data avizului (`dataSosirii`); textul de sub titlu o spune |
+| „15.641,41 €” sus, „din 15.641,42 €” jos, pe același șantier | valorile pe materiale se rotunjesc ca suma lor să fie oferta (`laBani`) |
+| R4: Măsurătorile se pierdeau la reîncărcare | paginile în lucru, cu poza, în IndexedDB până pleacă (`web/masuratori-local.ts`) |
+| Măsurători: fără model (link demo, server fără `OPENAI_API_KEY`), pozele treceau pe tăcute la „De verificat”, fără nicio citire | sus scrie „Pozele nu se citesc automat” și de ce, cu „Verifică din nou”; pagina are „Scrii de mână”, iar cu modelul pornit între timp, „Citește poza acum” (`stareModel`) |
+| Tooltipul meniului pliat ieșea sub carduri | bara pliată are `z-index` |
+| R6: avertismentul de Node 20 în CI | `checkout` și `setup-node` v5 |
+| favicon 404 în consolă; „Comandă nouă, mai jos” când formularul e ascuns; „1 poziții” | reparate |
+
+**Designul, pe toate ecranele** (`web/style.css`, blocul „sistemul comun”):
+cifrele de sus pe grilă, fără rupere; etichetele de stare ca pastile cu punct
+(arătau ca butoane); toate controalele de 44 px; secțiunile pliate la fel;
+ștergerea fără roșu; tabelele pe telefon cu titlu de card; antetul cu numele
+aplicației pe telefon. Pe ecrane: șantierul cu numele sus, situațiile înaintea
+materialului, planul și ștergerea pliate, soldul negativ marcat; Depozit cu
+„Sari la” și secțiunile în ordinea folosirii; Cereri și oferte cu titlul
+documentului primul; matricea de prețuri compactă pe telefon.
+
+Verificat cu Playwright pe `build:server` (bază goală, date făcute din ecrane)
+și pe demo: 10 ecrane + pagina șantierului, 390 / 768 / 1440 / 1920 px, ambele
+teme: zero derulare laterală, zero erori (pe demo, doar sonda `/api/stare`),
+nicio țintă sub 44 px în afara linkurilor din text. **592 de teste.**
 
 ## 13 octombrie 2026: starea de demo (R3)
 

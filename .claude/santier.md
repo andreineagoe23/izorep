@@ -40,6 +40,14 @@ poze → modelul citește termenii → codul îi adună pe rânduri
   incomplete (fără diametru, fără cantitate, fără niciun strat).
 - Pe Pages ruta `/api/poza` lipsește, deci ecranul trece pe **scris de mână**:
   poza alături, „Adaugă rând”. Aceeași verificare, același drum spre ofertă.
+- **Ecranul spune de ce nu citește** (14 octombrie 2026). Fără model, pagina
+  trecea pe tăcute pe scris de mână, cu eticheta „De verificat”, iar Andrei a
+  crezut că modelul a citit poza și n-a găsit nimic. Acum `stareModel` din
+  `web/imagine.ts` dă motivul — link demo, server fără `OPENAI_API_KEY`, server
+  care nu răspunde — iar sub „Alege pozele” scrie „Pozele nu se citesc
+  automat” cu motivul și „Verifică din nou”. Pagina necitită are „Scrii de
+  mână”; modelul pornit între timp (o poză nouă sau „Verifică din nou” întreabă
+  din nou) dă „Citește poza acum” pe paginile rămase necitite.
 - **O poză care nu se citește** are „Citește din nou” și „Scriu de mână”. Un
   apel are 180 s și o singură reîncercare: în comparație, o pagină blocată la
   OpenAI a ținut 20 de minute cu reîncercările implicite.

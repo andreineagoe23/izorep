@@ -52,13 +52,13 @@ function randuri(ex: Exemple, lista: Document[], arataValoare: boolean): string[
     const firma = doc.firmaId ? FIRME.find((f) => f.id === doc.firmaId)?.denumire : undefined;
     // Legatura dintre documente sta sub titlu, nu sub numar: coloana de numar
     // e ingusta si o nota de un rand acolo intinde randul pe sase linii.
+    // Titlul e primul: pe telefon e titlul cardului, iar tipul si numarul stau sub el.
     return `<tr>
-      <td class="fix">${esc(numar)}</td>
-      <td class="fix">${doc.data ? dataScurta(doc.data) : "—"}</td>
-      <td>${esc(TIP_ETICHETA[doc.tip])}</td>
-      <td>${esc(c?.denumire ?? "—")}</td>
       <td><span class="desc" title="${esc(doc.titlu)}">${esc(doc.titlu)}</span>
-        <br><span class="hint">${hint ? `${esc(hint)} · ` : ""}${firma ? `emisă de ${esc(firma)} · ` : ""}${esc(doc.fisierSursa)}</span></td>
+        <br><span class="hint">${esc(TIP_ETICHETA[doc.tip])}${numar !== "—" ? ` nr. ${esc(numar)}` : ""}${
+          hint ? ` · ${esc(hint)}` : ""}${firma ? ` · emisă de ${esc(firma)}` : ""} · ${esc(doc.fisierSursa)}</span></td>
+      <td>${esc(c?.denumire ?? "—")}</td>
+      <td class="fix">${doc.data ? dataScurta(doc.data) : "—"}</td>
       <td class="n">${nr(doc.linii)}</td>
       ${arataValoare ? `<td class="n">${doc.valoare != null ? eur(doc.valoare) : "—"}</td>` : ""}
       <td>${stare(st.text, st.ton)}</td>
@@ -73,7 +73,7 @@ const TIP_OFERTA: Record<string, string> = { rezidential: "Rezidențială", indu
 function randImport(m: IntrareIstoric, o: OfertaEmisa | undefined, santier: boolean, arataValoare: boolean, stergeDe: string | null): string {
   const st = santier ? stare("Șantier făcut", "ok") : o ? stare("Ofertă descărcată", "ok") : stare("De ofertat", "atentie");
   return `<tr>
-    <td><strong>${esc(m.nume)}</strong><br><span class="hint">importată pe ${esc(dataScurta(m.cand))}</span></td>
+    <td><strong>${esc(o?.client || m.nume)}</strong><br><span class="hint">${o?.client ? `${esc(m.nume)} · ` : ""}importată pe ${esc(dataScurta(m.cand))}</span></td>
     <td>${esc(TIP_OFERTA[m.destinatie ?? "rezidential"] ?? "")}</td>
     <td class="n">${nr(m.tarifate)} din ${nr(m.pozitii)}<br><span class="hint">cu preț</span></td>
     <td>${o ? `${esc(o.numar || "fără număr")} · ${esc(o.data)}${o.client ? `<br><span class="hint">${esc(o.client)}</span>` : ""}` : "—"}</td>
@@ -92,12 +92,12 @@ export const ecran: Ecran = {
   render(root) {
     const arataValoare = vedeCosturi();
     const capete = [
-      "Număr", "Dată", "Tip", "Client", "Titlu", "Linii",
+      "Document", "Client", "Dată", "Linii",
       ...(arataValoare ? ["Valoare"] : []),
       "Stare", "",
     ];
     const clase = [
-      "", "", "", "", "", "n",
+      "", "", "", "n",
       ...(arataValoare ? ["n"] : []),
       "", "",
     ];

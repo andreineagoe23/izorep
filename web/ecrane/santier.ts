@@ -1,4 +1,4 @@
-import { micsoreaza, modelPornit, rutaModel } from "../imagine.js";
+import { micsoreaza, rutaModel, stareModel, type StareModel } from "../imagine.js";
 import { agrega, type RandSantier } from "../../src/santier/agrega.js";
 import { RaspunsPoza, type Element, type Izolatie, type Jacheta } from "../../src/santier/schema.js";
 import { spreCerere } from "../../src/santier/spre-cerere.js";
@@ -13,6 +13,7 @@ import { incarca as incarcaImport, listeaza as listeazaImporturi } from "../date
 import { stocLocal } from "../stoc-local.js";
 import type { Comparatie } from "../../src/lucrari/comparatie.js";
 import type { Ecran } from "./tip.js";
+import { citesteLucru, paginaRefacuta, scrieLucru } from "../masuratori-local.js";
 
 /**
  * Măsurători: pozele carnetului -> randuri confirmate -> oferta sau situatia.
@@ -32,7 +33,8 @@ import type { Ecran } from "./tip.js";
  * oferta. Nicio a doua cale de pret.
  *
  * Starea sta la nivel de modul: plecat pe alt ecran si intors, munca e tot
- * acolo. La reincarcarea paginii se pierde — pozele nu se pastreaza in browser.
+ * acolo. Din 14 octombrie 2026 (R4) supravietuieste si reincarcarii: pozele si
+ * randurile stau in IndexedDB pana pleaca (`web/masuratori-local.ts`).
  */
 const RUTA_POZA = rutaModel("poza");
 /** Cate pagini se citesc deodata. Fiecare apel dureaza secunde; doua tin progresul vizibil. */
@@ -65,10 +67,45 @@ let comparatie: { lista: string; c: Comparatie } | null = null;
 /** Ce a ieșit la „Fă ciornele comenzii” când n-a fost nimic de comandat. */
 let mesajComanda = "";
 
+/** Lucrul din IndexedDB se reface o singura data, la prima deschidere dupa incarcarea paginii. */
+let refacut = false;
+let ceasSalvare: ReturnType<typeof setTimeout> | undefined;
+
+/** Scrie lucrul in browser, amanat: o citire, o corectura si un clic vin unul dupa altul. */
+function salveazaLucru(): void {
+  clearTimeout(ceasSalvare);
+  ceasSalvare = setTimeout(() => {
+    void scrieLucru({
+      scop, destinatie, planAles, titlu,
+      pagini: pagini.flatMap((p) => {
+        const poza = fisiere.get(p.id);
+        return poza ? [{
+          id: p.id, nume: p.nume, poza, stare: p.stare, eroare: p.eroare, randuri: p.randuri, note: p.note,
+          verificata: p.verificata, faraModel: p.faraModel,
+        }] : [];
+      }),
+    });
+  }, 300);
+}
+
+/** Paginile lasate la jumatate inainte de reincarcare, cu pozele lor. */
+async function refaLucrul(): Promise<void> {
+  if (refacut || pagini.length > 0) { refacut = true; return; }
+  refacut = true;
+  const l = await citesteLucru();
+  if (!l || l.pagini.length === 0) return;
+  ({ scop, destinatie, planAles, titlu } = l);
+  pagini = l.pagini.map((p) => {
+    const f = new File([p.poza], p.nume, { type: p.poza.type });
+    fisiere.set(p.id, f);
+    return paginaRefacuta(p, URL.createObjectURL(f));
+  });
+}
+
 const idNou = (): string => `${Date.now().toString(36)}-${(urmator++).toString(36)}`;
 
-async function modelDisponibil(): Promise<boolean> {
-  return modelPornit("poza");
+async function modelDisponibil(): Promise<StareModel> {
+  return stareModel("poza");
 }
 
 /** Id-urile randurilor unice pe pagina, ca editarea sa stie ce rand e. */
@@ -93,7 +130,7 @@ export const ecran: Ecran = {
       <div id="sant-comparatie"></div>
     </div>`;
     const gazda = root.querySelector<HTMLElement>(".sant")!;
-    const cuModel = await modelDisponibil();
+    let [model] = await Promise.all([modelDisponibil(), refaLucrul()]);
     /** Importurile din istoric: listele clientilor cu care se pot compara masuratorile. */
     let liste: ListaClient[] = [];
     try { liste = (await listeazaImporturi()).map((x) => ({ id: x.id, nume: x.nume })); } catch { liste = []; }
@@ -102,14 +139,15 @@ export const ecran: Ecran = {
     /** Pe situatie, tipul ofertei e al santierului, nu cel ales sus. */
     const destinatiaPaginii = (): Destinatie =>
       scop !== "oferta" ? ((citestePlanuri().find((p) => p.id === planAles)?.destinatie as Destinatie | undefined) ?? destinatie) : destinatie;
-    const incarca = (): string => cardIncarca({ scop, destinatie, santiere: santiere(), planAles, eroare, trimisa });
+    const incarca = (): string => cardIncarca({ scop, destinatie, santiere: santiere(), planAles, eroare, trimisa, model });
 
     const deseneaza = (): void => {
       gazda.querySelector("#sant-incarca")!.innerHTML = incarca();
       gazda.querySelector("#sant-pagini")!.innerHTML = pagini
-        .map((p, i) => `<div data-pagina="${p.id}">${cardPagina(p, i + 1, { editeaza, destinatie: destinatiaPaginii() })}</div>`).join("");
+        .map((p, i) => `<div data-pagina="${p.id}">${cardPagina(p, i + 1, { editeaza, destinatie: destinatiaPaginii(), cuModel: model === "pornit" })}</div>`).join("");
       deseneazaTrimite();
       legaDrop();
+      salveazaLucru();
     };
     const deseneazaTrimite = (): void => {
       gazda.querySelector("#sant-trimite")!.innerHTML = cardTrimite({
@@ -128,15 +166,16 @@ export const ecran: Ecran = {
       const i = pagini.findIndex((p) => p.id === id);
       const loc = gazda.querySelector(`[data-pagina="${CSS.escape(id)}"]`);
       if (i < 0 || !loc) return deseneaza();
-      loc.innerHTML = cardPagina(pagini[i]!, i + 1, { editeaza, destinatie: destinatiaPaginii() });
+      loc.innerHTML = cardPagina(pagini[i]!, i + 1, { editeaza, destinatie: destinatiaPaginii(), cuModel: model === "pornit" });
       deseneazaTrimite();
+      salveazaLucru();
     };
     redeseneaza = (id) => (id ? deseneazaPagina(id) : deseneaza());
 
     const pagina = (id: string | undefined): PaginaSantier | undefined => pagini.find((p) => p.id === id);
 
     async function citeste(p: PaginaSantier, f: File): Promise<void> {
-      if (!cuModel) {
+      if (model !== "pornit") {
         p.stare = "gata";
         p.faraModel = true;
         return;
@@ -154,6 +193,7 @@ export const ecran: Ecran = {
         p.randuri = cuId(agrega(citit.termeni));
         p.note = citit.note;
         p.stare = "gata";
+        p.faraModel = false;
       } catch (e) {
         console.error(e);
         p.stare = "eroare";
@@ -178,12 +218,16 @@ export const ecran: Ecran = {
       // Paginile noi se adauga la capat; cele existente nu se ating, ca o
       // corectura deschisa pe alta pagina sa nu se piarda.
       const inainte = pagini.length;
+      // Modelul oprit se mai intreaba o data la fiecare poza noua: serverul
+      // poate fi trezit intre timp, sau cheia pusa, fara reincarcarea paginii.
+      if (model !== "pornit" && noi.length > 0) model = await modelDisponibil();
       pagini.push(...noi.map((x) => x.p));
       for (const { f, p } of noi) fisiere.set(p.id, f);
+      salveazaLucru();
       gazda.querySelector("#sant-incarca")!.innerHTML = incarca();
       legaDrop();
       gazda.querySelector("#sant-pagini")!.insertAdjacentHTML("beforeend", noi.map(({ p }, k) =>
-        `<div data-pagina="${p.id}">${cardPagina(p, inainte + k + 1, { editeaza, destinatie: destinatiaPaginii() })}</div>`).join(""));
+        `<div data-pagina="${p.id}">${cardPagina(p, inainte + k + 1, { editeaza, destinatie: destinatiaPaginii(), cuModel: model === "pornit" })}</div>`).join(""));
       deseneazaTrimite();
       let i = 0;
       const lucrator = async (): Promise<void> => {
@@ -218,7 +262,7 @@ export const ecran: Ecran = {
 
     gazda.addEventListener("input", (e) => {
       const t = e.target as HTMLInputElement;
-      if (t.name === "titlu" && t.closest("#trimite")) titlu = t.value;
+      if (t.name === "titlu" && t.closest("#trimite")) { titlu = t.value; salveazaLucru(); }
     });
 
     gazda.addEventListener("click", (e) => {
@@ -231,6 +275,10 @@ export const ecran: Ecran = {
       switch (b.dataset["act"]) {
         case "compara":
           void compara();
+          return;
+        case "verifica-model":
+          b.disabled = true;
+          void modelDisponibil().then((m) => { model = m; deseneaza(); });
           return;
         case "reciteste": {
           const f = p && fisiere.get(p.id);
@@ -322,6 +370,7 @@ export const ecran: Ecran = {
       titlu = "";
       editeaza = null;
       comparatie = null;
+      salveazaLucru();
     }
 
     /**

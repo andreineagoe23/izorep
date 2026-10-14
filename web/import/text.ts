@@ -100,7 +100,7 @@ const mm = (g: number | null): string => (g === null ? "" : ` ${String(g).replac
 
 /**
  * Ce a inteles aplicatia din rand, ca etichete scurte: „Vată minerală 50 mm ·
- * rândul 114", „+ Tablă aluminiu · rândul 220", „DN100 = ø114,3", „flanșă".
+ * ø114 în listă", „+ Tablă aluminiu · ø220 în listă", „DN100 = ø114,3", „flanșă".
  *
  * Randul din lista vine din pretul deja calculat, cate unul per strat, in
  * aceeasi ordine. E singurul loc din care omul poate verifica unde a cazut
@@ -122,7 +122,9 @@ export function inteles(e: LinieExtrasa, pret?: LinieProcesata["pret"]): string[
   const peRand = (k: number): string => {
     const s = straturi[k];
     if (!s) return "";
-    return s.rand_lista > 0 ? ` · rândul ${numarRo(s.rand_lista)}` : " · pe mp";
+    // „ø114 în listă”, nu „rândul 114”: lângă rândul din Excel, „rândul” se
+    // citea ca rând din fișierul clientului.
+    return s.rand_lista > 0 ? ` · ø${numarRo(s.rand_lista)} în listă` : " · pe mp";
   };
   return [
     `${MATERIAL[e.sistem]}${mm(e.grosime_mm)}${peRand(0)}`,
@@ -143,7 +145,7 @@ export function ajutorDiametru(l: LinieProcesata): string {
   if (od === null) return `DN${numarRo(e.diametru_valoare)} nu e în tabelul de conversie`;
   const rand = l.pret && "straturi" in l.pret ? l.pret.straturi[0]?.rand_lista : undefined;
   const conversie = e.diametru_tip === "DN" ? `ø${numarRo(od)} după tabelul de conversie` : `ø${numarRo(od)}`;
-  return rand === undefined ? conversie : `${conversie} · rândul ${numarRo(rand)} din listă`;
+  return rand === undefined ? conversie : `${conversie} · prețul de la ø${numarRo(rand)} din listă`;
 }
 
 export type Stare = "gata" | "de_validat" | "netarifate";

@@ -63,10 +63,10 @@ export const ecran: Ecran = {
 
           <h2>Straturi <span class="hint">dinspre țeavă spre exterior</span></h2>
           <div id="straturi"></div>
-          <button id="adauga" class="secundar" type="button">+ adaugă strat</button>
+          <button id="adauga" class="secundar" type="button">+ Adaugă strat</button>
 
           <div class="exemple">
-            <span class="hint">exemple:</span>
+            <span class="hint">Încearcă un exemplu:</span>
             <button class="chip" type="button" data-ex="dn80">DN80, două straturi</button>
             <button class="chip" type="button" data-ex="dn100">DN100, două straturi</button>
             <button class="chip" type="button" data-ex="tub">tubulatură, pe m²</button>
@@ -137,7 +137,7 @@ export const ecran: Ecran = {
           <div class="pret">${eur(r.pret_unitar)}<small>/ ${um}</small></div>
           <div class="total">${r.cantitate} × ${eur(r.pret_unitar)} = <strong>${eur(r.total)}</strong>${
             r.multiplicator !== 1 ? ` · multiplicator ×${r.multiplicator}` : ""}</div>
-          ${tabel(["Material", "Pus pe ø (mm)", "Rândul din listă", "Preț"],
+          ${tabel(["Material", "Stă pe ø (mm)", "Prețul de la ø, din listă", "Preț"],
             r.straturi.map((s) => `<tr>
               <td>${esc(MATERIAL[s.sistem] ?? s.sistem)}${s.grosime_mm ? ` ${s.grosime_mm.toLocaleString("ro-RO")} mm` : ""}</td>
               <td class="n">${nr(s.diametru_geometric, 1)}</td>

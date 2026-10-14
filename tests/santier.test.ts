@@ -131,3 +131,36 @@ describe("pozele Ecoterm, transcrise, prin motor", () => {
     expect(new Set(izolatie.map((l) => sectiune.get(l.bruta.index)))).toEqual(new Set(linii.map((l) => l.zona)));
   });
 });
+
+describe("Măsurătorile în lucru, după reîncărcare (R4)", () => {
+  it("pagina se reface cu rândurile ei; o citire întreruptă se poate porni din nou", async () => {
+    const { paginaRefacuta } = await import("../web/masuratori-local.js");
+    const baza = {
+      id: "p1", nume: "santier1.jpeg", poza: new Blob(["x"], { type: "image/jpeg" }), eroare: "", note: [],
+      randuri: [], verificata: true, faraModel: false,
+    };
+    expect(paginaRefacuta({ ...baza, stare: "gata" }, "blob:1")).toMatchObject({ stare: "gata", verificata: true, url: "blob:1" });
+    const r = paginaRefacuta({ ...baza, stare: "citeste" }, "blob:2");
+    expect(r.stare).toBe("eroare");
+    expect(r.eroare).toMatch(/reîncărcat/);
+  });
+});
+
+describe("Pozele, când modelul nu e pornit (14 octombrie 2026)", () => {
+  it("ecranul spune de ce nu se citesc, iar pagina necitită nu arată „De verificat”", async () => {
+    const { cardIncarca, cardPagina, mesajModel } = await import("../web/santier-vizual.js");
+    expect(mesajModel("pornit")).toBe("");
+    expect(mesajModel("fara-cheie")).toMatch(/OPENAI_API_KEY/);
+    expect(mesajModel("fara-server")).toMatch(/linkul demo/);
+    expect(mesajModel("nu-raspunde")).toMatch(/nu a răspuns/);
+    const sus = cardIncarca({ scop: "oferta", destinatie: "rezidential", santiere: [], planAles: "", eroare: "", model: "fara-cheie" });
+    expect(sus).toMatch(/Pozele nu se citesc automat/);
+
+    const p = { id: "p1", nume: "carnet.jpg", url: "blob:1", stare: "gata" as const, eroare: "", randuri: [], note: [], verificata: false, faraModel: true };
+    const fara = cardPagina(p, 1, { editeaza: null, destinatie: "rezidential" });
+    expect(fara).toMatch(/Scrii de mână/);
+    expect(fara).not.toMatch(/De verificat/);
+    // Cheia pusă între timp: pagina se poate citi fără s-o încarci din nou.
+    expect(cardPagina(p, 1, { editeaza: null, destinatie: "rezidential", cuModel: true })).toMatch(/data-act="reciteste"/);
+  });
+});

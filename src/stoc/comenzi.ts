@@ -181,9 +181,26 @@ export function comandatNesosit(
 ): number {
   let q = 0;
   for (const c of comenzi) {
-    if (c.anulata || c.spre !== depozit) continue;
+    // Ciorna n-a plecat la furnizor: nu e pe drum (vezi `inCiorna`).
+    if (c.anulata || !c.trimisa || c.spre !== depozit) continue;
     const ramas = ramasDePrimit(c, miscari);
     for (const l of c.linii) if (cheieBaza(l.articol) === cheie) q += ramas.get(l.id) ?? 0;
+  }
+  return rotunjit(q);
+}
+
+/**
+ * Cat e pe ciornele netrimise spre un depozit. Nu e comandat (n-a plecat la
+ * furnizor), dar nici de comandat din nou: altfel „Fă comenzile” ar face a
+ * doua ciorna pe acelasi material. Pana pe 14 octombrie 2026 ciornele intrau
+ * in `comandatNesosit`, iar santierul arata „Lipsește: nimic” pe un material
+ * care nici nu fusese comandat.
+ */
+export function inCiorna(comenzi: readonly Comanda[], depozit: string, cheie: string): number {
+  let q = 0;
+  for (const c of comenzi) {
+    if (c.anulata || c.trimisa || c.spre !== depozit) continue;
+    for (const l of c.linii) if (cheieBaza(l.articol) === cheie) q += l.cantitate;
   }
   return rotunjit(q);
 }
@@ -194,9 +211,11 @@ export interface DeComandatSantier {
   necesar: number;
   /** Adus deja pe santier (intrari si transferuri, minus retururi); la etapa, cat e acum acolo. */
   adus: number;
-  /** Comandat spre santier si nesosit inca. */
+  /** Comandat spre santier (comenzi trimise) si nesosit inca. */
   comandat: number;
-  /** Ce mai trebuie comandat: necesar − adus − comandat. */
+  /** Pe ciornele netrimise spre santier. */
+  inCiorna: number;
+  /** Ce mai trebuie comandat: necesar − adus − comandat − în ciornă. */
   ramas: number;
   /** Rotunjit la ambalaj intreg, cand articolul are ambalaj. */
   ambalaje?: ReturnType<typeof laAmbalaj> & { dinEvidenta?: true };
@@ -229,7 +248,8 @@ export function deComandatSantier(
     const necesar = cantitateNecesara(m, articol);
     const a = fata === "sold" ? Math.max(0, soldPe(miscari, depozit, cheie)) : adus(miscari, depozit, cheie);
     const comandat = comandatNesosit(comenzi, miscari, depozit, cheie);
-    const ramas = Math.max(0, rotunjit(necesar - a - comandat));
+    const ciorna = inCiorna(comenzi, depozit, cheie);
+    const ramas = Math.max(0, rotunjit(necesar - a - comandat - ciorna));
     const disponibil: { depozit: string; cantitate: number }[] = [];
     const central = soldPe(miscari, CENTRAL, cheie);
     if (central > 0) disponibil.push({ depozit: CENTRAL, cantitate: central });
@@ -243,7 +263,7 @@ export function deComandatSantier(
     const scris = ambalaje[cheie] ?? ambalaje[cheieFaraForma(m.sistem, m.grosime_mm, m.rand)];
     const amb = scris ?? ambalajImplicit(m);
     return {
-      material: m, articol, necesar, adus: a, comandat, ramas, disponibil,
+      material: m, articol, necesar, adus: a, comandat, inCiorna: ciorna, ramas, disponibil,
       ...(amb && ramas > 0 ? { ambalaje: { ...laAmbalaj(ramas, amb), ...(scris ? {} : { dinEvidenta: true as const }) } } : {}),
     };
   });
@@ -413,6 +433,22 @@ export interface Factura {
 export function intrariPeAviz(c: Comanda, miscari: readonly Miscare[], numar: string): Miscare[] {
   return miscari.filter((m) => m.tip === "intrare" && !m.anuleaza && !esteAnulata(m, miscari)
     && m.comanda?.id === c.id && m.document?.tip === "aviz" && m.document.numar === numar);
+}
+
+/**
+ * Cand a ajuns materialul unei intrari. Intrarea scrisa de factura care
+ * inlocuieste un aviz (`inlocuiesteCuFactura`) n-aduce material nou: marfa a
+ * venit cu avizul, iar factura pune doar pretul. Ea poarta in nota avizul
+ * („(aviz 20261262)”), deci data sosirii e a intrarii avizului de pe aceeasi
+ * linie a comenzii. Altfel, data miscarii.
+ */
+export function dataSosirii(m: Miscare, miscari: readonly Miscare[]): string {
+  const aviz = /\(aviz ([^)]+)\)$/.exec(m.nota ?? "")?.[1];
+  if (m.tip !== "intrare" || !aviz || !m.comanda || m.document?.tip !== "factura") return m.data;
+  const vechi = miscari.find((x) => x.id !== m.id && x.tip === "intrare" && !x.anuleaza
+    && x.comanda?.id === m.comanda!.id && x.comanda.linie === m.comanda!.linie
+    && x.document?.tip === "aviz" && x.document.numar === aviz);
+  return vechi?.data ?? m.data;
 }
 
 /**

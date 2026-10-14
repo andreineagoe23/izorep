@@ -226,6 +226,8 @@ poate stiliza pe bara închisă la culoare — tooltipul CSS apare și pe
 
 Cât e pliată, `#meniu` trece pe `overflow: visible`: `auto` ar tăia tooltipul la
 68px. Banda ține cele opt destinații fără derulare, deci nu se pierde nimic.
+Tot cât e pliată, bara are `z-index: 30` (14 octombrie 2026): cardurile de după
+ea își fac propriul strat, iar tooltipul ieșea sub ele.
 
 Logica de preferință stă în `web/meniu-stare.ts`, cu depozit injectabil. Ca la
 orice depozit din browser, e best-effort: blocat, preferința se pierde, meniul
@@ -264,6 +266,33 @@ valoare) — altfel s-ar pierde odată cu grila refăcută. Salvarea e amânată
 Tot ce ține de depozit e best-effort. În fereastră privată sau cu stocarea
 blocată, fiecare apel eșuează tăcut și ecranul se poartă ca înainte. Istoricul e
 o comoditate; documentele adevărate vor sta în bază.
+
+## Importul în formatul ofertei (14 octombrie 2026)
+
+Decis de Andrei: pe pagină și la export, aceeași formă pentru orice cerere. La
+„Verificare”, vederea implicită e oferta (`web/import/oferta-vizual.ts`, din
+`documentOferta`): antetul ofertei (cu „Completează datele ofertei” spre pasul
+3), tabelul pe capitolele clientului cu subtotal, totalul cu discountul și
+nota. Pe fiecare rând, sub denumire: „Completat de noi: …” (în Excel cu roșu),
+„Excel: rândul N” și ce am înțeles; în dreapta starea și butonul care o
+rezolvă; editorul se deschide sub rând. Sub 980 px de document, fiecare poziție
+e un card cu aceleași câmpuri. Bara de deasupra: filtrele în stânga, „Mod de
+afișare: Fișierul clientului / Ca în ofertă” în dreapta, o pereche de mărimea
+tipului ofertei din antet (măsurat: 176 × 44, aceeași poziție). Lista de carduri
+veche („Arată ca listă”) a ieșit.
+
+**Tot pe 14 octombrie, după prima privire a lui Andrei:** vederea implicită e
+„Fișierul clientului” (prima în pereche), grila de mai jos, cu taburile foilor.
+Descrierea se vede întreagă, fără „Tot textul”: e primul lucru la care se uită
+omul. Coloanele noastre au lățime fixă (rândul 44 px, „Am înțeles · preț” 230,
+„Stare” 214, cât „Confirmă” și „Modifică” pe un rând), iar coloanele clientului
+împart restul: „Stare” stă lipită de marginea din dreapta, iar verificarea ia
+toată lățimea ecranului (`main:has(.imp-vedere)`). Descrierea primește cel mai
+mult (al treilea sfert al lungimilor, între 40 și 90, mai puțin când foaia are
+multe coloane), observațiile și celelalte texte cel mult 16: înainte, coloana
+de observații era cât jumătate din descriere. Sub 1100 px de import, fiecare
+rând din fișier devine card, cu numele coloanei deasupra fiecărei valori
+(`data-eticheta`), descrierea pe toată lățimea, celulele goale ascunse.
 
 ## Ecranul de import: trei pași
 

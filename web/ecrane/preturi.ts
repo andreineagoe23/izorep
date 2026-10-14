@@ -59,7 +59,7 @@ function deseneazaMatrice(l: ListaPreturi): string {
         return `<td class="n${v == null ? " gol" : ""}" title="${esc(titlu)}">${v == null ? "—" : eur(v)}</td>`;
       })
       .join("");
-    return `<tr><th scope="row">${nr(d)}</th>${celule}</tr>`;
+    return `<tr><th scope="row" class="diam">${nr(d)}</th>${celule}</tr>`;
   });
 
   const mpChei = Object.keys(l.per_mp);
@@ -123,7 +123,7 @@ function deseneazaIndicatori(l: ListaPreturi): string {
  * sa fie stearsa.
  */
 function deseneazaInventar(): string {
-  const capete = ["Sistem", ...DESTINATII.map((d) => ETICHETA_DEST[d])];
+  const capete = ["Material", ...DESTINATII.map((d) => ETICHETA_DEST[d])];
   const clase = capete.map((_, i) => (i === 0 ? "" : "n"));
 
   const randuri = SISTEME.filter((s) => s.id !== "goluri_foc").map((s) => {

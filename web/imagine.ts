@@ -30,13 +30,32 @@ export function caDataUrl(f: File): Promise<string> {
 /** Ruta unui model, langa pagina (merge si sub un subdirector). */
 export const rutaModel = (nume: string): string => location.pathname.replace(/[^/]*$/, "") + `api/${nume}`;
 
+/**
+ * Cum sta modelul, cu motivul. Masuratorile treceau pe tacute pe „scrii de
+ * mana” cand modelul nu era pornit, iar omul credea ca a citit poza si n-a
+ * gasit nimic (Andrei, 14 octombrie 2026). Motivul se spune pe ecran:
+ * - `pornit`: serverul are cheia;
+ * - `fara-cheie`: serverul raspunde, dar n-are cheia OpenAI;
+ * - `fara-server`: ruta lipseste (linkul demo de pe Pages);
+ * - `nu-raspunde`: serverul n-a raspuns in 8 secunde.
+ */
+export type StareModel = "pornit" | "fara-cheie" | "fara-server" | "nu-raspunde";
+
+export async function stareModel(nume: string): Promise<StareModel> {
+  try {
+    // 8 s, nu 3: pe Render, primul apel dupa o pauza trezeste serverul.
+    const r = await fetch(rutaModel(nume), { signal: AbortSignal.timeout(8000) });
+    if (r.status === 404) return "fara-server";
+    if (!r.ok) return "nu-raspunde";
+    const corp = (await r.json().catch(() => null)) as { disponibil?: boolean } | null;
+    if (corp === null) return "fara-server";
+    return corp.disponibil ? "pornit" : "fara-cheie";
+  } catch {
+    return "nu-raspunde";
+  }
+}
+
 /** GET pe ruta modelului: raspunde si e pornit? Pe Pages ruta lipseste. */
 export async function modelPornit(nume: string): Promise<boolean> {
-  try {
-    const r = await fetch(rutaModel(nume), { signal: AbortSignal.timeout(3000) });
-    if (!r.ok) return false;
-    return Boolean(((await r.json()) as { disponibil?: boolean }).disponibil);
-  } catch {
-    return false;
-  }
+  return (await stareModel(nume)) === "pornit";
 }

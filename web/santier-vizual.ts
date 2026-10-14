@@ -4,6 +4,7 @@ import type { Destinatie } from "../src/pricing/lists.js";
 import { esc, nr, stare, tabel } from "./ecrane/tip.js";
 import type { Comparatie, StareComparatie } from "../src/lucrari/comparatie.js";
 import { alegereSegment } from "./import/vizual.js";
+import type { StareModel } from "./imagine.js";
 
 /**
  * Marcajul ecranului „Măsurători". Pur, fara DOM, ca la import; regulile care
@@ -122,14 +123,15 @@ export function editorRand(p: PaginaSantier, r: RandSantier): string {
   </form>`;
 }
 
-export function cardPagina(p: PaginaSantier, nr: number, o: { editeaza: string | null; destinatie: Destinatie }): string {
+export function cardPagina(p: PaginaSantier, nr: number, o: { editeaza: string | null; destinatie: Destinatie; cuModel?: boolean }): string {
   const zone = [...new Set(p.randuri.map((r) => r.zona))];
   const nv = deVerificat(p);
   const titlu = `Pagina ${nr}`;
   const antetStare = p.stare === "citeste" ? stare("Se citește…", "neutru")
     : p.stare === "eroare" ? stare("Nu s-a putut citi", "atentie")
     : p.verificata ? stare("Verificată", "ok")
-    : nv > 0 ? stare(`${nv} de verificat`, "atentie") : stare("De verificat", "neutru");
+    : nv > 0 ? stare(`${nv} de verificat`, "atentie")
+    : p.faraModel && p.randuri.length === 0 ? stare("Scrii de mână", "neutru") : stare("De verificat", "neutru");
 
   const industrial = o.destinatie !== "industrial" && p.note.some((n) => /industrial/i.test(n));
   const note = p.note.length === 0 ? "" : `<div class="sant-note">
@@ -147,7 +149,10 @@ export function cardPagina(p: PaginaSantier, nr: number, o: { editeaza: string |
            <button type="button" class="secundar" data-act="de-mana" data-pag="${esc(p.id)}">Scriu de mână</button>
          </div>`
       : `${p.faraModel && p.randuri.length === 0
-          ? `<p class="hint">Scrie rândurile de mână, cu poza alături: „Adaugă rând”, jos.</p>`
+          ? o.cuModel
+            ? `<div class="sant-actiuni"><p class="hint">Poza n-a fost citită: când a fost adăugată, citirea automată nu era pornită.</p>
+                <button type="button" class="primar" data-act="reciteste" data-pag="${esc(p.id)}">Citește poza acum</button></div>`
+            : `<p class="hint">Scrie rândurile de mână, cu poza alături: „Adaugă rând”, jos.</p>`
           : ""}
         ${zone.map((z) => {
           const randuri = p.randuri.filter((r) => r.zona === z);
@@ -220,19 +225,40 @@ function alegereSantier(santiere: SantierAles[], ales: string, scop: Scop): stri
   </label>`;
 }
 
+/**
+ * De ce nu se citesc pozele, cand nu se citesc. Fara mesajul asta pagina
+ * trecea direct pe „scrii de mana”, iar omul credea ca modelul a citit poza si
+ * n-a gasit nimic.
+ */
+export function mesajModel(m: StareModel | undefined): string {
+  if (m === undefined || m === "pornit") return "";
+  const text = m === "fara-server"
+    ? "Pe linkul demo pozele nu se citesc automat: aici nu există server. Rândurile se scriu de mână, cu poza alături."
+    : m === "fara-cheie"
+      ? "Citirea automată a pozelor nu e pornită pe server: lipsește cheia OpenAI (OPENAI_API_KEY în setările serverului). Până se pune, rândurile se scriu de mână, cu poza alături."
+      : "Serverul nu a răspuns când am întrebat de citirea pozelor. Rândurile se pot scrie de mână, sau încearcă din nou.";
+  return `<div class="sant-model" role="status">
+    <p>${stare("Pozele nu se citesc automat", "atentie")} ${esc(text)}</p>
+    ${m === "fara-server" ? "" : `<button type="button" class="secundar" data-act="verifica-model">Verifică din nou</button>`}
+  </div>`;
+}
+
 export function cardIncarca(o: {
   scop: Scop; destinatie: Destinatie; santiere: SantierAles[]; planAles: string; eroare: string; trimisa?: string;
+  model?: StareModel;
 }): string {
   return `<section class="imp-card imp-incarca">
-    <div class="imp-campuri">
+    <div class="imp-campuri sant-sus">
       ${alegereScop(o.scop)}
       ${o.scop === "oferta" ? alegereSegment(o.destinatie) : alegereSantier(o.santiere, o.planAles, o.scop)}
     </div>
     <label class="imp-drop" id="drop" for="poze">
+      <svg aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="m21 16-5-5-8 8"/></svg>
       <span class="imp-drop-buton">Alege pozele</span>
       <span class="imp-drop-sub">sau trage-le aici · o poză pentru fiecare pagină de carnet</span>
       <input id="poze" type="file" accept="image/*" multiple />
     </label>
+    ${mesajModel(o.model)}
     ${o.eroare ? `<p class="alerta" role="alert">${esc(o.eroare)}</p>` : ""}
     ${o.trimisa ? `<p class="hint">${esc(o.trimisa)}</p>` : ""}
   </section>`;

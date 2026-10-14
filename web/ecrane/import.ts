@@ -24,15 +24,19 @@ import { PIERDERI_IMPLICITE, PRAG_TUB_MM, necesarDinLinii, type Pierderi } from 
 import { cardNecesar } from "../stoc-vizual.js";
 import {
   citesteDepozit, citestePlanuri, deschideLaIntrare, idCurent, idNou, incarca, listeaza, puneCurent,
-  salveaza, salveazaOferta, scrieDepozit, scriePlanuri, sterge, uitaOferta,
+  salveaza, salveazaOferta, scrieDepozit, scriePlanuri, sterge, uitaOferta, citesteOferte,
 } from "../date.js";
 import type { EditareCelula, IntrareIstoric, SesiuneImport } from "../istoric.js";
 import {
-  actiuniLista, antetVerificare, cardPozitie, comutaExcel, detaliuValoare, ecranOferta, ecranProgres, ecranStart, editorPozitie,
-  baraFoi, filtreMotiv, filtreStare, numaraMotive, pasi, patchDinFormular, randStrat, toast,
+  actiuniLista, antetVerificare, detaliuValoare, ecranOferta, ecranProgres, ecranStart, editorPozitie,
+  filtreMotiv, numaraMotive, pasi, patchDinFormular, randStrat, toast,
   type FiltruStare, type Pas, type TabFoaie,
 } from "../import/vizual.js";
 import { celuleExtrase, grilaFoaie } from "../import/grila.js";
+import {
+  antetDinFisier, baraVerificare, documentPeEcran, taburiFoi, type AntetScris, type Vedere,
+} from "../import/oferta-vizual.js";
+import { documentOferta } from "../document-oferta.js";
 import { FARA_POZITII, fisierNecitit, motiveLinie, stareLinie, type CodMotiv } from "../import/text.js";
 import { preia, type Predare } from "../predare.js";
 import { MARCA_PRET_DUBLU } from "../../src/santier/spre-cerere.js";
@@ -66,12 +70,6 @@ const RUTA_MODEL = location.pathname.replace(/[^/]*$/, "") + "api/extrage";
 interface StareModel { disponibil: boolean; model: string; prag: number; lot?: number; concurenta?: number }
 /** Loturi mici, in paralel: fiecare lot intors misca bara de progres. */
 const LOT_IMPLICIT = 25;
-/**
- * Sub latimea asta (a ecranului de import, cu bara pliata) foaia se deschide ca
- * lista. E pragul la care si cardurile trec pe un rand; sub el, un registru ca
- * Book15 (12 coloane) ar ramane cu coloane de doua-trei litere.
- */
-const LATIME_MINIMA_EXCEL = 1000;
 const CONCURENTA_IMPLICITA = 4;
 
 async function interogheazaModel(): Promise<StareModel | null> {
@@ -96,6 +94,15 @@ interface Sesiune {
 }
 
 const pozitii = (n: number): string => (n === 1 ? "o poziție" : cate(n, "poziții"));
+
+/** Antetul propus pentru un import nou: beneficiarul din fișier, altfel din numele lui. */
+function antetImplicit(numeFisier: string, dinFisier: Partial<AntetScris> = {}): AntetScris {
+  return {
+    firma: FIRME[0].id, numar: "", data: dataAzi(), localitate: "PALTINIS", discount: 0,
+    client: dinFisier.client ?? (numeFisier ? clientPropus(numeFisier) : ""),
+    obiectiv: dinFisier.obiectiv ?? "", persoana: dinFisier.persoana ?? "",
+  };
+}
 
 export const ecran: Ecran = {
   id: "import",
@@ -122,8 +129,13 @@ export const ecran: Ecran = {
     let motiv: CodMotiv | null = null;
     let foaie: string | null = null;
     let editIdx: number | null = null;
-    /** Foaia ca in Excel e vederea implicita pe ecran lat; lista de carduri e la un clic. */
-    let excel = true;
+    /**
+     * Ce se vede la verificare: oferta (implicit, aceeasi pentru orice fisier,
+     * exact ce se descarca) sau fisierul clientului, ca referinta.
+     */
+    let vedere: Vedere = "fisier";
+    /** Datele de pe antetul ofertei, scrise la pasul „Oferta”; se tin in sesiune. */
+    let antet: AntetScris = antetImplicit("");
     /** Adaosul pentru coturi si fitinguri din cardul „Materiale necesare". */
     let pierderi: Pierderi = { ...PIERDERI_IMPLICITE };
     let pragTub = PRAG_TUB_MM;
@@ -165,6 +177,21 @@ export const ecran: Ecran = {
     const pagina = gazda.querySelector<HTMLElement>("#imp-pagina")!;
     const elMesaj = gazda.querySelector<HTMLElement>("#imp-mesaj")!;
 
+    /**
+     * Antetul unei sesiuni fara antet salvat: din oferta descarcata deja pe ea
+     * (sesiunile de dinainte de 14 octombrie 2026), altfel din fisier.
+     */
+    function antetDinOferta(s: Sesiune): AntetScris {
+      const baza = antetImplicit(s.meta.nume, antetDinFisier(s.foi));
+      const o = citesteOferte()[s.meta.id];
+      if (!o) return baza;
+      const firma = FIRME.find((f) => o.numar.startsWith(f.serieOferta));
+      return {
+        ...baza, ...(firma ? { firma: firma.id, numar: o.numar.slice(firma.serieOferta.length) } : {}),
+        ...(o.data ? { data: o.data } : {}), ...(o.client ? { client: o.client } : {}), ...(o.obiectiv ? { obiectiv: o.obiectiv } : {}),
+      };
+    }
+
     /* ------------------------------------------------------------- ajutoare */
     const propunere = (l: LinieProcesata): number | null => {
       const e = l.extras;
@@ -181,9 +208,11 @@ export const ecran: Ecran = {
     };
 
     /** Pozitiile de pe foaia aleasa, apoi sub filtrul de stare, apoi sub motiv. */
-    function vizibile(s: Sesiune): { peFoaie: LinieProcesata[]; peStare: LinieProcesata[]; lista: LinieProcesata[] } {
+    function vizibile(s: Sesiune, f: string | null = vedere === "oferta" ? null : foaie): {
+      peFoaie: LinieProcesata[]; peStare: LinieProcesata[]; lista: LinieProcesata[];
+    } {
       const izo = s.rez.linii.filter((l) => l.extras.sistem !== null);
-      const peFoaie = foaie ? izo.filter((l) => l.bruta.foaie === foaie) : izo;
+      const peFoaie = f ? izo.filter((l) => l.bruta.foaie === f) : izo;
       const peStare = filtru === "toate" ? peFoaie : peFoaie.filter((l) => potrivit(l, filtru));
       const m = motiv;
       const lista = m ? peStare.filter((l) => motiveLinie(l).includes(m)) : peStare;
@@ -227,6 +256,7 @@ export const ecran: Ecran = {
         grosimiPropuse: [...grosimiPropuse],
         descrieriSchimbate: [...descrieriSchimbate],
         preturiManuale: [...preturiManuale],
+        antet, ajustare,
       });
       istoric = await listeaza();
     }
@@ -263,10 +293,10 @@ export const ecran: Ecran = {
       } else {
         const { oferta, deValidat, netarifate } = imparte(cuAjustare(sesiune.rez.linii, ajustare));
         pagina.innerHTML = ecranOferta({
-          gata: oferta.length, valoare: totalCuAdaos(oferta, destinatie),
+          gata: oferta.length, valoare: documentul(sesiune).totalGeneral,
           adaosFoc: adaosFocIndustrial(oferta, destinatie), ajustare,
           deVerificat: deValidat.length, faraPret: netarifate.length,
-          destinatie, client: clientPropus(sesiune.meta.nume), data: dataAzi(), firme: FIRME, eroare: "",
+          destinatie, antet, firme: FIRME, eroare: "",
         }) + cardNecesar(necesarOferta(sesiune));
       }
     }
@@ -317,8 +347,33 @@ export const ecran: Ecran = {
       return (cuPozitii ?? s.foi[0]!).nume;
     }
 
+    /** Suma de sus a pasului „Oferta”, la fiecare tastă: ce plătește clientul, ca în document. */
+    function arataValoarea(s: Sesiune): void {
+      const { oferta } = imparte(cuAjustare(s.rez.linii, ajustare));
+      const v = pagina.querySelector("#valoare-oferta");
+      const det = pagina.querySelector("#detaliu-valoare");
+      if (v) v.textContent = eur(documentul(s).totalGeneral);
+      if (det) det.innerHTML = detaliuValoare(adaosFocIndustrial(oferta, destinatie), ajustare, antet.discount);
+    }
+
+    /** Documentul ofertei din sesiune, cu antetul si ajustarea de acum: acelasi din care se scrie Excelul. */
+    function documentul(s: Sesiune): ReturnType<typeof documentOferta> {
+      const firma = FIRME.find((f) => f.id === antet.firma) ?? FIRME[0];
+      return documentOferta({
+        linii: s.rez.linii,
+        antet: {
+          serie: firma.serieOferta, numar: antet.numar, data: antet.data, persoana: antet.persoana, client: antet.client,
+          obiectiv: antet.obiectiv, firma: firma.denumire, localitate: antet.localitate,
+          ...(antet.discount > 0 ? { discountProcent: antet.discount } : {}), ...(ajustare ? { ajustareProcent: ajustare } : {}),
+        },
+        provenienta: { generatLa: "", destinatie, model: s.meta.model, sesiune: s.meta.id, fisierSursa: s.meta.nume },
+      });
+    }
+
     function paginaVerificare(s: Sesiune): string {
-      const { peFoaie, peStare, lista } = vizibile(s);
+      // In oferta se vad toate foile, pe capitole; foaia aleasa conteaza doar in fisierul clientului.
+      const peFoaie_ = vedere === "oferta" ? null : foaie;
+      const { peFoaie, peStare, lista } = vizibile(s, peFoaie_);
       const numere: Record<FiltruStare, number> = {
         toate: peFoaie.length,
         gata: peFoaie.filter((l) => potrivit(l, "gata")).length,
@@ -327,34 +382,26 @@ export const ecran: Ecran = {
       };
       const motive = filtru === "de_validat" || filtru === "netarifate" ? numaraMotive(peStare) : [];
       const cuFoaie = s.foi.length > 1;
-      // Cu taburi, foaia activa se vede deja in bara: numele ei pe fiecare card
-      // sau deasupra tabelului ar repeta acelasi lucru.
-      const numeFoaie = cuFoaie && foaie === null;
+      const filtrat = filtru === "toate" && motiv === null ? null : new Set(lista.map((l) => l.extras.index));
+      const harta = new Map(s.rez.linii.map((l) => [l.extras.index, l]));
 
-      const gol = `<p class="imp-gol">Nicio poziție aici.</p>`;
       let corp: string;
-      if (excel) {
-        // Fara filtru se vede tot fisierul, cu titluri si note, ca in Excel.
-        const vizibileIdx = filtru === "toate" && motiv === null ? null : new Set(lista.map((l) => l.extras.index));
-        const harta = new Map(s.rez.linii.map((l) => [l.extras.index, l]));
-        corp = s.foi.filter((f) => !foaie || f.nume === foaie)
-          .map((f) => grilaFoaie(f, harta, { vizibile: vizibileIdx, editIdx, propunere, cuNumeFoaie: numeFoaie }))
-          .join("") || gol;
+      if (vedere === "oferta") {
+        const l = editIdx === null ? undefined : harta.get(editIdx);
+        const campuri = l ? campuriLinie(s, l) : undefined;
+        corp = documentPeEcran(documentul(s), {
+          linii: harta, vizibile: filtrat, editIdx, propunere, cuFoaie, ...(campuri ? { campuri } : {}),
+        });
       } else {
-        corp = lista.length
-          ? lista.map((l) => {
-              const editeaza = editIdx === l.extras.index;
-              const campuri = editeaza ? campuriLinie(s, l) : undefined;
-              return cardPozitie(l, { propunere: propunere(l), editeaza, cuFoaie: numeFoaie, ...(campuri ? { campuri } : {}) });
-            }).join("")
-          : gol;
+        corp = s.foi.filter((f) => !foaie || f.nume === foaie)
+          .map((f) => grilaFoaie(f, harta, { vizibile: filtrat, editIdx, propunere, cuNumeFoaie: cuFoaie && foaie === null }))
+          .join("") || `<p class="imp-gol">Nicio poziție aici.</p>`;
       }
 
       return `${alerte(s)}
         <section class="imp-card">${antetVerificare({ nume: s.meta.nume, cand: s.meta.cand, destinatie })}</section>
-        ${cuFoaie
-          ? baraFoi(taburi(s), foaie, numere, filtru, excel)
-          : `<div class="imp-bara-lista">${filtreStare(numere, filtru)}${comutaExcel(excel)}</div>`}
+        ${baraVerificare(numere, filtru, vedere)}
+        ${vedere === "fisier" && cuFoaie ? taburiFoi(taburi(s), foaie) : ""}
         ${filtreMotiv(motive, motiv)}
         ${actiuniLista({
           deConfirmat: filtru === "de_validat" ? lista.length : 0,
@@ -389,7 +436,9 @@ export const ecran: Ecran = {
       // derulare laterala decat cu coloane de cateva litere: se deschide ca
       // lista, iar „Arată ca în Excel" ramane la un clic.
       ceriSpatiu(gazda, true);
-      excel = gazda.clientWidth >= LATIME_MINIMA_EXCEL;
+      vedere = "fisier";
+      antet = s.meta.antet ? { ...s.meta.antet } : antetDinOferta(s);
+      ajustare = s.meta.ajustare ?? 0;
       eroareStart = "";
       salveazaSesiune();
       deseneaza();
@@ -877,7 +926,6 @@ export const ecran: Ecran = {
         case "renunta-izolatie": deIzolat = null; deseneaza(); scrollTo({ top: 0 }); return;
         case "la-verificare": pas = 2; deseneaza(); scrollTo({ top: 0 }); return;
         case "creeaza-santier": creeazaSantier(); return;
-        case "excel": excel = !excel; editIdx = null; deseneaza(); return;
         case "modifica":
           editIdx = editIdx === idx ? null : idx;
           deseneaza();
@@ -942,11 +990,6 @@ export const ecran: Ecran = {
           deseneaza();
           return;
         }
-        case "tot-textul": {
-          const deschis = b.previousElementSibling?.classList.toggle("deschis") ?? false;
-          b.textContent = deschis ? "Mai puțin" : "Tot textul";
-          return;
-        }
         case "anuleaza":
           clearTimeout(ceasMesaj);
           elMesaj.innerHTML = "";
@@ -998,6 +1041,12 @@ export const ecran: Ecran = {
         redeseneazaNecesar(sesiune);
         return;
       }
+      if (t.name === "vedere") { vedere = t.value as Vedere; editIdx = null; deseneaza(); return; }
+      if (t.closest("#antet-oferta") && sesiune && t.tagName === "SELECT") {
+        antet = { ...antet, firma: t.value };
+        salveazaSesiune();
+        return;
+      }
       if (t.dataset["act"] === "filtru") { filtru = t.value as FiltruStare; motiv = null; editIdx = null; deseneaza(); return; }
       const form = t.closest<HTMLFormElement>(".imp-editor");
       if (!form) return;
@@ -1036,10 +1085,24 @@ export const ecran: Ecran = {
         // Doar suma de sus: o redesenare a pasului ar sterge datele ofertei deja scrise.
         const v = Number((camp as HTMLInputElement).value.replace(",", "."));
         ajustare = Number.isFinite(v) && v > -100 ? v : 0;
-        const { oferta } = imparte(cuAjustare(sesiune.rez.linii, ajustare));
-        pagina.querySelector("#valoare-oferta")!.textContent = eur(totalCuAdaos(oferta, destinatie));
-        pagina.querySelector("#detaliu-valoare")!.innerHTML = detaliuValoare(adaosFocIndustrial(oferta, destinatie), ajustare);
+        arataValoarea(sesiune);
+        salveazaSesiune();
         return;
+      }
+      const formAntet = camp.closest<HTMLFormElement>("#antet-oferta");
+      if (formAntet && sesiune) {
+        // Antetul ofertei se tine in sesiune: la reincarcare si la „Creează
+        // șantierul” sunt aceleasi date pe care le-a scris omul.
+        const d = new FormData(formAntet);
+        const v = (n: string): string => String(d.get(n) ?? "");
+        const disc = Number(v("discount").replace(",", "."));
+        antet = {
+          firma: v("firma") || antet.firma, numar: v("numar").trim(), data: v("data").trim(), client: v("client"),
+          obiectiv: v("obiectiv"), persoana: v("persoana"), localitate: v("localitate"),
+          discount: Number.isFinite(disc) && disc >= 0 && disc < 100 ? disc : 0,
+        };
+        if ((camp as HTMLInputElement).name === "discount") arataValoarea(sesiune);
+        salveazaSesiune();
       }
       const editor = camp.closest<HTMLFormElement>(".imp-editor");
       if (editor) {

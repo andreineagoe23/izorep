@@ -173,18 +173,26 @@ export const ecran: Ecran = {
         : `<div class="imp-formular-butoane"><button type="button" class="secundar" data-act="exemple">Încarcă date de exemplu</button></div>`}
       </section>`;
 
+      // In ordinea in care se folosesc: ce trebuie, ce e, ce se misca; reglajele
+      // (ambalajele) si istoricul la sfarsit. Pagina are noua sectiuni, deci sus
+      // e un rand „Sari la”, ca omul sa nu le caute derulind.
+      const sectiuni: [string, string, string][] = [
+        ["sec-necesar", "Necesarul", sectiuneNecesar(sold)],
+        ["sec-stoc", "Stocul", sectiuneStoc(sold)],
+        ["sec-miscare", "Mișcare nouă", formularMiscare()],
+        ["sec-inventar", "Inventar", sectiuneInventar(sold)],
+        ["sec-atelier", "Atelierul", sectiuneAtelier()],
+        ["sec-drum", "Drumul materialului", sectiuneDrum()],
+        ["sec-locuri", "Locurile", sectiuneLocuri(sold)],
+        ["sec-ambalaje", "Ambalaje", sectiuneAmbalaje()],
+        ["sec-jurnal", "Jurnalul", jurnal()],
+      ];
       root.innerHTML = `<div class="imp">
         ${stats}
+        <nav class="sari-la" aria-label="Pe pagina asta"><span class="hint">Sari la:</span>${sectiuni.map(([id, et]) =>
+          `<button type="button" class="chip" data-sari="${id}">${et}</button>`).join("")}</nav>
         ${banner}
-        ${sectiuneNecesar(sold)}
-        ${sectiuneAmbalaje()}
-        ${sectiuneStoc(sold)}
-        ${sectiuneInventar(sold)}
-        ${sectiuneAtelier()}
-        ${formularMiscare()}
-        ${sectiuneDrum()}
-        ${sectiuneLocuri(sold)}
-        ${jurnal()}
+        ${sectiuni.map(([id, , html]) => `<div id="${id}" class="sectiune-pagina">${html}</div>`).join("")}
       </div>`;
       arataDepozitele();
     }
@@ -216,6 +224,7 @@ export const ecran: Ecran = {
           if (c !== null) inOfertaCuCost += v;
           const kgPeUm = m.kg !== undefined && m.m2 > 0 ? m.kg / m.m2 : null;
           const ramas = !d ? stare("al clientului", "neutru")
+            : d.ramas === 0 && d.inCiorna > 0 ? stare("în ciornă, de trimis", "atentie")
             : d.ramas === 0 ? stare(d.comandat > 0 ? "comandat" : "acoperit", "ok")
               : d.ambalaje
                 ? `<strong>${cifra(d.ambalaje.cate)} × ${esc(d.ambalaje.ambalaj.unitate)}</strong><br><span class="hint">${
@@ -245,7 +254,7 @@ export const ecran: Ecran = {
           <td class="n">${v > 0 ? eur(v) : "—"}</td>
           <td class="fix">${m.manual
             ? `<button type="button" class="secundar" data-act="scoate-material" data-id="${esc(n.id)}" data-i="${i}">Scoate</button>`
-            : `<button type="button" class="secundar" data-act="client" data-id="${esc(n.id)}" data-i="${i}">${m.alClientului ? "Îl cumpărăm noi" : "Îl dă clientul"}</button>`}</td>
+            : `<button type="button" class="legatura" data-act="client" data-id="${esc(n.id)}" data-i="${i}">${m.alClientului ? "Îl cumpărăm noi" : "Îl dă clientul"}</button>`}</td>
         </tr>`;
         });
         const deComandat = r.filter((d) => d.ramas > 0).length;
@@ -271,7 +280,9 @@ export const ecran: Ecran = {
           <div class="imp-formular-butoane">
             ${deComandat > 0
               ? `<button type="button" class="primar" data-act="fa-comenzi" data-id="${esc(n.id)}">Fă comenzile pentru ${deComandat} ${deComandat === 1 ? "material" : "materiale"}</button>`
-              : `<span class="hint">Tot materialul e adus sau comandat. Vezi <a href="#/comenzi">Comenzi</a>.</span>`}
+              : r.some((d) => d.inCiorna > 0)
+                ? `<span class="hint">Restul e pe ciorne care n-au fost trimise. Trimite-le din <a href="#/comenzi">Comenzi</a>.</span>`
+                : `<span class="hint">Tot materialul e adus sau comandat. Vezi <a href="#/comenzi">Comenzi</a>.</span>`}
           </div>
           <p class="hint">În ofertă: ${eur(inOferta)} (cât plătește clientul, material și manoperă, cu ajustarea și discountul) · cost material
             ${deCumparat === 0 ? "zero: tot materialul îl dă clientul" : faraPret === deCumparat ? "necunoscut: nicio intrare cu preț" : `${eur(cost)}${faraPret ? `, fără ${faraPret} ${faraPret === 1 ? "material" : "materiale"} încă fără preț` : ""}`}${faraPret < deCumparat ? ` · rămân ${eur(inOfertaCuCost - cost)} pentru manoperă și profit${faraPret ? ", pe materialele cu preț" : ""}` : ""}.
@@ -370,9 +381,9 @@ export const ecran: Ecran = {
               `<option value="${esc(l.id)}"${l.id === invLoc ? " selected" : ""}>${esc(l.nume)}</option>`).join("")}</select></label>
           </div>
           ${aici.length
-            ? tabel(["Material", "Ce arată aplicația", "Ce ai numărat", "Diferența"], randuri, ["", "n", "n", "n"])
-            : `<p class="hint" style="margin:12px 0 0">În ${esc(nume)} aplicația nu arată niciun material. Dacă ai găsit ceva acolo, scrie mai jos.</p>`}
-          <div class="imp-campuri">
+            ? tabel(["Material", "Ce arată aplicația", "Ce ai numărat", "Diferența"], randuri, ["", "n", "n", "n"], true)
+            : `<p class="hint" style="margin:12px 0 0">În ${esc(nume)} aplicația nu arată niciun material. ${altele.length ? " Dacă ai găsit ceva acolo, scrie mai jos." : " Trece întâi stocul de pornire, la „Mișcare nouă”."}</p>`}
+          ${aici.length || altele.length ? `<div class="imp-campuri">
             ${altele.length ? `<label>Alt material găsit la numărat (opțional)<select name="alt"><option value="">— niciunul —</option>${altele.map((a) =>
               `<option value="${esc(a.cheie)}">${esc(numeArticol(a))}</option>`).join("")}</select></label>
             <label>Cât ai numărat din el<input name="altCant" type="number" inputmode="decimal" step="any" min="0" /></label>` : ""}
@@ -380,10 +391,10 @@ export const ecran: Ecran = {
               `<option>${esc(m)}</option>`).join("")}<option value="__alt">alt motiv…</option></select></label>
             <label data-camp="motiv-alt" hidden>Scrie motivul<input name="motivAlt" autocomplete="off" /></label>
             <label>Cine a numărat (opțional)<input name="cine" autocomplete="off" /></label>
-          </div>
+          </div>` : ""}
           ${eroareInventar ? `<p class="alerta" role="alert" style="margin-top:16px">${esc(eroareInventar)}</p>` : ""}
           ${mesajInventar ? `<p class="hint" role="status" style="margin:16px 0 0">${stare("Trecut", "ok")} ${esc(mesajInventar)}</p>` : ""}
-          <div class="imp-formular-butoane"><button type="submit" class="primar">Trece inventarul</button></div>
+          ${aici.length || altele.length ? `<div class="imp-formular-butoane"><button type="submit" class="primar">Trece inventarul</button></div>` : ""}
         </form>
       </section>`;
     }
@@ -644,6 +655,14 @@ export const ecran: Ecran = {
     }
 
     root.addEventListener("click", (e) => {
+      const sari = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-sari]");
+      if (sari) {
+        const tinta = root.querySelector<HTMLElement>(`#${sari.dataset["sari"]}`);
+        tinta?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+        tinta?.querySelector<HTMLElement>("h2, summary")?.setAttribute("tabindex", "-1");
+        tinta?.querySelector<HTMLElement>("h2, summary")?.focus({ preventScroll: true });
+        return;
+      }
       const t = e.target as HTMLElement;
       const bDep = t.closest<HTMLButtonElement>("[data-depozit]");
       if (bDep) { depozit = bDep.dataset["depozit"]!; deseneaza(); return; }

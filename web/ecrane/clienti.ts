@@ -66,6 +66,10 @@ const TIP_CLIENT: Record<TipClient, string> = {
 
 /** Clienții din fișierele firmei: exemple, doar pe linkul demo. */
 function clientiExemplu(ex: Exemple): string {
+  // O coloana goala pe toti clientii (CUI-urile nu se inventeaza, termenul nu e
+  // scris nicaieri) doar ocupa loc: nu se deseneaza.
+  const cuCui = ex.CLIENTI.some((c) => c.cui);
+  const cuTermen = ex.CLIENTI.some((c) => c.termenPlataZile !== null);
   const randuri = ex.CLIENTI.map((c) => {
     const nrLucrari = ex.LUCRARI.filter((l) => l.clientId === c.id).length;
     const nrDocumente = ex.DOCUMENTE.filter((d) => d.clientId === c.id).length;
@@ -79,11 +83,11 @@ function clientiExemplu(ex: Exemple): string {
     return `<tr>
       <td><strong>${esc(c.denumire)}</strong><br><span class="hint">${esc(c.sursa)}</span></td>
       <td>${contacte}</td>
-      <td>${c.cui ? esc(c.cui) : "—"}</td>
+      ${cuCui ? `<td>${c.cui ? esc(c.cui) : "—"}</td>` : ""}
       <td>${esc(CATEGORIE[c.categorie])}</td>
       <td>${esc(TIP_CLIENT[c.tip])}</td>
       <td class="desc">${esc(c.formatSituatii)}</td>
-      <td class="n">${c.termenPlataZile !== null ? `${nr(c.termenPlataZile)} zile` : "—"}</td>
+      ${cuTermen ? `<td class="n">${c.termenPlataZile !== null ? `${nr(c.termenPlataZile)} zile` : "—"}</td>` : ""}
       <td class="n">${nr(nrLucrari)}</td>
       <td class="n">${nr(nrDocumente)}</td>
     </tr>`;
@@ -91,9 +95,9 @@ function clientiExemplu(ex: Exemple): string {
   return `<section class="imp-card"><h2>Clienții din datele firmei</h2>
     <p class="hint" style="margin:0 0 12px">Exemple, citite din fișierele primite de la firmă.</p>
     ${tabel(
-      ["Client", "Contacte", "CUI", "Categorie", "Tip", "Format situații", "Termen plată", "Lucrări", "Documente"],
+      ["Client", "Contacte", ...(cuCui ? ["CUI"] : []), "Categorie", "Tip", "Format situații", ...(cuTermen ? ["Termen plată"] : []), "Lucrări", "Documente"],
       randuri,
-      ["", "", "", "", "", "", "n", "n", "n"],
+      ["", "", ...(cuCui ? [""] : []), "", "", "", ...(cuTermen ? ["n"] : []), "n", "n"],
     )}
   </section>`;
 }
@@ -108,15 +112,10 @@ export const ecran: Ecran = {
     root.innerHTML = `<div class="imp">
       <section class="imp-card"><h2>Clienții din oferte</h2>${clientiReali()}</section>
       ${ex ? clientiExemplu(ex) : ""}
-    </div>
       ${nota(
-        "Tipul ofertei (rezidențială sau industrială) se alege la import, pentru fiecare ofertă; nu depinde de " +
-          "client. Pe orice poziție prețul se poate pune și de mână; în ofertă se vede că a fost pus de mână.",
+        "Fiecare client trimite alt tabel, dar oferta iese mereu în același format. Tipul ofertei (rezidențială sau " +
+          "industrială) se alege la import, pentru fiecare ofertă, nu după client.",
       )}
-      ${nota(
-        "Fiecare client trimite alt tabel. Aplicația învață coloanele unui tabel nou o singură dată și le " +
-          "recunoaște singură data viitoare.",
-      )}
-    `;
+    </div>`;
   },
 };
