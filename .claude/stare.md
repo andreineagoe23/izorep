@@ -16,8 +16,11 @@ pagină și la export trebuie să aibă același format”. Pasul „Verificare�
 coloane pentru orice fișier (Nr., Cod doar cu coduri, Denumire, UM, Cantitate,
 golul doar la foc, Preț unitar, Valoare), capitolele clientului cu subtotal,
 totalul, discountul și nota. Pozițiile „De verificat” și „Fără preț” stau la
-locul lor, fără număr. Fișierul clientului (grila de dinainte) e la „Mod de
-afișare”. Cei trei pași rămân. `web/import/oferta-vizual.ts`. Verificat pe
+locul lor, fără număr. Cei trei pași rămân. După prima privire a lui Andrei,
+tot pe 14: vederea implicită e „Fișierul clientului” (grila), cu „Ca în ofertă”
+alături; descrierea se vede întreagă, fără „Tot textul”; „Stare” are lățime
+fixă, lipită de marginea din dreapta, descrierea ia cel mai mult din rest, iar
+observațiile puțin; sub 1100 px rândurile devin carduri (`ui.md`). `web/import/oferta-vizual.ts`. Verificat pe
 Book15, Flower City, CET (prin izolația pe foaie) și o cerere scrisă de noi:
 același tabel, Excelul descărcat are aceleași rânduri ca ecranul.
 
