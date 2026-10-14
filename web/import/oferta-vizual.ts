@@ -71,7 +71,7 @@ export function antetDinFisier(foi: readonly FoaieBruta[]): Partial<Pick<AntetSc
 
 /* ------------------------------------------------------------ bara */
 
-const VEDERI: [Vedere, string][] = [["oferta", "Ca în ofertă"], ["fisier", "Fișierul clientului"]];
+const VEDERI: [Vedere, string][] = [["fisier", "Fișierul clientului"], ["oferta", "Ca în ofertă"]];
 
 /** Filtrele de stare, cu cifra lor. Aceleași butoane ca până acum. */
 function butoaneStare(numere: Record<FiltruStare, number>, activ: FiltruStare): string {
@@ -141,10 +141,8 @@ function antetOferta(d: DocumentOferta): string {
 
 /** Denumirea: textul clientului, ce am completat noi și de unde vine rândul. */
 function denumire(p: PozitieOferta, l: LinieProcesata, cuFoaie: boolean): string {
-  const lung = p.textClient.length > 180;
   const sursa = `Excel: rândul ${p.sursa.rand}${cuFoaie ? `, foaia ${esc(p.sursa.foaie)}` : ""}`;
-  return `<p class="of-text${lung ? " lung" : ""}">${esc(p.textClient)}</p>
-    ${lung ? `<button type="button" class="legatura of-tot" data-act="tot-textul">Tot textul</button>` : ""}
+  return `<p class="of-text">${esc(p.textClient)}</p>
     ${p.specificatie ? `<p class="of-spec"><span>Completat de noi:</span> ${esc(p.specificatie)}</p>` : ""}
     <p class="of-meta"><span>${sursa}</span>${inteles(l.extras, l.pret).map((e) => `<span class="of-inteles">${esc(e)}</span>`).join("")}${
       l.sursa === "om" ? `<span class="imp-verificat">verificat de tine</span>` : ""}</p>`;

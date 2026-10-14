@@ -133,7 +133,7 @@ export const ecran: Ecran = {
      * Ce se vede la verificare: oferta (implicit, aceeasi pentru orice fisier,
      * exact ce se descarca) sau fisierul clientului, ca referinta.
      */
-    let vedere: Vedere = "oferta";
+    let vedere: Vedere = "fisier";
     /** Datele de pe antetul ofertei, scrise la pasul „Oferta”; se tin in sesiune. */
     let antet: AntetScris = antetImplicit("");
     /** Adaosul pentru coturi si fitinguri din cardul „Materiale necesare". */
@@ -436,7 +436,7 @@ export const ecran: Ecran = {
       // derulare laterala decat cu coloane de cateva litere: se deschide ca
       // lista, iar „Arată ca în Excel" ramane la un clic.
       ceriSpatiu(gazda, true);
-      vedere = "oferta";
+      vedere = "fisier";
       antet = s.meta.antet ? { ...s.meta.antet } : antetDinOferta(s);
       ajustare = s.meta.ajustare ?? 0;
       eroareStart = "";
@@ -988,11 +988,6 @@ export const ecran: Ecran = {
             retarifeaza();
           });
           deseneaza();
-          return;
-        }
-        case "tot-textul": {
-          const deschis = b.previousElementSibling?.classList.toggle("deschis") ?? false;
-          b.textContent = deschis ? "Mai puțin" : "Tot textul";
           return;
         }
         case "anuleaza":

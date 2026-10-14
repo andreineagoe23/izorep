@@ -231,8 +231,7 @@ export function cardPozitie(l: LinieProcesata, o: OptiuniCard): string {
 
   return `<article class="imp-poz" data-idx="${idx}" data-stare="${stare}" aria-labelledby="poz-${idx}">
     <div class="imp-poz-text">
-      <p id="poz-${idx}" class="imp-poz-descriere${text.length > 160 ? " lung" : ""}">${esc(text)}</p>
-      ${text.length > 160 ? `<button type="button" class="legatura imp-poz-tot" data-act="tot-textul">Tot textul</button>` : ""}
+      <p id="poz-${idx}" class="imp-poz-descriere">${esc(text)}</p>
       <p class="imp-poz-meta">Rândul ${l.bruta.rand}${o.cuFoaie ? ` · ${esc(l.bruta.foaie)}` : ""} · ${esc(numar(cantitate))} ${esc(um)}${
         l.sursa === "om" ? ` · <span class="imp-verificat">verificat</span>` : ""}</p>
     </div>
