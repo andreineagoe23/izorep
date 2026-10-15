@@ -24,7 +24,7 @@ const ECRANE: Record<string, () => Promise<{ ecran: Ecran }>> = {
 };
 
 /** Rutele vechi, dinainte ca cererile si ofertele sa ajunga pe acelasi ecran. */
-const ALIAS: Record<string, string> = { cereri: "documente", oferte: "documente", santier: "masuratori" };
+const ALIAS: Record<string, string> = { cereri: "documente", oferte: "documente", santier: "masuratori", santiere: "lucrari" };
 
 const $ = <T extends HTMLElement>(s: string) => document.querySelector(s) as T;
 
@@ -59,7 +59,7 @@ function deseneazaMeniu(): void {
   // accesibil al linkului, iar pe banda ar ramane sapte linkuri fara nume.
   const grupuri = MENIU.map((g) => `
     <div class="grup">
-      <h3>${esc(g.titlu)}</h3>
+      ${g.titlu ? `<h3>${esc(g.titlu)}</h3>` : ""}
       ${g.itemi.map((i) => `<a href="#/${i.id}" class="item"${
         i.id === activ ? ' aria-current="page"' : ""
       }>${icoana(i.id)}<span class="eticheta-item">${esc(i.eticheta)}</span></a>`).join("")}

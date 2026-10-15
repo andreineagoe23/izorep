@@ -86,7 +86,7 @@ function randImport(m: IntrareIstoric, o: OfertaEmisa | undefined, santier: bool
 
 export const ecran: Ecran = {
   id: "documente",
-  titlu: "Cereri și oferte",
+  titlu: "Oferte și cereri",
   subtitlu: "Cererile importate în aplicație și ofertele făcute din ele.",
 
   render(root) {
@@ -127,7 +127,7 @@ export const ecran: Ecran = {
       tale.innerHTML = `<h2>Cererile importate</h2>
         ${importuri.length === 0
           ? `<p class="hint" style="margin:0">Nicio cerere încă. O cerere intră aici când o aduci în aplicație, din
-            <a href="#/import">Import Excel</a> sau din <a href="#/masuratori">Măsurători</a>; oferta descărcată din ea
+            <a href="#/import">Cerere nouă</a> sau din <a href="#/masuratori">Poze de pe șantier</a>; oferta descărcată din ea
             apare pe același rând.</p>`
           : tabel(
               ["Cererea", "Tip ofertă", "Poziții", "Oferta", ...(arataValoare ? ["Valoare"] : []), "Stare", ""],

@@ -101,7 +101,7 @@ function tabelDerulare(d: DateTablou): string {
   const deschise = d.planuri.filter((p) => !p.inchis);
   if (deschise.length === 0) {
     return card("Șantiere în lucru", `<p class="hint" style="margin:0">Niciun șantier deschis. Șantierul se face din
-      ofertă: în <a href="#/import">Import Excel</a>, la pasul „Oferta”, „Creează șantierul”.</p>`);
+      ofertă: în <a href="#/import">Cerere nouă</a>, la pasul „Oferta”, „Creează șantierul”.</p>`);
   }
   const randuri = deschise.map((p) => {
     const st = stareSantier(p);
@@ -133,7 +133,7 @@ function notaCurs(): string {
 
 export const ecran: Ecran = {
   id: "tablou",
-  titlu: "Tablou de bord",
+  titlu: "Acasă",
   subtitlu: "Ofertele, cererile neofertate și șantierele în lucru.",
   async render(root) {
     const d: DateTablou = { planuri: citestePlanuri(), oferte: citesteOferte(), importuri: await listeaza() };

@@ -106,7 +106,7 @@ function antetImplicit(numeFisier: string, dinFisier: Partial<AntetScris> = {}):
 
 export const ecran: Ecran = {
   id: "import",
-  titlu: "Import Excel",
+  titlu: "Cerere nouă (din Excel)",
 
   async render(gazda) {
     const info = await interogheazaModel();
@@ -818,7 +818,7 @@ export const ecran: Ecran = {
           obiectiv: antet.obiectiv, valoare, pozitii, cand: new Date().toISOString(),
         });
         descarca(buf, numeOferta(antet.serie, antet.numar, antet.data));
-        arataMesaj("Oferta a fost salvată și descărcată. O găsești și la „Cereri și oferte”.");
+        arataMesaj("Oferta a fost salvată și descărcată. O găsești și la „Oferte și cereri”.");
       } catch (err) {
         form.querySelector(".imp-formular-butoane")!.insertAdjacentHTML("beforebegin",
           `<p class="alerta" role="alert">Oferta nu s-a putut salva și descărca: ${esc(err instanceof Error ? err.message : String(err))}</p>`);

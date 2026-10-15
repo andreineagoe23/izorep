@@ -92,9 +92,9 @@ export function cardNecesar(n: Necesar): string {
       ? tabel(["Material", "Se comandă", "Metri de țeavă", "Din piese"], randuri, ["", "n", "n", "n"])
       : `<p class="nota">Nicio poziție cu preț din liste: nu e nimic de calculat.</p>`}
     ${fara > 0 ? `<p class="hint">${fara === 1 ? "O poziție nu are" : `${fara} poziții nu au`} necesar calculat
-      (preț pus de mână sau închideri la foc): materialul lor se adaugă de mână, în „Depozit și stoc”.</p>` : ""}
+      (preț pus de mână sau închideri la foc): materialul lor se adaugă de mână, în „Necesar și depozit”.</p>` : ""}
     <p class="hint">„Creează șantierul” face șantierul din ofertă (pozițiile, cantitățile și prețurile ei, cu ajustarea
-      și discountul de mai sus). Materialele ajung în „Depozit și stoc”, iar pe șantier se fac situațiile de lucrări.</p>
+      și discountul de mai sus). Materialele ajung în „Necesar și depozit”, iar pe șantier se fac situațiile de lucrări.</p>
     <div class="imp-formular-butoane">
       <button type="button" class="primar" data-act="creeaza-santier">Creează șantierul</button>
     </div>

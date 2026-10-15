@@ -26,7 +26,7 @@ const EXEMPLE: Record<string, { diam: number; tip: string; forma: string; cant: 
 
 export const ecran: Ecran = {
   id: "deviz",
-  titlu: "Calcul deviz",
+  titlu: "Calcul rapid",
   subtitlu: "Prețul unei poziții, din listele firmei: alegi diametrul, materialul și grosimea.",
 
   render(root) {

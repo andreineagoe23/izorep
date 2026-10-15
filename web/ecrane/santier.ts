@@ -118,7 +118,7 @@ const randGol = (zona: string): RandSantier => ({
 
 export const ecran: Ecran = {
   id: "masuratori",
-  titlu: "Măsurători",
+  titlu: "Poze de pe șantier",
   subtitlu: "Pozele din carnet, înainte de ofertă sau din timpul lucrării. Rândurile citite din poză, verificate de tine, " +
     "ajung în ofertă sau în situația de lucrări.",
 
@@ -448,7 +448,7 @@ export const ecran: Ecran = {
       }
       lucreaza = false;
       golesteDupaTrimitere();
-      trimisa = `Ultimele măsurători au plecat în situația nouă de pe șantierul „${plan.denumire}”, în Lucrări.`;
+      trimisa = `Ultimele măsurători au plecat în situația nouă de pe șantierul „${plan.denumire}”, în Șantiere.`;
       location.hash = "#/lucrari";
     }
 
@@ -517,7 +517,7 @@ export const ecran: Ecran = {
       preda({ fisier, destinatie, pretDublu: true });
       await pastreazaPagini();
       golesteDupaTrimitere();
-      trimisa = `Ultima listă a plecat la import: ${fisier.name}. O găsești la „Import Excel”, în importurile recente.`;
+      trimisa = `Ultima listă a plecat la import: ${fisier.name}. O găsești la „Cerere nouă”, în importurile recente.`;
       location.hash = "#/import";
     }
 

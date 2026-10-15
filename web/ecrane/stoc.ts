@@ -123,7 +123,7 @@ function articoleCunoscute(s: StareDepozit): Articol[] {
 
 export const ecran: Ecran = {
   id: "stoc",
-  titlu: "Depozit și stoc",
+  titlu: "Necesar și depozit",
   subtitlu: "Unde e materialul și cât mai trebuie cumpărat pentru fiecare lucrare. Fiecare intrare și ieșire rămâne scrisă; nimic nu se șterge.",
 
   render(root) {
@@ -200,7 +200,7 @@ export const ecran: Ecran = {
     function sectiuneNecesar(sold: ReturnType<typeof solduri>): string {
       if (st.necesare.length === 0) {
         return `<section class="imp-card"><h2>Necesar pentru lucrări</h2>
-          <p class="hint" style="margin:0">Niciun necesar încă. În <a href="#/import">Import Excel</a>, după verificare,
+          <p class="hint" style="margin:0">Niciun necesar încă. În <a href="#/import">Cerere nouă</a>, după verificare,
           pasul „Oferta” calculează materialele din ofertă și, cu „Creează șantierul”, le trimite aici.</p></section>`;
       }
       return st.necesare.map((n) => {

@@ -76,7 +76,7 @@ function lucrariExemplu(): string {
 const notaInchidere = `${nota(
     `Când se termină o lucrare, șantierul se închide din pagina lui: șeful de lucrare numără ce a rămas, iar fiecare ` +
       `material pleacă înapoi în depozit, pe alt șantier, la furnizor, sau se scrie ca pierdut, furat ori reciclat. ` +
-      `Materialul de pe fiecare șantier se vede și în <a href="#/stoc">Depozit și stoc</a>.`,
+      `Materialul de pe fiecare șantier se vede și în <a href="#/stoc">Necesar și depozit</a>.`,
 )}`;
 
 const zi = (iso: string): string => new Date(iso).toLocaleDateString("ro-RO");
@@ -84,7 +84,7 @@ const cant = (n: number, um: string): string => `${cifra(n)}${um ? ` ${esc(um)}`
 
 export const ecran: Ecran = {
   id: "lucrari",
-  titlu: "Lucrări",
+  titlu: "Șantiere",
   subtitlu:
     "Șantierele făcute din oferte: planul, materialele de comandat și situațiile de lucrări, cu istoricul lor.",
   render(root) {
@@ -140,7 +140,7 @@ export const ecran: Ecran = {
       });
       return `<section class="imp-card"><h2>Șantiere din oferte</h2>
         ${planuri.length === 0
-          ? `<p class="hint" style="margin:0">Niciun șantier încă. În <a href="#/import">Import Excel</a>, la pasul
+          ? `<p class="hint" style="margin:0">Niciun șantier încă. În <a href="#/import">Cerere nouă</a>, la pasul
             „Oferta”, după ce descarci oferta, „Creează șantierul” face planul de șantier din ea și trimite materialele
             la depozit.</p>`
           : `${modDate() === "server" ? "" : `<p class="hint" style="margin:0 0 12px">Prototip: șantierele stau doar în acest browser.</p>`}
@@ -207,7 +207,7 @@ export const ecran: Ecran = {
           <summary>Planul de șantier · ${p.pozitii.length === 1 ? "o poziție" : `${p.pozitii.length} poziții`}${
             cumulat ? ` · ${executatPlan} începute` : ""}</summary>
           <p class="hint" style="margin:0 0 12px">Pozițiile ofertei, cu prețurile trimise clientului. Nu se schimbă
-            dacă se schimbă listele de prețuri. Materialele lor sunt în <a href="#/stoc">Depozit și stoc</a>.</p>
+            dacă se schimbă listele de prețuri. Materialele lor sunt în <a href="#/stoc">Necesar și depozit</a>.</p>
           ${tabel(["Poziția", "Cant. ofertă", "Preț unitar", "Executat"], randuriPlan, ["", "n", "n", "n"])}
         </details>
         ${inchide}
@@ -261,7 +261,7 @@ export const ecran: Ecran = {
       return `<section class="imp-card"><h2>Din măsurători</h2>
         ${d.planVechi
           ? `<p class="alerta" role="alert" style="margin:0 0 12px">Șantierul a fost făcut înainte ca aplicația să poată potrivi
-            măsurătorile cu oferta. Refă-l din ofertă (Import Excel → pasul „Oferta” → „Creează șantierul”) cât nu are
+            măsurătorile cu oferta. Refă-l din ofertă (Cerere nouă → pasul „Oferta” → „Creează șantierul”) cât nu are
             situații, sau scrie cantitățile de mână.</p>`
           : d.puse.length === 0
             ? `<p class="hint" style="margin:0 0 12px">Niciun rând din carnet nu s-a putut pune singur pe o poziție. Alege mai

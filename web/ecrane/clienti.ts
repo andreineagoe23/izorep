@@ -40,7 +40,7 @@ function clientiReali(): string {
   const clienti = clientiDinOferte(Object.values(citesteOferte()), citestePlanuri());
   if (clienti.length === 0) {
     return `<p class="hint" style="margin:0">Niciun client încă. Un client apare aici după ce descarci prima ofertă
-      pentru el, din <a href="#/import">Import Excel</a>: e beneficiarul scris pe antetul ofertei.</p>`;
+      pentru el, din <a href="#/import">Cerere nouă</a>: e beneficiarul scris pe antetul ofertei.</p>`;
   }
   const bani = vedeCosturi();
   const randuri = clienti.map((c) => `<tr>
@@ -95,7 +95,7 @@ function clientiExemplu(ex: Exemple): string {
   return `<section class="imp-card"><h2>Clienții din datele firmei</h2>
     <p class="hint" style="margin:0 0 12px">Exemple, citite din fișierele primite de la firmă.</p>
     ${tabel(
-      ["Client", "Contacte", ...(cuCui ? ["CUI"] : []), "Categorie", "Tip", "Format situații", ...(cuTermen ? ["Termen plată"] : []), "Lucrări", "Documente"],
+      ["Client", "Contacte", ...(cuCui ? ["CUI"] : []), "Categorie", "Tip", "Format situații", ...(cuTermen ? ["Termen plată"] : []), "Șantiere", "Documente"],
       randuri,
       ["", "", ...(cuCui ? [""] : []), "", "", "", ...(cuTermen ? ["n"] : []), "n", "n"],
     )}

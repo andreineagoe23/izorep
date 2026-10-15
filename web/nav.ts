@@ -9,8 +9,10 @@ export interface GrupMeniu {
 }
 
 /**
- * Meniul contine doar destinatii care exista. Zece intrari, doua grupuri:
- * fluxul zilnic sus, nomenclatoarele care se ating rar dedesubt.
+ * Meniul contine doar destinatii care exista. Grupurile urmeaza fluxul
+ * firmei (oferte → santiere → materiale), cu nume pe care le folosesc
+ * angajatii (15 octombrie 2026): „Lucrari” si „Masuratori” nu spuneau ca acolo
+ * e santierul. Setarile, care se ating rar, stau la urma.
  *
  * Varianta anterioara amesteca ecrane livrate cu module viitoare in cinci
  * grupuri. Harta sistemului e utila clientului, dar nu are ce cauta in
@@ -18,17 +20,23 @@ export interface GrupMeniu {
  * pliata, sub meniu.
  */
 export const MENIU: GrupMeniu[] = [
-  { titlu: "Zi de zi", itemi: [
-    { id: "tablou", eticheta: "Tablou de bord" },
-    { id: "lucrari", eticheta: "Lucrări" },
-    { id: "documente", eticheta: "Cereri și oferte" },
-    { id: "deviz", eticheta: "Calcul deviz" },
-    { id: "import", eticheta: "Import Excel" },
-    { id: "masuratori", eticheta: "Măsurători" },
-    { id: "stoc", eticheta: "Depozit și stoc" },
-    { id: "comenzi", eticheta: "Comenzi" },
+  { titlu: "", itemi: [
+    { id: "tablou", eticheta: "Acasă" },
   ]},
-  { titlu: "Date de bază", itemi: [
+  { titlu: "Oferte", itemi: [
+    { id: "import", eticheta: "Cerere nouă (din Excel)" },
+    { id: "documente", eticheta: "Oferte și cereri" },
+    { id: "deviz", eticheta: "Calcul rapid" },
+  ]},
+  { titlu: "Șantiere", itemi: [
+    { id: "lucrari", eticheta: "Șantiere" },
+    { id: "masuratori", eticheta: "Poze de pe șantier" },
+  ]},
+  { titlu: "Materiale", itemi: [
+    { id: "stoc", eticheta: "Necesar și depozit" },
+    { id: "comenzi", eticheta: "Comenzi la furnizori" },
+  ]},
+  { titlu: "Setări", itemi: [
     { id: "clienti", eticheta: "Clienți" },
     { id: "preturi", eticheta: "Liste de prețuri" },
   ]},
