@@ -24,7 +24,7 @@ import { PIERDERI_IMPLICITE, PRAG_TUB_MM, necesarDinLinii, type Pierderi } from 
 import { cardNecesar } from "../stoc-vizual.js";
 import {
   citesteDepozit, citestePlanuri, deschideLaIntrare, idCurent, idNou, incarca, listeaza, puneCurent,
-  salveaza, salveazaOferta, scrieDepozit, scriePlanuri, sterge, uitaOferta, citesteOferte,
+  salveaza, salveazaOferta, scrieDepozit, scriePlanuri, citesteOferte, ceSeVaSterge, stergeDeTot,
 } from "../date.js";
 import type { EditareCelula, IntrareIstoric, SesiuneImport } from "../istoric.js";
 import {
@@ -38,6 +38,7 @@ import {
 } from "../import/oferta-vizual.js";
 import { documentOferta, textClient, type PozitieOferta } from "../document-oferta.js";
 import { legaCelule, numarInCelula, numarScris } from "../celula.js";
+import { legaPanouStergere, panouStergere } from "../confirmare.js";
 import { FARA_POZITII, fisierNecitit, motiveLinie, stareLinie, type CodMotiv } from "../import/text.js";
 import { preia, type Predare } from "../predare.js";
 import { MARCA_PRET_DUBLU } from "../../src/santier/spre-cerere.js";
@@ -148,6 +149,7 @@ export const ecran: Ecran = {
     let ajustare = 0;
     let detaliiDeschise = false;
     let stergeDe: string | null = null;
+    let eroareStergere = "";
     let eroareStart = "";
     /** Ultima actiune care se poate anula din mesajul de jos. */
     let deAnulat: (() => void) | null = null;
@@ -293,7 +295,14 @@ export const ecran: Ecran = {
           })),
         });
       } else if (pas === 1 || !sesiune) {
-        pagina.innerHTML = ecranStart({ destinatie, istoric, stergeDe, eroare: eroareStart });
+        const deSters = stergeDe ? istoric.find((i) => i.id === stergeDe) : undefined;
+        pagina.innerHTML = ecranStart({
+          destinatie, istoric, stergeDe, eroare: eroareStart,
+          ...(deSters ? { confirmare: panouStergere({
+            ce: `cererea „${deSters.nume}”`, linii: ceSeVaSterge({ cerere: { id: deSters.id, nume: deSters.nume } }),
+            date: { id: deSters.id }, ...(eroareStergere ? { eroare: eroareStergere } : {}),
+          }) } : {}),
+        });
         legaDrop();
       } else if (pas === 2) {
         pagina.innerHTML = paginaVerificare(sesiune);
@@ -1028,17 +1037,35 @@ export const ecran: Ecran = {
       switch (act) {
         case "deschide": void redeschide(b.dataset["id"]!, false); return;
         case "sterge": {
+          // Primul pas: panoul cu ce se șterge. Ștergerea e abia după bifă și „Șterge definitiv”.
           const id = b.dataset["id"]!;
-          if (stergeDe !== id) {
-            stergeDe = id;
-            deseneaza();
-            pagina.querySelector<HTMLElement>(`[data-act="sterge"][data-id="${CSS.escape(id)}"]`)?.focus();
-            return;
-          }
+          stergeDe = stergeDe === id ? null : id;
+          eroareStergere = "";
+          deseneaza();
+          pagina.querySelector<HTMLElement>(stergeDe
+            ? '.sterge-panou [data-act="sterge-bifa"]' : `[data-act="sterge"][data-id="${CSS.escape(id)}"]`)?.focus();
+          return;
+        }
+        case "sterge-renunta": {
+          const id = b.dataset["id"]!;
           stergeDe = null;
-          uitaOferta(id);
-          void sterge(id).then(async () => {
-            if (sesiune?.meta.id === id) sesiune = null;
+          deseneaza();
+          pagina.querySelector<HTMLElement>(`[data-act="sterge"][data-id="${CSS.escape(id)}"]`)?.focus();
+          return;
+        }
+        case "sterge-definitiv": {
+          const id = b.dataset["id"]!;
+          const m = istoric.find((i) => i.id === id);
+          if (!m) return;
+          b.disabled = true;
+          b.textContent = "Se șterge…";
+          void stergeDeTot({ cerere: { id, nume: m.nume } }).then(async (refuz) => {
+            if (refuz) eroareStergere = `Nu s-a șters: ${refuz}`;
+            else {
+              stergeDe = null;
+              if (sesiune?.meta.id === id) sesiune = null;
+              arataMesaj(`Am șters cererea „${m.nume}” și tot ce era legat de ea.`);
+            }
             istoric = await listeaza();
             deseneaza();
           });
@@ -1298,6 +1325,8 @@ export const ecran: Ecran = {
       deseneaza,
       desenari: () => desenari,
     });
+
+    legaPanouStergere(gazda);
 
     gazda.addEventListener("toggle", (e) => {
       const t = e.target as HTMLElement;

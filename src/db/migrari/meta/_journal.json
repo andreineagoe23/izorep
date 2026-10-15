@@ -99,6 +99,13 @@
       "when": 1791921156716,
       "tag": "0013_purjare_fara_null",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1792086855440,
+      "tag": "0014_stergere_lucrare",
+      "breakpoints": true
     }
   ]
 }

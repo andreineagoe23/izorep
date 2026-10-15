@@ -21,6 +21,21 @@ nouă, Oferte și cereri, Calcul rapid) · Șantiere (Șantiere, Poze de pe
 Titlurile ecranelor și trimiterile din texte au aceleași nume; `#/santiere` e
 alias. Șantierul apare abia după „Creează șantierul”, la pasul „Oferta”.
 
+**Ștergerea de tot** (cerută de Andrei): înainte, o cerere cu ofertă și un
+șantier cu situații nu se puteau șterge deloc. Acum „Șterge” (Oferte și
+cereri, importurile recente, pagina șantierului) deschide un panou cu tot ce
+pleacă, rând cu rând („cererea …”, „oferta RAD11 …, cu toate versiunile ei”,
+„șantierul …, cu 3 situații”, necesarul, comenzile, mișcările de stoc,
+avizele); „Șterge definitiv” merge doar după bifa „Am înțeles”. Cererea ia cu
+ea ofertele și șantierele făcute din ea; șantierul ia situațiile, necesarul,
+comenzile (și trimise), mișcările pe el sau pentru el (cu storno-urile lor) și
+documentele comenzilor, iar cererea și oferta rămân. Ce se șterge se
+hotărăște într-un singur loc, pur (`web/stergere.ts`); serverul îl
+recalculează din bază (`POST /api/stergere`, `stergeLucrarea`), într-o
+tranzacție. Trigger-ele de imutabilitate lasă să treacă doar cu
+`app.sterge_lucrare` pus local (migrarea **0014**); altfel aplicația e
+refuzată ca înainte. Test pe Postgres: `tests/stergere-server.test.ts`.
+
 **Tabele editabile, ca în Excel** (macheta aprobată de Andrei): celula scrisă
 e galbenă și arată, sub mouse, ce era; Enter coboară, Escape renunță
 (`web/celula.ts`, `legaCelule`).

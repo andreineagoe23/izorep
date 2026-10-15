@@ -202,6 +202,12 @@ export function creeazaServer(o: OptiuniServer): Hono<Env> {
     await inTenant((tx, ctx) => repo.salveazaCerere(tx, ctx, corp as never));
     return ok(c);
   });
+  // Ștergerea de tot, după confirmare (`web/stergere.ts`): cererea cu tot ce
+  // s-a făcut din ea, sau șantierul cu tot ce ține de el.
+  app.post("/api/stergere", async (c) => {
+    const corp = z.union([z.object({ cerere: Id }), z.object({ santier: Id })]).parse(await c.req.json());
+    return c.json(await inTenant((tx, ctx) => repo.stergeLucrarea(tx, ctx, corp)));
+  });
   app.delete("/api/cereri/:id", async (c) => {
     await inTenant((tx) => repo.stergeCerere(tx, c.req.param("id")));
     return ok(c);

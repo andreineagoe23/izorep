@@ -70,8 +70,10 @@ export function alegereSegment(d: Destinatie): string {
 export interface OptiuniStart {
   destinatie: Destinatie;
   istoric: IntrareIstoric[];
-  /** Importul pe care omul a apasat o data „Șterge": al doilea clic il sterge. */
+  /** Importul pe care omul a apasat „Șterge": sub el, panoul cu ce se sterge (`confirmare`). */
   stergeDe: string | null;
+  /** Panoul de confirmare al stergerii, deja marcat (`panouStergere`). */
+  confirmare?: string;
   eroare: string;
 }
 
@@ -88,10 +90,10 @@ export function ecranStart(o: OptiuniStart): string {
           </div>
           <div class="imp-istoric-actiuni">
             <button type="button" class="secundar" data-act="deschide" data-id="${esc(i.id)}">Deschide</button>
-            <button type="button" class="legatura${o.stergeDe === i.id ? " pericol" : ""}" data-act="sterge" data-id="${esc(i.id)}"
-              aria-label="${o.stergeDe === i.id ? "Confirmă ștergerea" : "Șterge"} importul ${esc(i.nume)}">${
-              o.stergeDe === i.id ? "Sigur ștergi?" : "Șterge"}</button>
+            <button type="button" class="legatura" data-act="sterge" data-id="${esc(i.id)}" aria-expanded="${o.stergeDe === i.id}"
+              aria-label="Șterge importul ${esc(i.nume)}">Șterge</button>
           </div>
+          ${o.stergeDe === i.id && o.confirmare ? o.confirmare : ""}
         </li>`).join("")}
       </ul>
     </section>`;

@@ -1,0 +1,2730 @@
+{
+  "id": "c5fe746f-c061-4055-913f-60924db28c4f",
+  "prevId": "b65162c3-4967-4587-9881-8ea7b007f09c",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.ambalaj": {
+      "name": "ambalaj",
+      "schema": "",
+      "columns": {
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cheie_baza": {
+          "name": "cheie_baza",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "unitate": {
+          "name": "unitate",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "continut": {
+          "name": "continut",
+          "type": "numeric(12, 3)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "ambalaj_tenant_id_tenant_id_fk": {
+          "name": "ambalaj_tenant_id_tenant_id_fk",
+          "tableFrom": "ambalaj",
+          "columnsFrom": [
+            "tenant_id"
+          ],
+          "tableTo": "tenant",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "ambalaj_tenant_id_cheie_baza_pk": {
+          "name": "ambalaj_tenant_id_cheie_baza_pk",
+          "columns": [
+            "tenant_id",
+            "cheie_baza"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "ambalaj_tenant": {
+          "name": "ambalaj_tenant",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "public"
+          ],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.anexa_santier": {
+      "name": "anexa_santier",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "santier_id": {
+          "name": "santier_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "motiv": {
+          "name": "motiv",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "pozitii": {
+          "name": "pozitii",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "creat_de": {
+          "name": "creat_de",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "creat_la": {
+          "name": "creat_la",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "anexa_santier_tenant_id_tenant_id_fk": {
+          "name": "anexa_santier_tenant_id_tenant_id_fk",
+          "tableFrom": "anexa_santier",
+          "columnsFrom": [
+            "tenant_id"
+          ],
+          "tableTo": "tenant",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "anexa_santier_creat_de_utilizator_id_fk": {
+          "name": "anexa_santier_creat_de_utilizator_id_fk",
+          "tableFrom": "anexa_santier",
+          "columnsFrom": [
+            "creat_de"
+          ],
+          "tableTo": "utilizator",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        },
+        "anexa_santier_tenant_id_santier_id_santier_tenant_id_id_fk": {
+          "name": "anexa_santier_tenant_id_santier_id_santier_tenant_id_id_fk",
+          "tableFrom": "anexa_santier",
+          "columnsFrom": [
+            "tenant_id",
+            "santier_id"
+          ],
+          "tableTo": "santier",
+          "columnsTo": [
+            "tenant_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "anexa_santier_tenant": {
+          "name": "anexa_santier_tenant",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "public"
+          ],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.articol": {
+      "name": "articol",
+      "schema": "",
+      "columns": {
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cheie": {
+          "name": "cheie",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sistem": {
+          "name": "sistem",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "grosime_mm": {
+          "name": "grosime_mm",
+          "type": "numeric(8, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rand": {
+          "name": "rand",
+          "type": "numeric(8, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "forma": {
+          "name": "forma",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "um": {
+          "name": "um",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "marca": {
+          "name": "marca",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "articol_tenant_id_tenant_id_fk": {
+          "name": "articol_tenant_id_tenant_id_fk",
+          "tableFrom": "articol",
+          "columnsFrom": [
+            "tenant_id"
+          ],
+          "tableTo": "tenant",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "articol_tenant_id_cheie_pk": {
+          "name": "articol_tenant_id_cheie_pk",
+          "columns": [
+            "tenant_id",
+            "cheie"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "articol_tenant": {
+          "name": "articol_tenant",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "public"
+          ],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.cerere": {
+      "name": "cerere",
+      "schema": "",
+      "columns": {
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nume": {
+          "name": "nume",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "marime": {
+          "name": "marime",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cand": {
+          "name": "cand",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "model": {
+          "name": "model",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "destinatie": {
+          "name": "destinatie",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pozitii": {
+          "name": "pozitii",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tarifate": {
+          "name": "tarifate",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "valoare": {
+          "name": "valoare",
+          "type": "numeric(14, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fisier": {
+          "name": "fisier",
+          "type": "bytea",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "lucru": {
+          "name": "lucru",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "creat_de": {
+          "name": "creat_de",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "actualizat_la": {
+          "name": "actualizat_la",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "cerere_tenant_id_tenant_id_fk": {
+          "name": "cerere_tenant_id_tenant_id_fk",
+          "tableFrom": "cerere",
+          "columnsFrom": [
+            "tenant_id"
+          ],
+          "tableTo": "tenant",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "cerere_creat_de_utilizator_id_fk": {
+          "name": "cerere_creat_de_utilizator_id_fk",
+          "tableFrom": "cerere",
+          "columnsFrom": [
+            "creat_de"
+          ],
+          "tableTo": "utilizator",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        }
+      },
+      "compositePrimaryKeys": {
+        "cerere_tenant_id_id_pk": {
+          "name": "cerere_tenant_id_id_pk",
+          "columns": [
+            "tenant_id",
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "cerere_tenant": {
+          "name": "cerere_tenant",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "public"
+          ],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.client": {
+      "name": "client",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "denumire": {
+          "name": "denumire",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cui": {
+          "name": "cui",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "categorie": {
+          "name": "categorie",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sursa": {
+          "name": "sursa",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "creat_la": {
+          "name": "creat_la",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "client_tenant_idx": {
+          "name": "client_tenant_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "client_tenant_id_tenant_id_fk": {
+          "name": "client_tenant_id_tenant_id_fk",
+          "tableFrom": "client",
+          "columnsFrom": [
+            "tenant_id"
+          ],
+          "tableTo": "tenant",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "client_tenant": {
+          "name": "client_tenant",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "public"
+          ],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.comanda": {
+      "name": "comanda",
+      "schema": "",
+      "columns": {
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "continut": {
+          "name": "continut",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "trimisa_la": {
+          "name": "trimisa_la",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "anulata_la": {
+          "name": "anulata_la",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "creat_de": {
+          "name": "creat_de",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "creat_la": {
+          "name": "creat_la",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "comanda_tenant_id_tenant_id_fk": {
+          "name": "comanda_tenant_id_tenant_id_fk",
+          "tableFrom": "comanda",
+          "columnsFrom": [
+            "tenant_id"
+          ],
+          "tableTo": "tenant",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "comanda_creat_de_utilizator_id_fk": {
+          "name": "comanda_creat_de_utilizator_id_fk",
+          "tableFrom": "comanda",
+          "columnsFrom": [
+            "creat_de"
+          ],
+          "tableTo": "utilizator",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        }
+      },
+      "compositePrimaryKeys": {
+        "comanda_tenant_id_id_pk": {
+          "name": "comanda_tenant_id_id_pk",
+          "columns": [
+            "tenant_id",
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "comanda_tenant": {
+          "name": "comanda_tenant",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "public"
+          ],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.depozit": {
+      "name": "depozit",
+      "schema": "",
+      "columns": {
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "denumire": {
+          "name": "denumire",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tip": {
+          "name": "tip",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "firma_id": {
+          "name": "firma_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "santier_id": {
+          "name": "santier_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "responsabil": {
+          "name": "responsabil",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "depozit_tenant_id_tenant_id_fk": {
+          "name": "depozit_tenant_id_tenant_id_fk",
+          "tableFrom": "depozit",
+          "columnsFrom": [
+            "tenant_id"
+          ],
+          "tableTo": "tenant",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "depozit_firma_id_firma_id_fk": {
+          "name": "depozit_firma_id_firma_id_fk",
+          "tableFrom": "depozit",
+          "columnsFrom": [
+            "firma_id"
+          ],
+          "tableTo": "firma",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "depozit_tenant_id_id_pk": {
+          "name": "depozit_tenant_id_id_pk",
+          "columns": [
+            "tenant_id",
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "depozit_tenant": {
+          "name": "depozit_tenant",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "public"
+          ],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.document_furnizor": {
+      "name": "document_furnizor",
+      "schema": "",
+      "columns": {
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "comanda_id": {
+          "name": "comanda_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tip": {
+          "name": "tip",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "numar": {
+          "name": "numar",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nume": {
+          "name": "nume",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tip_fisier": {
+          "name": "tip_fisier",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fisier": {
+          "name": "fisier",
+          "type": "bytea",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "creat_de": {
+          "name": "creat_de",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "creat_la": {
+          "name": "creat_la",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "document_furnizor_tenant_id_tenant_id_fk": {
+          "name": "document_furnizor_tenant_id_tenant_id_fk",
+          "tableFrom": "document_furnizor",
+          "columnsFrom": [
+            "tenant_id"
+          ],
+          "tableTo": "tenant",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "document_furnizor_creat_de_utilizator_id_fk": {
+          "name": "document_furnizor_creat_de_utilizator_id_fk",
+          "tableFrom": "document_furnizor",
+          "columnsFrom": [
+            "creat_de"
+          ],
+          "tableTo": "utilizator",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        },
+        "document_furnizor_tenant_id_comanda_id_comanda_tenant_id_id_fk": {
+          "name": "document_furnizor_tenant_id_comanda_id_comanda_tenant_id_id_fk",
+          "tableFrom": "document_furnizor",
+          "columnsFrom": [
+            "tenant_id",
+            "comanda_id"
+          ],
+          "tableTo": "comanda",
+          "columnsTo": [
+            "tenant_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "document_furnizor_tenant_id_id_pk": {
+          "name": "document_furnizor_tenant_id_id_pk",
+          "columns": [
+            "tenant_id",
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "document_furnizor_tenant": {
+          "name": "document_furnizor_tenant",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "public"
+          ],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.firma": {
+      "name": "firma",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "denumire": {
+          "name": "denumire",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cod": {
+          "name": "cod",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cui": {
+          "name": "cui",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reg_com": {
+          "name": "reg_com",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "serie_oferta": {
+          "name": "serie_oferta",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "serie_factura": {
+          "name": "serie_factura",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "creat_la": {
+          "name": "creat_la",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "firma_tenant_idx": {
+          "name": "firma_tenant_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "firma_tenant_cod_idx": {
+          "name": "firma_tenant_cod_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "cod",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "firma_tenant_id_tenant_id_fk": {
+          "name": "firma_tenant_id_tenant_id_fk",
+          "tableFrom": "firma",
+          "columnsFrom": [
+            "tenant_id"
+          ],
+          "tableTo": "tenant",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "firma_tenant": {
+          "name": "firma_tenant",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "public"
+          ],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.furnizor": {
+      "name": "furnizor",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "denumire": {
+          "name": "denumire",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "vinde": {
+          "name": "vinde",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "telefon": {
+          "name": "telefon",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "furnizor_tenant_denumire_idx": {
+          "name": "furnizor_tenant_denumire_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "denumire",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "furnizor_tenant_id_tenant_id_fk": {
+          "name": "furnizor_tenant_id_tenant_id_fk",
+          "tableFrom": "furnizor",
+          "columnsFrom": [
+            "tenant_id"
+          ],
+          "tableTo": "tenant",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "furnizor_tenant": {
+          "name": "furnizor_tenant",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "public"
+          ],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.lista_preturi": {
+      "name": "lista_preturi",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sistem": {
+          "name": "sistem",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "destinatie": {
+          "name": "destinatie",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'rezidential'"
+        },
+        "denumire": {
+          "name": "denumire",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "contine": {
+          "name": "contine",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "moneda": {
+          "name": "moneda",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'EUR'"
+        },
+        "valabil_de_la": {
+          "name": "valabil_de_la",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "valabil_pana_la": {
+          "name": "valabil_pana_la",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'draft'"
+        },
+        "sursa": {
+          "name": "sursa",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "continut": {
+          "name": "continut",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "creat_la": {
+          "name": "creat_la",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "creat_de": {
+          "name": "creat_de",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "lista_preturi_tenant_sistem_idx": {
+          "name": "lista_preturi_tenant_sistem_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "sistem",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "destinatie",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "lista_preturi_una_activa_idx": {
+          "name": "lista_preturi_una_activa_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "sistem",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "destinatie",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "where": "status = 'activa'",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "lista_preturi_tenant_id_tenant_id_fk": {
+          "name": "lista_preturi_tenant_id_tenant_id_fk",
+          "tableFrom": "lista_preturi",
+          "columnsFrom": [
+            "tenant_id"
+          ],
+          "tableTo": "tenant",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "lista_preturi_creat_de_utilizator_id_fk": {
+          "name": "lista_preturi_creat_de_utilizator_id_fk",
+          "tableFrom": "lista_preturi",
+          "columnsFrom": [
+            "creat_de"
+          ],
+          "tableTo": "utilizator",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "lista_preturi_tenant": {
+          "name": "lista_preturi_tenant",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "public"
+          ],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.masuratoare": {
+      "name": "masuratoare",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "scop": {
+          "name": "scop",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "santier_id": {
+          "name": "santier_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "poza": {
+          "name": "poza",
+          "type": "bytea",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tip_poza": {
+          "name": "tip_poza",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "randuri": {
+          "name": "randuri",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "creat_de": {
+          "name": "creat_de",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "creat_la": {
+          "name": "creat_la",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "masuratoare_santier_idx": {
+          "name": "masuratoare_santier_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "santier_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "masuratoare_tenant_id_tenant_id_fk": {
+          "name": "masuratoare_tenant_id_tenant_id_fk",
+          "tableFrom": "masuratoare",
+          "columnsFrom": [
+            "tenant_id"
+          ],
+          "tableTo": "tenant",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "masuratoare_creat_de_utilizator_id_fk": {
+          "name": "masuratoare_creat_de_utilizator_id_fk",
+          "tableFrom": "masuratoare",
+          "columnsFrom": [
+            "creat_de"
+          ],
+          "tableTo": "utilizator",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "masuratoare_tenant": {
+          "name": "masuratoare_tenant",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "public"
+          ],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.miscare": {
+      "name": "miscare",
+      "schema": "",
+      "columns": {
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "data": {
+          "name": "data",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tip": {
+          "name": "tip",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "articol_cheie": {
+          "name": "articol_cheie",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cantitate": {
+          "name": "cantitate",
+          "type": "numeric(14, 3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "din": {
+          "name": "din",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "spre": {
+          "name": "spre",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lucrare_id": {
+          "name": "lucrare_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "nota": {
+          "name": "nota",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "motiv": {
+          "name": "motiv",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "situatie_id": {
+          "name": "situatie_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "anuleaza": {
+          "name": "anuleaza",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pret": {
+          "name": "pret",
+          "type": "numeric(14, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pret_lei": {
+          "name": "pret_lei",
+          "type": "numeric(14, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "curs": {
+          "name": "curs",
+          "type": "numeric(10, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "comanda_id": {
+          "name": "comanda_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "comanda_linie": {
+          "name": "comanda_linie",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "document": {
+          "name": "document",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "furnizor": {
+          "name": "furnizor",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "creat_de": {
+          "name": "creat_de",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "creat_la": {
+          "name": "creat_la",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "miscare_comanda_idx": {
+          "name": "miscare_comanda_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "comanda_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "miscare_tenant_id_tenant_id_fk": {
+          "name": "miscare_tenant_id_tenant_id_fk",
+          "tableFrom": "miscare",
+          "columnsFrom": [
+            "tenant_id"
+          ],
+          "tableTo": "tenant",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "miscare_creat_de_utilizator_id_fk": {
+          "name": "miscare_creat_de_utilizator_id_fk",
+          "tableFrom": "miscare",
+          "columnsFrom": [
+            "creat_de"
+          ],
+          "tableTo": "utilizator",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        },
+        "miscare_tenant_id_articol_cheie_articol_tenant_id_cheie_fk": {
+          "name": "miscare_tenant_id_articol_cheie_articol_tenant_id_cheie_fk",
+          "tableFrom": "miscare",
+          "columnsFrom": [
+            "tenant_id",
+            "articol_cheie"
+          ],
+          "tableTo": "articol",
+          "columnsTo": [
+            "tenant_id",
+            "cheie"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "miscare_tenant_id_id_pk": {
+          "name": "miscare_tenant_id_id_pk",
+          "columns": [
+            "tenant_id",
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "miscare_tenant": {
+          "name": "miscare_tenant",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "public"
+          ],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.necesar": {
+      "name": "necesar",
+      "schema": "",
+      "columns": {
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "santier_id": {
+          "name": "santier_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "continut": {
+          "name": "continut",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actualizat_la": {
+          "name": "actualizat_la",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "necesar_tenant_id_tenant_id_fk": {
+          "name": "necesar_tenant_id_tenant_id_fk",
+          "tableFrom": "necesar",
+          "columnsFrom": [
+            "tenant_id"
+          ],
+          "tableTo": "tenant",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "necesar_tenant_id_id_pk": {
+          "name": "necesar_tenant_id_id_pk",
+          "columns": [
+            "tenant_id",
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "necesar_tenant": {
+          "name": "necesar_tenant",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "public"
+          ],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.oferta": {
+      "name": "oferta",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cerere_id": {
+          "name": "cerere_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "versiune": {
+          "name": "versiune",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "firma_id": {
+          "name": "firma_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "numar": {
+          "name": "numar",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "data": {
+          "name": "data",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "client": {
+          "name": "client",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "obiectiv": {
+          "name": "obiectiv",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "valoare": {
+          "name": "valoare",
+          "type": "numeric(14, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "pozitii": {
+          "name": "pozitii",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "continut": {
+          "name": "continut",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mutata": {
+          "name": "mutata",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "creat_de": {
+          "name": "creat_de",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "creat_la": {
+          "name": "creat_la",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "oferta_cerere_versiune_idx": {
+          "name": "oferta_cerere_versiune_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "cerere_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "versiune",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "oferta_tenant_id_tenant_id_fk": {
+          "name": "oferta_tenant_id_tenant_id_fk",
+          "tableFrom": "oferta",
+          "columnsFrom": [
+            "tenant_id"
+          ],
+          "tableTo": "tenant",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "oferta_firma_id_firma_id_fk": {
+          "name": "oferta_firma_id_firma_id_fk",
+          "tableFrom": "oferta",
+          "columnsFrom": [
+            "firma_id"
+          ],
+          "tableTo": "firma",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "oferta_creat_de_utilizator_id_fk": {
+          "name": "oferta_creat_de_utilizator_id_fk",
+          "tableFrom": "oferta",
+          "columnsFrom": [
+            "creat_de"
+          ],
+          "tableTo": "utilizator",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        },
+        "oferta_tenant_id_cerere_id_cerere_tenant_id_id_fk": {
+          "name": "oferta_tenant_id_cerere_id_cerere_tenant_id_id_fk",
+          "tableFrom": "oferta",
+          "columnsFrom": [
+            "tenant_id",
+            "cerere_id"
+          ],
+          "tableTo": "cerere",
+          "columnsTo": [
+            "tenant_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "oferta_tenant": {
+          "name": "oferta_tenant",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "public"
+          ],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.santier": {
+      "name": "santier",
+      "schema": "",
+      "columns": {
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "oferta_id": {
+          "name": "oferta_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "firma_id": {
+          "name": "firma_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "denumire": {
+          "name": "denumire",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fisier": {
+          "name": "fisier",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "plan": {
+          "name": "plan",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "responsabil": {
+          "name": "responsabil",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "creat": {
+          "name": "creat",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "inchis_la": {
+          "name": "inchis_la",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "santier_tenant_id_tenant_id_fk": {
+          "name": "santier_tenant_id_tenant_id_fk",
+          "tableFrom": "santier",
+          "columnsFrom": [
+            "tenant_id"
+          ],
+          "tableTo": "tenant",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "santier_oferta_id_oferta_id_fk": {
+          "name": "santier_oferta_id_oferta_id_fk",
+          "tableFrom": "santier",
+          "columnsFrom": [
+            "oferta_id"
+          ],
+          "tableTo": "oferta",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "santier_firma_id_firma_id_fk": {
+          "name": "santier_firma_id_firma_id_fk",
+          "tableFrom": "santier",
+          "columnsFrom": [
+            "firma_id"
+          ],
+          "tableTo": "firma",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "santier_tenant_id_id_pk": {
+          "name": "santier_tenant_id_id_pk",
+          "columns": [
+            "tenant_id",
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "santier_tenant": {
+          "name": "santier_tenant",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "public"
+          ],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.sectiune_rectangulara": {
+      "name": "sectiune_rectangulara",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "a_mm": {
+          "name": "a_mm",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "b_mm": {
+          "name": "b_mm",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "sectiune_rectangulara_ab_idx": {
+          "name": "sectiune_rectangulara_ab_idx",
+          "columns": [
+            {
+              "expression": "a_mm",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "b_mm",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.serie_diametre": {
+      "name": "serie_diametre",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "material": {
+          "name": "material",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dn": {
+          "name": "dn",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "diametru_exterior": {
+          "name": "diametru_exterior",
+          "type": "numeric(8, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "toli": {
+          "name": "toli",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "standard": {
+          "name": "standard",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "serie_diametre_material_od_idx": {
+          "name": "serie_diametre_material_od_idx",
+          "columns": [
+            {
+              "expression": "material",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "diametru_exterior",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "serie_diametre_material_dn_idx": {
+          "name": "serie_diametre_material_dn_idx",
+          "columns": [
+            {
+              "expression": "material",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "dn",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.sesiune": {
+      "name": "sesiune",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "utilizator_id": {
+          "name": "utilizator_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hash": {
+          "name": "hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expira": {
+          "name": "expira",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "creat_la": {
+          "name": "creat_la",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "sesiune_hash_idx": {
+          "name": "sesiune_hash_idx",
+          "columns": [
+            {
+              "expression": "hash",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "sesiune_tenant_id_tenant_id_fk": {
+          "name": "sesiune_tenant_id_tenant_id_fk",
+          "tableFrom": "sesiune",
+          "columnsFrom": [
+            "tenant_id"
+          ],
+          "tableTo": "tenant",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "sesiune_utilizator_id_utilizator_id_fk": {
+          "name": "sesiune_utilizator_id_utilizator_id_fk",
+          "tableFrom": "sesiune",
+          "columnsFrom": [
+            "utilizator_id"
+          ],
+          "tableTo": "utilizator",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "sesiune_tenant": {
+          "name": "sesiune_tenant",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "public"
+          ],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        },
+        "sesiune_dupa_hash": {
+          "name": "sesiune_dupa_hash",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "public"
+          ],
+          "using": "hash = nullif(current_setting('app.hash_cautat', true), '')",
+          "withCheck": "hash = nullif(current_setting('app.hash_cautat', true), '')"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.situatie": {
+      "name": "situatie",
+      "schema": "",
+      "columns": {
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "santier_id": {
+          "name": "santier_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nr": {
+          "name": "nr",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "data": {
+          "name": "data",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cantitati": {
+          "name": "cantitati",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nota": {
+          "name": "nota",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "creat_de": {
+          "name": "creat_de",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "situatie_tenant_id_tenant_id_fk": {
+          "name": "situatie_tenant_id_tenant_id_fk",
+          "tableFrom": "situatie",
+          "columnsFrom": [
+            "tenant_id"
+          ],
+          "tableTo": "tenant",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "situatie_creat_de_utilizator_id_fk": {
+          "name": "situatie_creat_de_utilizator_id_fk",
+          "tableFrom": "situatie",
+          "columnsFrom": [
+            "creat_de"
+          ],
+          "tableTo": "utilizator",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        },
+        "situatie_tenant_id_santier_id_santier_tenant_id_id_fk": {
+          "name": "situatie_tenant_id_santier_id_santier_tenant_id_id_fk",
+          "tableFrom": "situatie",
+          "columnsFrom": [
+            "tenant_id",
+            "santier_id"
+          ],
+          "tableTo": "santier",
+          "columnsTo": [
+            "tenant_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "situatie_tenant_id_santier_id_nr_pk": {
+          "name": "situatie_tenant_id_santier_id_nr_pk",
+          "columns": [
+            "tenant_id",
+            "santier_id",
+            "nr"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "situatie_tenant": {
+          "name": "situatie_tenant",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "public"
+          ],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.tenant": {
+      "name": "tenant",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "denumire": {
+          "name": "denumire",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "activ": {
+          "name": "activ",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "creat_la": {
+          "name": "creat_la",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.token_intrare": {
+      "name": "token_intrare",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "utilizator_id": {
+          "name": "utilizator_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hash": {
+          "name": "hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expira": {
+          "name": "expira",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "folosit_la": {
+          "name": "folosit_la",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "creat_la": {
+          "name": "creat_la",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "token_intrare_hash_idx": {
+          "name": "token_intrare_hash_idx",
+          "columns": [
+            {
+              "expression": "hash",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "token_intrare_tenant_id_tenant_id_fk": {
+          "name": "token_intrare_tenant_id_tenant_id_fk",
+          "tableFrom": "token_intrare",
+          "columnsFrom": [
+            "tenant_id"
+          ],
+          "tableTo": "tenant",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "token_intrare_utilizator_id_utilizator_id_fk": {
+          "name": "token_intrare_utilizator_id_utilizator_id_fk",
+          "tableFrom": "token_intrare",
+          "columnsFrom": [
+            "utilizator_id"
+          ],
+          "tableTo": "utilizator",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "token_intrare_tenant": {
+          "name": "token_intrare_tenant",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "public"
+          ],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        },
+        "token_intrare_dupa_hash": {
+          "name": "token_intrare_dupa_hash",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "public"
+          ],
+          "using": "hash = nullif(current_setting('app.hash_cautat', true), '')",
+          "withCheck": "hash = nullif(current_setting('app.hash_cautat', true), '')"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.utilizator": {
+      "name": "utilizator",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nume": {
+          "name": "nume",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rol": {
+          "name": "rol",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "activ": {
+          "name": "activ",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "creat_la": {
+          "name": "creat_la",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "utilizator_tenant_email_idx": {
+          "name": "utilizator_tenant_email_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "email",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "utilizator_tenant_id_tenant_id_fk": {
+          "name": "utilizator_tenant_id_tenant_id_fk",
+          "tableFrom": "utilizator",
+          "columnsFrom": [
+            "tenant_id"
+          ],
+          "tableTo": "tenant",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "utilizator_tenant": {
+          "name": "utilizator_tenant",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "public"
+          ],
+          "using": "tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid",
+          "withCheck": "tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid"
+        },
+        "utilizator_dupa_email": {
+          "name": "utilizator_dupa_email",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "public"
+          ],
+          "using": "lower(email) = nullif(current_setting('app.email_cautat', true), '')"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "views": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

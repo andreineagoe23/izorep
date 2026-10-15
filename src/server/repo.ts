@@ -11,9 +11,10 @@
 import { and, asc, desc, eq, inArray, isNotNull, max, sql } from "drizzle-orm";
 import type { Baza } from "../db/client.js";
 import {
-  ambalaj, articol, cerere, comanda, depozit, documentFurnizor, firma, masuratoare, miscare, necesar, oferta, santier,
-  situatie,
+  ambalaj, anexaSantier, articol, cerere, comanda, depozit, documentFurnizor, firma, masuratoare, miscare, necesar, oferta,
+  santier, situatie,
 } from "../db/schema.js";
+import { ceSeSterge, type Stergere, type TintaStergere } from "../../web/stergere.js";
 import type { Situatie, PlanSantier } from "../lucrari/situatii.js";
 import { valideazaMiscare, type Ambalaj, type Miscare } from "../stoc/registru.js";
 import type { Categorie } from "../stoc/necesar.js";
@@ -266,6 +267,53 @@ export async function puneSantier(tx: Baza, ctx: Context, p: PlanSantier): Promi
   const dep = { denumire: `Șantier ${p.denumire}`, tip: "santier", firmaId, santierId: p.id };
   await tx.insert(depozit).values({ tenantId: ctx.tenantId, id: p.id, ...dep })
     .onConflictDoUpdate({ target: [depozit.tenantId, depozit.id], set: dep });
+}
+
+/**
+ * Ștergerea de tot a unei cereri sau a unui șantier (`web/stergere.ts`), după
+ * confirmarea omului. Ce se șterge se recalculează aici, din bază: pagina
+ * spune doar ținta. Totul într-o tranzacție; trigger-ele de imutabilitate lasă
+ * să treacă doar cu `app.sterge_lucrare` pus pe tenant, local tranzacției
+ * (migrarea 0014). Întoarce ce s-a șters.
+ */
+export async function stergeLucrarea(
+  tx: Baza, ctx: Context, t: { cerere: string } | { santier: string },
+): Promise<Stergere> {
+  let tinta: TintaStergere;
+  let inPlus: string[] = [];
+  if ("cerere" in t) {
+    const [c] = await tx.select({ id: cerere.id, nume: cerere.nume }).from(cerere).where(eq(cerere.id, t.cerere));
+    if (!c) throw new Refuz(404, "Cererea nu mai e pe server.");
+    tinta = { cerere: c };
+    // Șantierele făcute din ofertele ei, și cele pe care planul nu le leagă de cerere.
+    const din = await tx.select({ id: santier.id }).from(santier).innerJoin(oferta, eq(santier.ofertaId, oferta.id))
+      .where(eq(oferta.cerereId, t.cerere));
+    inPlus = din.map((x) => x.id);
+  } else {
+    const [s] = await tx.select({ id: santier.id }).from(santier).where(eq(santier.id, t.santier));
+    if (!s) throw new Refuz(404, "Șantierul nu mai e pe server.");
+    tinta = { santier: t.santier };
+  }
+  const s = ceSeSterge(await dateComune(tx), tinta, inPlus);
+  await tx.execute(sql`select set_config('app.sterge_lucrare', ${ctx.tenantId}, true)`);
+
+  const ids = s.santiere.map((x) => x.id);
+  if (s.documente.length) await tx.delete(documentFurnizor).where(inArray(documentFurnizor.id, s.documente));
+  if (s.miscari.length) await tx.delete(miscare).where(inArray(miscare.id, s.miscari));
+  if (s.comenzi.length) await tx.delete(comanda).where(inArray(comanda.id, s.comenzi.map((c) => c.id)));
+  if (s.necesare.length) await tx.delete(necesar).where(inArray(necesar.id, s.necesare.map((n) => n.id)));
+  if (ids.length) {
+    await tx.delete(situatie).where(inArray(situatie.santierId, ids));
+    await tx.delete(anexaSantier).where(inArray(anexaSantier.santierId, ids));
+    await tx.delete(masuratoare).where(inArray(masuratoare.santierId, ids));
+    await tx.delete(depozit).where(and(inArray(depozit.id, ids), eq(depozit.tip, "santier")));
+    await tx.delete(santier).where(inArray(santier.id, ids));
+  }
+  if (s.cerere) {
+    await tx.delete(oferta).where(eq(oferta.cerereId, s.cerere.id));
+    await tx.delete(cerere).where(eq(cerere.id, s.cerere.id));
+  }
+  return s;
 }
 
 export async function stergeSantier(tx: Baza, id: string): Promise<void> {

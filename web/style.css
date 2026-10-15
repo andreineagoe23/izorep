@@ -1393,3 +1393,22 @@ p.cel-ed.cel-text { white-space: pre-wrap; overflow-wrap: anywhere; cursor: text
 /* Celula si unitatea ei raman pe acelasi rand, si cand tabelul devine card. */
 .cel-cu-um { display: flex; align-items: center; gap: 6px; }
 .cel-cu-um > input.cel-ed { flex: 1 1 auto; }
+/* Confirmarea stergerii de tot (`web/confirmare.ts`): chenar de atentie, lista
+   a ce pleaca, bifa, apoi butonul. Fara rosu: rosul e pentru erori. */
+.sterge-panou {
+  margin: 8px 0; padding: 16px; border: 2px solid var(--atentie); border-radius: 12px; background: var(--panou-2);
+  white-space: normal; text-align: left;
+}
+.sterge-panou .sterge-titlu { margin: 0 0 4px; font-size: 16px; }
+.sterge-panou .sterge-sub { margin: 0 0 8px; color: var(--slab); }
+.sterge-panou ul { margin: 0 0 12px; padding-left: 20px; }
+.sterge-panou li { margin: 2px 0; overflow-wrap: anywhere; }
+.sterge-bifa { display: flex; align-items: center; gap: 10px; min-height: 44px; margin: 0 0 8px; cursor: pointer; }
+.sterge-bifa input { width: 22px; height: 22px; margin: 0; flex: none; accent-color: var(--accent); }
+.sterge-panou .sterge-definitiv:not(:disabled) { border-color: var(--text); color: var(--text); font-weight: 600; }
+.sterge-panou button:disabled { opacity: 0.5; cursor: not-allowed; }
+tr.sterge-rand > td { padding-top: 0; }
+/* Panoul sub un import recent ia tot randul; lista lui ramane lista, nu randuri de istoric. */
+.imp-istoric li > .sterge-panou { flex: 1 1 100%; }
+.imp-istoric .sterge-panou ul { list-style: disc; padding-left: 20px; margin: 0 0 12px; }
+.imp-istoric .sterge-panou li { display: list-item; padding: 0; border: 0; margin: 2px 0; }

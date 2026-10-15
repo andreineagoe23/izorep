@@ -13,8 +13,9 @@ import { exemple, type Exemple } from "../date/exemple.js";
 import { vedeCosturi } from "../nav.js";
 import {
   citesteDepozit, citestePlanuri, iaDeDeschis, idNou, inchideSantier, modDate, salveazaSituatie, scrieDepozit, scriePlanuri,
-  stergeUltimaSituatie,
+  ceSeVaSterge, stergeDeTot, stergeUltimaSituatie,
 } from "../date.js";
+import { legaPanouStergere, panouStergere } from "../confirmare.js";
 import { consumPlan } from "../consum-vizual.js";
 import { dinMarci } from "../../src/stoc/consum.js";
 import { ramasPeNecesar } from "./stoc.js";
@@ -96,6 +97,8 @@ export const ecran: Ecran = {
     let mesaj = "";
     /** Ce a facut ultima salvare (consumul scris): informatie, nu eroare. */
     let info = "";
+    /** Ce s-a șters de tot, spus pe lista șantierelor. */
+    let sters = "";
     /** Inchiderea (Faza 7): ce a scris omul, eroarea, a doua apasare, cardul deschis. */
     let inchidere = { scris: {} as Record<string, { numarat?: string; unde?: string }>, eroare: "", confirma: false, deschis: false };
     /** Situatia in lucru a venit din „Măsurători”: ce s-a pus, ce e de ales, ce nu e in oferta. */
@@ -138,7 +141,7 @@ export const ecran: Ecran = {
           <td class="fix"><button type="button" class="secundar" data-act="deschide" data-id="${esc(p.id)}">Deschide</button></td>
         </tr>`;
       });
-      return `<section class="imp-card"><h2>Șantiere din oferte</h2>
+      return `<section class="imp-card"><h2>Șantiere din oferte</h2>${sters ? `<p class="hint" role="status">${esc(sters)}</p>` : ""}
         ${planuri.length === 0
           ? `<p class="hint" style="margin:0">Niciun șantier încă. În <a href="#/import">Cerere nouă</a>, la pasul
             „Oferta”, după ce descarci oferta, „Creează șantierul” face planul de șantier din ea și trimite materialele
@@ -211,13 +214,14 @@ export const ecran: Ecran = {
           ${tabel(["Poziția", "Cant. ofertă", "Preț unitar", "Executat"], randuriPlan, ["", "n", "n", "n"])}
         </details>
         ${inchide}
-        ${p.inchis ? "" : `<details class="imp-card"${stergeDe === p.id ? " open" : ""}>
+        <details class="imp-card"${stergeDe === p.id ? " open" : ""}>
           <summary>Șterge șantierul</summary>
-          <p class="hint" style="margin:0 0 12px">Scoate planul, situațiile lui și necesarul din depozit.
-            Mișcările de stoc rămân.</p>
-          <div class="imp-formular-butoane"><button type="button" class="secundar" data-act="sterge" data-id="${esc(p.id)}">${
-            stergeDe === p.id ? "Sigur ștergi?" : "Șterge șantierul"}</button></div>
-        </details>`}`;
+          ${stergeDe === p.id ? panouStergere({ ce: `șantierul „${p.denumire}”`, linii: ceSeVaSterge({ santier: p.id }), date: { id: p.id },
+            ...(mesaj ? { eroare: mesaj } : {}) })
+          : `<p class="hint" style="margin:0 0 12px">Șterge de tot șantierul și tot ce ține de el: situațiile, necesarul,
+            comenzile și mișcările de stoc. Cererea și oferta rămân. Înainte să ștergi, vezi lista cu tot ce pleacă.</p>
+          <div class="imp-formular-butoane"><button type="button" class="secundar" data-act="sterge" data-id="${esc(p.id)}">Șterge șantierul…</button></div>`}
+        </details>`;
     }
 
     function istoric(p: PlanSantier): string {
@@ -331,6 +335,7 @@ export const ecran: Ecran = {
       };
     }
 
+    legaPanouStergere(root);
     root.addEventListener("click", (e) => {
       const b = (e.target as HTMLElement).closest<HTMLButtonElement>("button[data-act]");
       if (!b) return;
@@ -382,15 +387,29 @@ export const ecran: Ecran = {
           return;
         }
         case "sterge": {
+          // Primul pas: panoul cu ce se șterge. Ștergerea e abia după bifă și „Șterge definitiv”.
+          stergeDe = b.dataset["id"] ?? null;
+          deseneaza();
+          root.querySelector<HTMLElement>('.sterge-panou [data-act="sterge-bifa"]')?.focus();
+          return;
+        }
+        case "sterge-renunta": stergeDe = null; break;
+        case "sterge-definitiv": {
           const id = b.dataset["id"]!;
-          if (stergeDe !== id) { stergeDe = id; break; }
-          planuri = planuri.filter((x) => x.id !== id);
-          salveaza();
-          const dep = citesteDepozit();
-          scrieDepozit({ ...dep, necesare: dep.necesare.filter((n) => n.santier !== id) });
-          deschis = null;
-          stergeDe = null;
-          break;
+          const denumire = planuri.find((x) => x.id === id)?.denumire ?? id;
+          b.disabled = true;
+          b.textContent = "Se șterge…";
+          void stergeDeTot({ santier: id }).then((refuz) => {
+            if (refuz) mesaj = `Nu s-a șters: ${refuz}`;
+            else {
+              planuri = citestePlanuri();
+              deschis = null;
+              stergeDe = null;
+              sters = `Am șters șantierul „${denumire}” și tot ce ținea de el.`;
+            }
+            deseneaza();
+          });
+          return;
         }
         default: return;
       }

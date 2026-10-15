@@ -1,6 +1,7 @@
 import type { Ecran } from "./tip.js";
 import { dataScurta, esc, eur, nr, stare, tabel } from "./tip.js";
-import { citesteOferte, citestePlanuri, listeaza, puneCurent, sterge, uitaOferta } from "../date.js";
+import { ceSeVaSterge, citesteOferte, citestePlanuri, listeaza, puneCurent, stergeDeTot } from "../date.js";
+import { legaPanouStergere, panouStergere } from "../confirmare.js";
 import type { IntrareIstoric } from "../istoric.js";
 import type { OfertaEmisa } from "../oferte-local.js";
 import type { Document } from "../date/seed.js";
@@ -70,7 +71,9 @@ function randuri(ex: Exemple, lista: Document[], arataValoare: boolean): string[
 const TIP_OFERTA: Record<string, string> = { rezidential: "Rezidențială", industrial: "Industrială", rafinarie: "Rafinărie" };
 
 /** Un import din aplicatie: cererea, oferta descarcata din ea si santierul facut din oferta. */
-function randImport(m: IntrareIstoric, o: OfertaEmisa | undefined, santier: boolean, arataValoare: boolean, stergeDe: string | null): string {
+function randImport(
+  m: IntrareIstoric, o: OfertaEmisa | undefined, santier: boolean, arataValoare: boolean, stergeDe: string | null, eroare: string,
+): string {
   const st = santier ? stare("Șantier făcut", "ok") : o ? stare("Ofertă descărcată", "ok") : stare("De ofertat", "atentie");
   return `<tr>
     <td><strong>${esc(o?.client || m.nume)}</strong><br><span class="hint">${o?.client ? `${esc(m.nume)} · ` : ""}importată pe ${esc(dataScurta(m.cand))}</span></td>
@@ -80,8 +83,12 @@ function randImport(m: IntrareIstoric, o: OfertaEmisa | undefined, santier: bool
     ${arataValoare ? `<td class="n">${o ? eur(o.valoare) : "—"}</td>` : ""}
     <td>${st}</td>
     <td class="fix"><button type="button" class="secundar" data-act="deschide" data-id="${esc(m.id)}">Deschide</button>
-      <button type="button" class="legatura pericol" data-act="sterge" data-id="${esc(m.id)}">${stergeDe === m.id ? "Sigur ștergi?" : "Șterge"}</button></td>
-  </tr>`;
+      <button type="button" class="legatura" data-act="sterge" data-id="${esc(m.id)}" aria-expanded="${stergeDe === m.id}"
+        aria-label="Șterge cererea ${esc(m.nume)}">Șterge</button></td>
+  </tr>${stergeDe === m.id ? `<tr class="sterge-rand"><td colspan="${arataValoare ? 7 : 6}">${panouStergere({
+    ce: `cererea „${m.nume}”`, linii: ceSeVaSterge({ cerere: { id: m.id, nume: m.nume } }), date: { id: m.id },
+    ...(eroare ? { eroare } : {}),
+  })}</td></tr>` : ""}`;
 }
 
 export const ecran: Ecran = {
@@ -119,19 +126,22 @@ export const ecran: Ecran = {
 
     const tale = root.querySelector<HTMLElement>("#cererile-tale")!;
     let stergeDe: string | null = null;
+    let eroare = "";
+    let sters = "";
 
     async function deseneazaTale(): Promise<void> {
       const importuri = await listeaza();
       const oferte = citesteOferte();
       const santiere = new Set(citestePlanuri().map((p) => p.fisier));
       tale.innerHTML = `<h2>Cererile importate</h2>
+        ${sters ? `<p class="hint" role="status">${esc(sters)}</p>` : ""}
         ${importuri.length === 0
           ? `<p class="hint" style="margin:0">Nicio cerere încă. O cerere intră aici când o aduci în aplicație, din
             <a href="#/import">Cerere nouă</a> sau din <a href="#/masuratori">Poze de pe șantier</a>; oferta descărcată din ea
             apare pe același rând.</p>`
           : tabel(
               ["Cererea", "Tip ofertă", "Poziții", "Oferta", ...(arataValoare ? ["Valoare"] : []), "Stare", ""],
-              importuri.map((m) => randImport(m, oferte[m.id], santiere.has(m.nume), arataValoare, stergeDe)),
+              importuri.map((m) => randImport(m, oferte[m.id], santiere.has(m.nume), arataValoare, stergeDe, eroare)),
               ["", "", "n", "", ...(arataValoare ? ["n"] : []), "", ""],
             )}`;
     }
@@ -146,15 +156,34 @@ export const ecran: Ecran = {
         location.hash = "#/import";
         return;
       }
-      if (stergeDe !== id) {
-        stergeDe = id;
+      const act = b.dataset["act"];
+      if (act === "sterge") {
+        // Primul pas: panoul cu ce se șterge. Ștergerea e abia după bifă și „Șterge definitiv”.
+        stergeDe = stergeDe === id ? null : id;
+        eroare = "";
+        sters = "";
+        void deseneazaTale().then(() => tale.querySelector<HTMLElement>(stergeDe
+          ? '.sterge-panou [data-act="sterge-bifa"]' : `[data-act="sterge"][data-id="${CSS.escape(id)}"]`)?.focus());
+        return;
+      }
+      if (act === "sterge-renunta") {
+        stergeDe = null;
         void deseneazaTale().then(() => tale.querySelector<HTMLElement>(`[data-act="sterge"][data-id="${CSS.escape(id)}"]`)?.focus());
         return;
       }
-      stergeDe = null;
-      uitaOferta(id);
-      void sterge(id).then(deseneazaTale);
+      if (act !== "sterge-definitiv") return;
+      b.disabled = true;
+      b.textContent = "Se șterge…";
+      void listeaza().then(async (toate) => {
+        const m = toate.find((x) => x.id === id);
+        if (!m) { stergeDe = null; await deseneazaTale(); return; }
+        const refuz = await stergeDeTot({ cerere: { id, nume: m.nume } });
+        if (refuz) eroare = `Nu s-a șters: ${refuz}`;
+        else { stergeDe = null; sters = `Am șters cererea „${m.nume}” și tot ce era legat de ea.`; }
+        await deseneazaTale();
+      });
     });
+    legaPanouStergere(tale);
     void deseneazaTale();
 
     if (!ex) return;

@@ -38,6 +38,7 @@ import * as luc from "./lucrari-local.js";
 import * as of from "./oferte-local.js";
 import * as ist from "./istoric.js";
 import type { CerereOferta } from "./oferta.js";
+import { ceSeSterge, faraStergere, rezumatStergere, type TintaStergere } from "./stergere.js";
 
 export type Mod = "browser" | "server";
 
@@ -530,6 +531,46 @@ export async function sterge(id: string): Promise<void> {
   } catch (e) {
     ascultaEroare(e instanceof Error ? e.message : String(e));
   }
+}
+
+/* ------------------------------------------------- ștergerea de tot */
+
+const deSters = (t: TintaStergere) =>
+  ceSeSterge({ planuri: citestePlanuri(), depozit: citesteDepozit(), oferte: citesteOferte() }, t);
+
+/** Ce s-ar șterge, în cuvinte, pentru confirmare (`web/stergere.ts`). */
+export const ceSeVaSterge = (t: TintaStergere): string[] => rezumatStergere(deSters(t));
+
+/**
+ * Șterge de tot cererea sau șantierul, după confirmarea omului. Pe server o
+ * operație: serverul recalculează ce se șterge, din baza lui. Întoarce
+ * motivul refuzului, sau null.
+ */
+export async function stergeDeTot(t: TintaStergere): Promise<string | null> {
+  const id = "cerere" in t ? t.cerere.id : null;
+  if (mod === "server") {
+    await coada;
+    try {
+      await api("/api/stergere", "POST", "cerere" in t ? { cerere: t.cerere.id } : { santier: t.santier });
+    } catch (e) {
+      return e instanceof Error ? e.message : String(e);
+    }
+    if (id) {
+      cuFisier.delete(id);
+      if (ist.idCurent() === id) ist.puneCurent(null);
+    }
+    await reimprospateaza();
+    return null;
+  }
+  const s = deSters(t);
+  const santiere = new Set(s.santiere.map((x) => x.id));
+  luc.scriePlanuri(luc.citestePlanuri().filter((p) => !santiere.has(p.id)));
+  dep.scrieDepozit(faraStergere(dep.citesteDepozit(), s));
+  if (id) {
+    of.uitaOferta(id);
+    await ist.sterge(id);
+  }
+  return null;
 }
 
 /* ------------------------------------------------------- masuratorile */

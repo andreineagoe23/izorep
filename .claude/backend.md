@@ -319,6 +319,15 @@ Parola comună (`src/server/parola.ts`): Basic Auth pe tot site-ul, din
 `IZOREP_PAROLA`. `GET /api/viu` rămâne deschisă, pentru verificarea lui
 Render. `porneste.ts` refuză un `HOST` deschis fără parolă.
 
+### Ștergerea de tot (15 octombrie 2026)
+
+Migrarea 0014: `purjare_permisa` e adevărată și cu `app.sterge_lucrare` pus pe
+tenant, de orice rol. Doar `stergeLucrarea` (`repo.ts`) o pune, local
+tranzacției, după ce a calculat din bază ce se șterge (`ceSeSterge` din
+`web/stergere.ts`). Purjarea unui tenant întreg rămâne a proprietarului.
+Ordinea: documente, mișcări, comenzi, necesare, situații, anexe, măsurători,
+depozitul și șantierul, apoi ofertele și cererea (cheile sunt `restrict`).
+
 ## Ce lipsește
 
 - Conturile (scoase pe 10 octombrie 2026; până revin, parola comună), jurnal de audit (cine a schimbat

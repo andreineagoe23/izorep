@@ -283,6 +283,15 @@ românește („1.250” = 1250, „121,67”). Folosit în vederea „Ca în of
 importului și în tabelul necesarului; celula și unitatea stau pe un rând și pe
 card (`.cel-cu-um`). ✕ e `.cel-scoate`, 44 px, fără roșu.
 
+## Ștergerea de tot (15 octombrie 2026)
+
+`web/confirmare.ts`: `panouStergere` (chenar de atenție sub rândul ales, „Ești
+sigur că vrei să ștergi …?”, lista din `ceSeVaSterge`, bifa „Am înțeles”,
+„Șterge definitiv” oprit până la bifă, „Renunță”) și `legaPanouStergere`.
+Folosit în Oferte și cereri, în importurile recente și pe pagina șantierului
+(„Șterge șantierul”, pliat; și pe șantierul închis). După ștergere, un rând
+`role="status"` spune ce s-a șters.
+
 ## Importul în formatul ofertei (14 octombrie 2026)
 
 Decis de Andrei: pe pagină și la export, aceeași formă pentru orice cerere. La
