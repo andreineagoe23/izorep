@@ -15,7 +15,7 @@ import { anuleaza, confirma, potrivit } from "../validare.js";
 import { cate, esc, eur, type Ecran } from "./tip.js";
 import { FIRME } from "../date/firme.js";
 import {
-  adaosFocIndustrial, clientPropus, cuAjustare, dataAzi, imparte, planDinOferta, totalCuAdaos, valoareOferta,
+  adaosFocIndustrial, clientPropus, cuAjustare, cuDenumiri, dataAzi, imparte, planDinOferta, totalCuAdaos, valoareOferta,
   type AntetOferta, type CerereOferta,
 } from "../oferta.js";
 
@@ -34,9 +34,10 @@ import {
 } from "../import/vizual.js";
 import { celuleExtrase, grilaFoaie } from "../import/grila.js";
 import {
-  antetDinFisier, baraVerificare, documentPeEcran, taburiFoi, type AntetScris, type Vedere,
+  antetDinFisier, baraVerificare, documentPeEcran, taburiFoi, type AntetScris, type SchimbariPozitie, type Vedere,
 } from "../import/oferta-vizual.js";
-import { documentOferta } from "../document-oferta.js";
+import { documentOferta, textClient, type PozitieOferta } from "../document-oferta.js";
+import { legaCelule, numarInCelula, numarScris } from "../celula.js";
 import { FARA_POZITII, fisierNecitit, motiveLinie, stareLinie, type CodMotiv } from "../import/text.js";
 import { preia, type Predare } from "../predare.js";
 import { MARCA_PRET_DUBLU } from "../../src/santier/spre-cerere.js";
@@ -106,7 +107,7 @@ function antetImplicit(numeFisier: string, dinFisier: Partial<AntetScris> = {}):
 
 export const ecran: Ecran = {
   id: "import",
-  titlu: "Cerere nouă (din Excel)",
+  titlu: "Cerere nouă",
 
   async render(gazda) {
     const info = await interogheazaModel();
@@ -122,6 +123,8 @@ export const ecran: Ecran = {
     let descrieriSchimbate = new Set<number>();
     /** Preturile puse de mana. Vezi `OptiuniNucleu.preturiManuale`. */
     let preturiManuale = new Map<number, number>();
+    /** Denumirile scrise de om în tabelul ofertei. Vezi `SesiuneImport.denumiri`. */
+    let denumiri = new Map<number, string>();
     let pas: Pas = 1;
     let sesiune: Sesiune | null = null;
     let istoric: IntrareIstoric[] = [];
@@ -256,6 +259,7 @@ export const ecran: Ecran = {
         grosimiPropuse: [...grosimiPropuse],
         descrieriSchimbate: [...descrieriSchimbate],
         preturiManuale: [...preturiManuale],
+        denumiri: [...denumiri],
         antet, ajustare,
       });
       istoric = await listeaza();
@@ -268,7 +272,10 @@ export const ecran: Ecran = {
     }
 
     /* ------------------------------------------------------------ desenare */
+    /** Câte redesenări au fost: celula ofertei redesenează după un clic doar dacă el n-a făcut-o. */
+    let desenari = 0;
     function deseneaza(): void {
+      desenari++;
       const areSesiune = sesiune !== null;
       // Cu fisierul deschis, foaia clientului are nevoie de toata latimea:
       // bara laterala se pliaza (temporar, fara sa schimbe preferinta omului).
@@ -360,7 +367,7 @@ export const ecran: Ecran = {
     function documentul(s: Sesiune): ReturnType<typeof documentOferta> {
       const firma = FIRME.find((f) => f.id === antet.firma) ?? FIRME[0];
       return documentOferta({
-        linii: s.rez.linii,
+        linii: cuDenumiri(s.rez.linii, denumiri),
         antet: {
           serie: firma.serieOferta, numar: antet.numar, data: antet.data, persoana: antet.persoana, client: antet.client,
           obiectiv: antet.obiectiv, firma: firma.denumire, localitate: antet.localitate,
@@ -391,6 +398,7 @@ export const ecran: Ecran = {
         const campuri = l ? campuriLinie(s, l) : undefined;
         corp = documentPeEcran(documentul(s), {
           linii: harta, vizibile: filtrat, editIdx, propunere, cuFoaie, ...(campuri ? { campuri } : {}),
+          schimbari: schimbariPozitie(s),
         });
       } else {
         corp = s.foi.filter((f) => !foaie || f.nume === foaie)
@@ -616,6 +624,7 @@ export const ecran: Ecran = {
       grosimiPropuse = new Map(s.grosimiPropuse ?? []);
       descrieriSchimbate = new Set(s.descrieriSchimbate ?? []);
       preturiManuale = new Map(s.preturiManuale ?? []);
+      denumiri = new Map(s.denumiri ?? []);
       const rez = await redeschideImport(s, optiuni());
       puneCurent(id);
       deschideSesiune({ foi: rez.foi, rez, meta: s, editari: [...s.editari], avertisment: "" });
@@ -671,6 +680,7 @@ export const ecran: Ecran = {
         grosimiPropuse = new Map();
         descrieriSchimbate = new Set();
         preturiManuale = new Map();
+        denumiri = new Map();
         const rez = await proceseazaRegistru(foi, { ...optiuni(), ...(extractor ? { extrage: extractor } : {}) });
         // Lista de tevi a instalatorului, fara izolatie pe rand: izolatia se alege pe foaie.
         const tevi = rez.linii.some((l) => l.extras.sistem !== null) ? [] : foi.map(tevileFoii).filter((t) => t.tevi.length >= 3);
@@ -787,7 +797,7 @@ export const ecran: Ecran = {
       }
       if (ajustare) antet.ajustareProcent = ajustare;
       return {
-        linii: s.rez.linii, antet,
+        linii: cuDenumiri(s.rez.linii, denumiri), antet,
         provenienta: {
           generatLa: new Date().toISOString(), destinatie, model: s.meta.model,
           sesiune: s.meta.id, fisierSursa: s.meta.nume,
@@ -863,6 +873,118 @@ export const ecran: Ecran = {
       location.hash = "#/lucrari";
     }
 
+    /* ------------------------------------------ oferta scrisă pe loc */
+    // Tabelul „Ca în ofertă” se scrie ca un Excel (Andrei, 15 octombrie 2026).
+    // Cantitatea e celula din fișierul clientului, ca o corectură în foaie;
+    // prețul e prețul pus de mână; denumirea e doar a ofertei, nu schimbă ce
+    // s-a citit din rând. Toate trei se salvează în sesiune.
+
+    /** Ce a schimbat omul pe fiecare poziție a ofertei, cu ce era înainte. */
+    function schimbariPozitie(s: Sesiune): (p: PozitieOferta) => SchimbariPozitie {
+      const harta = new Map(s.rez.linii.map((l) => [l.extras.index, l]));
+      return (p) => {
+        const l = harta.get(p.linie);
+        const r: SchimbariPozitie = {};
+        if (!l) return r;
+        if (denumiri.has(p.linie)) r.den = `Din fișierul clientului: ${textClient(l)}`;
+        const e = editareCantitate(s, l);
+        if (e) {
+          r.cant = typeof e.inainte === "number" ? `În fișierul clientului: ${numarInCelula(e.inainte)}`
+            : "Schimbată față de fișierul clientului";
+        }
+        if (preturiManuale.has(p.linie)) {
+          const nota = (l.pret as { note?: string[] } | null)?.note?.find((n) => n.startsWith("pret unitar pus de om"));
+          const liste = nota?.split("; ")[1]?.match(/iesea ([\d.]+)/)?.[1];
+          r.pret = liste ? `Din listă: ${eur(Number(liste))}` : "Fără preț în listă";
+        }
+        return r;
+      };
+    }
+
+    function celulaCantitate(s: Sesiune, l: LinieProcesata): { rand: FoaieBruta["randuri"][number]; cel: number } | null {
+      const rand = s.foi.find((x) => x.nume === l.bruta.foaie)?.randuri.find((x) => x.rand === l.bruta.rand);
+      const cel = campuriLinie(s, l)?.cantitate?.cel;
+      return rand && cel !== undefined ? { rand, cel } : null;
+    }
+
+    function editareCantitate(s: Sesiune, l: LinieProcesata): EditareCelula | undefined {
+      const c = celulaCantitate(s, l);
+      return c ? s.editari.find((x) => x.foaie === l.bruta.foaie && x.rand === l.bruta.rand && x.cel === c.cel) : undefined;
+    }
+
+    /** Cantitatea scrisă în ofertă: celula ei din fișier, ca o corectură în foaie. */
+    function scrieCantitatea(idx: number, valoare: number): boolean {
+      const s = sesiune;
+      const l = s?.rez.linii.find((x) => x.extras.index === idx);
+      if (!s || !l) return false;
+      const c = celulaCantitate(s, l);
+      if (!c) {
+        arataMesaj("Cantitatea acestei poziții nu e într-o celulă a fișierului: o schimbi din „Modifică”.");
+        return false;
+      }
+      const vechi = c.rand.celule[c.cel]?.v ?? null;
+      if (vechi === valoare) return false;
+      const editariVechi = [...s.editari];
+      const anterioara = editareCantitate(s, l);
+      const inainte = anterioara ? anterioara.inainte ?? null : vechi;
+      scrieCelula(c.rand, c.cel, valoare);
+      reconstruieste(c.rand);
+      const fara = s.editari.filter((x) => x !== anterioara);
+      // Înapoi la cifra din fișier: nu mai e o corectură.
+      s.editari.splice(0, s.editari.length, ...fara,
+        ...(inainte === valoare ? [] : [{ foaie: l.bruta.foaie, rand: l.bruta.rand, cel: c.cel, v: valoare, inainte }]));
+      retarifeaza();
+      arataMesaj("Cantitatea a fost schimbată.", () => {
+        scrieCelula(c.rand, c.cel, vechi);
+        reconstruieste(c.rand);
+        s.editari.splice(0, s.editari.length, ...editariVechi);
+        retarifeaza();
+      });
+      return true;
+    }
+
+    /**
+     * Prețul scris în ofertă e prețul pus de mână. Pe ecran prețul are deja
+     * ajustarea tehnicului, deci se scrie fără ea: altfel 100 € scris ar ieși
+     * 110 € cu +10 %. Gol = prețul din listă.
+     */
+    function scriePretul(idx: number, valoare: number | null): boolean {
+      const vechi = preturiManuale.get(idx);
+      const nou = valoare === null || !(valoare > 0) ? undefined : ajustare ? valoare / (1 + ajustare / 100) : valoare;
+      if (nou === vechi) return false;
+      if (nou === undefined) preturiManuale.delete(idx); else preturiManuale.set(idx, nou);
+      retarifeaza();
+      arataMesaj(nou === undefined ? "Poziția ia din nou prețul din listă." : "Prețul a fost scris.", () => {
+        if (vechi === undefined) preturiManuale.delete(idx); else preturiManuale.set(idx, vechi);
+        retarifeaza();
+      });
+      return true;
+    }
+
+    /** Denumirea scrisă în ofertă. Textul clientului, scris la loc sau șters, o scoate. */
+    function scrieDenumirea(el: HTMLElement): void {
+      const s = sesiune;
+      const idx = Number(el.dataset["idx"]);
+      const l = s?.rez.linii.find((x) => x.extras.index === idx);
+      if (!s || !l) return;
+      const original = textClient(l);
+      const scris = (el.textContent ?? "").replace(/\s+/g, " ").trim();
+      const vechi = denumiri.get(idx);
+      const nou = scris === "" || scris === original ? undefined : scris;
+      if (nou === vechi) return;
+      if (nou === undefined) denumiri.delete(idx); else denumiri.set(idx, nou);
+      salveazaSesiune();
+      // Fără redesenare: clicul care a scos cursorul din celulă trebuie să-și atingă ținta.
+      el.textContent = nou ?? original;
+      el.classList.toggle("schimbat", nou !== undefined);
+      if (nou === undefined) el.removeAttribute("title"); else el.title = `Din fișierul clientului: ${original}`;
+      arataMesaj(nou === undefined ? "Poziția are din nou textul clientului." : "Denumirea a fost schimbată.", () => {
+        if (vechi === undefined) denumiri.delete(idx); else denumiri.set(idx, vechi);
+        salveazaSesiune();
+        deseneaza();
+      });
+    }
+
     /* ---------------------------------------------------------- evenimente */
     function legaDrop(): void {
       const drop = pagina.querySelector<HTMLElement>("#drop");
@@ -926,6 +1048,14 @@ export const ecran: Ecran = {
         case "renunta-izolatie": deIzolat = null; deseneaza(); scrollTo({ top: 0 }); return;
         case "la-verificare": pas = 2; deseneaza(); scrollTo({ top: 0 }); return;
         case "creeaza-santier": creeazaSantier(); return;
+        case "scoate-pozitie": {
+          if (idx === null) return;
+          const urm = urmatorul(idx);
+          corecteaza(idx, { sistem: null }, false);
+          deseneaza();
+          if (urm !== null) pagina.querySelector<HTMLElement>(`[data-act="scoate-pozitie"][data-idx="${urm}"]`)?.focus();
+          return;
+        }
         case "modifica":
           editIdx = editIdx === idx ? null : idx;
           deseneaza();
@@ -1152,6 +1282,21 @@ export const ecran: Ecran = {
         tr.dataset["stare"] = stareLinie(l);
         tr.dataset["idx"] = String(l.extras.index);
       }
+    });
+
+    // Tabelul ofertei, ca în Excel (`legaCelule`). Denumirea se scrie pe loc;
+    // cantitatea și prețul schimbă numerotarea și totalul, deci redesenează.
+    legaCelule(gazda, {
+      scrie: (el) => {
+        if (!sesiune) return false;
+        const idx = Number(el.dataset["idx"]);
+        if (el.dataset["ed"] === "den") { scrieDenumirea(el); return false; }
+        const valoare = numarScris((el as HTMLInputElement).value);
+        if (el.dataset["ed"] === "cant") return valoare !== null && valoare >= 0 && scrieCantitatea(idx, valoare);
+        return el.dataset["ed"] === "pret" && scriePretul(idx, valoare);
+      },
+      deseneaza,
+      desenari: () => desenari,
     });
 
     gazda.addEventListener("toggle", (e) => {

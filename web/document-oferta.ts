@@ -2,7 +2,7 @@ import type { LinieProcesata } from "../src/import/nucleu.js";
 import type { Sistem } from "../src/pricing/types.js";
 import { bani } from "../src/pricing/engine.js";
 import {
-  adaosFocIndustrial, codRand, cuAjustare, imparte, segmente, totalOferta, valoareLinie,
+  adaosFocIndustrial, codRand, cuAjustare, denumireScrisa, imparte, segmente, totalOferta, valoareLinie,
   type AntetOferta, type CerereOferta,
 } from "./oferta.js";
 import { motiveLinie, stareLinie, type CodMotiv, type Stare } from "./import/text.js";
@@ -144,7 +144,9 @@ const CONTINUARE = /^(?:same|idem|ditto|as\s+above|ca\s+mai\s+sus)\b\s*[-–:,]?
  * ce are rândul în plus — „Circular spiro duct … — Ø125 mm”, nu „Same - Ø125 mm
  * | Circular spiro duct …”, care pe hârtie nu spune ce e (Book15, SRU „idem DN20”).
  */
-function textClient(l: LinieProcesata): string {
+export function textClient(l: LinieProcesata): string {
+  const scrisa = denumireScrisa(l);
+  if (scrisa) return scrisa;
   const s = segmente(l);
   const fara = [...new Set(codRand(l) ? s.slice(1) : s)];
   const [primul, ...rest] = fara;
@@ -201,6 +203,8 @@ export function specificatie(l: LinieProcesata): string | null {
   const e = l.extras;
   if (e.sistem === null || e.sistem === "goluri_foc") return null;
   if (l.pret && "manual" in l.pret && l.pret.manual) return null;
+  // Denumirea scrisă de om e întreagă: n-o mai completăm noi.
+  if (denumireScrisa(l)) return null;
   // Protecția la foc a tubulaturii are prețul ei pe m² (48 €), nu straturi de
   // izolație: stratul din rezultat e doar purtătorul prețului.
   if (l.pret?.motiveDeVerificat?.includes("protectie_foc")) return null;

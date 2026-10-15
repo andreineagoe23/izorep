@@ -52,6 +52,8 @@ export interface EditareCelula {
   rand: number;
   cel: number;
   v: string | number | null;
+  /** Ce era în fișier înainte de prima corectură (15 octombrie 2026): celula galbenă îl arată. */
+  inainte?: string | number | null;
 }
 
 export interface SesiuneImport extends IntrareIstoric {
@@ -65,6 +67,11 @@ export interface SesiuneImport extends IntrareIstoric {
   descrieriSchimbate?: number[];
   /** Preturile unitare puse de om, `[index, EUR]`. Vezi `OptiuniNucleu.preturiManuale`. */
   preturiManuale?: [number, number][];
+  /**
+   * Denumirile scrise de om în tabelul ofertei, `[index, text]` (15 octombrie
+   * 2026). Înlocuiesc textul clientului în ofertă, în Excel și pe șantier.
+   */
+  denumiri?: [number, string][];
   /**
    * Datele ofertei scrise la pasul „Oferta” (numar, beneficiar, discount…) si
    * ajustarea preturilor. Pana pe 14 octombrie 2026 se pierdeau la reincarcare,

@@ -139,6 +139,25 @@ export const totalOferta = (linii: LinieProcesata[]): number =>
  * rotunjit la bani, ca un preț din listă. Liniile se copiază; sesiunea de
  * import rămâne pe prețurile din liste, deci ajustarea se poate schimba oricând.
  */
+/**
+ * Linia cu denumirea scrisă de om pe ecranul ofertei (15 octombrie 2026).
+ * Înlocuiește textul clientului în ofertă, în Excel și pe planul de șantier;
+ * nu schimbă ce s-a citit din rând, deci nici prețul.
+ */
+export type LinieCuDenumire = LinieProcesata & { denumireOferta?: string };
+
+export const denumireScrisa = (l: LinieProcesata): string | undefined =>
+  (l as LinieCuDenumire).denumireOferta?.trim() || undefined;
+
+/** Liniile cu denumirile scrise de om puse pe ele; restul rămân aceleași obiecte. */
+export function cuDenumiri(linii: LinieProcesata[], denumiri: ReadonlyMap<number, string>): LinieProcesata[] {
+  if (denumiri.size === 0) return linii;
+  return linii.map((l) => {
+    const d = denumiri.get(l.extras.index);
+    return d ? ({ ...l, denumireOferta: d } as LinieCuDenumire) : l;
+  });
+}
+
 export function cuAjustare(linii: LinieProcesata[], procent = 0): LinieProcesata[] {
   if (!procent) return linii;
   return linii.map((l) => {
@@ -202,6 +221,8 @@ export function codRand(l: LinieProcesata): string | null {
  * „IZOLATII | Caseta izolatie…”, iar oferta semnată are doar „Caseta izolatie…”.
  */
 const denumirea = (l: LinieProcesata): string => {
+  const scrisa = denumireScrisa(l);
+  if (scrisa) return scrisa;
   const text = (codRand(l) ? segmente(l).slice(1) : segmente(l)).join(" | ");
   const g = l.extras.grosime_mm;
   // Grosimea pe care clientul n-a scris-o (luată de la conductă, sau cea uzuală

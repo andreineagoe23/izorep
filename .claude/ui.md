@@ -171,7 +171,11 @@ Tema închisă e scrisă de două ori în CSS, cu aceleași valori: o dată sub
 `@media` cu un selector de atribut într-o singură regulă — dacă modifici una,
 modific-o și pe cealaltă.
 
-## Meniul: opt destinații, restul pliat
+## Meniul: pe flux, restul pliat
+
+Din 15 octombrie 2026: Acasă, apoi grupurile Oferte, Șantiere, Materiale,
+Setări, cu numele pe care le folosesc angajații („Lucrări” e „Șantiere”,
+„Măsurători” e „Poze de pe șantier”). Titlul ecranului e numele din meniu.
 
 `MENIU` din `nav.ts` conține doar ecrane care există. Modulele nelivrate stau în
 `VIITOR`, într-un `<details>` sub meniu.
@@ -266,6 +270,18 @@ valoare) — altfel s-ar pierde odată cu grila refăcută. Salvarea e amânată
 Tot ce ține de depozit e best-effort. În fereastră privată sau cu stocarea
 blocată, fiecare apel eșuează tăcut și ecranul se poartă ca înainte. Istoricul e
 o comoditate; documentele adevărate vor sta în bază.
+
+## Tabelele editabile (15 octombrie 2026)
+
+`web/celula.ts`: `celulaNumar`, `celulaText` și `legaCelule` (comportamentul,
+pe rădăcina ecranului). Celula se salvează când pleacă cursorul din ea; Enter
+coboară pe rândul următor, Escape renunță. Galben (`--schimbat`) = scris de
+om, iar `title` spune ce era. O redesenare la apăsarea mouse-ului ar scoate
+butonul de sub el înainte de clic: când celula pleacă la un clic, ecranul se
+redesenează după el, doar dacă clicul n-a redesenat. Numărul se citește
+românește („1.250” = 1250, „121,67”). Folosit în vederea „Ca în ofertă” a
+importului și în tabelul necesarului; celula și unitatea stau pe un rând și pe
+card (`.cel-cu-um`). ✕ e `.cel-scoate`, 44 px, fără roșu.
 
 ## Importul în formatul ofertei (14 octombrie 2026)
 

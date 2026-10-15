@@ -20,10 +20,11 @@ import { MATERIALE, MATERIAL } from "../import/text.js";
 import { cantitate, cifra, numeArticol, unitate } from "../stoc-vizual.js";
 import type { NecesarLucrare, StareDepozit } from "../depozit-local.js";
 import {
-  CERE, articolDin, esteAnulata, faraExemple, miscariDeExemplu, pretMediu,
+  CERE, articolDin, cantitateNecesara, esteAnulata, faraExemple, miscariDeExemplu, pretMediu,
   solduri, storno, valideazaMiscare, type Ambalaj, type Articol, type Miscare, type TipMiscare,
 } from "../../src/stoc/registru.js";
-import { materialManual, type Categorie } from "../../src/stoc/necesar.js";
+import { materialManual, type Categorie, type MaterialNecesar } from "../../src/stoc/necesar.js";
+import { celulaNumar, legaCelule, numarScris } from "../celula.js";
 import { ciorneDinRamas, deComandatSantier, type DeComandatSantier } from "../../src/stoc/comenzi.js";
 import { pretPropus } from "../../src/stoc/preturi-furnizori.js";
 import { ATELIER, drumul, inAtelier, intreFirme, locuri, type Loc } from "../../src/stoc/locuri.js";
@@ -121,6 +122,16 @@ function articoleCunoscute(s: StareDepozit): Articol[] {
   return [...toate.values()].sort((a, b) => numeArticol(a).localeCompare(numeArticol(b), "ro"));
 }
 
+/**
+ * Materialul cu altă cantitate, în unitatea articolului (ml la tub, m² altfel).
+ * Greutatea tablei se ține proporțională.
+ */
+function cuCantitatea(m: MaterialNecesar, q: number): MaterialNecesar {
+  const acum = cantitateNecesara(m);
+  const kg = m.kg !== undefined && acum > 0 ? { kg: Math.round((m.kg * q / acum) * 100) / 100 } : {};
+  return articolDin(m).um === "ml" ? { ...m, ml: q, ...kg } : { ...m, m2: q, ...kg };
+}
+
 export const ecran: Ecran = {
   id: "stoc",
   titlu: "Necesar și depozit",
@@ -147,7 +158,10 @@ export const ecran: Ecran = {
 
     const salveaza = (): void => { pastrat = scrieDepozit(st); };
 
+    /** De câte ori s-a redesenat: celula necesarului redesenează după un clic doar dacă el n-a făcut-o. */
+    let desenari = 0;
     function deseneaza(): void {
+      desenari++;
       DEPOZITE = depozite();
       LOCURI = locurile();
       const sold = solduri(st.miscari);
@@ -246,15 +260,20 @@ export const ecran: Ecran = {
           ].filter(Boolean).join(" · ");
           return `<tr>
           <td>${esc(numeArticol(a))}${nota ? `<br><span class="hint">${nota}</span>` : ""}</td>
-          <td class="n">${cantitate(necesar, a.um)}</td>
+          <td class="n"><span class="cel-cu-um">${celulaNumar({
+            ed: "nec", valoare: Math.round(necesar * 100) / 100, eticheta: `Necesar, ${numeArticol(a)}, în ${unitate(a.um)}`,
+            schimbat: m.calculat !== undefined, ...(m.calculat !== undefined ? { inainte: `Calculat: ${cantitate(m.calculat, a.um)}` } : {}),
+            date: { id: n.id, i },
+          })}<span class="hint">${unitate(a.um)}</span></span></td>
           <td class="n">${d ? cantitate(d.adus, a.um) : "—"}</td>
           <td class="n">${d && d.comandat > 0 ? cantitate(d.comandat, a.um) : "—"}</td>
           <td class="n">${ramas}</td>
           <td class="n">${c === null ? "—" : `${eur(c)}<br><span class="hint">${eur(pm!)} / ${unitate(a.um)}</span>`}</td>
           <td class="n">${v > 0 ? eur(v) : "—"}</td>
-          <td class="fix">${m.manual
-            ? `<button type="button" class="secundar" data-act="scoate-material" data-id="${esc(n.id)}" data-i="${i}">Scoate</button>`
-            : `<button type="button" class="legatura" data-act="client" data-id="${esc(n.id)}" data-i="${i}">${m.alClientului ? "Îl cumpărăm noi" : "Îl dă clientul"}</button>`}</td>
+          <td class="fix">${m.manual ? ""
+            : `<button type="button" class="legatura" data-act="client" data-id="${esc(n.id)}" data-i="${i}">${m.alClientului ? "Îl cumpărăm noi" : "Îl dă clientul"}</button> `}<button
+              type="button" class="cel-scoate" data-act="scoate-rand" data-id="${esc(n.id)}" data-i="${i}"
+              aria-label="Scoate ${esc(numeArticol(a))} din necesar" title="Scoate din necesar">✕</button></td>
         </tr>`;
         });
         const deComandat = r.filter((d) => d.ramas > 0).length;
@@ -271,8 +290,12 @@ export const ecran: Ecran = {
               <select data-act="santier" data-id="${esc(n.id)}"><option value="">— nelegat —</option>${optiuni}</select>
             </label>
           </div>
-          ${tabel(["Material", "Necesar", "Adus pe șantier", "Comandat, nesosit", "Rămas de comandat", "Cost achiziție", "În ofertă", ""], randuri,
-            ["", "n", "n", "n", "n", "n", "n", ""])}
+          <p class="cel-legenda"><span><span class="mostra" aria-hidden="true"></span>scris de tine (ține mouse-ul pe celulă: vezi cât era calculat)</span>
+            <span>Scrii necesarul direct în tabel, ca în Excel. ✕ scoate materialul.</span>${
+            n.scoase?.length || n.materiale.some((m) => m.calculat !== undefined)
+              ? ` <button type="button" class="secundar" data-act="anuleaza-necesar" data-id="${esc(n.id)}">Anulează modificările</button>` : ""}</p>
+          <div class="tabel-necesar">${tabel(["Material", "Necesar", "Adus pe șantier", "Comandat, nesosit", "Rămas de comandat", "Cost achiziție", "În ofertă", ""], randuri,
+            ["", "n", "n", "n", "n", "n", "n", ""])}</div>
           ${transferuri.length ? `<h3>Material care există deja</h3>
             <p class="hint" style="margin:0 0 12px">Înainte de comandă: materialul din depozitul central, sau adus pe alt șantier peste
               ce-i trebuie lui. Nu se scade singur din comandă; dacă îl muți, scade.</p>
@@ -288,7 +311,7 @@ export const ecran: Ecran = {
             ${deCumparat === 0 ? "zero: tot materialul îl dă clientul" : faraPret === deCumparat ? "necunoscut: nicio intrare cu preț" : `${eur(cost)}${faraPret ? `, fără ${faraPret} ${faraPret === 1 ? "material" : "materiale"} încă fără preț` : ""}`}${faraPret < deCumparat ? ` · rămân ${eur(inOfertaCuCost - cost)} pentru manoperă și profit${faraPret ? ", pe materialele cu preț" : ""}` : ""}.
             Costul e prețul mediu al intrărilor cu preț, pe toate mărcile.</p>
           <details class="imp-card">
-            <summary>Adaugă material de mână (goluri la foc, distribuitor, ce nu reiese din liste)</summary>
+            <summary>+ Rând nou: material adăugat de mână (goluri la foc, distribuitor, ce nu reiese din liste)</summary>
             <form class="imp-campuri" data-form="manual" data-id="${esc(n.id)}">
               <label>Material<select name="sistem">${MATERIALE.filter((m) => m !== "goluri_foc").map((m) =>
                 `<option value="${m}">${esc(MATERIAL[m])}</option>`).join("")}</select></label>
@@ -654,6 +677,31 @@ export const ecran: Ecran = {
       deseneaza();
     }
 
+    // Necesarul se scrie în tabel, ca în Excel (15 octombrie 2026).
+    legaCelule(root, {
+      scrie: (el) => {
+        if (el.dataset["ed"] !== "nec") return false;
+        const q = numarScris((el as HTMLInputElement).value);
+        const i = Number(el.dataset["i"]);
+        const n = st.necesare.find((x) => x.id === el.dataset["id"]);
+        const m = n?.materiale[i];
+        if (!n || !m || q === null || q < 0) return false;
+        const acum = cantitateNecesara(m);
+        if (Math.abs(q - acum) < 0.005) return false;
+        const calculat = m.manual ? undefined : m.calculat ?? acum;
+        const nou = cuCantitatea(m, q);
+        // Scrisă la loc cifra calculată, rândul nu mai e schimbat.
+        const { calculat: _c, ...fara } = nou;
+        const material: MaterialNecesar = calculat === undefined || Math.abs(calculat - q) < 0.005 ? fara : { ...fara, calculat };
+        st = { ...st, necesare: st.necesare.map((x) => (x === n
+          ? { ...n, materiale: n.materiale.map((y, j) => (j === i ? material : y)) } : x)) };
+        salveaza();
+        return true;
+      },
+      deseneaza,
+      desenari: () => desenari,
+    });
+
     root.addEventListener("click", (e) => {
       const sari = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-sari]");
       if (sari) {
@@ -714,6 +762,30 @@ export const ecran: Ecran = {
           for (const c of ciorne) puneComanda(c);
           location.hash = "#/comenzi";
           return;
+        }
+        case "scoate-rand": {
+          const i = Number(b.dataset["i"]);
+          st = { ...st, necesare: st.necesare.map((n) => {
+            if (n.id !== b.dataset["id"]) return n;
+            const m = n.materiale[i];
+            if (!m) return n;
+            // Materialul calculat se poate pune la loc cu „Anulează modificările”; cel de mână, nu.
+            return { ...n, materiale: n.materiale.filter((_, j) => j !== i), ...(m.manual ? {} : { scoase: [...(n.scoase ?? []), m] }) };
+          }) };
+          break;
+        }
+        case "anuleaza-necesar": {
+          st = { ...st, necesare: st.necesare.map((n) => {
+            if (n.id !== b.dataset["id"]) return n;
+            const { scoase, ...rest } = n;
+            const materiale = n.materiale.map((m) => {
+              if (m.calculat === undefined) return m;
+              const { calculat: _c, ...inapoi } = cuCantitatea(m, m.calculat);
+              return inapoi;
+            });
+            return { ...rest, materiale: [...materiale, ...(scoase ?? [])] };
+          }) };
+          break;
         }
         case "client":
         case "scoate-material": {

@@ -35,6 +35,8 @@ export interface NecesarLucrare {
   /** Rezerva peste calcul, la necesarurile vechi; firma nu tine rezerva (S21). */
   adaos?: number;
   materiale: MaterialNecesar[];
+  /** Materialele calculate scoase de om din tabel, ca „Anulează modificările” sa le puna la loc. */
+  scoase?: MaterialNecesar[];
   /** Cate pozitii nu au necesar calculat (fara pret, pret pus de mana, goluri la foc). */
   faraNecesar: number;
 }

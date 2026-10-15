@@ -26,6 +26,7 @@
 
   --ok: #1f6b46;
   --atentie: #7d5307;
+  --schimbat: #fff1bf;     /* celula scrisa de om, ca in Excel */
   --rosu: #a1322a;
 
   --focus: #0f5aa8;
@@ -44,7 +45,7 @@
     --bg: #0f1216; --panou: #161a20; --panou-2: #1f242c; --bara: #0b0e12;
     --text: #e6e9ee; --slab: #9aa4b1; --linie: #2a3038; --linie-tare: #6b7684;
     --accent: #79b8ff; --accent-fill: #1f6feb; --pe-accent: #ffffff; --accent-slab: #172231;
-    --ok: #4cb782; --atentie: #e3b341; --rosu: #f2857a;
+    --ok: #4cb782; --atentie: #e3b341; --rosu: #f2857a; --schimbat: #3d3312;
     --focus: #79b8ff; --umbra: none;
     color-scheme: dark;
   }
@@ -53,7 +54,7 @@
   --bg: #0f1216; --panou: #161a20; --panou-2: #1f242c; --bara: #0b0e12;
   --text: #e6e9ee; --slab: #9aa4b1; --linie: #2a3038; --linie-tare: #6b7684;
   --accent: #79b8ff; --accent-fill: #1f6feb; --pe-accent: #ffffff; --accent-slab: #172231;
-  --ok: #4cb782; --atentie: #e3b341; --rosu: #f2857a;
+  --ok: #4cb782; --atentie: #e3b341; --rosu: #f2857a; --schimbat: #3d3312;
   --focus: #79b8ff; --umbra: none;
   color-scheme: dark;
 }
@@ -1359,3 +1360,36 @@ main details.ajutor > .hint { margin: 0 0 8px; }
   padding: 10px 14px; border-radius: 10px; background: var(--panou-2);
 }
 .sant-model p { flex: 1 1 32ch; margin: 0; }
+
+/* Celula editabila, ca in Excel (15 octombrie 2026, `web/celula.ts`): pe oferta
+   si pe necesar se scrie direct in tabel. Galbena = scrisa de om; sub mouse
+   spune ce era inainte. */
+input.cel-ed, .cel-ed {
+  width: 100%; min-width: 0; min-height: 44px; margin: 0; padding: 8px 10px;
+  border: 1px solid var(--linie-tare); border-radius: 8px; background: var(--panou);
+  color: var(--text); font: inherit; font-size: inherit;
+}
+td.n input.cel-ed, .of-tabel td.n input.cel-ed { text-align: right; font-variant-numeric: tabular-nums; }
+.cel-ed:hover { border-color: var(--text); }
+.cel-ed:focus { outline: 2px solid var(--focus); outline-offset: 1px; border-color: var(--accent); }
+.cel-ed.schimbat { background: var(--schimbat); border-color: var(--atentie); }
+p.cel-ed.cel-text { white-space: pre-wrap; overflow-wrap: anywhere; cursor: text; }
+.of-tabel td .cel-ed + .of-spec, .of-tabel td .cel-ed + .of-meta { margin-top: 6px; }
+/* Butonul care scoate randul: o tinta de 44 px, fara rosu (stergerea nu e eroare). */
+.cel-scoate {
+  min-width: 44px; min-height: 44px; padding: 0; border: 1px solid var(--linie-tare); border-radius: 8px;
+  background: var(--panou); color: var(--slab); font-size: 18px; line-height: 1; cursor: pointer;
+}
+.cel-scoate:hover { color: var(--text); border-color: var(--text); }
+.cel-legenda { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; margin: 0 0 12px; color: var(--slab); font-size: 14px; }
+.cel-legenda .mostra { display: inline-block; width: 18px; height: 18px; border-radius: 4px; vertical-align: -3px; margin-right: 6px;
+  background: var(--schimbat); border: 1px solid var(--atentie); }
+/* Necesarul: explicatia de sub „Ramas de comandat” se rupe pe randuri. Pe un
+   singur rand impingea „In oferta” in afara cardului si strangea materialul. */
+.tabel-necesar td.n .hint { white-space: normal; }
+.tabel-necesar td:first-child { min-width: 16ch; }
+.tabel-necesar input.cel-ed { width: 10ch; }
+.tabel-necesar td.fix { white-space: nowrap; }
+/* Celula si unitatea ei raman pe acelasi rand, si cand tabelul devine card. */
+.cel-cu-um { display: flex; align-items: center; gap: 6px; }
+.cel-cu-um > input.cel-ed { flex: 1 1 auto; }

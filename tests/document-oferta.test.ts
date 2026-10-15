@@ -21,7 +21,8 @@ import { CLIENTI, cuClienti } from "./conditii.js";
 import ExcelJS from "exceljs";
 import { readdirSync } from "node:fs";
 import { documentOferta, specificatie, NOTA, type DocumentOferta } from "../web/document-oferta.js";
-import { imparte, planDinOferta, valoareOferta, type AntetOferta, type CerereOferta, type Provenienta } from "../web/oferta.js";
+import { cuDenumiri, imparte, planDinOferta, valoareOferta, type AntetOferta, type CerereOferta, type Provenienta } from "../web/oferta.js";
+import { registruOferta } from "../web/registru-oferta.js";
 import { importaFisier } from "../src/import/pipeline.js";
 import { stocInMemorie } from "../src/import/memorie.js";
 import type { LinieProcesata } from "../src/import/nucleu.js";
@@ -137,6 +138,32 @@ describe("capitolele și numerotarea", () => {
     expect(d.coloaneGol).toBe(true);
     expect(pozitii(d)[1]!.gol).toEqual({ dimensiune: "130/130", suprafata: 0.02 });
     expect(d.note.length).toBeGreaterThan(NOTA.length);
+  });
+});
+
+describe("denumirea scrisă de om în ofertă (15 octombrie 2026)", () => {
+  it("ajunge în document, în Excel și pe șantier, fără să schimbe prețul sau totalul", async () => {
+    const a = linie({ unitar: 12.5, cantitate: 4 });
+    const b = linie({ unitar: 3, cantitate: 10 });
+    const fara = cerere([a, b]);
+    const cu = cerere(cuDenumiri([a, b], new Map([[a.extras.index, "Izolatie scrisa de birou"]])));
+    const d = documentOferta(cu);
+    expect(pozitii(d)[0]!.textClient).toBe("Izolatie scrisa de birou");
+    // Denumirea e întreagă: n-o mai completăm cu specificația noastră.
+    expect(pozitii(d)[0]!.specificatie).toBeNull();
+    expect(pozitii(d)[1]!.textClient).toBe(pozitii(documentOferta(fara))[1]!.textClient);
+    expect(d.totalGeneral).toBe(documentOferta(fara).totalGeneral);
+    expect(planDinOferta(cu, "S-1").pozitii[0]!.denumire).toBe("Izolatie scrisa de birou");
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(await registruOferta(cu));
+    const texte: unknown[] = [];
+    wb.worksheets[0]!.eachRow((r) => r.eachCell((c) => { texte.push(valoare(c)); }));
+    expect(texte).toContain("Izolatie scrisa de birou");
+  });
+
+  it("fără denumiri scrise, liniile rămân aceleași obiecte", () => {
+    const l = [linie({ unitar: 1 })];
+    expect(cuDenumiri(l, new Map())).toBe(l);
   });
 });
 

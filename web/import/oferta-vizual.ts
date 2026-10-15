@@ -5,6 +5,7 @@ import { cate, esc, eur } from "../ecrane/tip.js";
 import type { DocumentOferta, PozitieOferta } from "../document-oferta.js";
 import { antetDocument } from "./grila.js";
 import { inteles, STARE } from "./text.js";
+import { celulaNumar, celulaText } from "../celula.js";
 import { actiuniPozitie, starePozitie, editorPozitie, type FiltruStare } from "./vizual.js";
 
 /**
@@ -115,6 +116,19 @@ export interface OptiuniDocument {
   campuri?: CampuriRand;
   /** Fișierul are mai multe foi: rândul spune și foaia. */
   cuFoaie: boolean;
+  /**
+   * Tabelul se scrie pe loc, ca în Excel (15 octombrie 2026): denumirea,
+   * cantitatea și prețul unitar sunt celule. Întoarce ce a schimbat omul pe
+   * poziție, fiecare cu ce era înainte, în cuvinte.
+   */
+  schimbari?: (p: PozitieOferta) => SchimbariPozitie;
+}
+
+/** Câmpurile scrise de om pe o poziție; valoarea e ce era înainte. */
+export interface SchimbariPozitie {
+  den?: string;
+  cant?: string;
+  pret?: string;
 }
 
 const numar = (n: number): string => n.toLocaleString("ro-RO", { maximumFractionDigits: 3 });
@@ -140,9 +154,13 @@ function antetOferta(d: DocumentOferta): string {
 }
 
 /** Denumirea: textul clientului, ce am completat noi și de unde vine rândul. */
-function denumire(p: PozitieOferta, l: LinieProcesata, cuFoaie: boolean): string {
+function denumire(p: PozitieOferta, l: LinieProcesata, cuFoaie: boolean, s?: SchimbariPozitie): string {
   const sursa = `Excel: rândul ${p.sursa.rand}${cuFoaie ? `, foaia ${esc(p.sursa.foaie)}` : ""}`;
-  return `<p class="of-text">${esc(p.textClient)}</p>
+  const text = s
+    ? celulaText({ ed: "den", text: p.textClient, eticheta: `Denumire, ${numePozitie(p)}`, clasa: "of-text",
+      schimbat: s.den !== undefined, ...(s.den !== undefined ? { inainte: s.den } : {}), date: { idx: p.linie } })
+    : `<p class="of-text">${esc(p.textClient)}</p>`;
+  return `${text}
     ${p.specificatie ? `<p class="of-spec"><span>Completat de noi:</span> ${esc(p.specificatie)}</p>` : ""}
     <p class="of-meta"><span>${sursa}</span>${inteles(l.extras, l.pret).map((e) => `<span class="of-inteles">${esc(e)}</span>`).join("")}${
       l.sursa === "om" ? `<span class="imp-verificat">verificat de tine</span>` : ""}</p>`;
@@ -163,22 +181,37 @@ function capete(d: DocumentOferta): [string, string][] {
   ];
 }
 
+const numePozitie = (p: PozitieOferta): string => (p.nr === null ? "poziția fără număr" : `poziția ${p.nr}`);
+
 function randPozitie(d: DocumentOferta, p: PozitieOferta, o: OptiuniDocument): string {
   const l = o.linii.get(p.linie)!;
   const editeaza = o.editIdx === p.linie;
+  const s = o.schimbari?.(p);
+  const cantitate = s
+    ? celulaNumar({ ed: "cant", valoare: p.cantitate, eticheta: `Cantitate, ${numePozitie(p)}`,
+      schimbat: s.cant !== undefined, ...(s.cant !== undefined ? { inainte: s.cant } : {}), date: { idx: p.linie } })
+    : numar(p.cantitate);
+  const pret = s
+    ? celulaNumar({ ed: "pret", valoare: p.pretUnitar, eticheta: `Preț unitar, ${numePozitie(p)}`, gol: "fără preț",
+      schimbat: s.pret !== undefined, ...(s.pret !== undefined ? { inainte: s.pret } : {}), date: { idx: p.linie } })
+    : p.pretUnitar === null ? lipsa : eur(p.pretUnitar);
+  const scoate = s ? `<button type="button" class="cel-scoate" data-act="scoate-pozitie" data-idx="${p.linie}"
+      aria-label="Scoate ${numePozitie(p)} din ofertă" title="Scoate din ofertă">✕</button>` : "";
   const celule = [
     `<td class="of-nr" data-eticheta="Nr.">${p.nr ?? `<span class="of-gol" title="Nu intră încă în ofertă">—</span>`}</td>`,
     ...(d.coloanaCod ? [`<td class="of-cod" data-eticheta="Cod">${p.cod ? esc(p.cod) : ""}</td>`] : []),
-    `<td class="of-den">${denumire(p, l, o.cuFoaie)}</td>`,
+    `<td class="of-den">${denumire(p, l, o.cuFoaie, s)}</td>`,
     `<td class="of-um" data-eticheta="UM">${esc(p.um || "—")}</td>`,
-    `<td class="n" data-eticheta="Cantitate">${numar(p.cantitate)}<span class="of-um-card"> ${esc(p.um)}</span></td>`,
+    s
+      ? `<td class="n" data-eticheta="Cantitate"><span class="cel-cu-um">${cantitate}<span class="of-um-card">${esc(p.um)}</span></span></td>`
+      : `<td class="n" data-eticheta="Cantitate">${cantitate}<span class="of-um-card"> ${esc(p.um)}</span></td>`,
     ...(d.coloaneGol ? [
       `<td class="of-gol-dim" data-eticheta="Dimensiune gol">${p.gol ? esc(p.gol.dimensiune) : ""}</td>`,
       `<td class="n" data-eticheta="Suprafață">${p.gol ? numar(p.gol.suprafata) : ""}</td>`,
     ] : []),
-    `<td class="n" data-eticheta="Preț unitar">${p.pretUnitar === null ? lipsa : eur(p.pretUnitar)}</td>`,
+    `<td class="n" data-eticheta="Preț unitar">${pret}</td>`,
     `<td class="n of-valoare" data-eticheta="Valoare">${p.valoare === null ? lipsa : eur(p.valoare)}</td>`,
-    `<td class="of-stare">${starePozitie(l)}<div class="of-actiuni">${actiuniPozitie(l, o.propunere(l), editeaza)}</div></td>`,
+    `<td class="of-stare">${starePozitie(l)}<div class="of-actiuni">${actiuniPozitie(l, o.propunere(l), editeaza)}${scoate}</div></td>`,
   ];
   const n = capete(d).length;
   return `<tr class="of-poz" data-idx="${p.linie}" data-stare="${p.stare}"${p.nr === null ? ' data-afara="da"' : ""}>${celule.join("")}</tr>`
@@ -219,6 +252,8 @@ export function documentPeEcran(d: DocumentOferta, o: OptiuniDocument): string {
 
   return `<section class="imp-card of" aria-label="Oferta">
     ${antetOferta(d)}
+    ${corp && o.schimbari ? `<p class="cel-legenda"><span><span class="mostra" aria-hidden="true"></span>scris de tine (ține mouse-ul pe celulă: vezi ce era)</span>
+      <span>Scrii direct în tabel, ca în Excel. Prețul gol = cel din listă. ✕ scoate poziția din ofertă.</span></p>` : ""}
     ${corp ? `<div class="of-tabelwrap"><table class="of-tabel${cuTitlu ? " cu-capitole" : ""}">
       <colgroup>${col.map(([, c]) => `<col class="of-col-${c}">`).join("")}</colgroup>
       <thead><tr>${col.map(([t, c]) => `<th scope="col" class="${c === "n" ? "n" : ""}">${t}</th>`).join("")}</tr></thead>

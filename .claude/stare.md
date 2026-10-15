@@ -1,13 +1,53 @@
 # Stare curentă
 
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
-> Ultima actualizare: 14 octombrie 2026.
+> Ultima actualizare: 15 octombrie 2026.
+
+## 15 octombrie 2026: pe Render, meniul pe flux, oferta și necesarul editabile
+
+**Render** (plan gratuit până la „100 % live”, decis de Andrei): creat din API
+în workspace-ul firmei, nu din `render.yaml` (care rămâne varianta plătită).
+Server `srv-db8etiuq1p3s73ajg2bg`, https://izorep.onrender.com, deploy din
+`main` doar cu CI verde. Postgres 18 gratuit, Frankfurt, **expiră pe 14
+noiembrie 2026**, fără backup, fără acces din afară. Pe gratuit nu există
+pre-deploy și nici shell: migrările rulează la pornire
+(`npm run db:migrate && npm run server`), iar seed-ul s-a rulat de pe laptop,
+cu IP-ul pus temporar în lista bazei. Logul: „aplicatia intra ca izorep_app”.
+Publicarea pe Pages (`pages.yml`) a ieșit.
+
+**Meniul pe flux** (angajații nu găseau șantierul): Acasă · Oferte (Cerere
+nouă, Oferte și cereri, Calcul rapid) · Șantiere (Șantiere, Poze de pe
+șantier) · Materiale (Necesar și depozit, Comenzi la furnizori) · Setări.
+Titlurile ecranelor și trimiterile din texte au aceleași nume; `#/santiere` e
+alias. Șantierul apare abia după „Creează șantierul”, la pasul „Oferta”.
+
+**Tabele editabile, ca în Excel** (macheta aprobată de Andrei): celula scrisă
+e galbenă și arată, sub mouse, ce era; Enter coboară, Escape renunță
+(`web/celula.ts`, `legaCelule`).
+
+- **Oferta, vederea „Ca în ofertă”:** denumirea (doar a ofertei, `cuDenumiri`;
+  prețul nu se schimbă), cantitatea (celula din fișierul clientului, ca o
+  corectură în foaie, cu `EditareCelula.inainte`), prețul unitar (prețul pus de
+  mână, fără ajustarea tehnicului; gol = lista), ✕ (scoate din ofertă).
+  Ajung în Excel și pe șantier. Verificat: TRANSAVIA, ecran = Excel, după
+  reîncărcare la fel.
+- **Necesarul**, în „Necesar și depozit”: cantitatea (`MaterialNecesar.calculat`
+  ține cifra calculată), ✕ pe orice rând (cele calculate merg în
+  `NecesarLucrare.scoase`), „Anulează modificările”, „+ Rând nou” (materialul de
+  mână). Tot acolo, explicația de sub „Rămas de comandat” se rupe pe rânduri:
+  înainte împingea „În ofertă” în afara cardului.
+- **După demo:** situațiile și comenzile (același tabel); „+ Rând nou” pe
+  ofertă (o poziție nouă cere un index nou în import, `editare.ts`).
+
+Verificat cu Playwright pe demo: 390 / 768 / 1440 / 1920 px, ambele teme, zero
+derulare laterală, zero erori, nicio celulă sau ✕ sub 44 px. Netestat pe
+server cu baza: se vede după deploy.
 
 ## 14 octombrie 2026: sesiunea de cloud, design și bug-uri (ramura `cloud-design`)
 
 Cerut de Andrei, pentru demo (19 octombrie): aplicația să arate profesional și
 să fie ușor de folosit de oameni de birou și de șantier, plus bug-urile din
-`docs/sesiune-cloud.md`. Pe ramură, cu PR spre `main`, neunit.
+`docs/sesiune-cloud.md`. Unit pe `main` prin #5 (c86981a).
 
 **Importul, în formatul ofertei** (decis de Andrei pe 13 octombrie seara,
 peste decizia din 11 octombrie): „cererile vin în structuri diferite, dar pe

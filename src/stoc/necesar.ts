@@ -153,6 +153,11 @@ export interface MaterialNecesar {
   manual?: string;
   /** Materialul il da clientul: valoare zero, nu intra in „De comandat" (S38). */
   alClientului?: true;
+  /**
+   * Cantitatea calculata, in unitatea articolului, cand omul a scris alta in
+   * tabelul necesarului (15 octombrie 2026). `ml` / `m2` tin ce a scris el.
+   */
+  calculat?: number;
 }
 
 export interface FaraNecesar {

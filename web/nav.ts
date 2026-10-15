@@ -24,7 +24,7 @@ export const MENIU: GrupMeniu[] = [
     { id: "tablou", eticheta: "Acasă" },
   ]},
   { titlu: "Oferte", itemi: [
-    { id: "import", eticheta: "Cerere nouă (din Excel)" },
+    { id: "import", eticheta: "Cerere nouă" },
     { id: "documente", eticheta: "Oferte și cereri" },
     { id: "deviz", eticheta: "Calcul rapid" },
   ]},
