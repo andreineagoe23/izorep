@@ -231,6 +231,19 @@ export function piesePeMetru(teava: number): number {
 export const regulaPresupusa = (teava: number): boolean => teava <= PRAG_TUB_MM || teava > 274;
 
 const ORDINE = ["elastomer", "vata_minerala", "tabla", "tabla_inox", "pvc"];
+
+/**
+ * Ordinea materialelor in necesar: pe sistem, tuburile inaintea suprafetelor,
+ * apoi grosime, forma si diametru. Si „Anulează modificările” pune randurile
+ * scoase inapoi dupa ea, nu la coada tabelului.
+ */
+export const ordineNecesar = (
+  a: Pick<MaterialNecesar, "sistem" | "rand" | "grosime_mm" | "categorie">,
+  b: Pick<MaterialNecesar, "sistem" | "rand" | "grosime_mm" | "categorie">,
+): number => ORDINE.indexOf(a.sistem) - ORDINE.indexOf(b.sistem)
+  || (a.rand === null ? 1 : 0) - (b.rand === null ? 1 : 0)
+  || (a.grosime_mm ?? 0) - (b.grosime_mm ?? 0) || (a.categorie ?? "").localeCompare(b.categorie ?? "")
+  || (a.rand ?? 0) - (b.rand ?? 0);
 const estePeMatrice = (p: LinieProcesata["pret"]): p is RezultatTarifare =>
   p !== undefined && "straturi" in p;
 
@@ -337,10 +350,7 @@ export function necesarDinLinii(linii: LinieProcesata[], o: OptiuniNecesar = {})
         ...(kgPeMp !== undefined && m.grosime_mm !== null ? { kg: rotunjit(m2 * kgPeMp * m.grosime_mm) } : {}),
       };
     })
-    .sort((a, b) => ORDINE.indexOf(a.sistem) - ORDINE.indexOf(b.sistem)
-      || (a.rand === null ? 1 : 0) - (b.rand === null ? 1 : 0)
-      || (a.grosime_mm ?? 0) - (b.grosime_mm ?? 0) || a.categorie.localeCompare(b.categorie)
-      || (a.rand ?? 0) - (b.rand ?? 0));
+    .sort(ordineNecesar);
   return {
     pierderi, pragTub, tuburiPeste: [...tuburiPeste].sort((a, b) => a - b),
     pestePrag: [...pestePrag].sort((a, b) => a - b), materiale, faraNecesar,

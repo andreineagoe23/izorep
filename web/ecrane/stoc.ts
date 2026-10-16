@@ -23,7 +23,7 @@ import {
   CERE, articolDin, cantitateNecesara, esteAnulata, faraExemple, miscariDeExemplu, pretMediu,
   solduri, storno, valideazaMiscare, type Ambalaj, type Articol, type Miscare, type TipMiscare,
 } from "../../src/stoc/registru.js";
-import { materialManual, type Categorie, type MaterialNecesar } from "../../src/stoc/necesar.js";
+import { materialManual, ordineNecesar, type Categorie, type MaterialNecesar } from "../../src/stoc/necesar.js";
 import { celulaNumar, legaCelule, numarScris } from "../celula.js";
 import { ciorneDinRamas, deComandatSantier, type DeComandatSantier } from "../../src/stoc/comenzi.js";
 import { pretPropus } from "../../src/stoc/preturi-furnizori.js";
@@ -791,7 +791,9 @@ export const ecran: Ecran = {
               const { calculat: _c, ...inapoi } = cuCantitatea(m, m.calculat);
               return inapoi;
             });
-            return { ...rest, materiale: [...materiale, ...(scoase ?? [])] };
+            // Calculatele la locul lor din necesar; cele adăugate de mână rămân la coadă, în ordinea lor.
+            const calculate = [...materiale.filter((m) => !m.manual), ...(scoase ?? [])].sort(ordineNecesar);
+            return { ...rest, materiale: [...calculate, ...materiale.filter((m) => m.manual)] };
           }) };
           break;
         }
