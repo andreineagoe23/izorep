@@ -18,6 +18,7 @@ import { RaspunsModel, type LinieExtrasa } from "../import/schema.js";
 import { citestePoza, MODEL_POZE_IMPLICIT, type RezultatPoza } from "../santier/extrage-poza.js";
 import { CitireAviz } from "../stoc/aviz.js";
 import { citesteAviz } from "../stoc/aviz-model.js";
+import { mesajPlafon, PLAFOANE_IMPLICITE, type Limita, type Plafoane } from "./limita-model.js";
 
 /** Plafon per cerere: un fisier de 3.000 de randuri nu porneste 3.000 de extrageri dintr-un clic gresit. */
 export const MAX_LINII = 400;
@@ -32,6 +33,9 @@ export interface OptiuniModel {
   prag: number;
   lot: number;
   concurenta: number;
+  /** Plafonul zilnic (`limita-model.ts`); lipsa = fara plafon (teste, CLI). Pe server il pune `porneste.ts`. */
+  limita?: Limita;
+  plafoane?: Plafoane;
   /** Inlocuibile in teste: fara retea, fara OpenAI. */
   extrage?: (linii: LinieDeExtras[], o: { apiKey: string; model: string; dimensiuneLot: number; concurenta: number }) => Promise<LinieExtrasa[]>;
   citeste?: (imagine: string, o: { apiKey: string; model: string }) => Promise<Pick<RezultatPoza, "termeni" | "note" | "model">>;
@@ -71,6 +75,12 @@ export function ruteModel(o: OptiuniModel): Hono {
   const app = new Hono();
   const extrage = o.extrage ?? extrageCuModel;
   const citeste = o.citeste ?? citestePoza;
+  /** 429 cu mesajul pentru om, cand plafonul de azi e atins; altfel unitatile s-au numarat. */
+  const peste = async (tip: "linii" | "poze", unitati: number): Promise<string | null> => {
+    if (!o.limita || await o.limita(tip, unitati)) return null;
+    console.warn(`model: plafonul de azi atins (${tip}), cererea refuzata`);
+    return mesajPlafon(tip, o.plafoane ?? PLAFOANE_IMPLICITE);
+  };
 
   app.get("/extrage", (c) => c.json({
     disponibil: Boolean(o.cheie), model: o.model, prag: o.prag, lot: o.lot, concurenta: o.concurenta,
@@ -82,6 +92,8 @@ export function ruteModel(o: OptiuniModel): Hono {
       index, text, ...(um !== undefined ? { um } : {}), ...(sectiune !== undefined ? { sectiune } : {}),
     }));
     if (linii.length === 0) return c.json({ linii: [], trunchiat: 0 });
+    const refuz = await peste("linii", linii.length);
+    if (refuz) return c.json({ eroare: refuz }, 429);
     console.info(`model: extrag ${linii.length} linii reziduale (${o.model})`);
     const extrase = await extrage(linii, { apiKey: o.cheie, model: o.model, dimensiuneLot: o.lot, concurenta: o.concurenta });
     // Validarea nu e optionala: aceeasi schema ca in CLI, inca o data. Un
@@ -95,6 +107,8 @@ export function ruteModel(o: OptiuniModel): Hono {
   app.post("/poza", async (c) => {
     if (!o.cheie) return c.json({ eroare: "Citirea cu model nu e pornită pe server." }, 503);
     const { imagine } = CererePoza.parse(await c.req.json());
+    const refuz = await peste("poze", 1);
+    if (refuz) return c.json({ eroare: refuz }, 429);
     console.info(`model: citesc o poza de santier (${o.modelPoze})`);
     const r = await citeste(imagine, { apiKey: o.cheie, model: o.modelPoze });
     return c.json({ termeni: r.termeni, note: r.note, model: r.model });
@@ -109,6 +123,8 @@ export function ruteModel(o: OptiuniModel): Hono {
   app.post("/aviz", async (c) => {
     if (!o.cheie) return c.json({ eroare: "Citirea cu model nu e pornită pe server." }, 503);
     const { fisier, nume } = CerereAviz.parse(await c.req.json());
+    const refuz = await peste("poze", 1);
+    if (refuz) return c.json({ eroare: refuz }, 429);
     console.info(`model: citesc un aviz de furnizor (${o.modelPoze})`);
     const r = await (o.citesteAviz ?? citesteAviz)(fisier, { apiKey: o.cheie, model: o.modelPoze, ...(nume ? { nume } : {}) });
     const verificat = CitireAviz.safeParse(r);

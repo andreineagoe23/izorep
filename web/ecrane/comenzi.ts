@@ -25,7 +25,7 @@ import {
 import { cantitate, cifra, numeArticol, unitate } from "../stoc-vizual.js";
 import { depozite, deschis } from "./stoc.js";
 import { descarca } from "../descarca.js";
-import { caDataUrl, micsoreaza, modelPornit, rutaModel } from "../imagine.js";
+import { caDataUrl, micsoreaza, modelPornit, PlafonModel, rutaModel } from "../imagine.js";
 import { registruComanda, registruEvidenta, randuriEvidenta } from "../comanda-excel.js";
 import { FURNIZORI } from "../../src/stoc/furnizori.js";
 import {
@@ -448,13 +448,15 @@ export const ecran: Ecran = {
           body: JSON.stringify({ fisier: dataUrl, nume: f.name }), signal: AbortSignal.timeout(300_000),
         });
         const corp = (await r.json()) as unknown;
-        if (!r.ok) throw new Error((corp as { eroare?: string }).eroare ?? `HTTP ${r.status}`);
+        const eroare = (corp as { eroare?: string }).eroare;
+        if (r.status === 429 && eroare) throw new PlafonModel(eroare);
+        if (!r.ok) throw new Error(eroare ?? `HTTP ${r.status}`);
         // Ce vine de la server trece prin aceeasi schema inca o data.
         const citire = CitireAviz.parse(corp);
         citite.set(cheie, { stare: "gata", fisier, r: receptieDinCitire(c, citire) });
       } catch (e) {
         console.error(e);
-        citite.set(cheie, { stare: "eroare", fisier, eroare: "Documentul nu s-a putut citi." });
+        citite.set(cheie, { stare: "eroare", fisier, eroare: e instanceof PlafonModel ? e.message : "Documentul nu s-a putut citi." });
       }
       deseneaza();
     }

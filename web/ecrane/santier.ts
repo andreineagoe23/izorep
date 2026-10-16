@@ -1,4 +1,4 @@
-import { micsoreaza, rutaModel, stareModel, type StareModel } from "../imagine.js";
+import { micsoreaza, PlafonModel, rutaModel, stareModel, type StareModel } from "../imagine.js";
 import { agrega, type RandSantier } from "../../src/santier/agrega.js";
 import { RaspunsPoza, type Element, type Izolatie, type Jacheta } from "../../src/santier/schema.js";
 import { spreCerere } from "../../src/santier/spre-cerere.js";
@@ -187,6 +187,7 @@ export const ecran: Ecran = {
           body: JSON.stringify({ imagine }), signal: AbortSignal.timeout(400_000),
         });
         const corp = (await r.json()) as { termeni?: unknown; note?: unknown; eroare?: string };
+        if (r.status === 429 && corp.eroare) throw new PlafonModel(corp.eroare);
         if (!r.ok) throw new Error(corp.eroare ?? `HTTP ${r.status}`);
         // Ce vine de la server trece prin aceeasi schema inca o data.
         const citit = RaspunsPoza.parse({ termeni: corp.termeni, note: corp.note });
@@ -197,7 +198,7 @@ export const ecran: Ecran = {
       } catch (e) {
         console.error(e);
         p.stare = "eroare";
-        p.eroare = "Poza nu s-a putut citi.";
+        p.eroare = e instanceof PlafonModel ? e.message : "Poza nu s-a putut citi.";
       }
     }
 

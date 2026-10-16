@@ -15,6 +15,7 @@ import { sql } from "drizzle-orm";
 import { caTenant, conecteaza, purjeazaTenant, URL_PROPRIETAR } from "../src/db/client.js";
 import { firma, oferta, miscare, tenant } from "../src/db/schema.js";
 import { creeazaServer, ANTET_CSRF, LIMITA_IMPLICITA, type OptiuniServer } from "../src/server/app.js";
+import { limitaDinBaza, plafoaneDinMediu } from "../src/server/limita-model.js";
 import type { CererePeFir, DateComune, Mutare, RezultatMutare } from "../src/server/contract.js";
 import { importaFisier } from "../src/import/pipeline.js";
 import { stocInMemorie } from "../src/import/memorie.js";
@@ -313,6 +314,46 @@ describe("stratul cu model pe server: ieșirea verificată", () => {
     expect((await cereM("/api/poza")).corp).toEqual({ disponibil: true, model: "m-poze" });
     expect((await cereM("/api/poza", { imagine: "nu e poza" })).status).toBe(400);
     expect((await cereM("/api/poza", { imagine: "data:image/jpeg;base64,AA==" })).corp).toEqual({ termeni: [], note: ["din test"], model: "m-poze" });
+  });
+
+  daca()("plafonul zilnic: peste el, 429 cu mesajul pentru om, fără apel la model", async () => {
+    const apeluri: string[] = [];
+    const cuPlafon = serverPentru(tenantA, {
+      model: { cheie: "test", model: "m", modelPoze: "m-poze", prag: 0.85, lot: 25, concurenta: 4,
+        plafoane: { linii: 10, poze: 0 }, limita: async (tip) => { apeluri.push(tip); return false; },
+        extrage: async () => { throw new Error("modelul nu trebuia chemat"); },
+        citeste: async () => { throw new Error("modelul nu trebuia chemat"); },
+        citesteAviz: async () => { throw new Error("modelul nu trebuia chemat"); } },
+    });
+    const post = (cale: string, corp: unknown) => cuPlafon.request(cale, {
+      method: "POST", body: JSON.stringify(corp), headers: { "content-type": "application/json", [ANTET_CSRF]: "1" },
+    });
+    const r1 = await post("/api/extrage", { linii: linii(3) });
+    expect(r1.status).toBe(429);
+    expect(((await r1.json()) as { eroare: string }).eroare).toContain("10 de rânduri");
+    expect((await post("/api/poza", { imagine: "data:image/jpeg;base64,AA==" })).status).toBe(429);
+    expect((await post("/api/aviz", { fisier: "data:application/pdf;base64,AA==" })).status).toBe(429);
+    expect(apeluri).toEqual(["linii", "poze", "poze"]);
+  });
+
+  daca()("plafonul se numără în bază și nu trece de limită, nici cu cereri deodată", async () => {
+    // O zi din afara oricărei folosiri reale, ca testul să nu atingă plafonul de azi.
+    const zi = `2999-01-${String(1 + (sufix % 28)).padStart(2, "0")}`;
+    try {
+      const limita = limitaDinBaza(app$.db, { linii: 10, poze: 3 }, zi);
+      expect(await limita("linii", 11)).toBe(false);
+      expect(await limita("linii", 6)).toBe(true);
+      expect(await limita("linii", 5)).toBe(false);
+      expect(await limita("linii", 4)).toBe(true);
+      const deodata = await Promise.all(Array.from({ length: 8 }, () => limita("poze", 1)));
+      expect(deodata.filter(Boolean)).toHaveLength(3);
+      // Alt server (altă trezire pe Render) vede aceeași numărătoare.
+      expect(await limitaDinBaza(app$.db, { linii: 10, poze: 3 }, zi)("poze", 1)).toBe(false);
+    } finally {
+      await prop.db.execute(sql`delete from folosire_model where zi = ${zi}::date`);
+    }
+    expect(plafoaneDinMediu({})).toEqual({ linii: 3000, poze: 100 });
+    expect(plafoaneDinMediu({ IZOREP_PLAFON_POZE: "20", IZOREP_PLAFON_LINII: "x" })).toEqual({ linii: 3000, poze: 20 });
   });
 
   daca()("fără cheie, ecranele aud „indisponibil” și merg pe reguli", async () => {

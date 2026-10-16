@@ -27,6 +27,13 @@ export function caDataUrl(f: File): Promise<string> {
   });
 }
 
+/**
+ * Serverul a refuzat cititul pentru ca s-a atins plafonul de azi
+ * (`src/server/limita-model.ts`, 429). Mesajul lui ajunge la om asa cum e:
+ * spune ce s-a intamplat si cand se reia, nu „nu s-a putut citi”.
+ */
+export class PlafonModel extends Error {}
+
 /** Ruta unui model, langa pagina (merge si sub un subdirector). */
 export const rutaModel = (nume: string): string => location.pathname.replace(/[^/]*$/, "") + `api/${nume}`;
 

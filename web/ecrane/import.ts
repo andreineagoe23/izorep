@@ -651,6 +651,7 @@ export const ecran: Ecran = {
         const foi = await parseFoiBuffer(buf.slice(0));
 
         let esuate = 0;
+        let plafon = "";
         const extractor: Extractor | undefined = info ? async (deTrimis) => {
           const lot = info.lot ?? LOT_IMPLICIT;
           const loturi: (typeof deTrimis)[] = [];
@@ -670,6 +671,7 @@ export const ecran: Ecran = {
                   body: JSON.stringify({ linii: loturi[i] }), signal: AbortSignal.timeout(120_000),
                 });
                 const corp = (await r.json()) as { linii?: LinieExtrasa[]; eroare?: string };
+                if (r.status === 429 && corp.eroare) plafon = corp.eroare;
                 if (!r.ok) throw new Error(corp.eroare ?? `HTTP ${r.status}`);
                 primite.push(...(corp.linii ?? []));
               } catch {
@@ -718,9 +720,11 @@ export const ecran: Ecran = {
         }
         deschideSesiune({
           foi, rez, editari: [],
-          avertisment: esuate > 0
-            ? `<p class="alerta"><strong>O parte din rânduri n-au putut fi citite.</strong> Încarcă fișierul din nou ca să reîncerci.</p>`
-            : "",
+          avertisment: plafon
+            ? `<p class="alerta"><strong>O parte din rânduri n-au fost citite cu model.</strong> ${esc(plafon)}</p>`
+            : esuate > 0
+              ? `<p class="alerta"><strong>O parte din rânduri n-au putut fi citite.</strong> Încarcă fișierul din nou ca să reîncerci.</p>`
+              : "",
           meta: {
             id: `${Date.now()}-${fisier.name}`, nume: fisier.name, marime: fisier.size,
             cand: new Date().toISOString(), model: info?.model ?? null, fisier: buf,

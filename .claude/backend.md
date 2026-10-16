@@ -160,6 +160,15 @@ aplicația, deci testele o cheamă direct (`app.request`), fără rețea.
 - **CSRF:** orice metodă în afară de GET cere antetul `X-Izorep: 1`.
 - **Plafoane** (10 octombrie 2026): mărimea cererii după rută (`LIMITE`, 5 MB
   implicit, 413 peste).
+- **Plafonul zilnic pe model** (16 octombrie 2026, migrarea 0015,
+  `limita-model.ts`): cel mult 3.000 de rânduri din Excel și 100 de poze și
+  avize pe zi (ziua de la București), peste 429 cu mesaj în română; ecranele îl
+  arată așa cum e. Se numără în `folosire_model`, nu în memorie: serverul
+  gratuit de pe Render adoarme și ar porni de la zero. Un singur
+  `insert … on conflict` cu condiția în el, deci cereri deodată nu trec peste.
+  Variabile: `IZOREP_PLAFON_LINII`, `IZOREP_PLAFON_POZE`. Îl pune doar
+  `porneste.ts`; testele și CLI-ul rămân fără. Nu apără de o cheie OpenAI
+  scăpată: acolo ține doar limita de cheltuieli din contul OpenAI.
 - **Situația se șterge cu id-ul ei** (`DELETE …/situatii/<nr>?id=<id>`):
   numărul spune că e ultima, id-ul că e aceeași pe care a văzut-o omul.
 - **Pagina** o servește tot serverul, construită cu `npm run build:server`

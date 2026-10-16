@@ -19,6 +19,7 @@
  *   IZOREP_PAROLA  parola comuna pe site; obligatorie cand HOST nu e local
  *   TENANT_ID      firma servita; implicit singura din baza
  *   OPENAI_API_KEY si restul variabilelor modelului (`model.ts`), din .env
+ *   IZOREP_PLAFON_LINII, IZOREP_PLAFON_POZE  plafonul zilnic pe model (`limita-model.ts`)
  */
 import { existsSync, readFileSync } from "node:fs";
 import { serve } from "@hono/node-server";
@@ -27,6 +28,7 @@ import { alegeAplicatia, conecteaza, verificaRolul } from "../db/client.js";
 import { tenant } from "../db/schema.js";
 import { creeazaServer } from "./app.js";
 import { optiuniModelDinMediu } from "./model.js";
+import { limitaDinBaza, plafoaneDinMediu } from "./limita-model.js";
 
 // .env e gitignorat si tine cheia OpenAI. Node 21+ il incarca nativ.
 if (existsSync(".env")) process.loadEnvFile(".env");
@@ -65,9 +67,11 @@ async function firmaServita(): Promise<{ id: string; denumire: string }> {
 }
 
 const firma = await firmaServita();
-const model = optiuniModelDinMediu();
+// Plafonul zilnic pe model: cine trece de parola nu cheama OpenAI fara limita.
+const plafoane = plafoaneDinMediu();
+const model = { ...optiuniModelDinMediu(), plafoane, limita: limitaDinBaza(db, plafoane) };
 console.log(model.cheie
-  ? `Stratul cu model: activ (${model.model}; pozele: ${model.modelPoze})`
+  ? `Stratul cu model: activ (${model.model}; pozele: ${model.modelPoze}; pe zi cel mult ${plafoane.linii} de randuri si ${plafoane.poze} de poze)`
   : "Stratul cu model: inactiv (OPENAI_API_KEY lipseste); importul merge pe reguli");
 
 const app = creeazaServer({ db, tenantId: firma.id, model, ...(parola ? { parola } : {}) });

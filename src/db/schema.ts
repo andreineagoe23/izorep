@@ -234,6 +234,24 @@ export const sectiuneRectangulara = pgTable("sectiune_rectangulara", {
   uniqueIndex("sectiune_rectangulara_ab_idx").on(t.aMm, t.bMm),
 ]);
 
+/**
+ * Cat s-a folosit modelul (OpenAI) azi, pe tipuri: `linii` (randurile din
+ * Excel trimise la `/api/extrage`) si `poze` (pozele din carnet si avizele).
+ * Plafonul zilnic (`src/server/limita-model.ts`) se numara aici, nu in
+ * memoria serverului: pe Render serverul gratuit adoarme dupa 15 minute si
+ * ar porni de la zero la fiecare trezire.
+ *
+ * Fara tenant: cheia OpenAI e a serverului, deci si plafonul.
+ */
+export const folosireModel = pgTable("folosire_model", {
+  /** Ziua, la Bucuresti. */
+  zi: date("zi").notNull(),
+  tip: text("tip").notNull(),
+  unitati: integer("unitati").notNull(),
+}, (t) => [
+  primaryKey({ columns: [t.zi, t.tip] }),
+]);
+
 /* ------------------------------------------------------------------------ */
 /* Faza 3: datele comune (9 octombrie 2026). Ce statea in browser trece aici. */
 /* ------------------------------------------------------------------------ */
