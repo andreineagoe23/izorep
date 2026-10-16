@@ -465,7 +465,9 @@ describe("reevalueaza", () => {
   });
 
   it("extragerea modelului nu se pastreaza peste o descriere schimbata", async () => {
-    const TEXT = "Izolatii cu vata minerala pentru teava Di60, fara alte detalii";
+    // Fără diametru: regulile nu-l pot tarifa, deci pleacă la model (cu Di60 scris,
+    // grosimea uzuală l-ar face „Gata” fără model și n-ar mai pleca).
+    const TEXT = "Izolatii cu vata minerala pentru teava, fara alte detalii";
     const foi = await parseFoi(await registru([ANTET, [1, TEXT, "ml", 5]]));
     const extractor: Extractor = async (linii) => linii.map((l) => extrasa({
       index: l.index, sistem: "vata_minerala", diametru_valoare: 60, diametru_tip: "interior", grosime_mm: 50,
@@ -475,7 +477,7 @@ describe("reevalueaza", () => {
     const idx = rez.linii.find((l) => l.sursa === "model")!.extras.index;
 
     const rand = foi[0]!.randuri[1]!;
-    scrieCelula(rand, 1, TEXT.replace("Di60", "Di89"));
+    scrieCelula(rand, 1, TEXT.replace("teava", "teava Di89"));
     reconstruieste(rand);
     reevalueaza(rez, { stoc: stocInMemorie(), descrieriSchimbate: schimbate });
 

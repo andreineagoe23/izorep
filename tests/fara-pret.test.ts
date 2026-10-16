@@ -15,6 +15,8 @@ import { join } from "node:path";
 import ExcelJS from "exceljs";
 import { parseFoi } from "../src/import/parse-workbook.js";
 import { proceseazaRegistru, tarifeazaExtras } from "../src/import/nucleu.js";
+import { extrageDeterminist } from "../src/import/extract-regex.js";
+import { mapariStatice } from "../src/import/mapari-statice.js";
 import { importaFisier } from "../src/import/pipeline.js";
 import { stocInMemorie } from "../src/import/memorie.js";
 import { tarifeaza, tarifeazaPeMp } from "../src/pricing/engine.js";
@@ -56,6 +58,29 @@ describe("cererile de ofertă ale clienților", () => {
         }
       }
       expect(fara).toEqual([]);
+    });
+
+    // 16 octombrie 2026: pe Render, cu modelul pornit, TRANSAVIA ieșea 98 „Gata”
+    // în loc de 99 (distribuitorul trecea prin model și regula dovedită nu mai
+    // conta), Transavia inox 67 în loc de 69. Modelul de aici e cel mai rău caz:
+    // întoarce citirea parțială a regulilor, cu încredere mică.
+    cuClienti(`pe ${destinatie}: cu model nu ies mai puține „Gata” decât fără model`, async () => {
+      const pierdute: string[] = [];
+      for (const f of readdirSync(DIR).filter((x) => x.endsWith(".xlsx"))) {
+        const foi = await parseFoi(join(DIR, f));
+        const gata = async (cuModel: boolean): Promise<number> => {
+          const extrage = async (l: { index: number; text: string; um?: string; sectiune?: string }[]) =>
+            l.map((x) => ({ ...extrageDeterminist(x.index, x.text, x.um, x.sectiune).linie, index: x.index, incredere: 0.5, motiv: "test" }));
+          const r = await proceseazaRegistru(structuredClone(foi), {
+            stoc: stocInMemorie(), mapari: mapariStatice(), destinatie, ...(cuModel ? { extrage } : {}),
+          });
+          return r.linii.filter((l) => l.extras.sistem !== null && l.pret && !l.necesitaValidare).length;
+        };
+        const fara = await gata(false);
+        const cu = await gata(true);
+        if (cu < fara) pierdute.push(`${f}: ${fara} fără model, ${cu} cu model`);
+      }
+      expect(pierdute).toEqual([]);
     });
   }
 });

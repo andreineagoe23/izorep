@@ -676,6 +676,41 @@ function tarifeazaIzolatie(
  * validare. Nu concureaza cu nimic: se aplica DOAR pe indecsii pe care nici
  * memoria, nici sablonul, nici modelul nu i-au rezolvat.
  */
+/**
+ * Regulile întâi, modelul doar pe ce rămâne (16 octombrie 2026). Un rând pe
+ * care regulile nu-l citesc complet, dar pe care o regulă dovedită îl
+ * completează („Gata” fără model: distribuitorul de abur pe suprafața lui,
+ * golul de la aceeași țeavă), nu mai pleacă la model. Altfel se întorcea cu
+ * sursa „model”, iar regula dovedită nu mai conta: pe Render, cererea
+ * TRANSAVIA ieșea 98 „Gata” în loc de 99, cu același preț.
+ *
+ * Se tarifează întâi totul ca fără model (aceleași reguli de context:
+ * grosimea de la conductă, golul de la aceeași țeavă) și se păstrează ce iese
+ * „Gata”. Deci cu model ies cel puțin atâtea „Gata” câte fără model.
+ */
+function ramanDupaReguli(
+  brute: LinieCuSectiune[],
+  rezolvate: Map<number, Rezolvare>,
+  partiale: ReadonlyMap<number, LinieExtrasa>,
+  deLucrat: LinieSursa[],
+  prag: number,
+  o: OptiuniNucleu,
+): LinieSursa[] {
+  const caFaraModel = new Map(rezolvate);
+  for (const [index, extras] of partiale) if (!caFaraModel.has(index)) caFaraModel.set(index, { extras, sursa: "regex" });
+  stampileazaText(brute, caFaraModel);
+  const gata = new Set(construiesteLinii(
+    brute, caFaraModel, prag, o.destinatie ?? "rezidential", o.grosimiPropuse, o.descrieriSchimbate, o.preturiManuale,
+  ).filter((l) => l.pret && !l.necesitaValidare && l.eroare === undefined && l.extras.sistem !== null)
+    .map((l) => l.bruta.index));
+  return deLucrat.filter((l) => {
+    const extras = partiale.get(l.index);
+    if (!extras || !gata.has(l.index)) return true;
+    rezolvate.set(l.index, { extras, sursa: "regex" });
+    return false;
+  });
+}
+
 function completeazaCuPartiale(
   rezolvate: Map<number, Rezolvare>,
   partiale: Map<number, LinieExtrasa>,
@@ -1337,7 +1372,8 @@ export async function proceseazaRegistru(foi: FoaieBruta[], o: OptiuniNucleu): P
   // L4 - memoria de sabloane: ce a corectat omul deja nu se mai intreaba.
   const dinMemorie = aplicaMemorie(reziduale, o.stoc);
   for (const e of dinMemorie.rezolvate) rezolvate.set(e.index, { extras: e, sursa: "memorie" });
-  const deLucrat = completeazaDinConducte(brute, rezolvate, partiale, dinMemorie.ramase);
+  const dinConducte = completeazaDinConducte(brute, rezolvate, partiale, dinMemorie.ramase);
+  const deLucrat = o.extrage ? ramanDupaReguli(brute, rezolvate, partiale, dinConducte, prag, o) : dinConducte;
   o.laProgres?.({ faza: "memorie", gata: rezolvate.size, total: brute.length });
 
   // L2b - model, doar pe rest, cate un reprezentant per sablon, cu un buget
