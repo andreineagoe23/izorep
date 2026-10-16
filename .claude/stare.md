@@ -1,7 +1,39 @@
 # Stare curentă
 
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
-> Ultima actualizare: 15 octombrie 2026.
+> Ultima actualizare: 16 octombrie 2026.
+
+## 16 octombrie 2026: auditul, plafonul pe model, bugurile de demo
+
+Pe ramura `limita-model`. **641 de teste.** Audit complet cerut de Andrei
+(cinci agenți: import și prețuri, șantier și ștergere, depozit și tablou,
+parcurgerea în browser, planul și Render). Calculele ies: TRANSAVIA 99 / 99 linii
+și Matari 53 / 53 față de semnat, stocul se conservă, tabloul e egal cu baza.
+Problemele erau la margini (editări, reimport, ștergere).
+
+**Plafonul zilnic pe model** (migrarea 0015, `src/server/limita-model.ts`):
+3.000 de rânduri din Excel și 100 de poze și avize pe zi, numărat în bază,
+peste: 429 cu mesajul pe ecran. Detalii în `backend.md`.
+
+| Bug | Acum |
+|---|---|
+| Șantierul se lega de cerere și după numele fișierului: ștergerea unei cereri reimportate lua șantierul închis al celeilalte; „Creează șantierul” era blocat la reimport | după id-ul cererii (`plan.cerere`); numele doar pentru planurile vechi, fără `cerere` |
+| Același număr („RAD284”) salvat pe două cereri: tabloul dubla valoarea | serverul refuză (409) numărul care e deja pe oferta altei cereri |
+| Șantierul închis cerea „7 materiale de comandat” (tablou, pagina lui) | nimic de comandat pe un șantier închis |
+| „Lipsește un material” după comenzile normale: 0,02 m² de tablă din rotunjirea kg ↔ m² | lipsa sub 0,5 % din necesar (min. 0,05) nu e lipsă (`tolerantaLipsa`) |
+| Cantitatea 0 în „Ca în ofertă” devenea 1, fără semn | refuzată cu mesaj (și literele, minusul); poziția se scoate cu ✕ |
+| Prețul pus de mână scotea materialul din necesar (TRANSAVIA: 8.899 €) | straturile din liste rămân; valoarea liniei se împarte pe ele |
+| `demo.ts` salva cererile fără antet: TRANSAVIA redeschisă arăta 94.575,06 fără discount | antetul, cu discountul, stă în cerere |
+
+**Rămase din audit, după demo:** necesarul editat nu ajunge peste tot („Lipsește”
+folosește încă cel calculat, ✕ scade „În ofertă”, șantierul închis îl lasă
+editabil); „Creează șantierul” din nou șterge editările necesarului; ștergerea
+unui șantier rescrie stocul central / atelier fără s-o spună în panou; comanda
+primită parțial și anulată nu se mai poate factura; ecranele de detaliu n-au
+adresă; prețul de mână cu ajustarea (±0,01 €, ajustarea schimbată după îl
+mută); validarea pe server la situații / necesar / mișcări; meniul la 40 px.
+Repo-ul GitHub e public (listele de prețuri, prețurile furnizorilor, avizul
+ISOLINE). Pe Render lipsește starea de demo.
 
 ## 15 octombrie 2026: pe Render, meniul pe flux, oferta și necesarul editabile
 
