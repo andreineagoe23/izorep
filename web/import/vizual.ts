@@ -75,6 +75,13 @@ export interface OptiuniStart {
   /** Panoul de confirmare al stergerii, deja marcat (`panouStergere`). */
   confirmare?: string;
   eroare: string;
+  /**
+   * Ofertele salvate, pe id-ul importului: unde există, rândul arată oferta
+   * (număr și valoare, cu discountul), ca în „Oferte și cereri”. Valoarea
+   * importului e înainte de discount: TRANSAVIA arăta 94.575,06 aici și
+   * 91.737,81 acolo (16 octombrie 2026).
+   */
+  oferte?: Record<string, { numar: string; valoare: number }>;
 }
 
 export function ecranStart(o: OptiuniStart): string {
@@ -85,7 +92,8 @@ export function ecranStart(o: OptiuniStart): string {
         <li>
           <div class="imp-istoric-info">
             <strong>${esc(i.nume)}</strong>
-            <span>${esc(dataScurta(i.cand))} · ${pozitii(i.pozitii)} · ${esc(eur(i.valoare))}${
+            <span>${esc(dataScurta(i.cand))} · ${pozitii(i.pozitii)} · ${o.oferte?.[i.id]
+              ? `oferta ${esc(o.oferte[i.id]!.numar || "fără număr")}, ${esc(eur(o.oferte[i.id]!.valoare))}` : esc(eur(i.valoare))}${
               i.destinatie && i.destinatie !== "rezidential" ? ` · ${esc(SEGMENT[i.destinatie])}` : ""}</span>
           </div>
           <div class="imp-istoric-actiuni">

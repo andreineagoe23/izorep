@@ -297,7 +297,7 @@ export const ecran: Ecran = {
       } else if (pas === 1 || !sesiune) {
         const deSters = stergeDe ? istoric.find((i) => i.id === stergeDe) : undefined;
         pagina.innerHTML = ecranStart({
-          destinatie, istoric, stergeDe, eroare: eroareStart,
+          destinatie, istoric, stergeDe, eroare: eroareStart, oferte: citesteOferte(),
           ...(deSters ? { confirmare: panouStergere({
             ce: `cererea „${deSters.nume}”`, linii: ceSeVaSterge({ cerere: { id: deSters.id, nume: deSters.nume } }),
             date: { id: deSters.id }, ...(eroareStergere ? { eroare: eroareStergere } : {}),
