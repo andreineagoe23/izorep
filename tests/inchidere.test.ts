@@ -309,6 +309,17 @@ describe("rapoartele (S49)", () => {
     expect(alerte([{ ...plan, inchis: ZI0 }], { miscari, necesare }, azi)).toEqual([]);
   });
 
+  it("pus fără să fi venit: avertisment înainte de închidere, iar costul spune că materialul lipsește din el", () => {
+    // 16 octombrie 2026, pe Render: închis fără recepții, costul ieșea „0,00 €, 0 %” fără nicio explicație.
+    const vata = articolDin(materialeMici[0]!);
+    const miscari: Miscare[] = [{ id: "c1", data: ZI0, tip: "consum", articol: vata, cantitate: 30, din: planMic.id }];
+    const f = restulPeSantier(planMic, [planMic], { miscari });
+    expect(f.atentie.join(" ")).toMatch(/Un material e în registru cu minus/);
+    const c = cifreInchidere({ ...planMic, inchis: ZI0 }, materialeMici, miscari);
+    expect(c.cost).toMatchObject({ cost: 0, faraPret: 1 });
+    expect(cardInchis(c)).toContain("un material n-are preț și nu intră în cost");
+  });
+
   it("rotunjirea nu e lipsă: comandat tot, cu câțiva centimetri sub necesar, fără alertă", () => {
     // 16 octombrie 2026: tabla comandată în kg și primită înapoi în m² lăsa 0,02 m² „lipsă” pe TRANSAVIA.
     const vata = articolDin(materialeMici[0]!);

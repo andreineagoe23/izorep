@@ -58,7 +58,7 @@ export function cardInchise(s: readonly SantierInchis[], bani: boolean): string 
   const randuri = s.map(({ plan, cifre: c }) => `<tr>
     <td><b>${esc(plan.denumire)}</b><br><span class="hint">${esc(plan.client || "—")}</span></td>
     <td>${esc(zi(c.inchis))}</td>
-    ${bani ? `<td class="n">${eur(c.cost.cost)}${c.cost.faraPret ? `<br><span class="hint">${c.cost.faraPret === 1 ? "un material" : cate(c.cost.faraPret, "materiale")} încă fără preț</span>` : ""}</td>
+    ${bani ? `<td class="n">${eur(c.cost.cost)}${c.cost.faraPret ? `<br><span class="hint">${c.cost.faraPret === 1 ? "un material" : cate(c.cost.faraPret, "materiale")} fără preț, în afara costului</span>` : ""}</td>
     <td class="n">${eur(c.cost.inOferta)}</td>` : ""}
     <td class="n">${c.cost.procent === null ? "—" : `${cifra(c.cost.procent)} %`}</td>
   </tr>`);

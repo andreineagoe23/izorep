@@ -451,7 +451,9 @@ export function cifreInchidere(
   let cost = 0;
   let faraPret = 0;
   for (const r of randuri) {
-    if (r.cost === null) { if (r.venit - r.inapoi - r.laFurnizor > 0) faraPret++; } else cost += r.cost;
+    // Fără preț: venit fără factură, sau pus fără să fi venit (registrul cu minus,
+    // pus la loc la inventar): și unul, și altul lipsesc din cost.
+    if (r.cost === null) { if (r.venit - r.inapoi - r.laFurnizor > 0 || r.pus > 0) faraPret++; } else cost += r.cost;
   }
   return {
     inchis: plan.inchis ?? "", randuri,

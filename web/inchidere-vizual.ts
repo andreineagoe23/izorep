@@ -25,7 +25,7 @@ function suma(eticheta: string, c: { cost: number; inOferta: number; procent: nu
   const fata = c.procent === null ? "fără valoare în ofertă pentru materialele lui"
     : `${cifra(c.procent)} % din ${eur(c.inOferta)} în ofertă`;
   const fara = c.faraPret > 0
-    ? ` · fără ${c.faraPret === 1 ? "un material" : `${c.faraPret} materiale`} încă fără preț` : "";
+    ? ` · ${c.faraPret === 1 ? "un material n-are preț și nu intră" : `${c.faraPret} materiale n-au preț și nu intră`} în cost` : "";
   return `<p class="imp-oferta-suma"><span>${esc(eticheta)}</span><strong>${eur(c.cost)}</strong><span>${fata}${fara}</span></p>`;
 }
 
@@ -121,6 +121,15 @@ export function restulPeSantier(
     if (st === "trimisa" || st === "partial") {
       atentie.push(`Comanda la ${c.furnizor} din ${zi(c.trimisa)} n-a venit toată. Anuleaz-o în Comenzi, sau la recepție alege alt loc decât șantierul.`);
     }
+  }
+  // Pus mai mult decât a venit pe șantier: la închidere diferența intră la
+  // inventar, dar fără preț, iar costul ieșea „0,00 €, 0 %” fără nicio
+  // explicație (16 octombrie 2026).
+  const cuMinus = stoc.filter((r) => r.scriptic < 0);
+  if (cuMinus.length) {
+    atentie.push(`${cuMinus.length === 1 ? "Un material e" : `${cuMinus.length} materiale sunt`} în registru cu minus: `
+      + "s-a pus pe șantier mai mult decât a venit. Fără recepția sau transferul lipsă, materialul acela nu are preț și nu intră în cost. "
+      + "Trece întâi intrările lipsă, apoi închide.");
   }
   return { stoc, locuri, atentie };
 }
