@@ -446,7 +446,7 @@ export function ecranOferta(o: OptiuniOferta): string {
         ${camp("numar", "Număr ofertă", o.antet.numar, 'required inputmode="numeric" autocomplete="off"')}
         ${camp("data", "Data", o.antet.data, "required")}
         ${camp("client", "Beneficiar", o.antet.client, "required")}
-        ${camp("obiectiv", "Obiectiv", o.antet.obiectiv)}
+        ${camp("obiectiv", "Obiectiv (numele șantierului)", o.antet.obiectiv)}
         ${camp("persoana", "În atenția", o.antet.persoana)}
         ${camp("localitate", "Localitate", o.antet.localitate, "required")}
         ${camp("ajustare", "Ajustare prețuri (%)", String(o.ajustare),
