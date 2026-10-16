@@ -133,6 +133,25 @@ describe("ștergerea de tot, pe server", () => {
     expect((await cere("/api/stergere", { method: "POST", body: { santier: "S-ST" } })).status).toBe(404);
   });
 
+  daca()("același fișier importat de două ori: ștergerea unei cereri nu ia șantierul celeilalte", async () => {
+    // 16 octombrie 2026: legătura era și după numele fișierului, iar ștergerea
+    // unei cereri reimportate lua șantierul închis al celei dintâi.
+    for (const id of ["C-1", "C-2"]) {
+      expect((await cere(`/api/cereri/${id}`, { method: "PUT", body: { ...cerereTest, id, nume: "acelasi.xlsx" } })).status).toBe(200);
+      const p = { ...plan(`S-${id}`, id), fisier: "acelasi.xlsx" };
+      expect((await cere(`/api/santiere/${p.id}`, { method: "PUT", body: p })).status).toBe(200);
+      const necesar = { id: `N-${id}`, creat: ZI, fisier: "acelasi.xlsx", obiectiv: "O", santier: p.id, materiale: [], faraNecesar: 0 };
+      expect((await cere(`/api/necesare/N-${id}`, { method: "PUT", body: necesar })).status).toBe(200);
+    }
+    const r = await cere("/api/stergere", { method: "POST", body: { cerere: "C-2" } });
+    expect(r.status).toBe(200);
+    expect((r.corp as { santiere: { id: string }[] }).santiere.map((x) => x.id)).toEqual(["S-C-2"]);
+    const d = (await cere("/api/date")).corp as DateComune;
+    expect(d.planuri.map((p) => p.id)).toContain("S-C-1");
+    expect(d.planuri.map((p) => p.id)).not.toContain("S-C-2");
+    expect(d.depozit.necesare.map((n) => n.id)).toEqual(["N-C-1"]);
+  });
+
   daca()("după ștergere, aplicația e iar oprită de trigger-e", async () => {
     await expect(caTenant(app$.db, tenantId, (tx) => tx.delete(oferta))).rejects.toThrow();
   });

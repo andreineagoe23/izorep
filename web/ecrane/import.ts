@@ -862,9 +862,12 @@ export const ecran: Ecran = {
       const form = pagina.querySelector<HTMLFormElement>("#antet-oferta");
       if (!s || !form) return;
       const planuri = citestePlanuri();
-      const vechi = planuri.find((p) => p.fisier === s.meta.nume);
+      // Șantierul acestei cereri, după id: același fișier importat din nou e
+      // altă cerere, cu șantierul ei (16 octombrie 2026). Numele fișierului
+      // leagă doar planurile vechi, fără `cerere`.
+      const vechi = planuri.find((p) => p.cerere === s.meta.id || (p.cerere === undefined && p.fisier === s.meta.nume));
       if (vechi && vechi.situatii.length > 0) {
-        arataMesaj(`Șantierul „${vechi.denumire}” are deja situații de lucrări: nu se mai poate înlocui din ofertă.`);
+        arataMesaj(`Șantierul „${vechi.denumire}” e deja făcut din această cerere și are situații de lucrări, deci pozițiile lui nu se mai schimbă. Îl găsești în Șantiere.`);
         return;
       }
       const cerere = cerereDinFormular(s, form);
@@ -875,7 +878,7 @@ export const ecran: Ecran = {
       }
       const n = necesarOferta(s, cerere.antet.discountProcent ?? 0);
       const st = citesteDepozit();
-      const vechiNecesar = st.necesare.find((x) => x.fisier === s.meta.nume);
+      const vechiNecesar = vechi ? st.necesare.find((x) => x.santier === vechi.id || (x.santier === undefined && x.fisier === s.meta.nume)) : undefined;
       const nou = {
         id: vechiNecesar?.id ?? idNou(), creat: new Date().toISOString(), fisier: s.meta.nume,
         obiectiv: plan.denumire, pierderi: n.pierderi, pragTub: n.pragTub, tuburiPeste: n.tuburiPeste, materiale: n.materiale,

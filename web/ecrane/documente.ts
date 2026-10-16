@@ -132,7 +132,10 @@ export const ecran: Ecran = {
     async function deseneazaTale(): Promise<void> {
       const importuri = await listeaza();
       const oferte = citesteOferte();
-      const santiere = new Set(citestePlanuri().map((p) => p.fisier));
+      // Șantierul e al cererii după id; numele fișierului, doar la planurile vechi, fără `cerere`.
+      const planuri = citestePlanuri();
+      const cuSantier = new Set(planuri.map((p) => p.cerere).filter(Boolean));
+      const vechiDupaNume = new Set(planuri.filter((p) => p.cerere === undefined).map((p) => p.fisier));
       tale.innerHTML = `<h2>Cererile importate</h2>
         ${sters ? `<p class="hint" role="status">${esc(sters)}</p>` : ""}
         ${importuri.length === 0
@@ -141,7 +144,7 @@ export const ecran: Ecran = {
             apare pe același rând.</p>`
           : tabel(
               ["Cererea", "Tip ofertă", "Poziții", "Oferta", ...(arataValoare ? ["Valoare"] : []), "Stare", ""],
-              importuri.map((m) => randImport(m, oferte[m.id], santiere.has(m.nume), arataValoare, stergeDe, eroare)),
+              importuri.map((m) => randImport(m, oferte[m.id], cuSantier.has(m.id) || vechiDupaNume.has(m.nume), arataValoare, stergeDe, eroare)),
               ["", "", "n", "", ...(arataValoare ? ["n"] : []), "", ""],
             )}`;
     }

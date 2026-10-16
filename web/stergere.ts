@@ -46,12 +46,15 @@ export interface DateDeSters {
  */
 export function ceSeSterge(d: DateDeSters, t: TintaStergere, santiereInPlus: readonly string[] = []): Stergere {
   const cerere = "cerere" in t ? t.cerere : undefined;
+  // Șantierul e al cererii după id. Numele fișierului leagă doar planurile
+  // vechi, fără `cerere`: același fișier importat de două ori sunt două cereri,
+  // iar ștergerea uneia lua și șantierul celeilalte (16 octombrie 2026).
   const planuri = d.planuri.filter((p) => ("santier" in t ? p.id === t.santier
-    : p.cerere === t.cerere.id || p.fisier === t.cerere.nume || santiereInPlus.includes(p.id)));
+    : p.cerere === t.cerere.id || (p.cerere === undefined && p.fisier === t.cerere.nume) || santiereInPlus.includes(p.id)));
   const ids = new Set([...planuri.map((p) => p.id), ...("santier" in t ? [t.santier] : santiereInPlus)]);
 
   const necesare = d.depozit.necesare.filter((n) => (n.santier !== undefined && ids.has(n.santier))
-    || (cerere !== undefined && n.fisier === cerere.nume));
+    || (cerere !== undefined && n.santier === undefined && n.fisier === cerere.nume));
   const comenzi = (d.depozit.comenzi ?? []).filter((c) => ids.has(c.spre) || (c.santier !== undefined && ids.has(c.santier)));
   const deComanda = new Set(comenzi.map((c) => c.id));
 
