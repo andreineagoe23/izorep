@@ -232,7 +232,7 @@ export const regulaPresupusa = (teava: number): boolean => teava <= PRAG_TUB_MM 
 
 const ORDINE = ["elastomer", "vata_minerala", "tabla", "tabla_inox", "pvc"];
 const estePeMatrice = (p: LinieProcesata["pret"]): p is RezultatTarifare =>
-  p !== undefined && "straturi" in p && !p.manual;
+  p !== undefined && "straturi" in p;
 
 /**
  * `linii` sunt cele care pleaca in oferta (`imparte(cuAjustare(...)).oferta`):
@@ -258,7 +258,13 @@ export function necesarDinLinii(linii: LinieProcesata[], o: OptiuniNecesar = {})
     nr++;
     const fara = (motiv: string): void => { faraNecesar.push({ rand: l.bruta.rand, text: l.bruta.text, motiv }); };
     if (!l.pret) { fara("fără preț: materialul nu se poate calcula"); continue; }
-    if ("manual" in l.pret && l.pret.manual) { fara("preț pus de mână: materialul nu reiese din liste"); continue; }
+    // Pretul pus de mana pastreaza straturile din liste (`nucleu.ts`): materialul
+    // se comanda, iar valoarea liniei se imparte pe ele ca la orice pozitie.
+    // Fara straturi (fara pret din liste), materialul nu reiese de nicaieri.
+    if ("manual" in l.pret && l.pret.manual && l.pret.straturi.length === 0) {
+      fara("preț pus de mână: materialul nu reiese din liste");
+      continue;
+    }
     if (!estePeMatrice(l.pret) || l.pret.straturi.length === 0) {
       fara("închidere de gol la foc: materialele ei nu sunt în liste");
       continue;

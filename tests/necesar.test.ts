@@ -174,6 +174,29 @@ describe("necesarul de materiale", () => {
     expect(suma).toBeCloseTo(totalOferta(oferta) * 0.97, 1);
   });
 
+  it("prețul pus de mână nu scoate materialul: valoarea liniei se împarte pe straturile din liste", async () => {
+    // 16 octombrie 2026: pe TRANSAVIA, un preț schimbat scotea 8.899 € de material din necesar.
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet("Lista");
+    ws.addRow(["Nr. crt.", "Denumire articol", "UM", "Cantitate"]);
+    ws.addRow([1, "Izolatii cu vata minerala si protectie cu tabla de aluminiu Di114, g30 - ML", "ml", 10]);
+    const cale = join(dir, "manual.xlsx");
+    await wb.xlsx.writeFile(cale);
+    const foi = await parseFoi(cale);
+    const lista = (await proceseazaRegistru(foi, { stoc: stocInMemorie() })).linii;
+    const index = lista.find((x) => x.pret)!.bruta.index;
+    const l = (await proceseazaRegistru(foi, { stoc: stocInMemorie(), preturiManuale: new Map([[index, 99.99]]) })).linii;
+    const p = l.find((x) => x.pret)!.pret as RezultatTarifare;
+    expect(p.manual).toBe(true);
+    expect(p.pret_unitar).toBe(99.99);
+    const n = necesarDinLinii(l, FARA);
+    expect(n.faraNecesar).toEqual([]);
+    // Același material ca fără prețul de mână, doar valoarea e cea scrisă de om.
+    const faraManual = necesarDinLinii(lista, FARA);
+    expect(n.materiale.map((m) => [m.cheie, m.m2, m.ml])).toEqual(faraManual.materiale.map((m) => [m.cheie, m.m2, m.ml]));
+    expect(n.materiale.reduce((t, m) => t + m.valoareOferta, 0)).toBeCloseTo(999.9, 2);
+  });
+
   it("ce nu are preț din liste apare separat, cu motivul", async () => {
     // Un echipament fără D și L: singura izolație care mai rămâne fără preț.
     const l = await linii([[1, "Izolare echipament schimbator de caldura cu vata minerala 100 mm", "buc", 1]]);

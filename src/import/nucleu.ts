@@ -1185,8 +1185,13 @@ function construiesteLinii(
     if (manual !== undefined) {
       const cantitate = b.cantitate ?? 1;
       const dinListe = t.pret ? `din liste iesea ${t.pret.pret_unitar} €` : `din liste: ${t.eroare ?? "fara pret"}`;
+      // Straturile din liste raman: pretul e al omului, dar materialul e tot
+      // cel din liste, iar necesarul il comanda (16 octombrie 2026: pe
+      // TRANSAVIA, un pret schimbat scotea 8.899 € de material din necesar).
+      const dinLista = t.pret && "straturi" in t.pret ? t.pret : undefined;
       proc.pret = {
-        straturi: [], pret_unitar: bani(manual), multiplicator: 1, cantitate,
+        straturi: dinLista?.straturi ?? [], pret_unitar: bani(manual), multiplicator: 1, cantitate,
+        ...(dinLista?.suprafata_mp !== undefined ? { suprafata_mp: dinLista.suprafata_mp } : {}),
         total: bani(manual * cantitate), moneda: "EUR", manual: true,
         note: [`pret unitar pus de om: ${bani(manual)} €; ${dinListe}`],
       };
