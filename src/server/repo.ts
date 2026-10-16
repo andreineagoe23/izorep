@@ -221,12 +221,14 @@ export async function salveazaOferta(tx: Baza, ctx: Context, cerereId: string, o
   // Un număr de ofertă e al unei singure cereri. Același fișier importat din
   // nou și salvat tot ca 284 dubla oferta pe tablou (16 octombrie 2026).
   if (numar) {
-    const [alta] = await tx.select({ nume: cerere.nume }).from(oferta)
+    const [alta] = await tx.select({ nume: cerere.nume, client: oferta.client, data: oferta.data }).from(oferta)
       .innerJoin(cerere, and(eq(cerere.tenantId, oferta.tenantId), eq(cerere.id, oferta.cerereId)))
       .where(and(eq(oferta.numar, numar), ne(oferta.cerereId, cerereId))).limit(1);
     if (alta) {
-      throw new Refuz(409, `Numărul ${numar} e deja pe oferta cererii „${alta.nume}”. Scrie alt număr la pasul „Oferta”, `
-        + "sau deschide cererea aceea din Oferte și cereri.");
+      // Fișierul singur nu ajunge: un reimport are același nume.
+      const care = [alta.client, alta.data].filter(Boolean).join(", ");
+      throw new Refuz(409, `Numărul ${numar} e deja pe oferta cererii „${alta.nume}”${care ? ` (${care})` : ""}. `
+        + "Scrie alt număr la pasul „Oferta”, sau deschide cererea aceea din Oferte și cereri.");
     }
   }
   const { valoare, pozitii } = valoareOferta(o.continut);

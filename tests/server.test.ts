@@ -107,7 +107,7 @@ describe("serverul unei firme", () => {
       expect((await post("/api/cereri/nr-1/oferte", "POST", continut("284"))).status).toBe(200);
       const dublu = await post("/api/cereri/nr-2/oferte", "POST", continut("284"));
       expect(dublu.status).toBe(409);
-      expect(dublu.corp.eroare).toContain("RAD284 e deja pe oferta cererii „test.xlsx”");
+      expect(dublu.corp.eroare).toContain("RAD284 e deja pe oferta cererii „test.xlsx” (C, 01.10.2026)");
       expect((await post("/api/cereri/nr-2/oferte", "POST", continut("285"))).status).toBe(200);
     } finally {
       await purjeazaTenant(prop.db, t);
