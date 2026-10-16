@@ -1323,7 +1323,17 @@ export const ecran: Ecran = {
         const idx = Number(el.dataset["idx"]);
         if (el.dataset["ed"] === "den") { scrieDenumirea(el); return false; }
         const valoare = numarScris((el as HTMLInputElement).value);
-        if (el.dataset["ed"] === "cant") return valoare !== null && valoare >= 0 && scrieCantitatea(idx, valoare);
+        if (el.dataset["ed"] === "cant") {
+          // 0 nu e o cantitate: la recitirea rândului ar ieși „fără cantitate”,
+          // iar oferta punea 1, fără niciun semn (16 octombrie 2026).
+          if (valoare === null || !(valoare > 0)) {
+            arataMesaj(valoare === 0
+              ? "Cantitatea trebuie să fie mai mare decât 0. Ca să scoți poziția din ofertă, apasă ✕ pe rândul ei."
+              : "Cantitatea se scrie ca număr mai mare decât 0, de exemplu 12 sau 12,5.");
+            return false;
+          }
+          return scrieCantitatea(idx, valoare);
+        }
         return el.dataset["ed"] === "pret" && scriePretul(idx, valoare);
       },
       deseneaza,
