@@ -25,6 +25,19 @@ peste: 429 cu mesajul pe ecran. Detalii în `backend.md`.
 | Prețul pus de mână scotea materialul din necesar (TRANSAVIA: 8.899 €) | straturile din liste rămân; valoarea liniei se împarte pe ele |
 | `demo.ts` salva cererile fără antet: TRANSAVIA redeschisă arăta 94.575,06 fără discount | antetul, cu discountul, stă în cerere |
 
+**După parcurgerea pe Render (tot pe 16):** cu modelul pornit, TRANSAVIA ieșea
+98 „Gata” în loc de 99 (distribuitorul trecea prin model, iar regula dovedită
+conta doar pe sursa „regex”); la fel Transavia inox, 67 în loc de 69. Acum
+**regulile întâi** (`ramanDupaReguli` în `nucleu.ts`): se tarifează întâi ca fără
+model, iar ce iese „Gata” nu mai pleacă la model. Testul din `fara-pret.test.ts`
+trece toate fișierele de client cu un model care întoarce cel mai rău răspuns:
+nicăieri mai puține „Gata” decât fără model. TRANSAVIA nu mai trimite niciun rând
+la model. Tot atunci: „Anulează modificările” pune rândurile la locul lor
+(`ordineNecesar`); avizul citit rămâne până la înregistrare (`sessionStorage`);
+șantierul se creează doar cu obiectivul scris; închiderea spune când materialul
+pus n-a venit pe șantier și lipsește din cost; „Importuri recente” arată oferta
+salvată, cu discountul.
+
 **Rămase din audit, după demo:** necesarul editat nu ajunge peste tot („Lipsește”
 folosește încă cel calculat, ✕ scade „În ofertă”, șantierul închis îl lasă
 editabil); „Creează șantierul” din nou șterge editările necesarului; ștergerea
