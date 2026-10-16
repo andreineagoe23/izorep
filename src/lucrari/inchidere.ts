@@ -327,6 +327,14 @@ function pentruRest(m: MaterialNecesar, plan: PlanSantier, rest: Map<number, num
   return m.pePozitie.reduce((t, p) => t + p.peUnitate * (rest.get(p.pozitie) ?? 0), 0) * (1 + (m.pierdere ?? 0));
 }
 
+/**
+ * Sub cat nu e lipsa: 0,5 % din necesar, cel putin 0,05 (ml sau m²). Tabla se
+ * comanda in kg si se primeste inapoi in m², iar necesarul pe pozitii e rotunjit
+ * la patru zecimale: pe TRANSAVIA, tabla 0,6 comandata toata (271,78 m²) ramanea
+ * cu 0,02 m² „lipsa”, iar tabloul aprindea alerta (16 octombrie 2026).
+ */
+export const tolerantaLipsa = (necesar: number): number => Math.max(0.05, necesar * 0.005);
+
 const procentDin = (cost: number, inOferta: number): number | null =>
   inOferta > 0 ? Math.round((cost / inOferta) * 1000) / 10 : null;
 
@@ -358,12 +366,14 @@ export function materialSantier(
     const deLucru = materiale.reduce((t, m) => t + pentruRest(m, plan, rest, pus), 0);
     const peDrum = plan.inchis ? 0 : comandatNesosit(comenzi, miscari, plan.id, cheie);
     const cost = f ? costFlux(f) : 0;
+    const necesarTot = rot(materiale.reduce((t, m) => t + cantitateNecesara(m), 0));
+    const lipsa = deLucru - Math.max(0, ramas) - peDrum;
     return {
       cheie, articol,
-      necesar: rot(materiale.reduce((t, m) => t + cantitateNecesara(m), 0)),
+      necesar: necesarTot,
       comandat: comandat.get(cheie) ?? 0,
       venit: f?.venit ?? 0, pus, ramas,
-      lipsa: Math.max(0, Math.round((deLucru - Math.max(0, ramas) - peDrum) * 100) / 100),
+      lipsa: lipsa <= tolerantaLipsa(necesarTot) ? 0 : Math.round(lipsa * 100) / 100,
       cost: cost === null ? null : bani(cost),
       inOferta: materiale.filter((m) => !m.alClientului).reduce((t, m) => t + (m.valoareOferta ?? 0), 0),
       ...(materiale.length > 0 && materiale.every((m) => m.alClientului) ? { alClientului: true as const } : {}),

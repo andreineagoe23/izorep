@@ -309,6 +309,20 @@ describe("rapoartele (S49)", () => {
     expect(alerte([{ ...plan, inchis: ZI0 }], { miscari, necesare }, azi)).toEqual([]);
   });
 
+  it("rotunjirea nu e lipsă: comandat tot, cu câțiva centimetri sub necesar, fără alertă", () => {
+    // 16 octombrie 2026: tabla comandată în kg și primită înapoi în m² lăsa 0,02 m² „lipsă” pe TRANSAVIA.
+    const vata = articolDin(materialeMici[0]!);
+    const necesare = [{ santier: planMic.id, materiale: [materialeMici[0]!] }];
+    const comanda = (cantitate: number): Comanda => ({
+      id: "C1", creat: ZI0, trimisa: ZI0, furnizor: "Banda Tech", firma: "RADOIA ISOLIRUNG SRL", santier: planMic.id, spre: planMic.id,
+      linii: [{ id: "L1", articol: vata, cantitate }],
+    });
+    // Necesarul e 55: 54,98 pe drum nu e lipsă, 54 da.
+    expect(materialSantier(planMic, materialeMici, [], [comanda(54.98)]).randuri.find((x) => x.cheie === vata.cheie)!.lipsa).toBe(0);
+    expect(alerte([planMic], { miscari: [], necesare, comenzi: [comanda(54.98)] }, azi).filter((x) => x.fel === "lipsa")).toEqual([]);
+    expect(materialSantier(planMic, materialeMici, [], [comanda(54)]).randuri.find((x) => x.cheie === vata.cheie)!.lipsa).toBe(1);
+  });
+
   it("cifrele la închidere, pe fiecare șantier închis", () => {
     const s = scenariu(planMic, materialeMici);
     const toate = [...s.miscari, ...miscariInchidere(s.inchidere(s.miscari), s.miscari, id, azi)];
