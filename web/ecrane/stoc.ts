@@ -100,9 +100,17 @@ export function ramasPeNecesar(s: StareDepozit, n: NecesarLucrare): DeComandatSa
   return deComandatSantier(n.materiale, s.miscari, s.comenzi ?? [], depozitNecesar(n), s.ambalaje, alte);
 }
 
-/** Câte materiale mai sunt de comandat, pe fiecare necesar. Folosit și de tabloul de bord. */
+/**
+ * Câte materiale mai sunt de comandat, pe fiecare necesar. Folosit și de
+ * tabloul de bord. Pe un șantier închis, nimic: tabloul cerea „7 materiale de
+ * comandat” pentru un șantier terminat (16 octombrie 2026).
+ */
 export function deComandatPeNecesar(s: StareDepozit): { necesar: NecesarLucrare; articole: number }[] {
-  return s.necesare.map((n) => ({ necesar: n, articole: ramasPeNecesar(s, n).filter((d) => d.ramas > 0).length }));
+  const eDeschis = deschis();
+  return s.necesare.map((n) => ({
+    necesar: n,
+    articole: n.santier && !eDeschis(n.santier) ? 0 : ramasPeNecesar(s, n).filter((d) => d.ramas > 0).length,
+  }));
 }
 
 const titluNecesar = (n: NecesarLucrare): string => n.obiectiv || n.fisier;

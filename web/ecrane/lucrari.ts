@@ -199,7 +199,7 @@ export const ecran: Ecran = {
           ${indicator(eur(v.total), "Valoare ofertă", p.oferta || p.fisier)}
           ${indicator(eur(executat?.total ?? 0), "Executat, cumulat", `${progresPlan(p)} % din ofertă`)}
           ${indicator(String(p.situatii.length), "Situații de lucrări")}
-          ${indicator(String(deCumparat), "Materiale de comandat", !necesar ? "fără necesar"
+          ${p.inchis ? "" : indicator(String(deCumparat), "Materiale de comandat", !necesar ? "fără necesar"
             : peCiorne ? `și ${peCiorne} pe ciorne netrimise` : "rămase din necesarul ofertei")}
         </div>
         ${inLucru && dinPoze ? cardDinPoze(p, inLucru, dinPoze) : ""}
