@@ -76,6 +76,34 @@ interface Citit {
   eroare?: string;
 }
 
+/**
+ * Citirile terminate rămân până se înregistrează documentul: înainte se
+ * pierdeau la reîncărcare sau la plecarea pe alt ecran, iar omul scria de
+ * mână ce citise deja modelul (16 octombrie 2026). În `sessionStorage`, adică
+ * doar în fila asta; dacă fișierul nu încape, rămâne citirea fără el.
+ */
+const CHEIE_CITITE = "izorep-citite";
+
+function citestePastrate(): Map<string, Citit> {
+  try {
+    const brut = sessionStorage.getItem(CHEIE_CITITE);
+    return new Map(brut ? (JSON.parse(brut) as [string, Citit][]) : []);
+  } catch {
+    return new Map();
+  }
+}
+
+function pastreaza(citite: ReadonlyMap<string, Citit>): void {
+  const terminate = [...citite].filter(([, c]) => c.stare === "gata" || c.stare === "fara-model");
+  try {
+    sessionStorage.setItem(CHEIE_CITITE, JSON.stringify(terminate));
+  } catch {
+    try {
+      sessionStorage.setItem(CHEIE_CITITE, JSON.stringify(terminate.map(([k, c]) => [k, { ...c, fisier: { nume: c.fisier.nume, dataUrl: "" } }])));
+    } catch { /* fara stocare: ramane doar pe ecran */ }
+  }
+}
+
 export const ecran: Ecran = {
   id: "comenzi",
   titlu: "Comenzi la furnizori",
@@ -88,7 +116,7 @@ export const ecran: Ecran = {
     let anulare: string | null = null;
     let cuModel = false;
     /** Cheia: id-ul comenzii, sau `id|aviz` pentru factura unui aviz. */
-    const citite = new Map<string, Citit>();
+    const citite = citestePastrate();
     const DEPOZITE = depozite();
     /** Unde se poate alege marfa: fără șantierele închise (Faza 7). */
     const ALEGERI = DEPOZITE.filter((d) => deschis()(d.id));
@@ -439,7 +467,7 @@ export const ecran: Ecran = {
       }
       const dataUrl = f.type === "application/pdf" ? await caDataUrl(f) : await micsoreaza(f);
       const fisier = { nume: f.name, dataUrl };
-      if (!cuModel) { citite.set(cheie, { stare: "fara-model", fisier }); deseneaza(); return; }
+      if (!cuModel) { citite.set(cheie, { stare: "fara-model", fisier }); pastreaza(citite); deseneaza(); return; }
       citite.set(cheie, { stare: "citeste", fisier });
       deseneaza();
       try {
@@ -458,14 +486,16 @@ export const ecran: Ecran = {
         console.error(e);
         citite.set(cheie, { stare: "eroare", fisier, eroare: e instanceof PlafonModel ? e.message : "Documentul nu s-a putut citi." });
       }
+      pastreaza(citite);
       deseneaza();
     }
 
     /** După înregistrare, fișierul citit se atașează la comandă, cu numărul documentului. */
     function ataseaza(cheie: string, comandaId: string, tip: "aviz" | "factura", numar: string): void {
       const c = citite.get(cheie);
-      if (c) ataseazaDocument({ id: idNou(), comanda: comandaId, tip, numar, nume: c.fisier.nume, fisier: c.fisier.dataUrl });
+      if (c?.fisier.dataUrl) ataseazaDocument({ id: idNou(), comanda: comandaId, tip, numar, nume: c.fisier.nume, fisier: c.fisier.dataUrl });
       citite.delete(cheie);
+      pastreaza(citite);
     }
 
     root.addEventListener("change", (e) => {
