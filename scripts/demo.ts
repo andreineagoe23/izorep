@@ -203,6 +203,14 @@ async function oferta(i: Import, c: CerereOferta, asteptat: number): Promise<voi
   await D.salveazaOferta(i.ses.id, "radoia", c, {
     numar: `${a.serie}${a.numar}`, data: a.data, client: a.client, obiectiv: a.obiectiv, valoare, pozitii, cand: new Date().toISOString(),
   });
+  // Ca pasul „Oferta”: datele ofertei stau și în cerere. Fără ele, TRANSAVIA
+  // redeschisă în Import arăta 94.575,06 fără discount, iar „Descarcă oferta”
+  // ar fi salvat o versiune greșită (16 octombrie 2026).
+  i.ses = { ...i.ses, antet: {
+    firma: "radoia", numar: a.numar, data: a.data, client: a.client, obiectiv: a.obiectiv,
+    persoana: a.persoana, localitate: a.localitate, discount: a.discountProcent ?? 0,
+  } };
+  await D.salveaza(i.ses);
 }
 
 /** „Creează șantierul”: planul din ofertă și necesarul lui, pe depozitul șantierului. */
