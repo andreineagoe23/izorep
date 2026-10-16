@@ -8,7 +8,7 @@
  * `src/stoc/` si ecranele lucreaza deja cu numere rotunjite la bani. Totalul
  * ofertei se verifica pe server din liniile ei (`salveazaOferta`).
  */
-import { and, asc, desc, eq, inArray, isNotNull, max, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull, max, ne, sql } from "drizzle-orm";
 import type { Baza } from "../db/client.js";
 import {
   ambalaj, anexaSantier, articol, cerere, comanda, depozit, documentFurnizor, firma, masuratoare, miscare, necesar, oferta,
@@ -216,13 +216,25 @@ async function firmaDupa(tx: Baza, col: "cod" | "denumire", v: string): Promise<
 export async function salveazaOferta(tx: Baza, ctx: Context, cerereId: string, o: OfertaDeSalvat): Promise<OfertaSalvata> {
   const [c] = await tx.select({ id: cerere.id }).from(cerere).where(eq(cerere.id, cerereId));
   if (!c) throw new Refuz(404, "Cererea ofertei nu e pe server.");
+  const a = o.continut.antet;
+  const numar = a.numar ? `${a.serie}${a.numar}` : "";
+  // Un număr de ofertă e al unei singure cereri. Același fișier importat din
+  // nou și salvat tot ca 284 dubla oferta pe tablou (16 octombrie 2026).
+  if (numar) {
+    const [alta] = await tx.select({ nume: cerere.nume }).from(oferta)
+      .innerJoin(cerere, and(eq(cerere.tenantId, oferta.tenantId), eq(cerere.id, oferta.cerereId)))
+      .where(and(eq(oferta.numar, numar), ne(oferta.cerereId, cerereId))).limit(1);
+    if (alta) {
+      throw new Refuz(409, `Numărul ${numar} e deja pe oferta cererii „${alta.nume}”. Scrie alt număr la pasul „Oferta”, `
+        + "sau deschide cererea aceea din Oferte și cereri.");
+    }
+  }
   const { valoare, pozitii } = valoareOferta(o.continut);
   const [ultima] = await tx.select({ v: max(oferta.versiune) }).from(oferta).where(eq(oferta.cerereId, cerereId));
   const versiune = (ultima?.v ?? 0) + 1;
-  const a = o.continut.antet;
   await tx.insert(oferta).values({
     tenantId: ctx.tenantId, cerereId, versiune, firmaId: await firmaDupa(tx, "cod", o.firma),
-    numar: a.numar ? `${a.serie}${a.numar}` : "", data: a.data, client: a.client, obiectiv: a.obiectiv,
+    numar, data: a.data, client: a.client, obiectiv: a.obiectiv,
     valoare: valoare.toFixed(2), pozitii, continut: o.continut, creatDe: ctx.utilizatorId,
   });
   return { versiune, valoare };

@@ -92,6 +92,28 @@ describe("serverul unei firme", () => {
     expect((await cere("/api/stare", "A")).corp).toEqual({ firma: `A-${sufix}` });
   });
 
+  daca()("un număr de ofertă e al unei singure cereri; versiunile aceleiași cereri îl păstrează", async () => {
+    // 16 octombrie 2026: același fișier importat din nou și salvat tot ca 284 dubla oferta pe tablou.
+    const t = await tenantNou("NR");
+    const srv = serverPentru(t);
+    const post = async (cale: string, metoda: string, corp: unknown) => {
+      const r = await srv.request(cale, { method: metoda, body: JSON.stringify(corp), headers: { "content-type": "application/json", [ANTET_CSRF]: "1" } });
+      return { status: r.status, corp: await r.json() as { eroare?: string } };
+    };
+    const continut = (numar: string) => ({ firma: "radoia", continut: { linii: [], antet: { serie: "RAD", numar, data: "01.10.2026", client: "C", obiectiv: "O" }, provenienta: {} } });
+    try {
+      for (const id of ["nr-1", "nr-2"]) expect((await post(`/api/cereri/${id}`, "PUT", cerereMica(id))).status).toBe(200);
+      expect((await post("/api/cereri/nr-1/oferte", "POST", continut("284"))).status).toBe(200);
+      expect((await post("/api/cereri/nr-1/oferte", "POST", continut("284"))).status).toBe(200);
+      const dublu = await post("/api/cereri/nr-2/oferte", "POST", continut("284"));
+      expect(dublu.status).toBe(409);
+      expect(dublu.corp.eroare).toContain("RAD284 e deja pe oferta cererii „test.xlsx”");
+      expect((await post("/api/cereri/nr-2/oferte", "POST", continut("285"))).status).toBe(200);
+    } finally {
+      await purjeazaTenant(prop.db, t);
+    }
+  });
+
   daca()("o cerere prea mare e refuzată înainte să ajungă la bază", async () => {
     const mare = "x".repeat(LIMITA_IMPLICITA + 1);
     const r = await cere("/api/miscari", "A", { method: "POST", body: miscareMica("mare", { nota: mare }) });
