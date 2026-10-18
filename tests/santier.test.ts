@@ -150,6 +150,9 @@ describe("Pozele, când modelul nu e pornit (14 octombrie 2026)", () => {
   it("ecranul spune ce ai de făcut când pozele nu se citesc, iar pagina necitită nu arată „De verificat”", async () => {
     const { cardIncarca, cardPagina, mesajModel } = await import("../web/santier-vizual.js");
     expect(mesajModel("pornit")).toBe("");
+    // Ruta e `/api`, ca datele: sub `/izorep/` din `npm run dev`, „lângă pagină” dădea HTML-ul lui vite.
+    const { rutaModel } = await import("../web/imagine.js");
+    expect(rutaModel("poza")).toBe("/api/poza");
     // Pe ecran doar ce face omul, fără server, model sau cheie (18 octombrie 2026).
     for (const m of ["fara-cheie", "fara-server", "nu-raspunde"] as const) {
       expect(mesajModel(m).replace(/<[^>]*>/g, "")).not.toMatch(/server|OpenAI|cheia|demo|model/i);

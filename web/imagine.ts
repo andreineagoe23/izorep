@@ -34,8 +34,13 @@ export function caDataUrl(f: File): Promise<string> {
  */
 export class PlafonModel extends Error {}
 
-/** Ruta unui model, langa pagina (merge si sub un subdirector). */
-export const rutaModel = (nume: string): string => location.pathname.replace(/[^/]*$/, "") + `api/${nume}`;
+/**
+ * Ruta unui model: `/api`, ca restul datelor. Era „langa pagina”, pentru Pages
+ * (`/izorep/api`); in `npm run dev` pagina sta tot sub `/izorep/`, iar vite trimite
+ * la server doar `/api`, deci pe localhost raspundea pagina HTML si ecranele credeau
+ * ca nu exista model (18 octombrie 2026).
+ */
+export const rutaModel = (nume: string): string => `/api/${nume}`;
 
 /**
  * Cum sta modelul, cu motivul. Masuratorile treceau pe tacute pe „scrii de

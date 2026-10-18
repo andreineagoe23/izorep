@@ -38,6 +38,7 @@ import {
 } from "../import/oferta-vizual.js";
 import { documentOferta, textClient, type PozitieOferta } from "../document-oferta.js";
 import { legaCelule, numarInCelula, numarScris, pastreazaCursorul } from "../celula.js";
+import { rutaModel } from "../imagine.js";
 import { legaPanouStergere, panouStergere } from "../confirmare.js";
 import { FARA_POZITII, fisierNecitit, motiveLinie, stareLinie, type CodMotiv } from "../import/text.js";
 import { preia, type Predare } from "../predare.js";
@@ -68,7 +69,7 @@ import { bani } from "../../src/pricing/engine.js";
  * Pe linkul de pe Pages lipseste, iar ecranul cade curat pe stratul
  * determinist — si cheia API nu poate ajunge in pagina.
  */
-const RUTA_MODEL = location.pathname.replace(/[^/]*$/, "") + "api/extrage";
+const RUTA_MODEL = rutaModel("extrage");
 interface StareModel { disponibil: boolean; model: string; prag: number; lot?: number; concurenta?: number }
 /** Loturi mici, in paralel: fiecare lot intors misca bara de progres. */
 const LOT_IMPLICIT = 25;

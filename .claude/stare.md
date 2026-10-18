@@ -14,6 +14,11 @@ firmei, iar câmpurile editate nu se refăceau pe pagină. Pe ramura `timp-real`
   de comandă. Rândul care nu mai e poziție își golește coloanele noastre.
   Verificat cu Playwright pe TRANSAVIA: totalul se schimbă la fiecare cifră,
   cursorul rămâne, „100,” rămâne „100,”, Escape revine la 94.575,06 €.
+- **Pe localhost pozele, importul și avizele nu foloseau modelul**, deși
+  serverul avea cheia: rutele modelului erau „lângă pagină” (`/izorep/api/…`, de
+  pe vremea Pages), iar vite trimite la server doar `/api`, deci răspundea
+  `index.html` și ecranul credea că nu există model. Acum `/api/…`, ca datele
+  (`rutaModel`, `linkDocument`). Pe Render nu se vedea: acolo pagina e la `/`.
 - **Fără jargon pe ecran:** mesajul de la poze („Pe linkul demo … nu există
   server”, „cheia OpenAI”) spune acum doar ce face omul; la fel mesajele de
   salvare și pagina „Aplicația nu se deschide acum”.

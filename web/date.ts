@@ -432,7 +432,7 @@ export function ataseazaDocument(d: DocumentAtasat & { fisier: string }): boolea
 }
 
 /** Linkul de deschis documentul atasat (se deschide in alta fila). */
-export const linkDocument = (id: string): string => `${location.pathname.replace(/[^/]*$/, "")}api/documente/${enc(id)}`;
+export const linkDocument = (id: string): string => `/api/documente/${enc(id)}`;
 
 export const idNou = dep.idNou;
 
