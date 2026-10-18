@@ -76,7 +76,7 @@ async function api<T>(cale: string, metoda = "GET", corp?: unknown): Promise<T> 
   let json: unknown = null;
   try { json = text ? JSON.parse(text) : null; } catch { /* nu e JSON: nu e serverul nostru */ }
   if (!r.ok) {
-    const mesaj = (json as { eroare?: string } | null)?.eroare ?? `Serverul a răspuns ${r.status}.`;
+    const mesaj = (json as { eroare?: string } | null)?.eroare ?? `Nu a mers (cod ${r.status}). Încearcă din nou.`;
     throw new EroareServer(r.status, mesaj);
   }
   return json as T;
@@ -85,7 +85,7 @@ async function api<T>(cale: string, metoda = "GET", corp?: unknown): Promise<T> 
 /** O scriere, dupa cele de dinainte. Refuzata → mesaj pe ecran si copia de pe server. */
 function trimite(f: () => Promise<unknown>): void {
   coada = coada.then(f).then(() => undefined, async (e: unknown) => {
-    ascultaEroare(`Nu s-a salvat pe server: ${e instanceof Error ? e.message : String(e)}`);
+    ascultaEroare(`Nu s-a salvat: ${e instanceof Error ? e.message : String(e)}`);
     try {
       copie = await api<DateComune>("/api/date");
       invechit = true;
@@ -121,7 +121,7 @@ export async function reimprospateaza(): Promise<void> {
 
 /** Ecranul scrie dintr-o lista luata inainte de un refuz: nu pleaca nimic. */
 function refuzaInvechit(): boolean {
-  if (invechit) ascultaEroare("Pagina s-a reîncărcat cu datele de pe server: fă din nou ultima modificare.");
+  if (invechit) ascultaEroare("Un coleg a schimbat ceva între timp. Pagina s-a reîncărcat: fă din nou ultima modificare.");
   return invechit;
 }
 
@@ -504,7 +504,7 @@ export async function listeaza(): Promise<ist.IntrareIstoric[]> {
     for (const c of toate) cuFisier.add(c.id);
     return toate;
   } catch (e) {
-    ascultaEroare(`Cererile nu s-au putut citi de pe server: ${e instanceof Error ? e.message : String(e)}`);
+    ascultaEroare(`Cererile nu s-au putut deschide: ${e instanceof Error ? e.message : String(e)}`);
     return [];
   }
 }

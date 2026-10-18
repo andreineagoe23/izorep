@@ -1,7 +1,24 @@
 # Stare curentă
 
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
-> Ultima actualizare: 16 octombrie 2026.
+> Ultima actualizare: 18 octombrie 2026.
+
+## 18 octombrie 2026: demo-ul amânat, editarea în timp real
+
+Andrei a anulat demo-ul de luni: aplicația e prea complicată pentru oamenii
+firmei, iar câmpurile editate nu se refăceau pe pagină. Pe ramura `timp-real`:
+
+- **Totul la tastă** (`pastreazaCursorul` în `web/celula.ts`): cantitatea,
+  prețul („Ca în ofertă”), necesarul, pierderile, cifrele de lângă foaia
+  clientului (Toate / Gata / De verificat / Fără preț, foile), valoarea ciornei
+  de comandă. Rândul care nu mai e poziție își golește coloanele noastre.
+  Verificat cu Playwright pe TRANSAVIA: totalul se schimbă la fiecare cifră,
+  cursorul rămâne, „100,” rămâne „100,”, Escape revine la 94.575,06 €.
+- **Fără jargon pe ecran:** mesajul de la poze („Pe linkul demo … nu există
+  server”, „cheia OpenAI”) spune acum doar ce face omul; la fel mesajele de
+  salvare și pagina „Aplicația nu se deschide acum”.
+- **De făcut, cu machetă întâi:** simplificarea ecranelor pentru oameni fără
+  experiență (`utilizatori-fara-experienta` în memoria lui Claude).
 
 ## 16 octombrie 2026: auditul, plafonul pe model, bugurile de demo
 

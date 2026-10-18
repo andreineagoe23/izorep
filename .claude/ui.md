@@ -274,8 +274,15 @@ o comoditate; documentele adevărate vor sta în bază.
 ## Tabelele editabile (15 octombrie 2026)
 
 `web/celula.ts`: `celulaNumar`, `celulaText` și `legaCelule` (comportamentul,
-pe rădăcina ecranului). Celula se salvează când pleacă cursorul din ea; Enter
-coboară pe rândul următor, Escape renunță. Galben (`--schimbat`) = scris de
+pe rădăcina ecranului). Din 18 octombrie 2026 (Andrei: tot ce se editează se
+vede pe loc) celula se scrie la fiecare tastă și ecranul se redesenează sub
+cursor (`pastreazaCursorul`: același câmp, textul exact, cursorul și derularea
+la loc). O valoare pe jumătate („0”, gol) nu dă mesaj la tastă, ci la ieșirea
+din celulă. Enter coboară pe rândul următor, Escape pune la loc ce era la
+intrarea în celulă. Rândul la care scrii rămâne vizibil sub filtru până
+schimbi filtrul (`randInLucru`). La fel, la tastă: pierderile din „Materiale
+de comandat”, cifrele din jurul foii clientului (`actualizeazaInJur`) și
+valoarea ciornei de comandă. Galben (`--schimbat`) = scris de
 om, iar `title` spune ce era. O redesenare la apăsarea mouse-ului ar scoate
 butonul de sub el înainte de clic: când celula pleacă la un clic, ecranul se
 redesenează după el, doar dacă clicul n-a redesenat. Numărul se citește

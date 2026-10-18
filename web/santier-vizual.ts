@@ -226,20 +226,20 @@ function alegereSantier(santiere: SantierAles[], ales: string, scop: Scop): stri
 }
 
 /**
- * De ce nu se citesc pozele, cand nu se citesc. Fara mesajul asta pagina
+ * Ce face omul cand pozele nu se citesc singure. Fara mesajul asta pagina
  * trecea direct pe „scrii de mana”, iar omul credea ca modelul a citit poza si
- * n-a gasit nimic.
+ * n-a gasit nimic (14 octombrie 2026). Motivul tehnic (link demo, server fara
+ * cheie) nu se spune: omului de la birou nu-i spune nimic (Andrei, 18 octombrie
+ * 2026). Se spune doar ce are de facut.
  */
 export function mesajModel(m: StareModel | undefined): string {
   if (m === undefined || m === "pornit") return "";
-  const text = m === "fara-server"
-    ? "Pe linkul demo pozele nu se citesc automat: aici nu există server. Rândurile se scriu de mână, cu poza alături."
-    : m === "fara-cheie"
-      ? "Citirea automată a pozelor nu e pornită pe server: lipsește cheia OpenAI (OPENAI_API_KEY în setările serverului). Până se pune, rândurile se scriu de mână, cu poza alături."
-      : "Serverul nu a răspuns când am întrebat de citirea pozelor. Rândurile se pot scrie de mână, sau încearcă din nou.";
+  const text = m === "nu-raspunde"
+    ? "Pozele nu s-au putut citi acum. Apasă „Încearcă din nou” sau scrie rândurile de pe poză, lângă ea."
+    : "Aici pozele nu se citesc singure. Încarcă poza, apoi scrie rândurile de pe ea în tabelul de lângă, cu „Adaugă rând”.";
   return `<div class="sant-model" role="status">
-    <p>${stare("Pozele nu se citesc automat", "atentie")} ${esc(text)}</p>
-    ${m === "fara-server" ? "" : `<button type="button" class="secundar" data-act="verifica-model">Verifică din nou</button>`}
+    <p>${stare(m === "nu-raspunde" ? "Nu s-au citit" : "Scrii de mână", "atentie")} ${esc(text)}</p>
+    ${m === "nu-raspunde" ? `<button type="button" class="secundar" data-act="verifica-model">Încearcă din nou</button>` : ""}
   </div>`;
 }
 

@@ -76,7 +76,7 @@ describe("web/date.ts pe server: pleacă doar diferența", () => {
     // Ecranul scoate prima situatie (n-ar trebui): serverul refuza.
     d.scriePlanuri([plan([sit(2)])]);
     await d.reimprospateaza();
-    expect(mesaje).toEqual(["Nu s-a salvat pe server: se șterge doar ultima"]);
+    expect(mesaje).toEqual(["Nu s-a salvat: se șterge doar ultima"]);
     expect(d.citestePlanuri()[0]!.situatii.map((s) => s.nr)).toEqual([1, 2]);
   });
 

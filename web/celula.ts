@@ -57,29 +57,101 @@ export function celulaText(c: { ed: string; text: string; eticheta: string; schi
     contenteditable="plaintext-only" role="textbox" spellcheck="false" aria-label="${esc(c.eticheta)}"${titlu}>${esc(c.text)}</p>`;
 }
 
-/** O țintă din pagină, regăsită după redesenare prin atributele ei `data-*`. */
+/** O țintă din pagină, regăsită după redesenare prin atributele ei `data-*` (sau id, sau nume). */
 function cheieTinta(gazda: HTMLElement, el: Element | null): string | null {
   if (!(el instanceof HTMLElement) || !gazda.contains(el)) return null;
-  const date = Object.entries(el.dataset).map(([k, v]) =>
+  const tag = el.tagName.toLowerCase();
+  // `original` îl pune celula la focus: după redesenare noua celulă nu-l are încă.
+  const date = Object.entries(el.dataset).filter(([k]) => k !== "original").map(([k, v]) =>
     `[data-${k.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`)}="${CSS.escape(v ?? "")}"]`).join("");
-  return date ? `${el.tagName.toLowerCase()}${date}` : null;
+  if (date) return `${tag}${date}`;
+  if (el.id) return `${tag}#${CSS.escape(el.id)}`;
+  const nume = el.getAttribute("name");
+  return nume ? `${tag}[name="${CSS.escape(nume)}"]` : null;
+}
+
+/** Cât timp ecranul se redesenează sub cursor: ieșirea din câmpul scos din pagină nu e a omului. */
+let subCursor = false;
+
+/** Poziția cursorului în textul unui câmp, ca început și sfârșit. */
+function cursorIn(el: HTMLElement): [number, number] {
+  if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
+    const n = el.value.length;
+    return [el.selectionStart ?? n, el.selectionEnd ?? n];
+  }
+  const n = (el.textContent ?? "").length;
+  const sel = getSelection();
+  if (!sel || sel.rangeCount === 0 || !el.contains(sel.anchorNode)) return [n, n];
+  const r = sel.getRangeAt(0);
+  const inainte = document.createRange();
+  inainte.selectNodeContents(el);
+  inainte.setEnd(r.startContainer, r.startOffset);
+  const start = inainte.toString().length;
+  inainte.setEnd(r.endContainer, r.endOffset);
+  return [start, inainte.toString().length];
+}
+
+function puneCursorul(el: HTMLElement, [start, sfarsit]: [number, number]): void {
+  if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
+    try { el.setSelectionRange(start, sfarsit); } catch { /* type=number nu are selecție */ }
+    return;
+  }
+  const text = el.firstChild ?? el;
+  const n = text.textContent?.length ?? 0;
+  const r = document.createRange();
+  r.setStart(text, Math.min(start, n));
+  r.setEnd(text, Math.min(sfarsit, n));
+  getSelection()?.removeAllRanges();
+  getSelection()?.addRange(r);
+}
+
+/**
+ * Redesenează ecranul în timp ce omul scrie (Andrei, 18 octombrie 2026: tot ce
+ * se schimbă dintr-un câmp se vede pe loc, nu la ieșirea din el). Câmpul în
+ * care scrie se regăsește după redesenare, cu textul lui exact („12,” rămâne
+ * „12,”, nu „12”), cursorul la loc și pagina nederulată.
+ */
+export function pastreazaCursorul(gazda: HTMLElement, deseneaza: () => void): void {
+  const el = document.activeElement;
+  const cheie = cheieTinta(gazda, el);
+  const pagina = document.scrollingElement;
+  const sus = pagina?.scrollTop ?? 0;
+  subCursor = true;
+  try { deseneaza(); } finally { subCursor = false; }
+  if (pagina) pagina.scrollTop = sus;
+  if (!cheie || !(el instanceof HTMLElement) || el.isConnected) return;
+  const nou = gazda.querySelector<HTMLElement>(cheie);
+  if (!nou) return;
+  const cursor = cursorIn(el);
+  const original = el.dataset["original"];
+  if (nou instanceof HTMLInputElement || nou instanceof HTMLTextAreaElement) {
+    nou.value = (el as HTMLInputElement).value;
+  } else if (nou.isContentEditable) {
+    nou.textContent = el.textContent;
+  }
+  nou.focus({ preventScroll: true });
+  if (original !== undefined) nou.dataset["original"] = original;
+  puneCursorul(nou, cursor);
 }
 
 export interface LegareCelule {
   /**
-   * Scrie valoarea celulei din care a plecat cursorul. Întoarce `true` când s-a
-   * schimbat ceva de redesenat; `false` lasă pagina cum e (o celulă de text se
+   * Scrie valoarea celulei. `peLoc`: omul încă scrie în ea, deci o valoare pe
+   * jumătate („0” înainte de „0,5”, gol) se lasă fără mesaj; la ieșirea din
+   * celulă vine din nou, cu `peLoc` fals. Întoarce `true` când s-a schimbat
+   * ceva de redesenat; `false` lasă pagina cum e (o celulă de text se
    * actualizează singură, pe loc).
    */
-  scrie: (el: HTMLElement) => boolean;
+  scrie: (el: HTMLElement, peLoc: boolean) => boolean;
   deseneaza: () => void;
   /** De câte ori s-a redesenat ecranul. */
   desenari: () => number;
 }
 
 /**
- * Celulele ecranului, ca în Excel: se salvează când pleacă cursorul din ele,
- * Enter coboară pe rândul următor, Escape renunță.
+ * Celulele ecranului, ca în Excel: valoarea și totalurile se refac la fiecare
+ * tastă, Enter coboară pe rândul următor, Escape pune la loc ce era când ai
+ * intrat în celulă. Ieșirea din celulă dă mesajul, dacă valoarea nu merge.
  *
  * Redesenarea (alt număr, alt total) făcută la apăsarea mouse-ului ar scoate
  * butonul de sub el înainte de clic. Când celula pleacă la un clic, se
@@ -96,15 +168,28 @@ export function legaCelule(gazda: HTMLElement, o: LegareCelule): void {
 
   gazda.addEventListener("focusin", (e) => {
     const el = e.target as HTMLElement;
-    if (el.matches?.("p.cel-ed[data-ed]")) el.dataset["original"] = el.textContent ?? "";
+    if (subCursor || !el.matches?.(".cel-ed[data-ed]")) return;
+    el.dataset["original"] = el instanceof HTMLInputElement ? el.value : el.textContent ?? "";
+  });
+  gazda.addEventListener("input", (e) => {
+    const el = e.target as HTMLElement;
+    if (!(el instanceof HTMLInputElement) || !el.matches(".cel-ed[data-ed]")) return;
+    if (o.scrie(el, true)) pastreazaCursorul(gazda, o.deseneaza);
   });
   gazda.addEventListener("keydown", (e) => {
     const el = e.target as HTMLElement;
     if (!el.matches?.(".cel-ed[data-ed]")) return;
     if (e.key === "Escape") {
-      if (el instanceof HTMLInputElement) el.value = el.defaultValue;
-      else el.textContent = el.dataset["original"] ?? el.textContent;
       urmatoarea = null;
+      if (el instanceof HTMLInputElement) {
+        // Ce s-a scris pe loc e deja în totaluri: Escape îl scoate de acolo.
+        el.value = el.dataset["original"] ?? el.defaultValue;
+        if (el.value.trim() !== el.defaultValue.trim() && o.scrie(el, true)) {
+          subCursor = true;
+          try { o.deseneaza(); } finally { subCursor = false; }
+          return;
+        }
+      } else el.textContent = el.dataset["original"] ?? el.textContent;
       el.blur();
       return;
     }
@@ -116,7 +201,7 @@ export function legaCelule(gazda: HTMLElement, o: LegareCelule): void {
   });
   gazda.addEventListener("focusout", (e) => {
     const el = e.target as HTMLElement;
-    if (!el.matches?.(".cel-ed[data-ed]")) return;
+    if (subCursor || !el.matches?.(".cel-ed[data-ed]")) return;
     const spre = urmatoarea ?? cheieTinta(gazda, (e as FocusEvent).relatedTarget as Element | null);
     const clic = apasat !== null && apasat !== el;
     urmatoarea = null;
@@ -124,7 +209,7 @@ export function legaCelule(gazda: HTMLElement, o: LegareCelule): void {
     const mergi = (): void => { if (spre) gazda.querySelector<HTMLElement>(spre)?.focus(); };
     const input = el instanceof HTMLInputElement ? el : null;
     if (input && input.value.trim() === input.defaultValue.trim()) { mergi(); return; }
-    if (!o.scrie(el)) {
+    if (!o.scrie(el, false)) {
       if (input) input.value = input.defaultValue;
       mergi();
       return;

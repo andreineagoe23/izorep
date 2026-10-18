@@ -103,7 +103,7 @@ async function navigheaza(mutaFocus = false): Promise<void> {
   try {
     await reimprospateaza();
   } catch (e) {
-    arataEroare(`Datele nu s-au putut lua de pe server: ${e instanceof Error ? e.message : String(e)}. Se arată ultimele primite.`);
+    arataEroare(`Nu am putut aduce datele noi: ${e instanceof Error ? e.message : String(e)}. Vezi datele de mai devreme.`);
   }
   const { ecran } = await incarca();
   root.innerHTML = `<div class="titlu-ecran">
@@ -300,8 +300,8 @@ laReimprospatare(() => { void navigheaza(); });
 
 function deseneazaFaraServer(): void {
   document.documentElement.dataset["faraMeniu"] = "";
-  document.title = "Serverul nu răspunde · IzoERP";
-  $("#ecran").innerHTML = `<div class="titlu-ecran"><h1>Serverul nu răspunde</h1><p>Datele firmei stau pe server.</p></div>
+  document.title = "Aplicația nu se deschide · IzoERP";
+  $("#ecran").innerHTML = `<div class="titlu-ecran"><h1>Aplicația nu se deschide acum</h1><p>Încearcă din nou peste câteva minute.</p></div>
     <div id="continut"><p class="alerta" role="alert">${esc(eroarePornire)}</p></div>`;
   laInceput();
 }

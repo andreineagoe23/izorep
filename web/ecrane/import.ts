@@ -37,7 +37,7 @@ import {
   antetDinFisier, baraVerificare, documentPeEcran, taburiFoi, type AntetScris, type SchimbariPozitie, type Vedere,
 } from "../import/oferta-vizual.js";
 import { documentOferta, textClient, type PozitieOferta } from "../document-oferta.js";
-import { legaCelule, numarInCelula, numarScris } from "../celula.js";
+import { legaCelule, numarInCelula, numarScris, pastreazaCursorul } from "../celula.js";
 import { legaPanouStergere, panouStergere } from "../confirmare.js";
 import { FARA_POZITII, fisierNecitit, motiveLinie, stareLinie, type CodMotiv } from "../import/text.js";
 import { preia, type Predare } from "../predare.js";
@@ -276,6 +276,8 @@ export const ecran: Ecran = {
     /* ------------------------------------------------------------ desenare */
     /** Câte redesenări au fost: celula ofertei redesenează după un clic doar dacă el n-a făcut-o. */
     let desenari = 0;
+    /** Rândul din „Ca în ofertă” la care s-a scris pe loc: nu dispare din filtru cât scrii. */
+    let randInLucru: number | null = null;
     function deseneaza(): void {
       desenari++;
       const areSesiune = sesiune !== null;
@@ -386,7 +388,8 @@ export const ecran: Ecran = {
       });
     }
 
-    function paginaVerificare(s: Sesiune): string {
+    /** `faraLista`: doar ce e în jurul listei (cifrele, filtrele, foile), pentru `actualizeazaInJur`. */
+    function paginaVerificare(s: Sesiune, faraLista = false): string {
       // In oferta se vad toate foile, pe capitole; foaia aleasa conteaza doar in fisierul clientului.
       const peFoaie_ = vedere === "oferta" ? null : foaie;
       const { peFoaie, peStare, lista } = vizibile(s, peFoaie_);
@@ -399,10 +402,12 @@ export const ecran: Ecran = {
       const motive = filtru === "de_validat" || filtru === "netarifate" ? numaraMotive(peStare) : [];
       const cuFoaie = s.foi.length > 1;
       const filtrat = filtru === "toate" && motiv === null ? null : new Set(lista.map((l) => l.extras.index));
+      if (filtrat && randInLucru !== null) filtrat.add(randInLucru);
       const harta = new Map(s.rez.linii.map((l) => [l.extras.index, l]));
 
       let corp: string;
-      if (vedere === "oferta") {
+      if (faraLista) corp = "";
+      else if (vedere === "oferta") {
         const l = editIdx === null ? undefined : harta.get(editIdx);
         const campuri = l ? campuriLinie(s, l) : undefined;
         corp = documentPeEcran(documentul(s), {
@@ -428,6 +433,28 @@ export const ecran: Ecran = {
         ${detalii(s)}`;
     }
 
+    /**
+     * Cifrele din jurul foii (Gata / De verificat / Fără preț, foile, motivele),
+     * refăcute cât omul scrie într-o celulă din foaie. Foaia rămâne: cursorul e în ea.
+     */
+    function actualizeazaInJur(s: Sesiune): void {
+      const lista = pagina.querySelector<HTMLElement>(":scope > .imp-lista");
+      if (!lista) return;
+      const sablon = document.createElement("template");
+      sablon.innerHTML = paginaVerificare(s, true);
+      // `:scope` nu merge pe un fragment: copiii lui se caută direct.
+      const goala = [...sablon.content.children].find((c) => c.classList.contains("imp-lista"));
+      if (!goala) return;
+      const inainte: Node[] = [];
+      for (let n = goala.previousSibling; n; n = n.previousSibling) inainte.unshift(n);
+      const dupa: Node[] = [];
+      for (let n = goala.nextSibling; n; n = n.nextSibling) dupa.push(n);
+      while (lista.previousSibling) lista.previousSibling.remove();
+      while (lista.nextSibling) lista.nextSibling.remove();
+      lista.before(...inainte);
+      lista.after(...dupa);
+    }
+
     /** Focus dupa redesenare: pe cardul atins, sau pe urmatorul cand acela a plecat din lista. */
     function focuseaza(idx: number | null, act = "modifica"): void {
       if (idx === null) return;
@@ -447,7 +474,7 @@ export const ecran: Ecran = {
     /* ------------------------------------------------------------- actiuni */
     function deschideSesiune(s: Sesiune): void {
       sesiune = s;
-      pas = 2; filtru = "toate"; motiv = null; foaie = foaieInitiala(s); editIdx = null;
+      pas = 2; filtru = "toate"; motiv = null; foaie = foaieInitiala(s); editIdx = null; randInLucru = null;
       // Latimea se masoara DUPA plierea barei, altfel ar decide pe locul pe
       // care il ocupa inca meniul. Sub prag, foaia 1:1 n-ar incapea fara
       // derulare laterala decat cu coloane de cateva litere: se deschide ca
@@ -936,13 +963,13 @@ export const ecran: Ecran = {
     }
 
     /** Cantitatea scrisă în ofertă: celula ei din fișier, ca o corectură în foaie. */
-    function scrieCantitatea(idx: number, valoare: number): boolean {
+    function scrieCantitatea(idx: number, valoare: number, peLoc = false): boolean {
       const s = sesiune;
       const l = s?.rez.linii.find((x) => x.extras.index === idx);
       if (!s || !l) return false;
       const c = celulaCantitate(s, l);
       if (!c) {
-        arataMesaj("Cantitatea acestei poziții nu e într-o celulă a fișierului: o schimbi din „Modifică”.");
+        if (!peLoc) arataMesaj("Cantitatea acestei poziții nu e într-o celulă a fișierului: o schimbi din „Modifică”.");
         return false;
       }
       const vechi = c.rand.celule[c.cel]?.v ?? null;
@@ -957,6 +984,8 @@ export const ecran: Ecran = {
       s.editari.splice(0, s.editari.length, ...fara,
         ...(inainte === valoare ? [] : [{ foaie: l.bruta.foaie, rand: l.bruta.rand, cel: c.cel, v: valoare, inainte }]));
       retarifeaza();
+      // Cât scrie, cifra și totalul se schimbă sub ochii lui: mesajul ar veni la fiecare tastă.
+      if (peLoc) return true;
       arataMesaj("Cantitatea a fost schimbată.", () => {
         scrieCelula(c.rand, c.cel, vechi);
         reconstruieste(c.rand);
@@ -971,12 +1000,13 @@ export const ecran: Ecran = {
      * ajustarea tehnicului, deci se scrie fără ea: altfel 100 € scris ar ieși
      * 110 € cu +10 %. Gol = prețul din listă.
      */
-    function scriePretul(idx: number, valoare: number | null): boolean {
+    function scriePretul(idx: number, valoare: number | null, peLoc = false): boolean {
       const vechi = preturiManuale.get(idx);
       const nou = valoare === null || !(valoare > 0) ? undefined : ajustare ? valoare / (1 + ajustare / 100) : valoare;
       if (nou === vechi) return false;
       if (nou === undefined) preturiManuale.delete(idx); else preturiManuale.set(idx, nou);
       retarifeaza();
+      if (peLoc) return true;
       arataMesaj(nou === undefined ? "Poziția ia din nou prețul din listă." : "Prețul a fost scris.", () => {
         if (vechi === undefined) preturiManuale.delete(idx); else preturiManuale.set(idx, vechi);
         retarifeaza();
@@ -1036,12 +1066,12 @@ export const ecran: Ecran = {
       }
 
       const bFiltru = t.closest<HTMLButtonElement>("[data-filtru]");
-      if (bFiltru) { filtru = bFiltru.dataset["filtru"] as FiltruStare; motiv = null; editIdx = null; deseneaza(); return; }
+      if (bFiltru) { filtru = bFiltru.dataset["filtru"] as FiltruStare; motiv = null; editIdx = null; randInLucru = null; deseneaza(); return; }
       const bTab = t.closest<HTMLButtonElement>('[data-act="foaie-tab"]');
-      if (bTab) { foaie = bTab.dataset["foaie"] ?? null; motiv = null; editIdx = null; deseneaza(); return; }
+      if (bTab) { foaie = bTab.dataset["foaie"] ?? null; motiv = null; editIdx = null; randInLucru = null; deseneaza(); return; }
 
       const bMotiv = t.closest<HTMLButtonElement>("[data-motiv]");
-      if (bMotiv) { const m = bMotiv.dataset["motiv"] as CodMotiv; motiv = motiv === m ? null : m; deseneaza(); return; }
+      if (bMotiv) { const m = bMotiv.dataset["motiv"] as CodMotiv; motiv = motiv === m ? null : m; randInLucru = null; deseneaza(); return; }
 
       const b = t.closest<HTMLButtonElement>("button[data-act]");
       const act = b?.dataset["act"];
@@ -1185,8 +1215,19 @@ export const ecran: Ecran = {
       });
     });
 
+    /** Pierderea scrisă într-un câmp al necesarului. `false`: aceeași ca înainte, sau nu e număr. */
+    function scriePierderea(t: HTMLInputElement | HTMLSelectElement): boolean {
+      const v = Number(t.value.replace(",", "."));
+      const cat = t.dataset["cat"] as keyof Pierderi;
+      if (t.value.trim() === "" || !Number.isFinite(v) || v < 0 || v > 100 || pierderi[cat] === v / 100) return false;
+      pierderi = { ...pierderi, [cat]: v / 100 };
+      return true;
+    }
+
     gazda.addEventListener("change", (e) => {
       const t = e.target as HTMLInputElement | HTMLSelectElement;
+      // Un câmp scos din pagină de o redesenare își trimite `change`-ul după: nu mai e al omului.
+      if (!t.isConnected) return;
       if (t.id === "fisier") {
         const f = (t as HTMLInputElement).files?.[0];
         if (f) void proceseaza(f);
@@ -1205,20 +1246,17 @@ export const ecran: Ecran = {
           const d = Number(t.value);
           const bifat = (t as HTMLInputElement).checked;
           tuburiPeste = bifat ? [...new Set([...tuburiPeste, d])] : tuburiPeste.filter((x) => x !== d);
-        } else {
-          const v = Number(t.value.replace(",", "."));
-          if (Number.isFinite(v) && v >= 0) pierderi = { ...pierderi, [t.dataset["cat"] as keyof Pierderi]: v / 100 };
-        }
+        } else if (!scriePierderea(t)) return;
         redeseneazaNecesar(sesiune);
         return;
       }
-      if (t.name === "vedere") { vedere = t.value as Vedere; editIdx = null; deseneaza(); return; }
+      if (t.name === "vedere") { vedere = t.value as Vedere; editIdx = null; randInLucru = null; deseneaza(); return; }
       if (t.closest("#antet-oferta") && sesiune && t.tagName === "SELECT") {
         antet = { ...antet, firma: t.value };
         salveazaSesiune();
         return;
       }
-      if (t.dataset["act"] === "filtru") { filtru = t.value as FiltruStare; motiv = null; editIdx = null; deseneaza(); return; }
+      if (t.dataset["act"] === "filtru") { filtru = t.value as FiltruStare; motiv = null; editIdx = null; randInLucru = null; deseneaza(); return; }
       const form = t.closest<HTMLFormElement>(".imp-editor");
       if (!form) return;
       // Un camp extras atins face din salvare corectura omului. Descrierea,
@@ -1252,11 +1290,17 @@ export const ecran: Ecran = {
     // doar bara de jos, care spune cat e gata.
     gazda.addEventListener("input", (e) => {
       const camp = e.target as HTMLElement;
+      if (camp.dataset["act"] === "pierdere" && sesiune) {
+        const s = sesiune;
+        if (scriePierderea(camp as HTMLInputElement)) pastreazaCursorul(gazda, () => redeseneazaNecesar(s));
+        return;
+      }
       if ((camp as HTMLInputElement).name === "ajustare" && sesiune && pas === 3) {
         // Doar suma de sus: o redesenare a pasului ar sterge datele ofertei deja scrise.
         const v = Number((camp as HTMLInputElement).value.replace(",", "."));
         ajustare = Number.isFinite(v) && v > -100 ? v : 0;
         arataValoarea(sesiune);
+        redeseneazaNecesar(sesiune);
         salveazaSesiune();
         return;
       }
@@ -1317,34 +1361,46 @@ export const ecran: Ecran = {
       // tabelului: cursorul ramane in celula in care scrie omul.
       const tr = camp.closest<HTMLTableRowElement>("tr");
       const l = s.rez.linii.find((x) => x.bruta.foaie === numeFoaie && x.bruta.rand === rand.rand);
-      if (tr && l && l.extras.sistem !== null) {
+      if (tr) {
+        // Un rând care nu mai e poziție („ceva” în loc de descriere) își golește coloanele noastre.
+        const poz = l && l.extras.sistem !== null ? l : undefined;
         tr.querySelectorAll("td.extras").forEach((td) => td.remove());
-        tr.insertAdjacentHTML("beforeend", celuleExtrase(l, { propunere, editIdx }));
-        tr.dataset["stare"] = stareLinie(l);
-        tr.dataset["idx"] = String(l.extras.index);
+        tr.insertAdjacentHTML("beforeend", poz ? celuleExtrase(poz, { propunere, editIdx }) : `<td class="extras"></td>`.repeat(2));
+        if (poz) {
+          tr.dataset["stare"] = stareLinie(poz);
+          tr.dataset["idx"] = String(poz.extras.index);
+        } else {
+          delete tr.dataset["stare"];
+          delete tr.dataset["idx"];
+        }
       }
+      actualizeazaInJur(s);
     });
 
     // Tabelul ofertei, ca în Excel (`legaCelule`). Denumirea se scrie pe loc;
     // cantitatea și prețul schimbă numerotarea și totalul, deci redesenează.
     legaCelule(gazda, {
-      scrie: (el) => {
+      scrie: (el, peLoc) => {
         if (!sesiune) return false;
         const idx = Number(el.dataset["idx"]);
-        if (el.dataset["ed"] === "den") { scrieDenumirea(el); return false; }
+        if (el.dataset["ed"] === "den") { if (!peLoc) scrieDenumirea(el); return false; }
         const valoare = numarScris((el as HTMLInputElement).value);
+        // Rândul la care scrie omul rămâne pe ecran și când iese din filtrul ales.
+        if (peLoc) randInLucru = idx;
         if (el.dataset["ed"] === "cant") {
           // 0 nu e o cantitate: la recitirea rândului ar ieși „fără cantitate”,
           // iar oferta punea 1, fără niciun semn (16 octombrie 2026).
           if (valoare === null || !(valoare > 0)) {
-            arataMesaj(valoare === 0
-              ? "Cantitatea trebuie să fie mai mare decât 0. Ca să scoți poziția din ofertă, apasă ✕ pe rândul ei."
-              : "Cantitatea se scrie ca număr mai mare decât 0, de exemplu 12 sau 12,5.");
+            if (!peLoc) {
+              arataMesaj(valoare === 0
+                ? "Cantitatea trebuie să fie mai mare decât 0. Ca să scoți poziția din ofertă, apasă ✕ pe rândul ei."
+                : "Cantitatea se scrie ca număr mai mare decât 0, de exemplu 12 sau 12,5.");
+            }
             return false;
           }
-          return scrieCantitatea(idx, valoare);
+          return scrieCantitatea(idx, valoare, peLoc);
         }
-        return el.dataset["ed"] === "pret" && scriePretul(idx, valoare);
+        return el.dataset["ed"] === "pret" && scriePretul(idx, valoare, peLoc);
       },
       deseneaza,
       desenari: () => desenari,

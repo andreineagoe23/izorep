@@ -161,6 +161,13 @@ export const ecran: Ecran = {
       return `${parti.join(" + ")} fără TVA${v.faraPret > 0 ? ` · ${v.faraPret} ${v.faraPret === 1 ? "linie" : "linii"} fără preț` : ""}`;
     }
 
+    const textKg = (l: LinieComanda): string => {
+      const k = kgPeMp(l.articol);
+      return k === null ? "" : `≈ ${cifra(Math.ceil(l.cantitate * k))} kg`;
+    };
+    const textValoare = (v: string): string =>
+      `Valoare așteptată: ${esc(v)}. Prețul vine din lista furnizorului sau din ultima lui factură; îl poți schimba.`;
+
     function cardComanda(c: Comanda, s: StareComanda): string {
       const primit = primitPeLinii(c, st.miscari);
       const rest = ramasDePrimit(c, st.miscari);
@@ -171,7 +178,7 @@ export const ecran: Ecran = {
       const ob = obiectiv(c);
       const kg = (l: LinieComanda): string => {
         const k = kgPeMp(l.articol);
-        return k !== null ? `<br><span class="hint">≈ ${cifra(Math.ceil(l.cantitate * k))} kg</span>` : "";
+        return k !== null ? `<br><span class="hint" data-kg="${esc(l.id)}">${textKg(l)}</span>` : "";
       };
       const v = valoare(c);
       const err = eroare?.id === c.id ? `<p class="alerta" role="alert">${esc(eroare.text)}</p>` : "";
@@ -197,7 +204,7 @@ export const ecran: Ecran = {
         return `<form class="imp-card" data-form="ciorna" data-id="${esc(c.id)}">
           ${antet}
           ${tabel(["Material", "Cantitate", "Preț fără TVA", ""], randuri, ["", "n", "n", ""], true)}
-          ${v ? `<p class="hint">Valoare așteptată: ${esc(v)}. Prețul vine din lista furnizorului sau din ultima lui factură; îl poți schimba.</p>` : ""}
+          <p class="hint" data-valoare${v ? "" : " hidden"}>${textValoare(v)}</p>
           <div class="imp-campuri">
             <label>Furnizor<select name="furnizor" data-act="furnizor">${furnizori.map((f) =>
               `<option${f === c.furnizor ? " selected" : ""}>${esc(f)}</option>`).join("")}</select></label>
@@ -498,9 +505,26 @@ export const ecran: Ecran = {
       pastreaza(citite);
     }
 
+    // Ciorna: valoarea și kg-ul se refac la fiecare tastă; se salvează la „Salvează ciorna”.
+    function arataCiorna(t: HTMLElement): void {
+      const form = t.closest<HTMLFormElement>("form[data-form=ciorna]");
+      const c = comanda(form?.dataset["id"]);
+      if (!form || !c || !/^(q|pr|mo)-/.test((t as HTMLInputElement).name ?? "")) return;
+      const noua = ciornaDin(form, c);
+      for (const l of noua.linii) {
+        const el = form.querySelector<HTMLElement>(`[data-kg="${CSS.escape(l.id)}"]`);
+        if (el) el.textContent = textKg(l);
+      }
+      const el = form.querySelector<HTMLElement>("[data-valoare]");
+      const v = valoare(noua);
+      if (el) { el.innerHTML = textValoare(v); el.hidden = !v; }
+    }
+    root.addEventListener("input", (e) => arataCiorna(e.target as HTMLElement));
+
     root.addEventListener("change", (e) => {
       const t = e.target as HTMLElement;
       if (t instanceof HTMLInputElement && t.type === "file" && t.dataset["citeste"]) { void laFisier(t); return; }
+      arataCiorna(t);
       // Alt furnizor pe ciornă: prețurile propuse se iau de la el.
       if (t instanceof HTMLSelectElement && t.dataset["act"] === "furnizor") {
         const form = t.closest<HTMLFormElement>("form[data-form=ciorna]");

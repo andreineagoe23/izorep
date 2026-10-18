@@ -63,7 +63,7 @@ export function cardNecesar(n: Necesar): string {
   const fara = n.faraNecesar.length;
   const presupuse = n.materiale.some((m) => m.piesePresupuse > 0);
   const camp = (cat: Categorie, eticheta: string): string =>
-    `<label>${eticheta}<input type="number" inputmode="decimal" min="0" max="100" step="1" data-act="pierdere" data-cat="${cat}" value="${procent(n.pierderi[cat])}" /></label>`;
+    `<label>${eticheta}<input type="text" inputmode="decimal" autocomplete="off" data-act="pierdere" data-cat="${cat}" value="${procent(n.pierderi[cat])}" /></label>`;
   // Peste prag, firma comandă de obicei saltea sau placă; pe unele lucrări tot
   // tub (TRANSAVIA: cochilii ø116, ø140, ø168). Alegerea e pe diametru.
   const pestePrag = n.pestePrag.length > 0 ? `<fieldset class="imp-segment">

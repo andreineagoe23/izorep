@@ -147,14 +147,17 @@ describe("Măsurătorile în lucru, după reîncărcare (R4)", () => {
 });
 
 describe("Pozele, când modelul nu e pornit (14 octombrie 2026)", () => {
-  it("ecranul spune de ce nu se citesc, iar pagina necitită nu arată „De verificat”", async () => {
+  it("ecranul spune ce ai de făcut când pozele nu se citesc, iar pagina necitită nu arată „De verificat”", async () => {
     const { cardIncarca, cardPagina, mesajModel } = await import("../web/santier-vizual.js");
     expect(mesajModel("pornit")).toBe("");
-    expect(mesajModel("fara-cheie")).toMatch(/OPENAI_API_KEY/);
-    expect(mesajModel("fara-server")).toMatch(/linkul demo/);
-    expect(mesajModel("nu-raspunde")).toMatch(/nu a răspuns/);
+    // Pe ecran doar ce face omul, fără server, model sau cheie (18 octombrie 2026).
+    for (const m of ["fara-cheie", "fara-server", "nu-raspunde"] as const) {
+      expect(mesajModel(m).replace(/<[^>]*>/g, "")).not.toMatch(/server|OpenAI|cheia|demo|model/i);
+    }
+    expect(mesajModel("fara-server")).toMatch(/Adaugă rând/);
+    expect(mesajModel("nu-raspunde")).toMatch(/Încearcă din nou/);
     const sus = cardIncarca({ scop: "oferta", destinatie: "rezidential", santiere: [], planAles: "", eroare: "", model: "fara-cheie" });
-    expect(sus).toMatch(/Pozele nu se citesc automat/);
+    expect(sus).toMatch(/Scrii de mână/);
 
     const p = { id: "p1", nume: "carnet.jpg", url: "blob:1", stare: "gata" as const, eroare: "", randuri: [], note: [], verificata: false, faraModel: true };
     const fara = cardPagina(p, 1, { editeaza: null, destinatie: "rezidential" });
