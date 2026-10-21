@@ -20,7 +20,7 @@ import { describe, it, expect } from "vitest";
 import { CLIENTI, cuClienti } from "./conditii.js";
 import ExcelJS from "exceljs";
 import { readdirSync } from "node:fs";
-import { documentOferta, faraMateriale, specificatie, NOTA, type DocumentOferta } from "../web/document-oferta.js";
+import { documentOferta, faraMateriale, specificatie, NOTA, NOTA_FOC, type DocumentOferta } from "../web/document-oferta.js";
 import { cuDenumiri, imparte, planDinOferta, valoareOferta, type AntetOferta, type CerereOferta, type Provenienta } from "../web/oferta.js";
 import { registruOferta } from "../web/registru-oferta.js";
 import { importaFisier } from "../src/import/pipeline.js";
@@ -138,6 +138,15 @@ describe("capitolele și numerotarea", () => {
     expect(d.coloaneGol).toBe(true);
     expect(pozitii(d)[1]!.gol).toEqual({ dimensiune: "130/130", suprafata: 0.02 });
     expect(d.note.length).toBeGreaterThan(NOTA.length);
+  });
+
+  it("notele de foc sunt cele din 118.1, cuvânt cu cuvânt", () => {
+    // Rândurile 90–96 din oferta semnată 118.1, cu rândul rupt de lățime (91–92) unit.
+    expect(NOTA_FOC.join(" ")).toBe("Nota 1 : Preturile se refera la inchideri goluri la foc EI60 si EI90 pentru "
+      + "conducte metalice si inchideri goluri la foc EI90 si EI120 pentru rosturi tubulatura de ventilatie . "
+      + "In pretul inchiderilor golurilor la foc nu sunt incluse colierele si banda wrap Nota 2 : Daca inchiderile "
+      + "golurilor la foc necesita banda wrap, pretul acestora va fi constituit din pretul inchiderii golului la foc "
+      + "+ pretul benzii wrap.");
   });
 });
 

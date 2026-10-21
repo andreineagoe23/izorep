@@ -280,3 +280,14 @@ describe("codul și denumirea", () => {
       .toBe("Caseta izolatie armaturi cu flanse DN100 vata minerala gr. 50 mm si protectie cu tabla de aluminiu");
   });
 });
+
+describe("„In atentia”", () => {
+  it("se scrie cum a fost scrisă persoana, cu „d-nei” ca în 118", async () => {
+    const ExcelJS = (await import("exceljs")).default;
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(await registruOferta({
+      linii: [linie({ unitar: 10 })], antet: { ...ANTET, persoana: "d-nei Alina Maties" }, provenienta: PROV,
+    }));
+    expect(wb.worksheets[0]!.getCell("A10").value).toBe("In atentia d-nei Alina Maties");
+  });
+});

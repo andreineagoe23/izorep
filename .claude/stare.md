@@ -1,7 +1,27 @@
 # Stare curentă
 
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
-> Ultima actualizare: 21 octombrie 2026.
+> Ultima actualizare: 21 octombrie 2026, noaptea.
+
+## 21 octombrie 2026 (noaptea): ce rămăsese de decis, reparat
+
+Andrei: „nu știu ce decizii să iau, mă bazez pe tine”. Pe ramura
+`reparatii-de-decis`. **664 de teste.** Deciziile, cu motivul:
+
+| Ce era | Decizia |
+|---|---|
+| Grosimea pusă pe o casetă trecea pe celelalte casete de același DN (TRANSAVIA: rândul 1 la 60 mm, rândurile 2–3 la fel) | Rămâne doar pe rândul ei. Grosimea pusă de om pe o **piesă** nu mai e sursă în `grosimiDeLaConducte`; pusă pe **conductă** rămâne sursă (armătura se izolează ca țeava). Teste în `nucleu.test.ts` |
+| „In atentia d-lui” fix; 118 are „d-nei” | Nu se ghicește din nume. Câmpul „În atenția (cu d-lui sau d-nei)” se scrie în ofertă exact cum e scris; din fișierul clientului se citește și rândul fără „:” („In atentia d-nei Alina Maties”), cu tot cu formulă. Importurile salvate înainte, cu doar numele, ies „In atentia Vlad Emil” până se completează formula |
+| Notele de foc din 118.1 nu erau cuvânt cu cuvânt | „Nota 1 :” (cu fraza EI60 / EI90 / EI120 care lipsea) și „Nota 2 :”, ca în 118.1, titlurile îngroșate; fraza ruptă pe două rânduri de lățimea paginii e un rând |
+| Coloana „Total” din „Verificare” lua locul descrierii la 1440 px | Scoasă: totalul e în „Cum iese oferta”. Descrierea: 190 → 266 px la 1440 |
+| UM-ul și al treilea strat nu se puteau schimba din „Verificare” (le avea doar editorul vechi) | UM-ul e listă (ml / buc / m², plus ce a scris clientul) și se scrie în celula UM a clientului, ca descrierea: rândul se recitește. Al doilea strat de izolație (elastomer + vată, NISAL) stă sub primul, cu grosimea sub grosime; „Fără” îl scoate. Fără buton de adăugat strat: se scrie în descriere |
+| „Scoate pagina” era text, sub fiecare pagină de poze | ✕ în colțul paginii, ca pe rânduri. Cu rânduri pe pagină, primul clic întreabă „Sigur scoți pagina?” (pleacă și poza, și ce s-a verificat, fără drum înapoi); orice alt clic renunță. Pagina goală pleacă direct |
+
+Verificat cu Playwright pe `build:server` (modelul blocat / simulat): 390 /
+768 / 1280 / 1440 / 1920 px, ambele teme, zero derulare laterală, casete de
+44 px, zero erori; TRANSAVIA (grosimea, UM-ul, după reîncărcare), NISAL
+(stratul al doilea, 44,35 → 56,44 € cu vata la 50 mm), pozele (✕, întrebarea,
+renunțarea).
 
 ## 21 octombrie 2026 (seara): pozele de pe șantier, corectate în tabel
 
@@ -80,9 +100,11 @@ sărea la capăt: acum îl citește înainte.
 trece și pe celelalte casete de același DN din cerere (TRANSAVIA: rândul 1 la
 60 mm, rândurile 2–3 la fel), fiindcă `grosimiDeLaConducte` ia cea mai mare
 grosime de pe rândurile cu același ø. Regula e veche, nu a ecranului.
+(Reparat în aceeași noapte: grosimea omului pe o piesă nu mai e sursă.)
 
 **Rămas:** „In atentia d-lui” e fix (118 are „d-nei”); notele de foc din 118.1
-(„Nota 1”, EI60 / EI90 / EI120) nu sunt cuvânt cu cuvânt.
+(„Nota 1”, EI60 / EI90 / EI120) nu sunt cuvânt cu cuvânt. (Reparate amândouă
+în aceeași noapte, mai sus.)
 
 ## 18 octombrie 2026: demo-ul amânat, editarea în timp real
 

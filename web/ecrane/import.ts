@@ -438,6 +438,7 @@ export const ecran: Ecran = {
         corp = verificarePeEcran(documentul(s, randInLucru), {
           linii: harta, vizibile: filtrat, editIdx, propunere, cuFoaie, schimbari: schimbariPozitie(s),
           descriere: (l) => celulaDescriere(s, l),
+          um: (l) => { const c = campuriLinie(s, l)?.um; return c ? { cel: c.cel, v: String(c.v) } : undefined; },
         });
       }
 
@@ -1251,6 +1252,11 @@ export const ecran: Ecran = {
         return;
       }
       if (t.name === "vedere") { vedere = t.value as Vedere; editIdx = null; randInLucru = null; deseneaza(); return; }
+      if (t.dataset["um"] && sesiune) {
+        scrieUm(Number(t.dataset["idx"]), t.value);
+        pastreazaCursorul(gazda, deseneaza);
+        return;
+      }
       if (t.dataset["vc"] && sesiune) {
         // O alegere din rândul de verificare (izolația, protecția, notația, piesa): corectura omului, ca din editor.
         const idx = Number(t.dataset["idx"]);
@@ -1397,6 +1403,34 @@ export const ecran: Ecran = {
       return true;
     }
 
+    /**
+     * UM-ul ales în rândul de verificare e celula UM din fișierul clientului, ca
+     * descrierea: rândul se recitește (forma, „buc.” pe izolație dreaptă) și se
+     * retarifează. „Anulează” pune la loc celula.
+     */
+    function scrieUm(idx: number, v: string): void {
+      const s = sesiune;
+      const l = s?.rez.linii.find((x) => x.extras.index === idx);
+      const f = s?.foi.find((x) => x.nume === l?.bruta.foaie);
+      const rand = f?.randuri.find((r) => r.rand === l?.bruta.rand);
+      const cel = s && l ? campuriLinie(s, l)?.um?.cel : undefined;
+      if (!s || !f || !rand || cel === undefined) return;
+      const vVechi = rand.celule[cel]?.v ?? null;
+      const gasita = (): number => s.editari.findIndex((x) => x.foaie === f.nume && x.rand === rand.rand && x.cel === cel);
+      const editareVeche = s.editari[gasita()];
+      const scrie = (val: string | number | null): void => { scrieCelula(rand, cel, val); reconstruieste(rand); retarifeaza(); };
+      scrie(v);
+      const editare: EditareCelula = { foaie: f.nume, rand: rand.rand, cel, v };
+      const j = gasita();
+      if (j >= 0) s.editari[j] = editare; else s.editari.push(editare);
+      randInLucru = idx;
+      arataMesaj("Unitatea de măsură s-a schimbat: rândul e recitit.", () => {
+        const k = gasita();
+        if (editareVeche) s.editari[k] = editareVeche; else if (k >= 0) s.editari.splice(k, 1);
+        scrie(vVechi);
+      });
+    }
+
     /** Casetele de număr din rândul de verificare, după `data-ed`, și câmpul lor din `patchDinCamp`. */
     const CAMPURI_RAND: Record<string, string> = { gros: "grosime", diam: "diam", gol_l: "gol_l", gol_h: "gol_h" };
     /** Câmpul la care scrie omul acum și cum era poziția înainte de prima tastă, pentru „Anulează”. */
@@ -1436,7 +1470,8 @@ export const ecran: Ecran = {
         const idx = Number(el.dataset["idx"]);
         if (el.dataset["ed"] === "den") { if (!peLoc) scrieDenumirea(el); return false; }
         if (el.dataset["ed"] === "desc") return scrieDescrierea(el, peLoc);
-        const camp = CAMPURI_RAND[el.dataset["ed"] ?? ""];
+        const ed = el.dataset["ed"] ?? "";
+        const camp = CAMPURI_RAND[ed] ?? (/^stratg\d+$/.test(ed) ? ed : undefined);
         if (camp) return scrieCampul(idx, camp, (el as HTMLInputElement).value, peLoc);
         const valoare = numarScris((el as HTMLInputElement).value);
         // Rândul la care scrie omul rămâne pe ecran și când iese din filtrul ales.

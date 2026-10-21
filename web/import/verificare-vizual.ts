@@ -1,6 +1,6 @@
 import type { LinieProcesata } from "../../src/import/nucleu.js";
 import type { LinieExtrasa } from "../../src/import/schema.js";
-import { esc, eur } from "../ecrane/tip.js";
+import { esc } from "../ecrane/tip.js";
 import { celulaNumar, celulaText, numarInCelula } from "../celula.js";
 import type { DocumentOferta, PozitieOferta } from "../document-oferta.js";
 import type { OptiuniDocument } from "./oferta-vizual.js";
@@ -13,8 +13,10 @@ import { actiuniPozitie } from "./vizual.js";
  *
  * Un tabel ca foaia Excel: pe fiecare rând descrierea clientului, apoi ce am
  * înțeles din ea (izolația, grosimea, protecția, diametrul, piesa), UM-ul,
- * cantitatea, prețul, totalul și starea, toate casete de aceeași înălțime, cu
- * butoanele pe aceeași linie. Înainte, ce am înțeles stătea în pastile sub
+ * cantitatea, prețul și starea, toate casete de aceeași înălțime, cu butoanele
+ * pe aceeași linie. Fără total pe rând: îl arată „Cum iese oferta”, iar
+ * descrierea are nevoie de loc la 1440 px. Al doilea strat de izolație
+ * (elastomer + vată, NISAL) stă sub primul, cu grosimea lui sub grosime. Înainte, ce am înțeles stătea în pastile sub
  * descriere („Vată minerală 50 mm · ø114 în listă”).
  *
  * Totul se scrie pe loc. Descrierea e celula din fișierul clientului: schimbată
@@ -26,6 +28,10 @@ import { actiuniPozitie } from "./vizual.js";
  */
 
 const JACHETE = new Set<Sistem>(["tabla", "tabla_inox", "pvc"]);
+/** Ce poate sta sub jachetă, ca strat în plus: izolațiile. */
+const IZOLATII = MATERIALE.filter((m) => !JACHETE.has(m) && m !== "goluri_foc");
+/** UM-urile pe care le citește importul; un UM scris altfel de client rămâne în listă. */
+const UM: [string, string][] = [["ml", "ml"], ["buc", "buc"], ["mp", "m²"]];
 
 /** Protecția, cu grosimea în aceeași alegere: la inox grosimea schimbă prețul, la aluminiu lista o știe. */
 const PROTECTII: [string, string][] = [
@@ -56,6 +62,16 @@ const numarSau = (v: string): number | null => {
  * vată, NISAL) rămân. Un diametru scris fără notație e Ø.
  */
 export function patchDinCamp(e: LinieExtrasa, camp: string, valoare: string): Partial<LinieExtrasa> {
+  // Un strat din mijloc: „strat0” e izolația lui („” îl scoate), „stratg0” grosimea.
+  const strat = /^strat(g?)(\d+)$/.exec(camp);
+  if (strat) {
+    const k = Number(strat[2]);
+    return {
+      straturi_extra: e.straturi_extra.flatMap((x, j) => (j !== k ? [x]
+        : strat[1] ? [{ ...x, grosime_mm: numarSau(valoare) }]
+        : valoare ? [{ sistem: valoare as Sistem, grosime_mm: x.grosime_mm }] : [])),
+    };
+  }
   switch (camp) {
     case "sistem": return { sistem: (valoare || null) as LinieExtrasa["sistem"] };
     case "grosime": return { grosime_mm: numarSau(valoare) };
@@ -120,6 +136,20 @@ function randVerificare(p: PozitieOferta, o: OptiuniDocument, c: Coloane): strin
     `<td${clasa ? ` class="${clasa}"` : ""} data-eticheta="${esc(eticheta)}">${continut}</td>`;
   const material = select("sistem", i, `Izolația, ${cine}`,
     [...MATERIALE.map((m): [string, string] => [m, MATERIAL[m]]), ["", "Nu e izolație"]], e.sistem ?? "");
+  // Straturile de izolație de sub jachetă, peste primul: fiecare pe rândul lui,
+  // în coloana izolației și a grosimii, aliniate cu primul.
+  const mijloc = e.straturi_extra.flatMap((x, k) => (JACHETE.has(x.sistem) ? [] : [{ x, k }]));
+  const izolatii = mijloc.length === 0 ? material : `<div class="ver-straturi">${material}${mijloc.map(({ x, k }) =>
+    select(`strat${k}`, i, `Stratul ${k + 2}, ${cine}`,
+      [...IZOLATII.map((m): [string, string] => [m, MATERIAL[m]]), ["", "Fără"]], x.sistem)).join("")}</div>`;
+  const grosimi = (prima: string): string => (mijloc.length === 0 ? prima : `<div class="ver-straturi">${prima}${mijloc.map(({ x, k }) =>
+    numarPeLoc(`stratg${k}`, i, x.grosime_mm, `Grosimea stratului ${k + 2}, ${cine}`, "—")).join("")}</div>`);
+  const celUm = o.um?.(l);
+  const um = celUm
+    ? `<select data-um="1" data-idx="${i}" aria-label="${esc(`UM, ${cine}`)}">${
+      (UM.some(([v]) => v === celUm.v.trim()) ? UM : [...UM, [celUm.v.trim(), celUm.v.trim()] as [string, string]])
+        .map(([v, t]) => `<option value="${esc(v)}"${v === celUm.v.trim() ? " selected" : ""}>${esc(t)}</option>`).join("")}</select>`
+    : "";
   const cantitate = celulaNumar({ ed: "cant", valoare: p.cantitate, eticheta: `Cantitate, ${cine}`,
     schimbat: s.cant !== undefined, ...(s.cant !== undefined ? { inainte: s.cant } : {}), date: { idx: i } });
   const pret = celulaNumar({ ed: "pret", valoare: p.pretUnitar, eticheta: `Preț unitar, ${cine}`, gol: "fără preț",
@@ -127,21 +157,20 @@ function randVerificare(p: PozitieOferta, o: OptiuniDocument, c: Coloane): strin
   return `<tr class="ver-poz" data-idx="${i}" data-stare="${p.stare}">
     <td class="ver-rand" data-eticheta="Rândul">${p.sursa.rand}</td>
     <td class="ver-desc">${text}${p.cod ? `<span class="ver-cod">${esc(p.cod)}</span>` : ""}</td>
-    ${td("Izolație", material)}
+    ${td("Izolație", izolatii)}
     ${gol
       ? td("Lățime gol (mm)", numarPeLoc("gol_l", i, e.gol_latime_mm, `Lățimea golului, ${cine}`, "lățime"))
         + td("Înălțime gol (mm)", numarPeLoc("gol_h", i, e.gol_inaltime_mm, `Înălțimea golului, ${cine}`, "înălțime"))
         + td("Diametru", "") + td("Piesă", "")
-      : td(c.gros, numarPeLoc("gros", i, e.grosime_mm, `Grosimea, ${cine}`, "—"))
+      : td(c.gros, grosimi(numarPeLoc("gros", i, e.grosime_mm, `Grosimea, ${cine}`, "—")))
         + td(c.prot, select("protectie", i, `Protecția, ${cine}`, PROTECTII, protectieDin(e)))
         + td("Diametru", `<div class="ver-diametru"${ajutorDiametru(l) ? ` title="${esc(ajutorDiametru(l))}"` : ""}>${
           select("diam_tip", i, `Notația diametrului, ${cine}`, NOTATII, e.diametru_tip ?? "exterior")}${
           numarPeLoc("diam", i, e.diametru_valoare, `Diametrul, ${cine}`, "—")}</div>`)
         + td("Piesă", select("forma", i, `Piesa, ${cine}`, FORME_EDITOR, e.forma ?? "ml"))}
-    ${td("UM", esc(p.um || "—"), "ver-text-cel")}
+    ${um ? td("UM", um) : td("UM", esc(p.um || "—"), "ver-text-cel")}
     ${td("Cantitate", cantitate, "n")}
     ${td("Preț unitar €", pret, "n")}
-    ${td("Total €", p.valoare === null ? "—" : eur(p.valoare), "n ver-text-cel ver-total")}
     <td class="ver-stare">${stare(l, o.propunere(l), cine)}</td>
   </tr>`;
 }
@@ -157,7 +186,7 @@ export function verificarePeEcran(d: DocumentOferta, o: OptiuniDocument): string
   // Doar închideri la foc (Matari): coloanele grosimii și protecției țin golul.
   const doarGoluri = toate.length > 0 && toate.every((p) => o.linii.get(p.linie)?.extras.sistem === "goluri_foc");
   const c: Coloane = doarGoluri ? { gros: "Lățime gol (mm)", prot: "Înălțime gol (mm)" } : { gros: "Grosime (mm)", prot: "Protecție" };
-  const capete = ["Rând", "Descrierea clientului", "Izolație", c.gros, c.prot, "Diametru", "Piesă", "UM", "Cantitate", "Preț unitar €", "Total €", "Stare"];
+  const capete = ["Rând", "Descrierea clientului", "Izolație", c.gros, c.prot, "Diametru", "Piesă", "UM", "Cantitate", "Preț unitar €", "Stare"];
   const n = capete.length;
   const corp = d.capitole.map((cap) => {
     const vazute = cap.pozitii.filter(vede);
@@ -167,9 +196,9 @@ export function verificarePeEcran(d: DocumentOferta, o: OptiuniDocument): string
   }).join("");
   return `<section class="imp-card ver" aria-label="Verificare">
     ${corp ? `<table class="ver-tabel">
-      <colgroup>${["rand", "desc", "material", "gros", "prot", "diam", "piesa", "um", "n", "n", "total", "stare"]
+      <colgroup>${["rand", "desc", "material", "gros", "prot", "diam", "piesa", "um", "n", "n", "stare"]
         .map((k) => `<col class="ver-col-${k}">`).join("")}</colgroup>
-      <thead><tr>${capete.map((t, k) => `<th scope="col"${[8, 9, 10].includes(k) ? ' class="n"' : ""}>${t}</th>`).join("")}</tr></thead>
+      <thead><tr>${capete.map((t, k) => `<th scope="col"${[8, 9].includes(k) ? ' class="n"' : ""}>${t}</th>`).join("")}</tr></thead>
       ${corp}
     </table>` : `<p class="imp-gol">Nicio poziție aici.</p>`}
   </section>`;

@@ -139,7 +139,13 @@ function tabelZona(p: PaginaSantier, zona: string, randuri: RandSantier[]): stri
   </section>`;
 }
 
-export function cardPagina(p: PaginaSantier, nr: number, o: { destinatie: Destinatie; cuModel?: boolean }): string {
+/**
+ * O pagină de carnet: miniatura, titlul, starea și ✕ (scoate pagina) pe rândul
+ * de sus, ca ✕ de pe rânduri (Andrei, 21 octombrie 2026). Cu rânduri pe ea, ✕
+ * întreabă întâi („Sigur scoți pagina?”, `deScos`): pleacă și poza, și ce s-a
+ * verificat, fără drum înapoi.
+ */
+export function cardPagina(p: PaginaSantier, nr: number, o: { destinatie: Destinatie; cuModel?: boolean; deScos?: boolean }): string {
   const zone = [...new Set(p.randuri.map((r) => r.zona))];
   const nv = deVerificat(p);
   const titlu = `Pagina ${nr}`;
@@ -186,6 +192,10 @@ export function cardPagina(p: PaginaSantier, nr: number, o: { destinatie: Destin
       </button>
       <h2>${esc(titlu)} <span class="hint">· ${esc(p.nume)}</span></h2>
       ${antetStare}
+      ${o.deScos
+        ? `<button type="button" class="secundar" data-act="scoate-pagina" data-pag="${esc(p.id)}">Sigur scoți pagina?</button>`
+        : `<button type="button" class="cel-scoate" data-act="scoate-pagina" data-pag="${esc(p.id)}"
+            aria-label="${esc(`Scoate ${titlu.toLowerCase()}`)}" title="Scoate pagina">✕</button>`}
     </div>
     <div class="sant-pagina">
       <div class="sant-randuri">
@@ -193,7 +203,6 @@ export function cardPagina(p: PaginaSantier, nr: number, o: { destinatie: Destin
         <div class="sant-actiuni">
           ${verificare}
           ${p.stare === "gata" ? `<button type="button" class="secundar" data-act="adauga" data-pag="${esc(p.id)}">Adaugă rând</button>` : ""}
-          <button type="button" class="legatura" data-act="scoate-pagina" data-pag="${esc(p.id)}">Scoate pagina</button>
         </div>
       </div>
     </div>

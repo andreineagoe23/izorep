@@ -20,7 +20,11 @@ export interface AntetOferta {
   numar: string;
   /** Data ofertei, scrisă cum apare în document: `27.05.2026`. */
   data: string;
-  /** Persoana de contact: „In atentia d-lui …". */
+  /**
+   * Persoana de contact, cu formula („d-lui Vlad Emil”, „d-nei Alina Maties”): se
+   * scrie în ofertă exact așa, după „In atentia”. Până pe 21 octombrie 2026
+   * „d-lui” era fix, iar 118 are „d-nei”; din nume nu se poate ghici.
+   */
   persoana: string;
   client: string;
   obiectiv: string;

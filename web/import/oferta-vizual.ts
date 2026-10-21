@@ -106,6 +106,14 @@ export function antetDinFisier(foi: readonly FoaieBruta[]): Partial<Pick<AntetSc
       const camp = ETICHETE.find(([, re]) => re.test(k.trim()))?.[0];
       if (camp && !out[camp] && v.trim()) out[camp] = v.trim();
     }
+    // „In atentia d-nei Alina Maties” (118), fără „:”: persoana e restul rândului,
+    // cu tot cu formulă, ca oferta să scrie „d-nei” unde clientul a scris „d-nei”.
+    for (const r of f.randuri) {
+      if (r.rand >= inceput || out.persoana) continue;
+      const m = r.celule.map((c) => (c.v === null || c.v === undefined ? "" : String(c.v))).join(" ").trim()
+        .match(/^(?:in atentia|în atenția)\s*:?\s+(.+)$/i);
+      if (m) out.persoana = m[1]!.replace(/\s+/g, " ").trim();
+    }
   }
   return out;
 }
@@ -160,6 +168,8 @@ export interface OptiuniDocument {
   cuFoaie: boolean;
   /** Celula cu descrierea poziției în fișierul clientului, ca s-o scrie omul (vezi `scrieDescrierea`). */
   descriere?: (l: LinieProcesata) => { cel: number; text: string } | undefined;
+  /** Celula cu UM-ul rândului în fișierul clientului: lipsă = UM-ul nu se poate schimba de aici. */
+  um?: (l: LinieProcesata) => { cel: number; v: string } | undefined;
   /**
    * Ce a schimbat omul pe poziție (denumirea, cantitatea, prețul unitar),
    * fiecare cu ce era înainte, în cuvinte: caseta e galbenă și o spune.
@@ -241,7 +251,7 @@ export function exportPeEcran(d: DocumentOferta): string {
       ${d.discount > 0 ? total(`DISCOUNT ${String(d.antet.discountProcent ?? 0).replace(".", ",")} %`, d.discount)
         + total("TOTAL GENERAL (FARA TVA)", d.totalGeneral) : ""}
     </div>
-    <div class="ex-nota"><p><strong>Nota :</strong></p>${d.note.map((x) => `<p>${esc(x)}</p>`).join("")}</div>
+    <div class="ex-nota"><p><strong>Nota :</strong></p>${d.note.map((x) => (/^Nota \d+ :$/.test(x) ? `<p><strong>${esc(x)}</strong></p>` : `<p>${esc(x)}</p>`)).join("")}</div>
     ${d.speciale.map((t) => `<div class="of-speciale"><p>${esc(t.titlu)}</p>${
       tabel(t.capete, t.randuri.map((r) => `<tr>${r.map((v) => `<td>${esc(v)}</td>`).join("")}</tr>`))}</div>`).join("")}
     <footer class="ex-semnatura"><p>${esc(a.localitate)},<br>${esc(a.data)}</p><p>${esc(a.firma)}</p></footer>

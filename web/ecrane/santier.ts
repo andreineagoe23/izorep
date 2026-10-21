@@ -45,6 +45,8 @@ const CONCURENTA = 2;
 let pagini: PaginaSantier[] = [];
 /** Pozele, pastrate ca „Citește din nou" sa aiba ce trimite. */
 const fisiere = new Map<string, File>();
+/** Pagina pe care ✕ a întrebat „Sigur scoți pagina?”; a doua apăsare o scoate. */
+let deScos: string | null = null;
 /** Numele ultimei liste trimise la import, ca omul sa stie ca a plecat. */
 let trimisa = "";
 /**
@@ -146,7 +148,7 @@ export const ecran: Ecran = {
     const deseneaza = (): void => {
       gazda.querySelector("#sant-incarca")!.innerHTML = incarca();
       gazda.querySelector("#sant-pagini")!.innerHTML = pagini
-        .map((p, i) => `<div data-pagina="${p.id}">${cardPagina(p, i + 1, { destinatie: destinatiaPaginii(), cuModel: model === "pornit" })}</div>`).join("");
+        .map((p, i) => `<div data-pagina="${p.id}">${cardPagina(p, i + 1, { destinatie: destinatiaPaginii(), cuModel: model === "pornit", deScos: deScos === p.id })}</div>`).join("");
       deseneazaTrimite();
       legaDrop();
       salveazaLucru();
@@ -170,7 +172,7 @@ export const ecran: Ecran = {
       const i = pagini.findIndex((p) => p.id === id);
       const loc = gazda.querySelector(`[data-pagina="${CSS.escape(id)}"]`);
       if (i < 0 || !loc) return deseneaza();
-      loc.innerHTML = cardPagina(pagini[i]!, i + 1, { destinatie: destinatiaPaginii(), cuModel: model === "pornit" });
+      loc.innerHTML = cardPagina(pagini[i]!, i + 1, { destinatie: destinatiaPaginii(), cuModel: model === "pornit", deScos: deScos === id });
       deseneazaTrimite();
       salveazaLucru();
     };
@@ -252,7 +254,7 @@ export const ecran: Ecran = {
       gazda.querySelector("#sant-incarca")!.innerHTML = incarca();
       legaDrop();
       gazda.querySelector("#sant-pagini")!.insertAdjacentHTML("beforeend", noi.map(({ p }, k) =>
-        `<div data-pagina="${p.id}">${cardPagina(p, inainte + k + 1, { destinatie: destinatiaPaginii(), cuModel: model === "pornit" })}</div>`).join(""));
+        `<div data-pagina="${p.id}">${cardPagina(p, inainte + k + 1, { destinatie: destinatiaPaginii(), cuModel: model === "pornit", deScos: deScos === p.id })}</div>`).join(""));
       deseneazaTrimite();
       ceriSpatiu(gazda, true);
       let i = 0;
@@ -296,6 +298,12 @@ export const ecran: Ecran = {
       if (!b) return;
       const p = pagina(b.dataset["pag"] ?? b.closest<HTMLElement>("[data-pagina]")?.dataset["pagina"]);
       const r = p?.randuri.find((x) => x.id === b.dataset["rand"]);
+      // „Sigur scoți pagina?” rămâne doar până la următorul clic.
+      if (deScos && b.dataset["act"] !== "scoate-pagina") {
+        const fost = deScos;
+        deScos = null;
+        if (pagina(fost)) deseneazaPagina(fost);
+      }
       switch (b.dataset["act"]) {
         case "mareste": {
           if (!p) return;
@@ -349,6 +357,13 @@ export const ecran: Ecran = {
           if (p) p.verificata = false;
           break;
         case "scoate-pagina":
+          if (p && p.randuri.length > 0 && deScos !== p.id) {
+            deScos = p.id;
+            deseneazaPagina(p.id);
+            gazda.querySelector<HTMLElement>(`[data-pagina="${CSS.escape(p.id)}"] [data-act="scoate-pagina"]`)?.focus();
+            return;
+          }
+          deScos = null;
           if (p) { URL.revokeObjectURL(p.url); fisiere.delete(p.id); pagini = pagini.filter((x) => x !== p); }
           deseneaza();
           return;

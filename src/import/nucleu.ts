@@ -861,14 +861,21 @@ const RE_UM_BUCATA = /^(buc|bucati|bucăți|pcs|pc|stk|st)\.?$/i;
  * `cerere-de-oferta-transavia-inox.xlsx`, „Di76, g48 - COT" (48 nu e grosime
  * de vata) primea 50 mm de la conducta „Di76, g50 - ML", cu incredere 0,99.
  * Clientul a scris ceva; ce a vrut sa scrie e al omului, nu al conductei.
+ *
+ * Grosimea pusa de om pe o piesa (caseta, cot) e doar a randului ei, nu sursa
+ * pentru celelalte piese: pe TRANSAVIA, caseta DN100 trecuta la 60 mm muta si
+ * celelalte casete DN100 pe 60, peste conducta lor de 50 (21 octombrie 2026).
+ * Pusa de om pe conducta, ramane sursa: armatura se izoleaza ca teava.
  */
 function grosimiDeLaConducte(
   brute: LinieCuSectiune[], rezolvate: Map<number, Rezolvare>,
 ): Map<number, GrosimeDeLaConducta> {
   const surse: { sistem: string; od: number; grosime: number; rand: number; foaie: string }[] = [];
   for (const b of brute) {
-    const e = rezolvate.get(b.index)?.extras;
+    const r = rezolvate.get(b.index);
+    const e = r?.extras;
     if (!e || e.sistem === null || e.grosime_mm === null) continue;
+    if (r.sursa === "om" && e.forma !== null && e.forma !== "ml" && !scrieGrosime(b.text)) continue;
     const od = diametruExterior(e);
     if (od !== null) surse.push({ sistem: e.sistem, od, grosime: e.grosime_mm, rand: b.rand, foaie: b.foaie });
   }

@@ -452,7 +452,7 @@ export function ecranOferta(o: OptiuniOferta): string {
         ${camp("data", "Data", o.antet.data, "required")}
         ${camp("client", "Beneficiar", o.antet.client, "required")}
         ${camp("obiectiv", "Obiectiv (numele șantierului)", o.antet.obiectiv)}
-        ${camp("persoana", "În atenția", o.antet.persoana)}
+        ${camp("persoana", "În atenția (cu d-lui sau d-nei)", o.antet.persoana, 'placeholder="d-nei Alina Maties" autocomplete="off"')}
         ${camp("localitate", "Localitate", o.antet.localitate, "required")}
         ${camp("ajustare", "Ajustare prețuri (%)", String(o.ajustare),
           'type="number" inputmode="decimal" min="-50" max="100" step="any" aria-describedby="ajutor-ajustare"')}

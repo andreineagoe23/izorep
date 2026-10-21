@@ -917,6 +917,8 @@ button.filtru[aria-pressed="true"] .hint, button.filtru.activ .hint { color: inh
 .sant-card { display: grid; gap: var(--imp-gap); }
 .sant-antet { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
 .sant-antet h2 { margin: 0; flex: 1 1 16ch; min-width: 0; overflow-wrap: anywhere; }
+/* ✕ (scoate pagina) la marginea din dreapta, și când starea coboară pe rândul doi. */
+.sant-antet [data-act="scoate-pagina"] { margin-left: auto; }
 .sant-poza {
   position: relative; flex: 0 0 auto; width: 7.5rem; height: 5.5rem; padding: 0; overflow: hidden; cursor: zoom-in;
   border: 1px solid var(--linie-tare); border-radius: 10px; background: var(--panou-2);
@@ -1115,9 +1117,8 @@ main details.imp-card[open] > summary { margin-bottom: 12px; }
 .ver-col-prot { width: 8.75rem; }
 .ver-col-diam { width: 7.75rem; }
 .ver-col-piesa { width: 6.75rem; }
-.ver-col-um { width: 2.75rem; }
+.ver-col-um { width: 4.25rem; }
 .ver-col-n { width: 5.25rem; }
-.ver-col-total { width: 6rem; }
 .ver-col-stare { width: 8.75rem; }
 .ver-tabel th {
   padding: 8px 6px; font-size: 13px; font-weight: 600; color: var(--slab); text-align: left;
@@ -1135,7 +1136,6 @@ main details.imp-card[open] > summary { margin-bottom: 12px; }
 .ver-tabel td.n input.cel-ed { text-align: right; font-variant-numeric: tabular-nums; padding: 8px; }
 .ver-rand, .ver-text-cel { line-height: 44px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .ver-rand { color: var(--slab); font-size: 13.5px; }
-.ver-total { text-align: right; font-weight: 600; }
 .ver-desc { overflow-wrap: anywhere; }
 .ver-cod { display: block; padding: 0 8px; font-size: 12.5px; color: var(--slab); }
 /* Descrierea, ca o celula de Excel: fara chenar pana treci cu mouse-ul sau scrii in ea. */
@@ -1144,13 +1144,15 @@ p.cel-ed.ver-text { border-color: transparent; background: none; }
 p.cel-ed.ver-text:hover { border-color: var(--linie-tare); }
 p.cel-ed.ver-text:focus { background: var(--panou); }
 p.ver-text:not(.cel-ed) { padding: 10px 0; }
+/* Al doilea strat de izolație, sub primul, cu grosimea lui sub grosime: aceleași rânduri de 44 px. */
+.ver-straturi { display: grid; gap: 6px; }
 .ver-diametru { display: grid; grid-template-columns: 3.6rem minmax(0, 1fr); gap: 3px; }
 .ver-actiuni { display: flex; align-items: center; gap: 6px; min-height: 44px; }
 .ver-actiuni .imp-stare { flex: 1 1 auto; }
 .imp .ver-actiuni button { min-height: 44px; height: 44px; padding: 0 10px; font-size: 14px; white-space: nowrap; }
 .imp .ver-actiuni .cel-scoate { flex: 0 0 44px; width: 44px; padding: 0; margin-left: auto; }
 .ver-motiv { margin: 4px 0 0; font-size: 12.5px; color: var(--slab); line-height: 1.35; }
-/* Coloanele fixe au ~1000 px: sub 1240 px de tabel descrierea ar ramane sub
+/* Coloanele fixe au ~1010 px: sub 1240 px de tabel descrierea ar ramane sub
    ~230 px, deci fiecare rand devine card: descrierea pe toata latimea, casetele
    cu numele coloanei deasupra, cate trei-patru pe rand. */
 @container ver (max-width: 1239px) {
@@ -1168,7 +1170,7 @@ p.ver-text:not(.cel-ed) { padding: 10px 0; }
   .ver-tabel td.ver-rand::before { display: inline; margin-right: 4px; }
   .ver-tabel td.ver-desc, .ver-tabel td.ver-stare { grid-column: 1 / -1; }
   .ver-tabel td:empty { display: none; }
-  .ver-tabel td, .ver-tabel td.n, .ver-total { text-align: left; }
+  .ver-tabel td, .ver-tabel td.n { text-align: left; }
   .ver-tabel td.n input.cel-ed { text-align: left; }
 }
 

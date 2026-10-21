@@ -343,6 +343,13 @@ schimbate fac poziția a omului (`patchDinCamp`). Sub 1240 px de tabel rândul
 devine card. **„Cum iese oferta”** (`exportPeEcran`): Excelul de acum, doar
 citire, fără logo și fără filtre. Foaia clientului ca în Excel a ieșit.
 
+**Tot pe 21, noaptea:** „Total” a ieșit din „Verificare” (e în „Cum iese
+oferta”; descrierea avea 190 px la 1440). UM-ul e listă (`data-um`, ml / buc /
+m² plus valoarea clientului) când rândul are celulă de UM, scrisă ca
+descrierea (`scrieUm`). Straturile de izolație de sub jachetă stau sub primul,
+în `.ver-straturi` (`strat0` / `stratg0` în `patchDinCamp`). Câmpul „În atenția
+(cu d-lui sau d-nei)” se scrie în ofertă cum e scris.
+
 ## Ecranul de import: trei pași
 
 Refăcut pe 13 septembrie 2026 pentru oamenii care îl folosesc — birou și
@@ -827,7 +834,9 @@ dinainte de ofertă nu au încă un șantier.
   de sub zonă. Câmpul schimbat scoate rândul din „De verificat”; cantitatea
   diferită de ce s-a citit din poză e galbenă, cu citirea sub mouse. Coloana
   „Pe foaie” („6 + 4 + 2”) a ieșit: citirea scrisului de mână greșea des. Numele zonei se
-  scrie pe loc. „Scoate” e ✕ (`.cel-scoate`). Sub 1000 px de tabel rândul
+  scrie pe loc. „Scoate” e ✕ (`.cel-scoate`). Tot pe 21, noaptea: „Scoate pagina” e ✕ în
+  antetul paginii; cu rânduri, primul clic întreabă „Sigur scoți pagina?”
+  (`deScos`), orice alt clic renunță. Sub 1000 px de tabel rândul
   devine card; cu pagini, ecranul cere toată lățimea. Paragrafele de mai jos
   despre rând și „Modifică” sunt istoric.
 - Un rând: „ø60 · Coturi”, straturile pe rândul doi, cantitatea, „Pe foaie”

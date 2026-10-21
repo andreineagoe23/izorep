@@ -264,6 +264,36 @@ describe("grosimea de la conducta de acelasi diametru", () => {
 
   // Din 10 octombrie 2026 grosimea de la conducta e regula dovedita (`MOTIVE_DOVEDITE`):
   // nota ramane pe pozitie, dar pozitia e „Gata”.
+  it("grosimea pusa de om pe o caseta ramane pe ea; celelalte casete o iau tot de la conducta", async () => {
+    const foi = await parseFoi(await registru([
+      ANTET,
+      [1, CASETA, "buc", 1],
+      [2, CASETA, "buc", 2],
+      [3, "Izolatii cu vata minerala si protectie cu tabla de aluminiu Di114, g50 - ML", "ml", 27],
+    ]));
+    const opt = { stoc: stocInMemorie() };
+    const rez = await proceseazaRegistru(foi, opt);
+    const [prima, a2a] = rez.linii.filter((x) => x.bruta.text.includes("Caseta"));
+    rez.rezolvate.set(prima!.extras.index, { extras: { ...prima!.extras, grosime_mm: 60 }, sursa: "om" });
+    reevalueaza(rez, opt);
+    expect(rez.linii.find((x) => x.extras.index === prima!.extras.index)!.extras.grosime_mm).toBe(60);
+    expect(rez.linii.find((x) => x.extras.index === a2a!.extras.index)!.extras.grosime_mm).toBe(50);
+  });
+
+  it("grosimea pusa de om pe conducta trece pe casetele ei", async () => {
+    const foi = await parseFoi(await registru([
+      ANTET,
+      [1, CASETA, "buc", 1],
+      [2, "Izolatii cu vata minerala si protectie cu tabla de aluminiu Di114, g50 - ML", "ml", 27],
+    ]));
+    const opt = { stoc: stocInMemorie() };
+    const rez = await proceseazaRegistru(foi, opt);
+    const conducta = rez.linii.find((x) => x.bruta.text.includes("Di114"))!;
+    rez.rezolvate.set(conducta.extras.index, { extras: { ...conducta.extras, grosime_mm: 60 }, sursa: "om" });
+    reevalueaza(rez, opt);
+    expect(rez.linii.find((x) => x.bruta.text.includes("Caseta"))!.extras.grosime_mm).toBe(60);
+  });
+
   it("doua grosimi pe acelasi diametru: caseta ia grosimea mai mare, cu nota", async () => {
     const rez = await proceseazaRegistru(await parseFoi(await registru([
       ANTET,

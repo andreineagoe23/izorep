@@ -126,6 +126,20 @@ describe("verificarea și „Cum iese oferta” (21 octombrie 2026)", async () =
     expect(ex).toMatch(/Nu intră încă: 0 de verificat și 1 fără preț/);
   });
 
+  it("fără Total pe rând; UM-ul e listă când are celulă, al doilea strat stă sub primul", () => {
+    const l = linie(1, "DN80 elastomer 13mm+40mm vata minerala", null, 44.35);
+    l.extras.straturi_extra = [{ sistem: "vata_minerala", grosime_mm: 40 }, { sistem: "tabla", grosime_mm: null }];
+    const d = documentOferta(cerere([l]));
+    const html = verificarePeEcran(d, { ...optiuni([l]), um: () => ({ cel: 2, v: "buc." }) });
+    expect(html).not.toContain("Total €");
+    expect(html).toMatch(/<select data-um="1" data-idx="1"[^>]*>.*<option value="buc\." selected>/s);
+    expect(html).toContain('data-vc="strat0"');
+    expect(html).toContain('data-ed="stratg0"');
+    // Jacheta rămâne la „Protecție”, nu apare ca strat în plus.
+    expect(html).not.toContain('data-vc="strat1"');
+    expect(verificarePeEcran(d, optiuni([l]))).not.toContain("data-um=");
+  });
+
   it("rândul de continuare iese întreg: descrierea, apoi ce are el în plus (Book15)", () => {
     const l = linie(1, "Same - Ø125 mm | Circular spiro duct, insulated with 30mm mineral wool", null, 10.87);
     const p = documentOferta(cerere([l])).capitole[0]!.pozitii[0]!;
@@ -144,6 +158,19 @@ describe("verificarea și „Cum iese oferta” (21 octombrie 2026)", async () =
       ],
     } as unknown as Parameters<typeof antetDinFisier>[0][number];
     expect(antetDinFisier([foaie])).toEqual({ client: "Construct Nord SRL", obiectiv: "Hala Logistica Chitila" });
+  });
+
+  it("„In atentia d-nei …” fără două puncte: persoana cu tot cu formulă, ca în 118", () => {
+    const celula = (v: string) => ({ v, span: 1 });
+    const foaie = {
+      nume: "Termice", coloane: 4,
+      antet: { rand: 12, celule: ["Nr.", "Denumire", "UM", "Cantitate"].map(celula) },
+      randuri: [
+        { rand: 9, celule: [celula("In atentia d-nei Alina Maties")] },
+        { rand: 10, celule: [celula("Beneficiar: NISAL SRL")] },
+      ],
+    } as unknown as Parameters<typeof antetDinFisier>[0][number];
+    expect(antetDinFisier([foaie]).persoana).toBe("d-nei Alina Maties");
   });
 });
 
@@ -165,5 +192,13 @@ describe("câmpurile din rândul de verificare (patchDinCamp)", () => {
     expect(patchDinCamp(e, "diam", "114,3")).toEqual({ diametru_valoare: 114.3, diametru_tip: "DN" });
     expect(patchDinCamp(e, "diam", "")).toEqual({ diametru_valoare: null, diametru_tip: null });
     expect(patchDinCamp(e, "sistem", "")).toEqual({ sistem: null });
+  });
+
+  it("al doilea strat: izolația și grosimea lui se schimbă, „Fără” îl scoate; jacheta rămâne", () => {
+    expect(patchDinCamp(e, "strat0", "elastomer").straturi_extra)
+      .toEqual([{ sistem: "elastomer", grosime_mm: 40 }, { sistem: "tabla", grosime_mm: null }]);
+    expect(patchDinCamp(e, "stratg0", "50").straturi_extra)
+      .toEqual([{ sistem: "vata_minerala", grosime_mm: 50 }, { sistem: "tabla", grosime_mm: null }]);
+    expect(patchDinCamp(e, "strat0", "").straturi_extra).toEqual([{ sistem: "tabla", grosime_mm: null }]);
   });
 });

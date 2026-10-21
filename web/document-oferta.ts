@@ -98,9 +98,17 @@ export const NOTA = [
   "Plata lucrarilor se face pe baza cantitatilor real executate si aprobate in situatii de lucrari.",
 ];
 
-/** Notele 1 și 2 din oferta 118.1, doar când oferta are închideri la foc. */
+/**
+ * „Nota 1” și „Nota 2” din oferta 118.1, cuvânt cu cuvânt, doar când oferta are
+ * închideri la foc. În 118.1 fraza despre EI60 / EI90 e ruptă pe două rânduri
+ * de lățimea paginii; aici e un rând, ca să nu depindă de lățimea coloanei.
+ */
 export const NOTA_FOC = [
-  "In pretul inchiderilor golurilor la foc nu sunt incluse colierele si banda wrap.",
+  "Nota 1 :",
+  "Preturile se refera la inchideri goluri la foc EI60 si EI90 pentru conducte metalice si inchideri goluri "
+    + "la foc EI90 si EI120 pentru rosturi tubulatura de ventilatie .",
+  "In pretul inchiderilor golurilor la foc nu sunt incluse colierele si banda wrap",
+  "Nota 2 :",
   "Daca inchiderile golurilor la foc necesita banda wrap, pretul acestora va fi constituit din pretul "
     + "inchiderii golului la foc + pretul benzii wrap.",
 ];

@@ -255,6 +255,8 @@ Fiecare dedusă din Oferta 284 sau Oferta 27.04.2026, cu dovada lângă ea în c
   clientului, nu propusă de noi. Din 8 octombrie 2026: cu două grosimi pe același
   ø, cea mai mare; fără conductă de același ø, cea cu ø cel mai apropiat; fără
   nicio conductă, grosimea uzuală — toate trei marcate `grosime_propusa`.
+  Din 21 octombrie 2026, grosimea pusă de om pe o piesă (casetă, cot) e doar
+  a rândului ei, nu sursă pentru celelalte piese; pusă pe conductă, da.
 - **Totalul documentului**: suma valorilor exacte preț × cantitate, rotunjită o
   singură dată (`valoareLinie`, `totalOferta`) — ca Excel-ul firmei, care are
   143,808 în celulă. Rotunjit pe linie, Oferta 284 ieșea cu un ban peste.
