@@ -822,10 +822,11 @@ dinainte de ofertă nu au încă un șantier.
   `#sant-mare` (`<dialog>`), cu ✕ în colț, Escape sau clic lângă ea. Rândurile
   sunt un tabel ca „Verificare” de la import (`randEditabil` în
   `web/santier-vizual.ts`): diametru (ø / DN), piesă, izolație, grosime,
-  protecție, cantitate, UM, „Pe foaie”, preț dublu, stare; totul se scrie pe
+  protecție, cantitate, UM, preț dublu, stare; totul se scrie pe
   loc (`legaCelule`, alegerile la `change`), fără „Modifică” și fără editorul
   de sub zonă. Câmpul schimbat scoate rândul din „De verificat”; cantitatea
-  diferită de suma de pe foaie e galbenă, cu suma sub mouse. Numele zonei se
+  diferită de ce s-a citit din poză e galbenă, cu citirea sub mouse. Coloana
+  „Pe foaie” („6 + 4 + 2”) a ieșit: citirea scrisului de mână greșea des. Numele zonei se
   scrie pe loc. „Scoate” e ✕ (`.cel-scoate`). Sub 1000 px de tabel rândul
   devine card; cu pagini, ecranul cere toată lățimea. Paragrafele de mai jos
   despre rând și „Modifică” sunt istoric.

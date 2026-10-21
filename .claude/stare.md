@@ -7,11 +7,12 @@
 
 Cerut de Andrei: poza mică (miniatură lângă titlu, clic → panou mare cu ✕),
 rândurile citite din poză editabile direct, ca la import, în timp real, fără
-„Modifică”, cu ✕ în loc de „Scoate”. Detalii în `ui.md`, „Măsurători”.
+„Modifică”, cu ✕ în loc de „Scoate”, fără coloana „Pe foaie” (sumele
+citite din scrisul de mână greșeau des). Detalii în `ui.md`, „Măsurători”.
 Verificat cu Playwright pe `build:server`, cu răspunsul modelului simulat
 (pagina Ecoterm din exemplul lui Andrei): 390 / 768 / 1280 / 1440 / 1920 px,
 ambele teme, zero derulare laterală, casete de 44 px, cantitatea 12 → 15 la
-fiecare tastă (galbenă, „Pe foaie: 6 + 4 + 2 = 12”), Confirmă, ✕, panoul cu
+fiecare tastă (galbenă, „Citit din poză: 12”), Confirmă, ✕, panoul cu
 poza (✕, Escape), „Adaugă rând” duce cursorul pe diametru, totul rămâne după
 reîncărcare.
 

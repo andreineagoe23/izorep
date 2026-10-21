@@ -1,4 +1,4 @@
-import { formula, type RandSantier } from "../src/santier/agrega.js";
+import type { RandSantier } from "../src/santier/agrega.js";
 import type { Element, Izolatie, Jacheta } from "../src/santier/schema.js";
 import type { Destinatie } from "../src/pricing/lists.js";
 import { esc, nr, stare, tabel } from "./ecrane/tip.js";
@@ -81,13 +81,15 @@ const PROTECTII: [Jacheta | "", string][] = [["aluminiu", "Tablă aluminiu"], ["
 const PIESE = (Object.keys(ELEMENT) as Element[]).map((e): [Element, string] => [e, ELEMENT[e].nume]);
 
 /** Capul tabelului; pe ecran îngust, același text e eticheta din card (`data-eticheta`). */
-const CAPETE = ["Diametru", "Piesă", "Izolație", "Grosime (mm)", "Protecție", "Cantitate", "UM", "Pe foaie", "Preț dublu", "Stare"];
+const CAPETE = ["Diametru", "Piesă", "Izolație", "Grosime (mm)", "Protecție", "Cantitate", "UM", "Preț dublu", "Stare"];
 
 /**
  * Un rând citit din poză, ca la „Verificare” din import (Andrei, 21 octombrie
  * 2026): fiecare câmp se scrie direct în tabel, fără „Modifică”, și se aplică
- * la fiecare tastă. Cantitatea schimbată față de ce s-a adunat de pe foaie e
- * galbenă și spune, sub mouse, suma de pe foaie.
+ * la fiecare tastă. Cantitatea schimbată față de ce s-a citit din poză e
+ * galbenă și spune, sub mouse, ce s-a citit. Cum s-a adunat de pe foaie („6 + 4
+ * + 2”) nu se mai arată: citirea scrisului de mână greșea des (Andrei, 21
+ * octombrie 2026), iar coloana doar încurca.
  */
 function randEditabil(p: PaginaSantier, r: RandSantier): string {
   const date = { pag: p.id, rand: r.id };
@@ -115,9 +117,8 @@ function randEditabil(p: PaginaSantier, r: RandSantier): string {
     ${td("Grosime (mm)", celulaNumar({ ed: "gros", valoare: r.grosime_mm, eticheta: `Grosimea izolației, ${cine}`, gol: "—", date }))}
     ${td("Protecție", sel("jacheta", "Protecția", optiuni(PROTECTII, r.jacheta)))}
     ${td("Cantitate", celulaNumar({ ed: "cant", valoare: r.cantitate, eticheta: `Cantitatea, ${cine}`, gol: "—", date,
-      schimbat: schimbata, ...(schimbata ? { inainte: `Pe foaie: ${formula(r)} = ${cifra(dePeFoaie!)}` } : {}) }), "n")}
+      schimbat: schimbata, ...(schimbata ? { inainte: `Citit din poză: ${cifra(dePeFoaie!)}` } : {}) }), "n")}
     ${td("UM", esc(ELEMENT[r.element].um), "ver-text-cel")}
-    ${td("Pe foaie", esc(r.termeni.length > 0 ? formula(r) : "scris de mână"), "sant-foaie")}
     ${td("Preț dublu", `<label class="sant-dublu"><input type="checkbox" data-sc="pret_dublu" ${atr}${r.pret_dublu ? " checked" : ""}
       aria-label="${esc(`Preț dublu, ${cine}`)}" /></label>`)}
     <td class="ver-stare"><div class="ver-actiuni">${actiune}
@@ -131,7 +132,7 @@ function tabelZona(p: PaginaSantier, zona: string, randuri: RandSantier[]): stri
   return `<section class="sant-zona">
     ${celulaText({ ed: "zona", text: zona, eticheta: `Numele zonei ${zona}`, clasa: "sant-zona-nume", date: { pag: p.id, zona } })}
     <table class="ver-tabel sant-tabel">
-      <colgroup>${["diam", "piesa", "material", "gros", "prot", "n", "um", "foaie", "dublu", "stare"].map((k) => `<col class="sant-col-${k}">`).join("")}</colgroup>
+      <colgroup>${["diam", "piesa", "material", "gros", "prot", "n", "um", "dublu", "stare"].map((k) => `<col class="sant-col-${k}">`).join("")}</colgroup>
       <thead><tr>${CAPETE.map((t, k) => `<th scope="col"${k === 5 ? ' class="n"' : ""}>${t}</th>`).join("")}</tr></thead>
       <tbody>${randuri.map((r) => randEditabil(p, r)).join("")}</tbody>
     </table>

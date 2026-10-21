@@ -954,11 +954,11 @@ p.cel-ed.sant-zona-nume:focus { background: var(--panou); }
 .sant-col-n { width: 5.5rem; }
 .sant-col-um { width: 2.75rem; }
 .sant-col-dublu { width: 4rem; }
-.sant-col-stare { width: 11rem; }
-.ver-tabel td.sant-foaie { line-height: 1.45; padding-top: 21px !important; color: var(--slab); overflow-wrap: anywhere; }
+/* Starea ia ce rămâne: motivul („cifră greu de citit”) are loc pe un rând. */
+.sant-col-stare { width: auto; }
 .sant-dublu { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; cursor: pointer; }
 .sant-tabel .sant-dublu input { width: 20px; height: 20px; min-height: 0; margin: 0; }
-/* Coloanele fixe au ~860 px: sub 1000 px de tabel „Pe foaie” n-ar mai avea loc, deci randul devine card. */
+/* Coloanele fixe au ~800 px: sub 1000 px de tabel starea n-ar mai avea loc, deci randul devine card. */
 @container sant (max-width: 999px) {
   .ver-tabel.sant-tabel, .ver-tabel.sant-tabel tbody, .ver-tabel.sant-tabel tr, .ver-tabel.sant-tabel td { display: block; width: auto; }
   .ver-tabel.sant-tabel colgroup, .ver-tabel.sant-tabel thead { display: none; }
@@ -972,7 +972,6 @@ p.cel-ed.sant-zona-nume:focus { background: var(--panou); }
   }
   .ver-tabel.sant-tabel td.ver-stare { grid-column: 1 / -1; }
   .ver-tabel.sant-tabel td.n, .ver-tabel.sant-tabel td.n input.cel-ed { text-align: left; }
-  .ver-tabel.sant-tabel td.sant-foaie { padding-top: 0 !important; }
   .ver-tabel.sant-tabel .sant-dublu { justify-content: flex-start; }
 }
 
