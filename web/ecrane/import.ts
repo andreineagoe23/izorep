@@ -230,6 +230,33 @@ export const ecran: Ecran = {
       return f && r ? campuriRand(r, f.antet) : undefined;
     };
 
+    /**
+     * Celula descrierii, pe foaie: cea care tine cel mai lung text pe cele mai
+     * multe pozitii. Hotarata o data pe foaie si tinuta minte, nu pe rand: golita
+     * ca s-o rescrie omul, descrierea n-ar mai fi cel mai lung text, iar caseta
+     * ar sari pe codul „IZOLATII”.
+     */
+    const coloanaDescrierii = new WeakMap<FoaieBruta, number>();
+    function celulaDescriere(s: Sesiune, l: LinieProcesata): { cel: number; text: string } | undefined {
+      const f = s.foi.find((x) => x.nume === l.bruta.foaie);
+      if (!f) return undefined;
+      if (!coloanaDescrierii.has(f)) {
+        const voturi = new Map<number, number>();
+        for (const r of f.randuri) {
+          if (!r.linie) continue;
+          let cel = -1;
+          r.celule.forEach((c, i) => { if (typeof c.v === "string" && c.v.length > (cel < 0 ? 0 : String(r.celule[cel]!.v).length)) cel = i; });
+          if (cel >= 0) voturi.set(cel, (voturi.get(cel) ?? 0) + 1);
+        }
+        const [cel] = [...voturi].sort((a, b) => b[1] - a[1])[0] ?? [-1];
+        coloanaDescrierii.set(f, cel);
+      }
+      const cel = coloanaDescrierii.get(f)!;
+      const r = f.randuri.find((x) => x.rand === l.bruta.rand);
+      const v = cel >= 0 ? r?.celule[cel] : undefined;
+      return v && (typeof v.v === "string" || v.v === null) ? { cel, text: String(v.v ?? "") } : undefined;
+    }
+
     /** Pozitiile, sub filtrul de stare, apoi sub motiv. */
     function vizibile(s: Sesiune): {
       pozitiile: LinieProcesata[]; peStare: LinieProcesata[]; lista: LinieProcesata[];
@@ -377,7 +404,7 @@ export const ecran: Ecran = {
     }
 
     /** Documentul ofertei din sesiune, cu antetul si ajustarea de acum: acelasi din care se scrie Excelul. */
-    function documentul(s: Sesiune): ReturnType<typeof documentOferta> {
+    function documentul(s: Sesiune, pastreaza: number | null = null): ReturnType<typeof documentOferta> {
       const firma = FIRME.find((f) => f.id === antet.firma) ?? FIRME[0];
       return documentOferta({
         linii: cuDenumiri(s.rez.linii, denumiri),
@@ -387,7 +414,7 @@ export const ecran: Ecran = {
           ...(antet.discount > 0 ? { discountProcent: antet.discount } : {}), ...(ajustare ? { ajustareProcent: ajustare } : {}),
         },
         provenienta: { generatLa: "", destinatie, model: s.meta.model, sesiune: s.meta.id, fisierSursa: s.meta.nume },
-      });
+      }, pastreaza);
     }
 
     function paginaVerificare(s: Sesiune): string {
@@ -408,8 +435,9 @@ export const ecran: Ecran = {
       let corp: string;
       if (vedere === "export") corp = exportPeEcran(documentul(s));
       else {
-        corp = verificarePeEcran(documentul(s), {
+        corp = verificarePeEcran(documentul(s, randInLucru), {
           linii: harta, vizibile: filtrat, editIdx, propunere, cuFoaie, schimbari: schimbariPozitie(s),
+          descriere: (l) => celulaDescriere(s, l),
         });
       }
 
@@ -1308,6 +1336,67 @@ export const ecran: Ecran = {
       }
     });
 
+    /** Descrierea la care scrie omul acum și cum era rândul înainte de prima tastă, pentru „Anulează”. */
+    let descriereInLucru: string | null = null;
+
+    /**
+     * Descrierea scrisă în tabelul de verificare e celula din fișierul
+     * clientului, ca în Excel (Andrei, 21 octombrie 2026: „dacă schimb DN100 în
+     * DN50 ar trebui să se schimbe ce afectează”). La fiecare tastă rândul se
+     * recitește și se retarifează: diametrul, rândul din listă, prețul. O poziție
+     * verificată de om se recitește și ea, din textul nou. „Anulează” (la prima
+     * tastă) pune la loc celula și ce era pe poziție.
+     */
+    function scrieDescrierea(el: HTMLElement, peLoc: boolean): boolean {
+      const s = sesiune;
+      const numeFoaie = el.dataset["foaie"] ?? "";
+      const rand = s?.foi.find((f) => f.nume === numeFoaie)?.randuri.find((r) => r.rand === Number(el.dataset["rand"]));
+      const idx = rand?.linie?.index;
+      if (!s || !rand || idx === undefined) return false;
+      const cel = Number(el.dataset["cel"]);
+      const text = el.textContent ?? "";
+      const vVechi = rand.celule[cel]?.v ?? null;
+      if (text === String(vVechi ?? "")) return false;
+      // Cum era rândul înainte de tasta asta, ca s-o putem retrage.
+      const rezInainte = s.rez.rezolvate.get(idx);
+      const marcata = descrieriSchimbate.has(idx);
+      const puneInapoi = (v: string | number | null, rez: typeof rezInainte, marcat: boolean): void => {
+        scrieCelula(rand, cel, v);
+        reconstruieste(rand);
+        if (rez) s.rez.rezolvate.set(idx, rez); else s.rez.rezolvate.delete(idx);
+        if (marcat) descrieriSchimbate.add(idx); else descrieriSchimbate.delete(idx);
+        retarifeaza();
+      };
+      scrieCelula(rand, cel, text);
+      reconstruieste(rand);
+      retarifeaza();
+      // Pe drum, un text pe jumătate („Case”) poate să nu mai fie o poziție: rândul
+      // ar dispărea de sub cursor. Rămâne cum era până textul e iar o poziție; la
+      // ieșire din casetă, descrierea de dinainte se pune la loc.
+      if (!s.rez.linii.some((l) => l.extras.index === idx)) {
+        puneInapoi(vVechi, rezInainte, marcata);
+        if (peLoc) return false;
+        arataMesaj("Descrierea nu mai e o poziție de izolație: a rămas cea de dinainte.");
+        return true;
+      }
+      const cheie = `${numeFoaie}|${rand.rand}|${cel}`;
+      if (descriereInLucru !== cheie) {
+        descriereInLucru = cheie;
+        const editareVeche = s.editari.find((x) => x.foaie === numeFoaie && x.rand === rand.rand && x.cel === cel);
+        arataMesaj("Descrierea s-a schimbat: rândul e recitit.", () => {
+          const j = s.editari.findIndex((x) => x.foaie === numeFoaie && x.rand === rand.rand && x.cel === cel);
+          if (editareVeche) s.editari[j] = editareVeche; else if (j >= 0) s.editari.splice(j, 1);
+          descriereInLucru = null;
+          puneInapoi(vVechi, rezInainte, marcata);
+        });
+      }
+      const editare: EditareCelula = { foaie: numeFoaie, rand: rand.rand, cel, v: text };
+      const i = s.editari.findIndex((x) => x.foaie === editare.foaie && x.rand === editare.rand && x.cel === cel);
+      if (i >= 0) s.editari[i] = editare; else s.editari.push(editare);
+      randInLucru = idx;
+      return true;
+    }
+
     /** Casetele de număr din rândul de verificare, după `data-ed`, și câmpul lor din `patchDinCamp`. */
     const CAMPURI_RAND: Record<string, string> = { gros: "grosime", diam: "diam", gol_l: "gol_l", gol_h: "gol_h" };
     /** Câmpul la care scrie omul acum și cum era poziția înainte de prima tastă, pentru „Anulează”. */
@@ -1346,6 +1435,7 @@ export const ecran: Ecran = {
         if (!sesiune) return false;
         const idx = Number(el.dataset["idx"]);
         if (el.dataset["ed"] === "den") { if (!peLoc) scrieDenumirea(el); return false; }
+        if (el.dataset["ed"] === "desc") return scrieDescrierea(el, peLoc);
         const camp = CAMPURI_RAND[el.dataset["ed"] ?? ""];
         if (camp) return scrieCampul(idx, camp, (el as HTMLInputElement).value, peLoc);
         const valoare = numarScris((el as HTMLInputElement).value);
@@ -1368,6 +1458,11 @@ export const ecran: Ecran = {
       },
       deseneaza,
       desenari: () => desenari,
+    });
+
+    gazda.addEventListener("input", (e) => {
+      const el = e.target as HTMLElement;
+      if (el.matches?.('.cel-ed[data-ed="desc"]') && scrieDescrierea(el, true)) pastreazaCursorul(gazda, deseneaza);
     });
 
     legaPanouStergere(gazda);

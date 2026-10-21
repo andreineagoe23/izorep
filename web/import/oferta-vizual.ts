@@ -158,6 +158,8 @@ export interface OptiuniDocument {
   campuri?: CampuriRand;
   /** Fișierul are mai multe foi: rândul spune și foaia. */
   cuFoaie: boolean;
+  /** Celula cu descrierea poziției în fișierul clientului, ca s-o scrie omul (vezi `scrieDescrierea`). */
+  descriere?: (l: LinieProcesata) => { cel: number; text: string } | undefined;
   /**
    * Ce a schimbat omul pe poziție (denumirea, cantitatea, prețul unitar),
    * fiecare cu ce era înainte, în cuvinte: caseta e galbenă și o spune.

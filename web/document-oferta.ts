@@ -367,9 +367,12 @@ function golul(l: LinieProcesata): PozitieOferta["gol"] {
  * - Totalul e cel din `valoareOferta`: ajustarea, adaosul de foc pe industrial,
  *   discountul.
  */
-export function documentOferta(c: CerereOferta): DocumentOferta {
+export function documentOferta(c: CerereOferta, pastreaza: number | null = null): DocumentOferta {
+  // `pastreaza`: rândul la care scrie omul rămâne în document și când textul,
+  // pe drum, nu mai e izolație (descrierea ștearsă ca s-o rescrie): altfel ar
+  // dispărea de sub cursor. Fără preț, nu intră în ofertă.
   const linii = cuAjustare(c.linii, c.antet.ajustareProcent ?? 0)
-    .filter((l) => l.extras.sistem !== null);
+    .filter((l) => l.extras.sistem !== null || l.extras.index === pastreaza);
   const foi = new Set(linii.map((l) => l.bruta.foaie));
 
   const capitole: CapitolOferta[] = [];

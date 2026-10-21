@@ -1066,55 +1066,72 @@ main details.imp-card[open] > summary { margin-bottom: 12px; }
 }
 @container imp (max-width: 619px) { .imp-vedere { width: 100%; } }
 
-/* ---- „Verificare” (21 octombrie 2026): un rand pe doua niveluri. Sus ce a scris
-   clientul si starea; dedesubt ce am inteles, ca casete de 44 px pe o linie,
-   cu butoanele in dreptul lor (inainte, pastile sub descriere si butoane decalate). */
-.ver { container: ver / inline-size; display: grid; gap: 0; padding: var(--pad); }
-.ver-capitol { margin: 16px 0 4px; font-size: 15px; font-weight: 650; }
-.ver-capitol:first-of-type { margin-top: 4px; }
-.ver-poz { display: grid; gap: 10px; padding: 14px 12px 14px 16px; border-top: 1px solid var(--linie); box-shadow: inset 4px 0 0 var(--c); }
-.ver-poz:first-of-type, .ver-capitol + .ver-poz { border-top: 0; }
-.ver-sus { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 16px; align-items: start; }
-.ver-rand { grid-column: 1; margin: 0; font-size: 13px; color: var(--slab); font-variant-numeric: tabular-nums; }
-.ver-rand span { margin-left: 8px; overflow-wrap: anywhere; }
-p.cel-ed.ver-text { grid-column: 1; margin: 0 0 0 -10px; min-height: 0; padding: 6px 10px; border-color: transparent; background: none; font-weight: 500; line-height: 1.45; }
+/* ---- „Verificare” (21 octombrie 2026): tabel ca in Excel. Pe fiecare rand
+   descrierea clientului, apoi ce am inteles, ca casete de 44 px; textele
+   (UM, totalul, starea) stau pe linia casetelor, ca totul sa se alinieze. */
+.ver { container: ver / inline-size; padding: var(--pad); }
+.ver-tabel { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 14px; }
+.ver-col-rand { width: 3.25rem; }
+.ver-col-material { width: 8.5rem; }
+.ver-col-gros { width: 4.5rem; }
+.ver-col-prot { width: 8.75rem; }
+.ver-col-diam { width: 7.75rem; }
+.ver-col-piesa { width: 6.75rem; }
+.ver-col-um { width: 2.75rem; }
+.ver-col-n { width: 5.25rem; }
+.ver-col-total { width: 6rem; }
+.ver-col-stare { width: 8.75rem; }
+.ver-tabel th {
+  padding: 8px 6px; font-size: 13px; font-weight: 600; color: var(--slab); text-align: left;
+  vertical-align: bottom; border-bottom: 2px solid var(--linie); white-space: normal;
+}
+.ver-tabel th.n { text-align: right; }
+.ver-tabel td { padding: 10px 6px; vertical-align: top; border-top: 1px solid var(--linie); min-width: 0; }
+.ver-poz td:first-child { padding-left: 12px; box-shadow: inset 4px 0 0 var(--c); }
+.ver-poz[data-stare="de_validat"] td, .ver-poz[data-stare="netarifate"] td { background: color-mix(in srgb, var(--panou-2) 55%, var(--panou)); }
+.ver-capitol th { padding: 14px 6px 6px; font-size: 15px; font-weight: 650; color: var(--text); border-bottom: 0; }
+.ver-tabel select, .ver-tabel input {
+  width: 100%; min-width: 0; height: 44px; min-height: 44px; margin: 0; font-size: 14px;
+}
+.ver-tabel select { padding: 0 4px; border: 1px solid var(--linie-tare); border-radius: 8px; background: var(--panou); color: var(--text); }
+.ver-tabel td.n input.cel-ed { text-align: right; font-variant-numeric: tabular-nums; padding: 8px; }
+.ver-rand, .ver-text-cel { line-height: 44px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ver-rand { color: var(--slab); font-size: 13.5px; }
+.ver-total { text-align: right; font-weight: 600; }
+.ver-desc { overflow-wrap: anywhere; }
+.ver-cod { display: block; padding: 0 8px; font-size: 12.5px; color: var(--slab); }
+/* Descrierea, ca o celula de Excel: fara chenar pana treci cu mouse-ul sau scrii in ea. */
+p.cel-ed.ver-text, p.ver-text { margin: 0; min-height: 44px; padding: 10px 8px; line-height: 1.45; font-weight: 500; }
+p.cel-ed.ver-text { border-color: transparent; background: none; }
 p.cel-ed.ver-text:hover { border-color: var(--linie-tare); }
-.ver-stare { grid-column: 2; grid-row: 1 / span 2; text-align: right; }
-.ver-stare .imp-poz-motiv { display: block; margin-top: 2px; font-size: 13.5px; color: var(--slab); }
-.ver-campuri { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; }
-.ver-camp { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; min-width: 0; margin: 0; font-size: inherit; }
-.ver-camp > span { overflow: hidden; font-size: 12.5px; color: var(--slab); white-space: nowrap; text-overflow: ellipsis; }
-.ver-camp select, .ver-camp input, .ver-camp output {
-  height: 44px; min-height: 44px; width: 100%; min-width: 0; margin: 0; font-size: 15px;
-}
-.ver-camp select { padding: 0 6px; border: 1px solid var(--linie-tare); border-radius: 8px; background: var(--panou); color: var(--text); }
-.ver-camp output { display: flex; align-items: center; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.ver-c-material { width: 9.5rem; }
-.ver-c-protectie { width: 10.5rem; }
-.ver-c-mic { width: 6.25rem; }
-.ver-c-gol { width: 8rem; }
-.ver-c-lat { width: 13rem; }
-.ver-c-diametru { width: 8.5rem; }
-.ver-diametru { display: grid; grid-template-columns: 3.75rem minmax(0, 1fr); gap: 4px; }
-.ver-c-piesa { width: 7.5rem; }
-.ver-c-numar { width: 6rem; }
-.ver-c-total { width: 6.5rem; }
-.ver-c-total output { justify-content: flex-end; font-weight: 600; }
-.ver-actiuni { display: flex; gap: 6px; margin-left: auto; }
-.imp .ver-actiuni button { min-height: 44px; height: 44px; padding: 0 12px; font-size: 14px; white-space: nowrap; }
-.imp .ver-actiuni .cel-scoate { padding: 0; width: 44px; }
-.ver-poz .imp-editor { margin-top: 0; padding: var(--imp-gap); border-radius: 10px; background: var(--accent-slab); }
-/* Sub 1180 px nu incape o linie: doua linii de cate cinci, tot aliniate
-   (izolatia … piesa; cantitatea, pretul, totalul si butoanele, pe doua coloane). Pe telefon, doua coloane. */
-@container ver (max-width: 1179px) {
-  .ver-campuri { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
-  .ver-camp { width: auto; }
-  .ver-actiuni { grid-column: span 2; align-self: end; justify-content: flex-end; margin-left: 0; }
-}
-@container ver (max-width: 619px) {
-  .ver-campuri { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .ver-actiuni { grid-column: 1 / -1; justify-content: stretch; }
-  .ver-actiuni button:not(.cel-scoate) { flex: 1 1 auto; }
+p.cel-ed.ver-text:focus { background: var(--panou); }
+p.ver-text:not(.cel-ed) { padding: 10px 0; }
+.ver-diametru { display: grid; grid-template-columns: 3.6rem minmax(0, 1fr); gap: 3px; }
+.ver-actiuni { display: flex; align-items: center; gap: 6px; min-height: 44px; }
+.ver-actiuni .imp-stare { flex: 1 1 auto; }
+.imp .ver-actiuni button { min-height: 44px; height: 44px; padding: 0 10px; font-size: 14px; white-space: nowrap; }
+.imp .ver-actiuni .cel-scoate { flex: 0 0 44px; width: 44px; padding: 0; margin-left: auto; }
+.ver-motiv { margin: 4px 0 0; font-size: 12.5px; color: var(--slab); line-height: 1.35; }
+/* Coloanele fixe au ~1000 px: sub 1240 px de tabel descrierea ar ramane sub
+   ~230 px, deci fiecare rand devine card: descrierea pe toata latimea, casetele
+   cu numele coloanei deasupra, cate trei-patru pe rand. */
+@container ver (max-width: 1239px) {
+  .ver-tabel, .ver-tabel tbody, .ver-tabel tr, .ver-tabel td, .ver-tabel th { display: block; width: auto; }
+  .ver-tabel colgroup, .ver-tabel thead { display: none; }
+  .ver-tabel tr.ver-poz {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 8.5rem), 1fr)); gap: 8px 10px;
+    padding: 12px 12px 14px 16px; border-top: 1px solid var(--linie); box-shadow: inset 4px 0 0 var(--c);
+  }
+  .ver-tabel td, .ver-poz td:first-child { padding: 0; border: 0; box-shadow: none; background: none !important; }
+  .ver-tabel td[data-eticheta]::before {
+    content: attr(data-eticheta); display: block; margin-bottom: 2px; font-size: 12.5px; line-height: 1.3; color: var(--slab); font-weight: 400;
+  }
+  .ver-tabel td.ver-rand { grid-column: 1 / -1; line-height: 1.3; }
+  .ver-tabel td.ver-rand::before { display: inline; margin-right: 4px; }
+  .ver-tabel td.ver-desc, .ver-tabel td.ver-stare { grid-column: 1 / -1; }
+  .ver-tabel td:empty { display: none; }
+  .ver-tabel td, .ver-tabel td.n, .ver-total { text-align: left; }
+  .ver-tabel td.n input.cel-ed { text-align: left; }
 }
 
 /* ---- „Cum iese oferta”: Excelul de acum, doar citire, cu foaia lui alba si randurile lui. */

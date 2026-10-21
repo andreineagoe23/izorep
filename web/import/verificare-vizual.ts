@@ -4,23 +4,23 @@ import { esc, eur } from "../ecrane/tip.js";
 import { celulaNumar, celulaText, numarInCelula } from "../celula.js";
 import type { DocumentOferta, PozitieOferta } from "../document-oferta.js";
 import type { OptiuniDocument } from "./oferta-vizual.js";
-import { FORME_EDITOR, GROSIMI, MATERIAL, MATERIALE, ajutorDiametru, type Sistem } from "./text.js";
-import { actiuniPozitie, starePozitie } from "./vizual.js";
+import { FORME_EDITOR, GROSIMI, MATERIAL, MATERIALE, MOTIV, STARE, ajutorDiametru, motiveLinie, stareLinie, type Sistem } from "./text.js";
+import { actiuniPozitie } from "./vizual.js";
 
 /**
  * Tabul „Verificare” (Andrei, 21 octombrie 2026): ce a înțeles aplicația din
  * fiecare rând al cererii, pe care angajatul îl verifică și îl corectează.
  *
- * Un rând pe două niveluri. Sus: rândul din fișier, codul, descrierea
- * clientului și starea. Dedesubt, pe o linie: câmpurile înțelese (izolația,
- * grosimea, protecția, diametrul, piesa, cantitatea cu UM-ul ei, prețul), toate casete de
- * aceeași înălțime, cu butoanele pe aceeași linie. Înainte, ce am înțeles stătea
- * în pastile sub descriere („Vată minerală 50 mm · ø114 în listă”), iar
- * „Modifică” și ✕ nu erau în dreptul casetelor.
+ * Un tabel ca foaia Excel: pe fiecare rând descrierea clientului, apoi ce am
+ * înțeles din ea (izolația, grosimea, protecția, diametrul, piesa), UM-ul,
+ * cantitatea, prețul, totalul și starea, toate casete de aceeași înălțime, cu
+ * butoanele pe aceeași linie. Înainte, ce am înțeles stătea în pastile sub
+ * descriere („Vată minerală 50 mm · ø114 în listă”).
  *
- * Câmpurile se scriu pe loc; schimbate, poziția devine a omului (ca o corectură
- * din editor). Fără alt buton de „mai mult” (Andrei: un buton fără rost):
- * prețul scris în casetă e prețul pus de mână, descrierea e denumirea din ofertă.
+ * Totul se scrie pe loc. Descrierea e celula din fișierul clientului: schimbată
+ * („DN100” → „DN50”), rândul se recitește și se retarifează la fiecare tastă.
+ * O casetă schimbată face poziția a omului (ca o corectură din editor); prețul
+ * scris e prețul pus de mână. Fără butoane „mai mult” (Andrei: fără rost).
  *
  * Pur, fără DOM: testat în Node.
  */
@@ -76,10 +76,6 @@ export function patchDinCamp(e: LinieExtrasa, camp: string, valoare: string): Pa
   }
 }
 
-/** O casetă cu eticheta deasupra; `clasa` îi dă lățimea. */
-const camp = (eticheta: string, control: string, clasa: string): string =>
-  `<label class="ver-camp ${clasa}"><span>${eticheta}</span>${control}</label>`;
-
 const select = (nume: string, idx: number, eticheta: string, optiuni: [string, string][], ales: string): string => {
   const lista = optiuni.some(([v]) => v === ales) ? optiuni : [...optiuni, [ales, ales] as [string, string]];
   return `<select data-vc="${nume}" data-idx="${idx}" aria-label="${esc(eticheta)}">${lista.map(([v, t]) =>
@@ -90,65 +86,91 @@ const select = (nume: string, idx: number, eticheta: string, optiuni: [string, s
 const numarPeLoc = (ed: string, idx: number, valoare: number | null, eticheta: string, gol = ""): string =>
   celulaNumar({ ed, valoare, eticheta, ...(gol ? { gol } : {}), date: { idx } });
 
-function campuri(p: PozitieOferta, l: LinieProcesata, o: OptiuniDocument): string {
+/** Capul tabelului; pe ecran îngust, același text e eticheta din card (`data-eticheta`). */
+interface Coloane { gros: string; prot: string }
+
+/**
+ * Starea, în coloana ei: pe linia casetelor butonul care o rezolvă („Confirmă”,
+ * „Pune 50 mm”) sau, gata, cuvântul ei, apoi ✕; motivul, mărunt, dedesubt.
+ */
+function stare(l: LinieProcesata, propunere: number | null, cine: string): string {
+  const st = stareLinie(l);
+  const actiune = actiuniPozitie(l, propunere, false, false);
+  const motive = motiveLinie(l).map((m) => MOTIV[m]);
+  return `<div class="ver-actiuni">${actiune || `<span class="imp-stare" data-stare="${st}">${STARE[st]}</span>`}
+      <button type="button" class="cel-scoate" data-act="scoate-pozitie" data-idx="${l.extras.index}"
+        aria-label="Scoate ${cine} din ofertă" title="Scoate din ofertă">✕</button></div>
+    ${motive.length ? `<p class="ver-motiv">${esc(motive.join(" · "))}</p>` : ""}`;
+}
+
+function randVerificare(p: PozitieOferta, o: OptiuniDocument, c: Coloane): string {
+  const l = o.linii.get(p.linie)!;
   const e = l.extras;
   const i = e.index;
-  const cine = p.nr === null ? `rândul ${p.sursa.rand}` : `poziția ${p.nr}`;
   const s = o.schimbari?.(p) ?? {};
-  const material = camp("Izolație", select("sistem", i, `Izolația, ${cine}`,
-    [...MATERIALE.map((m): [string, string] => [m, MATERIAL[m]]), ["", "Nu e izolație"]], e.sistem ?? ""),
-    e.sistem === "goluri_foc" ? "ver-c-material ver-c-lat" : "ver-c-material");
+  const cine = p.nr === null ? `rândul ${p.sursa.rand}` : `poziția ${p.nr}`;
+  // Descrierea e celula din fișierul clientului: scrisă, rândul se recitește pe loc.
+  const cel = o.descriere?.(l);
+  const text = cel
+    ? celulaText({ ed: "desc", text: cel.text, eticheta: `Descrierea, ${cine}`, clasa: "ver-text",
+      date: { idx: i, foaie: p.sursa.foaie, rand: p.sursa.rand, cel: cel.cel } })
+    : `<p class="ver-text">${esc(p.textClient)}</p>`;
   const gol = e.sistem === "goluri_foc";
-  const tehnice = gol
-    ? camp("Lățime gol (mm)", numarPeLoc("gol_l", i, e.gol_latime_mm, `Lățimea golului, ${cine}`), "ver-c-gol")
-      + camp("Înălțime gol (mm)", numarPeLoc("gol_h", i, e.gol_inaltime_mm, `Înălțimea golului, ${cine}`), "ver-c-gol")
-    : camp("Grosime (mm)", numarPeLoc("gros", i, e.grosime_mm, `Grosimea, ${cine}`, "—"), "ver-c-mic")
-      + camp("Protecție", select("protectie", i, `Protecția, ${cine}`, PROTECTII, protectieDin(e)), "ver-c-protectie")
-      + `<div class="ver-camp ver-c-diametru"><span id="ver-d-${i}">Diametru</span><div class="ver-diametru"${
-        ajutorDiametru(l) ? ` title="${esc(ajutorDiametru(l))}"` : ""}>${
-        select("diam_tip", i, `Notația diametrului, ${cine}`, NOTATII, e.diametru_tip ?? "exterior")}${
-        numarPeLoc("diam", i, e.diametru_valoare, `Diametrul, ${cine}`, "—")}</div></div>`
-      + camp("Piesă", select("forma", i, `Piesa, ${cine}`, FORME_EDITOR, e.forma ?? "ml"), "ver-c-piesa");
+  const td = (eticheta: string, continut: string, clasa = ""): string =>
+    `<td${clasa ? ` class="${clasa}"` : ""} data-eticheta="${esc(eticheta)}">${continut}</td>`;
+  const material = select("sistem", i, `Izolația, ${cine}`,
+    [...MATERIALE.map((m): [string, string] => [m, MATERIAL[m]]), ["", "Nu e izolație"]], e.sistem ?? "");
   const cantitate = celulaNumar({ ed: "cant", valoare: p.cantitate, eticheta: `Cantitate, ${cine}`,
     schimbat: s.cant !== undefined, ...(s.cant !== undefined ? { inainte: s.cant } : {}), date: { idx: i } });
   const pret = celulaNumar({ ed: "pret", valoare: p.pretUnitar, eticheta: `Preț unitar, ${cine}`, gol: "fără preț",
     schimbat: s.pret !== undefined, ...(s.pret !== undefined ? { inainte: s.pret } : {}), date: { idx: i } });
-  return `<div class="ver-campuri">
-    ${material}${tehnice}
-    ${camp(`Cantitate${p.um ? ` (${esc(p.um)})` : ""}`, cantitate, "ver-c-numar")}
-    ${camp("Preț unitar €", pret, "ver-c-numar")}
-    <div class="ver-camp ver-c-total"><span>Total €</span><output>${p.valoare === null ? "—" : eur(p.valoare)}</output></div>
-    <div class="ver-actiuni">${actiuniPozitie(l, o.propunere(l), false, false)}
-      <button type="button" class="cel-scoate" data-act="scoate-pozitie" data-idx="${i}"
-        aria-label="Scoate ${cine} din ofertă" title="Scoate din ofertă">✕</button></div>
-  </div>`;
+  return `<tr class="ver-poz" data-idx="${i}" data-stare="${p.stare}">
+    <td class="ver-rand" data-eticheta="Rândul">${p.sursa.rand}</td>
+    <td class="ver-desc">${text}${p.cod ? `<span class="ver-cod">${esc(p.cod)}</span>` : ""}</td>
+    ${td("Izolație", material)}
+    ${gol
+      ? td("Lățime gol (mm)", numarPeLoc("gol_l", i, e.gol_latime_mm, `Lățimea golului, ${cine}`, "lățime"))
+        + td("Înălțime gol (mm)", numarPeLoc("gol_h", i, e.gol_inaltime_mm, `Înălțimea golului, ${cine}`, "înălțime"))
+        + td("Diametru", "") + td("Piesă", "")
+      : td(c.gros, numarPeLoc("gros", i, e.grosime_mm, `Grosimea, ${cine}`, "—"))
+        + td(c.prot, select("protectie", i, `Protecția, ${cine}`, PROTECTII, protectieDin(e)))
+        + td("Diametru", `<div class="ver-diametru"${ajutorDiametru(l) ? ` title="${esc(ajutorDiametru(l))}"` : ""}>${
+          select("diam_tip", i, `Notația diametrului, ${cine}`, NOTATII, e.diametru_tip ?? "exterior")}${
+          numarPeLoc("diam", i, e.diametru_valoare, `Diametrul, ${cine}`, "—")}</div>`)
+        + td("Piesă", select("forma", i, `Piesa, ${cine}`, FORME_EDITOR, e.forma ?? "ml"))}
+    ${td("UM", esc(p.um || "—"), "ver-text-cel")}
+    ${td("Cantitate", cantitate, "n")}
+    ${td("Preț unitar €", pret, "n")}
+    ${td("Total €", p.valoare === null ? "—" : eur(p.valoare), "n ver-text-cel ver-total")}
+    <td class="ver-stare">${stare(l, o.propunere(l), cine)}</td>
+  </tr>`;
 }
 
-function randVerificare(p: PozitieOferta, o: OptiuniDocument): string {
-  const l = o.linii.get(p.linie)!;
-  const s = o.schimbari?.(p) ?? {};
-  const cine = p.nr === null ? `rândul ${p.sursa.rand}` : `poziția ${p.nr}`;
-  const text = celulaText({ ed: "den", text: p.textClient, eticheta: `Descrierea, ${cine}`, clasa: "ver-text",
-    schimbat: s.den !== undefined, ...(s.den !== undefined ? { inainte: s.den } : {}), date: { idx: p.linie } });
-  return `<article class="ver-poz" data-idx="${p.linie}" data-stare="${p.stare}">
-    <div class="ver-sus">
-      <p class="ver-rand">Rândul ${p.sursa.rand}${p.cod ? `<span>${esc(p.cod)}</span>` : ""}</p>
-      ${text}
-      <div class="ver-stare">${starePozitie(l)}</div>
-    </div>
-    ${campuri(p, l, o)}
-  </article>`;
-}
-
-/** Tabul „Verificare”: pozițiile pe capitolele clientului, toate (și cele care nu intră încă în ofertă). */
+/**
+ * Tabul „Verificare”: un tabel ca în Excel (Andrei, 21 octombrie 2026: „prefer
+ * view-ul pe coloane”), pe capitolele clientului, cu toate pozițiile (și cele
+ * care nu intră încă în ofertă). Pe ecran îngust rândul devine card.
+ */
 export function verificarePeEcran(d: DocumentOferta, o: OptiuniDocument): string {
   const vede = (p: PozitieOferta): boolean => o.vizibile === null || o.vizibile.has(p.linie);
+  const toate = d.capitole.flatMap((cap) => cap.pozitii);
+  // Doar închideri la foc (Matari): coloanele grosimii și protecției țin golul.
+  const doarGoluri = toate.length > 0 && toate.every((p) => o.linii.get(p.linie)?.extras.sistem === "goluri_foc");
+  const c: Coloane = doarGoluri ? { gros: "Lățime gol (mm)", prot: "Înălțime gol (mm)" } : { gros: "Grosime (mm)", prot: "Protecție" };
+  const capete = ["Rând", "Descrierea clientului", "Izolație", c.gros, c.prot, "Diametru", "Piesă", "UM", "Cantitate", "Preț unitar €", "Total €", "Stare"];
+  const n = capete.length;
   const corp = d.capitole.map((cap) => {
     const vazute = cap.pozitii.filter(vede);
     if (vazute.length === 0) return "";
-    return `${cap.titlu ? `<h3 class="ver-capitol">${esc(cap.titlu)}</h3>` : ""}${vazute.map((p) => randVerificare(p, o)).join("")}`;
+    return `<tbody>${cap.titlu ? `<tr class="ver-capitol"><th colspan="${n}" scope="colgroup">${esc(cap.titlu)}</th></tr>` : ""}${
+      vazute.map((p) => randVerificare(p, o, c)).join("")}</tbody>`;
   }).join("");
   return `<section class="imp-card ver" aria-label="Verificare">
-    ${corp || `<p class="imp-gol">Nicio poziție aici.</p>`}
+    ${corp ? `<table class="ver-tabel">
+      <colgroup>${["rand", "desc", "material", "gros", "prot", "diam", "piesa", "um", "n", "n", "total", "stare"]
+        .map((k) => `<col class="ver-col-${k}">`).join("")}</colgroup>
+      <thead><tr>${capete.map((t, k) => `<th scope="col"${[8, 9, 10].includes(k) ? ' class="n"' : ""}>${t}</th>`).join("")}</tr></thead>
+      ${corp}
+    </table>` : `<p class="imp-gol">Nicio poziție aici.</p>`}
   </section>`;
 }

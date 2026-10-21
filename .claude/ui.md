@@ -326,18 +326,19 @@ de observații era cât jumătate din descriere. Sub 1100 px de import, fiecare
 rând din fișier devine card, cu numele coloanei deasupra fiecărei valori
 (`data-eticheta`), descrierea pe toată lățimea, celulele goale ascunse.
 
-**21 octombrie 2026 (Andrei: „UI-ul e îngrozitor”):** pasul 2 are două taburi.
-**„Verificare”** (`web/import/verificare-vizual.ts`): fiecare poziție pe două
-niveluri, sus „Rândul N · cod”, descrierea (se scrie pe loc) și starea cu
-motivul; dedesubt izolația, grosimea, protecția (cu grosimea tablei în aceeași
-listă), diametrul (DN / Ø / Di + valoare), piesa, cantitatea cu UM-ul în
-etichetă, prețul unitar și totalul, toate de 44 px, cu „Confirmă” (doar la „De
-verificat”) și ✕ pe aceeași linie. Fără „Mai mult” și fără rândul de explicații
-de deasupra (Andrei: butoane și texte fără rost); prețul scris în casetă e
-prețul pus de mână. Peste 1180 px de listă, o linie; sub, două linii de câte
-cinci; pe telefon, două coloane. Schimbat, un câmp face poziția a omului
-(`patchDinCamp` → `corecteaza` la liste, `scrieCampul` la tastă), cu „Salvat.”
-și „Anulează”. **„Cum iese oferta”** (`exportPeEcran`): Excelul de acum, doar
+**21 octombrie 2026 (Andrei: „UI-ul e îngrozitor”, apoi „prefer view-ul pe
+coloane ca în Excel”):** pasul 2 are două taburi. **„Verificare”**
+(`web/import/verificare-vizual.ts`) e un tabel: Rând, Descrierea clientului,
+Izolație, Grosime, Protecție (cu grosimea tablei în aceeași listă), Diametru
+(DN / Ø / Di + valoare), Piesă, UM, Cantitate, Preț unitar, Total, Stare; toate
+casetele de 44 px pe linia rândului, cu „Confirmă” (doar la „De verificat”) și
+✕ în coloana stării. Fără „Mai mult”, fără rândul de explicații. **Descrierea e
+celula din fișierul clientului** (`scrieDescrierea` în `import.ts`, coloana ei
+hotărâtă o dată pe foaie): la fiecare tastă rândul se recitește și se
+retarifează (DN100 → DN50 schimbă diametrul, grosimea uzuală și prețul); un text
+pe jumătate care nu mai e poziție nu se aplică până nu redevine una. Casetele
+schimbate fac poziția a omului (`patchDinCamp`). Sub 1240 px de tabel rândul
+devine card. **„Cum iese oferta”** (`exportPeEcran`): Excelul de acum, doar
 citire, fără logo și fără filtre. Foaia clientului ca în Excel a ieșit.
 
 ## Ecranul de import: trei pași

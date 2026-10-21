@@ -114,6 +114,8 @@ function puneCursorul(el: HTMLElement, [start, sfarsit]: [number, number]): void
 export function pastreazaCursorul(gazda: HTMLElement, deseneaza: () => void): void {
   const el = document.activeElement;
   const cheie = cheieTinta(gazda, el);
+  // Înainte de redesenare: textul editabil scos din pagină își pierde selecția (cursorul sărea la capăt).
+  const cursor: [number, number] | null = el instanceof HTMLElement ? cursorIn(el) : null;
   const pagina = document.scrollingElement;
   const sus = pagina?.scrollTop ?? 0;
   subCursor = true;
@@ -121,8 +123,7 @@ export function pastreazaCursorul(gazda: HTMLElement, deseneaza: () => void): vo
   if (pagina) pagina.scrollTop = sus;
   if (!cheie || !(el instanceof HTMLElement) || el.isConnected) return;
   const nou = gazda.querySelector<HTMLElement>(cheie);
-  if (!nou) return;
-  const cursor = cursorIn(el);
+  if (!nou || !cursor) return;
   const original = el.dataset["original"];
   if (nou instanceof HTMLInputElement || nou instanceof HTMLTextAreaElement) {
     nou.value = (el as HTMLInputElement).value;

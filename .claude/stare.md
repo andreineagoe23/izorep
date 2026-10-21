@@ -44,6 +44,12 @@ Bandatech și Isoline; numele de proiect roșu marchează facturi întregi (91),
 coloana „Avize facturi” goală în 92 % din cazuri (55 % la restul). Regula
 pentru acesta din urmă nu se poate dovedi din date.
 
+**Tot pe 21, a treia trecere:** primul tab e tabel pe coloane, nu rând pe două
+niveluri; descrierea scrisă e celula clientului și recitește rândul la fiecare
+tastă (DN100 → DN50 pe TRANSAVIA: 52,41 €, ca în 284; rescrisă DN65: 66,10 €).
+`pastreazaCursorul` citea cursorul după redesenare, deci în textul editabil
+sărea la capăt: acum îl citește înainte.
+
 **Observat la verificare:** grosimea schimbată pe o casetă fără grosime scrisă
 trece și pe celelalte casete de același DN din cerere (TRANSAVIA: rândul 1 la
 60 mm, rândurile 2–3 la fel), fiindcă `grosimiDeLaConducte` ia cea mai mare
