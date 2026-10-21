@@ -326,6 +326,13 @@ de observații era cât jumătate din descriere. Sub 1100 px de import, fiecare
 rând din fișier devine card, cu numele coloanei deasupra fiecărei valori
 (`data-eticheta`), descrierea pe toată lățimea, celulele goale ascunse.
 
+**21 octombrie 2026:** vederea implicită e din nou „Ca în ofertă” (Andrei:
+după import, pagina ca exportul), prima în pereche; antetul are logo-ul firmei,
+coloanele se numesc ca în Excel („Preț unitar Euro”, „Preț total Euro”), iar
+sub notă stau tabelele de elemente speciale (`tabel()`, carduri pe telefon). În
+„Fișierul clientului”, o foaie fără antet are coloanele numite după rol
+(`numeDupaRol`), nu litere; prima coloană e „Rând”.
+
 ## Ecranul de import: trei pași
 
 Refăcut pe 13 septembrie 2026 pentru oamenii care îl folosesc — birou și

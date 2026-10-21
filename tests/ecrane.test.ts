@@ -10,6 +10,11 @@ import { describe, expect, it } from "vitest";
 import type { LinieProcesata } from "../src/import/nucleu.js";
 import type { RandSantier } from "../src/santier/agrega.js";
 import { cardPozitie } from "../web/import/vizual.js";
+import { grilaFoaie } from "../web/import/grila.js";
+import { proceseazaRegistru } from "../src/import/nucleu.js";
+import { parseFoi } from "../src/import/parse-workbook.js";
+import { stocInMemorie } from "../src/import/memorie.js";
+import { CLIENTI, cuClienti } from "./conditii.js";
 import { cardPagina, cardTrimite, poateFiVerificata, type PaginaSantier } from "../web/santier-vizual.js";
 
 const INJECTIE = `<img src=x onerror="alert(1)">`;
@@ -128,5 +133,20 @@ describe("importul în formatul ofertei (web/import/oferta-vizual.ts)", async ()
       ],
     } as unknown as Parameters<typeof antetDinFisier>[0][number];
     expect(antetDinFisier([foaie])).toEqual({ client: "Construct Nord SRL", obiectiv: "Hala Logistica Chitila" });
+  });
+});
+
+describe("foaia clientului fără rând de antet (21 octombrie 2026)", () => {
+  // Cererea TRANSAVIA n-are antet: ecranul scria „# A B D E”. Acum coloanele
+  // au numele ofertelor firmei, după ce țin pe poziții.
+  cuClienti("cererea TRANSAVIA: Rând, Cod, Denumire, UM, Cantitate, fără litere", async () => {
+    const rez = await proceseazaRegistru(await parseFoi(`${CLIENTI}/cerere-de-oferta-transavia-abur.xlsx`),
+      { stoc: stocInMemorie(), prag: 0.85 });
+    const f = rez.foi[0]!;
+    expect(f.antet).toBeUndefined();
+    const html = grilaFoaie(f, new Map(rez.linii.map((l) => [l.extras.index, l])),
+      { vizibile: null, editIdx: null, propunere: () => null, cuNumeFoaie: false });
+    const capete = [...html.matchAll(/<th scope="col"[^>]*>([^<]*)</g)].map((m) => m[1]!.trim());
+    expect(capete).toEqual(["Rând", "Cod", "Denumire", "UM", "Cantitate", "Preț Euro (total · unitar)", "Stare"]);
   });
 });

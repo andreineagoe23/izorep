@@ -289,9 +289,72 @@ describe("NISAL în șablon = Oferta 118", () => {
   });
 });
 
+/**
+ * Tabelele de elemente speciale de sub notă, citite dintr-o foaie: titlul,
+ * apoi rândurile până la primul gol. O celulă îmbinată se citește o dată.
+ * Scrierea se aduce la una singură: firma scrie „X *2”, „X*1.5”, „˃  324”,
+ * „140 – 273 ”, „urmatorul :”.
+ */
+function tabeleSpeciale(ws: ExcelJS.Worksheet): string[][][] {
+  const curat = (v: unknown): string => String(v ?? "").replace(/\s+/g, " ").trim()
+    .replace(/˃/g, ">").replace(/–/g, "-").replace(/\s*\*\s*/g, "*").replace(/X\*(\d+)\.(\d+)/g, "X*$1,$2").replace(/\s+:$/, ":");
+  const celule = (r: ExcelJS.Row): string[] => {
+    const out: string[] = [];
+    for (let c = 1; c <= 9; c++) {
+      const cel = r.getCell(c);
+      if (cel.isMerged && cel.master !== cel) continue;
+      out.push(curat(valoare(cel)));
+    }
+    while (out.length && out[out.length - 1] === "") out.pop();
+    return out;
+  };
+  const tabele: string[][][] = [];
+  for (let n = 1; n <= ws.rowCount; n++) {
+    const titlu = curat(valoare(ws.getRow(n).getCell(1)));
+    if (!titlu.startsWith("Pretul elementelor speciale")) continue;
+    const t: string[][] = [[titlu]];
+    for (let m = n + 1; celule(ws.getRow(m)).length > 0; m++) t.push(celule(ws.getRow(m)));
+    tabele.push(t);
+  }
+  return tabele;
+}
+
+describe("elementele speciale de sub notă = ofertele semnate", () => {
+  const LOGO = { base64: "/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAAA//EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AN//Z", latime: 315, inaltime: 58 };
+  const semnate = async (f: string): Promise<string[][][]> => {
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.readFile(`${DIR}/${f}`);
+    return tabeleSpeciale(wb.worksheets[0]!);
+  };
+  const aleNoastre = async (c: CerereOferta): Promise<ExcelJS.Worksheet> => {
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(await registruOferta(c, { logo: LOGO }));
+    return wb.worksheets[0]!;
+  };
+
+  cuClienti("TRANSAVIA: vată (fără manșetă) și tablă de aluminiu, ca în 284; Excelul are logo și „Pagina X din Y”", async () => {
+    const c = cerere(await importa("cerere-de-oferta-transavia-abur.xlsx"), { discountProcent: 3 });
+    const ws = await aleNoastre(c);
+    expect(tabeleSpeciale(ws)).toEqual(await semnate("oferta-284-transavia-abur.xlsx"));
+    expect(ws.getImages()).toHaveLength(1);
+    expect(ws.headerFooter.oddFooter).toBe("&CPagina &P din &N");
+    expect(ws.pageSetup.paperSize).toBe(9);
+  });
+
+  cuClienti("NISAL: elastomer și vată, cu manșetă, și tablă de aluminiu, ca în 118", async () => {
+    const ws = await aleNoastre(cerere(await importa("oferta-118-nisal.xlsx")));
+    expect(tabeleSpeciale(ws)).toEqual(await semnate("oferta-118-nisal.xlsx"));
+  });
+
+  it("fără izolație sau tablă (doar închideri la foc), niciun tabel", () => {
+    const d = documentOferta(cerere([linie({ unitar: 20, extras: { sistem: "goluri_foc", gol_latime_mm: 130, gol_inaltime_mm: 130 } })]));
+    expect(d.speciale).toEqual([]);
+  });
+});
+
 describe("pe toate cererile: documentul, registrul și planul spun același lucru", () => {
   cuClienti("aceleași poziții, același total, aceeași numerotare ca planul de șantier", async () => {
-    for (const f of readdirSync(DIR).filter((x) => x.endsWith(".xlsx"))) {
+    for (const f of readdirSync(DIR).filter((x) => x.endsWith(".xlsx") && !x.startsWith("~$"))) {
       const c = cerere(await importa(f), { discountProcent: 3, ajustareProcent: 5 });
       const d = documentOferta(c);
       const { oferta, deValidat, netarifate } = imparte(c.linii);

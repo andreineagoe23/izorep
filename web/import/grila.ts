@@ -31,11 +31,43 @@ export const textCelula = (v: string | number | null): string => {
   return d ? `${d[3]}.${d[2]}.${d[1]}` : v;
 };
 
-/** A, B, … Z, AA — antetul de rezerva, pentru foile fara rand de antet. */
+/** A, B, … Z, AA — litera coloanei, cand nici rolul ei nu se stie. */
 function litera(i: number): string {
   let s = "";
   for (let n = i; n >= 0; n = Math.floor(n / 26) - 1) s = String.fromCharCode(65 + (n % 26)) + s;
   return s;
+}
+
+/**
+ * Numele coloanelor unei foi fara rand de antet, dupa ce tin pe pozitii, ca in
+ * ofertele firmei (Denumire, UM, Cantitate). Cererea TRANSAVIA n-are antet, iar
+ * ecranul scria „A B D E” (Andrei, 21 octombrie 2026). Rolul se ia de pe
+ * majoritatea pozitiilor: unde sta UM-ul citit, unde sta cantitatea citita, iar
+ * descrierea e coloana cu texte lungi. Un text scurt care se repeta
+ * („IZOLATII”) e codul, ca „Identificare_Norma” din 284. Restul ramane „Coloana X”.
+ */
+function numeDupaRol(n: number, pozitii: RandBrut[], descrieri: ReadonlySet<number>): string[] {
+  const voturi = Array.from({ length: n }, () => ({ um: 0, cant: 0, text: 0 }));
+  for (const r of pozitii) {
+    let c = 0;
+    for (const cel of r.celule) {
+      const v = voturi[c];
+      if (v && cel.span === 1 && cel.v !== null) {
+        if (typeof cel.v === "number" && cel.v === r.linie?.cantitate) v.cant++;
+        else if (typeof cel.v === "string" && r.linie?.um !== undefined && cel.v.trim() === r.linie.um) v.um++;
+        else if (typeof cel.v === "string" && cel.v.trim() !== "") v.text++;
+      }
+      c += cel.span;
+    }
+  }
+  const jumatate = Math.max(1, pozitii.length / 2);
+  return voturi.map((v, k) => {
+    if (descrieri.has(k)) return "Denumire";
+    if (v.um >= jumatate) return "UM";
+    if (v.cant >= jumatate) return "Cantitate";
+    if (v.text >= jumatate) return "Cod";
+    return `Coloana ${litera(k)}`;
+  });
 }
 
 const latime = (celule: CelulaBruta[]): number => celule.reduce((s, c) => s + c.span, 0);
@@ -129,7 +161,8 @@ export function celuleExtrase(l: LinieProcesata, o: Pick<OptiuniGrila, "editIdx"
 /** Cate coloane pune ecranul dupa cele ale fisierului. */
 const COLOANE_EXTRASE = 2;
 /**
- * Latimile fixe, in pixeli: numarul randului, „Am înțeles · preț" si „Stare".
+ * Latimile fixe, in pixeli: numarul randului, „Preț Euro" (ce am inteles, cu
+ * pretul sub el) si „Stare".
  * Continutul lor e cunoscut (o eticheta, un pret, doua butoane), deci nu
  * cresc cu ecranul: pe un ecran lat, tot ce ramane merge la coloanele
  * clientului, iar „Stare" sta lipita de marginea din dreapta (Andrei, 14
@@ -289,10 +322,11 @@ export function grilaFoaie(f: FoaieBruta, linii: ReadonlyMap<number, LinieProces
   const coloaneLungi = new Set([...lungiPe].filter(([, n]) =>
     n * 2 >= randuriPozitii.length || (n === celeMaiMulte && n * 4 >= randuriPozitii.length)).map(([k]) => k));
 
+  const dupaRol = f.antet ? [] : numeDupaRol(f.coloane, randuriPozitii, coloaneLungi);
   const capete = f.antet
     ? celuleVizibile(f.antet.celule, "th", (c) => ` scope="col">${esc(textCelula(c.v))}`)
     : Array.from({ length: f.coloane }, (_, i) => i).filter((i) => !ascunse.has(i))
-      .map((i) => `<th scope="col" class="litera">${litera(i)}</th>`).join("");
+      .map((i) => `<th scope="col">${esc(dupaRol[i]!)}</th>`).join("");
 
   const antet = antetDocument(f.randuri.filter((r) => r.rand < inceput).map((r) => r.celule.map((c) => textCelula(c.v))));
 
@@ -307,7 +341,7 @@ export function grilaFoaie(f: FoaieBruta, linii: ReadonlyMap<number, LinieProces
       c += cel.span;
     }
   }
-  const eticheta = (k: number): string => numeColoana.get(k) ?? `Coloana ${litera(k)}`;
+  const eticheta = (k: number): string => numeColoana.get(k) ?? dupaRol[k] ?? `Coloana ${litera(k)}`;
 
   const corp = randuri.map((r) => {
     const l = pozitie(r.linie?.index);
@@ -340,8 +374,8 @@ export function grilaFoaie(f: FoaieBruta, linii: ReadonlyMap<number, LinieProces
     ${antetHtml(antet, o.cuNumeFoaie ? f.nume : null)}
     <div class="tabelwrap" tabindex="0"><table>
       <colgroup>${coloane}</colgroup>
-      <thead><tr><th scope="col" class="gutter">${f.antet ? `r${f.antet.rand}` : "#"}</th>${capete}
-        <th scope="col" class="extras">Am înțeles · preț</th>
+      <thead><tr><th scope="col" class="gutter">Rând</th>${capete}
+        <th scope="col" class="extras">Preț Euro (total · unitar)</th>
         <th scope="col" class="extras">Stare</th></tr></thead>
       <tbody>${corp}</tbody>
     </table></div>

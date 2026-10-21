@@ -1,6 +1,7 @@
 import type { LinieProcesata } from "../src/import/nucleu.js";
 import type { Sistem } from "../src/pricing/types.js";
 import { bani } from "../src/pricing/engine.js";
+import { listaDe, type BandaMultiplicator, type Destinatie, type ListaPreturi } from "../src/pricing/lists.js";
 import {
   adaosFocIndustrial, codRand, cuAjustare, denumireScrisa, imparte, segmente, totalOferta, valoareLinie,
   type AntetOferta, type CerereOferta,
@@ -81,6 +82,8 @@ export interface DocumentOferta {
   numarate: Record<Stare, number>;
   /** Nota de sub total, rând cu rând, ca în ofertele semnate. */
   note: string[];
+  /** Tabelele de elemente speciale de sub notă (118, 284). */
+  speciale: TabelSpeciale[];
 }
 
 /** Nota de pe toate ofertele semnate (284, 118, 118.1), cuvânt cu cuvânt. */
@@ -95,6 +98,84 @@ export const NOTA_FOC = [
   "Daca inchiderile golurilor la foc necesita banda wrap, pretul acestora va fi constituit din pretul "
     + "inchiderii golului la foc + pretul benzii wrap.",
 ];
+
+/* ------------------------------------------------- elementele speciale */
+
+/** Un tabel de sub notă: „Pretul elementelor speciale pentru … este urmatorul:”. */
+export interface TabelSpeciale {
+  titlu: string;
+  capete: string[];
+  /** Pe bandă: diametrul, apoi „X”, „X*1,5” sau gol, ca în ofertele semnate. */
+  randuri: string[][];
+}
+
+/**
+ * Coloanele tabelelor, cu textul și ordinea din Oferta 118 și 284. „Pret /
+ * manseta” apare doar cu elastomer: 118 (elastomer și vată) o are, 284 (doar
+ * vată) nu, deși lista vatei are coeficientul.
+ */
+const COLOANE_IZOLATII: [keyof BandaMultiplicator, string][] = [
+  ["ml", "Pret / ml"],
+  ["manseta", "Pret / manseta"],
+  ["cot_teu_reductie", "Pret / cot, teu, reductie"],
+  ["robinet_vana_flansa_contor", "Pret / robinet, vana, contor, flansa, compensator"],
+  ["pompa_filtru_distribuitor", "Pret / pompa, filtru Y, distribuitor/colector, schimbator de caldura, vas amestec, vana 2-3 cai"],
+];
+const COLOANE_JACHETE: [keyof BandaMultiplicator, string][] = [
+  ["ml", "Pret / ml"],
+  ["cot_teu_reductie", "Pret / cot, teu, reductie"],
+  ["flansa_robinet_contor_distribuitor", "Pret / flansa, compensator, robinet, vana, contor, distribuitor, schimbator de caldura, vas amestec"],
+  ["pompa_filtru_vana23", "Pret / pompa, filtru Y, vana 2-3 cai"],
+];
+
+/** „18 - 60”, iar ultima bandă „> 324”; tabla începe banda de sus la 401, oferta scrie „> 400”. */
+function banda([jos, sus]: [number, number]): string {
+  if (sus < 9999) return `${jos} - ${sus}`;
+  return `> ${jos % 10 === 1 ? jos - 1 : jos}`;
+}
+
+const factor = (f: number | null | undefined): string =>
+  f === null || f === undefined ? "" : f === 1 ? "X" : `X*${numar(f)}`;
+
+function tabelSpeciale(titlu: string, l: ListaPreturi, coloane: [keyof BandaMultiplicator, string][]): TabelSpeciale {
+  return {
+    titlu,
+    capete: ["Diametru Ø", ...coloane.map(([, t]) => t)],
+    randuri: l.multiplicatori.map((b) => [banda(b.band), ...coloane.map(([k]) => factor(b[k] as number | null | undefined))]),
+  };
+}
+
+/**
+ * Tabelele de sub notă, ca în Ofertele 118 și 284: cât costă coturile,
+ * robineții, pompele, ca multiplu X al prețului pe metru. Coeficienții sunt
+ * cei din listele de prețuri (aceiași cu care tarifează motorul), deci tabelul
+ * spune clientului exact regula după care s-au calculat piesele. Câte un tabel
+ * pentru izolații și unul pentru protecție, doar cu materialele din ofertă.
+ */
+export function elementeSpeciale(linii: readonly LinieProcesata[], destinatie: Destinatie): TabelSpeciale[] {
+  const sisteme = new Set<Sistem>();
+  for (const l of linii) {
+    if (l.extras.sistem === null) continue;
+    if (l.pret && "straturi" in l.pret) for (const s of l.pret.straturi) sisteme.add(s.sistem);
+    else {
+      sisteme.add(l.extras.sistem);
+      for (const s of l.extras.straturi_extra) sisteme.add(s.sistem);
+    }
+  }
+  const out: TabelSpeciale[] = [];
+  const izolatii = (["elastomer", "vata_minerala"] as const).filter((s) => sisteme.has(s));
+  if (izolatii.length > 0) {
+    const coloane = sisteme.has("elastomer") ? COLOANE_IZOLATII : COLOANE_IZOLATII.filter(([k]) => k !== "manseta");
+    out.push(tabelSpeciale(`Pretul elementelor speciale pentru izolatiile cu ${izolatii.map((s) => NUME[s]).join(" si ")} este urmatorul:`,
+      listaDe(izolatii[0]!, destinatie).lista, coloane));
+  }
+  const jachete = (["tabla", "tabla_inox", "pvc"] as const).filter((s) => sisteme.has(s));
+  if (jachete.length > 0) {
+    out.push(tabelSpeciale(`Pretul elementelor speciale pentru protectiile cu ${jachete.map((s) => NUME[s]).join(" si ")} este urmatorul:`,
+      listaDe(jachete[0]!, destinatie).lista, COLOANE_JACHETE));
+  }
+  return out;
+}
 
 /* ------------------------------------------------------------ capitolele */
 
@@ -312,5 +393,6 @@ export function documentOferta(c: CerereOferta): DocumentOferta {
     totalGeneral: bani(total - discount),
     numarate,
     note: foc ? [...NOTA, ...NOTA_FOC] : NOTA,
+    speciale: elementeSpeciale(linii, c.provenienta.destinatie as Destinatie),
   };
 }

@@ -1,7 +1,44 @@
 # Stare curentă
 
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
-> Ultima actualizare: 18 octombrie 2026.
+> Ultima actualizare: 21 octombrie 2026.
+
+## 21 octombrie 2026: oferta ca exportul, din ofertele semnate
+
+Pe ramura `oferta-ca-exportul`. **648 de teste.** Andrei: „la export și pe
+pagina de import, după import, aproximativ aceeași chestie”; coloanele să se
+numească ca în ofertele firmei. Ce lipsea, găsit în 284, 118 și anexa din 2024:
+
+| Ce | Acum |
+|---|---|
+| **Logo-ul firmei** (antetul de pagină al ofertelor: RADOIA pe 284, ISORAD pe 118 și anexă) | `web/public/logo-radoia.jpg`, `logo-isorad.jpg`; `logoFirmei` în `web/date/firme.ts`. În Excel deasupra titlului (ExcelJS nu scrie imagini în antetul de pagină), pe ecran în antetul ofertei |
+| **Tabelele de elemente speciale** de sub notă (cot/teu, robinet, pompă ca X × prețul pe ml, pe benzi de ø) | `elementeSpeciale` în `document-oferta.ts`, din coeficienții listelor (aceiași cu care tarifează motorul): unul pentru izolații (cu „manșetă” doar când e elastomer, ca 118; 284, doar vată, n-o are), unul pentru protecție. Test: TRANSAVIA dă exact tabelele din 284, NISAL pe cele din 118 |
+| **„Pagina X din Y”**, A4 pe lățime | `pageSetup` și `oddFooter`, ca 284 și anexa |
+| **După import se deschide „Ca în ofertă”** (era „Fișierul clientului”, decis pe 14 octombrie) | `vedere = "oferta"`; coloanele „Preț unitar Euro”, „Preț total Euro”, ca în Excel |
+| **„# A B D E” în fișierul clientului** (foile fără rând de antet, ca cererea TRANSAVIA) | numele după rol, citit din poziții (`numeDupaRol` în `grila.ts`): Rând, Cod, Denumire, UM, Cantitate |
+| Pe telefon, butonul „Completează datele ofertei” strângea titlul (o regulă CSS anula pe cea de ecran îngust) | reparat |
+| Testele pe fișierele clienților picau cât o ofertă era deschisă în Excel (`~$oferta-284…xlsx`) | fișierele `~$` nu se mai citesc |
+
+**Scrisul roșu.** În ofertele semnate roșul e *în* celulă (rich text), nu pe
+celulă: **ce a precizat sau schimbat firma în textul clientului**. Pe 284: pe
+cele 24 de casete, materialul și grosimea („vata minerala gr. 50 mm si
+protectie cu tabla de aluminiu”, în locul lui „din tabla aluminiu si vata
+minerala”); pe celelalte 75 de rânduri doar cuvântul „aluminiu”, corectat din
+„dealuminiu”. Pe 118: partea de izolație dintr-o descriere mai largă
+(tubulatura SPIRO „… izolata termic cu placi adezive de armaflex 9 mm”), adică
+ce acoperă prețul nostru. Exportul face deja primul caz (specificația cu roșu,
+24 / 24 pe 284); al doilea (marcarea izolației în textul clientului) nu.
+
+În **evidența de achiziții** roșul e altceva: rândul întreg roșu e transportul
+(3 rânduri RADOIA) sau o factură izolată; cursul roșu (coloana I, 4 zecimale,
+282 de rânduri RADOIA) e cursul BNR pus de mână la furnizorii care facturează
+în lei (R&F Izotec, MTM, Ravago), față de cursul de pe factură (2 zecimale) la
+Bandatech și Isoline; numele de proiect roșu marchează facturi întregi (91), cu
+coloana „Avize facturi” goală în 92 % din cazuri (55 % la restul). Regula
+pentru acesta din urmă nu se poate dovedi din date.
+
+**Rămas:** „In atentia d-lui” e fix (118 are „d-nei”); notele de foc din 118.1
+(„Nota 1”, EI60 / EI90 / EI120) nu sunt cuvânt cu cuvânt.
 
 ## 18 octombrie 2026: demo-ul amânat, editarea în timp real
 

@@ -51,7 +51,7 @@ describe("cererile de ofertă ale clienților", () => {
   for (const destinatie of ["rezidential", "industrial"] as const) {
     cuClienti(`pe ${destinatie}: nicio poziție fără preț, în niciun fișier`, async () => {
       const fara: string[] = [];
-      for (const f of readdirSync(DIR).filter((x) => x.endsWith(".xlsx"))) {
+      for (const f of readdirSync(DIR).filter((x) => x.endsWith(".xlsx") && !x.startsWith("~$"))) {
         const r = await importaFisier(join(DIR, f), { faraModel: true, destinatie, stoc: stocInMemorie() });
         for (const l of r.linii) {
           if (l.extras.sistem !== null && !l.pret) fara.push(`${f} r${l.bruta.rand}: ${l.codEroare} — ${l.bruta.text.slice(0, 80)}`);
@@ -66,7 +66,7 @@ describe("cererile de ofertă ale clienților", () => {
     // întoarce citirea parțială a regulilor, cu încredere mică.
     cuClienti(`pe ${destinatie}: cu model nu ies mai puține „Gata” decât fără model`, async () => {
       const pierdute: string[] = [];
-      for (const f of readdirSync(DIR).filter((x) => x.endsWith(".xlsx"))) {
+      for (const f of readdirSync(DIR).filter((x) => x.endsWith(".xlsx") && !x.startsWith("~$"))) {
         const foi = await parseFoi(join(DIR, f));
         const gata = async (cuModel: boolean): Promise<number> => {
           const extrage = async (l: { index: number; text: string; um?: string; sectiune?: string }[]) =>

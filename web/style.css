@@ -1197,7 +1197,8 @@ main details.imp-card[open] > summary { margin-bottom: 12px; }
 }
 .of-antet-titlu h2 { margin: 0; font-size: 19px; letter-spacing: -0.01em; }
 .of-antet-titlu p { margin: 2px 0 0; color: var(--slab); font-size: 15px; }
-.of-antet .secundar { white-space: nowrap; }
+/* Butonul sta in dreapta titlului, nu sub date pe toata latimea; sub 620 px coboara (mai jos). */
+.of-antet .secundar { white-space: nowrap; grid-column: 2; grid-row: 1; }
 .of-antet-date {
   grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
   gap: 8px 16px; margin: 0;
@@ -1210,8 +1211,6 @@ main details.imp-card[open] > summary { margin-bottom: 12px; }
 }
 .of-gol { color: var(--slab); font-weight: 400; }
 .of-um-card { display: none; }
-/* Butonul sta in dreapta titlului, nu sub date pe toata latimea. */
-.of-antet > .secundar { grid-column: 2; grid-row: 1; }
 
 .of-tabelwrap { min-width: 0; }
 .of-tabel { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 14.5px; }
@@ -1268,6 +1267,11 @@ main details.imp-card[open] > summary { margin-bottom: 12px; }
   border: 1px solid color-mix(in srgb, var(--atentie) 40%, transparent); color: var(--text);
 }
 .of-note { margin: 0; padding: 12px 0 0 18px; border-top: 1px solid var(--linie); color: var(--slab); font-size: 13.5px; }
+/* Logo-ul firmei, ca pe antetul ofertelor semnate; JPEG pe alb, deci pe alb și în tema închisă. */
+.of-logo { display: block; width: auto; max-width: 100%; height: 48px; object-fit: contain; object-position: left; margin-bottom: 10px; padding: 4px; border-radius: 6px; background: #fff; }
+.of-speciale p { margin: 0 0 6px; font-size: 13.5px; font-weight: 600; color: var(--slab); }
+.of-speciale td { text-align: center; }
+.of-speciale td:first-child { text-align: left; white-space: nowrap; }
 
 /* ---- sub 980 px: fiecare pozitie e un card */
 @container of (max-width: 979px) {

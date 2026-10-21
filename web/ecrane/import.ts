@@ -13,7 +13,7 @@ import { stocLocal } from "../stoc-local.js";
 import { ceriSpatiu } from "../meniu-stare.js";
 import { anuleaza, confirma, potrivit } from "../validare.js";
 import { cate, esc, eur, type Ecran } from "./tip.js";
-import { FIRME } from "../date/firme.js";
+import { FIRME, logoFirmei } from "../date/firme.js";
 import {
   adaosFocIndustrial, clientPropus, cuAjustare, cuDenumiri, dataAzi, imparte, planDinOferta, totalCuAdaos, valoareOferta,
   type AntetOferta, type CerereOferta,
@@ -98,6 +98,24 @@ interface Sesiune {
 
 const pozitii = (n: number): string => (n === 1 ? "o poziție" : cate(n, "poziții"));
 
+/**
+ * Logo-ul firmei din `web/public`, ca base64 pentru Excel. Adresa e relativă
+ * la pagină, deci merge și sub `/izorep/`, și pe server. Lipsă: oferta pleacă
+ * fără logo, nu cade.
+ */
+async function logoBase64(fisier: string): Promise<string | null> {
+  try {
+    const r = await fetch(fisier);
+    if (!r.ok) return null;
+    const octeti = new Uint8Array(await r.arrayBuffer());
+    let s = "";
+    for (let i = 0; i < octeti.length; i += 0x8000) s += String.fromCharCode(...octeti.subarray(i, i + 0x8000));
+    return btoa(s);
+  } catch {
+    return null;
+  }
+}
+
 /** Antetul propus pentru un import nou: beneficiarul din fișier, altfel din numele lui. */
 function antetImplicit(numeFisier: string, dinFisier: Partial<AntetScris> = {}): AntetScris {
   return {
@@ -138,7 +156,7 @@ export const ecran: Ecran = {
      * Ce se vede la verificare: oferta (implicit, aceeasi pentru orice fisier,
      * exact ce se descarca) sau fisierul clientului, ca referinta.
      */
-    let vedere: Vedere = "fisier";
+    let vedere: Vedere = "oferta";
     /** Datele de pe antetul ofertei, scrise la pasul „Oferta”; se tin in sesiune. */
     let antet: AntetScris = antetImplicit("");
     /** Adaosul pentru coturi si fitinguri din cardul „Materiale necesare". */
@@ -481,7 +499,10 @@ export const ecran: Ecran = {
       // derulare laterala decat cu coloane de cateva litere: se deschide ca
       // lista, iar „Arată ca în Excel" ramane la un clic.
       ceriSpatiu(gazda, true);
-      vedere = "fisier";
+      // Oferta întâi, exact ce se descarcă (Andrei, 21 octombrie 2026: „la
+      // export și pe pagina de import, după import, aproximativ aceeași
+      // chestie”); fișierul clientului rămâne la un clic.
+      vedere = "oferta";
       antet = s.meta.antet ? { ...s.meta.antet } : antetDinOferta(s);
       ajustare = s.meta.ajustare ?? 0;
       eroareStart = "";
@@ -858,7 +879,9 @@ export const ecran: Ecran = {
       form.querySelector(".alerta")?.remove();
       try {
         const { registruOferta } = await import("../registru-oferta.js");
-        const buf = await registruOferta(cerere);
+        const logo = logoFirmei(antet.firma);
+        const base64 = logo ? await logoBase64(logo.fisier) : null;
+        const buf = await registruOferta(cerere, logo && base64 ? { logo: { ...logo, base64 } } : {});
         // Salvata INAINTE de descarcare: ce pleaca la client e exact ce s-a
         // salvat. Pe server e o versiune noua; in browser, doar sumarul.
         const { valoare, pozitii } = valoareOferta(cerere);

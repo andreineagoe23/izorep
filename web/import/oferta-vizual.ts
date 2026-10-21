@@ -1,7 +1,8 @@
 import type { LinieProcesata } from "../../src/import/nucleu.js";
 import type { CampuriRand } from "../../src/import/editare.js";
 import type { FoaieBruta } from "../../src/import/parse-workbook.js";
-import { cate, esc, eur } from "../ecrane/tip.js";
+import { cate, esc, eur, tabel } from "../ecrane/tip.js";
+import { logoFirmei } from "../date/firme.js";
 import type { DocumentOferta, PozitieOferta } from "../document-oferta.js";
 import { antetDocument } from "./grila.js";
 import { inteles, STARE } from "./text.js";
@@ -72,7 +73,7 @@ export function antetDinFisier(foi: readonly FoaieBruta[]): Partial<Pick<AntetSc
 
 /* ------------------------------------------------------------ bara */
 
-const VEDERI: [Vedere, string][] = [["fisier", "Fișierul clientului"], ["oferta", "Ca în ofertă"]];
+const VEDERI: [Vedere, string][] = [["oferta", "Ca în ofertă"], ["fisier", "Fișierul clientului"]];
 
 /** Filtrele de stare, cu cifra lor. Aceleași butoane ca până acum. */
 function butoaneStare(numere: Record<FiltruStare, number>, activ: FiltruStare): string {
@@ -139,8 +140,10 @@ function antetOferta(d: DocumentOferta): string {
   const a = d.antet;
   const camp = (eticheta: string, valoare: string): string =>
     `<div><dt>${eticheta}</dt><dd>${valoare.trim() ? esc(valoare) : `<span class="of-gol">de completat</span>`}</dd></div>`;
+  const logo = logoFirmei(a.firma);
   return `<header class="of-antet">
     <div class="of-antet-titlu">
+      ${logo ? `<img class="of-logo" src="${logo.fisier}" alt="${esc(a.firma)}" width="${logo.latime}" height="${logo.inaltime}" />` : ""}
       <h2>Oferta lucrări izolații termice</h2>
       <p>${a.numar.trim() ? `Nr. ${esc(a.serie)}${esc(a.numar)} / ${esc(a.data)}` : `Fără număr încă · ${esc(a.data)}`} · ${esc(a.firma)}</p>
     </div>
@@ -175,8 +178,8 @@ function capete(d: DocumentOferta): [string, string][] {
     ["UM", "um"],
     ["Cantitate", "n"],
     ...(d.coloaneGol ? [["Dimensiune gol", "gol"], ["Suprafață (mp)", "n"]] as [string, string][] : []),
-    ["Preț unitar", "n"],
-    ["Valoare", "n"],
+    ["Preț unitar Euro", "n"],
+    ["Preț total Euro", "n"],
     ["Stare", "stare"],
   ];
 }
@@ -209,8 +212,8 @@ function randPozitie(d: DocumentOferta, p: PozitieOferta, o: OptiuniDocument): s
       `<td class="of-gol-dim" data-eticheta="Dimensiune gol">${p.gol ? esc(p.gol.dimensiune) : ""}</td>`,
       `<td class="n" data-eticheta="Suprafață">${p.gol ? numar(p.gol.suprafata) : ""}</td>`,
     ] : []),
-    `<td class="n" data-eticheta="Preț unitar">${pret}</td>`,
-    `<td class="n of-valoare" data-eticheta="Valoare">${p.valoare === null ? lipsa : eur(p.valoare)}</td>`,
+    `<td class="n" data-eticheta="Preț unitar Euro">${pret}</td>`,
+    `<td class="n of-valoare" data-eticheta="Preț total Euro">${p.valoare === null ? lipsa : eur(p.valoare)}</td>`,
     `<td class="of-stare">${starePozitie(l)}<div class="of-actiuni">${actiuniPozitie(l, o.propunere(l), editeaza)}${scoate}</div></td>`,
   ];
   const n = capete(d).length;
@@ -261,6 +264,8 @@ export function documentPeEcran(d: DocumentOferta, o: OptiuniDocument): string {
     </table></div>` : `<p class="imp-gol">Nicio poziție aici.</p>`}
     ${totaluri}
     <ul class="of-note">${d.note.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>
+    ${d.speciale.map((t) => `<div class="of-speciale"><p>${esc(t.titlu)}</p>${
+      tabel(t.capete, t.randuri.map((r) => `<tr>${r.map((v) => `<td>${esc(v)}</td>`).join("")}</tr>`))}</div>`).join("")}
   </section>`;
 }
 
