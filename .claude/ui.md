@@ -576,6 +576,53 @@ Logica — ce intră într-un filtru, ce se confirmă, ce se anulează — stă 
 `web/validare.ts`, nu în handlere: același motiv ca la `invataDinCorectie`, cod
 riscant care fără test nu se verifică. Ecranul rămâne cu apeluri simple.
 
+## Materiale: trei file (21 octombrie 2026)
+
+Andrei: „nu înțeleg nimic din ce se întâmplă acolo, prea mult scris, prea
+multe butoane, tabele”. „Necesar și depozit” avea, cu datele de demo, 16.000 px,
+172 de butoane, 102 câmpuri și 10 carduri; „Comenzi la furnizori” era alt
+ecran în meniu. Acum, în meniu, un singur „Materiale”, cu trei file
+(`fileMateriale` din `web/stoc-vizual.ts`, linkuri, deci adresa și „Înapoi”
+merg). Fiecare filă răspunde la o întrebare și are un buton albastru. Macheta
+aprobată: canvasul „Plan: Materiale simplu”. Secțiunile despre „Depozit și
+stoc” și „Comenzi” de mai jos sunt istoric: calculele și formularele lor au
+rămas, s-a schimbat locul.
+
+| Fila | Ruta, fișierul | Ce e pe ea |
+|---|---|---|
+| **De cumpărat** | `#/materiale` (`#/stoc` alias), `web/ecrane/stoc.ts` | Doar șantierele deschise. Pe fiecare: o propoziție („14 materiale: 13 lipsesc, 1 e comandat și vine.”), tabelul Material · Trebuie · Adus pe șantier · Stare („Lipsește 271,8 ml”, „Comandat, vine 630 m²”, „În ciornă, de trimis”, „Are tot”, „Îl dă clientul”), „Schimbă lista” și **„Comandă ce lipsește”**. Fără bani: costul și „În ofertă” sunt pe pagina șantierului (1.129 px, 2 butoane pe TRANSAVIA) |
+| **Comenzi** | `#/comenzi`, `web/ecrane/comenzi.ts` | Trei grupuri: De trimis, Așteptăm marfa, „Primite și anulate · N” (strânse). Un rând pe comandă (furnizor · șantier, starea „trimisă acum 9 zile”, ce s-a cerut) cu „Detalii” și un buton: **„Trimite comanda”**, **„A venit marfa”** sau **„A venit factura”**. Recepția: documentul, numărul, data și cât a venit; seria, moneda, cursul, transportul și alt loc sub „Alte date de pe document” |
+| **Depozit** | `#/depozit`, `web/ecrane/depozit.ts` | Pastilele locurilor (central, atelier, șantierele deschise cu material), tabelul Material · Cât e și **„Mută material”** (unde, apoi cât, pe rând). În atelier, tabla pusă deoparte cu „Trimite pe șantier” |
+
+- **„Comandă ce lipsește”** ia întâi din alte locuri (`propuneriDinDepozit` în
+  `src/stoc/comenzi.ts`: din fiecare loc cel mult cât mai lipsește, fără
+  șantierele închise, unde trigger-ul refuză mutarea, și fără resturi sub
+  0,05), fiecare cu bifă, apoi arată ciornele pe furnizorul obișnuit, cu „Alt
+  furnizor” (prețurile se iau de la el). Ciornele se socotesc după mutările
+  bifate. Butonul mută și face ciornele, apoi deschide Comenzi. Înainte,
+  „Material care există deja” era un tabel separat, iar „Fă comenzile”
+  comanda și ce era în depozit.
+- **„Schimbă lista”** deschide ce era pe necesar: cantitatea scrisă ca în
+  Excel, „Îl dă clientul”, ✕, șantierul legat, pierderile, materialul de mână,
+  „Pune la loc lista calculată”, „Scoate toată lista”; „Gata” închide.
+- **Mai multe** (`#/depozit/mai-multe`, câte o pagină `#/depozit/<ce>`, codul
+  vechi neschimbat): Am numărat (inventarul), Trecut de mână (stoc de pornire,
+  intrare fără comandă, consum, retur), Istoricul (jurnalul și drumul
+  materialului), Pus deoparte în atelier, Cine răspunde de fiecare loc,
+  Ambalaje. Routerul (`ruta` în `main.ts`) ia doar ce e înainte de al doilea
+  „/”; itemul „Materiale” din meniu rămâne aprins pe toate filele (`IN_MENIU`).
+- Funcțiile comune (locurile, șantierele deschise, rămas de comandat, cifrele
+  de pe file) stau în `web/materiale.ts`.
+
+Verificat cu Playwright pe `build:server`, cu datele `npm run demo` într-o bază
+separată: 390 / 768 / 1280 / 1440 / 1920 px, ambele teme, toate filele și
+paginile de sub „Mai multe”, zero derulare laterală, nicio țintă sub 40 px,
+zero erori. Fluxul: Comandă ce lipsește (40 ml ø114 din central, Isoline și
+Banda Tech schimbat pe STEELMET), Trimite comanda (emailul se vede), A venit
+marfa (aviz, apoi „A venit factura”), Mută material (10 ml ø140 în central,
+apoi „Lipsește 10 ml” și propunerea din central), Schimbă lista; totul rămâne
+după reîncărcare.
+
 ## Depozit și stoc (prototip, 28 septembrie 2026)
 
 **9 octombrie 2026, Faza 2.** Cardul „Materiale de comandat” din pasul

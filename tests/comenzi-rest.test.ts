@@ -9,6 +9,7 @@
  */
 import { describe, it, expect } from "vitest";
 import {
+  propuneriDinDepozit,
   adus, ciorneDinRamas, deComandatSantier, intrariDinReceptie, inlocuiesteCuFactura, primitPeLinii, returLaFurnizor,
   returnatPeLinii, soldPe, stareComanda, valideazaRetur, valoareAsteptata, type Comanda,
 } from "../src/stoc/comenzi.js";
@@ -211,5 +212,25 @@ describe("comanda din măsurătorile de pe teren (S2)", () => {
     expect([etapa!.adus, etapa!.ramas]).toEqual([20, 82]);
     // Pe toată oferta s-ar fi scăzut cei 200 aduși: nimic de comandat, deși pe șantier mai sunt 20.
     expect(deComandatSantier([vata], miscari, [], "S-T")[0]!.ramas).toBe(0);
+  });
+});
+
+describe("„Comandă ce lipsește”: întâi din depozit", () => {
+  const material = materialManual("vata_minerala", 50, 114, 193.33, "test");
+  const articol = articolDin({ sistem: "vata_minerala", grosime_mm: 50, rand: 114 });
+  const rand = (ramas: number, disponibil: { depozit: string; cantitate: number }[]) => ({ material, articol, ramas, disponibil });
+
+  it("ia din fiecare loc cel mult cât mai lipsește", () => {
+    expect(propuneriDinDepozit([rand(50, [{ depozit: "central", cantitate: 40 }, { depozit: "S2", cantitate: 30 }])], () => true))
+      .toEqual([{ material, articol, din: "central", cantitate: 40 }, { material, articol, din: "S2", cantitate: 10 }]);
+  });
+
+  it("nu propune șantiere închise și nici resturi din rotunjiri", () => {
+    expect(propuneriDinDepozit([rand(50, [{ depozit: "NISAL", cantitate: 30 }, { depozit: "central", cantitate: 0.01 }])],
+      (d) => d !== "NISAL")).toEqual([]);
+  });
+
+  it("nimic de luat când nu lipsește nimic", () => {
+    expect(propuneriDinDepozit([rand(0, [{ depozit: "central", cantitate: 40 }])], () => true)).toEqual([]);
   });
 });

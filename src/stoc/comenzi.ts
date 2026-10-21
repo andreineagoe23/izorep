@@ -191,7 +191,7 @@ export function comandatNesosit(
 
 /**
  * Cat e pe ciornele netrimise spre un depozit. Nu e comandat (n-a plecat la
- * furnizor), dar nici de comandat din nou: altfel „Fă comenzile” ar face a
+ * furnizor), dar nici de comandat din nou: altfel „Comandă ce lipsește” ar face a
  * doua ciorna pe acelasi material. Pana pe 14 octombrie 2026 ciornele intrau
  * in `comandatNesosit`, iar santierul arata „Lipsește: nimic” pe un material
  * care nici nu fusese comandat.
@@ -290,6 +290,39 @@ export function ciorneDinRamas(
     peFurnizor.set(f, linii);
   }
   return [...peFurnizor].map(([furnizor, linii]) => ({ id: id(), creat, furnizor, ...baza, linii }));
+}
+
+/** Ce se ia din depozit inainte de comanda: materialul, de unde si cat. */
+export interface PropunereTransfer {
+  material: MaterialNecesar;
+  articol: Articol;
+  din: string;
+  cantitate: number;
+}
+
+/**
+ * „Comanda ce lipseste” (21 octombrie 2026): intai se ia ce exista in alte
+ * locuri, apoi se comanda restul. Din fiecare loc cel mult cat mai lipseste,
+ * deci doua locuri nu acopera de doua ori aceeasi lipsa. Fara locurile in care
+ * nu se mai poate muta nimic (santierul inchis: trigger-ul refuza mutarea) si
+ * fara resturi sub `minim` (NISAL inchis cu 0,01 m² de tabla, din rotunjiri).
+ */
+export function propuneriDinDepozit(
+  randuri: readonly Pick<DeComandatSantier, "material" | "articol" | "ramas" | "disponibil">[],
+  sePoate: (depozit: string) => boolean, minim = 0.05,
+): PropunereTransfer[] {
+  const out: PropunereTransfer[] = [];
+  for (const d of randuri) {
+    let rest = d.ramas;
+    for (const x of d.disponibil) {
+      if (rest <= 0) break;
+      if (!sePoate(x.depozit) || x.cantitate < minim) continue;
+      const q = rotunjit(Math.min(x.cantitate, rest));
+      out.push({ material: d.material, articol: d.articol, din: x.depozit, cantitate: q });
+      rest = rotunjit(rest - q);
+    }
+  }
+  return out;
 }
 
 /** Cantitatea liniei pe document: kg la tabla (asa se cumpara), altfel ml sau m². */

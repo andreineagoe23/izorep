@@ -22,7 +22,7 @@ const CAI: Record<string, string> = {
   /* Un clipboard cu bifa: comanda la furnizor. */
   comenzi: '<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="M8.5 12.5l2.2 2.2 4.8-4.8"/>',
   /* Un raft cu cutii: depozitul. */
-  stoc: '<path d="M3 21V8l9-5 9 5v13"/><path d="M3 21h18"/><rect x="7" y="13" width="4" height="4" rx=".6"/><rect x="13" y="13" width="4" height="4" rx=".6"/><rect x="10" y="8.5" width="4" height="4" rx=".6"/>',
+  materiale: '<path d="M3 21V8l9-5 9 5v13"/><path d="M3 21h18"/><rect x="7" y="13" width="4" height="4" rx=".6"/><rect x="13" y="13" width="4" height="4" rx=".6"/><rect x="10" y="8.5" width="4" height="4" rx=".6"/>',
   /* Bara laterala insasi: un panou cu marginea din stanga ingrosata. */
   bara: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/>',
 };

@@ -36,6 +36,18 @@ export function numeArticol(a: {
   return `${material}${grosime} · ${cum}${a.marca ? ` · ${a.marca}` : ""}`;
 }
 
+/**
+ * Filele ecranului „Materiale” (21 octombrie 2026): fiecare răspunde la o
+ * singură întrebare (ce lipsește, ce așteptăm, ce avem). Sunt linkuri, deci
+ * „Înapoi” din browser și adresa merg; cifra spune câte lucruri sunt de făcut.
+ */
+export function fileMateriale(activ: "materiale" | "comenzi" | "depozit", n: { deCumparat: number; comenzi: number }): string {
+  const fila = (id: string, eticheta: string, numar?: number): string =>
+    `<a href="#/${id}" class="fila"${id === activ ? ' aria-current="page"' : ""}>${eticheta}${numar ? ` <b>${cifra(numar)}</b>` : ""}</a>`;
+  return `<nav class="file" aria-label="Materiale">${fila("materiale", "De cumpărat", n.deCumparat)}${
+    fila("comenzi", "Comenzi", n.comenzi)}${fila("depozit", "Depozit")}</nav>`;
+}
+
 /** Pragul tub / placă: până la ce diametru se comandă tuburi (S12). */
 export const PRAGURI_TUB: [number, string][] = [
   [90, "3 țoli (ø90), ca de obicei"], [114, "4 țoli (ø114)"], [140, "5 țoli (ø140)"], [168, "6 țoli (ø168)"],
@@ -92,9 +104,9 @@ export function cardNecesar(n: Necesar): string {
       ? tabel(["Material", "Se comandă", "Metri de țeavă", "Din piese"], randuri, ["", "n", "n", "n"])
       : `<p class="nota">Nicio poziție cu preț din liste: nu e nimic de calculat.</p>`}
     ${fara > 0 ? `<p class="hint">${fara === 1 ? "O poziție nu are" : `${fara} poziții nu au`} necesar calculat
-      (preț pus de mână sau închideri la foc): materialul lor se adaugă de mână, în „Necesar și depozit”.</p>` : ""}
+      (preț pus de mână sau închideri la foc): materialul lor se adaugă de mână, în „Materiale”.</p>` : ""}
     <p class="hint">„Creează șantierul” face șantierul din ofertă (pozițiile, cantitățile și prețurile ei, cu ajustarea
-      și discountul de mai sus). Materialele ajung în „Necesar și depozit”, iar pe șantier se fac situațiile de lucrări.</p>
+      și discountul de mai sus). Materialele ajung în „Materiale”, iar pe șantier se fac situațiile de lucrări.</p>
     <div class="imp-formular-butoane">
       <button type="button" class="primar" data-act="creeaza-santier">Creează șantierul</button>
     </div>

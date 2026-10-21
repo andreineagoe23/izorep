@@ -32,9 +32,9 @@ export const MENIU: GrupMeniu[] = [
     { id: "lucrari", eticheta: "Șantiere" },
     { id: "masuratori", eticheta: "Poze de pe șantier" },
   ]},
-  { titlu: "Materiale", itemi: [
-    { id: "stoc", eticheta: "Necesar și depozit" },
-    { id: "comenzi", eticheta: "Comenzi la furnizori" },
+  // Un singur ecran, cu trei file (De cumpărat, Comenzi, Depozit): 21 octombrie 2026.
+  { titlu: "", itemi: [
+    { id: "materiale", eticheta: "Materiale" },
   ]},
   { titlu: "Setări", itemi: [
     { id: "clienti", eticheta: "Clienți" },

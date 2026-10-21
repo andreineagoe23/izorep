@@ -1257,13 +1257,50 @@ main details.ajutor > .hint { margin: 0 0 8px; }
 /* Masuratori: scopul (trei butoane) ia ~70 %, tipul ofertei sau santierul ~30 %. */
 @container imp (min-width: 620px) { .imp-campuri.sant-sus { grid-template-columns: var(--imp-coloane); align-items: start; } }
 
-/* „Sari la”: secțiunile unei pagini lungi (Depozit și stoc), ca butoane, nu ca linkuri:
-   rutarea e pe hash, iar un link „#sec-stoc” ar schimba ecranul. */
-.sari-la { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.sari-la .hint { margin-right: 4px; }
-.sectiune-pagina { scroll-margin-top: 16px; display: grid; gap: var(--imp-gap); }
-.sectiune-pagina:empty { display: none; }
-.sectiune-pagina h2:focus { outline: none; }
+/* ---- „Materiale” (21 octombrie 2026): trei file, fiecare cu o întrebare și un buton.
+   Filele sunt linkuri (adresa și „Înapoi” merg); cea de acum, subliniată cu accentul. */
+.file { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 2px solid var(--linie); }
+.fila {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 16px; margin-bottom: -2px;
+  border-bottom: 3px solid transparent; color: var(--slab); font-size: 16px; font-weight: 500; text-decoration: none;
+}
+.fila:hover { color: var(--text); }
+.fila[aria-current="page"] { color: var(--accent); border-bottom-color: var(--accent); font-weight: 650; }
+.fila b { font-weight: 650; }
+/* Antetul unui card: titlul și propoziția în stânga, butoanele în dreapta; pe telefon, dedesubt. */
+.mat-antet { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; }
+.mat-antet > div:first-child { flex: 1 1 22rem; min-width: 0; }
+.mat-antet h2, .mat-antet h3 { margin: 0 0 4px; }
+.mat-antet p { margin: 0; color: var(--slab); font-size: 15px; overflow-wrap: anywhere; }
+.mat-antet .filtre { flex: 1 1 22rem; margin: 0; }
+.mat-actiuni { display: flex; flex-wrap: wrap; gap: 8px; }
+.mat-actiuni > * { min-height: 44px; }
+.mat-necesar .mat-antet { margin-bottom: var(--imp-gap); }
+.mat-necesar .mat-antet p { color: var(--text); }
+h2.mat-grup { margin: 8px 0 0; font-size: 17px; }
+.mat-comanda { font-size: 16.5px; }
+/* „Comandă ce lipsește”: bifele din depozit și ciornele, una lângă alta pe ecran lat. */
+.mat-bife { display: grid; gap: 4px; }
+.mat-bifa { display: flex; align-items: center; gap: 12px; min-height: 44px; font-size: 15px; }
+.mat-bifa input { width: 22px; height: 22px; margin: 0; flex: none; }
+.mat-ciorne { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr)); gap: var(--imp-gap); align-items: start; }
+.mat-ciorna { border: 1px solid var(--linie); border-radius: 12px; padding: 14px 16px; }
+.mat-ciorna-cap { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.mat-ciorna-cap label { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--slab); }
+.mat-ciorna-cap select { min-height: 44px; width: auto; }
+.mat-ciorna ul { list-style: none; margin: 0; padding: 0; }
+.mat-ciorna li { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-top: 1px solid var(--linie); font-size: 15px; }
+.mat-ciorna li strong { white-space: nowrap; font-variant-numeric: tabular-nums; }
+/* „A venit marfa” / „A venit factura”, sub rândul comenzii. */
+.mat-receptie { margin-top: var(--imp-gap); padding-top: var(--imp-gap); border-top: 1px solid var(--linie); }
+.mat-receptie h3 { margin: 0 0 12px; font-size: 16px; }
+.mat-alte { margin: 12px 0; }
+.mat-alte summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; color: var(--accent); }
+/* „Mai multe”, sub Depozit: un rând pe pagină, cu „Deschide”. */
+.mat-rand-mai { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 12px 0; border-top: 1px solid var(--linie); }
+.mat-rand-mai > div { flex: 1 1 20rem; }
+.mat-rand-mai .hint { margin: 2px 0 0; }
+.mat-rand-mai a.secundar, .mat-actiuni a.secundar { display: inline-flex; align-items: center; text-decoration: none; }
 
 /* Un camp de text intr-un tabel ia latimea celulei, nu 20 de caractere fixe:
    pe telefon, „Responsabil” din „Locurile” iesea din card. */

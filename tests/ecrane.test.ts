@@ -202,3 +202,15 @@ describe("câmpurile din rândul de verificare (patchDinCamp)", () => {
     expect(patchDinCamp(e, "strat0", "").straturi_extra).toEqual([{ sistem: "tabla", grosime_mm: null }]);
   });
 });
+
+describe("filele „Materiale” (21 octombrie 2026)", async () => {
+  const { fileMateriale } = await import("../web/stoc-vizual.js");
+
+  it("trei linkuri, fila de acum marcată, cifra doar unde e ceva de făcut", () => {
+    const html = fileMateriale("comenzi", { deCumparat: 13, comenzi: 0 });
+    expect([...html.matchAll(/href="#\/(\w+)"/g)].map((m) => m[1])).toEqual(["materiale", "comenzi", "depozit"]);
+    expect(html).toMatch(/href="#\/comenzi" class="fila" aria-current="page">Comenzi</);
+    expect(html).toContain("De cumpărat <b>13</b>");
+    expect(html).not.toMatch(/Comenzi <b>/);
+  });
+});

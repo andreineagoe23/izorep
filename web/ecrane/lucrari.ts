@@ -18,7 +18,7 @@ import {
 import { legaPanouStergere, panouStergere } from "../confirmare.js";
 import { consumPlan } from "../consum-vizual.js";
 import { dinMarci } from "../../src/stoc/consum.js";
-import { ramasPeNecesar } from "./stoc.js";
+import { ramasPeNecesar } from "../materiale.js";
 import { deComandat, solduri } from "../../src/stoc/registru.js";
 import { cifra } from "../stoc-vizual.js";
 import { descarca } from "../descarca.js";
@@ -77,7 +77,7 @@ function lucrariExemplu(): string {
 const notaInchidere = `${nota(
     `Când se termină o lucrare, șantierul se închide din pagina lui: șeful de lucrare numără ce a rămas, iar fiecare ` +
       `material pleacă înapoi în depozit, pe alt șantier, la furnizor, sau se scrie ca pierdut, furat ori reciclat. ` +
-      `Materialul de pe fiecare șantier se vede și în <a href="#/stoc">Necesar și depozit</a>.`,
+      `Materialul de pe fiecare șantier se vede și în <a href="#/materiale">Materiale</a>.`,
 )}`;
 
 const zi = (iso: string): string => new Date(iso).toLocaleDateString("ro-RO");
@@ -210,7 +210,7 @@ export const ecran: Ecran = {
           <summary>Planul de șantier · ${p.pozitii.length === 1 ? "o poziție" : `${p.pozitii.length} poziții`}${
             cumulat ? ` · ${executatPlan} începute` : ""}</summary>
           <p class="hint" style="margin:0 0 12px">Pozițiile ofertei, cu prețurile trimise clientului. Nu se schimbă
-            dacă se schimbă listele de prețuri. Materialele lor sunt în <a href="#/stoc">Necesar și depozit</a>.</p>
+            dacă se schimbă listele de prețuri. Materialele lor sunt în <a href="#/materiale">Materiale</a>.</p>
           ${tabel(["Poziția", "Cant. ofertă", "Preț unitar", "Executat"], randuriPlan, ["", "n", "n", "n"])}
         </details>
         ${inchide}

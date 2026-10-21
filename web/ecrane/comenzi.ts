@@ -1,9 +1,15 @@
 /**
- * Comenzi la furnizori (Faza 4).
+ * Materiale · Comenzi (Faza 4; din 21 octombrie 2026 fila „Comenzi” a
+ * ecranului „Materiale”).
+ *
+ * O singură întrebare: ce așteptăm de la furnizori? Comenzile stau în trei
+ * grupuri (de trimis, așteptăm marfa, primite, strânse), fiecare pe un rând
+ * cu un singur buton: „Trimite comanda”, „A venit marfa” sau „A venit
+ * factura”. Tabelul, emailul, returul și anularea se văd la „Detalii”.
  *
  * Drumul unei comenzi, cum il face biroul:
  *
- *   ciorna (din „Fa comenzile”, in Depozit si stoc, din Masuratori, sau de mana),
+ *   ciorna (din „Comanda ce lipseste”, la De cumparat, din Masuratori, sau de mana),
  *     cu pretul asteptat din lista furnizorului sau din ultima factura
  *     → „Trimite comanda”: textul de email si Excelul, gata de trimis
  *     → receptia, pe aviz sau pe factura: marfa intra in stoc. Avizul se poate
@@ -17,19 +23,19 @@
  * (S28). Logica e in `src/stoc/comenzi.ts`; datele, prin operatiile din
  * `web/date.ts`.
  */
-import { esc, indicator, stare, tabel, type Ecran } from "./tip.js";
+import { esc, stare, tabel, type Ecran } from "./tip.js";
 import {
   anuleazaComanda, ataseazaDocument, citesteDepozit, citestePlanuri, idNou, linkDocument, modDate, puneComanda, receptioneaza,
   returneaza, stergeComanda, treceFactura, trimiteComanda,
 } from "../date.js";
-import { cantitate, cifra, numeArticol, unitate } from "../stoc-vizual.js";
-import { depozite, deschis } from "./stoc.js";
+import { cantitate, cifra, fileMateriale, numeArticol, unitate } from "../stoc-vizual.js";
+import { avizeFaraFactura as avizeDeschise, comandaDeLucru, depozite, deschis, numereMateriale } from "../materiale.js";
 import { descarca } from "../descarca.js";
 import { caDataUrl, micsoreaza, modelPornit, PlafonModel, rutaModel } from "../imagine.js";
 import { registruComanda, registruEvidenta, randuriEvidenta } from "../comanda-excel.js";
 import { FURNIZORI } from "../../src/stoc/furnizori.js";
 import {
-  CENTRAL, intrariPeAviz, primitPeLinii, ramasDePrimit, returnatPeLinii, stareComanda, textEmail,
+  CENTRAL, cantitateComanda, intrariPeAviz, primitPeLinii, ramasDePrimit, returnatPeLinii, stareComanda, textEmail,
   valoareAsteptata, type Comanda, type LinieComanda, type PretAsteptat, type PretPeUnitate, type StareComanda,
 } from "../../src/stoc/comenzi.js";
 import { CitireAviz, receptieDinCitire, type ReceptieCitita } from "../../src/stoc/aviz.js";
@@ -104,14 +110,26 @@ function pastreaza(citite: ReadonlyMap<string, Citit>): void {
   }
 }
 
+/** „acum 9 zile”, de la trimitere; azi, „azi”. */
+function deCand(iso: string): string {
+  const zile = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
+  return zile <= 0 ? "azi" : zile === 1 ? "ieri" : `acum ${zile} zile`;
+}
+
 export const ecran: Ecran = {
   id: "comenzi",
-  titlu: "Comenzi la furnizori",
-  subtitlu: "Ce s-a comandat, ce a venit și ce mai e de primit. Comanda trimisă nu se mai schimbă; marfa intră în stoc la recepție.",
+  titlu: "Materiale",
 
   render(root) {
     let st = citesteDepozit();
-    let filtru: "deschise" | "toate" = "deschise";
+    /** Primitele și anulatele, strânse jos până le cere omul. */
+    let arataInchise = false;
+    /** Comenzile cu „Detalii” deschise; cele cu recepția sau factura deschise. */
+    const detalii = new Set<string>();
+    const receptie = new Set<string>();
+    const factura = new Set<string>();
+    /** Comanda tocmai trimisă: îi arăt emailul și Excelul. */
+    let trimisaAcum: string | null = null;
     let eroare: { id: string; text: string } | null = null;
     let anulare: string | null = null;
     let cuModel = false;
@@ -126,28 +144,24 @@ export const ecran: Ecran = {
     const reciteste = (): void => { st = citesteDepozit(); };
 
     function deseneaza(): void {
-      const comenzi = st.comenzi ?? [];
+      const comenzi = [...(st.comenzi ?? [])].reverse();
       const stari = new Map(comenzi.map((c) => [c.id, stareComanda(c, st.miscari)]));
-      const nr$ = (s: StareComanda): number => [...stari.values()].filter((x) => x === s).length;
-      // Deschisa: are ceva de primit, sau un aviz care inca n-are factura.
-      const deschise = comenzi.filter((c) => stari.get(c.id) !== "anulata"
-        && (stari.get(c.id) !== "primita" || avizeFaraFactura(c).length > 0));
-      const vizibile = filtru === "toate" ? comenzi : deschise;
+      const deTrimis = comenzi.filter((c) => stari.get(c.id) === "ciorna");
+      const asteptam = comenzi.filter((c) => stari.get(c.id) !== "ciorna" && comandaDeLucru(c, st));
+      const inchise = comenzi.filter((c) => !comandaDeLucru(c, st));
+      const grup = (titlu: string, lista: Comanda[]): string => (lista.length === 0 ? ""
+        : `<h2 class="mat-grup">${titlu}</h2>${lista.map((c) => cardComanda(c, stari.get(c.id)!)).join("")}`);
 
       root.innerHTML = `<div class="imp">
-        <div class="stats">
-          ${indicator(cifra(nr$("ciorna")), "Ciorne", "de verificat și trimis")}
-          ${indicator(cifra(nr$("trimisa") + nr$("partial")), "Trimise, de primit", nr$("partial") ? `${nr$("partial")} primite parțial` : "")}
-          ${indicator(cifra(nr$("primita")), "Primite")}
-        </div>
-        <div class="filtre" role="group" aria-label="Ce comenzi arăt">
-          <button class="filtru" data-filtru="deschise" aria-pressed="${filtru === "deschise"}">Deschise · ${deschise.length}</button>
-          <button class="filtru" data-filtru="toate" aria-pressed="${filtru === "toate"}">Toate · ${comenzi.length}</button>
-        </div>
-        ${vizibile.length === 0 ? `<section class="imp-card"><p class="hint" style="margin:0">${comenzi.length === 0
-          ? `Nicio comandă încă. În <a href="#/stoc">Necesar și depozit</a>, pe necesarul unui șantier, „Fă comenzile” face ciornele din ce a rămas de comandat; în <a href="#/masuratori">Poze de pe șantier</a>, „Pentru comandă” le face din ce s-a măsurat pe teren.${comandaNoua() ? " Pentru stocul general sau o lipsă, folosește „Comandă nouă”, mai jos." : ""}`
-          : "Nicio comandă deschisă: tot ce s-a comandat a venit sau a fost anulat."}</p></section>` : ""}
-        ${vizibile.map((c) => cardComanda(c, stari.get(c.id)!)).join("")}
+        ${fileMateriale("comenzi", numereMateriale(st))}
+        ${deTrimis.length + asteptam.length === 0 ? `<section class="imp-card"><p class="hint" style="margin:0">${comenzi.length === 0
+          ? `Nicio comandă încă. La <a href="#/materiale">De cumpărat</a>, „Comandă ce lipsește” face comenzile din ce lipsește pe un șantier; în <a href="#/masuratori">Poze de pe șantier</a>, „Pentru comandă” le face din ce s-a măsurat pe teren.`
+          : "Nimic de așteptat: tot ce s-a comandat a venit sau a fost anulat."}</p></section>` : ""}
+        ${grup("De trimis", deTrimis)}
+        ${grup("Așteptăm marfa", asteptam)}
+        ${inchise.length > 0 ? `<p style="margin:0"><button type="button" class="legatura" data-act="inchise" aria-expanded="${arataInchise}">${
+          arataInchise ? "Ascunde primitele" : `› Primite și anulate · ${inchise.length}`}</button></p>
+          ${arataInchise ? inchise.map((c) => cardComanda(c, stari.get(c.id)!)).join("") : ""}` : ""}
         ${comandaNoua()}
         ${evidenta()}
       </div>`;
@@ -183,12 +197,37 @@ export const ecran: Ecran = {
       const v = valoare(c);
       const err = eroare?.id === c.id ? `<p class="alerta" role="alert">${esc(eroare.text)}</p>` : "";
       const documente = (st.documente ?? []).filter((d) => d.comanda === c.id);
-      const antet = `<h2>${esc(c.furnizor)} · ${esc(ob || "stocul general")} ${stare(eticheta, ton)}</h2>
-        <p class="hint" style="margin:0 0 12px">${c.trimisa ? `trimisă pe ${new Date(c.trimisa).toLocaleDateString("ro-RO")}` : `ciornă din ${new Date(c.creat).toLocaleDateString("ro-RO")}`}
+      // Rândul comenzii: cine, pentru ce, starea, ce s-a cerut, într-o linie, și butonul care o duce mai departe.
+      const intarzie = (s === "trimisa" || s === "partial") && c.trimisa && Date.now() - new Date(c.trimisa).getTime() >= 7 * 86_400_000;
+      const eticheta$ = s === "trimisa" && c.trimisa ? `trimisă ${deCand(c.trimisa)}`
+        : s === "partial" && c.trimisa ? `${eticheta}, trimisă ${deCand(c.trimisa)}` : eticheta;
+      const ce = c.linii.length <= 3
+        ? c.linii.map((l) => `${denumireComanda(l.articol)} · ${cantitateComanda(l)}`).join("; ")
+        : `${c.linii.length} materiale`;
+      const actiune = s === "ciorna"
+        ? `<button type="button" class="primar" data-act="trimite-acum" data-id="${esc(c.id)}">Trimite comanda</button>`
+        : (s === "trimisa" || s === "partial") && !receptie.has(c.id) && !citite.has(c.id)
+          ? `<button type="button" class="primar" data-act="receptie" data-id="${esc(c.id)}">A venit marfa</button>`
+          : avize.length > 0 && !factura.has(c.id)
+            ? `<button type="button" class="primar" data-act="factura" data-id="${esc(c.id)}">A venit factura</button>` : "";
+      const vede = detalii.has(c.id);
+      const rand = `<div class="mat-antet">
+          <div>
+            <h3 class="mat-comanda">${esc(c.furnizor)} · ${esc(ob || "stocul general")} ${stare(eticheta$, intarzie ? "atentie" : ton)}</h3>
+            <p>${esc(ce)}</p>
+          </div>
+          <div class="mat-actiuni">
+            <button type="button" class="secundar" data-act="detalii" data-id="${esc(c.id)}" aria-expanded="${vede}">${vede ? "Ascunde detaliile" : "Detalii"}</button>
+            ${actiune}
+          </div>
+        </div>`;
+      const antet = `${rand}
+        ${vede ? `<p class="hint" style="margin:12px 0">${c.trimisa ? `trimisă pe ${new Date(c.trimisa).toLocaleDateString("ro-RO")}` : `ciornă din ${new Date(c.creat).toLocaleDateString("ro-RO")}`}
           · marfa vine în ${esc(numeDepozit(c.spre))} · factura pe ${esc(c.firma)}${c.suplimentara ? ` · suplimentară: ${esc(c.suplimentara)}` : ""}${
           c.anulata ? ` · anulată pe ${new Date(c.anulata).toLocaleDateString("ro-RO")}` : ""}${
-          v && s !== "ciorna" ? ` · valoare așteptată ${esc(v)}` : ""}</p>`;
+          v && s !== "ciorna" ? ` · valoare așteptată ${esc(v)}` : ""}</p>` : ""}`;
 
+      if (s === "ciorna" && !vede) return `<section class="imp-card">${antet}${err}</section>`;
       if (s === "ciorna") {
         const randuri = c.linii.map((l) => `<tr>
           <td>${esc(denumireComanda(l.articol))}<br><span class="hint">${esc(numeArticol(l.articol))}</span></td>
@@ -231,16 +270,22 @@ export const ecran: Ecran = {
       const tabelLinii = tabel(["Material", "Comandat", "Primit", "Rămas de primit", ...(cuRetur ? ["Returnat"] : [])], randuri,
         ["", "n", "n", "n", ...(cuRetur ? ["n"] : [])]);
 
-      if (s === "anulata") return `<section class="imp-card">${antet}${tabelLinii}</section>`;
+      if (s === "anulata") return `<section class="imp-card">${antet}${vede ? tabelLinii : ""}</section>`;
 
       const email = textEmail(c, ob);
       const poateReturna = c.linii.some((l) => (primit.get(l.id) ?? 0) - (returnat.get(l.id) ?? 0) > 0);
+      const deschisaReceptia = s !== "primita" && (receptie.has(c.id) || citite.has(c.id));
+      const deschisaFactura = avize.length > 0 && (factura.has(c.id) || avize.some((a) => citite.has(`${c.id}|${a}`)));
+      if (!vede) {
+        return `<section class="imp-card">${antet}${deschisaReceptia ? formularReceptie(c, rest) : ""}${
+          deschisaFactura ? avize.map((a) => formularFactura(c, a)).join("") : ""}${err}</section>`;
+      }
       return `<section class="imp-card">
         ${antet}
         ${tabelLinii}
         ${documente.length > 0 ? `<p class="hint">Atașate: ${documente.map((d) =>
           `<a href="${esc(linkDocument(d.id))}" target="_blank" rel="noopener">${d.tip === "aviz" ? "avizul" : "factura"} ${esc(d.numar)}</a>`).join(" · ")}</p>` : ""}
-        <details${s === "trimisa" ? " open" : ""}>
+        <details${trimisaAcum === c.id ? " open" : ""}>
           <summary>Textul de email și Excelul comenzii</summary>
           <textarea readonly rows="${Math.min(14, email.split("\n").length + 1)}" style="width:100%;margin-top:12px">${esc(email)}</textarea>
           <div class="imp-formular-butoane">
@@ -248,8 +293,8 @@ export const ecran: Ecran = {
             <button type="button" class="secundar" data-act="excel" data-id="${esc(c.id)}">Descarcă Excel</button>
           </div>
         </details>
-        ${s !== "primita" ? formularReceptie(c, rest) : ""}
-        ${avize.map((a) => formularFactura(c, a)).join("")}
+        ${deschisaReceptia ? formularReceptie(c, rest) : ""}
+        ${deschisaFactura ? avize.map((a) => formularFactura(c, a)).join("") : ""}
         ${poateReturna ? formularRetur(c, primit, returnat) : ""}
         ${err}
         ${s !== "primita" ? `<div class="imp-formular-butoane">${anulare === c.id
@@ -310,35 +355,39 @@ export const ecran: Ecran = {
         </tr>`;
       });
       const sel = (v: string, ales: string | undefined): string => (v === ales ? " selected" : "");
-      return `<details class="imp-card"${citite.has(c.id) ? " open" : ""}>
-        <summary>Recepție: a venit marfa (aviz sau factură)</summary>
+      // Vizibil doar ce are orice document: ce e, numărul, data, cât a venit. Restul
+      // (seria, moneda, cursul, transportul, alt loc) stă strâns: îl completează citirea din poză.
+      return `<div class="mat-receptie">
+        <h3>A venit marfa</h3>
         ${zonaDocument(c.id, "aviz sau factură")}
         <form data-form="receptie" data-id="${esc(c.id)}">
           <div class="imp-campuri">
             <label>Documentul<select name="tip"><option value="aviz"${sel("aviz", doc?.tip)}>Aviz (fără preț, „urmează factura”)</option><option value="factura"${sel("factura", doc?.tip)}>Factură</option></select></label>
-            <label>Seria (opțional)<input name="serie" autocomplete="off" value="${esc(doc?.serie ?? "")}" /></label>
             <label>Numărul<input name="numar" autocomplete="off" required value="${esc(doc?.numar ?? "")}" /></label>
             <label>Data de pe document<input name="data" type="date" value="${esc(doc?.data ?? azi())}" required /></label>
-            <label>Moneda prețurilor<select name="moneda"><option value="RON"${sel("RON", r?.moneda ?? "RON")}>lei</option><option value="EUR"${sel("EUR", r?.moneda)}>euro</option></select></label>
-            <label>Cursul de pe factură (lei pentru 1 €)<input name="curs" type="number" inputmode="decimal" step="any" min="0" value="${r?.curs ?? ""}" /></label>
-            <label>Transport pe document (opțional, în moneda de mai sus)<input name="transport" type="number" inputmode="decimal" step="any" min="0" value="${r?.transport ?? ""}" /></label>
-            <label>Unde a ajuns marfa<select name="spre">${ALEGERI.map((d) =>
-              `<option value="${esc(d.id)}"${d.id === c.spre ? " selected" : ""}>${esc(d.nume)}</option>`).join("")}</select></label>
           </div>
-          ${tabel(["Material", "Primit acum", "Preț unitar (gol pe aviz)"], linii, ["", "n", "n"], true)}
-          <p class="hint">Pe aviz, prețul rămâne gol: îl aduce factura („Trece factura”, apare după recepție). Prețul în lei se trece în euro
-            cu cursul de pe factură, ca în evidența voastră.</p>
-          <div class="imp-formular-butoane"><button type="submit" class="primar">Înregistrează recepția</button></div>
+          <details class="mat-alte">
+            <summary>Alte date de pe document: seria, moneda, cursul, transportul, alt loc</summary>
+            <div class="imp-campuri">
+              <label>Seria (opțional)<input name="serie" autocomplete="off" value="${esc(doc?.serie ?? "")}" /></label>
+              <label>Moneda prețurilor<select name="moneda"><option value="RON"${sel("RON", r?.moneda ?? "RON")}>lei</option><option value="EUR"${sel("EUR", r?.moneda)}>euro</option></select></label>
+              <label>Cursul de pe factură (lei pentru 1 €)<input name="curs" type="number" inputmode="decimal" step="any" min="0" value="${r?.curs ?? ""}" /></label>
+              <label>Transport pe document (opțional, în moneda de mai sus)<input name="transport" type="number" inputmode="decimal" step="any" min="0" value="${r?.transport ?? ""}" /></label>
+              <label>Unde a ajuns marfa<select name="spre">${ALEGERI.map((d) =>
+                `<option value="${esc(d.id)}"${d.id === c.spre ? " selected" : ""}>${esc(d.nume)}</option>`).join("")}</select></label>
+            </div>
+          </details>
+          ${tabel(["Material", "A venit", "Preț unitar (gol pe aviz)"], linii, ["", "n", "n"], true)}
+          <p class="hint">Pe aviz, prețul rămâne gol: îl aduce factura, cu „A venit factura”.</p>
+          <div class="imp-formular-butoane">
+            <button type="submit" class="primar">Înregistrează</button>
+            <button type="button" class="secundar" data-act="receptie" data-id="${esc(c.id)}">Renunță</button>
+          </div>
         </form>
-      </details>`;
+      </div>`;
     }
 
-    /** Avizele recepționate pe comandă care încă n-au factură. */
-    function avizeFaraFactura(c: Comanda): string[] {
-      const numere = new Set<string>();
-      for (const m of st.miscari) if (m.comanda?.id === c.id && m.document?.tip === "aviz") numere.add(m.document.numar);
-      return [...numere].filter((a) => intrariPeAviz(c, st.miscari, a).length > 0);
-    }
+    const avizeFaraFactura = (c: Comanda): string[] => avizeDeschise(c, st);
 
     function formularFactura(c: Comanda, aviz: string): string {
       const cheie = `${c.id}|${aviz}`;
@@ -354,8 +403,8 @@ export const ecran: Ecran = {
             <span class="hint">pe ${d.um}${l.pret ? ` · așteptat ${esc(bani(l.pret))}` : ""}</span></td></tr>`;
       });
       const doc = r?.document;
-      return `<details class="imp-card" open>
-        <summary>Avizul ${esc(aviz)} n-are încă factură: trece factura</summary>
+      return `<div class="mat-receptie">
+        <h3>A venit factura pentru avizul ${esc(aviz)}</h3>
         ${zonaDocument(cheie, "factura")}
         <form data-form="factura" data-id="${esc(c.id)}" data-aviz="${esc(aviz)}">
           <div class="imp-campuri">
@@ -368,9 +417,12 @@ export const ecran: Ecran = {
           </div>
           ${tabel(["Material", "Pe aviz", "Preț unitar fără TVA"], linii, ["", "n", "n"], true)}
           <p class="hint">Cantitățile rămân cele de pe aviz. În jurnal, intrarea de pe aviz apare anulată și înlocuită de cea de pe factură, cu preț.</p>
-          <div class="imp-formular-butoane"><button type="submit" class="primar">Trece factura</button></div>
+          <div class="imp-formular-butoane">
+            <button type="submit" class="primar">Înregistrează factura</button>
+            <button type="button" class="secundar" data-act="factura" data-id="${esc(c.id)}">Renunță</button>
+          </div>
         </form>
-      </details>`;
+      </div>`;
     }
 
     function formularRetur(c: Comanda, primit: Map<string, number>, returnat: Map<string, number>): string {
@@ -388,7 +440,7 @@ export const ecran: Ecran = {
           <label>De ce<input name="motiv" autocomplete="off" required placeholder="defect, alt diametru, în plus" /></label>
           <label>Avizul de retur (opțional)<input name="aviz" autocomplete="off" /></label>
           <p class="hint">Marfa iese din stoc. Primitul pe comandă rămâne cât a venit; dacă materialul trebuie înlocuit, apare din nou la
-            „Rămas de comandat” pe șantier și se cere cu o comandă suplimentară.</p>
+            „De cumpărat” ca lipsă pe șantier și se cere cu „Comandă ce lipsește”.</p>
           <div class="imp-formular-butoane"><button type="submit" class="secundar">Înregistrează returul</button></div>
         </form>
       </details>`;
@@ -418,11 +470,8 @@ export const ecran: Ecran = {
     function evidenta(): string {
       const intrari = st.miscari.filter((m) => m.tip === "intrare" && m.document && !m.anuleaza).length;
       if (intrari === 0) return "";
-      return `<section class="imp-card"><h2>Evidența cumpărărilor</h2>
-        <p class="hint" style="margin:0 0 12px">Intrările de la furnizori, cu coloanele Excelului vostru de evidență (furnizor, proiect,
-          document, preț în lei și euro, curs). Returul la furnizor iese cu minus. Se pot lipi în el cât timp îl mai țineți.</p>
-        <div class="imp-formular-butoane"><button type="button" class="secundar" data-act="evidenta">Descarcă evidența</button></div>
-      </section>`;
+      // Intrările de la furnizori, cu coloanele Excelului vostru de evidență; returul iese cu minus.
+      return `<p style="margin:0"><button type="button" class="legatura" data-act="evidenta">Descarcă evidența cumpărărilor (Excel)</button></p>`;
     }
 
     /* --------------------------------------------------------- evenimente */
@@ -539,12 +588,27 @@ export const ecran: Ecran = {
 
     root.addEventListener("click", async (e) => {
       const t = e.target as HTMLElement;
-      const f = t.closest<HTMLButtonElement>("[data-filtru]");
-      if (f) { filtru = f.dataset["filtru"] as typeof filtru; deseneaza(); return; }
       const b = t.closest<HTMLButtonElement>("button[data-act]");
       if (!b || b.type === "submit") return;
       const c = comanda(b.dataset["id"]);
+      const comuta = (multime: Set<string>): void => {
+        if (!c) return;
+        if (multime.has(c.id)) multime.delete(c.id); else multime.add(c.id);
+        deseneaza();
+      };
       switch (b.dataset["act"]) {
+        case "inchise": arataInchise = !arataInchise; deseneaza(); return;
+        case "detalii": comuta(detalii); return;
+        case "receptie": comuta(receptie); return;
+        case "factura": comuta(factura); return;
+        case "trimite-acum": {
+          // Ciorna e deja salvată: trimisă de pe rând, îi arăt emailul și Excelul.
+          if (!c) return;
+          trimiteComanda(c.id);
+          trimisaAcum = c.id;
+          detalii.add(c.id);
+          break;
+        }
         case "scoate-linie": {
           if (!c) return;
           const r = puneComanda({ ...c, linii: c.linii.filter((l) => l.id !== b.dataset["linie"]) });
@@ -592,7 +656,7 @@ export const ecran: Ecran = {
         if (noua.linii.length === 0) gresit = "Comanda nu are nicio cantitate.";
         else {
           gresit = puneComanda(noua);
-          if (!gresit && actiune === "trimite") trimiteComanda(c.id);
+          if (!gresit && actiune === "trimite") { trimiteComanda(c.id); trimisaAcum = c.id; }
         }
       }
       if (form.dataset["form"] === "receptie" && c) {
@@ -609,7 +673,7 @@ export const ecran: Ecran = {
             return { linie: l.id, cantitate: nr(d.get(`r-${l.id}`)) ?? 0, ...(p ? { pret: p } : {}) };
           }),
         });
-        if (!gresit) ataseaza(c.id, c.id, tip, [val("serie"), val("numar")].filter(Boolean).join(" "));
+        if (!gresit) { ataseaza(c.id, c.id, tip, [val("serie"), val("numar")].filter(Boolean).join(" ")); receptie.delete(c.id); }
       }
       if (form.dataset["form"] === "factura" && c) {
         const moneda = val("moneda");
@@ -623,7 +687,7 @@ export const ecran: Ecran = {
           ...(transport ? { transport: pret(transport, moneda)! } : {}),
           preturi,
         });
-        if (!gresit) ataseaza(`${c.id}|${aviz}`, c.id, "factura", [val("serie"), val("numar")].filter(Boolean).join(" "));
+        if (!gresit) { ataseaza(`${c.id}|${aviz}`, c.id, "factura", [val("serie"), val("numar")].filter(Boolean).join(" ")); factura.delete(c.id); }
       }
       if (form.dataset["form"] === "retur" && c) {
         gresit = returneaza(c.id, {

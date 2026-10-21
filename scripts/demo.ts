@@ -313,7 +313,7 @@ await la(zi(-60), () => { santier(nisal, cNisal, "S-NISAL-LUTZ"); });
 let comenziNisal: Comanda[] = [];
 await la(zi(-58, 10), async () => {
   const st = D.citesteDepozit();
-  const { ramasPeNecesar } = await import("../web/ecrane/stoc.js");
+  const { ramasPeNecesar } = await import("../web/materiale.js");
   comenziNisal = ciorneDinRamas(ramasPeNecesar(st, necesarul("S-NISAL-LUTZ")),
     { firma: RADOIA, spre: "S-NISAL-LUTZ", santier: "S-NISAL-LUTZ" }, D.idNou, new Date().toISOString(),
     (a, f) => pretPropus(a, f, st.miscari));

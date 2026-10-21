@@ -1,7 +1,29 @@
 # Stare curentă
 
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
-> Ultima actualizare: 21 octombrie 2026, noaptea.
+> Ultima actualizare: 21 octombrie 2026, noaptea (Materiale).
+
+## 21 octombrie 2026 (noaptea): Materiale, trei file
+
+Andrei, despre „Necesar și depozit”: „nu înțeleg nimic, prea mult scris, prea
+multe butoane, tabele”. Plan cu machetă (canvasul „Plan: Materiale simplu”),
+aprobat („sună bine, poți trece la implementare”). Pe ramura
+`materiale-simplu`. **668 de teste.** Detaliile în `ui.md`, „Materiale: trei
+file”. Pe scurt: „Necesar și depozit” și „Comenzi la furnizori” devin un
+singur „Materiale”, cu filele De cumpărat (`#/materiale`), Comenzi
+(`#/comenzi`) și Depozit (`#/depozit`), fiecare cu un buton albastru. Pe
+TRANSAVIA, „De cumpărat” are 1.129 px și 2 butoane, față de 16.000 px și 172.
+Calculele nu s-au schimbat.
+
+Două lucruri reparate pe drum: transferul propus venea și de pe un șantier
+închis (NISAL, 0,01 m² de tablă; serverul l-ar fi refuzat), iar cu două
+locuri cu material se propunea mai mult decât lipsea. Ambele în
+`propuneriDinDepozit`, cu teste.
+
+Decis de noi (se pot întoarce): „Comandă ce lipsește” ia întâi din depozit;
+banii (cost, „În ofertă”) nu mai sunt la Materiale, ci doar pe pagina
+șantierului; intrarea de la furnizor fără comandă e la Mai multe › Trecut de
+mână.
 
 ## 21 octombrie 2026 (noaptea): ce rămăsese de decis, reparat
 

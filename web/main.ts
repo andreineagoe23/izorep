@@ -17,14 +17,20 @@ const ECRANE: Record<string, () => Promise<{ ecran: Ecran }>> = {
   deviz: () => import("./ecrane/deviz.js"),
   import: () => import("./ecrane/import.js"),
   masuratori: () => import("./ecrane/santier.js"),
-  stoc: () => import("./ecrane/stoc.js"),
+  materiale: () => import("./ecrane/stoc.js"),
   comenzi: () => import("./ecrane/comenzi.js"),
+  depozit: () => import("./ecrane/depozit.js"),
   clienti: () => import("./ecrane/clienti.js"),
   preturi: () => import("./ecrane/preturi.js"),
 };
 
-/** Rutele vechi, dinainte ca cererile si ofertele sa ajunga pe acelasi ecran. */
-const ALIAS: Record<string, string> = { cereri: "documente", oferte: "documente", santier: "masuratori", santiere: "lucrari" };
+/** Rutele vechi: cererile si ofertele pe acelasi ecran; „Necesar și depozit” (`stoc`) e „Materiale” din 21 octombrie 2026. */
+const ALIAS: Record<string, string> = {
+  cereri: "documente", oferte: "documente", santier: "masuratori", santiere: "lucrari", stoc: "materiale",
+};
+
+/** Filele unui ecran din meniu: pe ele, itemul lui ramane aprins. */
+const IN_MENIU: Record<string, string> = { comenzi: "materiale", depozit: "materiale" };
 
 const $ = <T extends HTMLElement>(s: string) => document.querySelector(s) as T;
 
@@ -47,13 +53,14 @@ const laInceput = (): void => scrollTo({ top: 0, left: 0, behavior: "auto" });
  */
 if ("scrollRestoration" in history) history.scrollRestoration = "manual";
 
+/** Ecranul din adresa; ce e dupa al doilea „/” (`#/depozit/istoric`) e pagina din ecran, a lui de citit. */
 const ruta = (): string => {
-  const id = location.hash.replace(/^#\/?/, "") || "tablou";
+  const id = location.hash.replace(/^#\/?/, "").split("/")[0] || "tablou";
   return ALIAS[id] ?? id;
 };
 
 function deseneazaMeniu(): void {
-  const activ = ruta();
+  const activ = IN_MENIU[ruta()] ?? ruta();
   // Eticheta e mereu in marcaj, si cand bara e pliata: acolo CSS-ul o muta
   // langa item ca tooltip. Ascunsa cu `display:none` ar disparea si din numele
   // accesibil al linkului, iar pe banda ar ramane sapte linkuri fara nume.

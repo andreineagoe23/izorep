@@ -2,7 +2,7 @@ import { atentionare, card, cate, esc, eur, indicator, nota, nr, progres, stare,
 import { vedeCosturi } from "../nav.js";
 import { citesteDepozit, citesteOferte, citestePlanuri, listeaza, type IntrareIstoric } from "../date.js";
 import type { OfertaEmisa } from "../oferte-local.js";
-import { deComandatPeNecesar } from "./stoc.js";
+import { deComandatPeNecesar } from "../materiale.js";
 import { alerte, listaSaptamanala, santiereInchise } from "../../src/lucrari/rapoarte.js";
 import { progresPlan, type PlanSantier } from "../../src/lucrari/situatii.js";
 import { alerteAtentie, cardInchise, cardSaptamana } from "../rapoarte-vizual.js";
@@ -84,7 +84,7 @@ function sectiuneAtentie(d: DateTablou): string {
   for (const { necesar, articole } of deComandatPeNecesar(citesteDepozit())) {
     if (articole === 0) continue;
     itemi.push({
-      href: "#/stoc",
+      href: "#/materiale",
       html: `Pentru <b>${esc(necesar.obiectiv || necesar.fisier)}</b> ${articole === 1
         ? "e un material" : `sunt <b>${nr(articole)}</b> materiale`} de comandat.`,
     });
