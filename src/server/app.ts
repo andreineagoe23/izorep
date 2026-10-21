@@ -20,6 +20,7 @@ import { eq } from "drizzle-orm";
 import { caTenant, type Baza } from "../db/client.js";
 import { tenant } from "../db/schema.js";
 import { optiuniModelDinMediu, ruteModel, type OptiuniModel } from "./model.js";
+import { ruteCurs, type OptiuniCurs } from "./curs.js";
 import * as repo from "./repo.js";
 import { Refuz } from "./repo.js";
 import { inchideSantier } from "./inchidere.js";
@@ -36,6 +37,8 @@ export interface OptiuniServer {
   model?: OptiuniModel;
   /** Parola comuna pe tot site-ul (`parola.ts`). Lipsa = fara poarta: doar local. */
   parola?: string;
+  /** Cursul BNR din antet (`curs.ts`). Lipsa = de la BNR. */
+  curs?: OptiuniCurs;
 }
 
 type Env = { Variables: Record<string, never> };
@@ -184,6 +187,7 @@ export function creeazaServer(o: OptiuniServer): Hono<Env> {
   const ok = (c: HonoCtx<Env>) => c.json({ ok: true });
 
   app.route("/api", ruteModel(o.model ?? optiuniModelDinMediu({})));
+  app.route("/api", ruteCurs(o.curs));
 
   app.get("/api/stare", async (c) => {
     const [t] = await o.db.select({ denumire: tenant.denumire }).from(tenant).where(eq(tenant.id, o.tenantId));

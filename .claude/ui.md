@@ -148,7 +148,9 @@ Antetul din dreapta și numele firmei din bară au aceeași înălțime
 (`--inaltime-antet`, 64 px), ca linia de sub ele să fie una singură. Antetul
 ține doar butonul de meniu, cu text vizibil („Ascunde meniul” / „Arată
 meniul”), nu doar pictogramă. „DEMO” și cursul au plecat: cursul era un număr
-fix din cod, care arăta ca un curs de azi. Comutatorul de rol e ascuns
+fix din cod, care arăta ca un curs de azi (din 21 octombrie 2026 cursul e
+înapoi, live de la BNR, prin server: `arataCursul` în `main.ts`, doar
+informativ). Comutatorul de rol e ascuns
 (`hidden`): ambele roluri văd tot până se stabilesc rolurile cu firma. Rama de
 focus de pe `#ecran` nu se mai desenează (focusul rămâne, pentru cititorul de
 ecran). Textele ecranelor au fost rescrise fără jargon („snapshot”, „segment”,

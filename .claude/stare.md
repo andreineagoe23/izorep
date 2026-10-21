@@ -3,6 +3,19 @@
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
 > Ultima actualizare: 21 octombrie 2026.
 
+## 21 octombrie 2026 (seara): cursul BNR în antet
+
+Cerut de Andrei: cursul live, **doar în antet**, fără să atingă calculele.
+`GET /api/curs` (`src/server/curs.ts`) citește `https://curs.bnr.ro/nbrfxrates.xml`
+(`www.bnr.ro/nbrfxrates.xml` trimite acum spre prima pagină), îl ține o oră în
+memorie, iar când BNR nu răspunde rămâne ultimul citit, cu ziua lui; fără
+niciunul, 503 și antetul nu arată nimic. Antetul: „Curs BNR 21 oct.: 1 € =
+5,3297 lei”, pe telefon „Curs BNR: 5,3297 lei”; pe linkul demo, nimic. Niciun
+calcul nu-l citește: oferta rămâne în euro, depozitul și comenzile pe cursul
+de pe document. Gardul e în `tests/curs.test.ts` (doar `app.ts`, `date.ts` și
+`main.ts` ating cursul). Regula BNR + 1–2 % de la facturare („De reținut”) e
+tot nefăcută. **656 de teste.**
+
 ## 21 octombrie 2026: oferta ca exportul, din ofertele semnate
 
 Pe ramura `oferta-ca-exportul`. **648 de teste.** Andrei: „la export și pe

@@ -21,6 +21,7 @@
  * `VITE_DATE=server` la build il impune: o aplicatie de productie cu serverul
  * picat nu trebuie sa scrie pe tacute in browser.
  */
+import type { CursBnr } from "../src/server/curs.js";
 import type { Stare, DateComune, CererePeFir, Mutare, RezultatMutare, OfertaSalvata } from "../src/server/contract.js";
 import type { PlanSantier, Situatie } from "../src/lucrari/situatii.js";
 import type { Miscare } from "../src/stoc/registru.js";
@@ -109,6 +110,15 @@ export async function porneste(): Promise<Mod> {
     if (impus === "server") throw new Error("Serverul nu răspunde. Încearcă din nou peste câteva minute.");
     return (mod = "browser");
   }
+}
+
+/**
+ * Cursul BNR al zilei, doar de aratat in antet (`src/server/curs.ts`). Pe
+ * linkul demo sau cand BNR nu raspunde, null: antetul ramane fara curs.
+ */
+export async function cursBnr(): Promise<CursBnr | null> {
+  if (mod !== "server") return null;
+  try { return await api<CursBnr>("/api/curs"); } catch { return null; }
 }
 
 /** Copia de pe server, dupa ce au plecat scrierile in curs. Pe browser, nimic. */

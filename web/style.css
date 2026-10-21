@@ -1038,6 +1038,11 @@ main details.imp-card[open] > summary { margin-bottom: 12px; }
   table.stiva.lat td.n, table.stiva.lat td.fix { text-align: left; white-space: normal; }
 }
 
+/* ---- antetul: cursul BNR, informativ, la marginea din dreapta */
+.antet-curs { margin-left: auto; flex: 0 0 auto; font-size: 14px; color: var(--slab); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.antet-curs[hidden] { display: none; }
+@media (max-width: 560px) { .antet-curs-lung { display: none; } }
+
 /* ---- antetul: pe telefon, numele aplicatiei langa butonul de meniu */
 .antet-marca { display: none; font-weight: 700; font-size: 16px; letter-spacing: -0.01em; }
 .antet-marca span { font-weight: 400; color: var(--slab); font-size: 14px; margin-left: 6px; }

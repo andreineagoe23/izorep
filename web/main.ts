@@ -6,7 +6,7 @@ import {
   type SpatiuCerut, type StareMeniu,
 } from "./meniu-stare.js";
 import {
-  amMutat, areDateDeMutat, dateInBrowser, laEroare,
+  amMutat, areDateDeMutat, cursBnr, dateInBrowser, laEroare,
   laReimprospatare, modDate, mutaDinBrowser, porneste, reimprospateaza,
 } from "./date.js";
 
@@ -356,6 +356,24 @@ async function propuneMutarea(): Promise<void> {
   $("#mesaje").prepend(invelis);
 }
 
+/*
+ * Cursul BNR in antet (21 octombrie 2026): doar de citit. Oferta e in euro, iar
+ * la depozit si la comenzi se foloseste cursul de pe document, deci cifra de
+ * aici nu intra in nicio suma. BNR il schimba o data pe zi; pagina il reia din
+ * ora in ora, pentru cine o tine deschisa de ieri.
+ */
+async function arataCursul(): Promise<void> {
+  const c = await cursBnr();
+  const el = $("#curs");
+  if (!c) { el.hidden = true; return; }
+  const zi = new Date(`${c.data}T12:00:00`).toLocaleDateString("ro-RO", { day: "numeric", month: "short" });
+  const lei = c.eur.toLocaleString("ro-RO", { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+  // Pe telefon ziua si „1 € =” ies: ramane „Curs BNR: 5,3297 lei”.
+  el.innerHTML = `Curs BNR<span class="antet-curs-lung"> ${esc(zi)}</span>: <span class="antet-curs-lung">1 € = </span>${esc(lei)} lei`;
+  el.title = `Cursul BNR din ${zi}. Doar informativ: prețurile din oferte nu se schimbă după el.`;
+  el.hidden = false;
+}
+
 addEventListener("hashchange", () => void navigheaza(true));
 
 void (async () => {
@@ -367,4 +385,8 @@ void (async () => {
   }
   await navigheaza();
   void propuneMutarea();
+  if (stareDate === "server") {
+    void arataCursul();
+    setInterval(() => void arataCursul(), 60 * 60 * 1000);
+  }
 })();
