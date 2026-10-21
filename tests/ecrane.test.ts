@@ -10,11 +10,7 @@ import { describe, expect, it } from "vitest";
 import type { LinieProcesata } from "../src/import/nucleu.js";
 import type { RandSantier } from "../src/santier/agrega.js";
 import { cardPozitie } from "../web/import/vizual.js";
-import { grilaFoaie } from "../web/import/grila.js";
-import { proceseazaRegistru } from "../src/import/nucleu.js";
-import { parseFoi } from "../src/import/parse-workbook.js";
-import { stocInMemorie } from "../src/import/memorie.js";
-import { CLIENTI, cuClienti } from "./conditii.js";
+import { patchDinCamp, verificarePeEcran } from "../web/import/verificare-vizual.js";
 import { cardPagina, cardTrimite, poateFiVerificata, type PaginaSantier } from "../web/santier-vizual.js";
 
 const INJECTIE = `<img src=x onerror="alert(1)">`;
@@ -76,8 +72,8 @@ describe("pagina de santier ajunge in oferta doar verificata", () => {
   });
 });
 
-describe("importul în formatul ofertei (web/import/oferta-vizual.ts)", async () => {
-  const { documentPeEcran, antetDinFisier } = await import("../web/import/oferta-vizual.js");
+describe("verificarea și „Cum iese oferta” (21 octombrie 2026)", async () => {
+  const { exportPeEcran, antetDinFisier } = await import("../web/import/oferta-vizual.js");
   const { documentOferta } = await import("../web/document-oferta.js");
   const linie = (index: number, text: string, cod: string | null, pret: number | null, necesitaValidare = false): LinieProcesata => ({
     bruta: { index, foaie: "Foaia 1", rand: 10 + index, text: cod ? `${cod} | ${text}` : text, um: "ml", cantitate: 10, celule: cod ? [cod, text] : [text] },
@@ -94,25 +90,26 @@ describe("importul în formatul ofertei (web/import/oferta-vizual.ts)", async ()
     provenienta: { generatLa: "", destinatie: "rezidential", model: null, sesiune: "s", fisierSursa: "x.xlsx" },
   });
 
-  it("textul, codul și antetul din fișier nu injectează HTML", () => {
-    const linii = [linie(1, `Izolatie elastomer 13 mm DN50 ${INJECTIE}`, "E3.1.1.1", 8.84)];
-    const html = documentPeEcran(documentOferta(cerere(linii)), {
-      linii: new Map(linii.map((l) => [l.extras.index, l])), vizibile: null, editIdx: null, propunere: () => null, cuFoaie: true,
-    });
-    expect(html).not.toContain(INJECTIE);
+  const optiuni = (linii: LinieProcesata[]) => ({
+    linii: new Map(linii.map((l) => [l.extras.index, l])), vizibile: null, editIdx: null, propunere: () => null, cuFoaie: true,
   });
 
-  it("aceeași numerotare și același total ca documentul din care se scrie Excelul", () => {
+  it("textul, codul și antetul din fișier nu injectează HTML, în niciun tab", () => {
+    const linii = [linie(1, `Izolatie elastomer 13 mm DN50 ${INJECTIE}`, "E3.1.1.1", 8.84)];
+    const d = documentOferta(cerere(linii));
+    expect(verificarePeEcran(d, optiuni(linii))).not.toContain(INJECTIE);
+    expect(exportPeEcran(d)).not.toContain(INJECTIE);
+  });
+
+  it("verificarea arată toate pozițiile; „Cum iese oferta” doar pe cele gata, numerotate ca în Excel", () => {
     const linii = [linie(1, "Izolatie elastomer 13 mm DN50", null, 8.84), linie(2, "Izolatie elastomer DN50", null, null),
       linie(3, "Izolatie elastomer 13 mm DN50", null, 8.84)];
     const d = documentOferta(cerere(linii));
-    const html = documentPeEcran(d, {
-      linii: new Map(linii.map((l) => [l.extras.index, l])), vizibile: null, editIdx: null, propunere: () => null, cuFoaie: false,
-    });
-    // Poziția fără preț stă la locul ei, fără număr; a treia e a doua în ofertă.
-    expect([...html.matchAll(/class="of-nr"[^>]*>(\d+|<span)/g)].map((m) => m[1])).toEqual(["1", "<span", "2"]);
-    expect(html).toContain("176,80 €");
-    expect(html).toMatch(/Nu intră încă în ofertă: 0 de verificat și 1 fără preț/);
+    expect([...verificarePeEcran(d, optiuni(linii)).matchAll(/class="ver-poz" data-idx="(\d+)"/g)].map((m) => m[1])).toEqual(["1", "2", "3"]);
+    const ex = exportPeEcran(d);
+    expect([...ex.matchAll(/<td data-eticheta="Nr.">(\d+)<\/td>/g)].map((m) => m[1])).toEqual(["1", "2"]);
+    expect(ex).toContain("176,80 €");
+    expect(ex).toMatch(/Nu intră încă: 0 de verificat și 1 fără preț/);
   });
 
   it("rândul de continuare iese întreg: descrierea, apoi ce are el în plus (Book15)", () => {
@@ -136,17 +133,23 @@ describe("importul în formatul ofertei (web/import/oferta-vizual.ts)", async ()
   });
 });
 
-describe("foaia clientului fără rând de antet (21 octombrie 2026)", () => {
-  // Cererea TRANSAVIA n-are antet: ecranul scria „# A B D E”. Acum coloanele
-  // au numele ofertelor firmei, după ce țin pe poziții.
-  cuClienti("cererea TRANSAVIA: Rând, Cod, Denumire, UM, Cantitate, fără litere", async () => {
-    const rez = await proceseazaRegistru(await parseFoi(`${CLIENTI}/cerere-de-oferta-transavia-abur.xlsx`),
-      { stoc: stocInMemorie(), prag: 0.85 });
-    const f = rez.foi[0]!;
-    expect(f.antet).toBeUndefined();
-    const html = grilaFoaie(f, new Map(rez.linii.map((l) => [l.extras.index, l])),
-      { vizibile: null, editIdx: null, propunere: () => null, cuNumeFoaie: false });
-    const capete = [...html.matchAll(/<th scope="col"[^>]*>([^<]*)</g)].map((m) => m[1]!.trim());
-    expect(capete).toEqual(["Rând", "Cod", "Denumire", "UM", "Cantitate", "Preț Euro (total · unitar)", "Stare"]);
+describe("câmpurile din rândul de verificare (patchDinCamp)", () => {
+  const e = {
+    index: 1, sistem: "elastomer", diametru_valoare: 80, diametru_tip: "DN", grosime_mm: 13, forma: "ml",
+    gol_latime_mm: null, gol_inaltime_mm: null, incredere: 1, motiv: "",
+    straturi_extra: [{ sistem: "vata_minerala", grosime_mm: 40 }, { sistem: "tabla", grosime_mm: null }],
+  } as LinieProcesata["extras"];
+
+  it("protecția schimbă doar jacheta; vata de la mijloc rămâne (NISAL: elastomer + vată)", () => {
+    expect(patchDinCamp(e, "protectie", "tabla_inox|0.5").straturi_extra)
+      .toEqual([{ sistem: "vata_minerala", grosime_mm: 40 }, { sistem: "tabla_inox", grosime_mm: 0.5 }]);
+    expect(patchDinCamp(e, "protectie", "").straturi_extra).toEqual([{ sistem: "vata_minerala", grosime_mm: 40 }]);
+  });
+
+  it("grosimea și diametrul se citesc românește; golit, diametrul pierde și notația", () => {
+    expect(patchDinCamp(e, "grosime", "19")).toEqual({ grosime_mm: 19 });
+    expect(patchDinCamp(e, "diam", "114,3")).toEqual({ diametru_valoare: 114.3, diametru_tip: "DN" });
+    expect(patchDinCamp(e, "diam", "")).toEqual({ diametru_valoare: null, diametru_tip: null });
+    expect(patchDinCamp(e, "sistem", "")).toEqual({ sistem: null });
   });
 });

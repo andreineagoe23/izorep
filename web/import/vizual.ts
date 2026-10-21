@@ -151,9 +151,6 @@ export function antetVerificare(o: OptiuniAntet): string {
   </div>`;
 }
 
-/** O foaie a registrului, ca tab: numele si cate pozitii cer atentie pe ea. */
-export interface TabFoaie { nume: string; deRezolvat: number }
-
 /** Cate pozitii are fiecare motiv, descrescator. */
 export function numaraMotive(linii: LinieProcesata[]): [CodMotiv, number][] {
   const c = new Map<CodMotiv, number>();
@@ -211,7 +208,7 @@ function detaliu(l: LinieProcesata): string {
  * de verificat → „Confirmă"; fara pret, cu grosime uzuala → „Pune X mm";
  * oricare → „Modifică".
  */
-export function actiuniPozitie(l: LinieProcesata, propunere: number | null, editeaza: boolean): string {
+export function actiuniPozitie(l: LinieProcesata, propunere: number | null, editeaza: boolean, modifica = "Modifică"): string {
   const idx = l.extras.index;
   const stare = stareLinie(l);
   return [
@@ -219,7 +216,7 @@ export function actiuniPozitie(l: LinieProcesata, propunere: number | null, edit
     stare === "netarifate" && propunere !== null
       ? `<button type="button" class="primar" data-act="pune-grosime" data-idx="${idx}" data-g="${propunere}">Pune ${numar(propunere)} mm</button>`
       : "",
-    `<button type="button" class="secundar" data-act="modifica" data-idx="${idx}" aria-expanded="${editeaza}">Modifică</button>`,
+    `<button type="button" class="secundar" data-act="modifica" data-idx="${idx}" aria-expanded="${editeaza}">${modifica}</button>`,
   ].join("");
 }
 

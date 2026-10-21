@@ -326,12 +326,17 @@ de observații era cât jumătate din descriere. Sub 1100 px de import, fiecare
 rând din fișier devine card, cu numele coloanei deasupra fiecărei valori
 (`data-eticheta`), descrierea pe toată lățimea, celulele goale ascunse.
 
-**21 octombrie 2026:** vederea implicită e din nou „Ca în ofertă” (Andrei:
-după import, pagina ca exportul), prima în pereche; antetul are logo-ul firmei,
-coloanele se numesc ca în Excel („Preț unitar Euro”, „Preț total Euro”), iar
-sub notă stau tabelele de elemente speciale (`tabel()`, carduri pe telefon). În
-„Fișierul clientului”, o foaie fără antet are coloanele numite după rol
-(`numeDupaRol`), nu litere; prima coloană e „Rând”.
+**21 octombrie 2026 (Andrei: „UI-ul e îngrozitor”):** pasul 2 are două taburi.
+**„Verificare”** (`web/import/verificare-vizual.ts`): fiecare poziție pe două
+niveluri, sus „Rândul N · cod”, descrierea (se scrie pe loc) și starea cu
+motivul; dedesubt izolația, grosimea, protecția (cu grosimea tablei în aceeași
+listă), diametrul (DN / Ø / Di + valoare), piesa, cantitatea cu UM-ul în
+etichetă, prețul unitar și totalul, toate de 44 px, cu „Confirmă” / „Mai mult”
+/ ✕ pe aceeași linie. Peste 1180 px de listă, o linie; sub, două linii de câte
+cinci; pe telefon, două coloane. Schimbat, un câmp face poziția a omului
+(`patchDinCamp` → `corecteaza` la liste, `scrieCampul` la tastă), cu „Salvat.”
+și „Anulează”. **„Cum iese oferta”** (`exportPeEcran`): Excelul de acum, doar
+citire, fără logo și fără filtre. Foaia clientului ca în Excel a ieșit.
 
 ## Ecranul de import: trei pași
 

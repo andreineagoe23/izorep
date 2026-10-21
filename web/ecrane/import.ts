@@ -30,12 +30,12 @@ import type { EditareCelula, IntrareIstoric, SesiuneImport } from "../istoric.js
 import {
   actiuniLista, antetVerificare, detaliuValoare, ecranOferta, ecranProgres, ecranStart, editorPozitie,
   filtreMotiv, numaraMotive, pasi, patchDinFormular, randStrat, toast,
-  type FiltruStare, type Pas, type TabFoaie,
+  type FiltruStare, type Pas,
 } from "../import/vizual.js";
-import { celuleExtrase, grilaFoaie } from "../import/grila.js";
 import {
-  antetDinFisier, baraVerificare, documentPeEcran, taburiFoi, type AntetScris, type SchimbariPozitie, type Vedere,
+  antetDinFisier, baraVerificare, exportPeEcran, type AntetScris, type SchimbariPozitie, type Vedere,
 } from "../import/oferta-vizual.js";
+import { patchDinCamp, verificarePeEcran } from "../import/verificare-vizual.js";
 import { documentOferta, textClient, type PozitieOferta } from "../document-oferta.js";
 import { legaCelule, numarInCelula, numarScris, pastreazaCursorul } from "../celula.js";
 import { rutaModel } from "../imagine.js";
@@ -150,13 +150,12 @@ export const ecran: Ecran = {
     let istoric: IntrareIstoric[] = [];
     let filtru: FiltruStare = "toate";
     let motiv: CodMotiv | null = null;
-    let foaie: string | null = null;
     let editIdx: number | null = null;
     /**
      * Ce se vede la verificare: oferta (implicit, aceeasi pentru orice fisier,
      * exact ce se descarca) sau fisierul clientului, ca referinta.
      */
-    let vedere: Vedere = "oferta";
+    let vedere: Vedere = "verificare";
     /** Datele de pe antetul ofertei, scrise la pasul „Oferta”; se tin in sesiune. */
     let antet: AntetScris = antetImplicit("");
     /** Adaosul pentru coturi si fitinguri din cardul „Materiale necesare". */
@@ -231,16 +230,16 @@ export const ecran: Ecran = {
       return f && r ? campuriRand(r, f.antet) : undefined;
     };
 
-    /** Pozitiile de pe foaia aleasa, apoi sub filtrul de stare, apoi sub motiv. */
-    function vizibile(s: Sesiune, f: string | null = vedere === "oferta" ? null : foaie): {
-      peFoaie: LinieProcesata[]; peStare: LinieProcesata[]; lista: LinieProcesata[];
+    /** Pozitiile, sub filtrul de stare, apoi sub motiv. */
+    function vizibile(s: Sesiune): {
+      pozitiile: LinieProcesata[]; peStare: LinieProcesata[]; lista: LinieProcesata[];
     } {
       const izo = s.rez.linii.filter((l) => l.extras.sistem !== null);
-      const peFoaie = f ? izo.filter((l) => l.bruta.foaie === f) : izo;
-      const peStare = filtru === "toate" ? peFoaie : peFoaie.filter((l) => potrivit(l, filtru));
+      const pozitiile = izo;
+      const peStare = filtru === "toate" ? pozitiile : pozitiile.filter((l) => potrivit(l, filtru));
       const m = motiv;
       const lista = m ? peStare.filter((l) => motiveLinie(l).includes(m)) : peStare;
-      return { peFoaie, peStare, lista };
+      return { pozitiile, peStare, lista };
     }
 
     function arataMesaj(text: string, anulare: (() => void) | null = null): void {
@@ -368,22 +367,6 @@ export const ecran: Ecran = {
       </details>`;
     }
 
-    /** Foile registrului, cu cate pozitii cer atentie pe fiecare. */
-    function taburi(s: Sesiune): TabFoaie[] {
-      return s.foi.map((f) => ({
-        nume: f.nume,
-        deRezolvat: s.rez.linii.filter((l) => l.bruta.foaie === f.nume && l.extras.sistem !== null
-          && (potrivit(l, "de_validat") || potrivit(l, "netarifate"))).length,
-      }));
-    }
-
-    /** Foaia deschisa la inceput: prima cu pozitii, ca in Excel. `null` = registru cu o foaie. */
-    function foaieInitiala(s: Sesiune): string | null {
-      if (s.foi.length < 2) return null;
-      const cuPozitii = s.foi.find((f) => s.rez.linii.some((l) => l.bruta.foaie === f.nume && l.extras.sistem !== null));
-      return (cuPozitii ?? s.foi[0]!).nume;
-    }
-
     /** Suma de sus a pasului „Oferta”, la fiecare tastă: ce plătește clientul, ca în document. */
     function arataValoarea(s: Sesiune): void {
       const { oferta } = imparte(cuAjustare(s.rez.linii, ajustare));
@@ -407,16 +390,14 @@ export const ecran: Ecran = {
       });
     }
 
-    /** `faraLista`: doar ce e în jurul listei (cifrele, filtrele, foile), pentru `actualizeazaInJur`. */
-    function paginaVerificare(s: Sesiune, faraLista = false): string {
-      // In oferta se vad toate foile, pe capitole; foaia aleasa conteaza doar in fisierul clientului.
-      const peFoaie_ = vedere === "oferta" ? null : foaie;
-      const { peFoaie, peStare, lista } = vizibile(s, peFoaie_);
+    function paginaVerificare(s: Sesiune): string {
+      // Toate foile, pe capitolele clientului.
+      const { pozitiile, peStare, lista } = vizibile(s);
       const numere: Record<FiltruStare, number> = {
-        toate: peFoaie.length,
-        gata: peFoaie.filter((l) => potrivit(l, "gata")).length,
-        de_validat: peFoaie.filter((l) => potrivit(l, "de_validat")).length,
-        netarifate: peFoaie.filter((l) => potrivit(l, "netarifate")).length,
+        toate: pozitiile.length,
+        gata: pozitiile.filter((l) => potrivit(l, "gata")).length,
+        de_validat: pozitiile.filter((l) => potrivit(l, "de_validat")).length,
+        netarifate: pozitiile.filter((l) => potrivit(l, "netarifate")).length,
       };
       const motive = filtru === "de_validat" || filtru === "netarifate" ? numaraMotive(peStare) : [];
       const cuFoaie = s.foi.length > 1;
@@ -425,53 +406,26 @@ export const ecran: Ecran = {
       const harta = new Map(s.rez.linii.map((l) => [l.extras.index, l]));
 
       let corp: string;
-      if (faraLista) corp = "";
-      else if (vedere === "oferta") {
+      if (vedere === "export") corp = exportPeEcran(documentul(s));
+      else {
         const l = editIdx === null ? undefined : harta.get(editIdx);
         const campuri = l ? campuriLinie(s, l) : undefined;
-        corp = documentPeEcran(documentul(s), {
+        corp = verificarePeEcran(documentul(s), {
           linii: harta, vizibile: filtrat, editIdx, propunere, cuFoaie, ...(campuri ? { campuri } : {}),
           schimbari: schimbariPozitie(s),
         });
-      } else {
-        corp = s.foi.filter((f) => !foaie || f.nume === foaie)
-          .map((f) => grilaFoaie(f, harta, { vizibile: filtrat, editIdx, propunere, cuNumeFoaie: cuFoaie && foaie === null }))
-          .join("") || `<p class="imp-gol">Nicio poziție aici.</p>`;
       }
 
       return `${alerte(s)}
         <section class="imp-card">${antetVerificare({ nume: s.meta.nume, cand: s.meta.cand, destinatie })}</section>
         ${baraVerificare(numere, filtru, vedere)}
-        ${vedere === "fisier" && cuFoaie ? taburiFoi(taburi(s), foaie) : ""}
-        ${filtreMotiv(motive, motiv)}
-        ${actiuniLista({
+        ${vedere === "verificare" ? filtreMotiv(motive, motiv) : ""}
+        ${vedere === "verificare" ? actiuniLista({
           deConfirmat: filtru === "de_validat" ? lista.length : 0,
           grosimi: lista.filter((l) => potrivit(l, "netarifate") && propunere(l) !== null).length,
-        })}
+        }) : ""}
         <div class="imp-lista">${corp}</div>
         ${detalii(s)}`;
-    }
-
-    /**
-     * Cifrele din jurul foii (Gata / De verificat / Fără preț, foile, motivele),
-     * refăcute cât omul scrie într-o celulă din foaie. Foaia rămâne: cursorul e în ea.
-     */
-    function actualizeazaInJur(s: Sesiune): void {
-      const lista = pagina.querySelector<HTMLElement>(":scope > .imp-lista");
-      if (!lista) return;
-      const sablon = document.createElement("template");
-      sablon.innerHTML = paginaVerificare(s, true);
-      // `:scope` nu merge pe un fragment: copiii lui se caută direct.
-      const goala = [...sablon.content.children].find((c) => c.classList.contains("imp-lista"));
-      if (!goala) return;
-      const inainte: Node[] = [];
-      for (let n = goala.previousSibling; n; n = n.previousSibling) inainte.unshift(n);
-      const dupa: Node[] = [];
-      for (let n = goala.nextSibling; n; n = n.nextSibling) dupa.push(n);
-      while (lista.previousSibling) lista.previousSibling.remove();
-      while (lista.nextSibling) lista.nextSibling.remove();
-      lista.before(...inainte);
-      lista.after(...dupa);
     }
 
     /** Focus dupa redesenare: pe cardul atins, sau pe urmatorul cand acela a plecat din lista. */
@@ -493,16 +447,15 @@ export const ecran: Ecran = {
     /* ------------------------------------------------------------- actiuni */
     function deschideSesiune(s: Sesiune): void {
       sesiune = s;
-      pas = 2; filtru = "toate"; motiv = null; foaie = foaieInitiala(s); editIdx = null; randInLucru = null;
+      pas = 2; filtru = "toate"; motiv = null; editIdx = null; randInLucru = null;
       // Latimea se masoara DUPA plierea barei, altfel ar decide pe locul pe
       // care il ocupa inca meniul. Sub prag, foaia 1:1 n-ar incapea fara
       // derulare laterala decat cu coloane de cateva litere: se deschide ca
       // lista, iar „Arată ca în Excel" ramane la un clic.
       ceriSpatiu(gazda, true);
-      // Oferta întâi, exact ce se descarcă (Andrei, 21 octombrie 2026: „la
-      // export și pe pagina de import, după import, aproximativ aceeași
-      // chestie”); fișierul clientului rămâne la un clic.
-      vedere = "oferta";
+      // Întâi ce a înțeles aplicația, de verificat; Excelul e al doilea tab
+      // (Andrei, 21 octombrie 2026).
+      vedere = "verificare";
       antet = s.meta.antet ? { ...s.meta.antet } : antetDinOferta(s);
       ajustare = s.meta.ajustare ?? 0;
       eroareStart = "";
@@ -1091,8 +1044,6 @@ export const ecran: Ecran = {
 
       const bFiltru = t.closest<HTMLButtonElement>("[data-filtru]");
       if (bFiltru) { filtru = bFiltru.dataset["filtru"] as FiltruStare; motiv = null; editIdx = null; randInLucru = null; deseneaza(); return; }
-      const bTab = t.closest<HTMLButtonElement>('[data-act="foaie-tab"]');
-      if (bTab) { foaie = bTab.dataset["foaie"] ?? null; motiv = null; editIdx = null; randInLucru = null; deseneaza(); return; }
 
       const bMotiv = t.closest<HTMLButtonElement>("[data-motiv]");
       if (bMotiv) { const m = bMotiv.dataset["motiv"] as CodMotiv; motiv = motiv === m ? null : m; randInLucru = null; deseneaza(); return; }
@@ -1275,6 +1226,16 @@ export const ecran: Ecran = {
         return;
       }
       if (t.name === "vedere") { vedere = t.value as Vedere; editIdx = null; randInLucru = null; deseneaza(); return; }
+      if (t.dataset["vc"] && sesiune) {
+        // O alegere din rândul de verificare (izolația, protecția, notația, piesa): corectura omului, ca din editor.
+        const idx = Number(t.dataset["idx"]);
+        const l = sesiune.rez.linii.find((x) => x.extras.index === idx);
+        if (!l) return;
+        randInLucru = idx;
+        corecteaza(idx, patchDinCamp(l.extras, t.dataset["vc"], t.value));
+        pastreazaCursorul(gazda, deseneaza);
+        return;
+      }
       if (t.closest("#antet-oferta") && sesiune && t.tagName === "SELECT") {
         antet = { ...antet, firma: t.value };
         salveazaSesiune();
@@ -1348,58 +1309,38 @@ export const ecran: Ecran = {
         if (!["text", "um", "cantitate", "pret_manual"].includes((camp as HTMLInputElement).name)) editor.dataset["atins"] = "da";
         return;
       }
+    });
+
+    /** Casetele de număr din rândul de verificare, după `data-ed`, și câmpul lor din `patchDinCamp`. */
+    const CAMPURI_RAND: Record<string, string> = { gros: "grosime", diam: "diam", gol_l: "gol_l", gol_h: "gol_h" };
+    /** Câmpul la care scrie omul acum și cum era poziția înainte de prima tastă, pentru „Anulează”. */
+    let campInLucru: { cheie: string; vechi: ReturnType<Sesiune["rez"]["rezolvate"]["get"]> } | null = null;
+
+    /**
+     * Grosimea, diametrul sau golul scrise în rândul de verificare: poziția se
+     * retarifează la fiecare tastă (Andrei, 18 octombrie 2026) și devine a
+     * omului, ca o corectură din editor. „Salvat.” cu „Anulează” apare la
+     * prima tastă și pune poziția cum era înainte de câmp.
+     */
+    function scrieCampul(idx: number, camp: string, text: string, peLoc: boolean): boolean {
       const s = sesiune;
-      if (!s || !camp.matches(".camp[data-cel]")) return;
-      const numeFoaie = camp.dataset["foaie"] ?? "";
-      const rand = s.foi.find((f) => f.nume === numeFoaie)?.randuri.find((r) => r.rand === Number(camp.dataset["rand"]));
-      if (!rand) return;
-      const cel = Number(camp.dataset["cel"]);
-      const vechi = rand.celule[cel];
-      const vVechi = vechi?.v ?? null;
-      // Pozitia verificata de om inainte de tasta asta. Daca tasta ii schimba
-      // descrierea, nucleul o reciteste si o trimite la „De verificat"; mesajul
-      // spune asta si da drumul inapoi, cu tot cu textul de dinainte.
-      const idxRand = rand.linie?.index;
-      const inainte = idxRand === undefined ? undefined : s.rez.rezolvate.get(idxRand);
-      const editareVeche = s.editari.find((x) => x.foaie === numeFoaie && x.rand === rand.rand && x.cel === cel);
-      const text = camp.textContent ?? "";
-      const nou = vechi && typeof vechi.v === "number" && text.trim() !== "" && !Number.isNaN(Number(text)) ? Number(text) : text;
-      scrieCelula(rand, cel, nou);
-      reconstruieste(rand);
-      const editare: EditareCelula = { foaie: numeFoaie, rand: rand.rand, cel, v: nou };
-      const i = s.editari.findIndex((x) => x.foaie === editare.foaie && x.rand === editare.rand && x.cel === cel);
-      if (i >= 0) s.editari[i] = editare; else s.editari.push(editare);
-      retarifeaza();
-      if (idxRand !== undefined && inainte?.sursa === "om" && s.rez.rezolvate.get(idxRand)?.sursa !== "om") {
-        arataMesaj("Descrierea s-a schimbat: poziția e recitită și trece la „De verificat”.", () => {
-          scrieCelula(rand, cel, vVechi);
-          reconstruieste(rand);
-          const j = s.editari.findIndex((x) => x.foaie === numeFoaie && x.rand === rand.rand && x.cel === cel);
-          if (editareVeche) s.editari[j] = editareVeche; else if (j >= 0) s.editari.splice(j, 1);
-          s.rez.rezolvate.set(idxRand, inainte);
-          descrieriSchimbate.delete(idxRand);
+      const l = s?.rez.linii.find((x) => x.extras.index === idx);
+      if (!s || !l) return false;
+      const cheie = `${idx}|${camp}`;
+      if (campInLucru?.cheie !== cheie) {
+        const vechi = s.rez.rezolvate.get(idx);
+        campInLucru = { cheie, vechi };
+        arataMesaj("Salvat.", () => {
+          if (vechi) s.rez.rezolvate.set(idx, vechi); else s.rez.rezolvate.delete(idx);
+          campInLucru = null;
           retarifeaza();
         });
       }
-      // Randul atins isi reface coloanele noastre pe loc, fara redesenarea
-      // tabelului: cursorul ramane in celula in care scrie omul.
-      const tr = camp.closest<HTMLTableRowElement>("tr");
-      const l = s.rez.linii.find((x) => x.bruta.foaie === numeFoaie && x.bruta.rand === rand.rand);
-      if (tr) {
-        // Un rând care nu mai e poziție („ceva” în loc de descriere) își golește coloanele noastre.
-        const poz = l && l.extras.sistem !== null ? l : undefined;
-        tr.querySelectorAll("td.extras").forEach((td) => td.remove());
-        tr.insertAdjacentHTML("beforeend", poz ? celuleExtrase(poz, { propunere, editIdx }) : `<td class="extras"></td>`.repeat(2));
-        if (poz) {
-          tr.dataset["stare"] = stareLinie(poz);
-          tr.dataset["idx"] = String(poz.extras.index);
-        } else {
-          delete tr.dataset["stare"];
-          delete tr.dataset["idx"];
-        }
-      }
-      actualizeazaInJur(s);
-    });
+      s.rez.rezolvate.set(idx, { extras: { ...l.extras, ...patchDinCamp(l.extras, camp, text) }, sursa: "om" });
+      if (peLoc) randInLucru = idx;
+      retarifeaza();
+      return true;
+    }
 
     // Tabelul ofertei, ca în Excel (`legaCelule`). Denumirea se scrie pe loc;
     // cantitatea și prețul schimbă numerotarea și totalul, deci redesenează.
@@ -1408,6 +1349,8 @@ export const ecran: Ecran = {
         if (!sesiune) return false;
         const idx = Number(el.dataset["idx"]);
         if (el.dataset["ed"] === "den") { if (!peLoc) scrieDenumirea(el); return false; }
+        const camp = CAMPURI_RAND[el.dataset["ed"] ?? ""];
+        if (camp) return scrieCampul(idx, camp, (el as HTMLInputElement).value, peLoc);
         const valoare = numarScris((el as HTMLInputElement).value);
         // Rândul la care scrie omul rămâne pe ecran și când iese din filtrul ales.
         if (peLoc) randInLucru = idx;
