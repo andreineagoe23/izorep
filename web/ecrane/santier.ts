@@ -1,13 +1,15 @@
 import { micsoreaza, PlafonModel, rutaModel, stareModel, type StareModel } from "../imagine.js";
 import { agrega, type RandSantier } from "../../src/santier/agrega.js";
 import { RaspunsPoza, type Element, type Izolatie, type Jacheta } from "../../src/santier/schema.js";
+import { legaCelule, numarScris, pastreazaCursorul } from "../celula.js";
+import { ceriSpatiu } from "../meniu-stare.js";
 import { spreCerere } from "../../src/santier/spre-cerere.js";
 import { registruCerere } from "../../src/santier/registru.js";
 import type { Destinatie } from "../../src/pricing/lists.js";
 import { preda, predaSituatie } from "../predare.js";
 import { citesteDepozit, citestePlanuri, modDate, puneComanda, salveazaMasuratori } from "../date.js";
 import {
-  cardComparatie, cardIncarca, cardPagina, cardTrimite, type ListaClient, type PaginaSantier, type SantierAles, type Scop,
+  cardComparatie, cardIncarca, cardPagina, cardTrimite, previzualizare, type ListaClient, type PaginaSantier, type SantierAles, type Scop,
 } from "../santier-vizual.js";
 import { incarca as incarcaImport, listeaza as listeazaImporturi } from "../date.js";
 import { stocLocal } from "../stoc-local.js";
@@ -58,7 +60,6 @@ let planAles = "";
 /** Potrivirea ruleaza importul: cat dureaza, butonul e oprit. */
 let lucreaza = false;
 let titlu = "";
-let editeaza: string | null = null;
 let eroare = "";
 let urmator = 0;
 /** Importul din istoric cu care se compara masuratorile, si rezultatul. */
@@ -128,6 +129,7 @@ export const ecran: Ecran = {
       <div id="sant-pagini" class="imp-pagina"></div>
       <div id="sant-trimite"></div>
       <div id="sant-comparatie"></div>
+      ${previzualizare()}
     </div>`;
     const gazda = root.querySelector<HTMLElement>(".sant")!;
     let [model] = await Promise.all([modelDisponibil(), refaLucrul()]);
@@ -144,10 +146,12 @@ export const ecran: Ecran = {
     const deseneaza = (): void => {
       gazda.querySelector("#sant-incarca")!.innerHTML = incarca();
       gazda.querySelector("#sant-pagini")!.innerHTML = pagini
-        .map((p, i) => `<div data-pagina="${p.id}">${cardPagina(p, i + 1, { editeaza, destinatie: destinatiaPaginii(), cuModel: model === "pornit" })}</div>`).join("");
+        .map((p, i) => `<div data-pagina="${p.id}">${cardPagina(p, i + 1, { destinatie: destinatiaPaginii(), cuModel: model === "pornit" })}</div>`).join("");
       deseneazaTrimite();
       legaDrop();
       salveazaLucru();
+      // Cu pagini, tabelul rândurilor are nevoie de lățime, ca la import: bara se pliază.
+      ceriSpatiu(gazda, pagini.length > 0);
     };
     const deseneazaTrimite = (): void => {
       gazda.querySelector("#sant-trimite")!.innerHTML = cardTrimite({
@@ -160,19 +164,39 @@ export const ecran: Ecran = {
     };
     /**
      * Doar pagina atinsa. O citire care se termina pe pagina 3 nu are voie sa
-     * redeseneze pagina 1, unde omul poate avea o corectura nesalvata.
+     * redeseneze pagina 1, unde omul poate scrie chiar atunci.
      */
     const deseneazaPagina = (id: string): void => {
       const i = pagini.findIndex((p) => p.id === id);
       const loc = gazda.querySelector(`[data-pagina="${CSS.escape(id)}"]`);
       if (i < 0 || !loc) return deseneaza();
-      loc.innerHTML = cardPagina(pagini[i]!, i + 1, { editeaza, destinatie: destinatiaPaginii(), cuModel: model === "pornit" });
+      loc.innerHTML = cardPagina(pagini[i]!, i + 1, { destinatie: destinatiaPaginii(), cuModel: model === "pornit" });
       deseneazaTrimite();
       salveazaLucru();
     };
     redeseneaza = (id) => (id ? deseneazaPagina(id) : deseneaza());
 
     const pagina = (id: string | undefined): PaginaSantier | undefined => pagini.find((p) => p.id === id);
+    const randDin = (el: HTMLElement): { p: PaginaSantier; r: RandSantier } | null => {
+      const p = pagina(el.dataset["pag"]);
+      const r = p?.randuri.find((x) => x.id === el.dataset["rand"]);
+      return p && r ? { p, r } : null;
+    };
+
+    /**
+     * Un câmp al rândului s-a schimbat (Andrei, 21 octombrie 2026: ca la import,
+     * fără „Modifică”). Omul s-a uitat la rând, deci nu mai e nesigur; pagina se
+     * verifică din nou.
+     */
+    const schimbat = (p: PaginaSantier, r: RandSantier, campuri: Partial<RandSantier>): void => {
+      Object.assign(r, campuri, { nesigur: false });
+      if (r.izolatie === null) r.grosime_mm = null;
+      p.verificata = false;
+    };
+
+    // Poza mare: panoul de deasupra paginii, cu ✕ în colț; Escape îl închide singur.
+    const mare = gazda.querySelector<HTMLDialogElement>("#sant-mare")!;
+    mare.addEventListener("click", (e) => { if (e.target === mare) mare.close(); });
 
     async function citeste(p: PaginaSantier, f: File): Promise<void> {
       if (model !== "pornit") {
@@ -228,8 +252,9 @@ export const ecran: Ecran = {
       gazda.querySelector("#sant-incarca")!.innerHTML = incarca();
       legaDrop();
       gazda.querySelector("#sant-pagini")!.insertAdjacentHTML("beforeend", noi.map(({ p }, k) =>
-        `<div data-pagina="${p.id}">${cardPagina(p, inainte + k + 1, { editeaza, destinatie: destinatiaPaginii(), cuModel: model === "pornit" })}</div>`).join(""));
+        `<div data-pagina="${p.id}">${cardPagina(p, inainte + k + 1, { destinatie: destinatiaPaginii(), cuModel: model === "pornit" })}</div>`).join(""));
       deseneazaTrimite();
+      ceriSpatiu(gazda, true);
       let i = 0;
       const lucrator = async (): Promise<void> => {
         for (let j = i++; j < noi.length; j = i++) {
@@ -271,9 +296,18 @@ export const ecran: Ecran = {
       if (!b) return;
       const p = pagina(b.dataset["pag"] ?? b.closest<HTMLElement>("[data-pagina]")?.dataset["pagina"]);
       const r = p?.randuri.find((x) => x.id === b.dataset["rand"]);
-      // Corectura deschisa pe alta pagina se inchide si ea: se redeseneaza amandoua.
-      const editataInainte = editeaza?.split(":")[0];
       switch (b.dataset["act"]) {
+        case "mareste": {
+          if (!p) return;
+          const img = mare.querySelector("img")!;
+          img.src = p.url;
+          img.alt = `Pagina ${pagini.indexOf(p) + 1}, ${p.nume}`;
+          mare.showModal();
+          return;
+        }
+        case "micsoreaza":
+          mare.close();
+          return;
         case "compara":
           void compara();
           return;
@@ -296,12 +330,6 @@ export const ecran: Ecran = {
         case "confirma":
           if (r) r.nesigur = false;
           break;
-        case "modifica":
-          if (p && r) editeaza = `${p.id}:${r.id}`;
-          break;
-        case "renunta":
-          editeaza = null;
-          break;
         case "scoate-rand":
           if (p) { p.randuri = p.randuri.filter((x) => x !== r); p.verificata = false; }
           break;
@@ -310,9 +338,10 @@ export const ecran: Ecran = {
             const nou = randGol(p.randuri.at(-1)?.zona ?? "Fără zonă");
             p.randuri.push(nou);
             p.verificata = false;
-            editeaza = `${p.id}:${nou.id}`;
+            deseneazaPagina(p.id);
+            gazda.querySelector<HTMLInputElement>(`.cel-ed[data-ed="diam"][data-rand="${CSS.escape(nou.id)}"]`)?.focus();
           }
-          break;
+          return;
         case "verificata":
           if (p) p.verificata = true;
           break;
@@ -328,39 +357,59 @@ export const ecran: Ecran = {
       }
       if (!p) return deseneaza();
       deseneazaPagina(p.id);
-      if (editataInainte && editataInainte !== p.id) deseneazaPagina(editataInainte);
-      if (editeaza) gazda.querySelector<HTMLInputElement>(".sant-editor [name='cantitate']")?.focus();
+    });
+
+    // Alegerile din rând (notația, piesa, izolația, protecția, prețul dublu) se aplică pe loc.
+    gazda.addEventListener("change", (e) => {
+      const t = e.target as HTMLSelectElement | HTMLInputElement;
+      const camp = t.dataset["sc"];
+      const x = camp ? randDin(t) : null;
+      if (!camp || !x) return;
+      const v = t.value;
+      schimbat(x.p, x.r, camp === "pret_dublu" ? { pret_dublu: (t as HTMLInputElement).checked }
+        : camp === "diametru_tip" ? { diametru_tip: v === "DN" ? "DN" : "exterior" }
+        : camp === "element" ? { element: v as Element }
+        : camp === "izolatie" ? { izolatie: (v || null) as Izolatie | null }
+        : { jacheta: (v || null) as Jacheta | null });
+      pastreazaCursorul(gazda, () => deseneazaPagina(x.p.id));
+    });
+
+    // Diametrul, grosimea, cantitatea și numele zonei se scriu în tabel, ca în Excel.
+    let desenari = 0;
+    let deRedesenat = "";
+    legaCelule(gazda, {
+      scrie: (el, peLoc) => {
+        if (el.dataset["ed"] === "zona") {
+          if (peLoc) return false;
+          const p = pagina(el.dataset["pag"]);
+          const nume = (el.textContent ?? "").trim() || "Fără zonă";
+          if (!p || nume === el.dataset["zona"]) return false;
+          for (const r of p.randuri) if (r.zona === el.dataset["zona"]) r.zona = nume;
+          p.verificata = false;
+          deRedesenat = p.id;
+          return true;
+        }
+        const x = randDin(el);
+        if (!x) return false;
+        const text = (el as HTMLInputElement).value;
+        const n = numarScris(text);
+        // Un text care nu e număr („12a”) nu se aplică; golul înseamnă „lipsește”.
+        if (n === null && text.trim() !== "") return false;
+        if (n !== null && n < 0) return false;
+        const campuri: Partial<RandSantier> = el.dataset["ed"] === "diam" ? { diametru_valoare: n }
+          : el.dataset["ed"] === "gros" ? { grosime_mm: n }
+          : el.dataset["ed"] === "cant" ? { cantitate: n ?? 0 } : {};
+        schimbat(x.p, x.r, campuri);
+        deRedesenat = x.p.id;
+        return true;
+      },
+      deseneaza: () => { desenari++; deseneazaPagina(deRedesenat); },
+      desenari: () => desenari,
     });
 
     gazda.addEventListener("submit", (e) => {
       e.preventDefault();
-      const form = e.target as HTMLFormElement;
-      if (form.id === "trimite") { void trimite(); return; }
-      const p = pagina(form.dataset["pag"]);
-      const r = p?.randuri.find((x) => x.id === form.dataset["rand"]);
-      if (!p || !r) return;
-      const d = new FormData(form);
-      const nr = (k: string): number | null => {
-        const v = String(d.get(k) ?? "").trim().replace(",", ".");
-        return v === "" || !Number.isFinite(Number(v)) ? null : Number(v);
-      };
-      const izolatie = (String(d.get("izolatie") ?? "") || null) as Izolatie | null;
-      Object.assign(r, {
-        zona: String(d.get("zona") ?? "").trim() || "Fără zonă",
-        diametru_tip: d.get("diametru_tip") === "DN" ? "DN" : "exterior",
-        diametru_valoare: nr("diametru_valoare"),
-        izolatie,
-        grosime_mm: izolatie ? nr("grosime_mm") : null,
-        jacheta: (String(d.get("jacheta") ?? "") || null) as Jacheta | null,
-        element: String(d.get("element")) as Element,
-        cantitate: nr("cantitate") ?? 0,
-        pret_dublu: d.get("pret_dublu") === "on",
-        // Corectat de om: nu mai e nimic nesigur la rand, iar pagina se reverifica.
-        nesigur: false,
-      } satisfies Partial<RandSantier>);
-      p.verificata = false;
-      editeaza = null;
-      deseneazaPagina(p.id);
+      if ((e.target as HTMLFormElement).id === "trimite") void trimite();
     });
 
     /** Paginile au plecat; ramase aici, s-ar putea trimite a doua oara. */
@@ -369,7 +418,6 @@ export const ecran: Ecran = {
       pagini = [];
       fisiere.clear();
       titlu = "";
-      editeaza = null;
       comparatie = null;
       salveazaLucru();
     }

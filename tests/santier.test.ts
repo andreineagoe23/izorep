@@ -163,10 +163,10 @@ describe("Pozele, când modelul nu e pornit (14 octombrie 2026)", () => {
     expect(sus).toMatch(/Scrii de mână/);
 
     const p = { id: "p1", nume: "carnet.jpg", url: "blob:1", stare: "gata" as const, eroare: "", randuri: [], note: [], verificata: false, faraModel: true };
-    const fara = cardPagina(p, 1, { editeaza: null, destinatie: "rezidential" });
+    const fara = cardPagina(p, 1, { destinatie: "rezidential" });
     expect(fara).toMatch(/Scrii de mână/);
     expect(fara).not.toMatch(/De verificat/);
     // Cheia pusă între timp: pagina se poate citi fără s-o încarci din nou.
-    expect(cardPagina(p, 1, { editeaza: null, destinatie: "rezidential", cuModel: true })).toMatch(/data-act="reciteste"/);
+    expect(cardPagina(p, 1, { destinatie: "rezidential", cuModel: true })).toMatch(/data-act="reciteste"/);
   });
 });

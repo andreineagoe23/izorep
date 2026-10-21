@@ -40,9 +40,23 @@ describe("textul venit din afara nu injecteaza HTML", () => {
 
   it("zona si notele citite din poza, pe pagina de santier", () => {
     const html = cardPagina(pagina({ randuri: [rand({ zona: INJECTIE })], note: [INJECTIE] }), 1,
-      { editeaza: null, destinatie: "rezidential" });
+      { destinatie: "rezidential" });
     // Pagina are un <img> legitim, poza; cel injectat nu trebuie sa apara.
     expect(html).not.toContain(INJECTIE);
+  });
+});
+
+describe("pagina de santier se corecteaza in tabel (21 octombrie 2026)", () => {
+  it("fara „Modifică” și „Scoate”: câmpurile sunt in rand, iar randul se scoate cu ✕", () => {
+    const html = cardPagina(pagina({ randuri: [rand({ nesigur: true })] }), 1, { destinatie: "rezidential" });
+    expect(html).not.toMatch(/data-act="modifica"|>Scoate</);
+    for (const ed of ["diam", "gros", "cant"]) expect(html).toContain(`data-ed="${ed}"`);
+    for (const sc of ["diametru_tip", "element", "izolatie", "jacheta", "pret_dublu"]) expect(html).toContain(`data-sc="${sc}"`);
+    expect(html).toMatch(/class="cel-scoate" data-act="scoate-rand"/);
+    expect(html).toMatch(/data-act="confirma"/);
+    // Poza e mica, cu „Mărește”; nu mai se deschide in alta fila.
+    expect(html).toMatch(/data-act="mareste"/);
+    expect(html).not.toMatch(/target="_blank"/);
   });
 });
 

@@ -817,6 +817,18 @@ dinainte de ofertă nu au încă un șantier.
   pagină de carnet). Fiecare poză devine un card: poza în stânga (lipită sus
   cât derulezi, clic = mare în altă filă), rândurile citite în dreapta, pe
   zone. Sub 900 px de ecran, una sub alta.
+- **21 octombrie 2026 (Andrei):** poza nu mai stă mare lângă rânduri: e o
+  miniatură lângă titlul paginii („Mărește”), iar clicul o deschide în panoul
+  `#sant-mare` (`<dialog>`), cu ✕ în colț, Escape sau clic lângă ea. Rândurile
+  sunt un tabel ca „Verificare” de la import (`randEditabil` în
+  `web/santier-vizual.ts`): diametru (ø / DN), piesă, izolație, grosime,
+  protecție, cantitate, UM, „Pe foaie”, preț dublu, stare; totul se scrie pe
+  loc (`legaCelule`, alegerile la `change`), fără „Modifică” și fără editorul
+  de sub zonă. Câmpul schimbat scoate rândul din „De verificat”; cantitatea
+  diferită de suma de pe foaie e galbenă, cu suma sub mouse. Numele zonei se
+  scrie pe loc. „Scoate” e ✕ (`.cel-scoate`). Sub 1000 px de tabel rândul
+  devine card; cu pagini, ecranul cere toată lățimea. Paragrafele de mai jos
+  despre rând și „Modifică” sunt istoric.
 - Un rând: „ø60 · Coturi”, straturile pe rândul doi, cantitatea, „Pe foaie”
   (de unde vine suma: „(40 + 1) × 2”) și acțiunile. Doar rândurile care cer
   ochi au stare: „De verificat” (cifră greu de citit, cu „Confirmă”) sau „De
