@@ -54,10 +54,10 @@ function coloane(d: DocumentOferta): Coloana[] {
   ];
 }
 
-/** Denumirea: textul clientului, apoi specificația noastră cu roșu. */
+/** Denumirea: textul clientului (fără materialele pe care le spune specificația), apoi specificația cu roșu. */
 function denumire(p: PozitieOferta): Cell["value"] {
-  if (!p.specificatie) return p.textClient;
-  return { richText: [{ text: `${p.textClient} ` }, { text: p.specificatie, font: { color: { argb: ROSU } } }] };
+  if (!p.specificatie) return p.textOferta;
+  return { richText: [{ text: `${p.textOferta} ` }, { text: p.specificatie, font: { color: { argb: ROSU } } }] };
 }
 
 /** Eticheta umană a cauzei, plus întrebarea deschisă când există una. */

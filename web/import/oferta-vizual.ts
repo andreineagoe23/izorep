@@ -203,7 +203,7 @@ export function exportPeEcran(d: DocumentOferta): string {
   const corp = cuNumar.map((cap) => {
     const randuri = cap.pozitii.filter((p) => p.nr !== null).map((p) => `<tr>
       <td data-eticheta="Nr.">${p.nr}</td>${d.coloanaCod ? `<td class="ex-cod" data-eticheta="Cod">${esc(p.cod ?? "")}</td>` : ""}
-      <td>${esc(p.textClient)}${p.specificatie ? ` <span class="ex-rosu">${esc(p.specificatie)}</span>` : ""}</td>
+      <td>${esc(p.textOferta)}${p.specificatie ? ` <span class="ex-rosu">${esc(p.specificatie)}</span>` : ""}</td>
       <td data-eticheta="UM">${esc(p.um)}</td><td class="n" data-eticheta="Cantitate">${numar(p.cantitate)}</td>
       ${d.coloaneGol ? `<td data-eticheta="Dimensiune gol">${p.gol ? esc(p.gol.dimensiune) : ""}</td>`
         + `<td class="n" data-eticheta="Suprafata (mp)">${p.gol ? numar(p.gol.suprafata) : ""}</td>` : ""}

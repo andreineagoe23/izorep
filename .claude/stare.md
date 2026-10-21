@@ -14,9 +14,17 @@ numească ca în ofertele firmei. Ce lipsea, găsit în 284, 118 și anexa din 2
 | **Logo-ul firmei** (antetul de pagină al ofertelor: RADOIA pe 284, ISORAD pe 118 și anexă) | `web/public/logo-radoia.jpg`, `logo-isorad.jpg`; `logoFirmei` în `web/date/firme.ts`. Doar în Excel, deasupra titlului (ExcelJS nu scrie imagini în antetul de pagină); pe ecran nu (Andrei) |
 | **Tabelele de elemente speciale** de sub notă (cot/teu, robinet, pompă ca X × prețul pe ml, pe benzi de ø) | `elementeSpeciale` în `document-oferta.ts`, din coeficienții listelor (aceiași cu care tarifează motorul): unul pentru izolații (cu „manșetă” doar când e elastomer, ca 118; 284, doar vată, n-o are), unul pentru protecție. Test: TRANSAVIA dă exact tabelele din 284, NISAL pe cele din 118 |
 | **„Pagina X din Y”**, A4 pe lățime | `pageSetup` și `oddFooter`, ca 284 și anexa |
-| **Pasul de verificare, refăcut** (Andrei, tot pe 21: „UI-ul e îngrozitor”; pastilele „Vată minerală 50 mm · ø114 în listă”, „Completat de noi”, butoanele decalate față de casete; macheta aleasă din două) | două taburi: **„Verificare”** (`web/import/verificare-vizual.ts`): rând pe două niveluri, sus rândul din fișier, codul, descrierea și starea, dedesubt izolația, grosimea, protecția, diametrul, piesa, cantitatea (cu UM-ul), prețul, totalul, ca casete de 44 px pe o linie, cu butoanele pe aceeași linie; scrise pe loc (`patchDinCamp`), poziția devine a omului; „Mai mult” deschide editorul vechi. **„Cum iese oferta”** (`exportPeEcran`): Excelul de acum, doar citire, fără logo. Foaia clientului ca în Excel (`grila.ts`) a ieșit |
+| **Pasul de verificare, refăcut** (Andrei, tot pe 21: „UI-ul e îngrozitor”; pastilele „Vată minerală 50 mm · ø114 în listă”, „Completat de noi”, butoanele decalate față de casete; macheta aleasă din două) | două taburi: **„Verificare”** (`web/import/verificare-vizual.ts`): rând pe două niveluri, sus rândul din fișier, codul, descrierea și starea, dedesubt izolația, grosimea, protecția, diametrul, piesa, cantitatea (cu UM-ul), prețul, totalul, ca casete de 44 px pe o linie, cu butoanele pe aceeași linie; scrise pe loc (`patchDinCamp`), poziția devine a omului; fără butoane în plus. **„Cum iese oferta”** (`exportPeEcran`): Excelul de acum, doar citire, fără logo. Foaia clientului ca în Excel (`grila.ts`) a ieșit |
 | Pe telefon, butonul „Completează datele ofertei” strângea titlul (o regulă CSS anula pe cea de ecran îngust) | reparat |
 | Testele pe fișierele clienților picau cât o ofertă era deschisă în Excel (`~$oferta-284…xlsx`) | fișierele `~$` nu se mai citesc |
+
+**Denumirea în ofertă** (tot pe 21): specificația lipită după textul întreg
+repeta materialele („… din tabla aluminiu si vata minerala vata minerala gr. 50
+mm …”). Ca în 284, ea ia locul cozii cu materiale (`faraMateriale`: după „din”
+/ „cu”, numai materiale și legături, marca inoxului trece în specificație);
+unde nu se poate tăia (coadă cu Di / g, liste de mărci), cu roșu se scrie doar
+ce lipsește („tabla de inox gr. 0,4 mm”). Testul TRANSAVIA cere acum textul
+negru din 284 exact, pe cele 24 de casete.
 
 **Scrisul roșu.** În ofertele semnate roșul e *în* celulă (rich text), nu pe
 celulă: **ce a precizat sau schimbat firma în textul clientului**. Pe 284: pe

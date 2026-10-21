@@ -408,11 +408,8 @@ export const ecran: Ecran = {
       let corp: string;
       if (vedere === "export") corp = exportPeEcran(documentul(s));
       else {
-        const l = editIdx === null ? undefined : harta.get(editIdx);
-        const campuri = l ? campuriLinie(s, l) : undefined;
         corp = verificarePeEcran(documentul(s), {
-          linii: harta, vizibile: filtrat, editIdx, propunere, cuFoaie, ...(campuri ? { campuri } : {}),
-          schimbari: schimbariPozitie(s),
+          linii: harta, vizibile: filtrat, editIdx, propunere, cuFoaie, schimbari: schimbariPozitie(s),
         });
       }
 

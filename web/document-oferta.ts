@@ -30,6 +30,12 @@ export interface PozitieOferta {
   /** Textul clientului, fără cod, pe un rând. */
   textClient: string;
   /**
+   * Textul din ofertă, în negru: al clientului, fără bucata cu materialele
+   * când specificația noastră o înlocuiește (`faraMateriale`). Fără
+   * specificație, același cu `textClient`.
+   */
+  textOferta: string;
+  /**
    * Ce ofertăm, cu vorbele firmei: „vata minerala gr. 50 mm si protectie cu
    * tabla de aluminiu”. Doar când textul clientului nu spune tot ce am tarifat;
    * Oferta 284 a scris-o cu roșu pe exact cele 24 de casete fără grosime.
@@ -280,7 +286,7 @@ function scrieGrosimea(text: string, g: number): boolean {
  * Grosimea tablei de aluminiu nu se scrie (284 n-o scrie); la inox da, fiindcă
  * lista are trei grosimi la fiecare diametru și alegerea schimbă prețul.
  */
-export function specificatie(l: LinieProcesata): string | null {
+export function specificatie(l: LinieProcesata, doarCeLipseste = false): string | null {
   const e = l.extras;
   if (e.sistem === null || e.sistem === "goluri_foc") return null;
   if (l.pret && "manual" in l.pret && l.pret.manual) return null;
@@ -293,19 +299,52 @@ export function specificatie(l: LinieProcesata): string | null {
     ? l.pret.straturi.map((s) => ({ sistem: s.sistem, grosime: s.grosime_mm }))
     : [{ sistem: e.sistem, grosime: e.grosime_mm }, ...e.straturi_extra.map((s) => ({ sistem: s.sistem, grosime: s.grosime_mm }))];
   const text = l.bruta.text;
-  const lipsa = straturi.some((s) => s.sistem !== "goluri_foc" && (
+  const lipseste = (s: { sistem: Sistem; grosime: number | null }): boolean => s.sistem !== "goluri_foc" && (
     !NUMIT[s.sistem].test(text)
-    || ((!JACHETE.has(s.sistem) || s.sistem === "tabla_inox") && s.grosime !== null && !scrieGrosimea(text, s.grosime))));
-  if (!lipsa) return null;
+    || ((!JACHETE.has(s.sistem) || s.sistem === "tabla_inox") && s.grosime !== null && !scrieGrosimea(text, s.grosime)));
+  if (!straturi.some(lipseste)) return null;
 
-  const izolatii = straturi.filter((s) => !JACHETE.has(s.sistem) && s.sistem !== "goluri_foc");
-  const jachete = straturi.filter((s) => JACHETE.has(s.sistem));
+  // Lângă textul întreg al clientului se scrie doar ce lipsește din el (vezi `documentOferta`).
+  const alese = doarCeLipseste ? straturi.filter(lipseste) : straturi;
+  const izolatii = alese.filter((s) => !JACHETE.has(s.sistem) && s.sistem !== "goluri_foc");
+  const jachete = alese.filter((s) => JACHETE.has(s.sistem));
   const parti = izolatii.map((s) =>
     `${NUME[s.sistem as keyof typeof NUME]}${s.grosime !== null ? ` gr. ${numar(s.grosime)} mm` : ""}`);
   const protectie = jachete.map((s) =>
     `${NUME[s.sistem as keyof typeof NUME]}${s.sistem === "tabla_inox" && s.grosime !== null ? ` gr. ${numar(s.grosime)} mm` : ""}`);
-  if (parti.length === 0) return protectie.length ? `protectie cu ${protectie.join(" si ")}` : null;
+  // Doar jacheta lipsește (grosimea tablei de inox): fără „protectie cu”, textul o spune deja.
+  if (parti.length === 0) return protectie.length ? `${doarCeLipseste ? "" : "protectie cu "}${protectie.join(" si ")}` : null;
   return parti.join(" + ") + (protectie.length ? ` si protectie cu ${protectie.join(" si ")}` : "");
+}
+
+/**
+ * Textul clientului fără coada cu materialele, pe care o înlocuiește
+ * specificația. Oferta 284, pe cele 24 de casete: clientul a scris „Caseta
+ * izolatie armaturi cu flanse DN100 din tabla aluminiu si vata minerala”, iar
+ * firma a lăsat „Caseta izolatie armaturi cu flanse DN100” și a scris cu roșu
+ * „vata minerala gr. 50 mm si protectie cu tabla de aluminiu”. Lipită după
+ * textul întreg, specificația repeta materialele („… si vata minerala vata
+ * minerala gr. 50 mm …”).
+ *
+ * Se taie doar o coadă care începe cu „din” sau „cu” și are numai materiale
+ * și cuvinte de legătură, ca acolo. „… tabla de aluminiu Di21, g40 - COT”
+ * (cu cifre) sau „… / Armacell, Kaiflex, K-flex” (fără „din”) rămân întregi.
+ */
+export const MARCA_INOX = /\b(304|316L?|321)\b/i;
+
+export function faraMateriale(text: string): string {
+  const material = new RegExp(Object.values(NUMIT).map((r) => r.source).join("|"), "i");
+  // Legăturile și marca inoxului („tabla inox 304”), care trece în specificație (`MARCA_INOX`).
+  const legatura = /^(din|cu|si|și|de|in|în|with|and|aus|mit|304|316L?|321)$/i;
+  // Prima prepoziție după care vin numai materiale: „armaturi cu flanse” nu e.
+  // „DN150din tabla …” (TRANSAVIA inox) are prepoziția lipită de cifre.
+  for (const m of text.matchAll(/(?:\s+|(?<=\d))(?:din|cu|with|aus|mit)\s+/gi)) {
+    const coada = text.slice(m.index).trim().split(/[\s,]+/).filter(Boolean);
+    if (coada.every((c) => legatura.test(c) || material.test(c)) && coada.some((c) => material.test(c))) {
+      return text.slice(0, m.index).trim() || text;
+    }
+  }
+  return text;
 }
 
 /* ------------------------------------------------------------- documentul */
@@ -345,11 +384,19 @@ export function documentOferta(c: CerereOferta): DocumentOferta {
     }
     const stare = stareLinie(l);
     const pret = l.pret;
+    // Ca pe casetele din 284: specificația întreagă ia locul materialelor din
+    // textul clientului; când nu le poate lua locul, se scrie doar ce lipsește.
+    const text = textClient(l);
+    const taiat = specificatie(l) ? faraMateriale(text) : text;
+    // Marca inoxului tăiată din text se spune în specificație: „tabla de inox 304 gr. 0,4 mm”.
+    const marca = taiat === text ? undefined : MARCA_INOX.exec(text.slice(taiat.length))?.[1];
+    const spec = specificatie(l, taiat === text);
     capitole[capitole.length - 1]!.pozitii.push({
       nr: stare === "gata" ? ++nr : null,
       cod: codClient(l),
-      textClient: textClient(l),
-      specificatie: specificatie(l),
+      textClient: text,
+      textOferta: taiat,
+      specificatie: marca && spec ? spec.replace(NUME.tabla_inox, `${NUME.tabla_inox} ${marca}`) : spec,
       um: l.bruta.um ?? "",
       cantitate: l.bruta.cantitate ?? 1,
       pretUnitar: pret ? bani(pret.pret_unitar) : null,

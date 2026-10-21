@@ -20,7 +20,7 @@ import { describe, it, expect } from "vitest";
 import { CLIENTI, cuClienti } from "./conditii.js";
 import ExcelJS from "exceljs";
 import { readdirSync } from "node:fs";
-import { documentOferta, specificatie, NOTA, type DocumentOferta } from "../web/document-oferta.js";
+import { documentOferta, faraMateriale, specificatie, NOTA, type DocumentOferta } from "../web/document-oferta.js";
 import { cuDenumiri, imparte, planDinOferta, valoareOferta, type AntetOferta, type CerereOferta, type Provenienta } from "../web/oferta.js";
 import { registruOferta } from "../web/registru-oferta.js";
 import { importaFisier } from "../src/import/pipeline.js";
@@ -202,6 +202,22 @@ describe("codul și specificația", () => {
 
 /* ---------------------------------------------- pe ofertele semnate */
 
+describe("materialele clientului, înlocuite de specificație (faraMateriale)", () => {
+  it("taie coada cu materiale de după „din”, ca pe casetele din 284; „cu flanse” nu e material", () => {
+    expect(faraMateriale("Caseta izolatie armaturi cu flanse DN100 din tabla aluminiu si vata minerala"))
+      .toBe("Caseta izolatie armaturi cu flanse DN100");
+    expect(faraMateriale("Caseta izolatie armaturi cu flanse DN150din tabla inox 304 si vata minerala"))
+      .toBe("Caseta izolatie armaturi cu flanse DN150");
+  });
+
+  it("nu taie o coadă cu dimensiuni, nici o listă de mărci fără „din”", () => {
+    const di = "Izolatii cu vata minerala si protectie cu tabla de inox 304 Di21, g40 - ML";
+    expect(faraMateriale(di)).toBe(di);
+    const marci = "Izolatii armaturi banda autoadeziva | GOSPODARIE APA POTABILA / / Armacell, Kaiflex, K-flex";
+    expect(faraMateriale(marci)).toBe(marci);
+  });
+});
+
 describe("cererea TRANSAVIA în șablon = Oferta 284", () => {
   const CERERE = "cerere-de-oferta-transavia-abur.xlsx";
   const OFERTA = `${DIR}/oferta-284-transavia-abur.xlsx`;
@@ -238,7 +254,9 @@ describe("cererea TRANSAVIA în șablon = Oferta 284", () => {
       const asteptat = /gr\. \d+ mm/.test(r) ? r : null;
       if (p.specificatie !== asteptat) diferite.push(`${cum}: specificația „${p.specificatie}”, semnat „${r}”`);
       const negru = String(valoare(s.getCell(2))).replace(r, "").replace(/\s+/g, " ").trim();
-      if (asteptat && !p.textClient.startsWith(negru)) diferite.push(`${cum}: text „${p.textClient}”`);
+      // Negrul e textul clientului fără materialele, pe care le spune roșul.
+      if (asteptat && p.textOferta !== negru) diferite.push(`${cum}: text „${p.textOferta}”, semnat „${negru}”`);
+      if (!asteptat && p.textOferta !== p.textClient) diferite.push(`${cum}: text tăiat „${p.textOferta}”`);
     });
     expect(diferite).toEqual([]);
     expect(poz.filter((p) => p.specificatie !== null)).toHaveLength(24);

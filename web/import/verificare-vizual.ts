@@ -5,7 +5,7 @@ import { celulaNumar, celulaText, numarInCelula } from "../celula.js";
 import type { DocumentOferta, PozitieOferta } from "../document-oferta.js";
 import type { OptiuniDocument } from "./oferta-vizual.js";
 import { FORME_EDITOR, GROSIMI, MATERIAL, MATERIALE, ajutorDiametru, type Sistem } from "./text.js";
-import { actiuniPozitie, editorPozitie, starePozitie } from "./vizual.js";
+import { actiuniPozitie, starePozitie } from "./vizual.js";
 
 /**
  * Tabul „Verificare” (Andrei, 21 octombrie 2026): ce a înțeles aplicația din
@@ -19,8 +19,8 @@ import { actiuniPozitie, editorPozitie, starePozitie } from "./vizual.js";
  * „Modifică” și ✕ nu erau în dreptul casetelor.
  *
  * Câmpurile se scriu pe loc; schimbate, poziția devine a omului (ca o corectură
- * din editor). Ce nu încape pe linie (descrierea recitită, straturile de la
- * mijloc, golul, prețul pus de mână) e în editorul de sub „Mai mult”.
+ * din editor). Fără alt buton de „mai mult” (Andrei: un buton fără rost):
+ * prețul scris în casetă e prețul pus de mână, descrierea e denumirea din ofertă.
  *
  * Pur, fără DOM: testat în Node.
  */
@@ -118,7 +118,7 @@ function campuri(p: PozitieOferta, l: LinieProcesata, o: OptiuniDocument): strin
     ${camp(`Cantitate${p.um ? ` (${esc(p.um)})` : ""}`, cantitate, "ver-c-numar")}
     ${camp("Preț unitar €", pret, "ver-c-numar")}
     <div class="ver-camp ver-c-total"><span>Total €</span><output>${p.valoare === null ? "—" : eur(p.valoare)}</output></div>
-    <div class="ver-actiuni">${actiuniPozitie(l, o.propunere(l), o.editIdx === i, "Mai mult")}
+    <div class="ver-actiuni">${actiuniPozitie(l, o.propunere(l), false, false)}
       <button type="button" class="cel-scoate" data-act="scoate-pozitie" data-idx="${i}"
         aria-label="Scoate ${cine} din ofertă" title="Scoate din ofertă">✕</button></div>
   </div>`;
@@ -130,7 +130,6 @@ function randVerificare(p: PozitieOferta, o: OptiuniDocument): string {
   const cine = p.nr === null ? `rândul ${p.sursa.rand}` : `poziția ${p.nr}`;
   const text = celulaText({ ed: "den", text: p.textClient, eticheta: `Descrierea, ${cine}`, clasa: "ver-text",
     schimbat: s.den !== undefined, ...(s.den !== undefined ? { inainte: s.den } : {}), date: { idx: p.linie } });
-  const editeaza = o.editIdx === p.linie;
   return `<article class="ver-poz" data-idx="${p.linie}" data-stare="${p.stare}">
     <div class="ver-sus">
       <p class="ver-rand">Rândul ${p.sursa.rand}${p.cod ? `<span>${esc(p.cod)}</span>` : ""}</p>
@@ -138,7 +137,6 @@ function randVerificare(p: PozitieOferta, o: OptiuniDocument): string {
       <div class="ver-stare">${starePozitie(l)}</div>
     </div>
     ${campuri(p, l, o)}
-    ${editeaza ? editorPozitie(l, o.campuri ? { campuri: o.campuri } : {}) : ""}
   </article>`;
 }
 
@@ -151,8 +149,6 @@ export function verificarePeEcran(d: DocumentOferta, o: OptiuniDocument): string
     return `${cap.titlu ? `<h3 class="ver-capitol">${esc(cap.titlu)}</h3>` : ""}${vazute.map((p) => randVerificare(p, o)).join("")}`;
   }).join("");
   return `<section class="imp-card ver" aria-label="Verificare">
-    ${corp ? `<p class="cel-legenda"><span><span class="mostra" aria-hidden="true"></span>scris de tine (ține mouse-ul pe casetă: vezi ce era)</span>
-      <span>Ce schimbi într-o casetă se recalculează pe loc. ✕ scoate poziția din ofertă.</span></p>${corp}`
-      : `<p class="imp-gol">Nicio poziție aici.</p>`}
+    ${corp || `<p class="imp-gol">Nicio poziție aici.</p>`}
   </section>`;
 }

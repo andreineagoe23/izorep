@@ -208,7 +208,7 @@ function detaliu(l: LinieProcesata): string {
  * de verificat → „Confirmă"; fara pret, cu grosime uzuala → „Pune X mm";
  * oricare → „Modifică".
  */
-export function actiuniPozitie(l: LinieProcesata, propunere: number | null, editeaza: boolean, modifica = "Modifică"): string {
+export function actiuniPozitie(l: LinieProcesata, propunere: number | null, editeaza: boolean, cuModifica = true): string {
   const idx = l.extras.index;
   const stare = stareLinie(l);
   return [
@@ -216,7 +216,7 @@ export function actiuniPozitie(l: LinieProcesata, propunere: number | null, edit
     stare === "netarifate" && propunere !== null
       ? `<button type="button" class="primar" data-act="pune-grosime" data-idx="${idx}" data-g="${propunere}">Pune ${numar(propunere)} mm</button>`
       : "",
-    `<button type="button" class="secundar" data-act="modifica" data-idx="${idx}" aria-expanded="${editeaza}">${modifica}</button>`,
+    cuModifica ? `<button type="button" class="secundar" data-act="modifica" data-idx="${idx}" aria-expanded="${editeaza}">Modifică</button>` : "",
   ].join("");
 }
 

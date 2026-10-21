@@ -1091,7 +1091,7 @@ p.cel-ed.ver-text:hover { border-color: var(--linie-tare); }
 .ver-camp output { display: flex; align-items: center; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .ver-c-material { width: 9.5rem; }
 .ver-c-protectie { width: 10.5rem; }
-.ver-c-mic { width: 5rem; }
+.ver-c-mic { width: 6.25rem; }
 .ver-c-gol { width: 8rem; }
 .ver-c-lat { width: 13rem; }
 .ver-c-diametru { width: 8.5rem; }

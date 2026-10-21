@@ -269,7 +269,7 @@ describe("codul și denumirea", () => {
     expect(o.pozitii[0]).toMatchObject({ cod: "IZOLATII", denumire: "Caseta izolatie armaturi cu flanse DN100 vata minerala gr. 13 mm" });
   });
 
-  it("grosimea pe care clientul n-a scris-o apare cu roșu după denumire, ca în Oferta 284", async () => {
+  it("specificația cu roșu ia locul materialelor din textul clientului, ca în Oferta 284", async () => {
     const l = linie({
       text: "IZOLATII | Caseta izolatie armaturi cu flanse DN100 din tabla aluminiu si vata minerala",
       unitar: 121.67, extras: { sistem: "vata_minerala", grosime_mm: 50, straturi_extra: [{ sistem: "tabla", grosime_mm: null }] },
@@ -277,6 +277,6 @@ describe("codul și denumirea", () => {
     const o = await citesteOferta(await registruOferta({ linii: [l], antet: ANTET, provenienta: PROV }));
     expect(o.pozitii[0]!.rosu).toBe("vata minerala gr. 50 mm si protectie cu tabla de aluminiu");
     expect(o.pozitii[0]!.denumire)
-      .toBe("Caseta izolatie armaturi cu flanse DN100 din tabla aluminiu si vata minerala vata minerala gr. 50 mm si protectie cu tabla de aluminiu");
+      .toBe("Caseta izolatie armaturi cu flanse DN100 vata minerala gr. 50 mm si protectie cu tabla de aluminiu");
   });
 });

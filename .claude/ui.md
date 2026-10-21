@@ -331,8 +331,10 @@ rând din fișier devine card, cu numele coloanei deasupra fiecărei valori
 niveluri, sus „Rândul N · cod”, descrierea (se scrie pe loc) și starea cu
 motivul; dedesubt izolația, grosimea, protecția (cu grosimea tablei în aceeași
 listă), diametrul (DN / Ø / Di + valoare), piesa, cantitatea cu UM-ul în
-etichetă, prețul unitar și totalul, toate de 44 px, cu „Confirmă” / „Mai mult”
-/ ✕ pe aceeași linie. Peste 1180 px de listă, o linie; sub, două linii de câte
+etichetă, prețul unitar și totalul, toate de 44 px, cu „Confirmă” (doar la „De
+verificat”) și ✕ pe aceeași linie. Fără „Mai mult” și fără rândul de explicații
+de deasupra (Andrei: butoane și texte fără rost); prețul scris în casetă e
+prețul pus de mână. Peste 1180 px de listă, o linie; sub, două linii de câte
 cinci; pe telefon, două coloane. Schimbat, un câmp face poziția a omului
 (`patchDinCamp` → `corecteaza` la liste, `scrieCampul` la tastă), cu „Salvat.”
 și „Anulează”. **„Cum iese oferta”** (`exportPeEcran`): Excelul de acum, doar
