@@ -6,6 +6,7 @@
  */
 import { esc, type Ecran } from "./tip.js";
 import { eu, iesi, modDate, schimbaParola } from "../date.js";
+import { campParola, legaArataParola } from "../parola-vizual.js";
 
 export const ecran: Ecran = {
   id: "cont",
@@ -25,10 +26,8 @@ export const ecran: Ecran = {
       <section class="imp-card">
         <h2>Schimbă parola</h2>
         <form id="form-cont" novalidate>
-          <label>Parola de acum<span class="parola"><input name="veche" type="password" autocomplete="current-password" required />
-            <button type="button" class="secundar" data-arata-parola aria-pressed="false">Arată</button></span></label>
-          <label>Parola nouă, de cel puțin 10 caractere<span class="parola"><input name="noua" type="password" autocomplete="new-password" minlength="10" required />
-            <button type="button" class="secundar" data-arata-parola aria-pressed="false">Arată</button></span></label>
+          ${campParola("Parola de acum", "veche", "current-password", "required")}
+          ${campParola("Parola nouă, de cel puțin 10 caractere", "noua", "new-password", 'minlength="10" required')}
           <label>Parola nouă, încă o dată<input name="repeta" type="password" autocomplete="new-password" required /></label>
           <p class="alerta" role="alert" hidden></p>
           <p class="hint" role="status" hidden></p>
@@ -39,15 +38,7 @@ export const ecran: Ecran = {
       <p><button type="button" class="secundar" id="iesi-cont">Ieși din cont</button></p>
     </div>`;
     const f = root.querySelector<HTMLFormElement>("#form-cont")!;
-    f.addEventListener("click", (e) => {
-      const b = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-arata-parola]");
-      const input = b?.parentElement?.querySelector<HTMLInputElement>("input");
-      if (!b || !input) return;
-      const arata = input.type === "password";
-      input.type = arata ? "text" : "password";
-      b.textContent = arata ? "Ascunde" : "Arată";
-      b.setAttribute("aria-pressed", String(arata));
-    });
+    legaArataParola(f);
     root.querySelector("#iesi-cont")!.addEventListener("click", () => void iesi().then(() => { location.hash = ""; location.reload(); }));
     f.addEventListener("submit", async (e) => {
       e.preventDefault();

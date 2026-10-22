@@ -115,7 +115,7 @@ la fiecare schimbare de ecran, deci ce a scris un coleg se vede la următorul
 clic.
 
 - **Intrarea** (21 octombrie 2026, în locul ferestrei de parolă a
-  browserului): pagina „Intră în cont” (emailul, parola cu „Arată”, „Intră”),
+  browserului): pagina „Intră în cont” (emailul, parola cu ochiul în dreapta casetei, `web/parola-vizual.ts`, „Intră”; fără rândul „Ai uitat parola?”),
   pe tot ecranul, fără bara laterală și fără antet (`data-intrare` pe `:root`;
   Andrei, 22 octombrie: bara cu tema și firma nu are ce căuta înainte de
   intrare), desenată de `main.ts` când `/api/stare` nu

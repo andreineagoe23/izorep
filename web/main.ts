@@ -1,5 +1,6 @@
 import { MENIU, ROLURI, VIITOR, setRol, rolActiv, type Rol } from "./nav.js";
 import { esc, type Ecran } from "./ecrane/tip.js";
+import { campParola, legaArataParola } from "./parola-vizual.js";
 import { icoana } from "./icoane.js";
 import {
   citesteMeniu, scrieMeniu, inverseaza, laCerere, stareEfectiva, EVENIMENT_SPATIU, FARA_CERERE,
@@ -342,13 +343,11 @@ function deseneazaIntrarea(mesaj = ""): void {
     <section class="imp-card">
       <form id="form-intrare" novalidate>
         <label>Emailul<input name="email" type="email" autocomplete="username" inputmode="email" required /></label>
-        <label>Parola<span class="parola"><input name="parola" type="password" autocomplete="current-password" required />
-          <button type="button" class="secundar" data-arata-parola aria-pressed="false">Arată</button></span></label>
+        ${campParola("Parola", "parola", "current-password", "required")}
         <p class="alerta" role="alert"${mesaj ? "" : " hidden"}>${esc(mesaj)}</p>
         <button type="submit" class="primar">Intră</button>
       </form>
     </section>
-    <p class="hint">Ai uitat parola? Cere una nouă celui care ți-a făcut contul.</p>
   </div>`;
   const f = $<HTMLFormElement>("#form-intrare");
   legaArataParola(f);
@@ -374,18 +373,6 @@ function deseneazaIntrarea(mesaj = ""): void {
   laInceput();
 }
 
-/** „Arată” / „Ascunde” lângă o parolă: oamenii fără experiență greșesc des scriind orb. */
-export function legaArataParola(f: HTMLElement): void {
-  f.addEventListener("click", (e) => {
-    const b = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-arata-parola]");
-    const input = b?.parentElement?.querySelector<HTMLInputElement>("input");
-    if (!b || !input) return;
-    const arata = input.type === "password";
-    input.type = arata ? "text" : "password";
-    b.textContent = arata ? "Ascunde" : "Arată";
-    b.setAttribute("aria-pressed", String(arata));
-  });
-}
 
 /** Intrat cu parola dată de noi: își alege una a lui înainte de orice. */
 function deseneazaParolaNoua(): void {
@@ -394,10 +381,8 @@ function deseneazaParolaNoua(): void {
     <div><p class="intrare-marca">IzoERP</p><h1>Alege-ți parola</h1><p class="hint" style="margin:4px 0 0">Ai intrat cu o parolă primită. Alege una a ta, de cel puțin 10 caractere.</p></div>
     <section class="imp-card">
       <form id="form-parola" novalidate>
-        <label>Parola primită<span class="parola"><input name="veche" type="password" autocomplete="current-password" required />
-          <button type="button" class="secundar" data-arata-parola aria-pressed="false">Arată</button></span></label>
-        <label>Parola nouă<span class="parola"><input name="noua" type="password" autocomplete="new-password" minlength="10" required />
-          <button type="button" class="secundar" data-arata-parola aria-pressed="false">Arată</button></span></label>
+        ${campParola("Parola primită", "veche", "current-password", "required")}
+        ${campParola("Parola nouă", "noua", "new-password", 'minlength="10" required')}
         <label>Parola nouă, încă o dată<input name="repeta" type="password" autocomplete="new-password" required /></label>
         <p class="alerta" role="alert" hidden></p>
         <button type="submit" class="primar">Salvează parola</button>
