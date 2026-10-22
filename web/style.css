@@ -1087,16 +1087,13 @@ main details.imp-card[open] > summary { margin-bottom: 12px; }
 :root[data-intrare] #bara, :root[data-intrare] .fundal-sertar, :root[data-intrare] .continut > header { display: none; }
 :root[data-intrare] .aplicatie { grid-template-columns: minmax(0, 1fr); }
 :root[data-intrare] main { max-width: none; }
-/* Logo-urile firmelor, centrate pe o plăcuță albă; sub ele, pe un rând: IzoERP · titlul · firma. */
+/* Logo-urile firmelor, centrate pe o plăcuță albă; sub ele, doar titlul. */
 .intrare-sus { display: grid; justify-items: center; gap: 18px; text-align: center; }
 .intrare-logo {
   display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 16px 24px;
   width: 100%; box-sizing: border-box; padding: 20px; border: 1px solid var(--linie); border-radius: 14px; background: #fff;
 }
 .intrare-logo img { display: block; max-width: 100%; height: auto; }
-.intrare-rand { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 4px 10px; color: var(--slab); font-size: 15px; }
-.intrare-rand span:first-child { font-weight: 700; color: var(--text); }
-.intrare .intrare-rand h1 { margin: 0; font-size: 22px; color: var(--text); }
 /* ---- pagina de intrare și alegerea parolei: un card la mijloc, fără meniu */
 .intrare { max-width: 28rem; margin: 6vh auto 0; display: grid; gap: var(--imp-gap, 16px); }
 .intrare h1 { margin: 0; font-size: 24px; }

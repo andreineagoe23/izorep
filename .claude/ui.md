@@ -116,7 +116,7 @@ clic.
 
 - **Intrarea** (21 octombrie 2026, în locul ferestrei de parolă a
   browserului): pagina „Intră în cont” (emailul, parola cu ochiul în dreapta casetei, `web/parola-vizual.ts`, „Intră”; fără rândul „Ai uitat parola?”),
-  pe tot ecranul, cu logo-urile RADOIA și ISORAD din oferte centrate pe o plăcuță albă și dedesubt, pe un rând, „IzoERP · Intră în cont · RADOIA” (`antetIntrare`), fără bara laterală și fără antet (`data-intrare` pe `:root`;
+  pe tot ecranul, cu logo-urile RADOIA și ISORAD din oferte centrate pe o plăcuță albă și dedesubt doar titlul „Intră în cont” (`antetIntrare`; „IzoERP” și firma au plecat), fără bara laterală și fără antet (`data-intrare` pe `:root`;
   Andrei, 22 octombrie: bara cu tema și firma nu are ce căuta înainte de
   intrare), desenată de `main.ts` când `/api/stare` nu
   are om intrat; după intrare pagina se reîncarcă. Cu parola temporară,
