@@ -3,6 +3,17 @@
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
 > Ultima actualizare: 22 octombrie 2026.
 
+## 22 octombrie 2026: pagina șantierului pe file
+
+Andrei: filele sunt mai ușor de navigat decât cardurile pliate. Pe ramura
+`santier-taburi` (pornită din `straturi-rand`, încă neunită). Pagina unui
+șantier are, sub cifre, filele Situații de lucrări · Materiale · Planul de
+șantier · Închide șantierul · Șterge șantierul (detalii în `ui.md`). Verificat
+cu Playwright pe `build:server`: TRANSAVIA (deschis) și NISAL (închis, fără
+„Închide”), 390 / 768 / 1440 / 1920 px, ambele teme, fiecare filă cu cardul
+ei, adresa `#/lucrari/<id>/<fila>` păstrată la reîncărcare, „Situație nouă”
+de pe altă filă duce la situații, zero derulare laterală, zero erori.
+
 ## 22 octombrie 2026: straturile pe rând, din lista lui ✕
 
 Andrei: la import, un rând poate avea 1–4 straturi, iar angajatul trebuie să

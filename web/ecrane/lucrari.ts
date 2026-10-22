@@ -83,6 +83,20 @@ const notaInchidere = `${nota(
 const zi = (iso: string): string => new Date(iso).toLocaleDateString("ro-RO");
 const cant = (n: number, um: string): string => `${cifra(n)}${um ? ` ${esc(um)}` : ""}`;
 
+/** Filele paginii unui șantier, în ordinea lucrului (Andrei, 22 octombrie 2026). */
+const FILE = ["situatii", "materiale", "plan", "inchide", "sterge"] as const;
+type FilaSantier = (typeof FILE)[number];
+
+/** Filele șantierului: butoane, nu linkuri, ca o situație începută să nu se piardă la schimbarea filei. */
+export function fileSantier(activ: FilaSantier, n: { situatii: number; deCumparat: number; inchis: boolean }): string {
+  const fila = (id: FilaSantier, eticheta: string, numar = 0): string =>
+    `<button type="button" class="fila" data-act="fila" data-fila="${id}"${id === activ ? ' aria-current="page"' : ""}>${
+      eticheta}${numar ? ` <b>${cifra(numar)}</b>` : ""}</button>`;
+  return `<nav class="file" aria-label="Șantierul">${fila("situatii", "Situații de lucrări", n.situatii)}${
+    fila("materiale", "Materiale", n.deCumparat)}${fila("plan", "Planul de șantier")}${
+    n.inchis ? "" : fila("inchide", "Închide șantierul")}${fila("sterge", "Șterge șantierul")}</nav>`;
+}
+
 export const ecran: Ecran = {
   id: "lucrari",
   titlu: "Șantiere",
@@ -94,6 +108,10 @@ export const ecran: Ecran = {
     // „Înapoi” din browser, reîncărcarea și un link trimis unui coleg duc tot aici.
     const dinAdresa = decodeURIComponent(location.hash.replace(/^#\/?/, "").split("/")[1] ?? "") || null;
     let deschis: string | null = iaDeDeschis() ?? (dinAdresa && planuri.some((p) => p.id === dinAdresa) ? dinAdresa : null);
+    // Fila de pe pagina șantierului (Andrei, 22 octombrie 2026: filele se găsesc mai ușor
+    // decât cardurile pliate): `#/lucrari/<id>/<fila>`, deci reîncărcarea o păstrează.
+    const dinFila = location.hash.replace(/^#\/?/, "").split("/")[2] ?? "";
+    let fila: FilaSantier = (FILE as readonly string[]).includes(dinFila) ? dinFila as FilaSantier : "situatii";
     let inLucru: Situatie | null = null;
     let eroare = "";
     let stergeDe: string | null = null;
@@ -109,8 +127,9 @@ export const ecran: Ecran = {
 
     // Deschis din altă parte (o situație venită din poze): adresa arată șantierul, fără navigare nouă.
     const potrivesteAdresa = (): void => {
-      if (deschis && dinAdresa !== deschis) history.replaceState(null, "", `#/lucrari/${encodeURIComponent(deschis)}`);
+      if (deschis && dinAdresa !== deschis) history.replaceState(null, "", adresa());
     };
+    const adresa = (): string => (deschis ? `#/lucrari/${encodeURIComponent(deschis)}${fila === "situatii" ? "" : `/${fila}`}` : "#/lucrari");
     const venita = preiaSituatie();
     const tinta = venita && planuri.find((p) => p.id === venita.plan);
     if (venita && tinta?.inchis) {
@@ -118,6 +137,7 @@ export const ecran: Ecran = {
       mesaj = "Șantierul e închis: nu mai primește situații de lucrări.";
     } else if (venita && tinta) {
       deschis = tinta.id;
+      fila = "situatii";
       inLucru = {
         ...situatieNoua(tinta, idNou(), new Date().toISOString()),
         cantitati: { ...venita.potrivire.cantitati },
@@ -210,26 +230,27 @@ export const ecran: Ecran = {
           ${p.inchis ? "" : indicator(String(deCumparat), "Materiale de comandat", !necesar ? "fără necesar"
             : peCiorne ? `și ${peCiorne} pe ciorne netrimise` : "rămase din necesarul ofertei")}
         </div>
-        ${inLucru && dinPoze ? cardDinPoze(p, inLucru, dinPoze) : ""}
-        ${inLucru ? formularSituatie(p, inLucru) : ""}
-        ${istoric(p)}
-        ${material}
-        <details class="imp-card">
-          <summary>Planul de șantier · ${p.pozitii.length === 1 ? "o poziție" : `${p.pozitii.length} poziții`}${
-            cumulat ? ` · ${executatPlan} începute` : ""}</summary>
-          <p class="hint" style="margin:0 0 12px">Pozițiile ofertei, cu prețurile trimise clientului. Nu se schimbă
-            dacă se schimbă listele de prețuri. Materialele lor sunt în <a href="#/materiale">Materiale</a>.</p>
-          ${tabel(["Poziția", "Cant. ofertă", "Preț unitar", "Executat"], randuriPlan, ["", "n", "n", "n"])}
-        </details>
-        ${inchide}
-        <details class="imp-card"${stergeDe === p.id ? " open" : ""}>
-          <summary>Șterge șantierul</summary>
-          ${stergeDe === p.id ? panouStergere({ ce: `șantierul „${p.denumire}”`, linii: ceSeVaSterge({ santier: p.id }), date: { id: p.id },
-            ...(mesaj ? { eroare: mesaj } : {}) })
-          : `<p class="hint" style="margin:0 0 12px">Șterge de tot șantierul și tot ce ține de el: situațiile, necesarul,
-            comenzile și mișcările de stoc. Cererea și oferta rămân. Înainte să ștergi, vezi lista cu tot ce pleacă.</p>
-          <div class="imp-formular-butoane"><button type="button" class="secundar" data-act="sterge" data-id="${esc(p.id)}">Șterge șantierul…</button></div>`}
-        </details>`;
+        ${fileSantier(fila, { situatii: p.situatii.length, deCumparat: p.inchis ? 0 : deCumparat, inchis: !!p.inchis })}
+        <div class="file-panou">${{
+          situatii: () => `${inLucru && dinPoze ? cardDinPoze(p, inLucru, dinPoze) : ""}
+            ${inLucru ? formularSituatie(p, inLucru) : ""}
+            ${istoric(p)}`,
+          materiale: () => material,
+          plan: () => `<section class="imp-card"><h2>Planul de șantier · ${p.pozitii.length === 1 ? "o poziție" : `${p.pozitii.length} poziții`}${
+            cumulat ? ` · ${executatPlan} începute` : ""}</h2>
+            <p class="hint" style="margin:0 0 12px">Pozițiile ofertei, cu prețurile trimise clientului. Nu se schimbă
+              dacă se schimbă listele de prețuri. Materialele lor sunt în <a href="#/materiale">Materiale</a>.</p>
+            ${tabel(["Poziția", "Cant. ofertă", "Preț unitar", "Executat"], randuriPlan, ["", "n", "n", "n"])}
+          </section>`,
+          inchide: () => inchide,
+          sterge: () => `<section class="imp-card"><h2>Șterge șantierul</h2>
+            ${stergeDe === p.id ? panouStergere({ ce: `șantierul „${p.denumire}”`, linii: ceSeVaSterge({ santier: p.id }), date: { id: p.id },
+              ...(mesaj ? { eroare: mesaj } : {}) })
+            : `<p class="hint" style="margin:0 0 12px">Șterge de tot șantierul și tot ce ține de el: situațiile, necesarul,
+              comenzile și mișcările de stoc. Cererea și oferta rămân. Înainte să ștergi, vezi lista cu tot ce pleacă.</p>
+            <div class="imp-formular-butoane"><button type="button" class="secundar" data-act="sterge" data-id="${esc(p.id)}">Șterge șantierul…</button></div>`}
+          </section>`,
+        }[p.inchis && fila === "inchide" ? "situatii" : fila]()}</div>`;
     }
 
     function istoric(p: PlanSantier): string {
@@ -353,7 +374,15 @@ export const ecran: Ecran = {
       switch (b.dataset["act"]) {
         case "deschide": location.hash = `#/lucrari/${encodeURIComponent(b.dataset["id"] ?? "")}`; return;
         case "inapoi": location.hash = "#/lucrari"; return;
-        case "situatie-noua": if (p && !p.inchis) { inLucru = situatieNoua(p, idNou(), new Date().toISOString()); eroare = ""; } break;
+        case "situatie-noua": if (p && !p.inchis) { inLucru = situatieNoua(p, idNou(), new Date().toISOString()); eroare = ""; fila = "situatii"; } break;
+        case "fila": {
+          fila = b.dataset["fila"] as FilaSantier;
+          stergeDe = null;
+          history.replaceState(null, "", adresa());
+          deseneaza();
+          root.querySelector<HTMLElement>(`.file [data-fila="${fila}"]`)?.focus();
+          return;
+        }
         case "renunta": inLucru = null; dinPoze = null; eroare = ""; break;
         case "pune-la": {
           const i = Number(b.dataset["i"]);

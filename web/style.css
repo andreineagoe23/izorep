@@ -1349,6 +1349,10 @@ main details.ajutor > .hint { margin: 0 0 8px; }
 .fila:hover { color: var(--text); }
 .fila[aria-current="page"] { color: var(--accent); border-bottom-color: var(--accent); font-weight: 650; }
 .fila b { font-weight: 650; }
+/* Pe pagina șantierului filele sunt butoane (o situație începută nu se pierde la schimbare). */
+button.fila { background: none; border: 0; border-bottom: 3px solid transparent; border-radius: 0; font: inherit; font-size: 16px; cursor: pointer; }
+button.fila[aria-current="page"] { border-bottom-color: var(--accent); }
+.file-panou { display: grid; gap: var(--imp-gap, 16px); }
 /* Antetul unui card: titlul și propoziția în stânga, butoanele în dreapta; pe telefon, dedesubt. */
 .mat-antet { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; }
 .mat-antet > div:first-child { flex: 1 1 22rem; min-width: 0; }

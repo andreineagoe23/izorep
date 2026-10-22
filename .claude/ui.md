@@ -814,6 +814,21 @@ redesenare. „Fă lista de izolații” scrie registrul și îl importă ca pe 
 fișier; „Alt fișier” se întoarce la start. Bifele din `.imp-campuri` au
 eticheta pe același rând și ținta de 44 px.
 
+## Pagina șantierului: file (22 octombrie 2026)
+
+Andrei: „e mai simplu de navigat în taburi decât în dropdownuri”. Sub antet și
+cifre, filele (`fileSantier` în `web/ecrane/lucrari.ts`, stilul `.file` /
+`.fila` de la Materiale): **Situații de lucrări** (cu numărul lor; formularul
+situației noi, „Din măsurători” și istoricul), **Materiale** (cu câte sunt de
+comandat; cardul materialului sau, închis, cifrele închiderii), **Planul de
+șantier**, **Închide șantierul** (lipsește pe cel închis) și **Șterge
+șantierul**. Cardurile pliate (`<details>`) au plecat; formularul de închidere
+e acum un card cu titlu. Filele sunt butoane, nu linkuri: o situație începută
+nu se pierde la schimbarea filei; adresa se scrie cu `replaceState`
+(`#/lucrari/<id>/<fila>`), deci reîncărcarea ține fila. „Situație nouă” duce pe
+prima filă. Secțiunile de mai jos despre pagina șantierului descriu
+conținutul, nu așezarea.
+
 ## Lucrări: șantierele din oferte (29 septembrie 2026)
 
 `web/ecrane/lucrari.ts`; logica în `src/lucrari/situatii.ts`, datele în

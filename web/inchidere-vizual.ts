@@ -197,8 +197,8 @@ export function formularInchidere(f: FormularInchidere): string {
         optiuni(r, s.unde ?? IMPLICIT)}</select></td>
     </tr>`;
   });
-  return `<details class="imp-card" id="inchidere"${f.deschis ? " open" : ""}>
-    <summary>Închide șantierul</summary>
+  return `<section class="imp-card" id="inchidere">
+    <h2>Închide șantierul</h2>
     <form id="form-inchidere">
       <p class="hint">La sfârșitul lucrării, șeful de lucrare numără ce a rămas pe șantier. Scrie aici cât a găsit și unde pleacă
         fiecare material: înapoi în depozit, pe alt șantier, înapoi la furnizor, sau dacă s-a pierdut, s-a furat ori merge la
@@ -214,7 +214,7 @@ export function formularInchidere(f: FormularInchidere): string {
         ${f.confirma ? `<span class="hint">Apasă încă o dată. Închis, șantierul nu se mai deschide.</span>` : ""}
       </div>
     </form>
-  </details>`;
+  </section>`;
 }
 
 /* ------------------------------------------------ cifrele șantierului închis */
