@@ -370,11 +370,19 @@ descrierea (`scrieUm`). Straturile de izolație de sub jachetă stau sub primul,
 (cu d-lui sau d-nei)” se scrie în ofertă cum e scris.
 
 **22 octombrie 2026 (Andrei):** un rând poate avea de la 1 la 4 straturi, iar
-✕ a devenit o listă de 44 px cu „⋯” (`.cel-meniu`, `data-meniu-rand`), ca să nu
+✕ a devenit butonul „⋯” de 44 px cu un meniu al nostru dedesubt (`.cel-meniu`,
+`.meniu-rand`; lista nativă se deschidea mare, în stilul sistemului), ca să nu
 ia loc încă un buton: „Adaugă un strat” pune vată fără grosime sub protecție
 (`adauga-strat` în `patchDinCamp`) și duce cursorul în grosimea ei; oprită la
 `STRATURI_MAXIM` (4, cu tot cu protecția) și pe golurile la foc. „Scoate rândul
-din ofertă” face ce făcea ✕.
+din ofertă” face ce făcea ✕. Escape sau un clic în afară închid meniul.
+Fiecare strat în plus e un **sub-rând întreg** (`tr.ver-strat`), pe aceleași
+coloane: izolația și grosimea se scriu, protecția stă pe stratul de deasupra
+(pe celelalte „—”), diametrul e cel peste care stă stratul („ø214”, cu rândul
+din listă sub mouse), piesa, UM-ul și cantitatea sunt ale rândului (casete fără
+scris, `.ver-fix`), iar prețul e al stratului (cu multiplicatorul piesei;
+protecția intră la stratul de deasupra). Dedesubt, „Prețul rândului, suma
+straturilor”, cu prețul care se poate pune de mână. Totul se reface la tastă.
 
 ## Ecranul de import: trei pași
 

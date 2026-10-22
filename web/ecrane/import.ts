@@ -1078,8 +1078,24 @@ export const ecran: Ecran = {
       });
     }
 
+    gazda.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape") return;
+      const m = (e.target as HTMLElement).closest<HTMLElement>(".meniu-rand:not([hidden])");
+      if (!m) return;
+      m.hidden = true;
+      const b = m.parentElement?.querySelector<HTMLElement>(".cel-meniu");
+      b?.setAttribute("aria-expanded", "false");
+      b?.focus();
+    });
+
     gazda.addEventListener("click", (e) => {
       const t = e.target as HTMLElement;
+      // Meniul „⋯” al rândului: se deschide sub buton; orice alt clic îl închide.
+      for (const m of gazda.querySelectorAll<HTMLElement>(".meniu-rand:not([hidden])")) {
+        if (m.parentElement?.contains(t)) continue;
+        m.hidden = true;
+        m.parentElement?.querySelector(".cel-meniu")?.setAttribute("aria-expanded", "false");
+      }
 
       const bPas = t.closest<HTMLButtonElement>("[data-pas]");
       if (bPas) {
@@ -1146,6 +1162,33 @@ export const ecran: Ecran = {
         case "renunta-izolatie": deIzolat = null; deseneaza(); scrollTo({ top: 0 }); return;
         case "la-verificare": pas = 2; deseneaza(); scrollTo({ top: 0 }); return;
         case "creeaza-santier": creeazaSantier(); return;
+        case "meniu-rand": {
+          const m = b.nextElementSibling as HTMLElement | null;
+          if (!m) return;
+          m.hidden = !m.hidden;
+          b.setAttribute("aria-expanded", String(!m.hidden));
+          if (!m.hidden) m.querySelector<HTMLButtonElement>("button:not([disabled])")?.focus();
+          return;
+        }
+        case "scoate-pozitie": {
+          if (idx === null) return;
+          const urm = urmatorul(idx);
+          corecteaza(idx, { sistem: null }, false);
+          deseneaza();
+          if (urm !== null) pagina.querySelector<HTMLElement>(`[data-act="meniu-rand"][data-idx="${urm}"]`)?.focus();
+          return;
+        }
+        case "adauga-strat": {
+          const l = idx === null ? undefined : sesiune?.rez.linii.find((x) => x.extras.index === idx);
+          if (!l || idx === null) return;
+          // Stratul nou ia indicele de după celelalte izolații, înaintea protecției.
+          const k = l.extras.straturi_extra.filter((x) => !JACHETE.has(x.sistem)).length;
+          randInLucru = idx;
+          corecteaza(idx, patchDinCamp(l.extras, "adauga-strat", ""));
+          deseneaza();
+          pagina.querySelector<HTMLElement>(`.cel-ed[data-ed="stratg${k}"][data-idx="${idx}"]`)?.focus();
+          return;
+        }
         case "modifica":
           editIdx = editIdx === idx ? null : idx;
           deseneaza();
@@ -1270,30 +1313,6 @@ export const ecran: Ecran = {
         return;
       }
       if (t.name === "vedere") { vedere = t.value as Vedere; editIdx = null; randInLucru = null; deseneaza(); return; }
-      if (t.dataset["meniuRand"] && sesiune) {
-        // Lista din locul vechiului ✕: un strat nou pe rând, sau rândul scos din ofertă.
-        const idx = Number(t.dataset["idx"]);
-        const alegere = t.value;
-        (t as HTMLSelectElement).value = "";
-        const l = sesiune.rez.linii.find((x) => x.extras.index === idx);
-        if (!l) return;
-        if (alegere === "scoate") {
-          const urm = urmatorul(idx);
-          corecteaza(idx, { sistem: null }, false);
-          deseneaza();
-          if (urm !== null) pagina.querySelector<HTMLElement>(`[data-meniu-rand][data-idx="${urm}"]`)?.focus();
-          return;
-        }
-        if (alegere === "strat") {
-          const k = l.extras.straturi_extra.filter((x) => !JACHETE.has(x.sistem)).length;
-          randInLucru = idx;
-          corecteaza(idx, patchDinCamp(l.extras, "adauga-strat", ""));
-          deseneaza();
-          // Cursorul în grosimea stratului nou: e tot ce mai are de scris omul.
-          pagina.querySelector<HTMLElement>(`.cel-ed[data-ed="stratg${k}"][data-idx="${idx}"]`)?.focus();
-        }
-        return;
-      }
       if (t.dataset["um"] && sesiune) {
         scrieUm(Number(t.dataset["idx"]), t.value);
         pastreazaCursorul(gazda, deseneaza);

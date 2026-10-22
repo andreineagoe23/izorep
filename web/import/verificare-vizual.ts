@@ -1,5 +1,6 @@
 import type { LinieProcesata } from "../../src/import/nucleu.js";
 import type { LinieExtrasa } from "../../src/import/schema.js";
+import type { StratTarifat } from "../../src/pricing/types.js";
 import { esc } from "../ecrane/tip.js";
 import { celulaNumar, celulaText, numarInCelula } from "../celula.js";
 import type { DocumentOferta, PozitieOferta } from "../document-oferta.js";
@@ -111,14 +112,27 @@ const select = (nume: string, idx: number, eticheta: string, optiuni: [string, s
 const numarPeLoc = (ed: string, idx: number, valoare: number | null, eticheta: string, gol = ""): string =>
   celulaNumar({ ed, valoare, eticheta, ...(gol ? { gol } : {}), date: { idx } });
 
+/** O valoare a rândului, arătată pe sub-rândul stratului: aceeași casetă, fără scris. */
+const fix = (v: string, titlu = ""): string =>
+  `<span class="ver-fix"${titlu ? ` title="${esc(titlu)}"` : ""}>${esc(v)}</span>`;
+const SUB_STRAT = fix("—", "Protecția stă pe stratul de deasupra");
+/** Prețul unui strat (cu multiplicatorul piesei), plus protecția pusă peste el. */
+function pretStrat(t: StratTarifat | undefined, peste: (StratTarifat | undefined)[] = []): string {
+  const toate = [t, ...peste];
+  if (toate.some((x) => !x)) return fix("—");
+  const v = toate.reduce((s, x) => s + (x!.inclus ? Math.round(x!.pret_unitar * x!.multiplicator * 100) / 100 : 0), 0);
+  return fix(v.toFixed(2).replace(".", ","), t!.inclus ? "" : "Stratul ăsta nu intră în prețul piesei (regula firmei)");
+}
+
 /** Capul tabelului; pe ecran îngust, același text e eticheta din card (`data-eticheta`). */
 interface Coloane { gros: string; prot: string }
 
 /**
  * Starea, în coloana ei: pe linia casetelor butonul care o rezolvă („Confirmă”,
  * „Pune 50 mm”) sau, gata, cuvântul ei, apoi lista rândului; motivul, mărunt,
- * dedesubt. Lista ține locul vechiului ✕ (Andrei, 22 octombrie 2026: fără loc
+ * dedesubt. Meniul „⋯” ține locul vechiului ✕ (Andrei, 22 octombrie 2026: fără loc
  * pentru încă un buton): „Adaugă un strat” (până la 4) sau „Scoate rândul din ofertă”.
+ * Meniu al nostru, nu listă nativă: aceea se deschidea mare, în stilul sistemului.
  */
 function stare(l: LinieProcesata, propunere: number | null, cine: string): string {
   const st = stareLinie(l);
@@ -127,11 +141,15 @@ function stare(l: LinieProcesata, propunere: number | null, cine: string): strin
   const e = l.extras;
   const poateStrat = e.sistem !== null && e.sistem !== "goluri_foc" && 1 + e.straturi_extra.length < STRATURI_MAXIM;
   return `<div class="ver-actiuni">${actiune || `<span class="imp-stare" data-stare="${st}">${STARE[st]}</span>`}
-      <select class="cel-meniu" data-meniu-rand="1" data-idx="${e.index}" aria-label="${esc(`Ce faci cu ${cine}`)}" title="Adaugă un strat sau scoate rândul">
-        <option value="" selected hidden>⋯</option>
-        <option value="strat"${poateStrat ? "" : " disabled"}>${poateStrat ? "Adaugă un strat" : `Adaugă un strat (cel mult ${STRATURI_MAXIM})`}</option>
-        <option value="scoate">Scoate rândul din ofertă</option>
-      </select></div>
+      <div class="cel-meniu-loc">
+        <button type="button" class="cel-meniu" data-act="meniu-rand" data-idx="${e.index}" aria-haspopup="menu" aria-expanded="false"
+          aria-label="${esc(`Ce faci cu ${cine}`)}" title="Adaugă un strat sau scoate rândul">⋯</button>
+        <div class="meniu-rand" role="menu" hidden>
+          <button type="button" role="menuitem" data-act="adauga-strat" data-idx="${e.index}"${poateStrat ? "" : " disabled"}>${
+            poateStrat ? "Adaugă un strat" : `Adaugă un strat (cel mult ${STRATURI_MAXIM})`}</button>
+          <button type="button" role="menuitem" data-act="scoate-pozitie" data-idx="${e.index}">Scoate rândul din ofertă</button>
+        </div>
+      </div></div>
     ${motive.length ? `<p class="ver-motiv">${esc(motive.join(" · "))}</p>` : ""}`;
 }
 
@@ -152,20 +170,21 @@ function randVerificare(p: PozitieOferta, o: OptiuniDocument, c: Coloane): strin
     `<td${clasa ? ` class="${clasa}"` : ""} data-eticheta="${esc(eticheta)}">${continut}</td>`;
   const material = select("sistem", i, `Izolația, ${cine}`,
     [...MATERIALE.map((m): [string, string] => [m, MATERIAL[m]]), ["", "Nu e izolație"]], e.sistem ?? "");
-  // Straturile de izolație de sub jachetă, peste primul: fiecare pe rândul lui,
-  // în coloana izolației și a grosimii, aliniate cu primul.
+  // Straturile de izolație de sub protecție, peste primul: fiecare e un sub-rând
+  // întreg (Andrei, 22 octombrie 2026), cu protecția pe cel de deasupra.
   const mijloc = e.straturi_extra.flatMap((x, k) => (JACHETE.has(x.sistem) ? [] : [{ x, k }]));
-  const izolatii = mijloc.length === 0 ? material : `<div class="ver-straturi">${material}${mijloc.map(({ x, k }) =>
-    select(`strat${k}`, i, `Stratul ${k + 2}, ${cine}`,
-      [...IZOLATII.map((m): [string, string] => [m, MATERIAL[m]]), ["", "Fără"]], x.sistem)).join("")}</div>`;
-  const grosimi = (prima: string): string => (mijloc.length === 0 ? prima : `<div class="ver-straturi">${prima}${mijloc.map(({ x, k }) =>
-    numarPeLoc(`stratg${k}`, i, x.grosime_mm, `Grosimea stratului ${k + 2}, ${cine}`, "—")).join("")}</div>`);
+  const protectie = select("protectie", i, `Protecția, ${cine}`, PROTECTII, protectieDin(e));
   const celUm = o.um?.(l);
   const um = celUm
     ? `<select data-um="1" data-idx="${i}" aria-label="${esc(`UM, ${cine}`)}">${
       (UM.some(([v]) => v === celUm.v.trim()) ? UM : [...UM, [celUm.v.trim(), celUm.v.trim()] as [string, string]])
         .map(([v, t]) => `<option value="${esc(v)}"${v === celUm.v.trim() ? " selected" : ""}>${esc(t)}</option>`).join("")}</select>`
     : "";
+  // Straturile tarifate, pe ordinea din extragere: primul, apoi cele în plus.
+  const tarifate = l.pret && "straturi" in l.pret ? l.pret.straturi : [];
+  const pe: (StratTarifat | undefined)[] = [e.sistem, ...e.straturi_extra.map((x) => x.sistem)]
+    .map((sis, k) => (tarifate[k]?.sistem === sis ? tarifate[k] : undefined));
+  const jachete = e.straturi_extra.flatMap((x, k) => (JACHETE.has(x.sistem) ? [pe[k + 1]] : []));
   const cantitate = celulaNumar({ ed: "cant", valoare: p.cantitate, eticheta: `Cantitate, ${cine}`,
     schimbat: s.cant !== undefined, ...(s.cant !== undefined ? { inainte: s.cant } : {}), date: { idx: i } });
   const pret = celulaNumar({ ed: "pret", valoare: p.pretUnitar, eticheta: `Preț unitar, ${cine}`, gol: "fără preț",
@@ -173,22 +192,46 @@ function randVerificare(p: PozitieOferta, o: OptiuniDocument, c: Coloane): strin
   return `<tr class="ver-poz" data-idx="${i}" data-stare="${p.stare}">
     <td class="ver-rand" data-eticheta="Rândul">${p.sursa.rand}</td>
     <td class="ver-desc">${text}${p.cod ? `<span class="ver-cod">${esc(p.cod)}</span>` : ""}</td>
-    ${td("Izolație", izolatii)}
+    ${td("Izolație", material)}
     ${gol
       ? td("Lățime gol (mm)", numarPeLoc("gol_l", i, e.gol_latime_mm, `Lățimea golului, ${cine}`, "lățime"))
         + td("Înălțime gol (mm)", numarPeLoc("gol_h", i, e.gol_inaltime_mm, `Înălțimea golului, ${cine}`, "înălțime"))
         + td("Diametru", "") + td("Piesă", "")
-      : td(c.gros, grosimi(numarPeLoc("gros", i, e.grosime_mm, `Grosimea, ${cine}`, "—")))
-        + td(c.prot, select("protectie", i, `Protecția, ${cine}`, PROTECTII, protectieDin(e)))
+      : td(c.gros, numarPeLoc("gros", i, e.grosime_mm, `Grosimea, ${cine}`, "—"))
+        + td(c.prot, mijloc.length ? SUB_STRAT : protectie)
         + td("Diametru", `<div class="ver-diametru"${ajutorDiametru(l) ? ` title="${esc(ajutorDiametru(l))}"` : ""}>${
           select("diam_tip", i, `Notația diametrului, ${cine}`, NOTATII, e.diametru_tip ?? "exterior")}${
           numarPeLoc("diam", i, e.diametru_valoare, `Diametrul, ${cine}`, "—")}</div>`)
         + td("Piesă", select("forma", i, `Piesa, ${cine}`, FORME_EDITOR, e.forma ?? "ml"))}
     ${um ? td("UM", um) : td("UM", esc(p.um || "—"), "ver-text-cel")}
     ${td("Cantitate", cantitate, "n")}
-    ${td("Preț unitar €", pret, "n")}
+    ${td("Preț unitar €", mijloc.length ? pretStrat(pe[0]) : pret, "n")}
     <td class="ver-stare">${stare(l, o.propunere(l), cine)}</td>
+  </tr>${mijloc.map(({ x, k }, j) => {
+    const ultim = j === mijloc.length - 1;
+    const t = pe[k + 1];
+    const eticheta = `stratul ${j + 2}, ${cine}`;
+    return `<tr class="ver-strat" data-idx="${i}" data-stare="${p.stare}">
+    <td class="ver-rand" data-eticheta="Rândul"></td>
+    <td class="ver-desc"><p class="ver-text ver-strat-nume">Stratul ${j + 2}</p></td>
+    ${td("Izolație", select(`strat${k}`, i, `Izolația, ${eticheta}`,
+      [...IZOLATII.map((m): [string, string] => [m, MATERIAL[m]]), ["", "Scoate stratul"]], x.sistem))}
+    ${td(c.gros, numarPeLoc(`stratg${k}`, i, x.grosime_mm, `Grosimea, ${eticheta}`, "—"))}
+    ${td(c.prot, ultim ? protectie : SUB_STRAT)}
+    ${td("Diametru", fix(t ? `ø${numarInCelula(Math.round(t.diametru_geometric * 10) / 10)}` : "—",
+      t ? `Stă peste stratul de dedesubt: ø${numarInCelula(Math.round(t.diametru_geometric * 10) / 10)}, rândul ${t.rand_lista} din listă` : ""))}
+    ${td("Piesă", fix(FORME_EDITOR.find(([f]) => f === (e.forma ?? "ml"))?.[1] ?? "—"))}
+    ${td("UM", fix(p.um || "—"))}
+    ${td("Cantitate", fix(numarInCelula(p.cantitate)), "n")}
+    ${td("Preț unitar €", pretStrat(t, ultim ? jachete : []), "n")}
+    <td class="ver-stare"></td>
   </tr>`;
+  }).join("")}${mijloc.length ? `<tr class="ver-strat ver-strat-total" data-idx="${i}" data-stare="${p.stare}">
+    <td class="ver-rand"></td>
+    <td class="ver-desc" colspan="8"><p class="ver-text ver-strat-nume">Prețul rândului, suma straturilor</p></td>
+    ${td("Preț unitar €", pret, "n")}
+    <td class="ver-stare"></td>
+  </tr>` : ""}`;
 }
 
 /**

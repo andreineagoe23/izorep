@@ -1176,7 +1176,7 @@ main details.imp-card[open] > summary { margin-bottom: 12px; }
 .ver-tabel th.n { text-align: right; }
 .ver-tabel td { padding: 10px 6px; vertical-align: top; border-top: 1px solid var(--linie); min-width: 0; }
 .ver-poz td:first-child { padding-left: 12px; box-shadow: inset 4px 0 0 var(--c); }
-.ver-poz[data-stare="de_validat"] td, .ver-poz[data-stare="netarifate"] td { background: color-mix(in srgb, var(--panou-2) 55%, var(--panou)); }
+.ver-poz[data-stare="de_validat"] td, .ver-poz[data-stare="netarifate"] td, .ver-strat[data-stare="de_validat"] td, .ver-strat[data-stare="netarifate"] td { background: color-mix(in srgb, var(--panou-2) 55%, var(--panou)); }
 .ver-capitol th { padding: 14px 6px 6px; font-size: 15px; font-weight: 650; color: var(--text); border-bottom: 0; }
 .ver-tabel select, .ver-tabel input {
   width: 100%; min-width: 0; height: 44px; min-height: 44px; margin: 0; font-size: 14px;
@@ -1200,15 +1200,35 @@ p.ver-text:not(.cel-ed) { padding: 10px 0; }
 .ver-actiuni .imp-stare { flex: 1 1 auto; }
 .imp .ver-actiuni button { min-height: 44px; height: 44px; padding: 0 10px; font-size: 14px; white-space: nowrap; }
 .imp .ver-actiuni .cel-scoate { flex: 0 0 44px; width: 44px; padding: 0; margin-left: auto; }
-/* Lista rândului, în locul lui ✕: un pătrat de 44 px cu „⋯”, care se deschide în „Adaugă un strat” / „Scoate rândul”. */
+/* Meniul rândului, în locul lui ✕: un pătrat de 44 px cu „⋯”; dedesubt „Adaugă un strat” / „Scoate rândul”. */
+.imp .ver-actiuni .cel-meniu-loc { position: relative; flex: 0 0 44px; margin-left: auto; }
 .imp .ver-actiuni .cel-meniu {
-  flex: 0 0 44px; width: 44px; height: 44px; min-height: 44px; padding: 0; margin-left: auto;
-  appearance: none; -webkit-appearance: none; background-image: none; text-align: center; text-align-last: center;
-  border: 1px solid var(--linie-tare); border-radius: 8px; background-color: var(--panou); color: var(--slab);
-  font-size: 20px; line-height: 1; cursor: pointer;
+  width: 44px; height: 44px; padding: 0; border: 1px solid var(--linie-tare); border-radius: 8px;
+  background: var(--panou); color: var(--slab); font: inherit; font-size: 18px; line-height: 1; cursor: pointer;
 }
-.imp .ver-actiuni .cel-meniu:hover { color: var(--text); border-color: var(--text); }
-.imp .ver-actiuni .cel-meniu option { font-size: 15px; text-align: left; }
+.imp .ver-actiuni .cel-meniu:hover, .imp .ver-actiuni .cel-meniu[aria-expanded="true"] { color: var(--text); border-color: var(--text); }
+.meniu-rand {
+  position: absolute; top: calc(100% + 4px); right: 0; z-index: 20; display: grid; min-width: 15rem; padding: 4px;
+  border: 1px solid var(--linie-tare); border-radius: 8px; background: var(--panou); box-shadow: 0 6px 20px rgb(0 0 0 / 0.14);
+}
+.meniu-rand[hidden] { display: none; }
+.meniu-rand button {
+  min-height: 44px; padding: 0 12px; border: 0; border-radius: 6px; background: none; color: var(--text);
+  font: inherit; text-align: left; white-space: nowrap; cursor: pointer;
+}
+.meniu-rand button:hover:not([disabled]), .meniu-rand button:focus-visible { background: var(--panou-2); }
+.meniu-rand button[disabled] { color: var(--slab); cursor: default; }
+/* Sub-rândul unui strat: aceleași coloane, valorile rândului fără scris (Andrei, 22 octombrie 2026). */
+.ver-strat td { border-top: 1px dashed var(--linie); }
+.ver-poz:has(+ .ver-strat) td { padding-bottom: 4px; }
+.ver-strat td:first-child { padding-left: 12px; box-shadow: inset 4px 0 0 var(--c); }
+.ver-strat-nume { color: var(--slab); padding-left: 16px; }
+.ver-fix {
+  display: flex; align-items: center; min-height: 44px; padding: 0 8px; border: 1px solid var(--linie);
+  border-radius: 8px; color: var(--slab); font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ver-tabel td.n .ver-fix { justify-content: flex-end; }
+.ver-strat-total .ver-strat-nume { text-align: right; padding-top: 12px; color: var(--text); }
 .ver-motiv { margin: 4px 0 0; font-size: 12.5px; color: var(--slab); line-height: 1.35; }
 /* Coloanele fixe au ~1010 px: sub 1240 px de tabel descrierea ar ramane sub
    ~230 px, deci fiecare rand devine card: descrierea pe toata latimea, casetele
@@ -1216,11 +1236,15 @@ p.ver-text:not(.cel-ed) { padding: 10px 0; }
 @container ver (max-width: 1239px) {
   .ver-tabel, .ver-tabel tbody, .ver-tabel tr, .ver-tabel td, .ver-tabel th { display: block; width: auto; }
   .ver-tabel colgroup, .ver-tabel thead { display: none; }
-  .ver-tabel tr.ver-poz {
+  .ver-tabel tr.ver-poz, .ver-tabel tr.ver-strat {
     display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 8.5rem), 1fr)); gap: 8px 10px;
     padding: 12px 12px 14px 16px; border-top: 1px solid var(--linie); box-shadow: inset 4px 0 0 var(--c);
   }
-  .ver-tabel td, .ver-poz td:first-child { padding: 0; border: 0; box-shadow: none; background: none !important; }
+  .ver-tabel tr.ver-strat { border-top-style: dashed; }
+  .ver-tabel td.n .ver-fix { justify-content: flex-start; }
+  .ver-tabel td, .ver-poz td:first-child, .ver-strat td:first-child { padding: 0; border: 0; box-shadow: none; background: none !important; }
+  .ver-tabel .ver-strat-nume { padding: 0; text-align: left; }
+  .ver-tabel tr.ver-strat-total td.ver-desc { grid-column: 1 / -2; align-self: end; }
   .ver-tabel td[data-eticheta]::before {
     content: attr(data-eticheta); display: block; margin-bottom: 2px; font-size: 12.5px; line-height: 1.3; color: var(--slab); font-weight: 400;
   }

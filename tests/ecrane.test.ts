@@ -135,21 +135,24 @@ describe("verificarea și „Cum iese oferta” (21 octombrie 2026)", async () =
     expect(html).toMatch(/<select data-um="1" data-idx="1"[^>]*>.*<option value="buc\." selected>/s);
     expect(html).toContain('data-vc="strat0"');
     expect(html).toContain('data-ed="stratg0"');
+    // Stratul e un sub-rând întreg, cu protecția pe el și prețul rândului dedesubt.
+    expect(html.match(/<tr class="ver-strat" data-idx="1"/g)).toHaveLength(1);
+    expect(html).toMatch(/<tr class="ver-strat"[^]*data-vc="protectie"[^]*ver-strat-total/);
+    expect(html.match(/data-vc="protectie"/g)).toHaveLength(1);
     // Jacheta rămâne la „Protecție”, nu apare ca strat în plus.
     expect(html).not.toContain('data-vc="strat1"');
     expect(verificarePeEcran(d, optiuni([l]))).not.toContain("data-um=");
   });
 
-  it("✕ e o listă pe rând: „Adaugă un strat” oprit la 4 straturi, „Scoate rândul” mereu", () => {
+  it("✕ e un meniu pe rând: „Adaugă un strat” oprit la 4 straturi, „Scoate rândul” mereu", () => {
     const l = linie(1, "DN80 elastomer 13mm+40mm vata minerala", null, 44.35);
     l.extras.straturi_extra = [{ sistem: "vata_minerala", grosime_mm: 40 }, { sistem: "tabla", grosime_mm: null }];
     const html = verificarePeEcran(documentOferta(cerere([l])), optiuni([l]));
-    expect(html).toMatch(/<select class="cel-meniu" data-meniu-rand="1" data-idx="1"/);
-    expect(html).toContain('<option value="strat">Adaugă un strat</option>');
-    expect(html).toContain('<option value="scoate">Scoate rândul din ofertă</option>');
-    expect(html).not.toContain("scoate-pozitie");
+    expect(html).toMatch(/<button type="button" class="cel-meniu" data-act="meniu-rand" data-idx="1"/);
+    expect(html).toMatch(/data-act="adauga-strat" data-idx="1">Adaugă un strat</);
+    expect(html).toMatch(/data-act="scoate-pozitie" data-idx="1">Scoate rândul din ofertă</);
     l.extras.straturi_extra = [...l.extras.straturi_extra, { sistem: "elastomer", grosime_mm: 9 }];
-    expect(verificarePeEcran(documentOferta(cerere([l])), optiuni([l]))).toContain('<option value="strat" disabled>');
+    expect(verificarePeEcran(documentOferta(cerere([l])), optiuni([l]))).toMatch(/data-act="adauga-strat" data-idx="1" disabled>/);
   });
 
   it("rândul de continuare iese întreg: descrierea, apoi ce are el în plus (Book15)", () => {
