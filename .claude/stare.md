@@ -6,7 +6,7 @@
 ## 22 octombrie 2026: pozele pentru ofertă, la Cerere nouă
 
 Andrei: numele „Poze de pe șantier” era prea lung și nu se potrivea; pozele
-pentru ofertă se mută la import. Pe ramura `santier-taburi`. Cerere nouă,
+pentru ofertă se mută la import. Unit pe `main` (518ac45). Cerere nouă,
 pasul 1: filele **Fișier Excel** (cu tipul ofertei) și **Poze din carnet**;
 pagina din meniu e acum **Măsurători**, doar pentru situații și comenzi
 (detalii în `ui.md`). Verificat cu Playwright pe `build:server`: 390 / 768 /
@@ -19,7 +19,7 @@ pozele ofertei; zero erori.
 ## 22 octombrie 2026: pagina șantierului pe file
 
 Andrei: filele sunt mai ușor de navigat decât cardurile pliate. Pe ramura
-`santier-taburi` (pornită din `straturi-rand`, încă neunită). Pagina unui
+`santier-taburi`, unită pe `main` (dd5824e). Pagina unui
 șantier are, sub cifre, filele Situații de lucrări · Materiale · Planul de
 șantier · Închide șantierul · Șterge șantierul (detalii în `ui.md`). Verificat
 cu Playwright pe `build:server`: TRANSAVIA (deschis) și NISAL (închis, fără
@@ -30,7 +30,7 @@ de pe altă filă duce la situații, zero derulare laterală, zero erori.
 ## 22 octombrie 2026: straturile pe rând, din lista lui ✕
 
 Andrei: la import, un rând poate avea 1–4 straturi, iar angajatul trebuie să
-poată adăuga unul fără un buton în plus. Pe ramura `straturi-rand`. ✕ din
+poată adăuga unul fără un buton în plus. Pe ramura `straturi-rand`, unită pe `main`. ✕ din
 „Verificare” e acum o listă („⋯”): „Adaugă un strat” (vată sub protecție,
 cursorul în grosime; cel mult 4 straturi cu tot cu protecția) și „Scoate
 rândul din ofertă”. Asta înlocuiește „fără buton de adăugat strat” din 21

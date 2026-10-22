@@ -1,7 +1,8 @@
 # Șantier: notițele din carnet
 
 > Context pentru `src/santier/`, `src/lucrari/potrivire.ts`, `web/ecrane/santier.ts`
-> (pagina „Măsurători”), `web/santier-vizual.ts` și `scripts/compara-poze.ts`.
+> (pagina „Măsurători” și fila „Poze din carnet” din Cerere nouă, prin `montezaPoze`),
+> `web/santier-vizual.ts` și `scripts/compara-poze.ts`.
 
 ## De ce există
 
@@ -156,6 +157,7 @@ altfel omul (`deAles`); ce nu e în plan rămâne la om (`nepotrivite`). Planul
 ține amprenta și zona din 2 octombrie 2026; planurile mai vechi nu se pot
 potrivi (`planVechi`) și se refac din ofertă cât n-au situații. Testul
 Ecoterm: oferta din poze, apoi aceleași poze ca executat tot → situația dă
-exact valoarea ofertei. Ecranul: pagina „Măsurători”, cu „Pentru ofertă” /
-„Pentru situație” (3 octombrie 2026, `ui.md`). Nu avem încă poze reale din
+exact valoarea ofertei. Ecranul: din 22 octombrie 2026 pozele pentru ofertă
+sunt fila „Poze din carnet” din Cerere nouă, iar pagina „Măsurători” are doar
+„Pentru situație de lucrări” și „Pentru comanda de material” (`ui.md`). Nu avem încă poze reale din
 timpul lucrării: cerute firmei.
