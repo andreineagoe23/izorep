@@ -28,12 +28,11 @@ export const MENIU: GrupMeniu[] = [
     { id: "documente", eticheta: "Oferte și cereri" },
     { id: "deviz", eticheta: "Calcul rapid" },
   ]},
+  // „Materiale” (un ecran cu trei file, 21 octombrie 2026) stă cu șantierele: un grup
+  // fără titlu lăsa un gol în meniu (Andrei, 22 octombrie 2026).
   { titlu: "Șantiere", itemi: [
     { id: "lucrari", eticheta: "Șantiere" },
     { id: "masuratori", eticheta: "Poze de pe șantier" },
-  ]},
-  // Un singur ecran, cu trei file (De cumpărat, Comenzi, Depozit): 21 octombrie 2026.
-  { titlu: "", itemi: [
     { id: "materiale", eticheta: "Materiale" },
   ]},
   { titlu: "Setări", itemi: [

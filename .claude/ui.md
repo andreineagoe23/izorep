@@ -168,6 +168,15 @@ ecran). Textele ecranelor au fost rescrise fără jargon („snapshot”, „seg
 
 ## Tema
 
+**Din 22 octombrie 2026 (Andrei):** în locul celor trei butoane „Automat /
+Deschis / Închis” din josul barei, un singur buton lângă „IzoERP / RADOIA
+ISOLIRUNG SRL”: soarele în tema deschisă, luna în cea închisă (cea care se vede,
+și când vine din sistem); un clic trece pe cealaltă și o ține minte. Fără
+alegere ținută minte, pagina urmează sistemul. În bara pliată butonul se
+ascunde, ca înainte blocul. Paragrafele de mai jos despre cele trei stări sunt
+istoric. „Materiale” stă acum în grupul „Șantiere”: un grup fără titlu lăsa
+un gol în meniu.
+
 Comutator cu trei stări în bara laterală: **Automat** (implicit, după
 sistem), **Deschis**, **Închis**. Alegerea se ține în `localStorage` sub `izorep-tema`.
 

@@ -106,10 +106,11 @@ aside {
   overflow-x: hidden;
 }
 .marca {
-  flex: 0 0 auto; height: var(--inaltime-antet); padding: 0 20px;
-  display: flex; flex-direction: column; justify-content: center;
+  flex: 0 0 auto; height: var(--inaltime-antet); padding: 0 16px 0 20px;
+  display: flex; align-items: center; gap: 12px;
   border-bottom: 1px solid rgba(255,255,255,.12);
 }
+.marca-text { min-width: 0; flex: 0 1 auto; display: flex; flex-direction: column; justify-content: center; }
 .marca strong { display: block; font-size: 17px; color: #fff; letter-spacing: -0.01em; }
 .marca span { font-size: 13px; color: #96a0ab; }
 
@@ -143,15 +144,13 @@ a.item[aria-current="page"] {
 .viitor ul { margin: 4px 0 0; padding: 0 0 0 18px; list-style: none; }
 .viitor li { font-size: 13.5px; color: #7d8794; padding: 4px 0; }
 
-.tema { padding: 14px 20px 0; border-top: 1px solid rgba(255,255,255,.12); }
-.tema-titlu { display: block; font-size: 13px; color: #96a0ab; margin-bottom: 6px; }
-.tema-grup { display: flex; gap: 4px; background: #262b33; border: 1px solid #4a525c; border-radius: 8px; padding: 3px; }
-.tema-grup button {
-  flex: 1; min-height: 32px; border: 0; border-radius: 6px; background: transparent;
-  color: #d5dae0; font: inherit; font-size: 12.5px; cursor: pointer; padding: 4px 2px;
+/* Tema: un buton rotund lângă numele aplicației, cu soarele sau luna. */
+.tema-buton {
+  flex: 0 0 auto; width: 40px; height: 40px; padding: 0; margin: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid #4a525c; border-radius: 10px; background: #262b33; color: #d5dae0; cursor: pointer;
 }
-.tema-grup button:hover { background: rgba(255,255,255,.08); }
-.tema-grup button[aria-pressed="true"] { background: var(--accent-fill); color: #fff; font-weight: 600; }
+.tema-buton:hover { background: rgba(255,255,255,.12); color: #fff; }
 
 .rol { padding: 14px 20px 0; }
 .rol label { display: block; font-size: 13px; color: #96a0ab; margin-bottom: 6px; }
@@ -226,7 +225,7 @@ main:has(.imp-vedere) { max-width: none; }
   :root[data-meniu="pliat"] .marca span,
   :root[data-meniu="pliat"] .grup h3,
   :root[data-meniu="pliat"] .viitor,
-  :root[data-meniu="pliat"] .tema,
+  :root[data-meniu="pliat"] .tema-buton,
   :root[data-meniu="pliat"] .rol { display: none; }
   :root[data-meniu="pliat"] .item { justify-content: center; padding: 8px 0; border-left: 0; }
   :root[data-meniu="pliat"] a.item[aria-current="page"] { border-left: 0; }

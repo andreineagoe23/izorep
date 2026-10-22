@@ -237,47 +237,47 @@ aplicaBara();
 
 /* ------------------------------------------------------------------- tema */
 
-type Tema = "sistem" | "light" | "dark";
-const TEME: { id: Tema; eticheta: string }[] = [
-  { id: "sistem", eticheta: "Automat" },
-  { id: "light", eticheta: "Deschis" },
-  { id: "dark", eticheta: "Închis" },
-];
+/*
+ * Un singur buton lângă numele aplicației (Andrei, 22 octombrie 2026, în locul
+ * celor trei „Automat / Deschis / Închis”): soarele în tema deschisă, luna în
+ * cea închisă, iar un clic trece pe cealaltă și o ține minte. Fără alegere
+ * scrisă, tema urmează sistemul și butonul arată tema care se vede.
+ */
+type Tema = "light" | "dark";
+const SISTEM_INCHIS = matchMedia("(prefers-color-scheme: dark)");
 
-const citesteTema = (): Tema => {
+const temaAleasa = (): Tema | null => {
   try {
     const t = localStorage.getItem("izorep-tema");
-    return t === "light" || t === "dark" ? t : "sistem";
+    return t === "light" || t === "dark" ? t : null;
   } catch {
-    return "sistem"; // localStorage blocat (fereastra privata, cookies off)
+    return null; // localStorage blocat (fereastra privata, cookies off)
   }
 };
+const temaVazuta = (): Tema => temaAleasa() ?? (SISTEM_INCHIS.matches ? "dark" : "light");
 
-/**
- * "sistem" inseamna absenta atributului, nu o a treia paleta: asa raspunde
- * pagina la schimbarea temei din sistem in timp ce e deschisa.
- */
-function aplicaTema(t: Tema): void {
-  if (t === "sistem") delete document.documentElement.dataset["tema"];
-  else document.documentElement.dataset["tema"] = t;
-  try {
-    if (t === "sistem") localStorage.removeItem("izorep-tema");
-    else localStorage.setItem("izorep-tema", t);
-  } catch { /* preferinta nu se retine, dar tema se aplica */ }
-  deseneazaTema(t);
+const SOARE = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>';
+const LUNA = '<path d="M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a7 7 0 0 0 11 11Z"/>';
+
+function deseneazaTema(): void {
+  const t = temaVazuta();
+  const spre = t === "dark" ? "Treci pe tema deschisă" : "Treci pe tema închisă";
+  const b = $<HTMLButtonElement>("#tema");
+  b.innerHTML = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"
+    stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${t === "dark" ? LUNA : SOARE}</svg>`;
+  b.setAttribute("aria-label", spre);
+  b.title = spre;
 }
 
-function deseneazaTema(activ: Tema): void {
-  $("#tema").innerHTML = TEME.map((t) =>
-    `<button type="button" data-tema="${t.id}" aria-pressed="${t.id === activ}">${esc(t.eticheta)}</button>`,
-  ).join("");
-}
-
-deseneazaTema(citesteTema());
-$("#tema").addEventListener("click", (e) => {
-  const b = (e.target as HTMLElement).closest<HTMLButtonElement>("button[data-tema]");
-  if (b) aplicaTema(b.dataset["tema"] as Tema);
+$("#tema").addEventListener("click", () => {
+  const t: Tema = temaVazuta() === "dark" ? "light" : "dark";
+  document.documentElement.dataset["tema"] = t;
+  try { localStorage.setItem("izorep-tema", t); } catch { /* tema se aplica, doar nu se retine */ }
+  deseneazaTema();
 });
+// Fără alegere scrisă, sistemul poate schimba tema cât pagina e deschisă.
+SISTEM_INCHIS.addEventListener("change", () => { if (!temaAleasa()) deseneazaTema(); });
+deseneazaTema();
 
 /* ------------------------------------------------------------------- rol */
 
