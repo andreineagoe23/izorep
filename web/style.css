@@ -1085,11 +1085,9 @@ main details.imp-card[open] > summary { margin-bottom: 12px; }
 .antet-dreapta { margin-left: auto; display: flex; align-items: center; gap: 16px; min-width: 0; }
 .antet-om { display: flex; align-items: center; gap: 10px; min-width: 0; font-size: 14px; }
 .antet-om[hidden] { display: none; }
-.antet-om a { color: var(--text); text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 16ch; }
-.antet-om a:hover { color: var(--accent); text-decoration: underline; }
-/* „Ieși”: doar pictograma, pătrat de 40 px, ca butonul de meniu de lângă. */
-.antet-om .antet-iesi { width: 40px; padding: 0; gap: 0; }
-@media (max-width: 560px) { .antet-om a { display: none; } }
+/* „Cont” și „Ieși”: pictogramă și text, ca butonul de meniu; „Cont” e un link, deci fără subliniere. */
+.antet-om .antet-buton { text-decoration: none; white-space: nowrap; }
+.antet-om a.antet-buton[aria-current="page"] { background: var(--accent-slab); color: var(--accent); border-color: var(--accent); }
 
 /* ---- pagina de intrare și alegerea parolei: pe tot ecranul, fără bara
    laterală și fără antet (Andrei, 22 octombrie 2026: bara cu tema și firma
@@ -1127,6 +1125,8 @@ main details.imp-card[open] > summary { margin-bottom: 12px; }
 @media (max-width: 560px) { .antet-curs-lung { display: none; } }
 /* Pe telefon antetul ține butonul de meniu, firma și „Ieși”: cursul (doar informativ) nu mai încape. */
 @media (max-width: 560px) { :root:not([data-fara-meniu]) .antet-curs { display: none; } }
+/* Tot pe telefon, cu „Cont” și „Ieși” cu text în dreapta: numele aplicației din antet nu mai încape (e în meniu). */
+@media (max-width: 560px) { :root:not([data-fara-meniu]) .antet-marca { display: none; } .continut > header { gap: 8px; } .antet-dreapta { gap: 8px; } }
 
 /* ---- antetul: pe telefon, numele aplicatiei langa butonul de meniu */
 .antet-marca { display: none; font-weight: 700; font-size: 16px; letter-spacing: -0.01em; }

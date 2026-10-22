@@ -119,7 +119,7 @@ clic.
   pe tot ecranul, cu logo-urile RADOIA și ISORAD din oferte centrate pe o plăcuță albă și dedesubt doar titlul „Intră în cont” (`antetIntrare`; „IzoERP” și firma au plecat), fără bara laterală și fără antet (`data-intrare` pe `:root`;
   Andrei, 22 octombrie: bara cu tema și firma nu are ce căuta înainte de
   intrare), desenată de `main.ts` când `/api/stare` nu
-  are om intrat; după intrare pagina se reîncarcă. Antetul rămâne fixat sus la derulare, pe orice ecran (`position: sticky`, sub sertarul de pe telefon; 22 octombrie 2026), iar „Ieși” e doar pictograma (ușa cu săgeată, `icoana("iesi")`), cu eticheta „Ieși din cont” pentru cititorul de ecran. Cu parola temporară,
+  are om intrat; după intrare pagina se reîncarcă. Antetul rămâne fixat sus la derulare, pe orice ecran (`position: sticky`, sub sertarul de pe telefon; 22 octombrie 2026), iar în dreapta antetului sunt „Cont” (spre „Contul meu”, scos din meniu) și „Ieși”, fiecare cu pictogramă și text, ca butonul de meniu. Jurnalul „Cine a schimbat ce” se numește „Istoric” (Setări). Pe telefon (sub 560 px) antetul ține butonul de meniu, „Cont” și „Ieși”: numele aplicației și cursul nu mai încap. Cu parola temporară,
   „Alege-ți parola” înainte de orice. Un 401 în timpul lucrului (sesiune
   expirată) aduce intrarea, cu motivul. În antet: numele omului (spre „Contul
   meu”) și „Ieși”; pe telefon fără curs. La Setări: „Cine a schimbat ce”

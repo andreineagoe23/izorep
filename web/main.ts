@@ -424,13 +424,14 @@ function deseneazaParolaNoua(): void {
   laInceput();
 }
 
-/** În antet, numele omului (spre „Contul meu”) și „Ieși”. */
+/** În antet, „Cont” (spre „Contul meu”) și „Ieși”. */
 function arataOmul(): void {
   const om = eu();
   const el = $("#om");
   if (!om) { el.hidden = true; return; }
-  el.innerHTML = `<a href="#/cont" title="Contul meu">${esc(om.nume)}</a>
-    <button type="button" class="pliaza antet-iesi" id="iesi" aria-label="Ieși din cont" title="Ieși din cont">${icoana("iesi")}</button>`;
+  // „Cont” și „Ieși”: pictogramă și text, ca butonul de meniu (Andrei, 22 octombrie 2026).
+  el.innerHTML = `<a href="#/cont" class="pliaza antet-buton"${ruta() === "cont" ? ' aria-current="page"' : ""} title="Contul meu: ${esc(om.nume)}">${icoana("cont")}<span>Cont</span></a>
+    <button type="button" class="pliaza antet-buton" id="iesi" title="Ieși din cont">${icoana("iesi")}<span>Ieși</span></button>`;
   el.hidden = false;
 }
 

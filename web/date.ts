@@ -182,7 +182,7 @@ export async function urmatorulNumar(firma: string): Promise<string | null> {
   try { return (await api<{ numar: string | null }>(`/api/oferte/urmatorul?firma=${encodeURIComponent(firma)}`)).numar; } catch { return null; }
 }
 
-/** Cine a schimbat ce: cele mai noi întâi, câte 200; `inainte` dă pagina următoare. */
+/** Istoricul (cine a schimbat ce): cele mai noi întâi, câte 200; `inainte` dă pagina următoare. */
 export async function citesteJurnal(inainte?: string): Promise<RandJurnal[]> {
   return api<RandJurnal[]>(`/api/jurnal${inainte ? `?inainte=${encodeURIComponent(inainte)}` : ""}`);
 }

@@ -1,5 +1,5 @@
 /**
- * Cine a schimbat ce (21 octombrie 2026): jurnalul scrierilor, cele mai noi
+ * Istoric (21 octombrie 2026; „Cine a schimbat ce” până pe 22): jurnalul scrierilor, cele mai noi
  * întâi, câte 200, cu „Mai vechi”. Id-urile din jurnal se arată cu numele lor
  * (șantierul, comanda, cererea), când pagina le știe.
  */
@@ -13,7 +13,7 @@ const cand = (iso: string): string => new Date(iso).toLocaleString("ro-RO", {
 
 export const ecran: Ecran = {
   id: "jurnal",
-  titlu: "Cine a schimbat ce",
+  titlu: "Istoric",
 
   async render(root) {
     if (modDate() !== "server") {
