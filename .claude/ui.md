@@ -892,6 +892,25 @@ testate); fără clase CSS noi.
   noi „Ultimele 7 zile pe șantiere” și „Șantiere închise”. Banii ascultă de
   `vedeCosturi()`.
 
+## Pozele pentru ofertă, la Cerere nouă (22 octombrie 2026)
+
+Andrei: „Poze de pe șantier” era un nume prea lung, care nu se potrivea, iar
+pozele pentru ofertă țin de import. Pasul 1 din Cerere nouă are două file
+(`fileSursa` în `web/import/vizual.ts`): **Fișier Excel** (tipul ofertei și
+fișierul, ca înainte, cu importurile recente) și **Poze din carnet**
+(`#/import/poze`, ținută la reîncărcare). Fila de poze montează ecranul de
+poze (`montezaPoze(loc, "oferta")` din `web/ecrane/santier.ts`) fără alegerea
+scopului și fără tipul ofertei: acesta se alege la Verificare, ca la orice
+cerere. „Trimite la ofertă” predă registrul și importul îl ia pe loc
+(`laOferta`), deci pagina trece direct la Verificare. Evenimentele din fila de
+poze nu ajung la ascultătorii importului (aceleași `data-act`, aceleași celule
+`data-ed`). Pagina din meniu se numește acum **Măsurători** și are doar
+„Pentru situație de lucrări” și „Pentru comanda de material”. Cele două locuri
+își țin lucrul separat (`treciPe`; în IndexedDB sub „oferta”, respectiv
+„curent”; lucrul vechi pentru ofertă de sub „curent” trece la Cerere nouă).
+Secțiunea de mai jos descrie ecranul de poze; „Pentru ofertă” de acolo e acum
+fila din Cerere nouă.
+
 ## Măsurători: notițele din carnet (29 septembrie 2026)
 
 `web/ecrane/santier.ts` (ruta `#/masuratori`; `#/santier` e alias), marcajul în

@@ -140,7 +140,7 @@ export const ecran: Ecran = {
         ${sters ? `<p class="hint" role="status">${esc(sters)}</p>` : ""}
         ${importuri.length === 0
           ? `<p class="hint" style="margin:0">Nicio cerere încă. O cerere intră aici când o aduci în aplicație, din
-            <a href="#/import">Cerere nouă</a> sau din <a href="#/masuratori">Poze de pe șantier</a>; oferta descărcată din ea
+            <a href="#/import">Cerere nouă</a>, din Excel sau din <a href="#/import/poze">pozele din carnet</a>; oferta descărcată din ea
             apare pe același rând.</p>`
           : tabel(
               ["Cererea", "Tip ofertă", "Poziții", "Oferta", ...(arataValoare ? ["Valoare"] : []), "Stare", ""],

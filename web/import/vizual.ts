@@ -84,6 +84,16 @@ export interface OptiuniStart {
   oferte?: Record<string, { numar: string; valoare: number }>;
 }
 
+/**
+ * Ce aduci la pasul 1, ca file (Andrei, 22 octombrie 2026: filele se găsesc mai
+ * ușor decât listele): Excelul clientului, cu tipul ofertei, sau pozele din carnet.
+ */
+export function fileSursa(activ: "excel" | "poze"): string {
+  const fila = (id: "excel" | "poze", eticheta: string): string =>
+    `<button type="button" class="fila" data-act="sursa" data-sursa="${id}"${id === activ ? ' aria-current="page"' : ""}>${eticheta}</button>`;
+  return `<nav class="file imp-sursa" aria-label="Ce aduci">${fila("excel", "Fișier Excel")}${fila("poze", "Poze din carnet")}</nav>`;
+}
+
 export function ecranStart(o: OptiuniStart): string {
   const istoric = o.istoric.length === 0 ? "" : `
     <section class="imp-card imp-istoric" aria-labelledby="imp-istoric-titlu">

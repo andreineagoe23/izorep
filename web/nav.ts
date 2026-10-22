@@ -32,7 +32,7 @@ export const MENIU: GrupMeniu[] = [
   // fără titlu lăsa un gol în meniu (Andrei, 22 octombrie 2026).
   { titlu: "Șantiere", itemi: [
     { id: "lucrari", eticheta: "Șantiere" },
-    { id: "masuratori", eticheta: "Poze de pe șantier" },
+    { id: "masuratori", eticheta: "Măsurători" },
     { id: "materiale", eticheta: "Materiale" },
   ]},
   { titlu: "Setări", itemi: [

@@ -56,7 +56,7 @@ let trimisa = "";
  */
 let redeseneaza: (id?: string) => void = () => {};
 let destinatie: Destinatie = "rezidential";
-let scop: Scop = "oferta";
+let scop: Scop = "situatie";
 /** Santierul ales pentru „Pentru situatie”. */
 let planAles = "";
 /** Potrivirea ruleaza importul: cat dureaza, butonul e oprit. */
@@ -72,12 +72,39 @@ let mesajComanda = "";
 
 /** Lucrul din IndexedDB se reface o singura data, la prima deschidere dupa incarcarea paginii. */
 let refacut = false;
+
+/**
+ * Unde e montat ecranul (22 octombrie 2026): pagina „Măsurători” (situație,
+ * comandă) sau fila „Poze” din Cerere nouă (ofertă). Fiecare loc are lucrul lui:
+ * starea de mai sus e a locului deschis, iar celălalt așteaptă în `stari`.
+ * Doar un loc e în pagină odată, deci schimbul se face la montare.
+ */
+export type Loc = "oferta" | "santier";
+let loc: Loc = "santier";
+interface StareLoc {
+  pagini: PaginaSantier[]; deScos: string | null; trimisa: string; destinatie: Destinatie; scop: Scop; planAles: string;
+  titlu: string; eroare: string; comparaCu: string; comparatie: { lista: string; c: Comparatie } | null; mesajComanda: string; refacut: boolean;
+}
+const stari: Partial<Record<Loc, StareLoc>> = {};
+function treciPe(nou: Loc): void {
+  if (nou === loc) return;
+  stari[loc] = { pagini, deScos, trimisa, destinatie, scop, planAles, titlu, eroare, comparaCu, comparatie, mesajComanda, refacut };
+  const s = stari[nou] ?? {
+    pagini: [], deScos: null, trimisa: "", destinatie: "rezidential", scop: nou === "oferta" ? "oferta" : "situatie", planAles: "",
+    titlu: "", eroare: "", comparaCu: "", comparatie: null, mesajComanda: "", refacut: false,
+  };
+  ({ pagini, deScos, trimisa, destinatie, scop, planAles, titlu, eroare, comparaCu, comparatie, mesajComanda, refacut } = s);
+  lucreaza = false;
+  loc = nou;
+}
+const cheieLucru = (): string => (loc === "oferta" ? "oferta" : "curent");
 let ceasSalvare: ReturnType<typeof setTimeout> | undefined;
 
 /** Scrie lucrul in browser, amanat: o citire, o corectura si un clic vin unul dupa altul. */
 function salveazaLucru(): void {
   clearTimeout(ceasSalvare);
   ceasSalvare = setTimeout(() => {
+    const cheie = cheieLucru();
     void scrieLucru({
       scop, destinatie, planAles, titlu,
       pagini: pagini.flatMap((p) => {
@@ -87,7 +114,7 @@ function salveazaLucru(): void {
           verificata: p.verificata, faraModel: p.faraModel,
         }] : [];
       }),
-    });
+    }, cheie);
   }, 300);
 }
 
@@ -95,8 +122,12 @@ function salveazaLucru(): void {
 async function refaLucrul(): Promise<void> {
   if (refacut || pagini.length > 0) { refacut = true; return; }
   refacut = true;
-  const l = await citesteLucru();
-  if (!l || l.pagini.length === 0) return;
+  const aici = loc;
+  // Lucrul pentru ofertă de dinainte de 22 octombrie 2026 stătea tot sub „curent”.
+  const vechi = await citesteLucru();
+  const l = aici === "oferta" ? (await citesteLucru("oferta")) ?? (vechi?.scop === "oferta" ? vechi : null)
+    : vechi?.scop === "oferta" ? null : vechi;
+  if (!l || l.pagini.length === 0 || loc !== aici) return;
   ({ scop, destinatie, planAles, titlu } = l);
   pagini = l.pagini.map((p) => {
     const f = new File([p.poza], p.nume, { type: p.poza.type });
@@ -121,470 +152,487 @@ const randGol = (zona: string): RandSantier => ({
 
 export const ecran: Ecran = {
   id: "masuratori",
-  titlu: "Poze de pe șantier",
-  subtitlu: "Pozele din carnet, înainte de ofertă sau din timpul lucrării. Rândurile citite din poză, verificate de tine, " +
-    "ajung în ofertă sau în situația de lucrări.",
+  // Andrei, 22 octombrie 2026: „Poze de pe șantier” era prea lung; pozele pentru ofertă au plecat la Cerere nouă.
+  titlu: "Măsurători",
+  subtitlu: "Pozele din carnet, din timpul lucrării. Rândurile citite din poză, verificate de tine, " +
+    "ajung în situația de lucrări sau în comanda de material.",
+  render: (root) => montezaPoze(root, "santier"),
+};
 
-  async render(root) {
-    root.innerHTML = `<div class="imp sant">
-      <div id="sant-incarca"></div>
-      <div id="sant-pagini" class="imp-pagina"></div>
-      <div id="sant-trimite"></div>
-      <div id="sant-comparatie"></div>
-      ${previzualizare()}
-    </div>`;
-    const gazda = root.querySelector<HTMLElement>(".sant")!;
-    let [model] = await Promise.all([modelDisponibil(), refaLucrul()]);
-    /** Importurile din istoric: listele clientilor cu care se pot compara masuratorile. */
-    let liste: ListaClient[] = [];
-    try { liste = (await listeazaImporturi()).map((x) => ({ id: x.id, nume: x.nume })); } catch { liste = []; }
+/**
+ * Pozele din carnet, montate în `root`. `laOferta`: ce face Cerere nouă după
+ * „Trimite la ofertă” (e deja pe ecran; o navigare spre `#/import` n-ar schimba nimic).
+ */
+export async function montezaPoze(root: HTMLElement, unde: Loc, opt: { laOferta?: () => void } = {}): Promise<void> {
+  treciPe(unde);
+  if (unde === "santier" && scop === "oferta") scop = "situatie";
+  root.innerHTML = `<div class="imp sant">
+    <div id="sant-incarca"></div>
+    <div id="sant-pagini" class="imp-pagina"></div>
+    <div id="sant-trimite"></div>
+    <div id="sant-comparatie"></div>
+    ${previzualizare()}
+  </div>`;
+  const gazda = root.querySelector<HTMLElement>(".sant")!;
+  let [model] = await Promise.all([modelDisponibil(), refaLucrul()]);
+  /** Importurile din istoric: listele clientilor cu care se pot compara masuratorile. */
+  let liste: ListaClient[] = [];
+  try { liste = (await listeazaImporturi()).map((x) => ({ id: x.id, nume: x.nume })); } catch { liste = []; }
 
-    const santiere = (): SantierAles[] => citestePlanuri().filter((p) => !p.inchis).map((p) => ({ id: p.id, denumire: p.denumire, client: p.client }));
-    /** Pe situatie, tipul ofertei e al santierului, nu cel ales sus. */
-    const destinatiaPaginii = (): Destinatie =>
-      scop !== "oferta" ? ((citestePlanuri().find((p) => p.id === planAles)?.destinatie as Destinatie | undefined) ?? destinatie) : destinatie;
-    const incarca = (): string => cardIncarca({ scop, destinatie, santiere: santiere(), planAles, eroare, trimisa, model });
+  const santiere = (): SantierAles[] => citestePlanuri().filter((p) => !p.inchis).map((p) => ({ id: p.id, denumire: p.denumire, client: p.client }));
+  /** Pe situatie, tipul ofertei e al santierului, nu cel ales sus. */
+  const destinatiaPaginii = (): Destinatie =>
+    scop !== "oferta" ? ((citestePlanuri().find((p) => p.id === planAles)?.destinatie as Destinatie | undefined) ?? destinatie) : destinatie;
+  const incarca = (): string => cardIncarca({ scop, santiere: santiere(), planAles, eroare, trimisa, model });
 
-    const deseneaza = (): void => {
-      gazda.querySelector("#sant-incarca")!.innerHTML = incarca();
-      gazda.querySelector("#sant-pagini")!.innerHTML = pagini
-        .map((p, i) => `<div data-pagina="${p.id}">${cardPagina(p, i + 1, { destinatie: destinatiaPaginii(), cuModel: model === "pornit", deScos: deScos === p.id })}</div>`).join("");
-      deseneazaTrimite();
-      legaDrop();
-      salveazaLucru();
-      // Cu pagini, tabelul rândurilor are nevoie de lățime, ca la import: bara se pliază.
-      ceriSpatiu(gazda, pagini.length > 0);
-    };
-    const deseneazaTrimite = (): void => {
-      gazda.querySelector("#sant-trimite")!.innerHTML = cardTrimite({
-        pagini, titlu, scop, lucreaza, santier: santiere().find((x) => x.id === planAles) ?? null,
-        ...(scop === "oferta" ? { liste, comparaCu } : {}),
-        ...(scop === "comanda" && mesajComanda ? { mesaj: mesajComanda } : {}),
+  const deseneaza = (): void => {
+    gazda.querySelector("#sant-incarca")!.innerHTML = incarca();
+    gazda.querySelector("#sant-pagini")!.innerHTML = pagini
+      .map((p, i) => `<div data-pagina="${p.id}">${cardPagina(p, i + 1, { destinatie: destinatiaPaginii(), cuModel: model === "pornit", deScos: deScos === p.id })}</div>`).join("");
+    deseneazaTrimite();
+    legaDrop();
+    salveazaLucru();
+    // Cu pagini, tabelul rândurilor are nevoie de lățime, ca la import: bara se pliază.
+    ceriSpatiu(gazda, pagini.length > 0);
+  };
+  const deseneazaTrimite = (): void => {
+    gazda.querySelector("#sant-trimite")!.innerHTML = cardTrimite({
+      pagini, titlu, scop, lucreaza, santier: santiere().find((x) => x.id === planAles) ?? null,
+      ...(scop === "oferta" ? { liste, comparaCu } : {}),
+      ...(scop === "comanda" && mesajComanda ? { mesaj: mesajComanda } : {}),
+    });
+    gazda.querySelector("#sant-comparatie")!.innerHTML =
+      comparatie && scop === "oferta" && pagini.length > 0 ? cardComparatie(comparatie.c, comparatie.lista) : "";
+  };
+  /**
+   * Doar pagina atinsa. O citire care se termina pe pagina 3 nu are voie sa
+   * redeseneze pagina 1, unde omul poate scrie chiar atunci.
+   */
+  const deseneazaPagina = (id: string): void => {
+    const i = pagini.findIndex((p) => p.id === id);
+    const loc = gazda.querySelector(`[data-pagina="${CSS.escape(id)}"]`);
+    if (i < 0 || !loc) return deseneaza();
+    loc.innerHTML = cardPagina(pagini[i]!, i + 1, { destinatie: destinatiaPaginii(), cuModel: model === "pornit", deScos: deScos === id });
+    deseneazaTrimite();
+    salveazaLucru();
+  };
+  redeseneaza = (id) => (id ? deseneazaPagina(id) : deseneaza());
+
+  const pagina = (id: string | undefined): PaginaSantier | undefined => pagini.find((p) => p.id === id);
+  const randDin = (el: HTMLElement): { p: PaginaSantier; r: RandSantier } | null => {
+    const p = pagina(el.dataset["pag"]);
+    const r = p?.randuri.find((x) => x.id === el.dataset["rand"]);
+    return p && r ? { p, r } : null;
+  };
+
+  /**
+   * Un câmp al rândului s-a schimbat (Andrei, 21 octombrie 2026: ca la import,
+   * fără „Modifică”). Omul s-a uitat la rând, deci nu mai e nesigur; pagina se
+   * verifică din nou.
+   */
+  const schimbat = (p: PaginaSantier, r: RandSantier, campuri: Partial<RandSantier>): void => {
+    Object.assign(r, campuri, { nesigur: false });
+    if (r.izolatie === null) r.grosime_mm = null;
+    p.verificata = false;
+  };
+
+  // Poza mare: panoul de deasupra paginii, cu ✕ în colț; Escape îl închide singur.
+  const mare = gazda.querySelector<HTMLDialogElement>("#sant-mare")!;
+  mare.addEventListener("click", (e) => { if (e.target === mare) mare.close(); });
+
+  async function citeste(p: PaginaSantier, f: File): Promise<void> {
+    if (model !== "pornit") {
+      p.stare = "gata";
+      p.faraModel = true;
+      return;
+    }
+    try {
+      const imagine = await micsoreaza(f);
+      const r = await fetch(RUTA_POZA, {
+        method: "POST", headers: { "Content-Type": "application/json", "X-Izorep": "1" },
+        body: JSON.stringify({ imagine }), signal: AbortSignal.timeout(400_000),
       });
-      gazda.querySelector("#sant-comparatie")!.innerHTML =
-        comparatie && scop === "oferta" && pagini.length > 0 ? cardComparatie(comparatie.c, comparatie.lista) : "";
-    };
-    /**
-     * Doar pagina atinsa. O citire care se termina pe pagina 3 nu are voie sa
-     * redeseneze pagina 1, unde omul poate scrie chiar atunci.
-     */
-    const deseneazaPagina = (id: string): void => {
-      const i = pagini.findIndex((p) => p.id === id);
-      const loc = gazda.querySelector(`[data-pagina="${CSS.escape(id)}"]`);
-      if (i < 0 || !loc) return deseneaza();
-      loc.innerHTML = cardPagina(pagini[i]!, i + 1, { destinatie: destinatiaPaginii(), cuModel: model === "pornit", deScos: deScos === id });
-      deseneazaTrimite();
-      salveazaLucru();
-    };
-    redeseneaza = (id) => (id ? deseneazaPagina(id) : deseneaza());
+      const corp = (await r.json()) as { termeni?: unknown; note?: unknown; eroare?: string };
+      if (r.status === 429 && corp.eroare) throw new PlafonModel(corp.eroare);
+      if (!r.ok) throw new Error(corp.eroare ?? `HTTP ${r.status}`);
+      // Ce vine de la server trece prin aceeasi schema inca o data.
+      const citit = RaspunsPoza.parse({ termeni: corp.termeni, note: corp.note });
+      p.randuri = cuId(agrega(citit.termeni));
+      p.note = citit.note;
+      p.stare = "gata";
+      p.faraModel = false;
+    } catch (e) {
+      console.error(e);
+      p.stare = "eroare";
+      p.eroare = e instanceof PlafonModel ? e.message : "Poza nu s-a putut citi.";
+    }
+  }
 
-    const pagina = (id: string | undefined): PaginaSantier | undefined => pagini.find((p) => p.id === id);
-    const randDin = (el: HTMLElement): { p: PaginaSantier; r: RandSantier } | null => {
-      const p = pagina(el.dataset["pag"]);
-      const r = p?.randuri.find((x) => x.id === el.dataset["rand"]);
-      return p && r ? { p, r } : null;
+  async function adaugaPoze(alese: File[]): Promise<void> {
+    eroare = "";
+    trimisa = "";
+    const imagini = alese.filter((f) => f.type.startsWith("image/"));
+    if (imagini.length < alese.length) {
+      eroare = "Unele fișiere nu sunt poze și n-au fost adăugate. Aici merg doar poze (JPG, PNG).";
+    }
+    const noi = imagini.map((f) => ({
+      f,
+      p: {
+        id: idNou(), nume: f.name, url: URL.createObjectURL(f), stare: "citeste" as const, eroare: "",
+        randuri: [], note: [], verificata: false, faraModel: false,
+      } satisfies PaginaSantier as PaginaSantier,
+    }));
+    // Paginile noi se adauga la capat; cele existente nu se ating, ca o
+    // corectura deschisa pe alta pagina sa nu se piarda.
+    const inainte = pagini.length;
+    // Modelul oprit se mai intreaba o data la fiecare poza noua: serverul
+    // poate fi trezit intre timp, sau cheia pusa, fara reincarcarea paginii.
+    if (model !== "pornit" && noi.length > 0) model = await modelDisponibil();
+    pagini.push(...noi.map((x) => x.p));
+    for (const { f, p } of noi) fisiere.set(p.id, f);
+    salveazaLucru();
+    gazda.querySelector("#sant-incarca")!.innerHTML = incarca();
+    legaDrop();
+    gazda.querySelector("#sant-pagini")!.insertAdjacentHTML("beforeend", noi.map(({ p }, k) =>
+      `<div data-pagina="${p.id}">${cardPagina(p, inainte + k + 1, { destinatie: destinatiaPaginii(), cuModel: model === "pornit", deScos: deScos === p.id })}</div>`).join(""));
+    deseneazaTrimite();
+    ceriSpatiu(gazda, true);
+    let i = 0;
+    const lucrator = async (): Promise<void> => {
+      for (let j = i++; j < noi.length; j = i++) {
+        await citeste(noi[j]!.p, noi[j]!.f);
+        redeseneaza(noi[j]!.p.id);
+      }
     };
+    await Promise.all(Array.from({ length: Math.min(CONCURENTA, noi.length) }, lucrator));
+  }
 
-    /**
-     * Un câmp al rândului s-a schimbat (Andrei, 21 octombrie 2026: ca la import,
-     * fără „Modifică”). Omul s-a uitat la rând, deci nu mai e nesigur; pagina se
-     * verifică din nou.
-     */
-    const schimbat = (p: PaginaSantier, r: RandSantier, campuri: Partial<RandSantier>): void => {
-      Object.assign(r, campuri, { nesigur: false });
-      if (r.izolatie === null) r.grosime_mm = null;
-      p.verificata = false;
-    };
+  function legaDrop(): void {
+    const drop = gazda.querySelector<HTMLElement>("#drop");
+    if (!drop) return;
+    drop.addEventListener("dragover", (e) => { e.preventDefault(); drop.classList.add("peste"); });
+    drop.addEventListener("dragleave", () => drop.classList.remove("peste"));
+    drop.addEventListener("drop", (e) => {
+      e.preventDefault();
+      drop.classList.remove("peste");
+      void adaugaPoze([...(e.dataTransfer?.files ?? [])]);
+    });
+  }
 
-    // Poza mare: panoul de deasupra paginii, cu ✕ în colț; Escape îl închide singur.
-    const mare = gazda.querySelector<HTMLDialogElement>("#sant-mare")!;
-    mare.addEventListener("click", (e) => { if (e.target === mare) mare.close(); });
+  gazda.addEventListener("change", (e) => {
+    const t = e.target as HTMLInputElement;
+    if (t.id === "poze" && t.files) void adaugaPoze([...t.files]);
+    if (t.name === "segment") { destinatie = t.value as Destinatie; deseneaza(); }
+    if (t.name === "scop") { scop = t.value as Scop; trimisa = ""; mesajComanda = ""; deseneaza(); }
+    if (t.name === "plan") { planAles = t.value; deseneaza(); }
+    if (t.name === "compara-cu") { comparaCu = t.value; comparatie = null; deseneazaTrimite(); }
+  });
 
-    async function citeste(p: PaginaSantier, f: File): Promise<void> {
-      if (model !== "pornit") {
-        p.stare = "gata";
-        p.faraModel = true;
+  gazda.addEventListener("input", (e) => {
+    const t = e.target as HTMLInputElement;
+    if (t.name === "titlu" && t.closest("#trimite")) { titlu = t.value; salveazaLucru(); }
+  });
+
+  gazda.addEventListener("click", (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLButtonElement>("button[data-act]");
+    if (!b) return;
+    const p = pagina(b.dataset["pag"] ?? b.closest<HTMLElement>("[data-pagina]")?.dataset["pagina"]);
+    const r = p?.randuri.find((x) => x.id === b.dataset["rand"]);
+    // „Sigur scoți pagina?” rămâne doar până la următorul clic.
+    if (deScos && b.dataset["act"] !== "scoate-pagina") {
+      const fost = deScos;
+      deScos = null;
+      if (pagina(fost)) deseneazaPagina(fost);
+    }
+    switch (b.dataset["act"]) {
+      case "mareste": {
+        if (!p) return;
+        const img = mare.querySelector("img")!;
+        img.src = p.url;
+        img.alt = `Pagina ${pagini.indexOf(p) + 1}, ${p.nume}`;
+        mare.showModal();
         return;
       }
-      try {
-        const imagine = await micsoreaza(f);
-        const r = await fetch(RUTA_POZA, {
-          method: "POST", headers: { "Content-Type": "application/json", "X-Izorep": "1" },
-          body: JSON.stringify({ imagine }), signal: AbortSignal.timeout(400_000),
-        });
-        const corp = (await r.json()) as { termeni?: unknown; note?: unknown; eroare?: string };
-        if (r.status === 429 && corp.eroare) throw new PlafonModel(corp.eroare);
-        if (!r.ok) throw new Error(corp.eroare ?? `HTTP ${r.status}`);
-        // Ce vine de la server trece prin aceeasi schema inca o data.
-        const citit = RaspunsPoza.parse({ termeni: corp.termeni, note: corp.note });
-        p.randuri = cuId(agrega(citit.termeni));
-        p.note = citit.note;
-        p.stare = "gata";
-        p.faraModel = false;
-      } catch (e) {
-        console.error(e);
-        p.stare = "eroare";
-        p.eroare = e instanceof PlafonModel ? e.message : "Poza nu s-a putut citi.";
+      case "micsoreaza":
+        mare.close();
+        return;
+      case "compara":
+        void compara();
+        return;
+      case "verifica-model":
+        b.disabled = true;
+        void modelDisponibil().then((m) => { model = m; deseneaza(); });
+        return;
+      case "reciteste": {
+        const f = p && fisiere.get(p.id);
+        if (!p || !f) return;
+        p.stare = "citeste";
+        p.eroare = "";
+        redeseneaza(p.id);
+        void citeste(p, f).then(() => redeseneaza(p.id));
+        return;
       }
-    }
-
-    async function adaugaPoze(alese: File[]): Promise<void> {
-      eroare = "";
-      trimisa = "";
-      const imagini = alese.filter((f) => f.type.startsWith("image/"));
-      if (imagini.length < alese.length) {
-        eroare = "Unele fișiere nu sunt poze și n-au fost adăugate. Aici merg doar poze (JPG, PNG).";
-      }
-      const noi = imagini.map((f) => ({
-        f,
-        p: {
-          id: idNou(), nume: f.name, url: URL.createObjectURL(f), stare: "citeste" as const, eroare: "",
-          randuri: [], note: [], verificata: false, faraModel: false,
-        } satisfies PaginaSantier as PaginaSantier,
-      }));
-      // Paginile noi se adauga la capat; cele existente nu se ating, ca o
-      // corectura deschisa pe alta pagina sa nu se piarda.
-      const inainte = pagini.length;
-      // Modelul oprit se mai intreaba o data la fiecare poza noua: serverul
-      // poate fi trezit intre timp, sau cheia pusa, fara reincarcarea paginii.
-      if (model !== "pornit" && noi.length > 0) model = await modelDisponibil();
-      pagini.push(...noi.map((x) => x.p));
-      for (const { f, p } of noi) fisiere.set(p.id, f);
-      salveazaLucru();
-      gazda.querySelector("#sant-incarca")!.innerHTML = incarca();
-      legaDrop();
-      gazda.querySelector("#sant-pagini")!.insertAdjacentHTML("beforeend", noi.map(({ p }, k) =>
-        `<div data-pagina="${p.id}">${cardPagina(p, inainte + k + 1, { destinatie: destinatiaPaginii(), cuModel: model === "pornit", deScos: deScos === p.id })}</div>`).join(""));
-      deseneazaTrimite();
-      ceriSpatiu(gazda, true);
-      let i = 0;
-      const lucrator = async (): Promise<void> => {
-        for (let j = i++; j < noi.length; j = i++) {
-          await citeste(noi[j]!.p, noi[j]!.f);
-          redeseneaza(noi[j]!.p.id);
-        }
-      };
-      await Promise.all(Array.from({ length: Math.min(CONCURENTA, noi.length) }, lucrator));
-    }
-
-    function legaDrop(): void {
-      const drop = gazda.querySelector<HTMLElement>("#drop");
-      if (!drop) return;
-      drop.addEventListener("dragover", (e) => { e.preventDefault(); drop.classList.add("peste"); });
-      drop.addEventListener("dragleave", () => drop.classList.remove("peste"));
-      drop.addEventListener("drop", (e) => {
-        e.preventDefault();
-        drop.classList.remove("peste");
-        void adaugaPoze([...(e.dataTransfer?.files ?? [])]);
-      });
-    }
-
-    gazda.addEventListener("change", (e) => {
-      const t = e.target as HTMLInputElement;
-      if (t.id === "poze" && t.files) void adaugaPoze([...t.files]);
-      if (t.name === "segment") { destinatie = t.value as Destinatie; deseneaza(); }
-      if (t.name === "scop") { scop = t.value as Scop; trimisa = ""; mesajComanda = ""; deseneaza(); }
-      if (t.name === "plan") { planAles = t.value; deseneaza(); }
-      if (t.name === "compara-cu") { comparaCu = t.value; comparatie = null; deseneazaTrimite(); }
-    });
-
-    gazda.addEventListener("input", (e) => {
-      const t = e.target as HTMLInputElement;
-      if (t.name === "titlu" && t.closest("#trimite")) { titlu = t.value; salveazaLucru(); }
-    });
-
-    gazda.addEventListener("click", (e) => {
-      const b = (e.target as HTMLElement).closest<HTMLButtonElement>("button[data-act]");
-      if (!b) return;
-      const p = pagina(b.dataset["pag"] ?? b.closest<HTMLElement>("[data-pagina]")?.dataset["pagina"]);
-      const r = p?.randuri.find((x) => x.id === b.dataset["rand"]);
-      // „Sigur scoți pagina?” rămâne doar până la următorul clic.
-      if (deScos && b.dataset["act"] !== "scoate-pagina") {
-        const fost = deScos;
-        deScos = null;
-        if (pagina(fost)) deseneazaPagina(fost);
-      }
-      switch (b.dataset["act"]) {
-        case "mareste": {
-          if (!p) return;
-          const img = mare.querySelector("img")!;
-          img.src = p.url;
-          img.alt = `Pagina ${pagini.indexOf(p) + 1}, ${p.nume}`;
-          mare.showModal();
-          return;
-        }
-        case "micsoreaza":
-          mare.close();
-          return;
-        case "compara":
-          void compara();
-          return;
-        case "verifica-model":
-          b.disabled = true;
-          void modelDisponibil().then((m) => { model = m; deseneaza(); });
-          return;
-        case "reciteste": {
-          const f = p && fisiere.get(p.id);
-          if (!p || !f) return;
-          p.stare = "citeste";
-          p.eroare = "";
-          redeseneaza(p.id);
-          void citeste(p, f).then(() => redeseneaza(p.id));
-          return;
-        }
-        case "de-mana":
-          if (p) { p.stare = "gata"; p.faraModel = true; p.eroare = ""; }
-          break;
-        case "confirma":
-          if (r) r.nesigur = false;
-          break;
-        case "scoate-rand":
-          if (p) { p.randuri = p.randuri.filter((x) => x !== r); p.verificata = false; }
-          break;
-        case "adauga":
-          if (p) {
-            const nou = randGol(p.randuri.at(-1)?.zona ?? "Fără zonă");
-            p.randuri.push(nou);
-            p.verificata = false;
-            deseneazaPagina(p.id);
-            gazda.querySelector<HTMLInputElement>(`.cel-ed[data-ed="diam"][data-rand="${CSS.escape(nou.id)}"]`)?.focus();
-          }
-          return;
-        case "verificata":
-          if (p) p.verificata = true;
-          break;
-        case "reverifica":
-          if (p) p.verificata = false;
-          break;
-        case "scoate-pagina":
-          if (p && p.randuri.length > 0 && deScos !== p.id) {
-            deScos = p.id;
-            deseneazaPagina(p.id);
-            gazda.querySelector<HTMLElement>(`[data-pagina="${CSS.escape(p.id)}"] [data-act="scoate-pagina"]`)?.focus();
-            return;
-          }
-          deScos = null;
-          if (p) { URL.revokeObjectURL(p.url); fisiere.delete(p.id); pagini = pagini.filter((x) => x !== p); }
-          deseneaza();
-          return;
-        default:
-          return;
-      }
-      if (!p) return deseneaza();
-      deseneazaPagina(p.id);
-    });
-
-    // Alegerile din rând (notația, piesa, izolația, protecția, prețul dublu) se aplică pe loc.
-    gazda.addEventListener("change", (e) => {
-      const t = e.target as HTMLSelectElement | HTMLInputElement;
-      const camp = t.dataset["sc"];
-      const x = camp ? randDin(t) : null;
-      if (!camp || !x) return;
-      const v = t.value;
-      schimbat(x.p, x.r, camp === "pret_dublu" ? { pret_dublu: (t as HTMLInputElement).checked }
-        : camp === "diametru_tip" ? { diametru_tip: v === "DN" ? "DN" : "exterior" }
-        : camp === "element" ? { element: v as Element }
-        : camp === "izolatie" ? { izolatie: (v || null) as Izolatie | null }
-        : { jacheta: (v || null) as Jacheta | null });
-      pastreazaCursorul(gazda, () => deseneazaPagina(x.p.id));
-    });
-
-    // Diametrul, grosimea, cantitatea și numele zonei se scriu în tabel, ca în Excel.
-    let desenari = 0;
-    let deRedesenat = "";
-    legaCelule(gazda, {
-      scrie: (el, peLoc) => {
-        if (el.dataset["ed"] === "zona") {
-          if (peLoc) return false;
-          const p = pagina(el.dataset["pag"]);
-          const nume = (el.textContent ?? "").trim() || "Fără zonă";
-          if (!p || nume === el.dataset["zona"]) return false;
-          for (const r of p.randuri) if (r.zona === el.dataset["zona"]) r.zona = nume;
+      case "de-mana":
+        if (p) { p.stare = "gata"; p.faraModel = true; p.eroare = ""; }
+        break;
+      case "confirma":
+        if (r) r.nesigur = false;
+        break;
+      case "scoate-rand":
+        if (p) { p.randuri = p.randuri.filter((x) => x !== r); p.verificata = false; }
+        break;
+      case "adauga":
+        if (p) {
+          const nou = randGol(p.randuri.at(-1)?.zona ?? "Fără zonă");
+          p.randuri.push(nou);
           p.verificata = false;
-          deRedesenat = p.id;
-          return true;
+          deseneazaPagina(p.id);
+          gazda.querySelector<HTMLInputElement>(`.cel-ed[data-ed="diam"][data-rand="${CSS.escape(nou.id)}"]`)?.focus();
         }
-        const x = randDin(el);
-        if (!x) return false;
-        const text = (el as HTMLInputElement).value;
-        const n = numarScris(text);
-        // Un text care nu e număr („12a”) nu se aplică; golul înseamnă „lipsește”.
-        if (n === null && text.trim() !== "") return false;
-        if (n !== null && n < 0) return false;
-        const campuri: Partial<RandSantier> = el.dataset["ed"] === "diam" ? { diametru_valoare: n }
-          : el.dataset["ed"] === "gros" ? { grosime_mm: n }
-          : el.dataset["ed"] === "cant" ? { cantitate: n ?? 0 } : {};
-        schimbat(x.p, x.r, campuri);
-        deRedesenat = x.p.id;
-        return true;
-      },
-      deseneaza: () => { desenari++; deseneazaPagina(deRedesenat); },
-      desenari: () => desenari,
-    });
-
-    gazda.addEventListener("submit", (e) => {
-      e.preventDefault();
-      if ((e.target as HTMLFormElement).id === "trimite") void trimite();
-    });
-
-    /** Paginile au plecat; ramase aici, s-ar putea trimite a doua oara. */
-    function golesteDupaTrimitere(): void {
-      for (const p of pagini) URL.revokeObjectURL(p.url);
-      pagini = [];
-      fisiere.clear();
-      titlu = "";
-      comparatie = null;
-      salveazaLucru();
+        return;
+      case "verificata":
+        if (p) p.verificata = true;
+        break;
+      case "reverifica":
+        if (p) p.verificata = false;
+        break;
+      case "scoate-pagina":
+        if (p && p.randuri.length > 0 && deScos !== p.id) {
+          deScos = p.id;
+          deseneazaPagina(p.id);
+          gazda.querySelector<HTMLElement>(`[data-pagina="${CSS.escape(p.id)}"] [data-act="scoate-pagina"]`)?.focus();
+          return;
+        }
+        deScos = null;
+        if (p) { URL.revokeObjectURL(p.url); fisiere.delete(p.id); pagini = pagini.filter((x) => x !== p); }
+        deseneaza();
+        return;
+      default:
+        return;
     }
+    if (!p) return deseneaza();
+    deseneazaPagina(p.id);
+  });
 
-    /**
-     * Lista clientului (un import din istoric, refacut fara model) fata de
-     * randurile din pagini. Ca la situatie, randurile trec prin import pe tipul
-     * ofertei ales sus, deci cad pe aceleasi randuri din lista ca cererea.
-     */
-    async function compara(): Promise<void> {
-      if (!comparaCu || lucreaza) return;
-      lucreaza = true;
-      deseneazaTrimite();
-      try {
-        const s = await incarcaImport(comparaCu);
-        if (!s) throw new Error("importul nu mai e in istoric");
-        const [{ redeschideImport }, { executatDinMasuratori }, { comparaCuLista, randuriDinLista }] =
-          await Promise.all([
-            import("../../src/import/redeschide.js"), import("../../src/lucrari/potrivire.js"),
-            import("../../src/lucrari/comparatie.js"),
-          ]);
-        // Memoria de sabloane a ecranului de import: lista iese cum a vazut-o omul acolo.
-        const rez = await redeschideImport(s, {
-          stoc: stocLocal(), destinatie,
-          grosimiPropuse: new Map(s.grosimiPropuse ?? []),
-          descrieriSchimbate: new Set(s.descrieriSchimbate ?? []),
-          preturiManuale: new Map(s.preturiManuale ?? []),
-        });
-        const masurat = await executatDinMasuratori(pagini.flatMap((p) => p.randuri), destinatie);
-        comparatie = { lista: s.nume, c: comparaCuLista(randuriDinLista(rez.linii), masurat) };
-        eroare = "";
-      } catch (e) {
-        console.error(e);
-        comparatie = null;
-        eroare = "Lista clientului nu s-a putut compara. Încearcă din nou.";
+  // Alegerile din rând (notația, piesa, izolația, protecția, prețul dublu) se aplică pe loc.
+  gazda.addEventListener("change", (e) => {
+    const t = e.target as HTMLSelectElement | HTMLInputElement;
+    const camp = t.dataset["sc"];
+    const x = camp ? randDin(t) : null;
+    if (!camp || !x) return;
+    const v = t.value;
+    schimbat(x.p, x.r, camp === "pret_dublu" ? { pret_dublu: (t as HTMLInputElement).checked }
+      : camp === "diametru_tip" ? { diametru_tip: v === "DN" ? "DN" : "exterior" }
+      : camp === "element" ? { element: v as Element }
+      : camp === "izolatie" ? { izolatie: (v || null) as Izolatie | null }
+      : { jacheta: (v || null) as Jacheta | null });
+    pastreazaCursorul(gazda, () => deseneazaPagina(x.p.id));
+  });
+
+  // Diametrul, grosimea, cantitatea și numele zonei se scriu în tabel, ca în Excel.
+  let desenari = 0;
+  let deRedesenat = "";
+  legaCelule(gazda, {
+    scrie: (el, peLoc) => {
+      if (el.dataset["ed"] === "zona") {
+        if (peLoc) return false;
+        const p = pagina(el.dataset["pag"]);
+        const nume = (el.textContent ?? "").trim() || "Fără zonă";
+        if (!p || nume === el.dataset["zona"]) return false;
+        for (const r of p.randuri) if (r.zona === el.dataset["zona"]) r.zona = nume;
+        p.verificata = false;
+        deRedesenat = p.id;
+        return true;
       }
+      const x = randDin(el);
+      if (!x) return false;
+      const text = (el as HTMLInputElement).value;
+      const n = numarScris(text);
+      // Un text care nu e număr („12a”) nu se aplică; golul înseamnă „lipsește”.
+      if (n === null && text.trim() !== "") return false;
+      if (n !== null && n < 0) return false;
+      const campuri: Partial<RandSantier> = el.dataset["ed"] === "diam" ? { diametru_valoare: n }
+        : el.dataset["ed"] === "gros" ? { grosime_mm: n }
+        : el.dataset["ed"] === "cant" ? { cantitate: n ?? 0 } : {};
+      schimbat(x.p, x.r, campuri);
+      deRedesenat = x.p.id;
+      return true;
+    },
+    deseneaza: () => { desenari++; deseneazaPagina(deRedesenat); },
+    desenari: () => desenari,
+  });
+
+  gazda.addEventListener("submit", (e) => {
+    e.preventDefault();
+    if ((e.target as HTMLFormElement).id === "trimite") void trimite();
+  });
+
+  /** Paginile au plecat; ramase aici, s-ar putea trimite a doua oara. */
+  function golesteDupaTrimitere(): void {
+    for (const p of pagini) URL.revokeObjectURL(p.url);
+    pagini = [];
+    fisiere.clear();
+    titlu = "";
+    comparatie = null;
+    salveazaLucru();
+  }
+
+  /**
+   * Lista clientului (un import din istoric, refacut fara model) fata de
+   * randurile din pagini. Ca la situatie, randurile trec prin import pe tipul
+   * ofertei ales sus, deci cad pe aceleasi randuri din lista ca cererea.
+   */
+  async function compara(): Promise<void> {
+    if (!comparaCu || lucreaza) return;
+    lucreaza = true;
+    deseneazaTrimite();
+    try {
+      const s = await incarcaImport(comparaCu);
+      if (!s) throw new Error("importul nu mai e in istoric");
+      const [{ redeschideImport }, { executatDinMasuratori }, { comparaCuLista, randuriDinLista }] =
+        await Promise.all([
+          import("../../src/import/redeschide.js"), import("../../src/lucrari/potrivire.js"),
+          import("../../src/lucrari/comparatie.js"),
+        ]);
+      // Memoria de sabloane a ecranului de import: lista iese cum a vazut-o omul acolo.
+      const rez = await redeschideImport(s, {
+        stoc: stocLocal(), destinatie,
+        grosimiPropuse: new Map(s.grosimiPropuse ?? []),
+        descrieriSchimbate: new Set(s.descrieriSchimbate ?? []),
+        preturiManuale: new Map(s.preturiManuale ?? []),
+      });
+      const masurat = await executatDinMasuratori(pagini.flatMap((p) => p.randuri), destinatie);
+      comparatie = { lista: s.nume, c: comparaCuLista(randuriDinLista(rez.linii), masurat) };
+      eroare = "";
+    } catch (e) {
+      console.error(e);
+      comparatie = null;
+      eroare = "Lista clientului nu s-a putut compara. Încearcă din nou.";
+    }
+    lucreaza = false;
+    deseneaza();
+    gazda.querySelector("#comparatie")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  /**
+   * Paginile verificate, cu poza lor, pastrate pe server cand pleaca (pe
+   * linkul demo nu se pastreaza). O poza care nu se poate citi din nou nu
+   * opreste trimiterea: randurile pleaca oricum.
+   */
+  async function pastreazaPagini(santierId?: string): Promise<void> {
+    if (modDate() !== "server") return;
+    const cuPoze = await Promise.all(pagini.map(async (p) => {
+      try {
+        const blob = await (await fetch(p.url)).blob();
+        return { poza: await micsoreaza(new File([blob], p.nume, { type: blob.type })), randuri: p.randuri };
+      } catch {
+        return { randuri: p.randuri };
+      }
+    }));
+    salveazaMasuratori(scop, santierId, cuPoze);
+  }
+
+  async function puneInSituatie(): Promise<void> {
+    const plan = citestePlanuri().find((p) => p.id === planAles);
+    if (!plan || lucreaza) return;
+    lucreaza = true;
+    deseneazaTrimite();
+    try {
+      // Importul (ExcelJS) se incarca abia acum, ca la citirea unui fisier.
+      const { executatDinMasuratori, potriveste } = await import("../../src/lucrari/potrivire.js");
+      const executat = await executatDinMasuratori(pagini.flatMap((p) => p.randuri), plan.destinatie as Destinatie);
+      predaSituatie({ plan: plan.id, potrivire: potriveste(plan, executat), pagini: pagini.length });
+      await pastreazaPagini(plan.id);
+    } catch (e) {
+      console.error(e);
+      eroare = "Rândurile nu s-au putut pune pe șantier. Încearcă din nou.";
       lucreaza = false;
       deseneaza();
-      gazda.querySelector("#comparatie")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
     }
+    lucreaza = false;
+    golesteDupaTrimitere();
+    trimisa = `Ultimele măsurători au plecat în situația nouă de pe șantierul „${plan.denumire}”, în Șantiere.`;
+    location.hash = "#/lucrari";
+  }
 
-    /**
-     * Paginile verificate, cu poza lor, pastrate pe server cand pleaca (pe
-     * linkul demo nu se pastreaza). O poza care nu se poate citi din nou nu
-     * opreste trimiterea: randurile pleaca oricum.
-     */
-    async function pastreazaPagini(santierId?: string): Promise<void> {
-      if (modDate() !== "server") return;
-      const cuPoze = await Promise.all(pagini.map(async (p) => {
-        try {
-          const blob = await (await fetch(p.url)).blob();
-          return { poza: await micsoreaza(new File([blob], p.nume, { type: blob.type })), randuri: p.randuri };
-        } catch {
-          return { randuri: p.randuri };
-        }
-      }));
-      salveazaMasuratori(scop, santierId, cuPoze);
-    }
-
-    async function puneInSituatie(): Promise<void> {
-      const plan = citestePlanuri().find((p) => p.id === planAles);
-      if (!plan || lucreaza) return;
-      lucreaza = true;
-      deseneazaTrimite();
-      try {
-        // Importul (ExcelJS) se incarca abia acum, ca la citirea unui fisier.
-        const { executatDinMasuratori, potriveste } = await import("../../src/lucrari/potrivire.js");
-        const executat = await executatDinMasuratori(pagini.flatMap((p) => p.randuri), plan.destinatie as Destinatie);
-        predaSituatie({ plan: plan.id, potrivire: potriveste(plan, executat), pagini: pagini.length });
-        await pastreazaPagini(plan.id);
-      } catch (e) {
-        console.error(e);
-        eroare = "Rândurile nu s-au putut pune pe șantier. Încearcă din nou.";
-        lucreaza = false;
-        deseneaza();
-        return;
-      }
-      lucreaza = false;
-      golesteDupaTrimitere();
-      trimisa = `Ultimele măsurători au plecat în situația nouă de pe șantierul „${plan.denumire}”, în Șantiere.`;
-      location.hash = "#/lucrari";
-    }
-
-    /**
-     * Comanda etapei din masuratori (S2): materialul randurilor masurate, ca la
-     * oferta, minus ce e acum pe santier si ce e comandat nesosit, rotunjit la
-     * ambalaj. Ciornele pleaca in Comenzi; nimic nu se trimite singur.
-     */
-    async function faComanda(): Promise<void> {
-      const plan = citestePlanuri().find((p) => p.id === planAles);
-      if (!plan || lucreaza) return;
-      lucreaza = true;
-      mesajComanda = "";
-      deseneazaTrimite();
-      try {
-        const [{ necesarDinMasuratori }, { ciorneDinRamas, deComandatSantier }, { pretPropus }] = await Promise.all([
-          import("../../src/stoc/din-masuratori.js"), import("../../src/stoc/comenzi.js"), import("../../src/stoc/preturi-furnizori.js"),
-        ]);
-        const dep = citesteDepozit();
-        const al = dep.necesare.find((n) => n.santier === plan.id);
-        const nec = await necesarDinMasuratori(pagini.flatMap((p) => p.randuri), plan.destinatie as Destinatie, {
-          ...(al?.pierderi ? { pierderi: al.pierderi } : {}), ...(al?.pragTub !== undefined ? { pragTub: al.pragTub } : {}),
-          ...(al?.tuburiPeste ? { tuburiPeste: al.tuburiPeste } : {}),
-        });
-        const alte = dep.necesare.filter((n) => n.santier && n.santier !== plan.id).map((n) => ({ depozit: n.santier!, materiale: n.materiale }));
-        const ramas = deComandatSantier(nec.materiale, dep.miscari, dep.comenzi ?? [], plan.id, dep.ambalaje, alte, "sold");
-        const data = new Date().toLocaleDateString("ro-RO");
-        const ciorne = ciorneDinRamas(ramas, {
-          firma: plan.firma, santier: plan.id, spre: plan.id,
-          nota: `Din măsurătorile de pe teren din ${data} (${pagini.length === 1 ? "o pagină" : `${pagini.length} pagini`}).`,
-        }, idNou, new Date().toISOString(), (a, f) => pretPropus(a, f, dep.miscari));
-        const fara = nec.faraNecesar.length;
-        if (ciorne.length === 0) {
-          lucreaza = false;
-          mesajComanda = `Nimic de comandat: ce s-a măsurat e acoperit de ce e pe șantier sau deja comandat.${
-            fara ? ` ${fara === 1 ? "Un rând n-a dat" : `${fara} rânduri n-au dat`} material (fără preț în liste).` : ""}`;
-          deseneazaTrimite();
-          return;
-        }
-        for (const c of ciorne) puneComanda(c);
-        await pastreazaPagini(plan.id);
-      } catch (e) {
-        console.error(e);
-        eroare = "Materialele nu s-au putut calcula. Încearcă din nou.";
-        lucreaza = false;
-        deseneaza();
-        return;
-      }
-      lucreaza = false;
-      golesteDupaTrimitere();
-      trimisa = `Ultimele măsurători au făcut ciornele de comandă pentru „${plan.denumire}”, în Comenzi.`;
-      location.hash = "#/comenzi";
-    }
-
-    async function trimite(): Promise<void> {
-      if (pagini.some((p) => !p.verificata)) return;
-      if (scop === "situatie") return puneInSituatie();
-      if (scop === "comanda") return faComanda();
-      const linii = spreCerere(pagini.flatMap((p) => p.randuri));
-      if (linii.length === 0) return;
-      const nume = titlu.trim() || "Măsurători de șantier";
-      const buf = await registruCerere(linii, nume);
-      const fisier = new File([buf], `${nume.replace(/[\\/:*?"<>|]+/g, " ").trim()} - masuratori santier.xlsx`, {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  /**
+   * Comanda etapei din masuratori (S2): materialul randurilor masurate, ca la
+   * oferta, minus ce e acum pe santier si ce e comandat nesosit, rotunjit la
+   * ambalaj. Ciornele pleaca in Comenzi; nimic nu se trimite singur.
+   */
+  async function faComanda(): Promise<void> {
+    const plan = citestePlanuri().find((p) => p.id === planAles);
+    if (!plan || lucreaza) return;
+    lucreaza = true;
+    mesajComanda = "";
+    deseneazaTrimite();
+    try {
+      const [{ necesarDinMasuratori }, { ciorneDinRamas, deComandatSantier }, { pretPropus }] = await Promise.all([
+        import("../../src/stoc/din-masuratori.js"), import("../../src/stoc/comenzi.js"), import("../../src/stoc/preturi-furnizori.js"),
+      ]);
+      const dep = citesteDepozit();
+      const al = dep.necesare.find((n) => n.santier === plan.id);
+      const nec = await necesarDinMasuratori(pagini.flatMap((p) => p.randuri), plan.destinatie as Destinatie, {
+        ...(al?.pierderi ? { pierderi: al.pierderi } : {}), ...(al?.pragTub !== undefined ? { pragTub: al.pragTub } : {}),
+        ...(al?.tuburiPeste ? { tuburiPeste: al.tuburiPeste } : {}),
       });
-      preda({ fisier, destinatie, pretDublu: true });
-      await pastreazaPagini();
-      golesteDupaTrimitere();
-      trimisa = `Ultima listă a plecat la import: ${fisier.name}. O găsești la „Cerere nouă”, în importurile recente.`;
-      location.hash = "#/import";
+      const alte = dep.necesare.filter((n) => n.santier && n.santier !== plan.id).map((n) => ({ depozit: n.santier!, materiale: n.materiale }));
+      const ramas = deComandatSantier(nec.materiale, dep.miscari, dep.comenzi ?? [], plan.id, dep.ambalaje, alte, "sold");
+      const data = new Date().toLocaleDateString("ro-RO");
+      const ciorne = ciorneDinRamas(ramas, {
+        firma: plan.firma, santier: plan.id, spre: plan.id,
+        nota: `Din măsurătorile de pe teren din ${data} (${pagini.length === 1 ? "o pagină" : `${pagini.length} pagini`}).`,
+      }, idNou, new Date().toISOString(), (a, f) => pretPropus(a, f, dep.miscari));
+      const fara = nec.faraNecesar.length;
+      if (ciorne.length === 0) {
+        lucreaza = false;
+        mesajComanda = `Nimic de comandat: ce s-a măsurat e acoperit de ce e pe șantier sau deja comandat.${
+          fara ? ` ${fara === 1 ? "Un rând n-a dat" : `${fara} rânduri n-au dat`} material (fără preț în liste).` : ""}`;
+        deseneazaTrimite();
+        return;
+      }
+      for (const c of ciorne) puneComanda(c);
+      await pastreazaPagini(plan.id);
+    } catch (e) {
+      console.error(e);
+      eroare = "Materialele nu s-au putut calcula. Încearcă din nou.";
+      lucreaza = false;
+      deseneaza();
+      return;
     }
+    lucreaza = false;
+    golesteDupaTrimitere();
+    trimisa = `Ultimele măsurători au făcut ciornele de comandă pentru „${plan.denumire}”, în Comenzi.`;
+    location.hash = "#/comenzi";
+  }
 
-    deseneaza();
-  },
-};
+  async function trimite(): Promise<void> {
+    if (pagini.some((p) => !p.verificata)) return;
+    if (scop === "situatie") return puneInSituatie();
+    if (scop === "comanda") return faComanda();
+    const linii = spreCerere(pagini.flatMap((p) => p.randuri));
+    if (linii.length === 0) return;
+    const nume = titlu.trim() || "Măsurători de șantier";
+    const buf = await registruCerere(linii, nume);
+    const fisier = new File([buf], `${nume.replace(/[\\/:*?"<>|]+/g, " ").trim()} - masuratori santier.xlsx`, {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    preda({ fisier, destinatie, pretDublu: true });
+    await pastreazaPagini();
+    golesteDupaTrimitere();
+    trimisa = `Ultima listă a plecat la verificare: ${fisier.name}. O găsești și în importurile recente.`;
+    if (opt.laOferta) opt.laOferta();
+    else location.hash = "#/import";
+  }
+
+  // Montat în Cerere nouă, ecranul gazdă are propriile ascultători pe aceleași
+  // nume (`data-act="confirma"`, celulele `data-ed`): evenimentele de aici rămân aici.
+  if (unde === "oferta") {
+    for (const tip of ["click", "change", "input", "keydown", "pointerdown", "focusin", "focusout", "submit", "dragover", "drop", "dragleave"]) {
+      gazda.addEventListener(tip, (e) => e.stopPropagation());
+    }
+  }
+
+  deseneaza();
+}

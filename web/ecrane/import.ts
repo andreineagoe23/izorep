@@ -30,7 +30,7 @@ import {
 } from "../date.js";
 import type { EditareCelula, IntrareIstoric, SesiuneImport } from "../istoric.js";
 import {
-  actiuniLista, antetVerificare, detaliuValoare, ecranOferta, ecranProgres, ecranStart, editorPozitie,
+  actiuniLista, antetVerificare, detaliuValoare, ecranOferta, ecranProgres, ecranStart, editorPozitie, fileSursa,
   filtreMotiv, numaraMotive, pasi, patchDinFormular, randStrat, toast,
   type FiltruStare, type Pas,
 } from "../import/vizual.js";
@@ -148,6 +148,12 @@ export const ecran: Ecran = {
     /** Denumirile scrise de om în tabelul ofertei. Vezi `SesiuneImport.denumiri`. */
     let denumiri = new Map<number, string>();
     let pas: Pas = 1;
+    /**
+     * Ce aduce omul la pasul 1 (Andrei, 22 octombrie 2026): Excelul clientului
+     * sau pozele din carnet (măsurat de noi, înainte de ofertă). `#/import/poze`
+     * ține fila la reîncărcare.
+     */
+    let sursa: "excel" | "poze" = location.hash.replace(/^#\/?/, "").split("/")[1] === "poze" ? "poze" : "excel";
     let sesiune: Sesiune | null = null;
     let istoric: IntrareIstoric[] = [];
     let filtru: FiltruStare = "toate";
@@ -343,9 +349,23 @@ export const ecran: Ecran = {
             armaturi: t.tevi.filter((x) => x.element === "robinet" || x.element === "flansa").length,
           })),
         });
+      } else if ((pas === 1 || !sesiune) && sursa === "poze") {
+        pagina.innerHTML = `${fileSursa("poze")}<div id="imp-poze"></div>`;
+        const loc = pagina.querySelector<HTMLElement>("#imp-poze")!;
+        // Pozele trec prin aceeași verificare: „Trimite la ofertă” dă un registru, luat aici ca un fișier.
+        void import("./santier.js").then(({ montezaPoze }) => {
+          if (!loc.isConnected) return;
+          void montezaPoze(loc, "oferta", {
+            laOferta: () => {
+              const p = preia();
+              alegeSursa("excel");
+              if (p) { destinatie = p.destinatie; void proceseaza(p.fisier, p); }
+            },
+          });
+        });
       } else if (pas === 1 || !sesiune) {
         const deSters = stergeDe ? istoric.find((i) => i.id === stergeDe) : undefined;
-        pagina.innerHTML = ecranStart({
+        pagina.innerHTML = fileSursa("excel") + ecranStart({
           destinatie, istoric, stergeDe, eroare: eroareStart, oferte: citesteOferte(),
           ...(deSters ? { confirmare: panouStergere({
             ce: `cererea „${deSters.nume}”`, linii: ceSeVaSterge({ cerere: { id: deSters.id, nume: deSters.nume } }),
@@ -1065,6 +1085,11 @@ export const ecran: Ecran = {
     }
 
     /* ---------------------------------------------------------- evenimente */
+    function alegeSursa(s: "excel" | "poze"): void {
+      sursa = s;
+      history.replaceState(null, "", s === "poze" ? "#/import/poze" : "#/import");
+    }
+
     function legaDrop(): void {
       const drop = pagina.querySelector<HTMLElement>("#drop");
       if (!drop) return;
@@ -1159,6 +1184,12 @@ export const ecran: Ecran = {
           return;
         }
         case "schimba-fisier": pas = 1; editIdx = null; deseneaza(); scrollTo({ top: 0 }); return;
+        case "sursa": {
+          alegeSursa(b.dataset["sursa"] === "poze" ? "poze" : "excel");
+          deseneaza();
+          pagina.querySelector<HTMLElement>(`[data-sursa="${sursa}"]`)?.focus();
+          return;
+        }
         case "renunta-izolatie": deIzolat = null; deseneaza(); scrollTo({ top: 0 }); return;
         case "la-verificare": pas = 2; deseneaza(); scrollTo({ top: 0 }); return;
         case "creeaza-santier": creeazaSantier(); return;

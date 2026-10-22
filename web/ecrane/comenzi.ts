@@ -155,7 +155,7 @@ export const ecran: Ecran = {
       root.innerHTML = `<div class="imp">
         ${fileMateriale("comenzi", numereMateriale(st))}
         ${deTrimis.length + asteptam.length === 0 ? `<section class="imp-card"><p class="hint" style="margin:0">${comenzi.length === 0
-          ? `Nicio comandă încă. La <a href="#/materiale">De cumpărat</a>, „Comandă ce lipsește” face comenzile din ce lipsește pe un șantier; în <a href="#/masuratori">Poze de pe șantier</a>, „Pentru comandă” le face din ce s-a măsurat pe teren.`
+          ? `Nicio comandă încă. La <a href="#/materiale">De cumpărat</a>, „Comandă ce lipsește” face comenzile din ce lipsește pe un șantier; în <a href="#/masuratori">Măsurători</a>, „Pentru comanda de material” le face din ce s-a măsurat pe teren.`
           : "Nimic de așteptat: tot ce s-a comandat a venit sau a fost anulat."}</p></section>` : ""}
         ${grup("De trimis", deTrimis)}
         ${grup("Așteptăm marfa", asteptam)}

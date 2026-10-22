@@ -3,6 +3,19 @@
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
 > Ultima actualizare: 22 octombrie 2026.
 
+## 22 octombrie 2026: pozele pentru ofertă, la Cerere nouă
+
+Andrei: numele „Poze de pe șantier” era prea lung și nu se potrivea; pozele
+pentru ofertă se mută la import. Pe ramura `santier-taburi`. Cerere nouă,
+pasul 1: filele **Fișier Excel** (cu tipul ofertei) și **Poze din carnet**;
+pagina din meniu e acum **Măsurători**, doar pentru situații și comenzi
+(detalii în `ui.md`). Verificat cu Playwright pe `build:server`: 390 / 768 /
+1440 / 1920 px, ambele teme; fila de poze fără tip de ofertă și fără scop, o
+poză cu un rând scris de mână (ø60, 12 ml), fila și pagina rămase după
+reîncărcare, „Trimite la ofertă” → Verificare cu „Măsurători de șantier -
+masuratori santier.xlsx” (30,02 €); Măsurători cu cele două scopuri și fără
+pozele ofertei; zero erori.
+
 ## 22 octombrie 2026: pagina șantierului pe file
 
 Andrei: filele sunt mai ușor de navigat decât cardurile pliate. Pe ramura

@@ -4,7 +4,6 @@ import type { Destinatie } from "../src/pricing/lists.js";
 import { esc, nr, stare, tabel } from "./ecrane/tip.js";
 import { celulaNumar, celulaText } from "./celula.js";
 import type { Comparatie, StareComparatie } from "../src/lucrari/comparatie.js";
-import { alegereSegment } from "./import/vizual.js";
 import type { StareModel } from "./imagine.js";
 
 /**
@@ -233,9 +232,8 @@ export interface SantierAles {
 }
 
 function alegereScop(scop: Scop): string {
-  const optiuni: [Scop, string][] = [
-    ["oferta", "Pentru ofertă"], ["situatie", "Pentru situație de lucrări"], ["comanda", "Pentru comanda de material"],
-  ];
+  // Pozele pentru ofertă stau la Cerere nouă › Poze (Andrei, 22 octombrie 2026).
+  const optiuni: [Scop, string][] = [["situatie", "Pentru situație de lucrări"], ["comanda", "Pentru comanda de material"]];
   return `<fieldset class="imp-segment"><legend>Pentru ce sunt măsurătorile</legend><div>${optiuni.map(([v, t]) =>
     `<label><input type="radio" name="scop" value="${v}"${v === scop ? " checked" : ""} /><span>${t}</span></label>`).join("")}</div></fieldset>`;
 }
@@ -270,14 +268,15 @@ export function mesajModel(m: StareModel | undefined): string {
 }
 
 export function cardIncarca(o: {
-  scop: Scop; destinatie: Destinatie; santiere: SantierAles[]; planAles: string; eroare: string; trimisa?: string;
+  scop: Scop; santiere: SantierAles[]; planAles: string; eroare: string; trimisa?: string;
   model?: StareModel;
 }): string {
+  // Pentru ofertă doar pozele: tipul ofertei se alege la verificare, ca la orice cerere.
   return `<section class="imp-card imp-incarca">
-    <div class="imp-campuri sant-sus">
+    ${o.scop === "oferta" ? "" : `<div class="imp-campuri sant-sus">
       ${alegereScop(o.scop)}
-      ${o.scop === "oferta" ? alegereSegment(o.destinatie) : alegereSantier(o.santiere, o.planAles, o.scop)}
-    </div>
+      ${alegereSantier(o.santiere, o.planAles, o.scop)}
+    </div>`}
     <label class="imp-drop" id="drop" for="poze">
       <svg aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="m21 16-5-5-8 8"/></svg>
       <span class="imp-drop-buton">Alege pozele</span>

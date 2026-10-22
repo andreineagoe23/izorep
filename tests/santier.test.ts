@@ -159,8 +159,12 @@ describe("Pozele, când modelul nu e pornit (14 octombrie 2026)", () => {
     }
     expect(mesajModel("fara-server")).toMatch(/Adaugă rând/);
     expect(mesajModel("nu-raspunde")).toMatch(/Încearcă din nou/);
-    const sus = cardIncarca({ scop: "oferta", destinatie: "rezidential", santiere: [], planAles: "", eroare: "", model: "fara-cheie" });
+    const sus = cardIncarca({ scop: "oferta", santiere: [], planAles: "", eroare: "", model: "fara-cheie" });
     expect(sus).toMatch(/Scrii de mână/);
+    // Pentru ofertă (Cerere nouă › Poze) doar pozele; pe Măsurători, doar situația și comanda (22 octombrie 2026).
+    expect(sus).not.toMatch(/name="scop"|name="segment"/);
+    const santier = cardIncarca({ scop: "situatie", santiere: [], planAles: "", eroare: "" });
+    expect([...santier.matchAll(/name="scop" value="(\w+)"/g)].map((m) => m[1])).toEqual(["situatie", "comanda"]);
 
     const p = { id: "p1", nume: "carnet.jpg", url: "blob:1", stare: "gata" as const, eroare: "", randuri: [], note: [], verificata: false, faraModel: true };
     const fara = cardPagina(p, 1, { destinatie: "rezidential" });

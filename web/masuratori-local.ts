@@ -83,18 +83,19 @@ async function cuMagazin<T>(mod: IDBTransactionMode, f: (m: IDBObjectStore) => I
   }
 }
 
-export async function citesteLucru(): Promise<LucruSalvat | null> {
+/** `cheie`: „curent” pe pagina Măsurători, „oferta” la Cerere nouă › Poze (22 octombrie 2026). */
+export async function citesteLucru(cheie = CHEIE): Promise<LucruSalvat | null> {
   try {
-    return (await cuMagazin("readonly", (m) => m.get(CHEIE) as IDBRequest<LucruSalvat | undefined>)) ?? null;
+    return (await cuMagazin("readonly", (m) => m.get(cheie) as IDBRequest<LucruSalvat | undefined>)) ?? null;
   } catch {
     return null;
   }
 }
 
-export async function scrieLucru(l: LucruSalvat): Promise<void> {
+export async function scrieLucru(l: LucruSalvat, cheie = CHEIE): Promise<void> {
   try {
-    if (l.pagini.length === 0) await cuMagazin("readwrite", (m) => m.delete(CHEIE));
-    else await cuMagazin("readwrite", (m) => m.put(l, CHEIE));
+    if (l.pagini.length === 0) await cuMagazin("readwrite", (m) => m.delete(cheie));
+    else await cuMagazin("readwrite", (m) => m.put(l, cheie));
   } catch {
     // Cotă depășită sau stocare blocată: lucrul rămâne pe ecran, doar nu supraviețuiește reîncărcării.
   }
