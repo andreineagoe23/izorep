@@ -170,6 +170,10 @@ aplicația, deci testele o cheamă direct (`app.request`), fără rețea.
   - Conturile din linia de comandă (`src/server/om.ts`): `npm run om --
     <email> "<nume>" [rol] [--parola-stdin]`, `--reseteaza`, `--dezactiveaza`,
     `--lista`. Fără ecran de administrare. Seed-ul nu mai face conturi de test.
+  - Pe Render (fără acces de scriere la bază din afară): `IZOREP_CONT_EMAIL`,
+    `IZOREP_CONT_NUME`, `IZOREP_CONT_PAROLA` fac contul la pornire
+    (`asiguraCont`) și îl lasă singurul activ; după prima pornire parola se
+    golește din mediu, iar contul rămâne în bază (doar hash-ul).
   - Antete pe orice răspuns (`securitate.ts`): CSP (scripturi doar de pe
     server, plus amprenta scriptului inline al temei, calculată la pornire din
     `dist-web/index.html`), `frame-ancestors 'none'`, `nosniff`,

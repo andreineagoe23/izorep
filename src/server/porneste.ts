@@ -15,6 +15,7 @@
  *                  un rol care ocoleste RLS (superuser, BYPASSRLS) e refuzat
  *   PORT           8787
  *   HOST           127.0.0.1 (pe Render 0.0.0.0)
+ *   IZOREP_CONT_EMAIL, IZOREP_CONT_NUME, IZOREP_CONT_PAROLA  contul firmei, pus la pornire (`asiguraCont`)
  *   TENANT_ID      firma servita; implicit singura din baza
  *   OPENAI_API_KEY si restul variabilelor modelului (`model.ts`), din .env
  *   IZOREP_PLAFON_LINII, IZOREP_PLAFON_POZE  plafonul zilnic pe model (`limita-model.ts`)
@@ -25,7 +26,7 @@ import { serveStatic } from "@hono/node-server/serve-static";
 import { alegeAplicatia, conecteaza, verificaRolul } from "../db/client.js";
 import { tenant } from "../db/schema.js";
 import { creeazaServer } from "./app.js";
-import { conturiActive } from "./intrare.js";
+import { asiguraCont, conturiActive } from "./intrare.js";
 import { amprenteScripturi } from "./securitate.js";
 import { optiuniModelDinMediu } from "./model.js";
 import { limitaDinBaza, plafoaneDinMediu } from "./limita-model.js";
@@ -71,6 +72,13 @@ console.log(model.cheie
   ? `Stratul cu model: activ (${model.model}; pozele: ${model.modelPoze}; pe zi cel mult ${plafoane.linii} de randuri si ${plafoane.poze} de poze)`
   : "Stratul cu model: inactiv (OPENAI_API_KEY lipseste); importul merge pe reguli");
 
+// Contul firmei din mediu (Render: fără acces de scriere la bază). Parola nu se scrie în log.
+const contEmail = process.env["IZOREP_CONT_EMAIL"]?.trim();
+const contParola = process.env["IZOREP_CONT_PAROLA"];
+if (contEmail && contParola) {
+  const r = await asiguraCont(db, firma.id, { email: contEmail, nume: process.env["IZOREP_CONT_NUME"]?.trim() || "Birou", parola: contParola });
+  console.log(`Contul ${contEmail}: ${r}; e singurul activ. IZOREP_CONT_PAROLA se poate goli acum.`);
+}
 const conturi = await conturiActive(db, firma.id);
 if (conturi === 0) console.warn("Niciun cont nu poate intra: fa unul cu npm run om -- <email> \"<nume>\"");
 

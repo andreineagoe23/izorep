@@ -12,7 +12,7 @@ import { firma, tenant, utilizator } from "../src/db/schema.js";
 import { ANTET_CSRF, creeazaServer } from "../src/server/app.js";
 import { hashParola } from "../src/server/parola.js";
 import { COOKIE } from "../src/server/securitate.js";
-import { PRAG_BLOCARE } from "../src/server/intrare.js";
+import { PRAG_BLOCARE, asiguraCont } from "../src/server/intrare.js";
 import { serverCuCont } from "./cu-cont.js";
 import type { CererePeFir } from "../src/server/contract.js";
 
@@ -183,5 +183,19 @@ describe("documentele atașate", () => {
       body: JSON.stringify({ id: "d1", tip: "aviz", numar: "1", nume: "a.svg", fisier: "data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=" }),
     });
     expect(r.status).toBe(400);
+  });
+});
+
+describe("contul firmei din mediu (Render, 22 octombrie)", () => {
+  daca()("se face la pornire, e singurul activ, iar a doua pornire nu-l schimbă", async () => {
+    const vechi = await cont();
+    const c = { email: `Firma-${Date.now()}@izorep.test`, nume: "Birou firmă", parola: "parola-firmei-9" };
+    expect(await asiguraCont(app$.db, tenantId, c)).toBe("creat");
+    expect(await asiguraCont(app$.db, tenantId, c)).toBe("neschimbat");
+    expect((await intra(c.email.toLowerCase(), c.parola)).status).toBe(200);
+    expect((await intra(vechi)).status).toBe(401);
+    expect(await asiguraCont(app$.db, tenantId, { ...c, parola: "alta-parola-buna-5" })).toBe("actualizat");
+    expect((await intra(c.email, c.parola)).status).toBe(401);
+    await expect(asiguraCont(app$.db, tenantId, { ...c, parola: "scurta" })).rejects.toThrow("IZOREP_CONT_PAROLA");
   });
 });

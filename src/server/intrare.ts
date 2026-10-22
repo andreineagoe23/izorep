@@ -119,3 +119,35 @@ export async function conturiActive(db: Baza, tenantId: string): Promise<number>
     return Number(r?.n ?? 0);
   });
 }
+
+/**
+ * Contul firmei pus din mediu, la pornire (22 octombrie 2026): pe Render nu
+ * avem acces de scriere la bază, deci contul se dă prin `IZOREP_CONT_EMAIL`,
+ * `IZOREP_CONT_NUME` și `IZOREP_CONT_PAROLA`. Cât timp sunt puse, contul ăsta
+ * există, are parola dată și e singurul activ (Andrei: „singurul cont valabil,
+ * cu care poate intra oricine”). Parola se scoate apoi din mediu: în bază
+ * rămâne doar hash-ul. Parola deja bună nu se re-criptează, deci sesiunile
+ * deschise rămân la o repornire.
+ */
+export async function asiguraCont(
+  db: Baza, tenantId: string, c: { email: string; nume: string; parola: string },
+): Promise<"creat" | "actualizat" | "neschimbat"> {
+  const problema = problemaParola(c.parola);
+  if (problema) throw new Error(`IZOREP_CONT_PAROLA: ${problema}`);
+  const adresa = c.email.trim().toLowerCase();
+  return caTenant(db, tenantId, async (tx) => {
+    const [u] = await tx.select().from(utilizator).where(eq(sql`lower(${utilizator.email})`, adresa)).limit(1);
+    await tx.update(utilizator).set({ activ: false }).where(and(ne(sql`lower(${utilizator.email})`, adresa), eq(utilizator.activ, true)));
+    if (!u) {
+      await tx.insert(utilizator).values({ tenantId, email: adresa, nume: c.nume, rol: "birou", parolaHash: await hashParola(c.parola) });
+      return "creat";
+    }
+    const buna = u.parolaHash ? await verificaParola(c.parola, u.parolaHash) : false;
+    if (buna && u.activ && u.nume === c.nume && !u.parolaTemporara && !u.blocatPana) return "neschimbat";
+    await tx.update(utilizator).set({
+      nume: c.nume, activ: true, parolaTemporara: false, incercariGresite: 0, blocatPana: null,
+      ...(buna ? {} : { parolaHash: await hashParola(c.parola) }),
+    }).where(eq(utilizator.id, u.id));
+    return "actualizat";
+  });
+}
