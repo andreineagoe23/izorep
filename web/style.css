@@ -1200,6 +1200,15 @@ p.ver-text:not(.cel-ed) { padding: 10px 0; }
 .ver-actiuni .imp-stare { flex: 1 1 auto; }
 .imp .ver-actiuni button { min-height: 44px; height: 44px; padding: 0 10px; font-size: 14px; white-space: nowrap; }
 .imp .ver-actiuni .cel-scoate { flex: 0 0 44px; width: 44px; padding: 0; margin-left: auto; }
+/* Lista rândului, în locul lui ✕: un pătrat de 44 px cu „⋯”, care se deschide în „Adaugă un strat” / „Scoate rândul”. */
+.imp .ver-actiuni .cel-meniu {
+  flex: 0 0 44px; width: 44px; height: 44px; min-height: 44px; padding: 0; margin-left: auto;
+  appearance: none; -webkit-appearance: none; background-image: none; text-align: center; text-align-last: center;
+  border: 1px solid var(--linie-tare); border-radius: 8px; background-color: var(--panou); color: var(--slab);
+  font-size: 20px; line-height: 1; cursor: pointer;
+}
+.imp .ver-actiuni .cel-meniu:hover { color: var(--text); border-color: var(--text); }
+.imp .ver-actiuni .cel-meniu option { font-size: 15px; text-align: left; }
 .ver-motiv { margin: 4px 0 0; font-size: 12.5px; color: var(--slab); line-height: 1.35; }
 /* Coloanele fixe au ~1010 px: sub 1240 px de tabel descrierea ar ramane sub
    ~230 px, deci fiecare rand devine card: descrierea pe toata latimea, casetele

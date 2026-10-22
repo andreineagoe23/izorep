@@ -369,6 +369,13 @@ descrierea (`scrieUm`). Straturile de izolație de sub jachetă stau sub primul,
 în `.ver-straturi` (`strat0` / `stratg0` în `patchDinCamp`). Câmpul „În atenția
 (cu d-lui sau d-nei)” se scrie în ofertă cum e scris.
 
+**22 octombrie 2026 (Andrei):** un rând poate avea de la 1 la 4 straturi, iar
+✕ a devenit o listă de 44 px cu „⋯” (`.cel-meniu`, `data-meniu-rand`), ca să nu
+ia loc încă un buton: „Adaugă un strat” pune vată fără grosime sub protecție
+(`adauga-strat` în `patchDinCamp`) și duce cursorul în grosimea ei; oprită la
+`STRATURI_MAXIM` (4, cu tot cu protecția) și pe golurile la foc. „Scoate rândul
+din ofertă” face ce făcea ✕.
+
 ## Ecranul de import: trei pași
 
 Refăcut pe 13 septembrie 2026 pentru oamenii care îl folosesc — birou și

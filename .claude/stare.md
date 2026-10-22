@@ -3,6 +3,19 @@
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
 > Ultima actualizare: 22 octombrie 2026.
 
+## 22 octombrie 2026: straturile pe rând, din lista lui ✕
+
+Andrei: la import, un rând poate avea 1–4 straturi, iar angajatul trebuie să
+poată adăuga unul fără un buton în plus. Pe ramura `straturi-rand`. ✕ din
+„Verificare” e acum o listă („⋯”): „Adaugă un strat” (vată sub protecție,
+cursorul în grosime; cel mult 4 straturi cu tot cu protecția) și „Scoate
+rândul din ofertă”. Asta înlocuiește „fără buton de adăugat strat” din 21
+octombrie. **697 de teste.** Verificat cu Playwright pe `build:server`: 390 /
+768 / 1440 / 1920 px, ambele teme, lista de 44 × 44, zero derulare laterală;
+TRANSAVIA rândul 1, două straturi de vată adăugate (30 și 20 mm), 121,67 →
+207,91 €, a treia adăugare oprită; scoaterea pune rândul pe „Nu e izolație”,
+cu „Anulează”.
+
 ## 22 octombrie 2026: conturile, jurnalul și ce rămăsese din audit
 
 Cerut de Andrei: „toate astea + securitatea + o pagină de login în loc de

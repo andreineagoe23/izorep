@@ -37,7 +37,7 @@ import {
 import {
   antetDinFisier, baraVerificare, exportPeEcran, type AntetScris, type SchimbariPozitie, type Vedere,
 } from "../import/oferta-vizual.js";
-import { patchDinCamp, verificarePeEcran } from "../import/verificare-vizual.js";
+import { JACHETE, patchDinCamp, verificarePeEcran } from "../import/verificare-vizual.js";
 import { documentOferta, textClient, type PozitieOferta } from "../document-oferta.js";
 import { legaCelule, numarInCelula, numarScris, pastreazaCursorul } from "../celula.js";
 import { rutaModel } from "../imagine.js";
@@ -1146,14 +1146,6 @@ export const ecran: Ecran = {
         case "renunta-izolatie": deIzolat = null; deseneaza(); scrollTo({ top: 0 }); return;
         case "la-verificare": pas = 2; deseneaza(); scrollTo({ top: 0 }); return;
         case "creeaza-santier": creeazaSantier(); return;
-        case "scoate-pozitie": {
-          if (idx === null) return;
-          const urm = urmatorul(idx);
-          corecteaza(idx, { sistem: null }, false);
-          deseneaza();
-          if (urm !== null) pagina.querySelector<HTMLElement>(`[data-act="scoate-pozitie"][data-idx="${urm}"]`)?.focus();
-          return;
-        }
         case "modifica":
           editIdx = editIdx === idx ? null : idx;
           deseneaza();
@@ -1278,6 +1270,30 @@ export const ecran: Ecran = {
         return;
       }
       if (t.name === "vedere") { vedere = t.value as Vedere; editIdx = null; randInLucru = null; deseneaza(); return; }
+      if (t.dataset["meniuRand"] && sesiune) {
+        // Lista din locul vechiului ✕: un strat nou pe rând, sau rândul scos din ofertă.
+        const idx = Number(t.dataset["idx"]);
+        const alegere = t.value;
+        (t as HTMLSelectElement).value = "";
+        const l = sesiune.rez.linii.find((x) => x.extras.index === idx);
+        if (!l) return;
+        if (alegere === "scoate") {
+          const urm = urmatorul(idx);
+          corecteaza(idx, { sistem: null }, false);
+          deseneaza();
+          if (urm !== null) pagina.querySelector<HTMLElement>(`[data-meniu-rand][data-idx="${urm}"]`)?.focus();
+          return;
+        }
+        if (alegere === "strat") {
+          const k = l.extras.straturi_extra.filter((x) => !JACHETE.has(x.sistem)).length;
+          randInLucru = idx;
+          corecteaza(idx, patchDinCamp(l.extras, "adauga-strat", ""));
+          deseneaza();
+          // Cursorul în grosimea stratului nou: e tot ce mai are de scris omul.
+          pagina.querySelector<HTMLElement>(`.cel-ed[data-ed="stratg${k}"][data-idx="${idx}"]`)?.focus();
+        }
+        return;
+      }
       if (t.dataset["um"] && sesiune) {
         scrieUm(Number(t.dataset["idx"]), t.value);
         pastreazaCursorul(gazda, deseneaza);

@@ -140,6 +140,18 @@ describe("verificarea și „Cum iese oferta” (21 octombrie 2026)", async () =
     expect(verificarePeEcran(d, optiuni([l]))).not.toContain("data-um=");
   });
 
+  it("✕ e o listă pe rând: „Adaugă un strat” oprit la 4 straturi, „Scoate rândul” mereu", () => {
+    const l = linie(1, "DN80 elastomer 13mm+40mm vata minerala", null, 44.35);
+    l.extras.straturi_extra = [{ sistem: "vata_minerala", grosime_mm: 40 }, { sistem: "tabla", grosime_mm: null }];
+    const html = verificarePeEcran(documentOferta(cerere([l])), optiuni([l]));
+    expect(html).toMatch(/<select class="cel-meniu" data-meniu-rand="1" data-idx="1"/);
+    expect(html).toContain('<option value="strat">Adaugă un strat</option>');
+    expect(html).toContain('<option value="scoate">Scoate rândul din ofertă</option>');
+    expect(html).not.toContain("scoate-pozitie");
+    l.extras.straturi_extra = [...l.extras.straturi_extra, { sistem: "elastomer", grosime_mm: 9 }];
+    expect(verificarePeEcran(documentOferta(cerere([l])), optiuni([l]))).toContain('<option value="strat" disabled>');
+  });
+
   it("rândul de continuare iese întreg: descrierea, apoi ce are el în plus (Book15)", () => {
     const l = linie(1, "Same - Ø125 mm | Circular spiro duct, insulated with 30mm mineral wool", null, 10.87);
     const p = documentOferta(cerere([l])).capitole[0]!.pozitii[0]!;
@@ -200,6 +212,14 @@ describe("câmpurile din rândul de verificare (patchDinCamp)", () => {
     expect(patchDinCamp(e, "stratg0", "50").straturi_extra)
       .toEqual([{ sistem: "vata_minerala", grosime_mm: 50 }, { sistem: "tabla", grosime_mm: null }]);
     expect(patchDinCamp(e, "strat0", "").straturi_extra).toEqual([{ sistem: "tabla", grosime_mm: null }]);
+  });
+
+  it("„Adaugă un strat”: vată sub protecție, fără grosime; cel mult 4 straturi pe rând", () => {
+    expect(patchDinCamp(e, "adauga-strat", "").straturi_extra).toEqual([
+      { sistem: "vata_minerala", grosime_mm: 40 }, { sistem: "vata_minerala", grosime_mm: null }, { sistem: "tabla", grosime_mm: null },
+    ]);
+    const plin = { ...e, straturi_extra: [...e.straturi_extra, { sistem: "elastomer", grosime_mm: 9 }] } as LinieProcesata["extras"];
+    expect(patchDinCamp(plin, "adauga-strat", "")).toEqual({});
   });
 });
 

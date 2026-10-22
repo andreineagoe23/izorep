@@ -27,7 +27,9 @@ import { actiuniPozitie } from "./vizual.js";
  * Pur, fără DOM: testat în Node.
  */
 
-const JACHETE = new Set<Sistem>(["tabla", "tabla_inox", "pvc"]);
+export const JACHETE = new Set<Sistem>(["tabla", "tabla_inox", "pvc"]);
+/** Câte straturi poate avea un rând: izolația, cele de sub protecție și protecția (Andrei, 22 octombrie 2026). */
+export const STRATURI_MAXIM = 4;
 /** Ce poate sta sub jachetă, ca strat în plus: izolațiile. */
 const IZOLATII = MATERIALE.filter((m) => !JACHETE.has(m) && m !== "goluri_foc");
 /** UM-urile pe care le citește importul; un UM scris altfel de client rămâne în listă. */
@@ -62,6 +64,13 @@ const numarSau = (v: string): number | null => {
  * vată, NISAL) rămân. Un diametru scris fără notație e Ø.
  */
 export function patchDinCamp(e: LinieExtrasa, camp: string, valoare: string): Partial<LinieExtrasa> {
+  // Strat nou de izolație, sub protecție: vată, cu grosimea de scris (Andrei, 22 octombrie 2026).
+  if (camp === "adauga-strat") {
+    if (1 + e.straturi_extra.length >= STRATURI_MAXIM) return {};
+    const izolatii = e.straturi_extra.filter((x) => !JACHETE.has(x.sistem));
+    const jachete = e.straturi_extra.filter((x) => JACHETE.has(x.sistem));
+    return { straturi_extra: [...izolatii, { sistem: "vata_minerala", grosime_mm: null }, ...jachete] };
+  }
   // Un strat din mijloc: „strat0” e izolația lui („” îl scoate), „stratg0” grosimea.
   const strat = /^strat(g?)(\d+)$/.exec(camp);
   if (strat) {
@@ -107,15 +116,22 @@ interface Coloane { gros: string; prot: string }
 
 /**
  * Starea, în coloana ei: pe linia casetelor butonul care o rezolvă („Confirmă”,
- * „Pune 50 mm”) sau, gata, cuvântul ei, apoi ✕; motivul, mărunt, dedesubt.
+ * „Pune 50 mm”) sau, gata, cuvântul ei, apoi lista rândului; motivul, mărunt,
+ * dedesubt. Lista ține locul vechiului ✕ (Andrei, 22 octombrie 2026: fără loc
+ * pentru încă un buton): „Adaugă un strat” (până la 4) sau „Scoate rândul din ofertă”.
  */
 function stare(l: LinieProcesata, propunere: number | null, cine: string): string {
   const st = stareLinie(l);
   const actiune = actiuniPozitie(l, propunere, false, false);
   const motive = motiveLinie(l).map((m) => MOTIV[m]);
+  const e = l.extras;
+  const poateStrat = e.sistem !== null && e.sistem !== "goluri_foc" && 1 + e.straturi_extra.length < STRATURI_MAXIM;
   return `<div class="ver-actiuni">${actiune || `<span class="imp-stare" data-stare="${st}">${STARE[st]}</span>`}
-      <button type="button" class="cel-scoate" data-act="scoate-pozitie" data-idx="${l.extras.index}"
-        aria-label="Scoate ${cine} din ofertă" title="Scoate din ofertă">✕</button></div>
+      <select class="cel-meniu" data-meniu-rand="1" data-idx="${e.index}" aria-label="${esc(`Ce faci cu ${cine}`)}" title="Adaugă un strat sau scoate rândul">
+        <option value="" selected hidden>⋯</option>
+        <option value="strat"${poateStrat ? "" : " disabled"}>${poateStrat ? "Adaugă un strat" : `Adaugă un strat (cel mult ${STRATURI_MAXIM})`}</option>
+        <option value="scoate">Scoate rândul din ofertă</option>
+      </select></div>
     ${motive.length ? `<p class="ver-motiv">${esc(motive.join(" · "))}</p>` : ""}`;
 }
 
