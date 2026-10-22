@@ -158,10 +158,18 @@ a.item[aria-current="page"] {
 .rol select { width: 100%; background: #262b33; color: #e6e9ee; border: 1px solid #4a525c; }
 
 .continut { display: flex; flex-direction: column; min-width: 0; }
+/*
+ * Antetul rămâne sus când derulezi, pe orice ecran (Andrei, 22 octombrie
+ * 2026): meniul, cursul și „Ieși” sunt mereu la îndemână. Sub sertarul de pe
+ * telefon (30) și fundalul lui (20), peste conținut.
+ */
 .continut > header {
   display: flex; align-items: center; gap: 16px; height: var(--inaltime-antet);
   padding: 0 28px; border-bottom: 1px solid var(--linie); background: var(--panou);
+  position: sticky; top: 0; z-index: 15;
 }
+/* Un salt la un element (focus, ancoră) nu-l lasă sub antetul fix. */
+html { scroll-padding-top: calc(var(--inaltime-antet) + 12px); }
 
 /*
  * Un singur buton pentru doua comportamente: pe ecran larg plieaza bara la o
@@ -880,7 +888,7 @@ button.filtru[aria-pressed="true"] .hint, button.filtru.activ .hint { color: inh
 .imp-oferta { display: grid; gap: var(--imp-gap); }
 @container imp (min-width: 900px) {
   .imp-oferta { grid-template-columns: minmax(240px, 1fr) minmax(0, 2fr); align-items: start; }
-  .imp-oferta-rezumat { position: sticky; top: 16px; }
+  .imp-oferta-rezumat { position: sticky; top: calc(var(--inaltime-antet) + 16px); }
 }
 .imp-oferta-suma { display: grid; gap: 2px; margin: 0; }
 .imp-oferta-suma span { font-size: 15px; color: var(--slab); }
@@ -1079,6 +1087,8 @@ main details.imp-card[open] > summary { margin-bottom: 12px; }
 .antet-om[hidden] { display: none; }
 .antet-om a { color: var(--text); text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 16ch; }
 .antet-om a:hover { color: var(--accent); text-decoration: underline; }
+/* „Ieși”: doar pictograma, pătrat de 40 px, ca butonul de meniu de lângă. */
+.antet-om .antet-iesi { width: 40px; padding: 0; gap: 0; }
 @media (max-width: 560px) { .antet-om a { display: none; } }
 
 /* ---- pagina de intrare și alegerea parolei: pe tot ecranul, fără bara

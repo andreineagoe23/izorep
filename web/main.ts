@@ -430,7 +430,7 @@ function arataOmul(): void {
   const el = $("#om");
   if (!om) { el.hidden = true; return; }
   el.innerHTML = `<a href="#/cont" title="Contul meu">${esc(om.nume)}</a>
-    <button type="button" class="pliaza" id="iesi">Ieși</button>`;
+    <button type="button" class="pliaza antet-iesi" id="iesi" aria-label="Ieși din cont" title="Ieși din cont">${icoana("iesi")}</button>`;
   el.hidden = false;
 }
 

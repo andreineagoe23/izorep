@@ -119,7 +119,7 @@ clic.
   pe tot ecranul, cu logo-urile RADOIA și ISORAD din oferte centrate pe o plăcuță albă și dedesubt doar titlul „Intră în cont” (`antetIntrare`; „IzoERP” și firma au plecat), fără bara laterală și fără antet (`data-intrare` pe `:root`;
   Andrei, 22 octombrie: bara cu tema și firma nu are ce căuta înainte de
   intrare), desenată de `main.ts` când `/api/stare` nu
-  are om intrat; după intrare pagina se reîncarcă. Cu parola temporară,
+  are om intrat; după intrare pagina se reîncarcă. Antetul rămâne fixat sus la derulare, pe orice ecran (`position: sticky`, sub sertarul de pe telefon; 22 octombrie 2026), iar „Ieși” e doar pictograma (ușa cu săgeată, `icoana("iesi")`), cu eticheta „Ieși din cont” pentru cititorul de ecran. Cu parola temporară,
   „Alege-ți parola” înainte de orice. Un 401 în timpul lucrului (sesiune
   expirată) aduce intrarea, cu motivul. În antet: numele omului (spre „Contul
   meu”) și „Ieși”; pe telefon fără curs. La Setări: „Cine a schimbat ce”
