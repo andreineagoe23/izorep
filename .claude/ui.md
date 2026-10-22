@@ -116,7 +116,9 @@ clic.
 
 - **Intrarea** (21 octombrie 2026, în locul ferestrei de parolă a
   browserului): pagina „Intră în cont” (emailul, parola cu „Arată”, „Intră”),
-  fără meniu (`data-fara-meniu`), desenată de `main.ts` când `/api/stare` nu
+  pe tot ecranul, fără bara laterală și fără antet (`data-intrare` pe `:root`;
+  Andrei, 22 octombrie: bara cu tema și firma nu are ce căuta înainte de
+  intrare), desenată de `main.ts` când `/api/stare` nu
   are om intrat; după intrare pagina se reîncarcă. Cu parola temporară,
   „Alege-ți parola” înainte de orice. Un 401 în timpul lucrului (sesiune
   expirată) aduce intrarea, cu motivul. În antet: numele omului (spre „Contul

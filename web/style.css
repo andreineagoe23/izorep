@@ -1081,6 +1081,13 @@ main details.imp-card[open] > summary { margin-bottom: 12px; }
 .antet-om a:hover { color: var(--accent); text-decoration: underline; }
 @media (max-width: 560px) { .antet-om a { display: none; } }
 
+/* ---- pagina de intrare și alegerea parolei: pe tot ecranul, fără bara
+   laterală și fără antet (Andrei, 22 octombrie 2026: bara cu tema și firma
+   n-are ce căuta înainte de intrare). Numele aplicației stă deasupra cardului. */
+:root[data-intrare] #bara, :root[data-intrare] .fundal-sertar, :root[data-intrare] .continut > header { display: none; }
+:root[data-intrare] .aplicatie { grid-template-columns: minmax(0, 1fr); }
+:root[data-intrare] main { max-width: none; }
+.intrare-marca { margin: 0 0 4px; font-size: 15px; font-weight: 700; letter-spacing: -0.01em; color: var(--slab); }
 /* ---- pagina de intrare și alegerea parolei: un card la mijloc, fără meniu */
 .intrare { max-width: 26rem; margin: 6vh auto 0; display: grid; gap: var(--imp-gap, 16px); }
 .intrare h1 { margin: 0; font-size: 24px; }

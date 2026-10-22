@@ -99,6 +99,7 @@ async function navigheaza(mutaFocus = false): Promise<void> {
   arataOmul();
 
   delete document.documentElement.dataset["faraMeniu"];
+  delete document.documentElement.dataset["intrare"];
   const id = ruta();
   const incarca = ECRANE[id];
 
@@ -328,6 +329,8 @@ function deseneazaFaraServer(): void {
  */
 function faraMeniu(titlu: string): void {
   document.documentElement.dataset["faraMeniu"] = "";
+  // Pagina de intrare e pe tot ecranul: fără bara laterală și fără antet.
+  document.documentElement.dataset["intrare"] = "";
   document.title = `${titlu} · IzoERP`;
   $("#om").hidden = true;
 }
@@ -335,7 +338,7 @@ function faraMeniu(titlu: string): void {
 function deseneazaIntrarea(mesaj = ""): void {
   faraMeniu("Intră în cont");
   $("#ecran").innerHTML = `<div class="intrare">
-    <div><h1>Intră în cont</h1>${firmaServita() ? `<p class="hint" style="margin:4px 0 0">${esc(firmaServita()!)}</p>` : ""}</div>
+    <div><p class="intrare-marca">IzoERP</p><h1>Intră în cont</h1>${firmaServita() ? `<p class="hint" style="margin:4px 0 0">${esc(firmaServita()!)}</p>` : ""}</div>
     <section class="imp-card">
       <form id="form-intrare" novalidate>
         <label>Emailul<input name="email" type="email" autocomplete="username" inputmode="email" required /></label>
@@ -388,7 +391,7 @@ export function legaArataParola(f: HTMLElement): void {
 function deseneazaParolaNoua(): void {
   faraMeniu("Alege-ți parola");
   $("#ecran").innerHTML = `<div class="intrare">
-    <div><h1>Alege-ți parola</h1><p class="hint" style="margin:4px 0 0">Ai intrat cu o parolă primită. Alege una a ta, de cel puțin 10 caractere.</p></div>
+    <div><p class="intrare-marca">IzoERP</p><h1>Alege-ți parola</h1><p class="hint" style="margin:4px 0 0">Ai intrat cu o parolă primită. Alege una a ta, de cel puțin 10 caractere.</p></div>
     <section class="imp-card">
       <form id="form-parola" novalidate>
         <label>Parola primită<span class="parola"><input name="veche" type="password" autocomplete="current-password" required />
