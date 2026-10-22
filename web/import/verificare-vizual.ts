@@ -66,6 +66,13 @@ const numarSau = (v: string): number | null => {
  */
 export function patchDinCamp(e: LinieExtrasa, camp: string, valoare: string): Partial<LinieExtrasa> {
   // Strat nou de izolație, sub protecție: vată, cu grosimea de scris (Andrei, 22 octombrie 2026).
+  // Primul strat scos: următoarea izolație îi ia locul, cu grosimea ei; protecția rămâne.
+  if (camp === "scoate-primul") {
+    const k = e.straturi_extra.findIndex((x) => !JACHETE.has(x.sistem));
+    if (k < 0) return {};
+    const urm = e.straturi_extra[k]!;
+    return { sistem: urm.sistem, grosime_mm: urm.grosime_mm, straturi_extra: e.straturi_extra.filter((_, j) => j !== k) };
+  }
   if (camp === "adauga-strat") {
     if (1 + e.straturi_extra.length >= STRATURI_MAXIM) return {};
     const izolatii = e.straturi_extra.filter((x) => !JACHETE.has(x.sistem));
@@ -139,14 +146,16 @@ function stare(l: LinieProcesata, propunere: number | null, cine: string): strin
   const actiune = actiuniPozitie(l, propunere, false, false);
   const motive = motiveLinie(l).map((m) => MOTIV[m]);
   const e = l.extras;
+  const areStraturi = e.straturi_extra.some((x) => !JACHETE.has(x.sistem));
   const poateStrat = e.sistem !== null && e.sistem !== "goluri_foc" && 1 + e.straturi_extra.length < STRATURI_MAXIM;
   return `<div class="ver-actiuni">${actiune || `<span class="imp-stare" data-stare="${st}">${STARE[st]}</span>`}
       <div class="cel-meniu-loc">
         <button type="button" class="cel-meniu" data-act="meniu-rand" data-idx="${e.index}" aria-haspopup="menu" aria-expanded="false"
           aria-label="${esc(`Ce faci cu ${cine}`)}" title="Adaugă un strat sau scoate rândul">⋯</button>
         <div class="meniu-rand" role="menu" hidden>
-          <button type="button" role="menuitem" data-act="adauga-strat" data-idx="${e.index}"${poateStrat ? "" : " disabled"}>${
+          <button type="button" role="menuitem" data-act="strat-nou" data-idx="${e.index}"${poateStrat ? "" : " disabled"}>${
             poateStrat ? "Adaugă un strat" : `Adaugă un strat (cel mult ${STRATURI_MAXIM})`}</button>
+          ${areStraturi ? `<button type="button" role="menuitem" data-act="scoate-primul" data-idx="${e.index}">Scoate stratul 1</button>` : ""}
           <button type="button" role="menuitem" data-act="scoate-pozitie" data-idx="${e.index}">Scoate rândul din ofertă</button>
         </div>
       </div></div>
@@ -215,7 +224,7 @@ function randVerificare(p: PozitieOferta, o: OptiuniDocument, c: Coloane): strin
     <td class="ver-rand" data-eticheta="Rândul"></td>
     <td class="ver-desc"><p class="ver-text ver-strat-nume">Stratul ${j + 2}</p></td>
     ${td("Izolație", select(`strat${k}`, i, `Izolația, ${eticheta}`,
-      [...IZOLATII.map((m): [string, string] => [m, MATERIAL[m]]), ["", "Scoate stratul"]], x.sistem))}
+      IZOLATII.map((m): [string, string] => [m, MATERIAL[m]]), x.sistem))}
     ${td(c.gros, numarPeLoc(`stratg${k}`, i, x.grosime_mm, `Grosimea, ${eticheta}`, "—"))}
     ${td(c.prot, ultim ? protectie : SUB_STRAT)}
     ${td("Diametru", fix(t ? `ø${numarInCelula(Math.round(t.diametru_geometric * 10) / 10)}` : "—",
@@ -224,7 +233,8 @@ function randVerificare(p: PozitieOferta, o: OptiuniDocument, c: Coloane): strin
     ${td("UM", fix(p.um || "—"))}
     ${td("Cantitate", fix(numarInCelula(p.cantitate)), "n")}
     ${td("Preț unitar €", pretStrat(t, ultim ? jachete : []), "n")}
-    <td class="ver-stare"></td>
+    <td class="ver-stare"><div class="ver-actiuni"><button type="button" class="cel-scoate" data-act="sterge-strat" data-idx="${i}" data-k="${k}"
+      aria-label="${esc(`Scoate ${eticheta}`)}" title="Scoate stratul">✕</button></div></td>
   </tr>`;
   }).join("")}${mijloc.length ? `<tr class="ver-strat ver-strat-total" data-idx="${i}" data-stare="${p.stare}">
     <td class="ver-rand"></td>

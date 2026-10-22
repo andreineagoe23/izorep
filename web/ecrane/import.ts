@@ -1178,7 +1178,17 @@ export const ecran: Ecran = {
           if (urm !== null) pagina.querySelector<HTMLElement>(`[data-act="meniu-rand"][data-idx="${urm}"]`)?.focus();
           return;
         }
-        case "adauga-strat": {
+        case "sterge-strat":
+        case "scoate-primul": {
+          const l = idx === null ? undefined : sesiune?.rez.linii.find((x) => x.extras.index === idx);
+          if (!l || idx === null) return;
+          randInLucru = idx;
+          corecteaza(idx, patchDinCamp(l.extras, act === "scoate-primul" ? "scoate-primul" : `strat${b.dataset["k"]}`, ""));
+          deseneaza();
+          pagina.querySelector<HTMLElement>(`[data-act="meniu-rand"][data-idx="${idx}"]`)?.focus();
+          return;
+        }
+        case "strat-nou": {
           const l = idx === null ? undefined : sesiune?.rez.linii.find((x) => x.extras.index === idx);
           if (!l || idx === null) return;
           // Stratul nou ia indicele de după celelalte izolații, înaintea protecției.

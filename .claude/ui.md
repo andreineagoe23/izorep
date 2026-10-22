@@ -383,6 +383,11 @@ din listă sub mouse), piesa, UM-ul și cantitatea sunt ale rândului (casete f�
 scris, `.ver-fix`), iar prețul e al stratului (cu multiplicatorul piesei;
 protecția intră la stratul de deasupra). Dedesubt, „Prețul rândului, suma
 straturilor”, cu prețul care se poate pune de mână. Totul se reface la tastă.
+Fiecare strat se scoate: sub-rândul are ✕ în coloana stării (`sterge-strat`),
+iar primul strat se scoate din meniul „⋯” („Scoate stratul 1”, `scoate-primul`
+în `patchDinCamp`): următoarea izolație îi ia locul, cu grosimea ei, protecția
+rămâne. Acțiunile meniului au nume proprii (`strat-nou`, `sterge-strat`):
+editorul vechi folosește deja `adauga-strat` și `scoate-strat`.
 
 ## Ecranul de import: trei pași
 

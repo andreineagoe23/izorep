@@ -139,6 +139,8 @@ describe("verificarea și „Cum iese oferta” (21 octombrie 2026)", async () =
     expect(html.match(/<tr class="ver-strat" data-idx="1"/g)).toHaveLength(1);
     expect(html).toMatch(/<tr class="ver-strat"[^]*data-vc="protectie"[^]*ver-strat-total/);
     expect(html.match(/data-vc="protectie"/g)).toHaveLength(1);
+    expect(html).toMatch(/data-act="sterge-strat" data-idx="1" data-k="0"/);
+    expect(html).toMatch(/data-act="scoate-primul" data-idx="1">Scoate stratul 1</);
     // Jacheta rămâne la „Protecție”, nu apare ca strat în plus.
     expect(html).not.toContain('data-vc="strat1"');
     expect(verificarePeEcran(d, optiuni([l]))).not.toContain("data-um=");
@@ -149,10 +151,10 @@ describe("verificarea și „Cum iese oferta” (21 octombrie 2026)", async () =
     l.extras.straturi_extra = [{ sistem: "vata_minerala", grosime_mm: 40 }, { sistem: "tabla", grosime_mm: null }];
     const html = verificarePeEcran(documentOferta(cerere([l])), optiuni([l]));
     expect(html).toMatch(/<button type="button" class="cel-meniu" data-act="meniu-rand" data-idx="1"/);
-    expect(html).toMatch(/data-act="adauga-strat" data-idx="1">Adaugă un strat</);
+    expect(html).toMatch(/data-act="strat-nou" data-idx="1">Adaugă un strat</);
     expect(html).toMatch(/data-act="scoate-pozitie" data-idx="1">Scoate rândul din ofertă</);
     l.extras.straturi_extra = [...l.extras.straturi_extra, { sistem: "elastomer", grosime_mm: 9 }];
-    expect(verificarePeEcran(documentOferta(cerere([l])), optiuni([l]))).toMatch(/data-act="adauga-strat" data-idx="1" disabled>/);
+    expect(verificarePeEcran(documentOferta(cerere([l])), optiuni([l]))).toMatch(/data-act="strat-nou" data-idx="1" disabled>/);
   });
 
   it("rândul de continuare iese întreg: descrierea, apoi ce are el în plus (Book15)", () => {
@@ -221,6 +223,10 @@ describe("câmpurile din rândul de verificare (patchDinCamp)", () => {
     expect(patchDinCamp(e, "adauga-strat", "").straturi_extra).toEqual([
       { sistem: "vata_minerala", grosime_mm: 40 }, { sistem: "vata_minerala", grosime_mm: null }, { sistem: "tabla", grosime_mm: null },
     ]);
+    // Fiecare strat se scoate: al doilea cu ✕ („strat0” gol), primul din meniu, iar vata îi ia locul.
+    expect(patchDinCamp(e, "scoate-primul", "")).toEqual({
+      sistem: "vata_minerala", grosime_mm: 40, straturi_extra: [{ sistem: "tabla", grosime_mm: null }],
+    });
     const plin = { ...e, straturi_extra: [...e.straturi_extra, { sistem: "elastomer", grosime_mm: 9 }] } as LinieProcesata["extras"];
     expect(patchDinCamp(plin, "adauga-strat", "")).toEqual({});
   });

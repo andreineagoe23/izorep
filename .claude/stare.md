@@ -14,7 +14,9 @@ octombrie. **697 de teste.** A doua trecere, tot pe 22 (Andrei: stratul să
 arate ca primul, cu tot până la preț; lista prea mare): meniul e al nostru,
 iar stratul e un sub-rând întreg cu prețul lui (ales de Andrei dintre „sub-rând
 al aceleiași poziții” și „poziție separată”); TRANSAVIA rândul 1 cu vată 30
-peste vata 50: 28,10 + 138,86 = 166,96 €. Verificat cu Playwright pe `build:server`: 390 /
+peste vata 50: 28,10 + 138,86 = 166,96 €. A treia trecere: fiecare strat se
+scoate (✕ pe sub-rând, „Scoate stratul 1” în meniu); TRANSAVIA rândul 1:
+50 + 30 + 20 = 207,91 → fără 30: 160,87 → fără primul: doar 20 mm, 58,02 €. Verificat cu Playwright pe `build:server`: 390 /
 768 / 1440 / 1920 px, ambele teme, lista de 44 × 44, zero derulare laterală;
 TRANSAVIA rândul 1, două straturi de vată adăugate (30 și 20 mm), 121,67 →
 207,91 €, a treia adăugare oprită; scoaterea pune rândul pe „Nu e izolație”,
