@@ -9,19 +9,30 @@ import type { StareDepozit } from "../../web/depozit-local.js";
 import type { CerereOferta } from "../../web/oferta.js";
 import type { PlanSantier } from "../lucrari/situatii.js";
 
-/** Raspunsul la `GET /api/stare`: serverul exista si a cui firma e. */
+/** Raspunsul la `GET /api/stare`: serverul exista, a cui firma e si cine e intrat (null = nimeni). */
 export interface Stare {
   firma: string;
+  eu: Eu | null;
+}
+
+/** Omul intrat, cum il vede pagina. */
+export interface Eu {
+  nume: string;
+  email: string;
+  rol: string;
+  /** Intrat cu parola data de noi: pagina ii cere intai una noua. */
+  parolaTemporara: boolean;
 }
 
 /**
- * In ce context ruleaza o cerere. Fara intrare (scoasa pe 10 octombrie 2026,
- * cerut de Andrei: inca nu e nevoie de conturi), serverul serveste o singura
- * firma, iar `creat_de` ramane gol.
+ * In ce context ruleaza o cerere: firma servita si omul intrat (din 21
+ * octombrie 2026, conturile). `utilizatorId` ajunge in `creat_de`, `nume` in
+ * jurnal si in mesajul „schimbat de … între timp”. Null doar in teste si CLI.
  */
 export interface Context {
   tenantId: string;
   utilizatorId: string | null;
+  nume?: string;
 }
 
 /** Tot ce citesc ecranele sincron; se ia la fiecare schimbare de ecran. */

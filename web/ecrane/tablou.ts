@@ -55,7 +55,7 @@ function sectiuneAtentie(d: DateTablou): string {
 
   for (const p of d.planuri.filter((x) => !x.inchis && progresPlan(x) >= 100)) {
     itemi.push({
-      href: "#/lucrari",
+      href: `#/lucrari/${encodeURIComponent(p.id)}`,
       html: `Șantierul <b>${esc(p.denumire)}</b> are tot executat: se poate închide, din pagina lui, după ce se
         numără ce a rămas pe șantier.`,
     });

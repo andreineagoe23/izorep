@@ -1,7 +1,41 @@
 # Stare curentă
 
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
-> Ultima actualizare: 21 octombrie 2026, noaptea (Materiale).
+> Ultima actualizare: 22 octombrie 2026.
+
+## 22 octombrie 2026: conturile, jurnalul și ce rămăsese din audit
+
+Cerut de Andrei: „toate astea + securitatea + o pagină de login în loc de
+popup”. Ales de el: **email + parolă** (linkul pe email cerea un furnizor de
+email pe Render). Pe ramura `conturi-si-audit`, migrarea **0016**. **694 de
+teste.** Detalii în `backend.md` („Conturile”) și `ui.md` („Intrarea”).
+
+| Ce | Acum |
+|---|---|
+| Parola comună (fereastra browserului) | pagina „Intră în cont”; parola scrypt, blocare după 5 greșite, 20 de încercări pe adresă, cookie HttpOnly / SameSite / Secure, parolă temporară cu „Alege-ți parola”, „Contul meu”, „Ieși”; CSP, fără încadrare, HSTS; documentele doar poze și PDF (SVG refuzat) |
+| Cine a schimbat ce | tabelul `jurnal` (doar adăugare), scris după fiecare scriere reușită; ecranul „Cine a schimbat ce” la Setări |
+| Numărul ofertei | `GET /api/oferte/urmatorul`: cel mai mare de pe seria firmei + 1, pus în casetă la pasul „Oferta”; fără oferte salvate, îl scrie omul |
+| Doi oameni pe aceeași cerere | `versiune` pe cerere și necesar: al doilea primește 409 „salvată de X la ora Y” și nu mai pleacă nimic până redeschide |
+| Necesarul editat nu ajungea peste tot | „Lipsește” scalează restul pe poziții la cifra omului; ✕ nu mai scade „În ofertă” (`inOfertaPe`, cu `scoase`); lista unui șantier închis e refuzată pe server |
+| „Creează șantierul” din nou ștergea editările | `pastreazaEditari`: cantitățile scrise (galbene, cu noul calcul sub mouse), ✕, „Îl dă clientul”, materialul de mână rămân |
+| Ștergerea șantierului schimba stocul din central fără s-o spună | panoul: „atenție: se schimbă și stocul din depozitul central, la N materiale: ce a plecat de acolo se întoarce acolo” |
+| Comanda primită parțial și anulată nu se mai factura | „A venit factura” și pe ea; apare la „Așteptăm marfa” |
+| Ecranele de detaliu fără adresă | `#/lucrari/<id>`: „Înapoi”, reîncărcarea și linkurile din „Necesită atenția ta” |
+| Prețul de mână cu ajustarea (±0,01 €, mutat de o ajustare nouă) | prețul scris e final: `cuAjustare` îl sare |
+| Serverul nu verifica situații, necesar, mișcări | locuri care există, date valide, anulări care sunt oglinda originalului (și o singură dată), poziții din plan, cantități finite și nenegative, șantier existent |
+
+Contul firmei: `tehnic@isorad.ro` (singurul activ), făcut cu `npm run om`
+pe baza locală; conturile de test din seed au plecat. **Pe Render nu există
+încă niciun cont**: după publicare, contul se face cu `npm run om` pe adresa
+externă a bazei, cu IP-ul laptopului pus temporar în lista ei (ca la seed).
+Variabila `IZOREP_PAROLA` se poate scoate de pe Render.
+
+Verificat cu Playwright pe `build:server` (baza de probă): 390 / 1440 px,
+ambele teme; fără fereastra browserului, mesajul la parolă greșită, intrarea,
+jurnalul, numărul 285, `#/lucrari/S-TRANSAVIA` după reîncărcare, „Ieși”,
+parola temporară (403 pe date până la parola nouă), câmpul și „Arată” aliniate
+la 48 px. Pe telefon antetul nu mai încăpea cu numele și „Ieși”: cursul BNR
+nu se mai arată sub 560 px.
 
 ## 21 octombrie 2026 (noaptea): Materiale, trei file
 

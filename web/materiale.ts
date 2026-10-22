@@ -80,7 +80,8 @@ export function avizeFaraFactura(c: Comanda, s: StareDepozit): string[] {
  */
 export function comandaDeLucru(c: Comanda, s: StareDepozit): boolean {
   const st = stareComanda(c, s.miscari);
-  return st === "ciorna" || st === "trimisa" || st === "partial" || (st === "primita" && avizeFaraFactura(c, s).length > 0);
+  return st === "ciorna" || st === "trimisa" || st === "partial"
+    || ((st === "primita" || st === "anulata") && avizeFaraFactura(c, s).length > 0);
 }
 
 /** Cifrele de pe file: materialele care lipsesc pe șantierele deschise și comenzile de lucru. */

@@ -92,7 +92,8 @@ export async function stareDepozit(tx: Baza): Promise<StareDepozit> {
   const amb = await tx.select().from(ambalaj);
   return {
     miscari,
-    necesare: nec.map((n) => n.continut as NecesarLucrare),
+    // Versiunea din bază, ca pagina s-o trimită înapoi la salvare (`puneNecesar`).
+    necesare: nec.map((n) => ({ ...(n.continut as NecesarLucrare), versiune: n.versiune })),
     ambalaje: Object.fromEntries(amb.map((a) => [a.cheieBaza, { unitate: a.unitate, continut: Number(a.continut) }])),
     comenzi: await comenzi(tx),
     documente: await documente(tx),
@@ -159,38 +160,64 @@ const meta = (c: typeof cerere.$inferSelect): IntrareIstoric => ({
   ...(c.destinatie ? { destinatie: c.destinatie as NonNullable<IntrareIstoric["destinatie"]> } : {}),
 });
 
+/**
+ * Refuzul unei salvări peste a unui coleg (21 octombrie 2026): până atunci
+ * câștiga tăcut ultimul care salva. Spune cine și când, ca omul să știe pe
+ * cine să întrebe.
+ */
+function schimbatIntreTimp(ce: string, cine: string | null, cand: Date): Refuz {
+  const ora = cand.toLocaleTimeString("ro-RO", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Bucharest" });
+  // `ce` e mereu feminin („Cererea”, „Lista de materiale”).
+  return new Refuz(409, `${ce} a fost salvată de ${cine ?? "un coleg"} la ${ora}, după ce ai deschis-o tu. `
+    + "Reîncarcă pagina ca să vezi ce s-a schimbat, apoi fă din nou modificarea.");
+}
+
 export async function listaCereri(tx: Baza): Promise<IntrareIstoric[]> {
   const rows = await tx.select({
     id: cerere.id, nume: cerere.nume, marime: cerere.marime, cand: cerere.cand, model: cerere.model,
     pozitii: cerere.pozitii, tarifate: cerere.tarifate, valoare: cerere.valoare, destinatie: cerere.destinatie,
   }).from(cerere).orderBy(desc(cerere.cand));
-  return rows.map((r) => meta({ ...r, tenantId: "", fisier: Buffer.alloc(0), lucru: {}, creatDe: null, actualizatLa: r.cand }));
+  return rows.map((r) => meta({ ...r, tenantId: "", fisier: Buffer.alloc(0), lucru: {}, creatDe: null, actualizatLa: r.cand, versiune: 0, actualizatDe: null }));
 }
 
 export async function citesteCerere(tx: Baza, id: string): Promise<CererePeFir | null> {
   const [c] = await tx.select().from(cerere).where(eq(cerere.id, id));
   if (!c) return null;
-  return { ...meta(c), ...(c.lucru as object), fisier: c.fisier.toString("base64") } as CererePeFir;
+  return { ...meta(c), ...(c.lucru as object), fisier: c.fisier.toString("base64"), versiune: c.versiune } as CererePeFir;
 }
 
 /** Lucrul omului pe cerere: tot ce nu e metadata sau fisier. */
 function lucruDin(c: CererePeFir): Record<string, unknown> {
-  const { id: _i, nume: _n, marime: _m, cand: _c, model: _mo, pozitii: _p, tarifate: _t, valoare: _v, destinatie: _d, fisier: _f, ...lucru } = c;
+  const {
+    id: _i, nume: _n, marime: _m, cand: _c, model: _mo, pozitii: _p, tarifate: _t, valoare: _v, destinatie: _d, fisier: _f,
+    versiune: _ver, ...lucru
+  } = c;
   return lucru;
 }
 
-export async function salveazaCerere(tx: Baza, ctx: Context, c: CererePeFir): Promise<void> {
+/**
+ * Salvează cererea și întoarce versiunea nouă. Cu `versiune` (cea citită de
+ * pagină), salvarea trece doar peste aceeași versiune: altfel a salvat un
+ * coleg între timp, iar munca lui nu se mai pierde tăcut (409).
+ */
+export async function salveazaCerere(tx: Baza, ctx: Context, c: CererePeFir): Promise<number> {
   const val = {
     nume: c.nume, marime: c.marime, cand: new Date(c.cand), model: c.model, destinatie: c.destinatie ?? null,
     pozitii: c.pozitii, tarifate: c.tarifate, valoare: c.valoare.toFixed(2), lucru: lucruDin(c), actualizatLa: new Date(),
+    actualizatDe: ctx.nume ?? null, versiune: sql`${cerere.versiune} + 1`,
   };
-  if (c.fisier !== undefined) {
-    await tx.insert(cerere).values({ tenantId: ctx.tenantId, id: c.id, fisier: Buffer.from(c.fisier, "base64"), creatDe: ctx.utilizatorId, ...val })
-      .onConflictDoUpdate({ target: [cerere.tenantId, cerere.id], set: val });
-    return;
+  const [are] = await tx.select({ versiune: cerere.versiune, de: cerere.actualizatDe, la: cerere.actualizatLa })
+    .from(cerere).where(eq(cerere.id, c.id)).for("update");
+  if (are && c.versiune !== undefined && are.versiune !== c.versiune) throw schimbatIntreTimp("Cererea", are.de, are.la);
+  if (!are) {
+    if (c.fisier === undefined) throw new Refuz(400, "Cererea nu e pe server: trimite-o cu tot cu fișier.");
+    await tx.insert(cerere).values({
+      tenantId: ctx.tenantId, id: c.id, fisier: Buffer.from(c.fisier, "base64"), creatDe: ctx.utilizatorId, ...val, versiune: 1,
+    });
+    return 1;
   }
-  const gasite = await tx.update(cerere).set(val).where(eq(cerere.id, c.id)).returning({ id: cerere.id });
-  if (gasite.length === 0) throw new Refuz(400, "Cererea nu e pe server: trimite-o cu tot cu fișier.");
+  const [r] = await tx.update(cerere).set(val).where(eq(cerere.id, c.id)).returning({ versiune: cerere.versiune });
+  return r!.versiune;
 }
 
 export async function stergeCerere(tx: Baza, id: string): Promise<void> {
@@ -240,6 +267,21 @@ export async function salveazaOferta(tx: Baza, ctx: Context, cerereId: string, o
     valoare: valoare.toFixed(2), pozitii, continut: o.continut, creatDe: ctx.utilizatorId,
   });
   return { versiune, valoare };
+}
+
+/**
+ * Următorul număr de ofertă al firmei (21 octombrie 2026: „numărul îl dă
+ * serverul”): cel mai mare număr salvat pe seria ei + 1. Fără nicio ofertă
+ * salvată, null: seria firmei a început înainte de aplicație (284 la RADOIA),
+ * deci primul număr îl scrie omul.
+ */
+export async function urmatorulNumar(tx: Baza, cod: string): Promise<string | null> {
+  const [f] = await tx.select({ serie: firma.serieOferta }).from(firma).where(eq(firma.cod, cod));
+  const serie = f?.serie ?? "";
+  const rows = await tx.select({ numar: oferta.numar }).from(oferta);
+  const numere = rows.map((r) => r.numar).filter((n) => n.startsWith(serie))
+    .map((n) => Number(n.slice(serie.length))).filter((n) => Number.isInteger(n) && n > 0);
+  return numere.length ? String(Math.max(...numere) + 1) : null;
 }
 
 export async function versiuniOferta(tx: Baza, cerereId: string): Promise<unknown[]> {
@@ -349,6 +391,12 @@ export async function adaugaSituatie(
 ): Promise<number> {
   const inchis = await santierInchis(tx, [santierId]);
   if (inchis) throw new Refuz(409, `Șantierul ${inchis} e închis: nu mai primește situații.`);
+  const plan = (await planuri(tx)).find((p) => p.id === santierId);
+  if (!plan) throw new Refuz(404, "Șantierul nu e pe server.");
+  // Cantitățile sunt pe pozițiile planului: o poziție inventată ar intra în situație și în consum.
+  const pozitii = new Set(plan.pozitii.map((p) => String(p.nr)));
+  const straina = Object.keys(s.cantitati).find((k) => !pozitii.has(k));
+  if (straina) throw new Refuz(400, `Poziția ${straina} nu e în planul șantierului.`);
   const [ultima] = await tx.select({ v: max(situatie.nr) }).from(situatie).where(eq(situatie.santierId, santierId));
   if (s.nr !== (ultima?.v ?? 0) + 1) {
     throw new Refuz(409, `Situația ${s.nr} nu urmează după ultima de pe server (${ultima?.v ?? 0}): a scris-o cineva între timp. Ecranul arată acum ce e pe server.`);
@@ -386,10 +434,34 @@ export async function stergeSituatie(tx: Baza, ctx: Context, santierId: string, 
 /* ------------------------------------------------------------- stocul */
 
 /** Miscarea, cu articolul ei. Una cu acelasi id deja scrisa nu se dubleaza. */
+/**
+ * Locurile în care poate sta material: depozitul central, atelierul și
+ * șantierele din bază. Până pe 21 octombrie 2026 o mișcare putea pleca spre
+ * orice text, iar materialul dispărea într-un loc pe care nu-l arată nimeni.
+ */
+async function existaLoc(tx: Baza, id: string): Promise<boolean> {
+  if (id === "central" || id === "atelier") return true;
+  const [s] = await tx.select({ id: santier.id }).from(santier).where(eq(santier.id, id));
+  return Boolean(s);
+}
+
 export async function adaugaMiscare(tx: Baza, ctx: Context, m: Miscare): Promise<boolean> {
   if (m.exemplu) throw new Refuz(400, "Datele de exemplu nu se scriu pe server.");
   const gresit = valideazaMiscare(m) ?? (estePornire(m) ? valideazaPornire({ depozit: m.spre ?? "", cantitate: m.cantitate }) : null);
   if (gresit) throw new Refuz(400, gresit);
+  if (Number.isNaN(new Date(m.data).getTime())) throw new Refuz(400, "Data mișcării nu e o dată.");
+  for (const loc of [m.din, m.spre]) {
+    if (loc !== undefined && !(await existaLoc(tx, loc))) throw new Refuz(400, `Locul „${loc}” nu există.`);
+  }
+  // Anularea (storno) e oglinda unei mișcări care există și nu e deja anulată.
+  if (m.anuleaza !== undefined) {
+    const [o] = await tx.select().from(miscare).where(eq(miscare.id, m.anuleaza));
+    const oglinda = o && o.articolCheie === m.articol.cheie && Number(o.cantitate) === m.cantitate && o.tip === m.tip
+      && (o.din ?? undefined) === m.din && (o.spre ?? undefined) === m.spre && !o.anuleaza;
+    if (!oglinda) throw new Refuz(400, "Anularea nu se potrivește cu mișcarea anulată.");
+    const [deja] = await tx.select({ id: miscare.id }).from(miscare).where(eq(miscare.anuleaza, m.anuleaza));
+    if (deja && deja.id !== m.id) throw new Refuz(409, "Mișcarea a fost deja anulată.");
+  }
   const inchis = await santierInchis(tx, [m.din, m.spre]);
   if (inchis) {
     // Retrimisa (aceeasi miscare, scrisa inainte de inchidere) nu e o miscare noua.
@@ -414,13 +486,41 @@ export async function adaugaMiscare(tx: Baza, ctx: Context, m: Miscare): Promise
   return nou.length > 0;
 }
 
-export async function puneNecesar(tx: Baza, ctx: Context, n: NecesarLucrare): Promise<void> {
-  const val = { continut: n, santierId: n.santier ?? null, actualizatLa: new Date() };
-  await tx.insert(necesar).values({ tenantId: ctx.tenantId, id: n.id, ...val })
-    .onConflictDoUpdate({ target: [necesar.tenantId, necesar.id], set: val });
+/**
+ * Lista unui șantier închis nu se mai schimbă și nu se scoate: costul lui
+ * față de ofertă e socotit pe ea (audit 16 octombrie; pagina o lăsa editabilă).
+ */
+async function refuzaPeInchis(tx: Baza, santierId: string | null | undefined): Promise<void> {
+  if (!santierId) return;
+  const [s] = await tx.select({ inchis: santier.inchisLa, denumire: santier.denumire }).from(santier).where(eq(santier.id, santierId));
+  if (s?.inchis) throw new Refuz(409, `Șantierul „${s.denumire}” e închis: lista lui de materiale nu se mai schimbă.`);
+}
+
+/** Ca la cerere: cu `versiune`, salvarea trece doar peste versiunea pe care a citit-o pagina. */
+export async function puneNecesar(tx: Baza, ctx: Context, n: NecesarLucrare): Promise<number> {
+  const { versiune: citita, ...continut } = n;
+  if (n.santier && !(await existaLoc(tx, n.santier))) throw new Refuz(400, `Șantierul „${n.santier}” nu e pe server.`);
+  await refuzaPeInchis(tx, n.santier);
+  const [vechi] = await tx.select({ santier: necesar.santierId }).from(necesar).where(eq(necesar.id, n.id));
+  await refuzaPeInchis(tx, vechi?.santier);
+  const val = {
+    continut, santierId: n.santier ?? null, actualizatLa: new Date(), actualizatDe: ctx.nume ?? null,
+    versiune: sql`${necesar.versiune} + 1`,
+  };
+  const [are] = await tx.select({ versiune: necesar.versiune, de: necesar.actualizatDe, la: necesar.actualizatLa })
+    .from(necesar).where(eq(necesar.id, n.id)).for("update");
+  if (are && citita !== undefined && are.versiune !== citita) throw schimbatIntreTimp("Lista de materiale", are.de, are.la);
+  if (!are) {
+    await tx.insert(necesar).values({ tenantId: ctx.tenantId, id: n.id, ...val, versiune: 1 });
+    return 1;
+  }
+  const [r] = await tx.update(necesar).set(val).where(eq(necesar.id, n.id)).returning({ versiune: necesar.versiune });
+  return r!.versiune;
 }
 
 export async function stergeNecesar(tx: Baza, id: string): Promise<void> {
+  const [vechi] = await tx.select({ santier: necesar.santierId }).from(necesar).where(eq(necesar.id, id));
+  await refuzaPeInchis(tx, vechi?.santier);
   await tx.delete(necesar).where(eq(necesar.id, id));
 }
 

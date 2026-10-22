@@ -22,9 +22,11 @@ import {
 import { descarca, numeOferta } from "../descarca.js";
 import { PIERDERI_IMPLICITE, PRAG_TUB_MM, necesarDinLinii, type Pierderi } from "../../src/stoc/necesar.js";
 import { cardNecesar } from "../stoc-vizual.js";
+import { pastreazaEditari } from "../../src/stoc/editari-necesar.js";
 import {
-  citesteDepozit, citestePlanuri, deschideLaIntrare, idCurent, idNou, incarca, listeaza, puneCurent,
+  citesteDepozit, citestePlanuri, idCurent, idNou, incarca, listeaza, puneCurent,
   salveaza, salveazaOferta, scrieDepozit, scriePlanuri, citesteOferte, ceSeVaSterge, stergeDeTot,
+  urmatorulNumar,
 } from "../date.js";
 import type { EditareCelula, IntrareIstoric, SesiuneImport } from "../istoric.js";
 import {
@@ -881,6 +883,24 @@ export const ecran: Ecran = {
       }
     }
 
+    /** Ultimul număr pus de server, ca la schimbarea firmei să se ia numărul ei, nu să rămână al celeilalte. */
+    let numarPropus = "";
+    /**
+     * Numărul ofertei îl dă serverul (21 octombrie 2026): cu caseta goală (sau
+     * cu numărul propus pentru altă firmă), următorul număr liber al firmei.
+     * Rămâne modificabil; unul deja folosit de altă cerere e refuzat la salvare.
+     */
+    async function propuneNumar(): Promise<void> {
+      if (!sesiune || (antet.numar && antet.numar !== numarPropus)) return;
+      const n = await urmatorulNumar(antet.firma);
+      if (!n || pas !== 3 || (antet.numar && antet.numar !== numarPropus)) return;
+      numarPropus = n;
+      antet = { ...antet, numar: n };
+      salveazaSesiune();
+      const camp = pagina.querySelector<HTMLInputElement>('#antet-oferta [name="numar"]');
+      if (camp) camp.value = n;
+    }
+
     /**
      * Șantierul din ofertă: planul (pozițiile ofertei, înghețate) plus
      * necesarul lui, trimis la depozit pe șantierul nou. Unul pe fișier: refăcut
@@ -916,14 +936,16 @@ export const ecran: Ecran = {
       const n = necesarOferta(s, cerere.antet.discountProcent ?? 0);
       const st = citesteDepozit();
       const vechiNecesar = vechi ? st.necesare.find((x) => x.santier === vechi.id || (x.santier === undefined && x.fisier === s.meta.nume)) : undefined;
+      // Refăcut, lista păstrează ce a schimbat omul pe ea (cantități, ✕, „Îl dă clientul”, materialul de mână).
+      const pastrat = pastreazaEditari(vechiNecesar, n.materiale);
       const nou = {
         id: vechiNecesar?.id ?? idNou(), creat: new Date().toISOString(), fisier: s.meta.nume,
-        obiectiv: plan.denumire, pierderi: n.pierderi, pragTub: n.pragTub, tuburiPeste: n.tuburiPeste, materiale: n.materiale,
+        obiectiv: plan.denumire, pierderi: n.pierderi, pragTub: n.pragTub, tuburiPeste: n.tuburiPeste, ...pastrat,
         faraNecesar: n.faraNecesar.length, santier: plan.id,
+        ...(vechiNecesar?.versiune !== undefined ? { versiune: vechiNecesar.versiune } : {}),
       };
       scrieDepozit({ ...st, necesare: [nou, ...st.necesare.filter((x) => x !== vechiNecesar)] });
-      deschideLaIntrare(plan.id);
-      location.hash = "#/lucrari";
+      location.hash = `#/lucrari/${encodeURIComponent(plan.id)}`;
     }
 
     /* ------------------------------------------ oferta scrisă pe loc */
@@ -1005,7 +1027,8 @@ export const ecran: Ecran = {
      */
     function scriePretul(idx: number, valoare: number | null, peLoc = false): boolean {
       const vechi = preturiManuale.get(idx);
-      const nou = valoare === null || !(valoare > 0) ? undefined : ajustare ? valoare / (1 + ajustare / 100) : valoare;
+      // Prețul scris e cel final din ofertă: ajustarea nu-l mai atinge (`cuAjustare`).
+      const nou = valoare === null || !(valoare > 0) ? undefined : valoare;
       if (nou === vechi) return false;
       if (nou === undefined) preturiManuale.delete(idx); else preturiManuale.set(idx, nou);
       retarifeaza();
@@ -1064,7 +1087,10 @@ export const ecran: Ecran = {
         stergeDe = null; editIdx = null;
         deseneaza();
         scrollTo({ top: 0 });
-        if (pas === 3) pagina.querySelector<HTMLInputElement>('[name="numar"]')?.focus({ preventScroll: true });
+        if (pas === 3) {
+          pagina.querySelector<HTMLInputElement>('[name="numar"]')?.focus({ preventScroll: true });
+          void propuneNumar();
+        }
         return;
       }
 
@@ -1270,6 +1296,7 @@ export const ecran: Ecran = {
       if (t.closest("#antet-oferta") && sesiune && t.tagName === "SELECT") {
         antet = { ...antet, firma: t.value };
         salveazaSesiune();
+        void propuneNumar();
         return;
       }
       if (t.dataset["act"] === "filtru") { filtru = t.value as FiltruStare; motiv = null; editIdx = null; randInLucru = null; deseneaza(); return; }

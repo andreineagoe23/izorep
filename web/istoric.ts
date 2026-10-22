@@ -58,6 +58,8 @@ export interface EditareCelula {
 
 export interface SesiuneImport extends IntrareIstoric {
   fisier: ArrayBuffer;
+  /** Pe server: versiunea citita, trimisa inapoi la salvare (un coleg nu se mai suprascrie). */
+  versiune?: number;
   /** `text` lipseste la sesiunile salvate inainte sa existe: nucleul il ia pe cel de acum. */
   extrase: { index: number; extras: LinieExtrasa; sursa: Sursa; text?: string }[];
   editari: EditareCelula[];

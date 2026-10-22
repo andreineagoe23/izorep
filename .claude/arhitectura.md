@@ -4,7 +4,7 @@ ERP pentru o firmă de izolații termice (SC RADOIA ISOLIRUNG SRL + R&F ISORAD
 SYSTEM SRL). Făcute (12 octombrie 2026): motorul de prețuri, importul
 ofertelor de la clienți, măsurătorile din carnet, situațiile de lucrări și
 stocul pe șantiere (fazele 1–8 din `docs/plan-implementare.md`). Înainte de
-folosirea reală: conturile, rolurile, locul serverului și backup-ul
+folosirea reală: rolurile, locul serverului și backup-ul (conturile există din 21 octombrie 2026)
 (`docs/productie.md`).
 
 ## Ce face aplicația
@@ -56,7 +56,7 @@ src/import/          pipeline L0–L4 de citire a Excel-urilor de la clienți
 src/stoc/            necesarul de materiale din ofertă, registrul de stoc (pur, testat)
 src/lucrari/         planul de șantier din ofertă, situațiile de lucrări (pur, testat)
 src/db/              Postgres: schema, migrările, RLS pe tenant
-src/server/          serverul: datele comune (Faza 3), stratul cu model; o firmă, fără conturi deocamdată
+src/server/          serverul: datele comune (Faza 3), stratul cu model, conturile și jurnalul; o firmă
 web/date.ts          unde stau datele ecranelor: pe server, sau în browser pe linkul demo
 tests/               suita de referință: reproduce oferte istorice la bănuț
 ```

@@ -6,8 +6,8 @@ import {
   type SpatiuCerut, type StareMeniu,
 } from "./meniu-stare.js";
 import {
-  amMutat, areDateDeMutat, cursBnr, dateInBrowser, laEroare,
-  laReimprospatare, modDate, mutaDinBrowser, porneste, reimprospateaza,
+  amMutat, areDateDeMutat, cursBnr, dateInBrowser, eu, firmaServita, iesi, intra, laEroare, laNeautentificat,
+  laReimprospatare, modDate, mutaDinBrowser, porneste, reimprospateaza, schimbaParola,
 } from "./date.js";
 
 const ECRANE: Record<string, () => Promise<{ ecran: Ecran }>> = {
@@ -22,6 +22,8 @@ const ECRANE: Record<string, () => Promise<{ ecran: Ecran }>> = {
   depozit: () => import("./ecrane/depozit.js"),
   clienti: () => import("./ecrane/clienti.js"),
   preturi: () => import("./ecrane/preturi.js"),
+  cont: () => import("./ecrane/cont.js"),
+  jurnal: () => import("./ecrane/jurnal.js"),
 };
 
 /** Rutele vechi: cererile si ofertele pe acelasi ecran; „Necesar și depozit” (`stoc`) e „Materiale” din 21 octombrie 2026. */
@@ -91,6 +93,10 @@ async function navigheaza(mutaFocus = false): Promise<void> {
   const root = $("#ecran");
 
   if (stareDate === "fara-server") { deseneazaFaraServer(); return; }
+  // Pe server, fără cont intrat: pagina de intrare; cu parola dată de noi: alegerea parolei.
+  if (stareDate === "server" && !eu()) { deseneazaIntrarea(); return; }
+  if (stareDate === "server" && eu()?.parolaTemporara) { deseneazaParolaNoua(); return; }
+  arataOmul();
 
   delete document.documentElement.dataset["faraMeniu"];
   const id = ruta();
@@ -313,6 +319,120 @@ function deseneazaFaraServer(): void {
   laInceput();
 }
 
+/* ------------------------------------------------------------ intrarea */
+
+/*
+ * Pagina de intrare (21 octombrie 2026), în locul ferestrei de parolă a
+ * browserului: emailul și parola omului, „Intră”. Fără meniu până intră.
+ * După intrare pagina se reîncarcă: datele, cursul și meniul pornesc curat.
+ */
+function faraMeniu(titlu: string): void {
+  document.documentElement.dataset["faraMeniu"] = "";
+  document.title = `${titlu} · IzoERP`;
+  $("#om").hidden = true;
+}
+
+function deseneazaIntrarea(mesaj = ""): void {
+  faraMeniu("Intră în cont");
+  $("#ecran").innerHTML = `<div class="intrare">
+    <div><h1>Intră în cont</h1>${firmaServita() ? `<p class="hint" style="margin:4px 0 0">${esc(firmaServita()!)}</p>` : ""}</div>
+    <section class="imp-card">
+      <form id="form-intrare" novalidate>
+        <label>Emailul<input name="email" type="email" autocomplete="username" inputmode="email" required /></label>
+        <label>Parola<span class="parola"><input name="parola" type="password" autocomplete="current-password" required />
+          <button type="button" class="secundar" data-arata-parola aria-pressed="false">Arată</button></span></label>
+        <p class="alerta" role="alert"${mesaj ? "" : " hidden"}>${esc(mesaj)}</p>
+        <button type="submit" class="primar">Intră</button>
+      </form>
+    </section>
+    <p class="hint">Ai uitat parola? Cere una nouă celui care ți-a făcut contul.</p>
+  </div>`;
+  const f = $<HTMLFormElement>("#form-intrare");
+  legaArataParola(f);
+  f.querySelector<HTMLInputElement>('[name="email"]')!.focus();
+  f.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const d = new FormData(f);
+    const email = String(d.get("email") ?? "").trim();
+    const parola = String(d.get("parola") ?? "");
+    const alerta = f.querySelector<HTMLElement>(".alerta")!;
+    if (!email || !parola) { alerta.textContent = "Scrie emailul și parola."; alerta.hidden = false; return; }
+    const buton = f.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+    buton.disabled = true;
+    buton.textContent = "Se verifică…";
+    const gresit = await intra(email, parola);
+    if (!gresit) { location.reload(); return; }
+    alerta.textContent = gresit;
+    alerta.hidden = false;
+    buton.disabled = false;
+    buton.textContent = "Intră";
+    f.querySelector<HTMLInputElement>('[name="parola"]')!.select();
+  });
+  laInceput();
+}
+
+/** „Arată” / „Ascunde” lângă o parolă: oamenii fără experiență greșesc des scriind orb. */
+export function legaArataParola(f: HTMLElement): void {
+  f.addEventListener("click", (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-arata-parola]");
+    const input = b?.parentElement?.querySelector<HTMLInputElement>("input");
+    if (!b || !input) return;
+    const arata = input.type === "password";
+    input.type = arata ? "text" : "password";
+    b.textContent = arata ? "Ascunde" : "Arată";
+    b.setAttribute("aria-pressed", String(arata));
+  });
+}
+
+/** Intrat cu parola dată de noi: își alege una a lui înainte de orice. */
+function deseneazaParolaNoua(): void {
+  faraMeniu("Alege-ți parola");
+  $("#ecran").innerHTML = `<div class="intrare">
+    <div><h1>Alege-ți parola</h1><p class="hint" style="margin:4px 0 0">Ai intrat cu o parolă primită. Alege una a ta, de cel puțin 10 caractere.</p></div>
+    <section class="imp-card">
+      <form id="form-parola" novalidate>
+        <label>Parola primită<span class="parola"><input name="veche" type="password" autocomplete="current-password" required />
+          <button type="button" class="secundar" data-arata-parola aria-pressed="false">Arată</button></span></label>
+        <label>Parola nouă<span class="parola"><input name="noua" type="password" autocomplete="new-password" minlength="10" required />
+          <button type="button" class="secundar" data-arata-parola aria-pressed="false">Arată</button></span></label>
+        <label>Parola nouă, încă o dată<input name="repeta" type="password" autocomplete="new-password" required /></label>
+        <p class="alerta" role="alert" hidden></p>
+        <button type="submit" class="primar">Salvează parola</button>
+      </form>
+    </section>
+    <p><button type="button" class="legatura" id="iesi-parola">Ieși</button></p>
+  </div>`;
+  const f = $<HTMLFormElement>("#form-parola");
+  legaArataParola(f);
+  $("#iesi-parola").addEventListener("click", () => void iesi().then(() => location.reload()));
+  f.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const d = new FormData(f);
+    const alerta = f.querySelector<HTMLElement>(".alerta")!;
+    const noua = String(d.get("noua") ?? "");
+    if (noua !== String(d.get("repeta") ?? "")) { alerta.textContent = "Cele două parole noi nu sunt la fel."; alerta.hidden = false; return; }
+    const gresit = await schimbaParola(String(d.get("veche") ?? ""), noua);
+    if (!gresit) { location.reload(); return; }
+    alerta.textContent = gresit;
+    alerta.hidden = false;
+  });
+  laInceput();
+}
+
+/** În antet, numele omului (spre „Contul meu”) și „Ieși”. */
+function arataOmul(): void {
+  const om = eu();
+  const el = $("#om");
+  if (!om) { el.hidden = true; return; }
+  el.innerHTML = `<a href="#/cont" title="Contul meu">${esc(om.nume)}</a>
+    <button type="button" class="pliaza" id="iesi">Ieși</button>`;
+  el.hidden = false;
+}
+
+document.addEventListener("click", (e) => {
+  if ((e.target as HTMLElement).closest("#iesi")) void iesi().then(() => { location.hash = ""; location.reload(); });
+});
+
 /**
  * Ce a ramas in browserul asta din vremea prototipului, cand datele stateau
  * aici: un singur buton le muta pe server. Mutarea nu dubleaza nimic, deci
@@ -382,6 +502,8 @@ async function arataCursul(): Promise<void> {
 }
 
 addEventListener("hashchange", () => void navigheaza(true));
+// Sesiunea s-a încheiat în timpul lucrului (expirată, ieșit din alt tab): intrarea, cu motivul.
+laNeautentificat(() => { if (stareDate === "server") deseneazaIntrarea("Sesiunea s-a încheiat: intră din nou în cont."); });
 
 void (async () => {
   try {
@@ -392,7 +514,7 @@ void (async () => {
   }
   await navigheaza();
   void propuneMutarea();
-  if (stareDate === "server") {
+  if (stareDate === "server" && eu() && !eu()!.parolaTemporara) {
     void arataCursul();
     setInterval(() => void arataCursul(), 60 * 60 * 1000);
   }

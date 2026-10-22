@@ -187,8 +187,10 @@ export const ecran: Ecran = {
       const rest = ramasDePrimit(c, st.miscari);
       const returnat = returnatPeLinii(c, st.miscari);
       const cuRetur = [...returnat.values()].some((q) => q > 0);
-      const avize = s === "anulata" || s === "ciorna" ? [] : avizeFaraFactura(c);
-      const [eticheta, ton] = s === "primita" && avize.length > 0 ? ["primită, fără factură", "atentie" as const] : STARE[s];
+      // Și pe comanda anulată: ce a venit parțial înainte de anulare își așteaptă factura (audit 16 octombrie).
+      const avize = s === "ciorna" ? [] : avizeFaraFactura(c);
+      const [eticheta, ton] = (s === "primita" || s === "anulata") && avize.length > 0
+        ? [`${STARE[s][0]}, fără factură`, "atentie" as const] : STARE[s];
       const ob = obiectiv(c);
       const kg = (l: LinieComanda): string => {
         const k = kgPeMp(l.articol);
@@ -270,11 +272,11 @@ export const ecran: Ecran = {
       const tabelLinii = tabel(["Material", "Comandat", "Primit", "Rămas de primit", ...(cuRetur ? ["Returnat"] : [])], randuri,
         ["", "n", "n", "n", ...(cuRetur ? ["n"] : [])]);
 
-      if (s === "anulata") return `<section class="imp-card">${antet}${vede ? tabelLinii : ""}</section>`;
+      if (s === "anulata" && avize.length === 0) return `<section class="imp-card">${antet}${vede ? tabelLinii : ""}</section>`;
 
       const email = textEmail(c, ob);
       const poateReturna = c.linii.some((l) => (primit.get(l.id) ?? 0) - (returnat.get(l.id) ?? 0) > 0);
-      const deschisaReceptia = s !== "primita" && (receptie.has(c.id) || citite.has(c.id));
+      const deschisaReceptia = s !== "primita" && s !== "anulata" && (receptie.has(c.id) || citite.has(c.id));
       const deschisaFactura = avize.length > 0 && (factura.has(c.id) || avize.some((a) => citite.has(`${c.id}|${a}`)));
       if (!vede) {
         return `<section class="imp-card">${antet}${deschisaReceptia ? formularReceptie(c, rest) : ""}${
@@ -297,7 +299,7 @@ export const ecran: Ecran = {
         ${deschisaFactura ? avize.map((a) => formularFactura(c, a)).join("") : ""}
         ${poateReturna ? formularRetur(c, primit, returnat) : ""}
         ${err}
-        ${s !== "primita" ? `<div class="imp-formular-butoane">${anulare === c.id
+        ${s !== "primita" && s !== "anulata" ? `<div class="imp-formular-butoane">${anulare === c.id
           ? `<button type="button" class="secundar" data-act="anuleaza" data-id="${esc(c.id)}">Sigur anulezi comanda?</button>`
           : `<button type="button" class="secundar" data-act="anuleaza" data-id="${esc(c.id)}">Anulează comanda</button>`}</div>` : ""}
       </section>`;

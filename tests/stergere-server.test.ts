@@ -10,7 +10,8 @@ import { bazaDisponibila } from "./conditii.js";
 import { sql } from "drizzle-orm";
 import { caTenant, conecteaza, purjeazaTenant, URL_PROPRIETAR } from "../src/db/client.js";
 import { firma, oferta, tenant } from "../src/db/schema.js";
-import { creeazaServer, ANTET_CSRF } from "../src/server/app.js";
+import { ANTET_CSRF } from "../src/server/app.js";
+import { serverCuCont } from "./cu-cont.js";
 import type { DateComune } from "../src/server/contract.js";
 import type { PlanSantier } from "../src/lucrari/situatii.js";
 import { articolDin, type Miscare } from "../src/stoc/registru.js";
@@ -21,7 +22,7 @@ const disponibila = bazaDisponibila(await app$.db.execute(sql`select 1`).then(()
 const daca = () => (disponibila ? it : it.skip);
 
 let tenantId = "";
-let server: ReturnType<typeof creeazaServer>;
+let server: ReturnType<typeof serverCuCont>;
 
 async function cere(cale: string, init: { method?: string; body?: unknown } = {}) {
   const r = await server.request(cale, {
@@ -38,7 +39,7 @@ beforeAll(async () => {
   tenantId = t!.id;
   await caTenant(prop.db, tenantId, (tx) =>
     tx.insert(firma).values({ tenantId, cod: "radoia", denumire: "RADOIA ISOLIRUNG SRL", serieOferta: "RAD" }).then(() => undefined));
-  server = creeazaServer({ db: app$.db, tenantId });
+  server = serverCuCont({ db: app$.db, tenantId });
 });
 
 afterAll(async () => {

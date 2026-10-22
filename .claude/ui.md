@@ -114,10 +114,18 @@ răspunde) sau browser (linkul de pe Pages). Pe server, `navigheaza` ia datele
 la fiecare schimbare de ecran, deci ce a scris un coleg se vede la următorul
 clic.
 
-- **Fără intrare** (10 octombrie 2026, cerut de Andrei): aplicația se deschide
-  direct. Ecranul de email, linkul `#/intrare/<token>` și „Ieși” au plecat.
-  Cu serverul picat, pagina spune „Serverul nu răspunde”, fără meniu
-  (`data-fara-meniu` pe `:root`).
+- **Intrarea** (21 octombrie 2026, în locul ferestrei de parolă a
+  browserului): pagina „Intră în cont” (emailul, parola cu „Arată”, „Intră”),
+  fără meniu (`data-fara-meniu`), desenată de `main.ts` când `/api/stare` nu
+  are om intrat; după intrare pagina se reîncarcă. Cu parola temporară,
+  „Alege-ți parola” înainte de orice. Un 401 în timpul lucrului (sesiune
+  expirată) aduce intrarea, cu motivul. În antet: numele omului (spre „Contul
+  meu”) și „Ieși”; pe telefon fără curs. La Setări: „Cine a schimbat ce”
+  (`ecrane/jurnal.ts`) și „Contul meu” (`ecrane/cont.ts`, schimbarea parolei).
+  Cu serverul picat, pagina spune „Serverul nu răspunde”, fără meniu.
+- **Adrese de detaliu:** pagina unui șantier e `#/lucrari/<id>` (routerul ia
+  ecranul de dinainte de al doilea „/”): merge „Înapoi”, reîncărcarea și
+  linkurile din „Necesită atenția ta”.
 - **Mesajele serverului** stau deasupra ecranului (`#mesaje`): o scriere
   refuzată („Nu s-a salvat pe server: …”, cu „Am înțeles”) și cardul „Datele
   din acest browser” / „Mută datele pe server”. După un refuz ecranul se

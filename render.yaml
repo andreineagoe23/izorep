@@ -33,10 +33,6 @@ services:
           property: connectionString
       - key: IZOREP_APP_PAROLA
         generateValue: true
-      # Parola comuna pe site, pana revin conturile. Fara ea serverul nu
-      # porneste cu HOST=0.0.0.0.
-      - key: IZOREP_PAROLA
-        sync: false
       - key: OPENAI_API_KEY
         sync: false
       # Contul OpenAI are 30.000 de tokeni pe minut pe gpt-4.1.

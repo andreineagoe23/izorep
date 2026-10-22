@@ -9,7 +9,8 @@ import { bazaDisponibila } from "./conditii.js";
 import { sql } from "drizzle-orm";
 import { caTenant, conecteaza, purjeazaTenant, URL_PROPRIETAR } from "../src/db/client.js";
 import { firma, miscare, situatie, tenant } from "../src/db/schema.js";
-import { creeazaServer, ANTET_CSRF } from "../src/server/app.js";
+import { ANTET_CSRF } from "../src/server/app.js";
+import { serverCuCont } from "./cu-cont.js";
 import type { DateComune } from "../src/server/contract.js";
 import type { PlanSantier } from "../src/lucrari/situatii.js";
 import { miscariInchidere, stocSantier, stocZero, type Inchidere } from "../src/lucrari/inchidere.js";
@@ -21,7 +22,7 @@ const disponibila = bazaDisponibila(await app$.db.execute(sql`select 1`).then(()
 const daca = () => (disponibila ? it : it.skip);
 
 let tenantId = "";
-let server: ReturnType<typeof creeazaServer>;
+let server: ReturnType<typeof serverCuCont>;
 
 async function cere(cale: string, init: { method?: string; body?: unknown } = {}) {
   const r = await server.request(cale, {
@@ -38,7 +39,7 @@ beforeAll(async () => {
   tenantId = t!.id;
   await caTenant(prop.db, tenantId, (tx) =>
     tx.insert(firma).values({ tenantId, cod: "radoia", denumire: "RADOIA ISOLIRUNG SRL", serieOferta: "RAD" }).then(() => undefined));
-  server = creeazaServer({ db: app$.db, tenantId });
+  server = serverCuCont({ db: app$.db, tenantId });
 });
 
 afterAll(async () => {
@@ -112,6 +113,11 @@ describe("închiderea șantierului, pe server", () => {
     expect((await cere("/api/miscari", { method: "POST", body: intrari[0] })).status).toBe(200);
     expect((await cere(`/api/santiere/${plan.id}`, { method: "PUT", body: { ...plan, denumire: "Alt nume", situatii: [] } })).status).toBe(409);
     expect((await cere(`/api/santiere/${plan.id}`, { method: "DELETE" })).status).toBe(409);
+    // Nici lista de materiale (audit 16 octombrie: rămânea editabilă).
+    const lista = { id: "f7-nec-inchis", creat: data, fisier: "x.xlsx", obiectiv: "Hala F7", santier: plan.id, materiale: [] };
+    const nec = await cere(`/api/necesare/${lista.id}`, { method: "PUT", body: lista });
+    expect(nec.status).toBe(409);
+    expect((nec.corp as { eroare: string }).eroare).toContain("e închis: lista lui de materiale nu se mai schimbă");
   });
 
   daca()("trigger-ul ține și fără aplicație: direct în bază, nimic nou pe șantierul închis", async () => {

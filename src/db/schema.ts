@@ -91,6 +91,18 @@ export const utilizator = pgTable("utilizator", {
   /** birou | contabilitate — rolurile se stabilesc cu firma */
   rol: text("rol").notNull(),
   activ: boolean("activ").notNull().default(true),
+  /**
+   * Parola (21 octombrie 2026, ales de Andrei în locul linkului pe email):
+   * `scrypt$N$r$p$sare$hash`, niciodată parola însăși (`src/server/parola.ts`).
+   * Null = contul nu poate intra până nu i se pune una.
+   */
+  parolaHash: text("parola_hash"),
+  /** Pusă de noi la crearea contului: la prima intrare omul își alege alta. */
+  parolaTemporara: boolean("parola_temporara").notNull().default(false),
+  /** Încercările greșite la rând; peste prag, contul stă blocat până la `blocat_pana`. */
+  incercariGresite: integer("incercari_gresite").notNull().default(0),
+  blocatPana: timestamp("blocat_pana", { withTimezone: true }),
+  ultimaIntrare: timestamp("ultima_intrare", { withTimezone: true }),
   creatLa: timestamp("creat_la", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
   // Email unic pe tenant, nu global: acelasi om poate exista la doi clienti.
@@ -328,6 +340,14 @@ export const cerere = pgTable("cerere", {
   lucru: jsonb("lucru").notNull(),
   creatDe: uuid("creat_de").references(() => utilizator.id, { onDelete: "set null" }),
   actualizatLa: timestamp("actualizat_la", { withTimezone: true }).notNull().defaultNow(),
+  /**
+   * Crește la fiecare salvare. Browserul o trimite înapoi pe cea pe care a
+   * citit-o: alta în bază = un coleg a salvat între timp, iar salvarea lui nu
+   * se pierde (409), cum se pierdea până pe 21 octombrie 2026 („ultimul câștigă”).
+   */
+  versiune: integer("versiune").notNull().default(1),
+  /** Cine a salvat ultimul, pentru mesajul de mai sus. */
+  actualizatDe: text("actualizat_de"),
 }, (t) => [
   primaryKey({ columns: [t.tenantId, t.id] }),
   doarTenantul("cerere_tenant"),
@@ -500,9 +520,31 @@ export const necesar = pgTable("necesar", {
   santierId: text("santier_id"),
   continut: jsonb("continut").notNull(),
   actualizatLa: timestamp("actualizat_la", { withTimezone: true }).notNull().defaultNow(),
+  /** Ca la cerere: doi oameni pe același necesar nu se mai suprascriu. */
+  versiune: integer("versiune").notNull().default(1),
+  actualizatDe: text("actualizat_de"),
 }, (t) => [
   primaryKey({ columns: [t.tenantId, t.id] }),
   doarTenantul("necesar_tenant"),
+]);
+
+/**
+ * Cine a schimbat ce (21 octombrie 2026): un rând pe fiecare scriere reușită,
+ * cu omul, ce a făcut și asupra cui. Doar se adaugă (trigger în 0016). Fără
+ * cheie străină spre `utilizator`: numele se copiază, ca rândul să spună tot
+ * și după ce contul e dezactivat.
+ */
+export const jurnal = pgTable("jurnal", {
+  tenantId: uuid("tenant_id").notNull().references(() => tenant.id, { onDelete: "restrict" }),
+  id: uuid("id").primaryKey().defaultRandom(),
+  cand: timestamp("cand", { withTimezone: true }).notNull().defaultNow(),
+  utilizatorId: uuid("utilizator_id"),
+  cine: text("cine").notNull(),
+  actiune: text("actiune").notNull(),
+  obiect: text("obiect"),
+}, (t) => [
+  index("jurnal_tenant_cand_idx").on(t.tenantId, t.cand),
+  doarTenantul("jurnal_tenant"),
 ]);
 
 /**

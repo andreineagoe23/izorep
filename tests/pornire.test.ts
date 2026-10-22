@@ -30,7 +30,8 @@ import {
 import type { PreturiFurnizori } from "../src/stoc/preturi-furnizori.js";
 import { caTenant, conecteaza, purjeazaTenant, URL_PROPRIETAR } from "../src/db/client.js";
 import { firma, tenant } from "../src/db/schema.js";
-import { creeazaServer, ANTET_CSRF } from "../src/server/app.js";
+import { ANTET_CSRF } from "../src/server/app.js";
+import { serverCuCont } from "./cu-cont.js";
 import type { DateComune } from "../src/server/contract.js";
 import type { PlanSantier } from "../src/lucrari/situatii.js";
 
@@ -235,7 +236,7 @@ const prop = conecteaza(URL_PROPRIETAR);
 const disponibila = bazaDisponibila(await app$.db.execute(sql`select 1`).then(() => true, () => false), "testele pornirii pe server");
 const daca = () => (disponibila ? it : it.skip);
 let tenantId = "";
-let server: ReturnType<typeof creeazaServer>;
+let server: ReturnType<typeof serverCuCont>;
 
 async function cere(cale: string, metoda = "GET", corp?: unknown) {
   const r = await server.request(cale, {
@@ -254,7 +255,7 @@ beforeAll(async () => {
   await caTenant(prop.db, tenantId, async (tx) => {
     await tx.insert(firma).values({ tenantId, cod: "radoia", denumire: "RADOIA ISOLIRUNG SRL", serieOferta: "RAD" });
   });
-  server = creeazaServer({ db: app$.db, tenantId });
+  server = serverCuCont({ db: app$.db, tenantId });
 });
 
 afterAll(async () => {

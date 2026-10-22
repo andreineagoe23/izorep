@@ -40,7 +40,7 @@ beforeEach(() => {
     if (metoda !== "GET") cereri.push(`${metoda} ${url}`);
     if (!server) return new Response("", { status: 404 });
     const json = (c: unknown) => new Response(JSON.stringify(c), { status: 200, headers: { "content-type": "application/json" } });
-    if (url === "/api/stare") return json({ firma: "RADOIA" });
+    if (url === "/api/stare") return json({ firma: "RADOIA", eu: { nume: "Test", email: "t@izorep.test", rol: "birou", parolaTemporara: false } });
     if (url === "/api/date") return json(stare());
     return json({ ok: true, consum: 1 });
   }));

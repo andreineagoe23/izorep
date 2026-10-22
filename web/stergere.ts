@@ -32,6 +32,12 @@ export interface Stergere {
   comenzi: { id: string; furnizor: string; trimisa: boolean }[];
   miscari: string[];
   documente: string[];
+  /**
+   * Locurile din afara a ce se șterge al căror stoc se schimbă (21 octombrie
+   * 2026; panoul nu spunea): un transfer din central pe șantier, șters, pune
+   * materialul înapoi în central; restul adus înapoi de pe șantier dispare.
+   */
+  alteLocuri?: { nume: string; materiale: number; revine: boolean; dispare: boolean }[];
 }
 
 export interface DateDeSters {
@@ -69,6 +75,22 @@ export function ceSeSterge(d: DateDeSters, t: TintaStergere, santiereInPlus: rea
     }
   }
 
+  // Ce simte stocul din alte locuri când mișcările astea dispar.
+  const numeLoc = (id: string): string => (id === "central" ? "depozitul central" : id === "atelier" ? "atelier"
+    : `șantierul „${d.planuri.find((p) => p.id === id)?.denumire ?? id}”`);
+  const peLoc = new Map<string, { materiale: Set<string>; revine: boolean; dispare: boolean }>();
+  for (const m of d.depozit.miscari) {
+    if (!miscari.has(m.id) || m.anuleaza !== undefined) continue;
+    for (const [loc, revine] of [[m.din, true], [m.spre, false]] as const) {
+      if (loc === undefined || ids.has(loc)) continue;
+      const x = peLoc.get(loc) ?? { materiale: new Set<string>(), revine: false, dispare: false };
+      x.materiale.add(m.articol.cheie);
+      if (revine) x.revine = true; else x.dispare = true;
+      peLoc.set(loc, x);
+    }
+  }
+  const alteLocuri = [...peLoc].map(([id, x]) => ({ nume: numeLoc(id), materiale: x.materiale.size, revine: x.revine, dispare: x.dispare }));
+
   const oferta = cerere ? d.oferte[cerere.id] : undefined;
   return {
     ...(cerere ? { cerere } : {}),
@@ -81,6 +103,7 @@ export function ceSeSterge(d: DateDeSters, t: TintaStergere, santiereInPlus: rea
     comenzi: comenzi.map((c) => ({ id: c.id, furnizor: c.furnizor, trimisa: c.trimisa !== undefined })),
     miscari: [...miscari],
     documente: (d.depozit.documente ?? []).filter((x) => deComanda.has(x.comanda)).map((x) => x.id),
+    ...(alteLocuri.length ? { alteLocuri } : {}),
   };
 }
 
@@ -103,6 +126,11 @@ export function rezumatStergere(s: Stergere): string[] {
   if (s.miscari.length) r.push(`${cate(s.miscari.length, "mișcare de stoc", "mișcări de stoc")} (intrări, transferuri, consum, retururi)`);
   if (s.documente.length) r.push(`${cate(s.documente.length, "aviz sau factură atașată", "avize și facturi atașate")}`);
   if (s.santiere.length) r.push("pozele din măsurători trimise pe șantier, dacă sunt");
+  for (const l of s.alteLocuri ?? []) {
+    const cum = [l.revine ? "ce a plecat de acolo se întoarce acolo" : "", l.dispare ? "ce a ajuns acolo de aici dispare" : ""]
+      .filter(Boolean).join(", iar ");
+    r.push(`atenție: se schimbă și stocul din ${l.nume}, la ${cate(l.materiale, "material", "materiale")}: ${cum}`);
+  }
   return r;
 }
 

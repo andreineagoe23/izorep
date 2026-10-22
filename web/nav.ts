@@ -39,6 +39,8 @@ export const MENIU: GrupMeniu[] = [
   { titlu: "Setări", itemi: [
     { id: "clienti", eticheta: "Clienți" },
     { id: "preturi", eticheta: "Liste de prețuri" },
+    { id: "jurnal", eticheta: "Cine a schimbat ce" },
+    { id: "cont", eticheta: "Contul meu" },
   ]},
 ];
 

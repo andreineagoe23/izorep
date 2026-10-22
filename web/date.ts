@@ -22,7 +22,8 @@
  * picat nu trebuie sa scrie pe tacute in browser.
  */
 import type { CursBnr } from "../src/server/curs.js";
-import type { Stare, DateComune, CererePeFir, Mutare, RezultatMutare, OfertaSalvata } from "../src/server/contract.js";
+import type { Eu, Stare, DateComune, CererePeFir, Mutare, RezultatMutare, OfertaSalvata } from "../src/server/contract.js";
+import type { RandJurnal } from "../src/server/jurnal.js";
 import type { PlanSantier, Situatie } from "../src/lucrari/situatii.js";
 import type { Miscare } from "../src/stoc/registru.js";
 import {
@@ -53,11 +54,26 @@ let ascultaEroare: (mesaj: string) => void = (m) => console.error(m);
 let ascultaReimprospatare: () => void = () => undefined;
 /** Copia s-a luat din nou dupa un refuz, iar ecranul inca n-a citit-o. */
 let invechit = false;
+/**
+ * Versiunile citite de pe server (21 octombrie 2026): salvarea le trimite
+ * înapoi, iar serverul refuză (409) o salvare peste a unui coleg. Se citesc la
+ * trimitere, după răspunsul salvării de dinainte, deci propriile salvări una
+ * după alta nu se refuză între ele.
+ */
+const versiuniCereri = new Map<string, number>();
+const versiuniNecesar = new Map<string, number>();
+/** Cererile refuzate ca schimbate de un coleg: nu mai pleacă nimic până se redeschid. */
+const conflicte = new Set<string>();
+let ascultaNeautentificat: () => void = () => undefined;
 
 export const modDate = (): Mod => mod;
 /** Firma servita, cand datele stau pe server. */
 export const firmaServita = (): string | null => stare?.firma ?? null;
 export const laEroare = (f: (mesaj: string) => void): void => { ascultaEroare = f; };
+/** Serverul a spus 401: sesiunea s-a încheiat (expirată, ieșit din alt tab). Pagina arată intrarea. */
+export const laNeautentificat = (f: () => void): void => { ascultaNeautentificat = f; };
+/** Omul intrat; null = nimeni (sau linkul demo). */
+export const eu = (): Eu | null => stare?.eu ?? null;
 export const laReimprospatare = (f: () => void): void => { ascultaReimprospatare = f; };
 
 /* ------------------------------------------------------------- reteaua */
@@ -77,6 +93,7 @@ async function api<T>(cale: string, metoda = "GET", corp?: unknown): Promise<T> 
   let json: unknown = null;
   try { json = text ? JSON.parse(text) : null; } catch { /* nu e JSON: nu e serverul nostru */ }
   if (!r.ok) {
+    if (r.status === 401 && cale !== "/api/intrare") ascultaNeautentificat();
     const mesaj = (json as { eroare?: string } | null)?.eroare ?? `Nu a mers (cod ${r.status}). Încearcă din nou.`;
     throw new EroareServer(r.status, mesaj);
   }
@@ -104,7 +121,8 @@ export async function porneste(): Promise<Mod> {
   try {
     stare = await api<Stare>("/api/stare");
     mod = "server";
-    await reimprospateaza();
+    // Fără cont intrat (sau cu parola temporară), datele nu se cer: pagina arată întâi intrarea.
+    if (stare.eu && !stare.eu.parolaTemporara) await reimprospateaza();
     return "server";
   } catch {
     if (impus === "server") throw new Error("Serverul nu răspunde. Încearcă din nou peste câteva minute.");
@@ -126,7 +144,47 @@ export async function reimprospateaza(): Promise<void> {
   if (mod !== "server") return;
   await coada;
   copie = await api<DateComune>("/api/date");
+  for (const n of copie.depozit.necesare) if (n.versiune !== undefined) versiuniNecesar.set(n.id, n.versiune);
   invechit = false;
+}
+
+/* ------------------------------------------------------------- contul */
+
+/** Intrarea: null = a mers; altfel mesajul pentru om (parolă greșită, cont blocat, prea multe încercări). */
+export async function intra(email: string, parola: string): Promise<string | null> {
+  try {
+    const r = await api<{ eu: Eu }>("/api/intrare", "POST", { email, parola });
+    stare = { firma: stare?.firma ?? "", eu: r.eu };
+    return null;
+  } catch (e) {
+    return e instanceof Error ? e.message : String(e);
+  }
+}
+
+export async function iesi(): Promise<void> {
+  try { await api("/api/iesire", "POST", {}); } catch { /* cookie-ul se șterge oricum la reîncărcare */ }
+}
+
+/** Parola nouă: null = schimbată; altfel de ce nu. */
+export async function schimbaParola(veche: string, noua: string): Promise<string | null> {
+  try {
+    await api("/api/parola", "POST", { veche, noua });
+    if (stare?.eu) stare = { ...stare, eu: { ...stare.eu, parolaTemporara: false } };
+    return null;
+  } catch (e) {
+    return e instanceof Error ? e.message : String(e);
+  }
+}
+
+/** Următorul număr liber de ofertă al firmei, dat de server; null pe linkul demo sau fără ofertă salvată. */
+export async function urmatorulNumar(firma: string): Promise<string | null> {
+  if (mod !== "server") return null;
+  try { return (await api<{ numar: string | null }>(`/api/oferte/urmatorul?firma=${encodeURIComponent(firma)}`)).numar; } catch { return null; }
+}
+
+/** Cine a schimbat ce: cele mai noi întâi, câte 200; `inainte` dă pagina următoare. */
+export async function citesteJurnal(inainte?: string): Promise<RandJurnal[]> {
+  return api<RandJurnal[]>(`/api/jurnal${inainte ? `?inainte=${encodeURIComponent(inainte)}` : ""}`);
 }
 
 /** Ecranul scrie dintr-o lista luata inainte de un refuz: nu pleaca nimic. */
@@ -259,7 +317,12 @@ export function scrieDepozit(s: dep.StareDepozit): boolean {
   }
   const necVechi = new Map(v.necesare.map((n) => [n.id, n]));
   for (const n of s.necesare) {
-    if (!acelasi(necVechi.get(n.id), n)) trimite(() => api(`/api/necesare/${enc(n.id)}`, "PUT", n));
+    if (!acelasi(necVechi.get(n.id), n)) {
+      trimite(async () => {
+        const r = await api<{ versiune: number }>(`/api/necesare/${enc(n.id)}`, "PUT", { ...n, versiune: versiuniNecesar.get(n.id) ?? n.versiune });
+        versiuniNecesar.set(n.id, r.versiune);
+      });
+    }
   }
   const raman = new Set(s.necesare.map((n) => n.id));
   for (const n of v.necesare.filter((x) => !raman.has(x.id))) trimite(() => api(`/api/necesare/${enc(n.id)}`, "DELETE"));
@@ -497,11 +560,21 @@ const peFir = (s: ist.SesiuneImport, cuFis: boolean): CererePeFir => {
 export async function salveaza(s: ist.SesiuneImport): Promise<void> {
   if (mod !== "server") return ist.salveaza(s);
   ist.puneCurent(s.id);
+  // Refuzată o dată ca schimbată de un coleg: nimic nu mai pleacă până se redeschide cererea.
+  if (conflicte.has(s.id)) return;
   const trimiteFisier = !cuFisier.has(s.id);
   const corp = peFir(s, trimiteFisier);
   trimite(async () => {
-    await api(`/api/cereri/${enc(s.id)}`, "PUT", corp);
-    cuFisier.add(s.id);
+    if (conflicte.has(s.id)) return;
+    try {
+      const v = versiuniCereri.get(s.id);
+      const r = await api<{ versiune: number }>(`/api/cereri/${enc(s.id)}`, "PUT", { ...corp, ...(v !== undefined ? { versiune: v } : {}) });
+      versiuniCereri.set(s.id, r.versiune);
+      cuFisier.add(s.id);
+    } catch (e) {
+      if (e instanceof EroareServer && e.status === 409 && versiuniCereri.has(s.id)) conflicte.add(s.id);
+      throw e;
+    }
   });
   await coada;
 }
@@ -525,6 +598,8 @@ export async function incarca(id: string): Promise<ist.SesiuneImport | null> {
   try {
     const c = await api<CererePeFir>(`/api/cereri/${enc(id)}`);
     cuFisier.add(id);
+    if (c.versiune !== undefined) versiuniCereri.set(id, c.versiune);
+    conflicte.delete(id);
     return { ...c, fisier: dinBase64(c.fisier ?? "") } as ist.SesiuneImport;
   } catch {
     return null;

@@ -17,9 +17,10 @@ Nu au IT și nu vor să învețe unelte noi. Tot ce urmează e măsurat după as
   azi, și trimit poze. Tehnicul le pune în ecranul „Măsurători”, verifică ce a
   citit aplicația de pe poză și le trimite spre ofertă sau în situația de
   lucrări a șantierului.
-- **Un cont pentru fiecare om**, cu intrare prin link primit pe email — fără
-  parole de ținut minte. Contul comun de birou nu merge: nu se mai știe cine a
-  schimbat un preț.
+- **Un cont pentru fiecare om**, cu emailul și parola lui (ales de Andrei pe
+  21 octombrie 2026: linkul pe email cerea un furnizor de email). Contul comun
+  de birou nu merge: nu se mai știe cine a schimbat un preț. Conturile le
+  facem noi, cu `npm run om`; parola uitată se resetează tot așa.
 - **Rolurile** (cine vede ce) se stabilesc mai târziu, cu firma.
 
 ## Legătura cu Saga

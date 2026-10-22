@@ -318,14 +318,28 @@ function restPePozitii(plan: PlanSantier): Map<number, number> {
   return new Map(randuriSituatie(plan, ultima).map((r) => [r.poz.nr, Math.max(0, r.rest)]));
 }
 
-/** Materialul pentru lucrarea ramasa, cu pierderea la croit; fara situatii, tot necesarul. */
+/**
+ * Materialul pentru lucrarea ramasa, cu pierderea la croit; fara situatii, tot
+ * necesarul. Pe pozitii, `peUnitate` e din calcul: cand omul a scris alta
+ * cantitate in lista (`calculat` tine cifra calculata), restul se scaleaza la
+ * cifra lui. Pana pe 21 octombrie 2026 „Lipsește” urma calculul, nu omul.
+ */
 function pentruRest(m: MaterialNecesar, plan: PlanSantier, rest: Map<number, number>, pus: number): number {
   const necesar = cantitateNecesara(m);
   if (plan.inchis) return 0;
   if (plan.situatii.length === 0) return necesar;
   if (!m.pePozitie?.length) return Math.max(0, necesar - pus);
-  return m.pePozitie.reduce((t, p) => t + p.peUnitate * (rest.get(p.pozitie) ?? 0), 0) * (1 + (m.pierdere ?? 0));
+  const scala = m.calculat !== undefined && m.calculat > 0 ? necesar / m.calculat : 1;
+  return m.pePozitie.reduce((t, p) => t + p.peUnitate * (rest.get(p.pozitie) ?? 0), 0) * (1 + (m.pierdere ?? 0)) * scala;
 }
+
+/**
+ * „În ofertă” pe un necesar: cât plătește clientul pentru materialele lui. Și
+ * cele scoase din listă cu ✕: clientul le plătește oricum, iar costul trebuie
+ * comparat cu toată oferta (21 octombrie 2026; înainte, ✕ scădea „În ofertă”).
+ */
+export const inOfertaPe = (necesar: readonly MaterialNecesar[], scoase: readonly MaterialNecesar[] = []): number =>
+  [...necesar, ...scoase].filter((m) => !m.alClientului).reduce((t, m) => t + (m.valoareOferta ?? 0), 0);
 
 /**
  * Sub cat nu e lipsa: 0,5 % din necesar, cel putin 0,05 (ml sau m²). Tabla se
@@ -344,6 +358,7 @@ const procentDin = (cost: number, inOferta: number): number | null =>
  */
 export function materialSantier(
   plan: PlanSantier, necesar: readonly MaterialNecesar[], miscari: readonly Miscare[], comenzi: readonly Comanda[] = [],
+  scoase: readonly MaterialNecesar[] = [],
 ): MaterialSantier {
   const flux = fluxuri(miscari, plan.id);
   const rest = restPePozitii(plan);
@@ -384,13 +399,13 @@ export function materialSantier(
     randuri.push(rand(k, articolDin(materiale[0]!), materiale));
   }
   for (const [k, f] of flux) if (!vazute.has(k)) randuri.push(rand(k, f.articol, []));
-  return { randuri, cost: costDin(randuri) };
+  return { randuri, cost: costDin(randuri, inOfertaPe([], scoase)) };
 }
 
-function costDin(randuri: readonly RandMaterial[]): CostFataDeOferta {
+function costDin(randuri: readonly RandMaterial[], scoase = 0): CostFataDeOferta {
   let cost = 0;
   let faraPret = 0;
-  let inOferta = 0;
+  let inOferta = scoase;
   for (const r of randuri) {
     inOferta += r.inOferta;
     if (r.cost === null) faraPret++;
@@ -429,7 +444,7 @@ export interface CifreInchidere {
 
 /** Cifrele unui santier inchis (sau, inainte, ce ar iesi acum). */
 export function cifreInchidere(
-  plan: PlanSantier, necesar: readonly MaterialNecesar[], miscari: readonly Miscare[],
+  plan: PlanSantier, necesar: readonly MaterialNecesar[], miscari: readonly Miscare[], scoase: readonly MaterialNecesar[] = [],
 ): CifreInchidere {
   const flux = fluxuri(miscari, plan.id);
   const randuri: RandInchidere[] = [...flux.values()].map((f) => {
@@ -447,7 +462,7 @@ export function cifreInchidere(
     pierderi += q * r.costUnitar;
   }
   // „În ofertă” din necesar, pe toate materialele lui, venite sau nu.
-  const inOferta = necesar.filter((m) => !m.alClientului).reduce((t, m) => t + (m.valoareOferta ?? 0), 0);
+  const inOferta = inOfertaPe(necesar, scoase);
   let cost = 0;
   let faraPret = 0;
   for (const r of randuri) {

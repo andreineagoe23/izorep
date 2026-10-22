@@ -17,6 +17,8 @@ const CAI: Record<string, string> = {
   import: '<path d="M12 15V4"/><path d="M8 8l4-4 4 4"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/>',
   clienti: '<path d="M15 20v-1.5A3.5 3.5 0 0 0 11.5 15h-4A3.5 3.5 0 0 0 4 18.5V20"/><circle cx="9.5" cy="8" r="3.4"/><path d="M20 20v-1.5a3.5 3.5 0 0 0-2.6-3.4"/><path d="M15.2 4.8a3.4 3.4 0 0 1 0 6.4"/>',
   preturi: '<path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0l-7-7A2 2 0 0 1 3 12.2V5a2 2 0 0 1 2-2h7.2a2 2 0 0 1 1.4.6l7 7a2 2 0 0 1 0 2.8Z"/><circle cx="7.6" cy="7.6" r="1.4"/>',
+  jurnal: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  cont: '<circle cx="12" cy="8.5" r="3.6"/><path d="M5 20v-1a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1"/>',
   /* Un carnet cu spirala: notitele de pe santier. */
   masuratori: '<rect x="5" y="3" width="15" height="18" rx="2"/><path d="M5 7H3M5 12H3M5 17H3"/><path d="M9 8h7M9 12h7M9 16h4"/>',
   /* Un clipboard cu bifa: comanda la furnizor. */

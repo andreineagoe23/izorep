@@ -26,6 +26,8 @@ export interface NecesarLucrare {
   obiectiv: string;
   /** Depozitul santierului, daca omul l-a legat de unul. */
   santier?: string;
+  /** Versiunea din baza, pe server: salvarea o trimite inapoi (`puneNecesar`). */
+  versiune?: number;
   /** Pierderile la croit cu care s-a calculat (lipsesc la necesarurile de dinainte de 9 octombrie 2026). */
   pierderi?: Pierderi;
   /** Pragul tub / placa, in mm. */

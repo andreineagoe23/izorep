@@ -1,5 +1,9 @@
 # Planul de deploy: un link pentru Adrian, apoi pentru firmă
 
+> **21 octombrie 2026:** parola comună (pasul 1 de securitate, `IZOREP_PAROLA`) a
+> fost înlocuită de conturi cu email și parolă, pe o pagină de intrare
+> (`.claude/backend.md`, „Conturile”). Restul planului e istoric.
+
 > Pentru noi (Andrei, Adrian). Scris pe 12 octombrie 2026. Problema de azi:
 > Adrian nu poate face demo la firmă, fiindcă aplicația pornește doar cu Docker
 > pe laptop. Cerut: ceva securizat și, de preferat, o singură platformă pentru

@@ -14,7 +14,8 @@ import { readFileSync } from "node:fs";
 import { sql } from "drizzle-orm";
 import { caTenant, conecteaza, purjeazaTenant, URL_PROPRIETAR } from "../src/db/client.js";
 import { firma, oferta, miscare, tenant } from "../src/db/schema.js";
-import { creeazaServer, ANTET_CSRF, LIMITA_IMPLICITA, type OptiuniServer } from "../src/server/app.js";
+import { ANTET_CSRF, LIMITA_IMPLICITA, type OptiuniServer } from "../src/server/app.js";
+import { serverCuCont } from "./cu-cont.js";
 import { limitaDinBaza, plafoaneDinMediu } from "../src/server/limita-model.js";
 import type { CererePeFir, DateComune, Mutare, RezultatMutare } from "../src/server/contract.js";
 import { importaFisier } from "../src/import/pipeline.js";
@@ -36,9 +37,9 @@ let tenantA = "";
 let tenantB = "";
 /** A2: alt server (alt calculator) al aceleiasi firme A. */
 type Firma = "A" | "A2" | "B";
-const servere = {} as Record<Firma, ReturnType<typeof creeazaServer>>;
+const servere = {} as Record<Firma, ReturnType<typeof serverCuCont>>;
 const serverPentru = (tenantId: string, extra: Partial<OptiuniServer> = {}) =>
-  creeazaServer({ db: app$.db, tenantId, ...extra });
+  serverCuCont({ db: app$.db, tenantId, ...extra });
 
 /** O cerere ca din browser, la serverul firmei: JSON, cu antetul CSRF. */
 async function cere(cale: string, firma: Firma, init: { method?: string; body?: unknown; faraCsrf?: boolean } = {}) {
@@ -88,8 +89,10 @@ const miscareMica = (id: string, extra: Partial<Miscare> = {}): Miscare => ({
 });
 
 describe("serverul unei firme", () => {
-  daca()("spune ce firmă servește", async () => {
-    expect((await cere("/api/stare", "A")).corp).toEqual({ firma: `A-${sufix}` });
+  daca()("spune ce firmă servește și cine e intrat", async () => {
+    expect((await cere("/api/stare", "A")).corp).toEqual({
+      firma: `A-${sufix}`, eu: expect.objectContaining({ nume: "Om de test", parolaTemporara: false }),
+    });
   });
 
   daca()("un număr de ofertă e al unei singure cereri; versiunile aceleiași cereri îl păstrează", async () => {
@@ -108,6 +111,8 @@ describe("serverul unei firme", () => {
       const dublu = await post("/api/cereri/nr-2/oferte", "POST", continut("284"));
       expect(dublu.status).toBe(409);
       expect(dublu.corp.eroare).toContain("RAD284 e deja pe oferta cererii „test.xlsx” (C, 01.10.2026)");
+      // Numărul următor îl dă serverul: cel mai mare de pe seria firmei + 1.
+      expect(await (await srv.request("/api/oferte/urmatorul?firma=radoia")).json()).toEqual({ numar: "285" });
       expect((await post("/api/cereri/nr-2/oferte", "POST", continut("285"))).status).toBe(200);
     } finally {
       await purjeazaTenant(prop.db, t);
@@ -397,6 +402,17 @@ describe("comenzile și recepția (Faza 4): operații, nu diferențe de stare", 
   });
   const date = async (f: Firma = "A") => (await cere("/api/date", f)).corp as DateComune;
 
+  // Marfa comenzilor vine pe șantierul S-TR: el există, ca în aplicație (un loc inventat e refuzat).
+  beforeAll(async () => {
+    if (!disponibila) return;
+    const plan: PlanSantier = {
+      id: "S-TR", creat: "2026-07-01T08:00:00.000Z", denumire: "TRANSAVIA", client: "C", firma: "RADOIA ISOLIRUNG SRL",
+      oferta: "", fisier: "t.xlsx", destinatie: "rezidential", ajustareProcent: 0, discountProcent: 0, adaosFocProcent: 0,
+      pozitii: [{ nr: 1, denumire: "p", um: "ml", cantitate: 10, pretUnitar: 5, foc: false }], situatii: [],
+    };
+    await cere("/api/santiere/S-TR", "A", { method: "PUT", body: plan });
+  });
+
   daca()("ciorna se scrie și se rescrie; trimisă, nu se mai schimbă și nu se șterge", async () => {
     expect((await cere("/api/comenzi/co-1", "A", { method: "PUT", body: ciorna("co-1", 300) })).status).toBe(200);
     expect((await cere("/api/comenzi/co-1", "A", { method: "PUT", body: ciorna("co-1") })).status).toBe(200);
@@ -450,6 +466,19 @@ describe("comenzile și recepția (Faza 4): operații, nu diferențe de stare", 
     expect((await date()).depozit.comenzi!.find((x) => x.id === "co-3")!.anulata).toBe("2026-07-15T00:00:00.000Z");
     expect((await cere("/api/comenzi/co-3/receptii", "A", { method: "POST", body: aviz(["r-9"]) })).corp)
       .toEqual({ eroare: "Comanda e anulată." });
+  });
+
+  daca()("primită parțial pe aviz, apoi anulată: factura avizului tot se trece (audit 16 octombrie)", async () => {
+    await cere("/api/comenzi/co-anulata", "A", { method: "PUT", body: ciorna("co-anulata") });
+    await cere("/api/comenzi/co-anulata/trimite", "A", { method: "POST", body: { cand: "2026-07-14T00:00:00.000Z" } });
+    const partial = { ...aviz(["r-40"]), linii: [{ linie: "L1", cantitate: 100 }] };
+    expect((await cere("/api/comenzi/co-anulata/receptii", "A", { method: "POST", body: partial })).corp).toEqual({ scrise: 1 });
+    await cere("/api/comenzi/co-anulata/anuleaza", "A", { method: "POST", body: { cand: "2026-07-16T00:00:00.000Z" } });
+    const r = await cere("/api/comenzi/co-anulata/facturi", "A", { method: "POST", body: {
+      aviz: "20261262", ids: ["f4-s", "f4-1"], data: "2026-07-20T08:00:00.000Z",
+      factura: { document: { tip: "factura", numar: "F-4", data: "2026-07-20" }, preturi: { L1: { valoare: 7.49, moneda: "EUR" } } },
+    } });
+    expect(r.corp).toEqual({ scrise: 2 });
   });
 
   daca()("returul la furnizor: din stoc, pe linia comenzii; nu mai mult decât a venit", async () => {
@@ -531,5 +560,42 @@ describe("Faza 5: atelierul și responsabilii, pe server", () => {
     // Altă firmă nu vede nimic.
     const b = (await cere("/api/date", "B")).corp as { depozit: { responsabili: Record<string, string> } };
     expect(b.depozit.responsabili).toEqual({});
+  });
+});
+
+describe("serverul verifică ce primește (audit 16 octombrie)", () => {
+  const plan: PlanSantier = {
+    id: "S-ver", creat: "2026-10-09T08:00:00.000Z", denumire: "Verificare", client: "C", firma: "RADOIA ISOLIRUNG SRL",
+    oferta: "", fisier: "v.xlsx", destinatie: "rezidential", ajustareProcent: 0, discountProcent: 0, adaosFocProcent: 0,
+    pozitii: [{ nr: 1, denumire: "p", um: "ml", cantitate: 10, pretUnitar: 5, foc: false }], situatii: [],
+  };
+  beforeAll(async () => { if (disponibila) await cere("/api/santiere/S-ver", "A", { method: "PUT", body: plan }); });
+  const eroare = async (cale: string, metoda: string, body: unknown) => {
+    const r = await cere(cale, "A", { method: metoda, body });
+    return { status: r.status, eroare: (r.corp as { eroare?: string })?.eroare ?? "" };
+  };
+
+  daca()("mișcarea: spre un loc care nu există, cu o dată stricată, sau o anulare care nu e oglinda originalului", async () => {
+    expect(await eroare("/api/miscari", "POST", miscareMica("v-1", { spre: "nicaieri" }))).toEqual({ status: 400, eroare: "Locul „nicaieri” nu există." });
+    expect((await eroare("/api/miscari", "POST", miscareMica("v-2", { data: "ieri" }))).status).toBe(400);
+    expect((await cere("/api/miscari", "A", { method: "POST", body: miscareMica("v-3", { spre: "S-ver" }) })).status).toBe(200);
+    const storno = (id: string, cantitate: number) => miscareMica(id, { spre: "S-ver", cantitate, anuleaza: "v-3" });
+    expect(await eroare("/api/miscari", "POST", storno("v-s1", 99))).toEqual({ status: 400, eroare: "Anularea nu se potrivește cu mișcarea anulată." });
+    expect((await cere("/api/miscari", "A", { method: "POST", body: storno("v-s2", 12.5) })).status).toBe(200);
+    expect(await eroare("/api/miscari", "POST", storno("v-s3", 12.5))).toEqual({ status: 409, eroare: "Mișcarea a fost deja anulată." });
+  });
+
+  daca()("situația: doar pe pozițiile planului, cu cantități reale", async () => {
+    const sit = (cantitati: Record<string, number>) => ({ id: "v-sit", nr: 1, data: "2026-10-10T08:00:00.000Z", cantitati });
+    expect(await eroare("/api/santiere/S-ver/situatii", "POST", sit({ 7: 1 }))).toEqual({ status: 400, eroare: "Poziția 7 nu e în planul șantierului." });
+    expect((await eroare("/api/santiere/S-ver/situatii", "POST", sit({ 1: -3 }))).status).toBe(400);
+  });
+
+  daca()("lista de materiale: cantități reale, pe un șantier care există", async () => {
+    const material = { cheie: "tabla|0.8", sistem: "tabla", ml: 0, m2: 10 };
+    const lista = (p: object) => ({ id: "v-nec", creat: "2026-10-10", fisier: "v.xlsx", obiectiv: "V", materiale: [material], ...p });
+    expect((await eroare("/api/necesare/v-nec", "PUT", lista({ materiale: [{ ...material, m2: -1 }] }))).status).toBe(400);
+    expect(await eroare("/api/necesare/v-nec", "PUT", lista({ santier: "S-nu" }))).toEqual({ status: 400, eroare: "Șantierul „S-nu” nu e pe server." });
+    expect((await cere("/api/necesare/v-nec", "A", { method: "PUT", body: lista({ santier: "S-ver" }) })).status).toBe(200);
   });
 });

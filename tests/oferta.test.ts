@@ -21,7 +21,7 @@
  */
 import { describe, it, expect } from "vitest";
 import { CLIENTI, cuClienti } from "./conditii.js";
-import { imparte, totalOferta, type AntetOferta, type Provenienta } from "../web/oferta.js";
+import { cuAjustare, imparte, totalOferta, type AntetOferta, type Provenienta } from "../web/oferta.js";
 import { registruOferta } from "../web/registru-oferta.js";
 import { citesteOferta, totalul } from "./registru-citit.js";
 import type { LinieProcesata } from "../src/import/nucleu.js";
@@ -289,5 +289,18 @@ describe("„In atentia”", () => {
       linii: [linie({ unitar: 10 })], antet: { ...ANTET, persoana: "d-nei Alina Maties" }, provenienta: PROV,
     }));
     expect(wb.worksheets[0]!.getCell("A10").value).toBe("In atentia d-nei Alina Maties");
+  });
+});
+
+describe("prețul pus de mână și ajustarea (audit 16 octombrie)", () => {
+  it("ajustarea mută prețurile din liste, nu și pe cel scris de om, oricât s-ar schimba", () => {
+    const lista = linie({ unitar: 10 });
+    const manual = linie({ unitar: 47.41 });
+    (manual.pret as { manual?: boolean }).manual = true;
+    for (const procent of [10, 7.5, -3]) {
+      const [a, b] = cuAjustare([lista, manual], procent);
+      expect(a!.pret!.pret_unitar).toBe(Math.round(10 * (1 + procent / 100) * 100) / 100);
+      expect(b!.pret!.pret_unitar).toBe(47.41);
+    }
   });
 });

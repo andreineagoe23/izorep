@@ -149,14 +149,39 @@ care nu o poți reproduce.
 aplicația, deci testele o cheamă direct (`app.request`), fără rețea.
 `npm run server` o pornește pe 8787.
 
-- **Fără intrare** (scoasă pe 10 octombrie 2026, cerut de Andrei: încă nu e
-  nevoie de conturi). Un server servește o singură firmă: `TENANT_ID`, sau
-  singura din bază. Totul rulează tot în `caTenant`, deci RLS rămâne graniță.
-  `creat_de` rămâne gol. **Fără conturi, serverul ascultă doar pe 127.0.0.1**
-  (`HOST` îl deschide); nu se pune în internet până nu revin conturile.
-  Tabelele `utilizator`, `sesiune`, `token_intrare` și politicile „după cheie”
-  (migrarea 0006) au rămas în bază, nefolosite: intrarea cu link (commit-ul
-  `d6d2ab0`, `src/server/intrare.ts`) se poate pune la loc din git.
+- **Conturile** (21 octombrie 2026, migrarea 0016; ales de Andrei: email +
+  parolă, nu link pe email, care cerea un furnizor SMTP pe Render). Un server
+  servește o singură firmă (`TENANT_ID`, sau singura din bază), totul în
+  `caTenant`. Publice: `/api/viu`, `/api/stare` (firma și cine e intrat),
+  `/api/curs`, `/api/intrare`, `/api/iesire`; restul `/api/*` cere sesiunea.
+  - Parola: doar `scrypt$N$r$p$sare$hash` în `utilizator.parola_hash`
+    (`parola.ts`, N = 2^15), comparată în timp constant; minimum 10 caractere,
+    fără cele mai folosite. Email necunoscut și parolă greșită: același mesaj
+    și același timp (`verificaInGol`).
+  - 5 parole greșite la rând → contul blocat 15 minute (în bază); de pe aceeași
+    adresă cel mult 20 de încercări în 15 minute (în memorie; adresa e ultima
+    din `x-forwarded-for`, pusă de proxy-ul Render).
+  - Sesiunea: token aleator în cookie `izorep_sesiune` (HttpOnly,
+    SameSite=Lax, Secure pe https, 7 zile), în bază doar sha256-ul lui.
+    Schimbarea parolei închide celelalte sesiuni; contul dezactivat nu mai
+    merge nici cu sesiunea deschisă.
+  - Parola temporară (`npm run om`, `--reseteaza`): până nu-și alege alta,
+    omul primește 403 pe tot în afară de `/api/parola`.
+  - Conturile din linia de comandă (`src/server/om.ts`): `npm run om --
+    <email> "<nume>" [rol] [--parola-stdin]`, `--reseteaza`, `--dezactiveaza`,
+    `--lista`. Fără ecran de administrare. Seed-ul nu mai face conturi de test.
+  - Antete pe orice răspuns (`securitate.ts`): CSP (scripturi doar de pe
+    server, plus amprenta scriptului inline al temei, calculată la pornire din
+    `dist-web/index.html`), `frame-ancestors 'none'`, `nosniff`,
+    `Referrer-Policy`, HSTS pe https, `Cache-Control: no-store` pe `/api`.
+  - Documentele atașate: doar poze (jpeg, png, webp, gif, heic) și PDF; un SVG
+    ar fi fost o pagină cu scripturi deschisă de pe domeniul nostru.
+- **Jurnalul** (`jurnal.ts`, tabelul `jurnal`, doar adăugare): după fiecare
+  scriere reușită, omul, ce a făcut („a trimis comanda”) și id-ul atins; și
+  intrările în aplicație. `GET /api/jurnal` (câte 200, `?inainte=`).
+- **Versiunea pe cerere și necesar** (0016): salvarea trimite versiunea
+  citită; alta în bază → 409 „salvată de X la ora Y, după ce ai deschis-o
+  tu”. Înainte câștiga tăcut ultimul.
 - **CSRF:** orice metodă în afară de GET cere antetul `X-Izorep: 1`.
 - **Plafoane** (10 octombrie 2026): mărimea cererii după rută (`LIMITE`, 5 MB
   implicit, 413 peste).
@@ -324,9 +349,9 @@ Proba: `npm run ca-pe-render [-- --fara-createrole] [--teste]`
 nimic. Trigger-ele cu `IF purjare_permisa(...)` erau corecte; cele cu `NOT`
 (planul înghețat, lista activă) nu opreau proprietarul. Acum `coalesce(…, false)`.
 
-Parola comună (`src/server/parola.ts`): Basic Auth pe tot site-ul, din
-`IZOREP_PAROLA`. `GET /api/viu` rămâne deschisă, pentru verificarea lui
-Render. `porneste.ts` refuză un `HOST` deschis fără parolă.
+Parola comună (Basic Auth, `IZOREP_PAROLA`) a plecat pe 21 octombrie 2026,
+odată cu conturile; `porneste.ts` doar avertizează dacă variabila mai e pusă.
+`GET /api/viu` rămâne deschisă, pentru verificarea lui Render.
 
 ### Ștergerea de tot (15 octombrie 2026)
 
@@ -339,8 +364,8 @@ depozitul și șantierul, apoi ofertele și cererea (cheile sunt `restrict`).
 
 ## Ce lipsește
 
-- Conturile (scoase pe 10 octombrie 2026; până revin, parola comună), jurnal de audit (cine a schimbat
-  ce), permisiuni pe rol. Toate înainte ca serverul să iasă din rețeaua firmei.
+- Permisiunile pe rol (rolurile se stabilesc cu firma). Conturile și jurnalul
+  există din 21 octombrie 2026.
 - Restul tabelelor: deviz, contract, factura de vânzare.
 - Regula după care se alege destinația unei lucrări. Coloana există și e
   populată; în aplicație segmentul se alege manual la import, dar nu se

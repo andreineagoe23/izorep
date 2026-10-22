@@ -27,7 +27,7 @@ import { totalSituatie, type PlanSantier } from "./situatii.js";
 /** Ce citesc rapoartele din depozit (forma `StareDepozit` din browser). */
 export interface DateRapoarte {
   miscari: readonly Miscare[];
-  necesare: readonly { santier?: string; materiale: readonly MaterialNecesar[] }[];
+  necesare: readonly { santier?: string; materiale: readonly MaterialNecesar[]; scoase?: readonly MaterialNecesar[] }[];
   comenzi?: readonly Comanda[];
 }
 
@@ -48,6 +48,10 @@ const zileIntre = (de: string, pana: string): number => Math.floor((Date.parse(p
 
 export const materialePe = (d: DateRapoarte, santier: string): MaterialNecesar[] =>
   d.necesare.filter((n) => n.santier === santier).flatMap((n) => [...n.materiale]);
+
+/** Materialele scoase cu ✕ din lista unui șantier: rămân în „În ofertă” (`inOfertaPe`). */
+export const scoasePe = (d: DateRapoarte, santier: string): MaterialNecesar[] =>
+  d.necesare.filter((n) => n.santier === santier).flatMap((n) => [...(n.scoase ?? [])]);
 
 /* ------------------------------------------------------ lista saptamanala */
 
@@ -194,5 +198,5 @@ export interface SantierInchis {
 export function santiereInchise(planuri: readonly PlanSantier[], d: DateRapoarte): SantierInchis[] {
   return planuri.filter((p) => p.inchis)
     .sort((a, b) => b.inchis!.localeCompare(a.inchis!))
-    .map((plan) => ({ plan, cifre: cifreInchidere(plan, materialePe(d, plan.id), d.miscari) }));
+    .map((plan) => ({ plan, cifre: cifreInchidere(plan, materialePe(d, plan.id), d.miscari, scoasePe(d, plan.id)) }));
 }

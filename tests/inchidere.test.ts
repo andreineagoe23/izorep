@@ -14,6 +14,7 @@ import { CLIENTI, cuClienti } from "./conditii.js";
 import { importaFisier } from "../src/import/pipeline.js";
 import { stocInMemorie } from "../src/import/memorie.js";
 import { necesarDinLinii, type MaterialNecesar } from "../src/stoc/necesar.js";
+import { pastreazaEditari } from "../src/stoc/editari-necesar.js";
 import { articolDin, cantitateNecesara, solduri, type Miscare } from "../src/stoc/registru.js";
 import { comandatNesosit, deComandatSantier, inlocuiesteCuFactura, intrariDinReceptie, type Comanda } from "../src/stoc/comenzi.js";
 import { imparte, planDinOferta } from "../web/oferta.js";
@@ -212,6 +213,49 @@ describe("ce vede directorul pe șantier (S9)", () => {
     expect(fara.lipsa).toBe(17.5);
     // Costul până acum: ce a venit, la prețul lui.
     expect(fara.cost).toBe(300);
+  });
+});
+
+describe("lista schimbată de om ajunge peste tot (audit 16 octombrie)", () => {
+  const vata = articolDin(materialeMici[0]!);
+  const miscari: Miscare[] = [
+    { id: "i1", data: ZI0, tip: "intrare", articol: vata, cantitate: 40, spre: planMic.id, pret: { valoare: 7.5 } },
+    { id: "c1", data: ZI0, tip: "consum", articol: vata, cantitate: 30, din: planMic.id },
+  ];
+  const plan: PlanSantier = { ...planMic, situatii: [{ id: "s1", nr: 1, data: ZI0, cantitati: { 1: 50 } }] };
+
+  it("„Lipsește” urmează cantitatea scrisă de om, nu calculul", () => {
+    // Calculat 55 m², omul a scris 66 (+20 %): lucrarea rămasă cere 33, nu 27,5; pe șantier sunt 10.
+    const scris = [{ ...materialeMici[0]!, m2: 66, calculat: 55 }, ...materialeMici.slice(1)];
+    expect(materialSantier(plan, scris, miscari).randuri.find((x) => x.cheie === vata.cheie)!.lipsa).toBe(23);
+    expect(materialSantier(plan, materialeMici, miscari).randuri.find((x) => x.cheie === vata.cheie)!.lipsa).toBe(17.5);
+  });
+
+  it("scos cu ✕, materialul rămâne în „În ofertă”: clientul îl plătește oricum", () => {
+    const [scos, ...ramase] = materialeMici;
+    const tot = materialSantier(plan, materialeMici, miscari).cost.inOferta;
+    expect(materialSantier(plan, ramase, miscari, [], [scos!]).cost.inOferta).toBe(tot);
+    expect(materialSantier(plan, ramase, miscari).cost.inOferta).toBeCloseTo(tot - 1500, 2);
+    expect(cifreInchidere({ ...plan, inchis: ZI0 }, ramase, miscari, [scos!]).cost.inOferta).toBe(tot);
+  });
+
+  it("„Creează șantierul” din nou păstrează cantitățile scrise, ✕, „Îl dă clientul” și materialul de mână", () => {
+    const [vataM, tabla, elastomer, ...rest] = materialeMici;
+    const manual: MaterialNecesar = { ...mat("elastomer", 9, null, 5, 1, 0), manual: "goluri la foc" };
+    const vechi = {
+      materiale: [{ ...vataM!, m2: 66, calculat: 55 }, { ...tabla!, alClientului: true as const }, ...rest, manual],
+      scoase: [elastomer!],
+    };
+    // Oferta s-a schimbat: vata calculată acum 60, nu 55.
+    const nou = [{ ...vataM!, m2: 60 }, tabla!, elastomer!, ...rest];
+    const r = pastreazaEditari(vechi, nou);
+    expect(r.materiale.find((m) => m.cheie === vataM!.cheie)).toMatchObject({ m2: 66, calculat: 60 });
+    expect(r.materiale.find((m) => m.cheie === tabla!.cheie)?.alClientului).toBe(true);
+    expect(r.materiale.some((m) => m.cheie === elastomer!.cheie)).toBe(false);
+    expect(r.scoase?.map((m) => m.cheie)).toEqual([elastomer!.cheie]);
+    expect(r.materiale.at(-1)?.manual).toBe("goluri la foc");
+    // Fără listă veche, lista nouă neatinsă.
+    expect(pastreazaEditari(undefined, nou).materiale).toEqual(nou);
   });
 });
 

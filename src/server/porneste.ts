@@ -3,11 +3,10 @@
  * cererile `/api/*` (vite.config.ts). In productie acelasi proces serveste si
  * pagina construita cu `npm run build:server` (`dist-web`), cand exista.
  *
- * Fara intrare (10 octombrie 2026): oricine ajunge la server vede datele
- * firmei si poate chema modelul pe cheia ei. De aceea asculta implicit doar pe
- * 127.0.0.1. Deschis (`HOST=0.0.0.0`, pe Render) porneste doar cu parola
- * comuna (`IZOREP_PAROLA`): fara ea refuza, ca sa nu ajunga in internet
- * descuiat dintr-o variabila uitata.
+ * Cu conturi (21 octombrie 2026): pagina de intrare cere emailul si parola
+ * omului (`intrare.ts`); parola comuna pe site (`IZOREP_PAROLA`) a plecat.
+ * Fara niciun cont, nimeni nu intra: serverul o spune la pornire, iar contul
+ * se face cu `npm run om` (`om.ts`).
  *
  * Variabile, toate cu implicit pentru local:
  *   DATABASE_URL   conexiunea, cu rolul izorep_app (NOBYPASSRLS), niciodata proprietarul;
@@ -15,8 +14,7 @@
  *                  sau e chiar proprietarul, cand baza n-are izorep_app (fara CREATEROLE);
  *                  un rol care ocoleste RLS (superuser, BYPASSRLS) e refuzat
  *   PORT           8787
- *   HOST           127.0.0.1
- *   IZOREP_PAROLA  parola comuna pe site; obligatorie cand HOST nu e local
+ *   HOST           127.0.0.1 (pe Render 0.0.0.0)
  *   TENANT_ID      firma servita; implicit singura din baza
  *   OPENAI_API_KEY si restul variabilelor modelului (`model.ts`), din .env
  *   IZOREP_PLAFON_LINII, IZOREP_PLAFON_POZE  plafonul zilnic pe model (`limita-model.ts`)
@@ -27,6 +25,8 @@ import { serveStatic } from "@hono/node-server/serve-static";
 import { alegeAplicatia, conecteaza, verificaRolul } from "../db/client.js";
 import { tenant } from "../db/schema.js";
 import { creeazaServer } from "./app.js";
+import { conturiActive } from "./intrare.js";
+import { amprenteScripturi } from "./securitate.js";
 import { optiuniModelDinMediu } from "./model.js";
 import { limitaDinBaza, plafoaneDinMediu } from "./limita-model.js";
 
@@ -35,11 +35,8 @@ if (existsSync(".env")) process.loadEnvFile(".env");
 
 const port = Number(process.env["PORT"] ?? 8787);
 const host = process.env["HOST"] ?? "127.0.0.1";
-const parola = process.env["IZOREP_PAROLA"] || undefined;
-const local = host === "127.0.0.1" || host === "localhost" || host === "::1";
-if (!local && !parola) {
-  console.error(`HOST=${host} deschide serverul in afara calculatorului, iar fara conturi asta cere parola comuna: pune IZOREP_PAROLA.`);
-  process.exit(1);
+if (process.env["IZOREP_PAROLA"]) {
+  console.warn("IZOREP_PAROLA nu mai e folosita: fiecare om intra cu contul lui. Poate fi scoasa din mediu.");
 }
 const aplicatia = await alegeAplicatia();
 const { db } = conecteaza(aplicatia.url);
@@ -74,13 +71,18 @@ console.log(model.cheie
   ? `Stratul cu model: activ (${model.model}; pozele: ${model.modelPoze}; pe zi cel mult ${plafoane.linii} de randuri si ${plafoane.poze} de poze)`
   : "Stratul cu model: inactiv (OPENAI_API_KEY lipseste); importul merge pe reguli");
 
-const app = creeazaServer({ db, tenantId: firma.id, model, ...(parola ? { parola } : {}) });
+const conturi = await conturiActive(db, firma.id);
+if (conturi === 0) console.warn("Niciun cont nu poate intra: fa unul cu npm run om -- <email> \"<nume>\"");
+
+// Scriptul inline al temei din pagina construita intra in CSP dupa amprenta lui.
+const pagina = existsSync("dist-web/index.html") ? readFileSync("dist-web/index.html", "utf8") : "";
+const app = creeazaServer({ db, tenantId: firma.id, model, scripturi: amprenteScripturi(pagina) });
 
 // Pagina servita de aici trebuie construita cu `npm run build:server`: cea de
 // pe Pages (`build:web`) cere fisierele de la /izorep/ si, fara server,
 // scrie datele in browser.
-if (existsSync("dist-web/index.html")) {
-  if (readFileSync("dist-web/index.html", "utf8").includes("/izorep/assets/")) {
+if (pagina) {
+  if (pagina.includes("/izorep/assets/")) {
     console.error("dist-web e construit pentru GitHub Pages. Pentru server: npm run build:server");
   } else {
     app.use("/*", serveStatic({ root: "./dist-web" }));
@@ -88,5 +90,5 @@ if (existsSync("dist-web/index.html")) {
 }
 
 serve({ fetch: app.fetch, port, hostname: host }, () => {
-  console.log(`Serverul Izorep pe http://${host}:${port} · firma: ${firma.denumire}${parola ? " · cu parola comuna" : ""}`);
+  console.log(`Serverul Izorep pe http://${host}:${port} · firma: ${firma.denumire} · ${conturi} ${conturi === 1 ? "cont" : "conturi"}`);
 });

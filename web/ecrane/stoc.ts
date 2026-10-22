@@ -27,6 +27,7 @@ import type { NecesarLucrare } from "../depozit-local.js";
 import { articolDin, cantitateNecesara, type Miscare } from "../../src/stoc/registru.js";
 import { materialManual, ordineNecesar, type Categorie, type MaterialNecesar } from "../../src/stoc/necesar.js";
 import { celulaNumar, legaCelule, numarScris } from "../celula.js";
+import { cuCantitatea } from "../../src/stoc/editari-necesar.js";
 import {
   cantitateComanda, ciorneDinRamas, propuneriDinDepozit, type Comanda, type DeComandatSantier, type PropunereTransfer,
 } from "../../src/stoc/comenzi.js";
@@ -37,16 +38,6 @@ import { denumireComanda } from "../../src/stoc/produse.js";
 /** Forma aleasa in formular; cu ø ramane tub, fara alegere ramane cea implicita. */
 const formaAleasa = (v: string, rand: number | null): Categorie | undefined =>
   rand === null && (v === "saltea" || v === "placa") ? v : undefined;
-
-/**
- * Materialul cu altă cantitate, în unitatea articolului (ml la tub, m² altfel).
- * Greutatea tablei se ține proporțională.
- */
-function cuCantitatea(m: MaterialNecesar, q: number): MaterialNecesar {
-  const acum = cantitateNecesara(m);
-  const kg = m.kg !== undefined && acum > 0 ? { kg: Math.round((m.kg * q / acum) * 100) / 100 } : {};
-  return articolDin(m).um === "ml" ? { ...m, ml: q, ...kg } : { ...m, m2: q, ...kg };
-}
 
 /** Starea unui material, în cuvintele omului: ce lipsește, ce vine, ce e gata. */
 function stareMaterial(m: MaterialNecesar, d: DeComandatSantier | undefined): string {

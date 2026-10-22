@@ -162,10 +162,16 @@ export function cuDenumiri(linii: LinieProcesata[], denumiri: ReadonlyMap<number
   });
 }
 
+/**
+ * Ajustarea tehnicului („crește tot cu 10 %”), pe prețul din liste. Prețul pus
+ * de mână e prețul final din ofertă și nu se mai ajustează (21 octombrie 2026,
+ * audit 16 octombrie): ținut împărțit la ajustare și înmulțit la loc ieșea cu
+ * ±0,01 €, iar o ajustare schimbată după îl muta.
+ */
 export function cuAjustare(linii: LinieProcesata[], procent = 0): LinieProcesata[] {
   if (!procent) return linii;
   return linii.map((l) => {
-    if (!l.pret) return l;
+    if (!l.pret || (l.pret as { manual?: boolean }).manual) return l;
     const unitar = bani(l.pret.pret_unitar * (1 + procent / 100));
     return { ...l, pret: { ...l.pret, pret_unitar: unitar, total: bani(unitar * l.pret.cantitate) } } as LinieProcesata;
   });

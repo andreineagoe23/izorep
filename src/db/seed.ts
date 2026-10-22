@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 import { and, eq, ilike, sql } from "drizzle-orm";
 import { caTenant, conecteaza, URL_PROPRIETAR, type Baza } from "./client.js";
 import {
-  client, depozit, firma, furnizor, listaPreturi, sectiuneRectangulara, serieDiametre, tenant, utilizator,
+  client, depozit, firma, furnizor, listaPreturi, sectiuneRectangulara, serieDiametre, tenant,
 } from "./schema.js";
 
 /**
@@ -115,11 +115,7 @@ async function main(): Promise<void> {
         central ??= id;
       }
 
-      // Emailurile se tin cu litere mici: intrarea le cauta asa (`utilizator_dupa_email`).
-      await tx.insert(utilizator).values([
-        { tenantId, email: "birou@radoia.test", nume: "Birou", rol: "birou" },
-        { tenantId, email: "contabilitate@radoia.test", nume: "Contabilitate", rol: "contabilitate" },
-      ]).onConflictDoNothing();
+      // Fără conturi de test (21 octombrie 2026): conturile adevărate se fac cu `npm run om`.
 
       for (const denumire of ["NISAL SRL", "Transavia"]) {
         const [are] = await tx.select().from(client).where(eq(client.denumire, denumire));
@@ -180,7 +176,7 @@ async function main(): Promise<void> {
 
     const ref = await seedReferinte(db);
     console.log(
-      `Tenant ${NUME_TENANT} (${tenantId}): 2 firme, utilizatorii de test, depozitul central, ${FURNIZORI.length} furnizori, ` +
+      `Tenant ${NUME_TENANT} (${tenantId}): 2 firme, depozitul central, ${FURNIZORI.length} furnizori, ` +
       `${nrListe} liste de preturi (5 rezidentiale + 4 industriale).`,
     );
     console.log(

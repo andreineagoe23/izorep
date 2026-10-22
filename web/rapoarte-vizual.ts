@@ -15,13 +15,13 @@ export function alerteAtentie(a: readonly Alerta[]): { href: string; html: strin
     switch (x.fel) {
       case "lipsa":
         return {
-          href: "#/lucrari",
+          href: `#/lucrari/${encodeURIComponent(x.santier)}`,
           html: `Pe șantierul <b>${esc(x.denumire)}</b> ${x.materiale === 1 ? "lipsește un material" : `lipsesc <b>${x.materiale}</b> materiale`}
             ca să se termine lucrarea, deși tot necesarul a fost adus sau comandat.`,
         };
       case "pierdere":
         return {
-          href: "#/lucrari",
+          href: `#/lucrari/${encodeURIComponent(x.santier)}`,
           html: `Pe șantierul <b>${esc(x.denumire)}</b> s-a consumat cu <b>${cifra(x.procent)} %</b> mai mult material decât
             arată situațiile (normal până la 10 %).`,
         };

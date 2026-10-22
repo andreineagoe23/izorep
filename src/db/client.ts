@@ -176,7 +176,7 @@ export async function purjeazaTenant(dbProprietar: Baza, tenantId: string): Prom
     await tx.execute(sql`select set_config('app.tenant_id', ${tenantId}, true)`);
     // Copiii inaintea parintilor: cheile straine sunt `restrict`.
     for (const tabel of [
-      "situatie", "anexa_santier", "masuratoare", "miscare", "document_furnizor", "comanda", "articol", "ambalaj", "necesar",
+      "jurnal", "situatie", "anexa_santier", "masuratoare", "miscare", "document_furnizor", "comanda", "articol", "ambalaj", "necesar",
       "depozit", "santier", "oferta", "cerere", "furnizor", "sesiune", "token_intrare",
       "lista_preturi", "client", "utilizator", "firma",
     ]) {

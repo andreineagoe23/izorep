@@ -90,7 +90,10 @@ export const ecran: Ecran = {
     "Șantierele făcute din oferte: planul, materialele de comandat și situațiile de lucrări, cu istoricul lor.",
   render(root) {
     let planuri = citestePlanuri();
-    let deschis: string | null = iaDeDeschis();
+    // Pagina unui șantier are adresa ei (`#/lucrari/<id>`, 21 octombrie 2026):
+    // „Înapoi” din browser, reîncărcarea și un link trimis unui coleg duc tot aici.
+    const dinAdresa = decodeURIComponent(location.hash.replace(/^#\/?/, "").split("/")[1] ?? "") || null;
+    let deschis: string | null = iaDeDeschis() ?? (dinAdresa && planuri.some((p) => p.id === dinAdresa) ? dinAdresa : null);
     let inLucru: Situatie | null = null;
     let eroare = "";
     let stergeDe: string | null = null;
@@ -104,6 +107,10 @@ export const ecran: Ecran = {
     /** Situatia in lucru a venit din „Măsurători”: ce s-a pus, ce e de ales, ce nu e in oferta. */
     let dinPoze: Potrivire | null = null;
 
+    // Deschis din altă parte (o situație venită din poze): adresa arată șantierul, fără navigare nouă.
+    const potrivesteAdresa = (): void => {
+      if (deschis && dinAdresa !== deschis) history.replaceState(null, "", `#/lucrari/${encodeURIComponent(deschis)}`);
+    };
     const venita = preiaSituatie();
     const tinta = venita && planuri.find((p) => p.id === venita.plan);
     if (venita && tinta?.inchis) {
@@ -164,10 +171,11 @@ export const ecran: Ecran = {
       const peCiorne = ramas.filter((d) => d.ramas === 0 && d.inCiorna > 0).length;
       const cumulat = ultima ? randuriSituatie(p, ultima) : null;
       const materiale = dep.necesare.filter((n) => n.santier === p.id).flatMap((n) => n.materiale);
+      const scoase = dep.necesare.filter((n) => n.santier === p.id).flatMap((n) => n.scoase ?? []);
       // Faza 7: ce vede directorul (S9) sau, inchis, cifrele lui; inventarul de inchidere, dupa situatii.
       const material = p.inchis
-        ? cardInchis(cifreInchidere(p, materiale, dep.miscari))
-        : cardMaterial(materialSantier(p, materiale, dep.miscari, dep.comenzi ?? []), consumPlan(p, dep));
+        ? cardInchis(cifreInchidere(p, materiale, dep.miscari, scoase))
+        : cardMaterial(materialSantier(p, materiale, dep.miscari, dep.comenzi ?? [], scoase), consumPlan(p, dep));
       const inchide = p.inchis ? "" : formularInchidere({ ...restulPeSantier(p, planuri, dep), ...inchidere });
 
       const randuriPlan = p.pozitii.map((poz, i) => {
@@ -343,8 +351,8 @@ export const ecran: Ecran = {
       mesaj = "";
       info = "";
       switch (b.dataset["act"]) {
-        case "deschide": deschis = b.dataset["id"] ?? null; inLucru = null; dinPoze = null; stergeDe = null; inchidere = { scris: {}, eroare: "", confirma: false, deschis: false }; break;
-        case "inapoi": deschis = null; inLucru = null; dinPoze = null; stergeDe = null; break;
+        case "deschide": location.hash = `#/lucrari/${encodeURIComponent(b.dataset["id"] ?? "")}`; return;
+        case "inapoi": location.hash = "#/lucrari"; return;
         case "situatie-noua": if (p && !p.inchis) { inLucru = situatieNoua(p, idNou(), new Date().toISOString()); eroare = ""; } break;
         case "renunta": inLucru = null; dinPoze = null; eroare = ""; break;
         case "pune-la": {
@@ -404,6 +412,8 @@ export const ecran: Ecran = {
             else {
               planuri = citestePlanuri();
               deschis = null;
+              // Adresa fără șantierul șters, fără o navigare nouă (mesajul de mai jos rămâne).
+              history.replaceState(null, "", "#/lucrari");
               stergeDe = null;
               sters = `Am șters șantierul „${denumire}” și tot ce ținea de el.`;
             }
@@ -494,6 +504,7 @@ export const ecran: Ecran = {
       deseneaza();
     }
 
+    potrivesteAdresa();
     deseneaza();
   },
 };

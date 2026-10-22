@@ -153,7 +153,9 @@ câmpul „Ajustare prețuri” din pasul „Oferta”. Fiecare preț unitar × 
 rotunjit la bani (`cuAjustare`); clientul vede prețurile ajustate, fără rând
 separat, iar registrul scrie ajustarea în „Cum a fost calculată oferta”.
 Sesiunea de import rămâne pe prețurile din liste. Ajustarea e înaintea
-adaosului de foc și a discountului.
+adaosului de foc și a discountului. Prețul pus de mână e prețul final din ofertă:
+ajustarea nu-l atinge (din 21 octombrie 2026; ținut împărțit la ajustare ieșea
+cu ±0,01 €, iar o ajustare schimbată după îl muta).
 
 ## Cum verifici că nu ai stricat nimic
 
