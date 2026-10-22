@@ -336,10 +336,29 @@ function faraMeniu(titlu: string): void {
   $("#om").hidden = true;
 }
 
+/**
+ * Sus pe paginile de intrare: logo-urile celor două firme, din ofertele lor
+ * (RADOIA pe 284, ISORAD pe 118), centrate pe o plăcuță albă (JPEG-urile au fond
+ * alb, deci și în tema închisă arată ca în Excel), apoi pe un rând aplicația,
+ * ce faci aici și firma servită (Andrei, 22 octombrie 2026).
+ */
+function antetIntrare(titlu: string): string {
+  const firma = firmaServita();
+  return `<div class="intrare-sus">
+    <div class="intrare-logo">
+      <img src="logo-radoia.jpg" alt="RADOIA ISOLIRUNG" width="218" height="40" />
+      <img src="logo-isorad.jpg" alt="ISORAD System Engineering Insulation" width="150" height="68" />
+    </div>
+    <div class="intrare-rand">
+      <span>IzoERP</span><span aria-hidden="true">·</span><h1>${esc(titlu)}</h1>${firma ? `<span aria-hidden="true">·</span><span>${esc(firma)}</span>` : ""}
+    </div>
+  </div>`;
+}
+
 function deseneazaIntrarea(mesaj = ""): void {
   faraMeniu("Intră în cont");
   $("#ecran").innerHTML = `<div class="intrare">
-    <div><p class="intrare-marca">IzoERP</p><h1>Intră în cont</h1>${firmaServita() ? `<p class="hint" style="margin:4px 0 0">${esc(firmaServita()!)}</p>` : ""}</div>
+    ${antetIntrare("Intră în cont")}
     <section class="imp-card">
       <form id="form-intrare" novalidate>
         <label>Emailul<input name="email" type="email" autocomplete="username" inputmode="email" required /></label>
@@ -378,7 +397,8 @@ function deseneazaIntrarea(mesaj = ""): void {
 function deseneazaParolaNoua(): void {
   faraMeniu("Alege-ți parola");
   $("#ecran").innerHTML = `<div class="intrare">
-    <div><p class="intrare-marca">IzoERP</p><h1>Alege-ți parola</h1><p class="hint" style="margin:4px 0 0">Ai intrat cu o parolă primită. Alege una a ta, de cel puțin 10 caractere.</p></div>
+    ${antetIntrare("Alege-ți parola")}
+    <p class="hint" style="margin:0;text-align:center">Ai intrat cu o parolă primită. Alege una a ta, de cel puțin 10 caractere.</p>
     <section class="imp-card">
       <form id="form-parola" novalidate>
         ${campParola("Parola primită", "veche", "current-password", "required")}
