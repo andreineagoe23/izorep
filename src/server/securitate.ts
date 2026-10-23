@@ -74,8 +74,7 @@ export function cookieDin(c: Context): string {
 /**
  * Câte încercări de intrare de pe aceeași adresă, într-o fereastră. Peste,
  * 429: cine încearcă parole pe rând se oprește chiar și pe conturi diferite
- * (blocarea pe cont din `intrare.ts` prinde doar un cont). În memorie: la
- * repornire se golește, iar blocarea pe cont rămâne în bază.
+ * (`blocariIntrare` prinde doar un cont). În memorie: la repornire se golește.
  */
 export function limitaIncercari(maxim = 20, fereastraMs = 15 * 60 * 1000): { permis: (cheie: string, acum?: number) => boolean } {
   const vazute = new Map<string, { n: number; start: number }>();
@@ -86,6 +85,50 @@ export function limitaIncercari(maxim = 20, fereastraMs = 15 * 60 * 1000): { per
       v.n++;
       vazute.set(cheie, v);
       return v.n <= maxim;
+    },
+  };
+}
+
+export const PRAG_BLOCARE = 5;
+export const DURATA_BLOCARE_MS = 15 * 60 * 1000;
+
+/**
+ * Parolele greșite la rând, pe cont ȘI pe adresă (23 octombrie 2026). Până
+ * atunci blocarea era pe cont, în bază: cu un singur cont activ, al firmei, și
+ * adresa lui scrisă în repo-ul public, oricine putea ține firma afară cu 5
+ * parole greșite la fiecare sfert de oră. Acum se blochează doar calculatorul
+ * care greșește; de pe celelalte, contul intră. Ghicitul de pe multe adrese îl
+ * frânează `limitaIncercari` (pe adresă) și scrypt-ul.
+ *
+ * Cheia e emailul scris + adresa, oricare ar fi emailul: un email necunoscut
+ * se blochează la fel, deci răspunsul nu spune ce adrese au cont.
+ */
+export function blocariIntrare(prag = PRAG_BLOCARE, durataMs = DURATA_BLOCARE_MS) {
+  const greseli = new Map<string, { n: number; pana: number | null; ultima: number }>();
+  const curata = (acum: number) => {
+    for (const [k, v] of greseli) if (acum - v.ultima > durataMs && (v.pana === null || v.pana <= acum)) greseli.delete(k);
+  };
+  return {
+    /** Până când e blocată cheia, sau null. */
+    blocatPana(cheie: string, acum = Date.now()): number | null {
+      const pana = greseli.get(cheie)?.pana;
+      return pana && pana > acum ? pana : null;
+    },
+    /** O parolă greșită. Întoarce până când e blocată cheia, dacă asta a fost greșeala de prag. */
+    greseala(cheie: string, acum = Date.now()): number | null {
+      curata(acum);
+      const v = greseli.get(cheie) ?? { n: 0, pana: null, ultima: acum };
+      v.n++;
+      v.ultima = acum;
+      if (v.n >= prag) {
+        v.n = 0;
+        v.pana = acum + durataMs;
+      }
+      greseli.set(cheie, v);
+      return v.pana && v.pana > acum ? v.pana : null;
+    },
+    reusita(cheie: string): void {
+      greseli.delete(cheie);
     },
   };
 }

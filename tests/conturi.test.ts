@@ -11,8 +11,8 @@ import { caTenant, conecteaza, purjeazaTenant, URL_PROPRIETAR } from "../src/db/
 import { firma, tenant, utilizator } from "../src/db/schema.js";
 import { ANTET_CSRF, creeazaServer } from "../src/server/app.js";
 import { hashParola } from "../src/server/parola.js";
-import { COOKIE } from "../src/server/securitate.js";
-import { PRAG_BLOCARE, asiguraCont } from "../src/server/intrare.js";
+import { COOKIE, PRAG_BLOCARE } from "../src/server/securitate.js";
+import { asiguraCont } from "../src/server/intrare.js";
 import { serverCuCont } from "./cu-cont.js";
 import type { CererePeFir } from "../src/server/contract.js";
 
@@ -49,8 +49,9 @@ async function cont(p: { temporara?: boolean; nume?: string } = {}): Promise<str
 }
 
 const json = { "content-type": "application/json", [ANTET_CSRF]: "1" };
-async function intra(email: string, parola = PAROLA) {
-  const r = await server.request("/api/intrare", { method: "POST", headers: json, body: JSON.stringify({ email, parola }) });
+async function intra(email: string, parola = PAROLA, ip?: string) {
+  const headers = ip ? { ...json, "x-forwarded-for": ip } : json;
+  const r = await server.request("/api/intrare", { method: "POST", headers, body: JSON.stringify({ email, parola }) });
   const setCookie = r.headers.get("set-cookie") ?? "";
   return { status: r.status, corp: await r.json() as { eroare?: string }, setCookie, cookie: new RegExp(`${COOKIE}=([^;]*)`).exec(setCookie)?.[1] ?? "" };
 }
@@ -89,13 +90,19 @@ describe("intrarea", () => {
     expect(gresita.cookie).toBe("");
   });
 
-  daca()(`după ${PRAG_BLOCARE} parole greșite contul se blochează, iar nici parola bună nu mai trece`, async () => {
+  daca()(`după ${PRAG_BLOCARE} parole greșite se blochează calculatorul, nu contul: de pe alt calculator, contul intră`, async () => {
     const email = await cont();
-    for (let i = 1; i < PRAG_BLOCARE; i++) expect((await intra(email, "gresita-123")).status).toBe(401);
-    const blocat = await intra(email, "gresita-123");
+    const strain = "203.0.113.7";
+    for (let i = 1; i < PRAG_BLOCARE; i++) expect((await intra(email, "gresita-123", strain)).status).toBe(401);
+    const blocat = await intra(email, "gresita-123", strain);
     expect(blocat.status).toBe(423);
-    expect(blocat.corp.eroare).toContain("blocat până la");
-    expect((await intra(email)).status).toBe(423);
+    expect(blocat.corp.eroare).toContain("de pe acest calculator");
+    expect((await intra(email, PAROLA, strain)).status).toBe(423);
+    // Firma, de pe calculatorul ei, intră.
+    expect((await intra(email, PAROLA, "198.51.100.4")).status).toBe(200);
+    // Un email fără cont se blochează la fel: răspunsul nu spune ce adrese au cont.
+    for (let i = 1; i < PRAG_BLOCARE; i++) expect((await intra("nimeni@izorep.test", "gresita-123", strain)).status).toBe(401);
+    expect((await intra("nimeni@izorep.test", "gresita-123", strain)).status).toBe(423);
   });
 
   daca()("cu parola temporară nu se vede nimic până nu-și alege alta; apoi da", async () => {

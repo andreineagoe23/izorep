@@ -99,9 +99,6 @@ export const utilizator = pgTable("utilizator", {
   parolaHash: text("parola_hash"),
   /** Pusă de noi la crearea contului: la prima intrare omul își alege alta. */
   parolaTemporara: boolean("parola_temporara").notNull().default(false),
-  /** Încercările greșite la rând; peste prag, contul stă blocat până la `blocat_pana`. */
-  incercariGresite: integer("incercari_gresite").notNull().default(0),
-  blocatPana: timestamp("blocat_pana", { withTimezone: true }),
   ultimaIntrare: timestamp("ultima_intrare", { withTimezone: true }),
   creatLa: timestamp("creat_la", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [

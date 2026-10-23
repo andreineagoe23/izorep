@@ -3,7 +3,7 @@
  *
  *   npm run om -- <email> "<nume>" [birou|contabilitate]   cont nou, cu parolă temporară
  *   npm run om -- <email> "<nume>" [rol] --parola-stdin     cu parola citită de la intrare
- *   npm run om -- --reseteaza <email>                       parolă temporară nouă, deblocat, ieșit peste tot
+ *   npm run om -- --reseteaza <email>                       parolă temporară nouă, ieșit peste tot
  *   npm run om -- --dezactiveaza <email>                     nu mai intră; jurnalul îl păstrează
  *   npm run om -- --lista
  *
@@ -42,7 +42,7 @@ try {
     const toti = await caTenant(db, t.id, (tx) => tx.select().from(utilizator));
     for (const u of toti) {
       console.log(`${u.activ ? "activ  " : "inactiv"} ${u.email} · ${u.nume} · ${u.rol}${u.parolaHash ? "" : " · fără parolă"}${
-        u.parolaTemporara ? " · parolă temporară" : ""}${u.blocatPana && u.blocatPana > new Date() ? " · blocat" : ""}`);
+        u.parolaTemporara ? " · parolă temporară" : ""}`);
     }
   } else if (arg[0] === "--reseteaza" || arg[0] === "--dezactiveaza") {
     const email = arg[1] ?? folosire();
@@ -51,7 +51,7 @@ try {
       const [u] = await tx.select().from(utilizator).where(peEmail(email));
       if (!u) return false;
       await tx.update(utilizator).set(arg[0] === "--reseteaza"
-        ? { parolaHash: await hashParola(temporara), parolaTemporara: true, incercariGresite: 0, blocatPana: null, activ: true }
+        ? { parolaHash: await hashParola(temporara), parolaTemporara: true, activ: true }
         : { activ: false }).where(eq(utilizator.id, u.id));
       await tx.delete(sesiune).where(and(eq(sesiune.utilizatorId, u.id)));
       return true;
@@ -73,7 +73,7 @@ try {
       tx.insert(utilizator).values({ tenantId: t.id, email: adresa, nume: nume!, rol, parolaHash: hash, parolaTemporara: !dinStdin })
         .onConflictDoUpdate({
           target: [utilizator.tenantId, utilizator.email],
-          set: { nume: nume!, rol, activ: true, parolaHash: hash, parolaTemporara: !dinStdin, incercariGresite: 0, blocatPana: null },
+          set: { nume: nume!, rol, activ: true, parolaHash: hash, parolaTemporara: !dinStdin },
         }));
     console.log(dinStdin
       ? `${nume} <${adresa}> poate intra (${rol}), cu parola dată.`

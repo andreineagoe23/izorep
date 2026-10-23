@@ -120,6 +120,13 @@
       "when": 1792622194154,
       "tag": "0016_conturi_jurnal_versiuni",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1792752754057,
+      "tag": "0017_blocare_pe_calculator",
+      "breakpoints": true
     }
   ]
 }

@@ -8,7 +8,7 @@ import type { Baza } from "../src/db/client.js";
 import { ANTET_CSRF, creeazaServer, RUTA_VIATA } from "../src/server/app.js";
 import { hashParola, parolaTemporara, problemaParola, verificaParola } from "../src/server/parola.js";
 import { actiuneDin } from "../src/server/jurnal.js";
-import { amprenteScripturi, limitaIncercari } from "../src/server/securitate.js";
+import { amprenteScripturi, blocariIntrare, limitaIncercari } from "../src/server/securitate.js";
 
 describe("parolele", () => {
   it("se păstrează doar ca scrypt cu sare: aceeași parolă dă alt hash, iar verificarea merge", async () => {
@@ -75,6 +75,19 @@ describe("poarta și antetele", () => {
     expect([1, 2, 3, 4].map(() => l.permis("ip", 0))).toEqual([true, true, true, false]);
     expect(l.permis("alt-ip", 0)).toBe(true);
     expect(l.permis("ip", 2000)).toBe(true);
+  });
+
+  it("parolele greșite blochează cheia (cont + adresă) la prag, până trece durata; intrarea bună o golește", () => {
+    const b = blocariIntrare(3, 1000);
+    expect([b.greseala("a|1", 0), b.greseala("a|1", 0)]).toEqual([null, null]);
+    expect(b.greseala("a|1", 0)).toBe(1000);
+    expect(b.blocatPana("a|1", 500)).toBe(1000);
+    expect(b.blocatPana("a|2", 500)).toBeNull();
+    expect(b.blocatPana("a|1", 1000)).toBeNull();
+    expect(b.greseala("a|1", 1000)).toBeNull();
+    b.greseala("a|1", 1000);
+    b.reusita("a|1");
+    expect(b.greseala("a|1", 1000)).toBeNull();
   });
 
   it(`${ANTET_CSRF} rămâne cerut pe orice scriere`, async () => {

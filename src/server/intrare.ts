@@ -5,8 +5,8 @@
  *   2. bine → o sesiune nouă: în cookie un token aleator, în bază doar
  *      sha256-ul lui. Cookie-ul e HttpOnly (scripturile paginii nu-l văd),
  *      SameSite=Lax și, pe https, Secure;
- *   3. greșit de `PRAG_BLOCARE` ori la rând → contul stă blocat
- *      `DURATA_BLOCARE_MS`, oricât de bună ar fi parola de după.
+ *   3. greșit de mai multe ori la rând → blocat calculatorul, nu contul
+ *      (`blocariIntrare` în `securitate.ts`, folosit de `app.ts`).
  *
  * Mesajul e același pentru email necunoscut și parolă greșită, iar timpul la
  * fel (`verificaInGol`): pagina nu spune nimănui ce adrese au cont.
@@ -21,8 +21,6 @@ import { sesiune, utilizator } from "../db/schema.js";
 import { hashParola, problemaParola, verificaInGol, verificaParola } from "./parola.js";
 
 export const DURATA_SESIUNE_MS = 7 * 24 * 60 * 60 * 1000;
-export const PRAG_BLOCARE = 5;
-export const DURATA_BLOCARE_MS = 15 * 60 * 1000;
 
 export const tokenNou = (): string => randomBytes(32).toString("base64url");
 export const hashToken = (t: string): string => createHash("sha256").update(t).digest("hex");
@@ -39,8 +37,7 @@ export interface Om {
 
 export type RezultatIntrare =
   | { fel: "ok"; cookie: string; om: Om }
-  | { fel: "gresit" }
-  | { fel: "blocat"; pana: Date };
+  | { fel: "gresit" };
 
 const omDin = (u: typeof utilizator.$inferSelect): Om => ({
   utilizatorId: u.id, nume: u.nume, email: u.email, rol: u.rol, parolaTemporara: u.parolaTemporara,
@@ -54,17 +51,8 @@ export async function intra(db: Baza, tenantId: string, email: string, parola: s
       await verificaInGol(parola);
       return { fel: "gresit" } as const;
     }
-    if (u.blocatPana && u.blocatPana > acum) return { fel: "blocat", pana: u.blocatPana } as const;
-    if (!(await verificaParola(parola, u.parolaHash))) {
-      const incercari = u.incercariGresite + 1;
-      const blocheaza = incercari >= PRAG_BLOCARE;
-      const pana = new Date(acum.getTime() + DURATA_BLOCARE_MS);
-      await tx.update(utilizator).set(blocheaza
-        ? { incercariGresite: 0, blocatPana: pana }
-        : { incercariGresite: incercari }).where(eq(utilizator.id, u.id));
-      return blocheaza ? { fel: "blocat", pana } as const : { fel: "gresit" } as const;
-    }
-    await tx.update(utilizator).set({ incercariGresite: 0, blocatPana: null, ultimaIntrare: acum }).where(eq(utilizator.id, u.id));
+    if (!(await verificaParola(parola, u.parolaHash))) return { fel: "gresit" } as const;
+    await tx.update(utilizator).set({ ultimaIntrare: acum }).where(eq(utilizator.id, u.id));
     // Sesiunile expirate ale omului pleacă la fiecare intrare: tabelul nu crește la nesfârșit.
     await tx.delete(sesiune).where(and(eq(sesiune.utilizatorId, u.id), lt(sesiune.expira, acum)));
     const cookie = tokenNou();
@@ -143,9 +131,9 @@ export async function asiguraCont(
       return "creat";
     }
     const buna = u.parolaHash ? await verificaParola(c.parola, u.parolaHash) : false;
-    if (buna && u.activ && u.nume === c.nume && !u.parolaTemporara && !u.blocatPana) return "neschimbat";
+    if (buna && u.activ && u.nume === c.nume && !u.parolaTemporara) return "neschimbat";
     await tx.update(utilizator).set({
-      nume: c.nume, activ: true, parolaTemporara: false, incercariGresite: 0, blocatPana: null,
+      nume: c.nume, activ: true, parolaTemporara: false,
       ...(buna ? {} : { parolaHash: await hashParola(c.parola) }),
     }).where(eq(utilizator.id, u.id));
     return "actualizat";

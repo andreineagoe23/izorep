@@ -158,9 +158,15 @@ aplicația, deci testele o cheamă direct (`app.request`), fără rețea.
     (`parola.ts`, N = 2^15), comparată în timp constant; minimum 10 caractere,
     fără cele mai folosite. Email necunoscut și parolă greșită: același mesaj
     și același timp (`verificaInGol`).
-  - 5 parole greșite la rând → contul blocat 15 minute (în bază); de pe aceeași
-    adresă cel mult 20 de încercări în 15 minute (în memorie; adresa e ultima
-    din `x-forwarded-for`, pusă de proxy-ul Render).
+  - 5 parole greșite la rând → blocat 15 minute **contul de pe acel
+    calculator** (cheia e emailul scris + adresa, în memorie,
+    `blocariIntrare`); de pe alt calculator contul intră. Până pe 23
+    octombrie 2026 blocarea era pe cont, în bază: cu un singur cont activ și
+    adresa lui în repo-ul public, oricine ținea firma afară (migrarea 0017 a
+    scos coloanele). De pe aceeași adresă cel mult 20 de încercări în 15
+    minute, pe orice conturi (`limitaIncercari`; adresa e ultima din
+    `x-forwarded-for`, pusă de proxy-ul Render). Amândouă se golesc la
+    repornire.
   - Sesiunea: token aleator în cookie `izorep_sesiune` (HttpOnly,
     SameSite=Lax, Secure pe https, 7 zile), în bază doar sha256-ul lui.
     Schimbarea parolei închide celelalte sesiuni; contul dezactivat nu mai

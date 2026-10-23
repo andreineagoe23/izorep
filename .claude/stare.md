@@ -1,7 +1,33 @@
 # Stare curentă
 
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
-> Ultima actualizare: 22 octombrie 2026.
+> Ultima actualizare: 23 octombrie 2026.
+
+## 23 octombrie 2026: auditul, blocarea pe calculator, dependențele
+
+Audit cerut de Andrei. Starea: `tsc` curat, CI verde, **698 de teste**, Render
+publică ultimul `main` (aceeași pagină ca build-ul local), antetele de
+securitate sunt acolo; în browser, 16 ecrane × 390 / 768 / 1440 / 1920 px ×
+ambele teme fără derulare laterală și fără erori. 18 teste picau doar pentru
+că lipseau trei fișiere din `../attachments/clienti` (puse la loc din
+`attachments.zip` și `~/Downloads/radoia-fisiere`).
+
+Reparat pe ramura `securitate-intrare`:
+
+| Ce | Acum |
+|---|---|
+| 5 parole greșite blocau **contul**, iar contul firmei e singurul activ și adresa lui e în acest fișier, public: oricine ținea firma afară | se blochează contul **de pe acel calculator** (email + adresă, în memorie, `blocariIntrare`); de pe alt calculator intră. Emailul fără cont se blochează la fel. Migrarea **0017** scoate `incercari_gresite` și `blocat_pana`; `npm run om --reseteaza` nu mai deblochează (nu mai are ce) |
+| `hono` 4.13.8: `serveStatic` decodifica calea de două ori | 4.13.13; plus `npm audit fix` fără versiuni majore |
+
+Rămas: `uuid` prin `exceljs` (moderat, fără reparație reală) și uneltele de
+test (`vitest` 2 → 5, `drizzle-kit`), versiuni majore, doar pe laptop, nu pe
+Render. Baza gratuită de pe Render expiră pe **14 noiembrie 2026**, fără
+backup: planul se alege mai târziu (Andrei, 23 octombrie).
+
+Verificat cu Playwright pe `build:server`: 390 / 768 / 1440 / 1920 px, ambele
+teme; 4 parole greșite → 401, a cincea și parola bună → 423 „Prea multe parole
+greșite de pe acest calculator. Încearcă din nou la …”, de pe altă adresă
+aceeași parolă bună → intră; zero derulare laterală, zero erori.
 
 ## 22 octombrie 2026: pozele pentru ofertă, la Cerere nouă
 
@@ -55,7 +81,7 @@ teste.** Detalii în `backend.md` („Conturile”) și `ui.md` („Intrarea”)
 
 | Ce | Acum |
 |---|---|
-| Parola comună (fereastra browserului) | pagina „Intră în cont”; parola scrypt, blocare după 5 greșite, 20 de încercări pe adresă, cookie HttpOnly / SameSite / Secure, parolă temporară cu „Alege-ți parola”, „Contul meu”, „Ieși”; CSP, fără încadrare, HSTS; documentele doar poze și PDF (SVG refuzat) |
+| Parola comună (fereastra browserului) | pagina „Intră în cont”; parola scrypt, blocare după 5 greșite (din 23 octombrie pe cont + calculator), 20 de încercări pe adresă, cookie HttpOnly / SameSite / Secure, parolă temporară cu „Alege-ți parola”, „Contul meu”, „Ieși”; CSP, fără încadrare, HSTS; documentele doar poze și PDF (SVG refuzat) |
 | Cine a schimbat ce | tabelul `jurnal` (doar adăugare), scris după fiecare scriere reușită; ecranul „Cine a schimbat ce” la Setări |
 | Numărul ofertei | `GET /api/oferte/urmatorul`: cel mai mare de pe seria firmei + 1, pus în casetă la pasul „Oferta”; fără oferte salvate, îl scrie omul |
 | Doi oameni pe aceeași cerere | `versiune` pe cerere și necesar: al doilea primește 409 „salvată de X la ora Y” și nu mai pleacă nimic până redeschide |
@@ -68,10 +94,9 @@ teste.** Detalii în `backend.md` („Conturile”) și `ui.md` („Intrarea”)
 | Serverul nu verifica situații, necesar, mișcări | locuri care există, date valide, anulări care sunt oglinda originalului (și o singură dată), poziții din plan, cantități finite și nenegative, șantier existent |
 
 Contul firmei: `tehnic@isorad.ro` (singurul activ), făcut cu `npm run om`
-pe baza locală; conturile de test din seed au plecat. **Pe Render nu există
-încă niciun cont**: după publicare, contul se face cu `npm run om` pe adresa
-externă a bazei, cu IP-ul laptopului pus temporar în lista ei (ca la seed).
-Variabila `IZOREP_PAROLA` se poate scoate de pe Render.
+pe baza locală; conturile de test din seed au plecat. Pe Render contul se
+face la pornire din `IZOREP_CONT_*` (`asiguraCont`, tot pe 22). Variabila
+`IZOREP_PAROLA` se poate scoate de pe Render.
 
 Verificat cu Playwright pe `build:server` (baza de probă): 390 / 1440 px,
 ambele teme; fără fereastra browserului, mesajul la parolă greșită, intrarea,

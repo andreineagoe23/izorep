@@ -26,7 +26,7 @@ import { Refuz } from "./repo.js";
 import { inchideSantier } from "./inchidere.js";
 import { DURATA_SESIUNE_MS, iesi, intra, omDinCookie, schimbaParola, type Om } from "./intrare.js";
 import { actiuneDin, citesteJurnal, scrieInJurnal } from "./jurnal.js";
-import { adresa, antete, cookieDin, cookieSesiune, limitaIncercari } from "./securitate.js";
+import { adresa, antete, blocariIntrare, cookieDin, cookieSesiune, limitaIncercari } from "./securitate.js";
 import type { Context, Stare } from "./contract.js";
 
 /** Ruta pe care o verifica Render ca sa stie daca serverul traieste. Publica: nu spune nimic despre firma. */
@@ -210,6 +210,7 @@ export function creeazaServer(o: OptiuniServer): Hono<Env> {
   app.route("/api", ruteCurs(o.curs));
 
   const incercari = limitaIncercari();
+  const blocari = blocariIntrare();
   const eu = (om: Om) => ({ nume: om.nume, email: om.email, rol: om.rol, parolaTemporara: om.parolaTemporara });
 
   app.get("/api/stare", async (c) => {
@@ -223,12 +224,19 @@ export function creeazaServer(o: OptiuniServer): Hono<Env> {
       return c.json({ eroare: "Prea multe încercări de pe acest calculator. Încearcă din nou peste un sfert de oră." }, 429);
     }
     const { email, parola } = z.object({ email: z.string().max(200), parola: z.string().max(200) }).parse(await c.req.json());
+    const cheie = `${email.trim().toLowerCase()}|${adresa(c)}`;
+    const blocat = (pana: number) => {
+      const ora = new Date(pana).toLocaleTimeString("ro-RO", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Bucharest" });
+      return c.json({ eroare: `Prea multe parole greșite de pe acest calculator. Încearcă din nou la ${ora}.` }, 423);
+    };
+    const pana = blocari.blocatPana(cheie);
+    if (pana) return blocat(pana);
     const r = await intra(o.db, o.tenantId, email, parola);
-    if (r.fel === "blocat") {
-      const ora = r.pana.toLocaleTimeString("ro-RO", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Bucharest" });
-      return c.json({ eroare: `Prea multe parole greșite: contul e blocat până la ${ora}. Încearcă atunci, sau cere o parolă nouă.` }, 423);
+    if (r.fel === "gresit") {
+      const acum = blocari.greseala(cheie);
+      return acum ? blocat(acum) : c.json({ eroare: "Emailul sau parola nu sunt bune." }, 401);
     }
-    if (r.fel === "gresit") return c.json({ eroare: "Emailul sau parola nu sunt bune." }, 401);
+    blocari.reusita(cheie);
     await caTenant(o.db, o.tenantId, (tx) => scrieInJurnal(tx, o.tenantId, r.om, "a intrat în aplicație", null));
     c.header("Set-Cookie", cookieSesiune(c, r.cookie, Math.floor(DURATA_SESIUNE_MS / 1000)));
     return c.json({ eu: eu(r.om) });
