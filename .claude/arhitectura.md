@@ -90,7 +90,8 @@ python scripts/extract_conversii.py ../attachments     # regenerează seriile de
 
 ## Ce e încă nedecis
 
-Întrebări deschise către firmă, care schimbă arhitectura (nu doar implementarea):
+Întrebări deschise către firmă, care schimbă arhitectura (nu doar implementarea).
+Toate întrebările rămase, la 23 octombrie 2026: `docs/intrebari-firma-2.md`.
 
 - ~~Cine ține stocul oficial, cine emite factura~~ — **Saga rămâne**
   (`docs/productie.md`): contabilitatea, stocul oficial și facturile în SPV.

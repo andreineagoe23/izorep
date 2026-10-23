@@ -24,6 +24,14 @@ test (`vitest` 2 → 5, `drizzle-kit`), versiuni majore, doar pe laptop, nu pe
 Render. Baza gratuită de pe Render expiră pe **14 noiembrie 2026**, fără
 backup: planul se alege mai târziu (Andrei, 23 octombrie).
 
+**Întrebările pentru firmă, revizuite** (cerut de Andrei): din toate listele
+vechi au rămas 22, în `docs/intrebari-firma-2.md` (9 documente, 6 de preț, 3
+confirmări, găzduirea, listele, 2 pentru contabilă); starea fiecărei întrebări
+vechi, cu motivul, în `docs/starea-intrebarilor.md`. Ordonate după pozițiile
+„De verificat”: pe cele 10 fișiere, 116 din 623 (rezidențial), cele mai multe
+la protecția la foc (40, preț de mână, după firmă), țeava instalatorului cu
+izolație (34, SRU) și peste listă (23).
+
 Verificat cu Playwright pe `build:server`: 390 / 768 / 1440 / 1920 px, ambele
 teme; 4 parole greșite → 401, a cincea și parola bună → 423 „Prea multe parole
 greșite de pe acest calculator. Încearcă din nou la …”, de pe altă adresă
@@ -1922,6 +1930,9 @@ verificări, zero derulare, zero erori.
 
 ## Pentru întâlnirea cu firma (25 septembrie 2026)
 
+> **Istoric.** Starea fiecărei întrebări la 23 octombrie 2026 e în
+> `docs/starea-intrebarilor.md`; ce a rămas deschis, în `docs/intrebari-firma-2.md`.
+
 Varianta scurtă, de dus la firmă: `docs/intrebari-firma.md`. Ordonate după
 cât deblochează pe cele 10 fișiere. Tot restul s-a dedus din
 date și e în cod, marcat unde dovada e subțire. Numerele din paranteză sunt cele
@@ -1978,6 +1989,9 @@ Saga (1); cine emite și trimite factura în SPV (2); cele două firme (6);
 cursul la facturare (7).
 
 ## Întrebări deschise către firmă
+
+> **Istoric.** Starea fiecărei întrebări la 23 octombrie 2026 e în
+> `docs/starea-intrebarilor.md`; ce a rămas deschis, în `docs/intrebari-firma-2.md`.
 
 Astea blochează arhitectura, nu doar implementarea:
 
@@ -2073,7 +2087,7 @@ lustruirea pentru demo. Mai departe, în ordine:
 - **E. Contabilitate.** Facturi, curs BNR înghețat pe document, e-Factura,
   export spre Saga.
 
-**Întrebări de stoc pentru firmă:**
+**Întrebări de stoc pentru firmă** (răspunse pe 5 octombrie, S1–S49):
 
 1. Saga ține stocul oficial? Dacă da: aplicația ține stocul operativ și
    exportă. Dacă nu: emite NIR, bon de consum, avize numerotate și intră în
