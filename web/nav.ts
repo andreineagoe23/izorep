@@ -14,10 +14,9 @@ export interface GrupMeniu {
  * angajatii (15 octombrie 2026): „Lucrari” si „Masuratori” nu spuneau ca acolo
  * e santierul. Setarile, care se ating rar, stau la urma.
  *
- * Varianta anterioara amesteca ecrane livrate cu module viitoare in cinci
- * grupuri. Harta sistemului e utila clientului, dar nu are ce cauta in
- * navigatia zilnica: modulele nelivrate stau in `VIITOR`, intr-o lista
- * pliata, sub meniu.
+ * Modulele nelivrate (facturi, portalul clientului) nu apar deloc: lista lor
+ * pliata, sub meniu, era inca un lucru de citit fara nimic de facut acolo
+ * (planul UX, 14 noiembrie 2026).
  */
 export const MENIU: GrupMeniu[] = [
   { titlu: "", itemi: [
@@ -40,12 +39,6 @@ export const MENIU: GrupMeniu[] = [
     { id: "preturi", eticheta: "Liste de prețuri" },
     { id: "jurnal", eticheta: "Istoric" },
   ]},
-];
-
-/** Module care fac parte din sistem, dar nu sunt livrate in aceasta etapa. */
-export const VIITOR: string[] = [
-  "Facturi",
-  "Portal client",
 ];
 
 export type Rol = "birou" | "contabilitate";

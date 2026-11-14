@@ -133,17 +133,6 @@ a.item[aria-current="page"] {
   background: var(--accent-fill); color: #fff; border-left-color: #9ecbf5; font-weight: 600;
 }
 
-/* Modulele nelivrate: o singura lista pliata, nu jumatate din meniu. */
-.viitor { margin: 4px 10px 0; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.12); }
-.viitor summary {
-  cursor: pointer; font-size: 13px; color: #96a0ab; padding: 6px 2px; list-style: none;
-}
-.viitor summary::-webkit-details-marker { display: none; }
-.viitor summary::before { content: "▸ "; }
-.viitor[open] summary::before { content: "▾ "; }
-.viitor ul { margin: 4px 0 0; padding: 0 0 0 18px; list-style: none; }
-.viitor li { font-size: 13.5px; color: #7d8794; padding: 4px 0; }
-
 /* Tema: un buton rotund lângă numele aplicației, cu soarele sau luna. */
 .tema-buton {
   flex: 0 0 auto; width: 40px; height: 40px; padding: 0; margin: 0;
@@ -192,7 +181,7 @@ html { scroll-padding-top: calc(var(--inaltime-antet) + 12px); }
 .mesaje .alerta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
 
 /* Cand serverul nu raspunde, meniul n-are unde duce. */
-:root[data-fara-meniu] #meniu, :root[data-fara-meniu] .viitor, :root[data-fara-meniu] #pliaza { display: none; }
+:root[data-fara-meniu] #meniu, :root[data-fara-meniu] #pliaza { display: none; }
 
 /* Vizibil doar pentru cititorul de ecran; ramane focusabil, spre deosebire de `hidden`. */
 .doar-citit {
@@ -224,7 +213,6 @@ main:has(.imp-vedere) { max-width: none; }
   :root[data-meniu="pliat"] .marca strong { font-size: 15px; }
   :root[data-meniu="pliat"] .marca span,
   :root[data-meniu="pliat"] .grup h3,
-  :root[data-meniu="pliat"] .viitor,
   :root[data-meniu="pliat"] .tema-buton,
   :root[data-meniu="pliat"] .rol { display: none; }
   :root[data-meniu="pliat"] .item { justify-content: center; padding: 8px 0; border-left: 0; }
@@ -269,7 +257,7 @@ main:has(.imp-vedere) { max-width: none; }
   /*
    * Pe ecran ingust bara nu se plieaza, ci gliseaza peste continut. Varianta
    * anterioara o intindea sub antet, ca un rand de chip-uri: sapte destinatii
-   * plus modulele viitoare impingeau ecranul in jos la fiecare incarcare.
+   * impingeau ecranul in jos la fiecare incarcare.
    *
    * Inchisa, bara e si `visibility: hidden` — altfel linkurile ei raman in
    * ordinea de tabulare, iar focusul pleaca intr-un panou din afara ecranului.

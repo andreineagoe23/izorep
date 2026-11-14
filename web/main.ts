@@ -1,4 +1,4 @@
-import { MENIU, ROLURI, VIITOR, setRol, rolActiv, type Rol } from "./nav.js";
+import { MENIU, ROLURI, setRol, rolActiv, type Rol } from "./nav.js";
 import { esc, type Ecran } from "./ecrane/tip.js";
 import { campParola, legaArataParola } from "./parola-vizual.js";
 import { icoana } from "./icoane.js";
@@ -75,15 +75,7 @@ function deseneazaMeniu(): void {
       }>${icoana(i.id)}<span class="eticheta-item">${esc(i.eticheta)}</span></a>`).join("")}
     </div>`).join("");
 
-  // Harta sistemului ramane vizibila, dar pliata: clientul vede unde se ajunge
-  // fara ca navigatia zilnica sa fie pe jumatate goala.
-  const viitor = `
-    <details class="viitor">
-      <summary>Module care urmează (${VIITOR.length})</summary>
-      <ul>${VIITOR.map((m) => `<li>${esc(m)}</li>`).join("")}</ul>
-    </details>`;
-
-  $("#meniu").innerHTML = grupuri + viitor;
+  $("#meniu").innerHTML = grupuri;
 }
 
 async function navigheaza(mutaFocus = false): Promise<void> {
