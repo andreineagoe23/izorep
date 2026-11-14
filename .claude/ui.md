@@ -147,6 +147,8 @@ clic.
 
 ## Cereri și oferte (3 octombrie 2026)
 
+> **Istoric.** Ecranul a ieșit pe 14 noiembrie 2026; cererile și ofertele sunt lista „Lucrări”.
+
 Sus, **„Cererile importate”**: fiecare import din istoric (`web/istoric.ts`)
 e un rând, cu oferta descărcată din el (`web/oferte-local.ts`, scrisă la
 „Descarcă oferta”: număr, client, valoarea după ajustare, foc și discount) și
@@ -199,7 +201,65 @@ Tema închisă e scrisă de două ori în CSS, cu aceleași valori: o dată sub
 `@media` cu un selector de atribut într-o singură regulă — dacă modifici una,
 modific-o și pe cealaltă.
 
+## Lucrarea: meniul pe patru, lista pe stadii, pagina cu cinci file (14 noiembrie 2026)
+
+Planul UX (`docs/plan-ux.md`), Fazele 2 și 3. Secțiunile mai vechi despre
+meniu, „Cereri și oferte”, Cerere nouă cu trei pași, pagina șantierului și
+lista „Lucrări” sunt **istoric** unde o contrazic pe asta; conținutul
+ecranelor (verificarea, materialul, situațiile, închiderea) a rămas, s-a
+schimbat locul.
+
+- **Meniul**: Acasă · Lucrări · Materiale · Setări (`MENIU` în `nav.ts`, fără
+  grupuri). Setări e o bară de file comună (`fileSetari` în `main.ts`): Clienți
+  · Liste de prețuri · Calcul rapid · Istoric · Contul meu, fiecare cu adresa
+  lui, cu „Setări” aprins în meniu (`IN_MENIU`). Adresele vechi: `ALIAS`
+  (`cereri`, `oferte`, `documente`, `santiere` → `lucrari`; `setari` →
+  `clienti`) și `MUTATE` (`#/import[/poze]` → `#/lucrari/noua[/poze]`).
+  „Măsurători” nu mai e în meniu; ruta rămâne, intrată din filele lucrării.
+- **Lista Lucrări** (`web/ecrane/lucrari.ts`): „Cerere nouă” albastru sus,
+  apoi file după stadiu (De ofertat · Oferte trimise · În lucru · Închise, cu
+  cifra; `#/lucrari?stadiu=…`; se deschide prima care are ceva) și un tabel:
+  lucrarea (obiectivul, clientul dedesubt), oferta, valoarea, ce urmează,
+  „Deschide”. Legarea cerere + ofertă + șantier e în `web/lucrare.ts` (pur).
+- **Pagina lucrării** (`#/lucrari/<id>/<fila>`, id-ul cererii sau al
+  șantierului): titlul e obiectivul; sub „← Toate lucrările”, un rând cu ce nu
+  e deja în titlu (clientul dacă diferă, oferta, valoarea, „refuzată”,
+  „închisă”), și „⋯” în dreapta (Planul de șantier, Șterge lucrarea); fără
+  text, „⋯” stă pe rândul lui „← Toate lucrările”. Pe fila Cerere, cât se vede
+  tabelul de verificare, `main` ia toată lățimea (`main:has(.ver-tabel…)`). Apoi rândul **„Urmează”** (`urmeaza` în
+  `lucrare.ts`): o propoziție și butonul pasului; butonul care ar duce pe fila
+  deschisă nu se desenează. Apoi cele cinci file, butoane cu `replaceState`:
+  **Cerere · Ofertă · Materiale · Situații · Închidere**, cu ✓ pe cele gata;
+  cele la care nu s-a ajuns sunt gri (doar textul: cu `opacity` se stingea și
+  linia de dedesubt) și panoul lor spune de ce („După ce acceptă clientul.”).
+- **Cerere și Ofertă** sunt importul montat (`montezaImport` din
+  `web/ecrane/import.ts`), fără pașii 1 · 2 · 3; restul filelor sunt
+  `web/ecrane/santier-panou.ts`. Importul rămâne montat, ascuns, pe celelalte
+  file: ce era scris nu se pierde.
+- **Fila Cerere, după fișier**: antetul are fișierul și **„Ofertă
+  rezidențială” cu „schimbă”** (Faza 3), care arată pe loc cele două tipuri;
+  alegerea retarifează și salvează, apoi revine la text. Pe „Cerere nouă”
+  (`#/lucrari/noua`, înainte de fișier) tipul rămâne cu cele două butoane.
+  Propoziția de deasupra filelor („Toate cele 99 au preț.”) nu mai are buton:
+  „Mergi la ofertă” e doar în „Urmează”.
+- **Fila Ofertă pe două carduri** (Faza 3, `ecranOferta` în
+  `web/import/vizual.ts`), un singur formular `#antet-oferta` în jurul lor:
+  „Cui trimitem” (firma, numărul, data, beneficiarul, obiectivul, în atenția,
+  localitatea) și „Prețul” (suma mare „Intră în ofertă”, cu pozițiile și tipul,
+  ce include, ajustarea și discountul, ce nu intră cu „Înapoi la verificare”,
+  „Descarcă oferta”). Pe ecran lat, „Cui trimitem” ~2/3 în stânga, „Prețul”
+  în dreapta, lipit sus la derulare; pe telefon unul sub altul. Suma și „Cum
+  iese oferta” se schimbă la tastă fără redesenare. Dedesubt, „Cum iese
+  oferta”. „Descarcă oferta” e albastru doar cât lucrarea n-are ofertă; după,
+  e alb, iar albastrul e „Clientul a acceptat” din „Urmează”.
+- **„Clientul a acceptat”** întreabă pe loc „Pornești șantierul …?”, apoi face
+  planul și lista (`santierDin`, regulile firmei) și duce pe fila Materiale;
+  regulile se schimbă de acolo („Schimbă regulile de calcul”, „Refă lista”).
+  „A refuzat” scrie ziua în `antet.refuzat`; „A acceptat până la urmă” o scoate.
+
 ## Meniul: pe flux, restul pliat
+
+> **Istoric** de la 14 noiembrie 2026: meniul e pe patru, fără grupuri (mai sus).
 
 Din 15 octombrie 2026: Acasă, apoi grupurile Oferte, Șantiere, Materiale,
 Setări, cu numele pe care le folosesc angajații („Lucrări” e „Șantiere”,
@@ -398,7 +458,9 @@ editorul vechi folosește deja `adauga-strat` și `scoate-strat`.
 din aceleași cifre ca filele (`rezumatVerificare` în `oferta-vizual.ts`): „97
 din 99 de poziții au preț sigur. 2 cer să te uiți.”, cu „N n-au preț” adăugat
 oricând există; fără nimic de văzut, „Toate cele 99 au preț.” și butonul
-albastru „Mergi la ofertă” (pasul 3). Filtrele (Toate · Gata · De verificat ·
+albastru „Mergi la ofertă” (pasul 3). (Din 14 noiembrie 2026, Faza 3: butonul e doar
+în rândul „Urmează” al lucrării; „Ce vezi” a ieșit, „Cum iese oferta” e pe fila
+Ofertă.) Filtrele (Toate · Gata · De verificat ·
 Fără preț, cu cifra și punctul culorii) și „Ce vezi” (Verificare · Cum iese
 oferta) sunt file `.file` / `.fila` cu `aria-current`, ca la Materiale, fiecare
 cu eticheta ei mică deasupra („Arată pozițiile”, „Ce vezi”), în grila ~70 / 30;
@@ -413,6 +475,8 @@ goală (după „Confirmă” pe ultima), nu la fiecare tastă: un rând care de
 „Toate”, cu „Mergi la ofertă”.
 
 ## Ecranul de import: trei pași
+
+> **Istoric** pentru așezare: din 14 noiembrie 2026 pașii 1 · 2 · 3 nu se mai desenează; importul e fila Cerere (fișierul și verificarea) și fila Ofertă a lucrării. Fără „Importuri recente”.
 
 Refăcut pe 13 septembrie 2026 pentru oamenii care îl folosesc — birou și
 șantier, nu IT — după ce varianta cu grila 1:1 a fost găsită „prea încărcată".
@@ -839,6 +903,8 @@ eticheta pe același rând și ținta de 44 px.
 
 ## Pagina șantierului: file (22 octombrie 2026)
 
+> **Istoric** pentru așezare: din 14 noiembrie 2026 pagina șantierului e pagina lucrării, cu cinci file (mai sus).
+
 Andrei: „e mai simplu de navigat în taburi decât în dropdownuri”. Sub antet și
 cifre, filele (`fileSantier` în `web/ecrane/lucrari.ts`, stilul `.file` /
 `.fila` de la Materiale): **Situații de lucrări** (cu numărul lor; formularul
@@ -868,6 +934,8 @@ cardului are „Comandă ce lipsește” → `#/materiale`. Butonul e alb: albas
 paginii e „Situație nouă”.
 
 ## Lucrări: șantierele din oferte (29 septembrie 2026)
+
+> **Istoric** pentru listă: din 14 noiembrie 2026 lista e pe stadii (mai sus).
 
 `web/ecrane/lucrari.ts`; logica în `src/lucrari/situatii.ts`, datele în
 `web/lucrari-local.ts` (browser, ca depozitul); Excel-ul în `web/situatie.ts`.
@@ -941,6 +1009,8 @@ testate); fără clase CSS noi.
   „Închise” din Faza 2.
 
 ## Pozele pentru ofertă, la Cerere nouă (22 octombrie 2026)
+
+> Din 14 noiembrie 2026 Cerere nouă e `#/lucrari/noua[/poze]`, fără importurile recente.
 
 Andrei: „Poze de pe șantier” era un nume prea lung, care nu se potrivea, iar
 pozele pentru ofertă țin de import. Pasul 1 din Cerere nouă are două file

@@ -3,6 +3,52 @@
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
 > Ultima actualizare: 14 noiembrie 2026.
 
+## 14 noiembrie 2026: planul UX, Faza 2 (lucrarea) și Faza 3 (Cerere și Ofertă)
+
+Din `docs/plan-ux.md`, pe ramura `ux-lucrare`. Nicio regulă de preț, nicio
+migrare. **706 teste** (705 + testul de server pentru lista cererilor).
+
+| Ce | Acum |
+|---|---|
+| O lucrare stătea în cinci locuri din meniu (Cerere nouă, Oferte și cereri, Șantiere, Măsurători, Materiale) | **Meniul pe patru**: Acasă · Lucrări · Materiale · Setări (cu file: Clienți, Liste de prețuri, Calcul rapid, Istoric, Contul meu). Adresele vechi trec prin `ALIAS` / `MUTATE` din `main.ts` |
+| Nimic nu spunea în ce stadiu e o lucrare | **Lucrări** pe file: De ofertat · Oferte trimise · În lucru · Închise, cu cifra; „Cerere nouă” albastru sus |
+| Cerere, ofertă și șantier erau ecrane diferite | **Pagina lucrării** (`#/lucrari/<id>/<fila>`): antetul, „⋯” (Planul de șantier, Șterge lucrarea), rândul **„Urmează”** cu butonul pasului, cinci file: Cerere · Ofertă · Materiale · Situații · Închidere (✓ pe cele gata, gri cu motivul pe cele la care nu s-a ajuns) |
+| „Creează șantierul” era jos pe pasul 3, sub materiale | **„Clientul a acceptat”** în „Urmează”: întreabă „Pornești șantierul …?”, apoi planul și lista cu regulile firmei (`santierDin`), și duce pe fila Materiale. „A refuzat” / „A acceptat până la urmă” scriu `antet.refuzat` în cerere |
+| Fila Ofertă era un singur formular, cu două butoane albastre | **Două carduri**: „Cui trimitem” (firma, numărul, data, beneficiarul, obiectivul, în atenția, localitatea) și „Prețul” (suma, ajustarea, discountul, „Descarcă oferta”); dedesubt „Cum iese oferta” |
+| „Tip ofertă” la verificare: două butoane mari | text „Ofertă rezidențială” cu „schimbă”, care arată cele două tipuri pe loc |
+| „Mergi la ofertă” de două ori pe fila Cerere | doar în „Urmează”; propoziția „Toate cele 99 au preț.” rămâne, fără buton |
+| Sub titlu, pe o lucrare fără ofertă, se repeta titlul | rândul arată doar ce nu e în titlu (clientul, oferta, valoarea, „refuzată”); fără text, „⋯” urcă pe rândul lui „← Toate lucrările”, în dreapta (`.doar-inapoi`) |
+| Verificarea nu mai lua toată lățimea (regula `main:has(.imp-vedere)` nu mai prindea nimic de când a ieșit „Ce vezi”) | `main:has(.ver-tabel:not([hidden] *))`: tabelul de verificare și cel al pozelor din carnet, doar cât se văd; pe Ofertă, Materiale și lista Lucrări `main` rămâne la 1400 px |
+| Linia de sub file părea ruptă după „Închidere” | filele inactive aveau `opacity`, care stingea și linia; acum doar textul e mai stins |
+
+Decise de noi (se pot întoarce):
+
+- **Fără starea „trimisă”**: o ofertă salvată, fără șantier și fără refuz, e
+  „Oferte trimise”. Refuzul fără migrare, în lucrul cererii.
+- **Un singur albastru pe fila Ofertă**: „Descarcă oferta” e albastru cât
+  lucrarea n-are ofertă; după prima descărcare (și la redeschidere) e alb, iar
+  albastrul e „Clientul a acceptat” din „Urmează”. Butonul din „Urmează” care
+  ar duce pe fila deschisă nu se desenează.
+- **„Nu intră …” și „Înapoi la verificare”** stau într-un singur paragraf, în
+  cardul „Prețul”, lângă descărcare (erau două, sus și jos).
+- **`scripts/demo.ts` rămâne cu funcția lui de șantier**: `santierDin` stă în
+  `web/ecrane/import.ts` (ecran, cu DOM) și face id-uri noi (`S-<id>`), iar
+  demo-ul are nevoie de id-uri fixe (`S-TRANSAVIA`). Planul demo-ului poartă
+  `cerere` (din `provenienta.sesiune`), deci se leagă de lucrarea lui.
+
+Curățat: `deschideLaIntrare` / `iaDeDeschis`, „Importuri recente” din
+`ecranStart`, ramura „Ce vezi” din `baraVerificare` (cu tipul `Vedere`),
+`LANT`, `LANT_VALOARE`, `CURS_BNR` și `client` / `santier` din `seed.ts`, CSS-ul
+lor; „Șantiere” ca link pe Materiale → „Lucrări › Închise”.
+
+Verificat: Faza 2 parcursă în browser pe varianta fără server (`npx vite`,
+datele în browser), de la Cerere nouă până la situație, 390 și 1440 px, ambele
+teme, adresele vechi și reîncărcarea pe fiecare filă, zero erori. Faza 3, la fel
+pe TRANSAVIA: tipul schimbat și pus la loc, fila Ofertă (284, discount 3 % →
+91.737,81 €, „Descarcă oferta”, apoi alb), zero derulare laterală. **Rămâne**:
+parcurgerea pe server cu baza (`izorep_ux`), de un coleg cu Docker; testul nou
+de server se sare fără Postgres.
+
 ## 14 noiembrie 2026: planul UX, Faza 0 (fără Render) și Faza 1
 
 Din `docs/plan-ux.md`, pe ramura `ux-lucrare`. Nicio mutare de ecran, nicio

@@ -299,8 +299,34 @@ Pentru fiecare: da / nu / altfel.
 ## Unde am rămas (14 noiembrie 2026)
 
 Pentru cine continuă pe alt calculator, într-o sesiune nouă. Ramura `ux-lucrare`,
-nepublicată (fără push). Faza 2 e **scrisă și trece testele, dar n-a fost văzută
-în browser**.
+nepublicată (fără push). Faza 2 e **scrisă, trece testele și a fost parcursă în
+browser** pe varianta fără server; din Faza 3 sunt făcute fila Ofertă pe două
+carduri, „Tip ofertă” cu „schimbă” și un singur „Mergi la ofertă”.
+
+### Ce s-a schimbat după primul rând de mai jos
+
+- **Faza 2, parcursă în browser** pe varianta fără server (`npx vite --port
+  5183`, datele în browser): de la Cerere nouă până la situație, la 390 și 1440
+  px, ambele teme, cu adresele vechi și reîncărcarea pe fiecare filă, fără
+  erori. **Pe server cu baza (`izorep_ux`) rămâne de parcurs**, de un coleg cu
+  Docker (comenzile la „Cum verifici pe alt calculator”).
+- Reparate după parcurgere: rândul de sub „← Toate lucrările” nu mai repetă
+  titlul (doar clientul dacă diferă, oferta, valoarea, „refuzată”); linia de
+  sub file nu mai pare ruptă după „Închidere” (filele inactive aveau `opacity`,
+  care stingea și linia); `deschideLaIntrare` / `iaDeDeschis` scoase.
+- Testul de server pentru `antet` / `deVerificat` în `/api/cereri` e scris
+  (`tests/server.test.ts`); se sare fără Postgres.
+- Cod mort după ecranele plecate, scos: „Importuri recente” din `ecranStart`,
+  „Ce vezi” din `baraVerificare`, `LANT` / `LANT_VALOARE` / `CURS_BNR` din
+  `seed.ts`. Linkul „Șantiere” de pe Materiale duce la „Lucrări › Închise”.
+- **Faza 3, făcut**: fila Ofertă pe două carduri, „Cui trimitem” și „Prețul”,
+  cu „Cum iese oferta” dedesubt și un singur albastru („Descarcă oferta” cât
+  nu e ofertă, apoi alb, iar albastrul e „Clientul a acceptat”); „Tip ofertă”
+  pe fila Cerere ca text cu „schimbă”; „Mergi la ofertă” doar în „Urmează”.
+  **Nefăcut din Faza 3**: rândurile „Gata” ca text (cer machetă), iar
+  `scripts/demo.ts` își păstrează funcția lui de șantier (`santierDin` e în
+  ecran și face id-uri noi; demo-ul vrea `S-TRANSAVIA`). Demo-ul compilează pe
+  API-urile de acum; nerulat (cere Postgres).
 
 ### Făcut (commit-uri)
 
@@ -315,7 +341,8 @@ Verificat: `npm run typecheck` curat, `npm test` **705 teste** trec (698 + 7 noi
 
 ### Pe jumătate / nefăcut
 
-- **Parcurgerea în browser, de la cap la coadă, nefăcută.** De făcut întâi:
+- ~~**Parcurgerea în browser, de la cap la coadă, nefăcută.**~~ Făcută pe
+  varianta fără server (mai sus); pe server, nu. De făcut întâi:
   Lucrări (file, cifre) → Cerere nouă → TRANSAVIA a doua oară → fila Cerere →
   Mergi la ofertă → număr și obiectiv → Descarcă oferta (94.575,06 €; cu 3 %:
   91.737,81 €) → A refuzat → A acceptat până la urmă → Da, pornește șantierul →
@@ -324,11 +351,11 @@ Verificat: `npm run typecheck` curat, `npm test` **705 teste** trec (698 + 7 noi
   suspectat: trecerea de la `#/lucrari/noua` la pagina lucrării după fișier
   (`cerereNoua` în `lucrari.ts`, depinde de salvarea cererii înainte), plierea
   barei (`ceriSpatiu`) la schimbarea filelor, focusul după „Urmează”.
-- Un test de server pentru `antet` / `deVerificat` în `/api/cereri` nu e scris.
-- `.claude/stare.md` și `.claude/ui.md` nu sunt actualizate pentru Faza 2.
+- ~~Un test de server pentru `antet` / `deVerificat` în `/api/cereri` nu e scris.~~ Scris.
+- ~~`.claude/stare.md` și `.claude/ui.md` nu sunt actualizate pentru Faza 2.~~ Actualizate.
 - Pe linkul demo (fără server) au plecat „Documentele firmei” și „Lucrările din
-  datele firmei” (exemplele): nu mai au ecran.
-- `deschideLaIntrare` / `iaDeDeschis` din `web/date.ts` au rămas nefolosite.
+  datele firmei” (exemplele): nu mai au ecran, și rămâne așa.
+- ~~`deschideLaIntrare` / `iaDeDeschis` din `web/date.ts` au rămas nefolosite.~~ Scoase.
 
 ### Decizii luate (de păstrat)
 
