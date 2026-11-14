@@ -690,6 +690,8 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
     salveazaSesiune();
     deseneaza();
     scrollTo({ top: 0 });
+    // Deschisă direct pe fila Ofertă (adresa, reîncărcarea), nu trece prin `treciPe`.
+    if (pas === 3) void propuneNumar();
   }
 
   function confirmaIndecsi(indecsi: number[]): void {
