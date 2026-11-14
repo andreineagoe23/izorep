@@ -27,7 +27,7 @@ import {
   type PlanSantier, type Situatie,
 } from "../../src/lucrari/situatii.js";
 import { PIERDERI_IMPLICITE, PRAG_TUB_MM, type Pierderi } from "../../src/stoc/necesar.js";
-import type { ReguliNecesar } from "./import.js";
+import type { ReguliNecesar } from "../santier-din.js";
 
 export type FilaSantier = "situatii" | "materiale" | "inchidere" | "plan";
 

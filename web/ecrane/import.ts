@@ -15,16 +15,17 @@ import { anuleaza, confirma, potrivit } from "../validare.js";
 import { cate, esc, eur } from "./tip.js";
 import { FIRME, logoFirmei } from "../date/firme.js";
 import {
-  adaosFocIndustrial, clientPropus, cuAjustare, cuDenumiri, dataAzi, imparte, planDinOferta, totalCuAdaos, valoareOferta,
+  adaosFocIndustrial, clientPropus, cuAjustare, cuDenumiri, dataAzi, imparte, totalCuAdaos, valoareOferta,
   type AntetOferta, type CerereOferta,
 } from "../oferta.js";
 
 import { descarca, numeOferta } from "../descarca.js";
-import { PIERDERI_IMPLICITE, PRAG_TUB_MM, necesarDinLinii, type Pierderi } from "../../src/stoc/necesar.js";
-import { pastreazaEditari } from "../../src/stoc/editari-necesar.js";
+import { necesarDinLinii } from "../../src/stoc/necesar.js";
 import {
-  citesteDepozit, citestePlanuri, idNou, incarca, puneCurent,
-  salveaza, salveazaOferta, scrieDepozit, scriePlanuri, citesteOferte, urmatorulNumar,
+  REGULI_FIRMEI, santierDin as santierDinCerereOferta, type ReguliNecesar, type RezultatSantier,
+} from "../santier-din.js";
+import {
+  incarca, puneCurent, salveaza, salveazaOferta, citesteOferte, urmatorulNumar,
 } from "../date.js";
 import type { EditareCelula, SesiuneImport } from "../istoric.js";
 import {
@@ -139,15 +140,6 @@ function antetDinOferta(meta: SesiuneImport, foi: readonly FoaieBruta[]): AntetS
   };
 }
 
-/** Regulile necesarului: pierderile la croit, pragul tub / placă și diametrele comandate tot ca tub. */
-export interface ReguliNecesar { pierderi: Pierderi; pragTub: number; tuburiPeste: number[] }
-
-/** Ce pune firma de obicei (pierderi 10 / 10 / 10 / 0 %, tuburi până la 3 țoli): cu ele pornește șantierul. */
-export const REGULI_FIRMEI: ReguliNecesar = { pierderi: { ...PIERDERI_IMPLICITE }, pragTub: PRAG_TUB_MM, tuburiPeste: [] };
-
-/** Șantierul făcut, sau de ce nu (și fila unde se rezolvă). */
-export type RezultatSantier = { plan: string } | { eroare: string; fila?: "oferta" };
-
 interface CerereDeschisa {
   meta: SesiuneImport; rez: Rezultat; antet: AntetScris; ajustare: number; destinatie: Destinatie; denumiri: Map<number, string>;
 }
@@ -179,49 +171,14 @@ function cerereDinAntet(c: CerereDeschisa): CerereOferta {
 }
 
 /**
- * Șantierul din ofertă (până pe 14 noiembrie 2026, „Creează șantierul” din
- * pasul „Oferta”; acum „Clientul a acceptat” și „Schimbă regulile de calcul”):
- * planul (pozițiile ofertei, înghețate) plus necesarul lui, trimis la depozit
- * pe șantierul nou. Unul pe cerere: refăcut, îl înlocuiește pe cel vechi și
- * păstrează ce a schimbat omul pe listă, dar nu și după ce are situații de
- * lucrări, fiindcă istoricul lor e pe pozițiile vechi.
+ * Șantierul din cererea deschisă (`web/santier-din.ts`): „Clientul a acceptat”
+ * și „Refă lista”. Antetul e cel ținut în sesiune.
  */
 function santierDin(c: CerereDeschisa, reguli: ReguliNecesar): RezultatSantier {
-  if (c.antet.refuzat) return { eroare: "Clientul a refuzat oferta. Apasă întâi „A acceptat până la urmă”." };
-  const planuri = citestePlanuri();
-  // Șantierul acestei cereri, după id: același fișier importat din nou e
-  // altă cerere, cu șantierul ei (16 octombrie 2026). Numele fișierului
-  // leagă doar planurile vechi, fără `cerere`.
-  const vechi = planuri.find((p) => p.cerere === c.meta.id || (p.cerere === undefined && p.fisier === c.meta.nume));
-  if (vechi && vechi.situatii.length > 0) {
-    return { eroare: `Șantierul „${vechi.denumire}” are deja situații de lucrări, deci pozițiile lui nu se mai schimbă.` };
-  }
-  const cerere = cerereDinAntet(c);
-  // Fără obiectiv, șantierul lua numele fișierului („Transavia Abur”) și se
-  // confunda cu altul din aceeași cerere (16 octombrie 2026).
-  if (!cerere.antet.obiectiv) {
-    return { eroare: "Scrie întâi obiectivul la „Datele ofertei”: așa se va numi șantierul.", fila: "oferta" };
-  }
-  const plan = planDinOferta(cerere, vechi?.id ?? `S-${idNou()}`, new Map(c.rez.brute.map((b) => [b.index, b.sectiune ?? ""])));
-  if (!scriePlanuri([plan, ...planuri.filter((p) => p !== vechi)])) {
-    return { eroare: "Browserul nu permite salvarea: șantierul nu a putut fi pornit." };
-  }
-  const n = necesarDinLinii(imparte(cuAjustare(c.rez.linii, c.ajustare)).oferta, {
-    pierderi: reguli.pierderi, pragTub: reguli.pragTub, tuburiPeste: reguli.tuburiPeste,
-    discountProcent: cerere.antet.discountProcent ?? 0,
-  });
-  const st = citesteDepozit();
-  const vechiNecesar = vechi ? st.necesare.find((x) => x.santier === vechi.id || (x.santier === undefined && x.fisier === c.meta.nume)) : undefined;
-  // Refăcut, lista păstrează ce a schimbat omul pe ea (cantități, ✕, „Îl dă clientul”, materialul de mână).
-  const pastrat = pastreazaEditari(vechiNecesar, n.materiale);
-  const nou = {
-    id: vechiNecesar?.id ?? idNou(), creat: new Date().toISOString(), fisier: c.meta.nume,
-    obiectiv: plan.denumire, pierderi: n.pierderi, pragTub: n.pragTub, tuburiPeste: n.tuburiPeste, ...pastrat,
-    faraNecesar: n.faraNecesar.length, santier: plan.id,
-    ...(vechiNecesar?.versiune !== undefined ? { versiune: vechiNecesar.versiune } : {}),
-  };
-  scrieDepozit({ ...st, necesare: [nou, ...st.necesare.filter((x) => x !== vechiNecesar)] });
-  return { plan: plan.id };
+  return santierDinCerereOferta({
+    sesiune: c.meta.id, fisier: c.meta.nume, oferta: cerereDinAntet(c), brute: c.rez.brute,
+    ...(c.antet.refuzat ? { refuzat: c.antet.refuzat } : {}),
+  }, reguli);
 }
 
 /** Opțiunile nucleului pentru o cerere salvată, ca la redeschiderea ei în import. */
