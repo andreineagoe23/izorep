@@ -78,6 +78,36 @@ Verificat pe toate fișierele, cu și fără mapare: **aceleași poziții, acele
 prețuri unitare**, cantități corecte. Singura diferență de valoare totală vine
 din cantitățile reparate.
 
+### Din aplicație, pe firmă (14 noiembrie 2026, planul UX, Faza 6)
+
+Până acum `propuneMapare` se chema doar din `npm run mapare`: un client nou,
+încărcat din ecran, cădea pe euristica de cantitate. Acum, la import, înaintea
+pozițiilor (`proceseaza` în `web/ecrane/import.ts`, prin `citesteColoanele`
+din `web/import/mapari-firma.ts`):
+
+- foile cu rânduri de poziții al căror antet nu e cunoscut (nici în
+  `data/mapari`, nici pe firmă, nici respins deja; `foiDeCitit` în
+  `src/import/coloane.ts`, o dată pe amprentă) pleacă la `POST /api/mapare`
+  (`src/server/import-firma.ts`), cu aceleași reguli ca `/api/extrage`:
+  sesiune, `X-Izorep`, plafonul zilnic (15 rânduri din Excel pe foaie),
+  răspunsul trecut prin `MapareFoaie`; `valideazaMapare` decide;
+- rezultatul, acceptat sau respins, stă în `mapare_coloane` (pe firmă): același
+  antet nu mai cheamă modelul, iar unul respins rămâne pe euristică;
+- maparile folosite se țin și în cerere (`SesiuneImport.mapari`): redeschisă,
+  cererea iese cum a văzut-o omul, chiar dacă un coleg a ales între timp alte
+  coloane pe același antet. Ordinea: repo, firma, cererea;
+- pe ecranul de verificare, sub fișier: „Cantitatea e în coloana E,
+  denumirea în B.” cu „schimbă” (fără mapare: „Cantitatea e luată de lângă
+  unitatea de măsură.” cu „alege coloanele”). Alegerea omului
+  (`mapareAleasa`) e verificată ca a modelului (`problemaAlegerii`, cu motivul
+  în cuvinte) și se ține la fel (`PUT /api/mapari`, sursa „om”); „Anulează”
+  o scoate și de pe firmă.
+
+Fără model (link demo, server fără cheie): nimic nu se întreabă, importul e
+cel de dinainte. Teste: `tests/coloane.test.ts` (alegerea pe o listă la care
+regula veche lua prețul unitar drept cantitate: 12,5 / 13,5 / 40 → 140 / 85 /
+62; ruta cu model fals, izolarea între firme, 503, 429, 502).
+
 ## L4 — memoria de șabloane
 
 Ce a corectat omul o dată nu se mai întreabă. Același mecanism ca deduplicarea,

@@ -71,7 +71,7 @@ export function laColoana(celule: CelulaBruta[], coloana: number): string | numb
   return null;
 }
 
-const UM_TOKEN = /^(ml|m|m²|m2|mp|buc|buc\.|pcs|stk|lm|kg|to|set|kpl)$/i;
+export const UM_TOKEN = /^(ml|m|m²|m2|mp|buc|buc\.|pcs|stk|lm|kg|to|set|kpl)$/i;
 
 const esteNumar = (v: string | number | null): boolean =>
   typeof v === "number" || (typeof v === "string" && v.trim() !== "" && !Number.isNaN(Number(v.replace(",", "."))));

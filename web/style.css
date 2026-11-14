@@ -676,6 +676,14 @@ a.legatura { display: inline-flex; align-items: center; }
 /* Tipul ales, ca text cu „schimbă” (Faza 3): la dreapta, pe aceeași linie cu fișierul. */
 .imp-tip { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 0 10px; margin: 0; font-size: 15px; }
 .imp-tip .legatura { display: inline-flex; align-items: center; min-height: 44px; padding: 0 4px; font-size: 15px; }
+/* Coloanele citite (Faza 6): un rând discret sub fișier, cu „schimbă”; alegerea, pe file. */
+.imp-coloane-rand { margin-top: 8px; padding-top: 4px; border-top: 1px solid var(--linie); }
+.imp-coloane { display: flex; flex-wrap: wrap; align-items: center; gap: 0 10px; margin: 0; font-size: 15px; color: var(--slab); }
+.imp-coloane .legatura { display: inline-flex; align-items: center; min-height: 44px; padding: 0 4px; font-size: 15px; }
+.imp-coloane-alege { display: grid; gap: 8px; margin: 4px 0 12px; }
+.imp-coloane-alege .fila { padding: 0 12px; }
+.imp-coloane-alege .fila .hint { font-size: 13px; }
+.imp-coloane-alege .imp-formular-butoane { margin-top: 4px; }
 @container imp (max-width: 619px) {
   .imp-antet-optiuni, .imp-tip { justify-content: flex-start; }
   .imp-antet { grid-template-columns: minmax(0, 1fr); }

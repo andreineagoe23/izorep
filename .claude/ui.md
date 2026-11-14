@@ -474,6 +474,20 @@ goală (după „Confirmă” pe ultima), nu la fiecare tastă: un rând care de
 „De verificat” cât scrii nu mută pagina pe altă filă. TRANSAVIA se deschide pe
 „Toate”, cu „Mergi la ofertă”.
 
+## Verificarea: coloanele citite (14 noiembrie 2026, planul UX, Faza 6)
+
+În cardul fișierului, sub tipul ofertei, un rând discret pe fiecare foaie cu
+poziții (`web/import/coloane-ecran.ts`, montat din `paginaVerificare`):
+„Cantitatea e în coloana E, denumirea în B.” cu „schimbă”, sau, fără coloane
+citite, „Cantitatea e luată de lângă unitatea de măsură.” cu „alege
+coloanele”; cu mai multe foi, „Foaia X: …”. „schimbă” deschide pe loc două
+rânduri de file (`.file` / `.fila`, litera și eticheta din antet): „Cantitatea
+e în coloana” și „Denumirea e în coloana”, apoi „Folosește coloanele” (alb) și
+„Renunță”. O alegere care nu se potrivește cu foaia nu se aplică și spune de
+ce („În coloana D nu e text pe cele mai multe rânduri: nu poate fi
+denumirea.”). Aplicată: pozițiile se recitesc, mesajul de jos are „Anulează”.
+Pe ecran nu apar „model” sau „mapare”.
+
 ## Ecranul de import: trei pași
 
 > **Istoric** pentru așezare: din 14 noiembrie 2026 pașii 1 · 2 · 3 nu se mai desenează; importul e fila Cerere (fișierul și verificarea) și fila Ofertă a lucrării. Fără „Importuri recente”.

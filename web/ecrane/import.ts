@@ -3,7 +3,8 @@ import {
 } from "../../src/import/nucleu.js";
 import { campuriRand, scrieCelula, reconstruieste, type CampuriRand } from "../../src/import/editare.js";
 import { invataDinCorectie } from "../../src/import/memorie.js";
-import { mapariStatice } from "../../src/import/mapari-statice.js";
+import { citesteColoanele, mapariFolosite, mapariImport } from "../import/mapari-firma.js";
+import { controlColoane } from "../import/coloane-ecran.js";
 import type { LinieExtrasa } from "../../src/import/schema.js";
 // Doar tipul: ExcelJS (~940 kB) ramane incarcat lenes, prin `import()`.
 import type { FoaieBruta } from "../../src/import/parse-workbook.js";
@@ -228,7 +229,7 @@ function santierDin(c: CerereDeschisa, reguli: ReguliNecesar): RezultatSantier {
 async function optiuniCererii(s: SesiuneImport): Promise<OptiuniNucleu> {
   const info = await interogheazaModel();
   return {
-    stoc: stocLocal(), mapari: mapariStatice(), prag: info?.prag ?? 0.85, destinatie: s.destinatie ?? "rezidential",
+    stoc: stocLocal(), mapari: (await mapariImport(s.mapari)).mapari, prag: info?.prag ?? 0.85, destinatie: s.destinatie ?? "rezidential",
     grosimiPropuse: new Map(s.grosimiPropuse ?? []), descrieriSchimbate: new Set(s.descrieriSchimbate ?? []),
     preturiManuale: new Map(s.preturiManuale ?? []),
   };
@@ -324,7 +325,8 @@ export interface ControlImport {
  */
 export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Promise<ControlImport> {
   const info = await interogheazaModel();
-  const mapari = mapariStatice();
+  /** Coloanele foilor: din repo, ale firmei, ale cererii (`mapari-firma.ts`). */
+  let mi = await mapariImport();
   const prag = info?.prag ?? 0.85;
   const stoc = stocLocal();
 
@@ -384,7 +386,21 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
   let ceasMesaj: ReturnType<typeof setTimeout> | undefined;
   let ceasSalvare: ReturnType<typeof setTimeout> | undefined;
 
-  const optiuni = () => ({ stoc, mapari, prag, destinatie, grosimiPropuse, descrieriSchimbate, preturiManuale });
+  const optiuni = () => ({ stoc, mapari: mi.mapari, prag, destinatie, grosimiPropuse, descrieriSchimbate, preturiManuale });
+
+  const coloane = controlColoane({
+    foi: () => sesiune?.foi ?? [],
+    cuPozitii: () => new Set((sesiune?.rez.linii ?? []).filter((l) => l.extras.sistem !== null).map((l) => l.bruta.foaie)),
+    mapari: () => mi.mapari,
+    fisier: () => sesiune?.meta.nume ?? "",
+    aplicat: (mesaj, anulare) => {
+      retarifeaza();
+      deseneaza();
+      arataMesaj(mesaj, () => { anulare(); retarifeaza(); });
+    },
+    deseneaza: () => deseneaza(),
+    mesaj: (text) => arataMesaj(text),
+  });
 
   gazda.innerHTML = `<div class="imp">
     <div id="imp-pagina" class="imp-pagina"></div>
@@ -488,6 +504,7 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
       preturiManuale: [...preturiManuale],
       denumiri: [...denumiri],
       antet, ajustare,
+      mapari: mapariFolosite(s.foi, mi.mapari),
     });
     opt.laSchimbare?.({ deVerificat, antet });
   }
@@ -647,7 +664,7 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
     });
 
     return `${alerte(s)}
-      <section class="imp-card">${antetVerificare({ nume: s.meta.nume, cand: s.meta.cand, destinatie, schimbaTip: tipDeschis })}</section>
+      <section class="imp-card">${antetVerificare({ nume: s.meta.nume, cand: s.meta.cand, destinatie, schimbaTip: tipDeschis })}${coloane.html()}</section>
       ${baraVerificare(numere, filtru)}
       ${filtreMotiv(motive, motiv)}
       ${actiuniLista({
@@ -869,6 +886,7 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
     descrieriSchimbate = new Set(s.descrieriSchimbate ?? []);
     preturiManuale = new Map(s.preturiManuale ?? []);
     denumiri = new Map(s.denumiri ?? []);
+    mi = await mapariImport(s.mapari);
     const rez = await redeschideImport(s, optiuni());
     puneCurent(id);
     deschideSesiune({ foi: rez.foi, rez, meta: s, editari: [...s.editari], avertisment: "" }, pas === 3 ? 3 : 2);
@@ -887,6 +905,12 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
 
       let esuate = 0;
       let plafon = "";
+      // Coloanele unui antet necunoscut, citite cu modelul înaintea pozițiilor (Faza 6, punctul 1).
+      mi = await mapariImport();
+      if (info) {
+        pagina.innerHTML = ecranProgres("Se citesc coloanele…", null);
+        plafon = await citesteColoanele(foi, fisier.name, mi);
+      }
       const extractor: Extractor | undefined = info ? async (deTrimis) => {
         const lot = info.lot ?? LOT_IMPLICIT;
         const loturi: (typeof deTrimis)[] = [];
@@ -1281,6 +1305,7 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
     const b = t.closest<HTMLButtonElement>("button[data-act]");
     const act = b?.dataset["act"];
     if (!b || !act) return;
+    if (coloane.click(b)) return;
     const idx = b.dataset["idx"] !== undefined ? Number(b.dataset["idx"]) : null;
 
     switch (act) {
