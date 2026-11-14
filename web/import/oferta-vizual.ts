@@ -18,9 +18,6 @@ import type { FiltruStare } from "./vizual.js";
  * Pur, fără DOM, ca restul marcajului importului: testat în Node.
  */
 
-/** Cele două taburi de la verificare: ce a înțeles aplicația, și Excelul cum ar ieși acum. */
-export type Vedere = "verificare" | "export";
-
 /** Datele de pe antetul ofertei, cum le scrie omul la pasul „Oferta”; se țin în sesiune. */
 export interface AntetScris {
   firma: string;
@@ -122,8 +119,6 @@ export function antetDinFisier(foi: readonly FoaieBruta[]): Partial<Pick<AntetSc
 
 /* ------------------------------------------------------------ bara */
 
-const VEDERI: [Vedere, string][] = [["verificare", "Verificare"], ["export", "Cum iese oferta"]];
-
 /**
  * Filtrele de stare și „Ce vezi”, ca file (14 noiembrie 2026): erau perechi
  * de butoane și pastile, deși fac ce fac filele din restul aplicației. Punctul
@@ -142,18 +137,17 @@ export function filtruImplicit(numere: Record<FiltruStare, number>): FiltruStare
 }
 
 /**
- * O propoziție deasupra tabelului, din aceleași cifre ca filele, și drumul
- * mai departe: cu nimic de văzut, „Mergi la ofertă”. Pozițiile fără preț se
- * spun mereu, nu se ascund în „cer să te uiți”.
+ * O propoziție deasupra tabelului, din aceleași cifre ca filele. Pozițiile
+ * fără preț se spun mereu, nu se ascund în „cer să te uiți”. Drumul mai
+ * departe („Mergi la ofertă”) e al rândului „Urmează” de pe pagina lucrării.
  */
-export function rezumatVerificare(numere: Record<FiltruStare, number>, primar = true): string {
+export function rezumatVerificare(numere: Record<FiltruStare, number>): string {
   const total = numere.toate;
   if (total === 0) return "";
   const de = numere.de_validat;
   const fara = numere.netarifate;
   if (de + fara === 0) {
-    return `<div class="imp-rezumat"><p>${total === 1 ? "Poziția are preț." : `Toate cele ${total} au preț.`}</p>
-      <button type="button" class="${primar ? "primar" : "secundar"}" data-pas="3">Mergi la ofertă</button></div>`;
+    return `<div class="imp-rezumat"><p>${total === 1 ? "Poziția are preț." : `Toate cele ${total} au preț.`}</p></div>`;
   }
   const parti = [
     `${numere.gata} din ${cate(total, total === 1 ? "poziție" : "poziții")} ${numere.gata === 1 ? "are" : "au"} preț sigur.`,
@@ -164,34 +158,16 @@ export function rezumatVerificare(numere: Record<FiltruStare, number>, primar = 
 }
 
 /**
- * Bara de deasupra pozițiilor: propoziția, apoi în stânga ce arăt (filtrele,
- * doar la verificare: Excelul are doar pozițiile gata), în dreapta ce vezi.
- * Două coloane ~70 / 30, fiecare cu eticheta ei: două rânduri de file fără
- * nume, unul lângă altul, nu se deosebeau.
+ * Bara de deasupra pozițiilor: propoziția, apoi filtrele, cu eticheta lor. Pe
+ * pagina lucrării (14 noiembrie 2026) „Cum iese oferta” e pe fila Ofertă, unde
+ * e întrebarea ei, deci aici nu mai e „Ce vezi”. „Mergi la ofertă” e doar în
+ * rândul „Urmează” (Faza 3): al doilea, lângă propoziție, făcea același lucru.
  */
-export function baraVerificare(numere: Record<FiltruStare, number>, filtru: FiltruStare, vedere: Vedere, cuVedere = true): string {
-  // Pe pagina lucrării (14 noiembrie 2026) „Cum iese oferta” e pe fila Ofertă, unde e
-  // întrebarea ei; albastrul e al rândului „Urmează”, deci „Mergi la ofertă” e alb.
-  if (!cuVedere) {
-    return `<section class="imp-card imp-bara-foi imp-bara-singura">
-      ${rezumatVerificare(numere, false)}
-      <div class="imp-bara-stanga"><p class="imp-eticheta-control" id="eticheta-filtre">Arată pozițiile</p>
-        <nav class="file" aria-labelledby="eticheta-filtre">${fileStare(numere, filtru)}</nav></div>
-    </section>`;
-  }
-  return `<section class="imp-card imp-bara-foi">
+export function baraVerificare(numere: Record<FiltruStare, number>, filtru: FiltruStare): string {
+  return `<section class="imp-card imp-bara-foi imp-bara-singura">
     ${rezumatVerificare(numere)}
-    <div class="imp-bara-stanga">${vedere === "verificare"
-      ? `<p class="imp-eticheta-control" id="eticheta-filtre">Arată pozițiile</p>
-      <nav class="file" aria-labelledby="eticheta-filtre">${fileStare(numere, filtru)}</nav>`
-      : `<p class="imp-eticheta-control">Exact ce descarci acum, la pasul „Oferta”</p>
-      <p class="imp-ajutor">Doar pozițiile gata. Ce schimbi la „Verificare” se vede aici.</p>`}
-    </div>
-    <div class="imp-bara-dreapta">
-      <p class="imp-eticheta-control" id="eticheta-vedere">Ce vezi</p>
-      <nav class="file imp-vedere" aria-labelledby="eticheta-vedere">${VEDERI.map(([v, e]) =>
-        `<button type="button" class="fila" data-vedere="${v}"${v === vedere ? ' aria-current="page"' : ""}>${e}</button>`).join("")}</nav>
-    </div>
+    <div class="imp-bara-stanga"><p class="imp-eticheta-control" id="eticheta-filtre">Arată pozițiile</p>
+      <nav class="file" aria-labelledby="eticheta-filtre">${fileStare(numere, filtru)}</nav></div>
   </section>`;
 }
 

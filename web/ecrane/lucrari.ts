@@ -60,11 +60,16 @@ function stareLucrarii(l: Lucrare, dep: StareDepozit): StareLucrare {
 const adresaLucrare = (id: string, fila?: string): string =>
   `#/lucrari/${encodeURIComponent(id)}${fila ? `/${fila}` : ""}`;
 
-/** Sub titlu: clientul, oferta (număr și dată) și valoarea. */
+/**
+ * Sub titlu: clientul, oferta (număr și dată) și valoarea. Doar ce nu e deja
+ * în titlu: o lucrare fără ofertă își ia titlul din client sau din fișier, iar
+ * rândul ar fi repetat titlul paginii.
+ */
 function detaliiLucrare(l: Lucrare): string {
   const o = l.oferta;
+  const client = clientLucrare(l);
   const parti = [
-    clientLucrare(l),
+    client !== titluLucrare(l) ? client : "",
     o ? [o.numar ? `oferta ${o.numar}` : "oferta fără număr", o.data].filter(Boolean).join(" din ") : l.plan?.oferta ? `oferta ${l.plan.oferta}` : "",
     o && vedeCosturi() ? eur(o.valoare) : "",
   ].filter(Boolean);
@@ -229,10 +234,13 @@ async function deseneazaPagina(root: HTMLElement, idDinAdresa: string | null, se
     }
     const s = stareAcum()!;
     titluEcran(titluLucrare(l));
-    elSus.innerHTML = `<p style="margin:0"><a class="legatura" href="#/lucrari">← Toate lucrările</a></p>
-      <header class="pagina-antet">
-        <div><p class="hint">${refuzata(l) ? `${stare("refuzată", "atentie")} ` : ""}${l.plan?.inchis ? `${stare("închisă", "ok")} ` : ""}${
-          esc(detaliiLucrare(l) || l.cerere?.nume || "")}</p></div>
+    const detalii = `${refuzata(l) ? `${stare("refuzată", "atentie")} ` : ""}${l.plan?.inchis ? `${stare("închisă", "ok")} ` : ""}${
+      esc(detaliiLucrare(l))}`.trim();
+    const inapoi = `<a class="legatura" href="#/lucrari">← Toate lucrările</a>`;
+    // Fără nimic de spus sub titlu, „⋯” urcă lângă „← Toate lucrările”: singur pe un rând lăsa un gol.
+    elSus.innerHTML = `${detalii ? `<p style="margin:0">${inapoi}</p>` : ""}
+      <header class="pagina-antet${detalii ? "" : " doar-inapoi"}">
+        <div>${detalii ? `<p class="hint">${detalii}</p>` : inapoi}</div>
         <div class="mat-actiuni">${meniu(l)}</div>
       </header>
       ${randUrmeaza(s)}
@@ -271,6 +279,7 @@ async function deseneazaPagina(root: HTMLElement, idDinAdresa: string | null, se
           actualizeaza();
         },
         laOferta: () => { actualizeaza(); },
+        areOferta: () => !!l?.oferta,
       });
       return;
     }

@@ -298,9 +298,6 @@ export function inchideSantier(id: string, inventar: RestNumarat[], nume?: (chei
   return null;
 }
 
-export const deschideLaIntrare = luc.deschideLaIntrare;
-export const iaDeDeschis = luc.iaDeDeschis;
-
 /* ------------------------------------------------------------- depozitul */
 
 export const citesteDepozit = (): dep.StareDepozit => (mod === "server" ? clona(copie.depozit) : dep.citesteDepozit());

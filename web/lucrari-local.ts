@@ -41,8 +41,3 @@ export function scriePlanuri(planuri: PlanSantier[], d?: Storage): boolean {
     return false;
   }
 }
-
-/** Santierul de deschis cand se ajunge pe ecranul Lucrari (dupa „Creeaza santierul"). Se ia o data. */
-let deDeschis: string | null = null;
-export const deschideLaIntrare = (id: string): void => { deDeschis = id; };
-export const iaDeDeschis = (): string | null => { const id = deDeschis; deDeschis = null; return id; };

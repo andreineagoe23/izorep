@@ -117,7 +117,7 @@ export const ecran: Ecran = {
       root.innerHTML = `<div class="imp">
         ${fileMateriale("materiale", numereMateriale(st))}
         ${corp}
-        ${!n && inchise > 0 ? `<p class="hint">Șantierele închise nu mai apar aici. Costul materialului fiecărui șantier e pe pagina lui, în <a href="#/lucrari">Șantiere</a>.</p>` : ""}
+        ${!n && inchise > 0 ? `<p class="hint">Șantierele închise nu mai apar aici. Costul materialului fiecărui șantier e pe pagina lucrării, în <a href="#/lucrari?stadiu=inchise">Lucrări › Închise</a>.</p>` : ""}
       </div>`;
     }
 

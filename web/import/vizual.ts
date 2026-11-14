@@ -1,6 +1,5 @@
 import type { LinieProcesata } from "../../src/import/nucleu.js";
 import type { Destinatie } from "../../src/pricing/lists.js";
-import type { IntrareIstoric } from "../istoric.js";
 import { cate, dataScurta, esc, eur } from "../ecrane/tip.js";
 import type { CampuriRand } from "../../src/import/editare.js";
 import type { LinieExtrasa } from "../../src/import/schema.js";
@@ -69,19 +68,7 @@ export function alegereSegment(d: Destinatie): string {
 
 export interface OptiuniStart {
   destinatie: Destinatie;
-  istoric: IntrareIstoric[];
-  /** Importul pe care omul a apasat „Șterge": sub el, panoul cu ce se sterge (`confirmare`). */
-  stergeDe: string | null;
-  /** Panoul de confirmare al stergerii, deja marcat (`panouStergere`). */
-  confirmare?: string;
   eroare: string;
-  /**
-   * Ofertele salvate, pe id-ul importului: unde există, rândul arată oferta
-   * (număr și valoare, cu discountul), ca în „Oferte și cereri”. Valoarea
-   * importului e înainte de discount: TRANSAVIA arăta 94.575,06 aici și
-   * 91.737,81 acolo (16 octombrie 2026).
-   */
-  oferte?: Record<string, { numar: string; valoare: number }>;
 }
 
 /**
@@ -94,29 +81,12 @@ export function fileSursa(activ: "excel" | "poze"): string {
   return `<nav class="file imp-sursa" aria-label="Ce aduci">${fila("excel", "Fișier Excel")}${fila("poze", "Poze din carnet")}</nav>`;
 }
 
+/**
+ * Cerere nouă, înainte de fișier: tipul ofertei și fișierul. „Importuri
+ * recente” a plecat (14 noiembrie 2026): lista „Lucrări” ține cererile.
+ */
 export function ecranStart(o: OptiuniStart): string {
-  const istoric = o.istoric.length === 0 ? "" : `
-    <section class="imp-card imp-istoric" aria-labelledby="imp-istoric-titlu">
-      <h2 id="imp-istoric-titlu">Importuri recente</h2>
-      <ul>${o.istoric.map((i) => `
-        <li>
-          <div class="imp-istoric-info">
-            <strong>${esc(i.nume)}</strong>
-            <span>${esc(dataScurta(i.cand))} · ${pozitii(i.pozitii)} · ${o.oferte?.[i.id]
-              ? `oferta ${esc(o.oferte[i.id]!.numar || "fără număr")}, ${esc(eur(o.oferte[i.id]!.valoare))}` : esc(eur(i.valoare))}${
-              i.destinatie && i.destinatie !== "rezidential" ? ` · ${esc(SEGMENT[i.destinatie])}` : ""}</span>
-          </div>
-          <div class="imp-istoric-actiuni">
-            <button type="button" class="secundar" data-act="deschide" data-id="${esc(i.id)}">Deschide</button>
-            <button type="button" class="legatura" data-act="sterge" data-id="${esc(i.id)}" aria-expanded="${o.stergeDe === i.id}"
-              aria-label="Șterge importul ${esc(i.nume)}">Șterge</button>
-          </div>
-          ${o.stergeDe === i.id && o.confirmare ? o.confirmare : ""}
-        </li>`).join("")}
-      </ul>
-    </section>`;
-
-  return `<div class="imp-start${o.istoric.length ? " cu-istoric" : ""}">
+  return `<div class="imp-start">
     <section class="imp-card imp-incarca">
       ${alegereSegment(o.destinatie)}
       <label class="imp-drop" id="drop" for="fisier">
@@ -127,7 +97,6 @@ export function ecranStart(o: OptiuniStart): string {
       </label>
       ${o.eroare ? `<p class="alerta" role="alert">${o.eroare}</p>` : ""}
     </section>
-    ${istoric}
   </div>`;
 }
 
@@ -146,6 +115,19 @@ export interface OptiuniAntet {
   nume: string;
   cand: string;
   destinatie: Destinatie;
+  /** „schimbă” apăsat: cele două tipuri, pe loc, în locul textului. */
+  schimbaTip?: boolean;
+}
+
+/**
+ * Tipul ofertei, după ce există fișierul (planul UX, Faza 3): s-a ales la
+ * încărcare și se schimbă rar, deci e un text cu „schimbă”, nu două butoane
+ * mari care se citeau ca o întrebare de acum.
+ */
+function tipOferta(d: Destinatie, deschis: boolean): string {
+  if (deschis) return alegereSegment(d);
+  return `<p class="imp-tip">Ofertă ${esc(SEGMENT[d])} <button type="button" class="legatura" data-act="schimba-tip"
+    aria-label="Schimbă tipul ofertei">schimbă</button></p>`;
 }
 
 export function antetVerificare(o: OptiuniAntet): string {
@@ -157,7 +139,7 @@ export function antetVerificare(o: OptiuniAntet): string {
         <span>${esc(dataScurta(o.cand))} · <button type="button" class="legatura" data-act="schimba-fisier">Schimbă fișierul</button></span>
       </div>
     </div>
-    <div class="imp-antet-optiuni">${alegereSegment(o.destinatie)}</div>
+    <div class="imp-antet-optiuni">${tipOferta(o.destinatie, o.schimbaTip ?? false)}</div>
   </div>`;
 }
 
@@ -429,6 +411,11 @@ export interface OptiuniOferta {
   };
   firme: readonly { id: string; denumire: string; serieOferta: string }[];
   eroare: string;
+  /**
+   * Oferta e deja salvată: albastrul paginii e atunci răspunsul clientului, în
+   * rândul „Urmează”, iar „Descarcă oferta” (din nou) rămâne alb.
+   */
+  descarcata?: boolean;
 }
 
 /** Sub valoarea ofertei: ce e inclus în ea, dincolo de prețurile din liste. */
@@ -441,20 +428,19 @@ export function detaliuValoare(adaosFoc: number, ajustare: number, discount = 0)
   return parti.length ? esc(parti.join(" · ")) : "Prețurile din liste, neajustate.";
 }
 
+/**
+ * Fila Ofertă pe două carduri (planul UX, Faza 3): „Cui trimitem” (antetul
+ * documentului) și „Prețul” (suma, ajustarea, discountul, descărcarea). Un
+ * singur formular în jurul amândurora: câmpurile se citesc tot din
+ * `#antet-oferta`, iar „Descarcă oferta” le trimite pe toate.
+ */
 export function ecranOferta(o: OptiuniOferta): string {
   const camp = (nume: string, eticheta: string, valoare: string, extra = ""): string =>
     `<label>${eticheta}<input name="${nume}" value="${esc(valoare)}" ${extra} /></label>`;
   const afara = o.deVerificat + o.faraPret;
-  return `<div class="imp-oferta">
-    <section class="imp-card imp-oferta-rezumat">
-      <p class="imp-oferta-suma"><span>Intră în ofertă</span><strong id="valoare-oferta">${eur(o.valoare)}</strong>
-        <span>${pozitii(o.gata)} · ofertă ${SEGMENT[o.destinatie]}</span></p>
-      <p class="hint" id="detaliu-valoare">${detaliuValoare(o.adaosFoc, o.ajustare, o.antet.discount)}</p>
-      ${afara > 0 ? `<p class="imp-oferta-afara">Nu intră: ${o.deVerificat} de verificat, ${o.faraPret} fără preț.
-        <button type="button" class="legatura" data-act="la-verificare">Înapoi la verificare</button></p>` : ""}
-    </section>
-    <form class="imp-card imp-formular" id="antet-oferta">
-      <h2>Datele ofertei</h2>
+  return `<form class="imp-oferta imp-formular" id="antet-oferta">
+    <section class="imp-card" aria-labelledby="titlu-cui">
+      <h2 id="titlu-cui">Cui trimitem</h2>
       <div class="imp-campuri">
         <label>Firma<select name="firma">${o.firme.map((f) =>
           `<option value="${esc(f.id)}"${f.id === o.antet.firma ? " selected" : ""}>${esc(f.denumire)}</option>`).join("")}</select></label>
@@ -464,17 +450,26 @@ export function ecranOferta(o: OptiuniOferta): string {
         ${camp("obiectiv", "Obiectiv (numele șantierului)", o.antet.obiectiv)}
         ${camp("persoana", "În atenția (cu d-lui sau d-nei)", o.antet.persoana, 'placeholder="d-nei Alina Maties" autocomplete="off"')}
         ${camp("localitate", "Localitate", o.antet.localitate, "required")}
+      </div>
+    </section>
+    <section class="imp-card imp-oferta-rezumat" aria-labelledby="titlu-pret">
+      <h2 id="titlu-pret">Prețul</h2>
+      <p class="imp-oferta-suma"><span>Intră în ofertă</span><strong id="valoare-oferta">${eur(o.valoare)}</strong>
+        <span>${pozitii(o.gata)} · ofertă ${SEGMENT[o.destinatie]}</span></p>
+      <p class="hint" id="detaliu-valoare">${detaliuValoare(o.adaosFoc, o.ajustare, o.antet.discount)}</p>
+      <div class="imp-campuri imp-oferta-procente">
         ${camp("ajustare", "Ajustare prețuri (%)", String(o.ajustare),
           'type="number" inputmode="decimal" min="-50" max="100" step="any" aria-describedby="ajutor-ajustare"')}
         ${camp("discount", "Discount (%)", String(o.antet.discount), 'type="number" inputmode="decimal" min="0" max="100" step="any"')}
         <p class="imp-ajutor" id="ajutor-ajustare">Ajustarea mută toate prețurile: 10 = cu 10 % mai mari, −5 = mai mici.</p>
       </div>
-      ${o.eroare ? `<p class="alerta" role="alert">${esc(o.eroare)}</p>` : ""}
       ${afara > 0 ? `<p class="imp-oferta-lipsa">Oferta descărcată nu va conține ${pozitii(afara)}: ${o.deVerificat} de verificat
-        și ${o.faraPret} fără preț. Dacă trebuie să fie în ofertă, rezolvă-le întâi la verificare.</p>` : ""}
+        și ${o.faraPret} fără preț. Dacă trebuie să fie în ofertă, rezolvă-le întâi la verificare.
+        <button type="button" class="legatura" data-act="la-verificare">Înapoi la verificare</button></p>` : ""}
+      ${o.eroare ? `<p class="alerta" role="alert">${esc(o.eroare)}</p>` : ""}
       <div class="imp-formular-butoane">
-        <button type="submit" class="primar">Descarcă oferta</button>
+        <button type="submit" class="${o.descarcata ? "secundar" : "primar"}">Descarcă oferta</button>
       </div>
-    </form>
-  </div>`;
+    </section>
+  </form>`;
 }

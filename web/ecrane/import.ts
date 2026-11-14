@@ -298,6 +298,8 @@ export interface OptiuniImport {
   laSchimbare?: (r: RezumatImport) => void;
   /** Oferta a fost salvată și descărcată. */
   laOferta?: () => void;
+  /** Lucrarea are deja o ofertă salvată: „Descarcă oferta” nu mai e pasul de acum. */
+  areOferta?: () => boolean;
 }
 
 export interface RezumatImport { deVerificat: number; antet: AntetScris }
@@ -359,6 +361,8 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
   /** Ajustarea tehnicului pe toate prețurile, din pasul „Oferta" (procente). */
   let ajustare = 0;
   let detaliiDeschise = false;
+  /** „schimbă” de lângă tipul ofertei, la verificare: cele două tipuri, până se alege unul. */
+  let tipDeschis = false;
   let eroareStart = "";
   /** Ultima actiune care se poate anula din mesajul de jos. */
   let deAnulat: (() => void) | null = null;
@@ -537,8 +541,7 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
         });
       });
     } else if (pas === 1 || !sesiune) {
-      // Lista „Importuri recente” a plecat (14 noiembrie 2026): lista „Lucrări” o ține.
-      pagina.innerHTML = fileSursa("excel") + ecranStart({ destinatie, istoric: [], stergeDe: null, eroare: eroareStart });
+      pagina.innerHTML = fileSursa("excel") + ecranStart({ destinatie, eroare: eroareStart });
       legaDrop();
     } else if (pas === 2) {
       pagina.innerHTML = paginaVerificare(sesiune);
@@ -550,7 +553,7 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
         gata: oferta.length, valoare: documentul(sesiune).totalGeneral,
         adaosFoc: adaosFocIndustrial(oferta, destinatie), ajustare,
         deVerificat: deValidat.length, faraPret: netarifate.length,
-        destinatie, antet, firme: FIRME, eroare: "",
+        destinatie, antet, firme: FIRME, eroare: "", descarcata: opt.areOferta?.() ?? false,
       }) + `<section class="imp-card imp-cum-iese"><h2>Cum iese oferta</h2>
         <p class="hint">Exact ce descarci acum, doar pozițiile gata. Ce schimbi mai sus se vede aici.</p>
         <div id="cum-iese">${exportPeEcran(documentul(sesiune))}</div></section>`;
@@ -644,8 +647,8 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
     });
 
     return `${alerte(s)}
-      <section class="imp-card">${antetVerificare({ nume: s.meta.nume, cand: s.meta.cand, destinatie })}</section>
-      ${baraVerificare(numere, filtru, "verificare", false)}
+      <section class="imp-card">${antetVerificare({ nume: s.meta.nume, cand: s.meta.cand, destinatie, schimbaTip: tipDeschis })}</section>
+      ${baraVerificare(numere, filtru)}
       ${filtreMotiv(motive, motiv)}
       ${actiuniLista({
         deConfirmat: filtru === "de_validat" ? lista.length : 0,
@@ -675,6 +678,7 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
   function deschideSesiune(s: Sesiune, laPas: Pas = 2): void {
     sesiune = s;
     pas = laPas; filtru = filtruImplicit(numereStare(s)); filtruAles = false; motiv = null; editIdx = null; randInLucru = null;
+    tipDeschis = false;
     // Latimea se masoara DUPA plierea barei, altfel ar decide pe locul pe
     // care il ocupa inca meniul. Sub prag, foaia 1:1 n-ar incapea fara
     // derulare laterala decat cu coloane de cateva litere: se deschide ca
@@ -1055,6 +1059,8 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
       });
       descarca(buf, numeOferta(antet.serie, antet.numar, antet.data));
       arataMesaj("Oferta a fost salvată și descărcată.");
+      // Albastrul trece pe răspunsul clientului, din „Urmează”; fără redesenare, ca formularul să rămână cum e.
+      buton.className = "secundar";
       opt.laOferta?.();
     } catch (err) {
       form.querySelector(".imp-formular-butoane")!.insertAdjacentHTML("beforebegin",
@@ -1252,6 +1258,15 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
       return;
     }
 
+    // Tipul deschis cu „schimbă”, ales din nou același: nu vine `change`, deci se închide de aici.
+    const seg = t.closest<HTMLInputElement>('.imp-antet input[name="segment"]');
+    if (seg && tipDeschis && seg.value === destinatie) {
+      tipDeschis = false;
+      deseneaza();
+      pagina.querySelector<HTMLElement>('[data-act="schimba-tip"]')?.focus();
+      return;
+    }
+
     const bFiltru = t.closest<HTMLButtonElement>("[data-filtru]");
     if (bFiltru) {
       filtru = bFiltru.dataset["filtru"] as FiltruStare; filtruAles = true; motiv = null; editIdx = null; randInLucru = null;
@@ -1277,6 +1292,11 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
         return;
       }
       case "renunta-izolatie": deIzolat = null; deseneaza(); scrollTo({ top: 0 }); return;
+      case "schimba-tip":
+        tipDeschis = true;
+        deseneaza();
+        pagina.querySelector<HTMLInputElement>('.imp-antet [name="segment"]:checked')?.focus();
+        return;
       case "la-verificare": treciPe(2); opt.laParte?.("verificare"); return;
       case "meniu-rand": {
         const m = b.nextElementSibling as HTMLElement | null;
@@ -1415,7 +1435,10 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
     if (t.name === "segment") {
       destinatie = t.value as Destinatie;
       retarifeaza();
+      const laVerificare = tipDeschis;
+      tipDeschis = false;
       if (pas !== 1) deseneaza();
+      if (laVerificare) pagina.querySelector<HTMLElement>('[data-act="schimba-tip"]')?.focus();
       return;
     }
     if (t.dataset["um"] && sesiune) {

@@ -1,7 +1,7 @@
 /**
  * Ofertele descarcate din aplicatie, pe importul din care au iesit.
  *
- * „Cereri și oferte” arata ce s-a facut in aplicatie: fiecare import e o
+ * Lista „Lucrări” arata ce s-a facut in aplicatie: fiecare import e o
  * cerere, iar „Descarcă oferta” o noteaza aici (numarul, clientul, valoarea).
  * Sters importul, se sterge si oferta lui — omul se asteapta ca un rand sters
  * sa dispara de peste tot (Andrei, 3 octombrie 2026).

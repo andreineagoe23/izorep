@@ -22,6 +22,7 @@ import { importaFisier } from "../src/import/pipeline.js";
 import { stocInMemorie } from "../src/import/memorie.js";
 import { valoareOferta, type CerereOferta } from "../web/oferta.js";
 import type { Miscare } from "../src/stoc/registru.js";
+import type { IntrareIstoric } from "../web/istoric.js";
 import type { PlanSantier } from "../src/lucrari/situatii.js";
 
 const app$ = conecteaza();
@@ -114,6 +115,34 @@ describe("serverul unei firme", () => {
       // Numărul următor îl dă serverul: cel mai mare de pe seria firmei + 1.
       expect(await (await srv.request("/api/oferte/urmatorul?firma=radoia")).json()).toEqual({ numar: "285" });
       expect((await post("/api/cereri/nr-2/oferte", "POST", continut("285"))).status).toBe(200);
+    } finally {
+      await purjeazaTenant(prop.db, t);
+    }
+  });
+
+  daca()("lista cererilor aduce din lucrul omului antetul (cu refuzul) și câte poziții sunt de verificat", async () => {
+    // Planul UX, Faza 2 (14 noiembrie 2026): lista „Lucrări” spune obiectivul, refuzul și ce
+    // urmează fără să deschidă fiecare cerere; restul lucrului nu pleacă în listă.
+    const t = await tenantNou("LISTA");
+    const srv = serverPentru(t);
+    const pune = (c: CererePeFir) => srv.request(`/api/cereri/${c.id}`, {
+      method: "PUT", body: JSON.stringify(c), headers: { "content-type": "application/json", [ANTET_CSRF]: "1" },
+    });
+    const antet = {
+      firma: "radoia", numar: "284", data: "27.05.2026", client: "Grup Energoinstal", obiectiv: "Transavia Alba-Iulia",
+      persoana: "", localitate: "Alba-Iulia", discount: 3, refuzat: "2026-11-14T09:30:00.000Z",
+    };
+    try {
+      expect((await pune({ ...cerereMica("lista-1"), antet, deVerificat: 2, cand: "2026-11-14T09:00:00.000Z" })).status).toBe(200);
+      expect((await pune({ ...cerereMica("lista-2"), cand: "2026-11-13T09:00:00.000Z" })).status).toBe(200);
+      const lista = await (await srv.request("/api/cereri")).json() as IntrareIstoric[];
+      expect(lista.map((c) => c.id)).toEqual(["lista-1", "lista-2"]);
+      expect(lista[0]).toMatchObject({ antet, deVerificat: 2 });
+      // Extragerile și corecturile rămân la deschiderea cererii.
+      expect(lista[0]).not.toHaveProperty("extrase");
+      // Fără lucru salvat, câmpurile lipsesc, nu vin goale.
+      expect(lista[1]).not.toHaveProperty("antet");
+      expect(lista[1]).not.toHaveProperty("deVerificat");
     } finally {
       await purjeazaTenant(prop.db, t);
     }
