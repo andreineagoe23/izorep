@@ -1181,11 +1181,13 @@ p.ver-text:not(.cel-ed) { padding: 10px 0; }
 .imp .ver-actiuni button { min-height: 44px; height: 44px; padding: 0 10px; font-size: 14px; white-space: nowrap; }
 .imp .ver-actiuni .cel-scoate { flex: 0 0 44px; width: 44px; padding: 0; margin-left: auto; }
 /* Meniul rândului, în locul lui ✕: un pătrat de 44 px cu „⋯”; dedesubt „Adaugă un strat” / „Scoate rândul”. */
-.imp .ver-actiuni .cel-meniu-loc { position: relative; flex: 0 0 44px; margin-left: auto; }
-.imp .ver-actiuni .cel-meniu {
+.cel-meniu-loc { position: relative; flex: 0 0 44px; }
+.imp .ver-actiuni .cel-meniu-loc { margin-left: auto; }
+.cel-meniu, .imp .ver-actiuni .cel-meniu {
   width: 44px; height: 44px; padding: 0; border: 1px solid var(--linie-tare); border-radius: 8px;
   background: var(--panou); color: var(--slab); font: inherit; font-size: 18px; line-height: 1; cursor: pointer;
 }
+.cel-meniu:hover, .cel-meniu[aria-expanded="true"],
 .imp .ver-actiuni .cel-meniu:hover, .imp .ver-actiuni .cel-meniu[aria-expanded="true"] { color: var(--text); border-color: var(--text); }
 .meniu-rand {
   position: absolute; top: calc(100% + 4px); right: 0; z-index: 20; display: grid; min-width: 15rem; padding: 4px;
@@ -1297,7 +1299,13 @@ p.ver-text:not(.cel-ed) { padding: 10px 0; }
 .pagina-antet h2 { margin: 0; font-size: 22px; letter-spacing: -0.015em; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
 .pagina-antet .hint { margin: 4px 0 0; font-size: 15px; }
 .pagina-antet .primar { flex: 0 0 auto; }
-@media (max-width: 560px) { .pagina-antet .primar { flex: 1 1 100%; } }
+/* Butonul albastru și „⋯” stau împreună în dreapta; pe telefon, pe un rând sub text. */
+.pagina-antet > .mat-actiuni { flex: 0 0 auto; flex-wrap: nowrap; }
+@media (max-width: 560px) {
+  .pagina-antet .primar { flex: 1 1 100%; }
+  .pagina-antet > .mat-actiuni { flex: 1 1 100%; justify-content: flex-end; }
+  .pagina-antet > .mat-actiuni .primar { flex: 1 1 auto; }
+}
 
 /* „Ce înseamnă coloanele”: ajutorul care se citeste o data, pliat deasupra tabelului. */
 main details.ajutor { margin: -6px 0 8px; }

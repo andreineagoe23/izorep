@@ -34,8 +34,13 @@ function suma(eticheta: string, c: { cost: number; inOferta: number; procent: nu
  * costul față de ofertă. Cu consumul Fazei 6 (`c`), și pierderea față de
  * situații, pe material și pe tot șantierul, plus consumul notat de mână: un
  * singur card pentru materialul șantierului, nu două cu aceleași coloane.
+ *
+ * O coloană goală pe toate rândurile nu se desenează (14 noiembrie 2026): pe
+ * TRANSAVIA, 12 din 14 rânduri erau „—” în cinci coloane. „Lipsește” rămâne
+ * mereu: e întrebarea paginii. Cu ceva de comandat (`deComandat`), butonul
+ * duce la Materiale, unde se face comanda.
  */
-export function cardMaterial(m: MaterialSantier, c?: ConsumSantier): string {
+export function cardMaterial(m: MaterialSantier, c?: ConsumSantier, deComandat = false): string {
   if (m.randuri.length === 0) {
     return `<section class="imp-card"><h2>Materialul șantierului</h2>
       <p class="hint" style="margin:0">Șantierul nu are încă necesar de materiale și nici material adus.</p></section>`;
@@ -44,30 +49,54 @@ export function cardMaterial(m: MaterialSantier, c?: ConsumSantier): string {
     const x = c?.materiale.find((y) => y.cheie === cheie);
     return x ? celulaPierdere(x) : "—";
   };
+  type Rand = MaterialSantier["randuri"][number];
+  const coloane: { cap: string; celula: (r: Rand) => string; areCeva: (r: Rand) => boolean }[] = [
+    { cap: "Necesar", celula: (r) => cant(r.necesar, r.articol), areCeva: (r) => r.necesar !== 0 },
+    { cap: "Comandat", celula: (r) => cant(r.comandat, r.articol), areCeva: (r) => r.comandat !== 0 },
+    { cap: "Venit", celula: (r) => cant(r.venit, r.articol), areCeva: (r) => r.venit !== 0 },
+    { cap: "Pus", celula: (r) => cant(r.pus, r.articol), areCeva: (r) => r.pus !== 0 },
+    {
+      cap: "Rămas", areCeva: (r) => r.ramas !== 0,
+      celula: (r) => (r.ramas < 0 ? `${stare("sold negativ", "atentie")} −${cant(-r.ramas, r.articol)}` : cant(r.ramas, r.articol)),
+    },
+    {
+      cap: "Lipsește", areCeva: () => true,
+      celula: (r) => (r.lipsa > 0 ? `<strong>${cantitate(r.lipsa, r.articol.um)}</strong>` : stare("nimic", "ok")),
+    },
+    ...(c ? [{
+      cap: "Pierdere", celula: (r: Rand) => pierdere(cheieBaza(r.articol)),
+      areCeva: (r: Rand) => pierdere(cheieBaza(r.articol)) !== "—",
+    }] : []),
+  ];
+  const vizibile = coloane.filter((k) => m.randuri.some(k.areCeva));
   const randuri = m.randuri.map((r) => `<tr>
     <td>${esc(numeArticol(r.articol))}${r.alClientului ? `<br>${stare("îl dă clientul")}` : ""}</td>
-    <td class="n">${cant(r.necesar, r.articol)}</td>
-    <td class="n">${cant(r.comandat, r.articol)}</td>
-    <td class="n">${cant(r.venit, r.articol)}</td>
-    <td class="n">${cant(r.pus, r.articol)}</td>
-    <td class="n">${r.ramas < 0 ? `${stare("sold negativ", "atentie")} −${cant(-r.ramas, r.articol)}` : cant(r.ramas, r.articol)}</td>
-    <td class="n">${r.lipsa > 0 ? `<strong>${cantitate(r.lipsa, r.articol.um)}</strong>` : stare("nimic", "ok")}</td>
-    ${c ? `<td class="n">${pierdere(cheieBaza(r.articol))}</td>` : ""}
+    ${vizibile.map((k) => `<td class="n">${k.celula(r)}</td>`).join("")}
   </tr>`);
+  const are = (cap: string): boolean => vizibile.some((k) => k.cap === cap);
   // Definitiile coloanelor stau pliate: patru randuri de text gri deasupra
   // tabelului le citea omul o data, apoi ii ascundeau tabelul de fiecare data.
-  return `<section class="imp-card"><h2>Materialul șantierului</h2>
+  const definitii = [
+    are("Comandat") ? "Comandat: pe comenzile trimise." : "",
+    are("Venit") ? "Venit: ce a ajuns pe șantier." : "",
+    are("Pus") ? "Pus: ce s-a pus pe țeavă." : "",
+    are("Rămas") ? "Rămas: ce e acum pe șantier." : "",
+    `Lipsește: cât mai trebuie pentru ce n-a fost încă executat (după situații), peste ce e pe șantier și ce e comandat și
+      n-a venit.`,
+    are("Pierdere") ? `Pierdere: cât s-a dus peste ce arată situațiile (venit, minus ce s-a întors și ce a rămas, față de
+      consumul scris la situații, care are deja pierderea la croit).` : "",
+  ].filter(Boolean).join(" ");
+  return `<section class="imp-card">
+    ${deComandat
+      ? `<div class="mat-antet"><div><h2>Materialul șantierului</h2></div>
+        <div class="mat-actiuni"><a class="secundar" href="#/materiale">Comandă ce lipsește</a></div></div>`
+      : `<h2>Materialul șantierului</h2>`}
     <details class="ajutor">
       <summary>Ce înseamnă coloanele</summary>
-      <p class="hint">Comandat: pe comenzile trimise. Venit: ce a ajuns pe șantier. Pus: ce s-a pus pe
-      țeavă. Rămas: ce e acum pe șantier. Lipsește: cât mai trebuie pentru ce n-a fost încă executat (după situații), peste ce e
-      pe șantier și ce e comandat și n-a venit.${c ? ` Pierdere: cât s-a dus peste ce arată situațiile (venit, minus ce s-a
-      întors și ce a rămas, față de consumul scris la situații, care are deja pierderea la croit).` : ""}</p>
+      <p class="hint">${definitii}</p>
     </details>
     ${c ? randPierdere(c) : ""}
-    ${c
-      ? tabel(["Material", "Necesar", "Comandat", "Venit", "Pus", "Rămas", "Lipsește", "Pierdere"], randuri, ["", "n", "n", "n", "n", "n", "n", "n"])
-      : tabel(["Material", "Necesar", "Comandat", "Venit", "Pus", "Rămas", "Lipsește"], randuri, ["", "n", "n", "n", "n", "n", "n"])}
+    ${tabel(["Material", ...vizibile.map((k) => k.cap)], randuri, ["", ...vizibile.map(() => "n")])}
     ${suma("Costul materialului, până acum", m.cost)}
     <p class="hint">Costul e ce a rămas pe șantier (pus, pierdut sau încă acolo), la prețul cu care a venit: prețul facturii
       pentru ce s-a cumpărat pentru șantier, prețul mediu pentru ce a venit din depozit sau de pe alt șantier. „În ofertă” e

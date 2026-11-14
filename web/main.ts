@@ -119,7 +119,8 @@ async function navigheaza(mutaFocus = false): Promise<void> {
     </div><div id="continut"></div>`;
   await ecran.render($("#continut"));
   deseneazaMeniu();
-  document.title = `${ecran.titlu} · IzoERP`;
+  // Ecranul își poate schimba titlul (`titluEcran`): fila browserului ia ce scrie sus.
+  document.title = `${root.querySelector(".titlu-ecran h1")?.textContent || ecran.titlu} · IzoERP`;
   laInceput();
   // Dupa o navigare din meniu, focusul trece pe continut: altfel cititorul de
   // ecran ramane pe link si nu anunta ca s-a schimbat ecranul.

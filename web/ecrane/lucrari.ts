@@ -7,7 +7,7 @@
  * de comandat și istoricul situațiilor. Logica e în `src/lucrari/situatii.ts`;
  * datele stau în browser (`web/lucrari-local.ts`), ca la depozit.
  */
-import { data as dataRo, esc, eur, indicator, nota, progres, stare, tabel, type Ecran } from "./tip.js";
+import { data as dataRo, esc, eur, indicator, nota, progres, stare, tabel, titluEcran, type Ecran } from "./tip.js";
 import type { Lucrare, StareLucrare } from "../date/seed.js";
 import { exemple, type Exemple } from "../date/exemple.js";
 import { vedeCosturi } from "../nav.js";
@@ -83,25 +83,42 @@ const notaInchidere = `${nota(
 const zi = (iso: string): string => new Date(iso).toLocaleDateString("ro-RO");
 const cant = (n: number, um: string): string => `${cifra(n)}${um ? ` ${esc(um)}` : ""}`;
 
-/** Filele paginii unui șantier, în ordinea lucrului (Andrei, 22 octombrie 2026). */
+/**
+ * Părțile paginii unui șantier (Andrei, 22 octombrie 2026), fiecare cu adresa
+ * ei. Primele trei sunt file; „Închide” și „Șterge” se fac o dată, deci stau în
+ * „⋯” din antet (14 noiembrie 2026), dar se deschid în același loc.
+ */
 const FILE = ["situatii", "materiale", "plan", "inchide", "sterge"] as const;
 type FilaSantier = (typeof FILE)[number];
 
 /** Filele șantierului: butoane, nu linkuri, ca o situație începută să nu se piardă la schimbarea filei. */
-export function fileSantier(activ: FilaSantier, n: { situatii: number; deCumparat: number; inchis: boolean }): string {
+export function fileSantier(activ: FilaSantier, n: { situatii: number; deCumparat: number }): string {
   const fila = (id: FilaSantier, eticheta: string, numar = 0): string =>
     `<button type="button" class="fila" data-act="fila" data-fila="${id}"${id === activ ? ' aria-current="page"' : ""}>${
       eticheta}${numar ? ` <b>${cifra(numar)}</b>` : ""}</button>`;
   return `<nav class="file" aria-label="Șantierul">${fila("situatii", "Situații de lucrări", n.situatii)}${
-    fila("materiale", "Materiale", n.deCumparat)}${fila("plan", "Planul de șantier")}${
-    n.inchis ? "" : fila("inchide", "Închide șantierul")}${fila("sterge", "Șterge șantierul")}</nav>`;
+    fila("materiale", "Materiale", n.deCumparat)}${fila("plan", "Planul de șantier")}</nav>`;
 }
+
+/** „⋯” din antetul șantierului, cu stilul meniului de rând de la import. Închis, rămâne doar „Șterge”. */
+function meniuSantier(inchis: boolean): string {
+  return `<div class="cel-meniu-loc">
+    <button type="button" class="cel-meniu" data-act="meniu-santier" aria-haspopup="menu" aria-expanded="false"
+      aria-label="${inchis ? "Șterge șantierul" : "Închide sau șterge șantierul"}" title="${inchis ? "Șterge șantierul" : "Închide sau șterge șantierul"}">⋯</button>
+    <div class="meniu-rand" role="menu" hidden>
+      ${inchis ? "" : `<button type="button" role="menuitem" data-act="fila" data-fila="inchide">Închide șantierul</button>`}
+      <button type="button" role="menuitem" data-act="fila" data-fila="sterge">Șterge șantierul</button>
+    </div>
+  </div>`;
+}
+
+const TITLU = "Șantiere";
+const SUBTITLU = "Șantierele făcute din oferte: planul, materialele de comandat și situațiile de lucrări, cu istoricul lor.";
 
 export const ecran: Ecran = {
   id: "lucrari",
-  titlu: "Șantiere",
-  subtitlu:
-    "Șantierele făcute din oferte: planul, materialele de comandat și situațiile de lucrări, cu istoricul lor.",
+  titlu: TITLU,
+  subtitlu: SUBTITLU,
   render(root) {
     let planuri = citestePlanuri();
     // Pagina unui șantier are adresa ei (`#/lucrari/<id>`, 21 octombrie 2026):
@@ -153,6 +170,8 @@ export const ecran: Ecran = {
 
     function deseneaza(): void {
       const p = plan();
+      // Pe pagina unui șantier titlul e șantierul; propoziția listei nu mai are ce căuta acolo.
+      titluEcran(p ? p.denumire : TITLU, p ? "" : SUBTITLU);
       root.innerHTML = `<div class="imp">${p ? detaliu(p) : lista()}</div>`;
     }
 
@@ -195,7 +214,7 @@ export const ecran: Ecran = {
       // Faza 7: ce vede directorul (S9) sau, inchis, cifrele lui; inventarul de inchidere, dupa situatii.
       const material = p.inchis
         ? cardInchis(cifreInchidere(p, materiale, dep.miscari, scoase))
-        : cardMaterial(materialSantier(p, materiale, dep.miscari, dep.comenzi ?? [], scoase), consumPlan(p, dep));
+        : cardMaterial(materialSantier(p, materiale, dep.miscari, dep.comenzi ?? [], scoase), consumPlan(p, dep), deCumparat > 0);
       const inchide = p.inchis ? "" : formularInchidere({ ...restulPeSantier(p, planuri, dep), ...inchidere });
 
       const randuriPlan = p.pozitii.map((poz, i) => {
@@ -208,18 +227,22 @@ export const ecran: Ecran = {
         </tr>`;
       });
 
+      // Un șantier închis n-are ce închide: „…/inchide” (un link vechi) arată situațiile, cu fila lor aleasă.
+      const vazuta: FilaSantier = p.inchis && fila === "inchide" ? "situatii" : fila;
       const executatPlan = cumulat ? p.pozitii.filter((_, i) => (cumulat[i]?.cumulat ?? 0) > 0).length : 0;
       return `
-        <p style="margin:0"><button type="button" class="legatura" data-act="inapoi">← Toate lucrările</button></p>
+        <p style="margin:0"><button type="button" class="legatura" data-act="inapoi">← Toate șantierele</button></p>
         <header class="pagina-antet">
           <div>
-            <h2>${esc(p.denumire)}${p.inchis ? ` ${stare("închis", "ok")}` : ""}</h2>
-            <p class="hint">${esc(p.client || "—")} · oferta ${esc(p.oferta || p.fisier)} · ${esc(p.firma)}${
+            <p class="hint">${p.inchis ? `${stare("închis", "ok")} ` : ""}${esc(p.client || "—")} · oferta ${esc(p.oferta || p.fisier)} · ${esc(p.firma)}${
               p.ajustareProcent ? ` · prețuri ajustate cu ${cifra(p.ajustareProcent)} %` : ""}${
               p.discountProcent ? ` · discount ${cifra(p.discountProcent)} %` : ""}${
               p.adaosFocProcent ? ` · +${p.adaosFocProcent} % pe închiderile la foc` : ""}</p>
           </div>
-          ${inLucru || p.inchis ? "" : `<button type="button" class="primar" data-act="situatie-noua">Situație nouă</button>`}
+          <div class="mat-actiuni">
+            ${inLucru || p.inchis ? "" : `<button type="button" class="primar" data-act="situatie-noua">Situație nouă</button>`}
+            ${meniuSantier(!!p.inchis)}
+          </div>
         </header>
         ${mesaj ? `<p class="alerta" role="alert">${esc(mesaj)}</p>` : ""}
         ${info ? `<p class="hint" role="status" style="margin:0">${esc(info)}</p>` : ""}
@@ -230,7 +253,7 @@ export const ecran: Ecran = {
           ${p.inchis ? "" : indicator(String(deCumparat), "Materiale de comandat", !necesar ? "fără necesar"
             : peCiorne ? `și ${peCiorne} pe ciorne netrimise` : "rămase din necesarul ofertei")}
         </div>
-        ${fileSantier(fila, { situatii: p.situatii.length, deCumparat: p.inchis ? 0 : deCumparat, inchis: !!p.inchis })}
+        ${fileSantier(vazuta, { situatii: p.situatii.length, deCumparat: p.inchis ? 0 : deCumparat })}
         <div class="file-panou">${{
           situatii: () => `${inLucru && dinPoze ? cardDinPoze(p, inLucru, dinPoze) : ""}
             ${inLucru ? formularSituatie(p, inLucru) : ""}
@@ -250,7 +273,7 @@ export const ecran: Ecran = {
               comenzile și mișcările de stoc. Cererea și oferta rămân. Înainte să ștergi, vezi lista cu tot ce pleacă.</p>
             <div class="imp-formular-butoane"><button type="button" class="secundar" data-act="sterge" data-id="${esc(p.id)}">Șterge șantierul…</button></div>`}
           </section>`,
-        }[p.inchis && fila === "inchide" ? "situatii" : fila]()}</div>`;
+        }[vazuta]()}</div>`;
     }
 
     function istoric(p: PlanSantier): string {
@@ -365,6 +388,28 @@ export const ecran: Ecran = {
     }
 
     legaPanouStergere(root);
+    // „⋯”: Escape îl închide și întoarce focusul pe buton, ca la import.
+    root.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape") return;
+      const m = (e.target as HTMLElement).closest<HTMLElement>(".meniu-rand:not([hidden])");
+      if (!m) return;
+      m.hidden = true;
+      const b = m.parentElement?.querySelector<HTMLElement>(".cel-meniu");
+      b?.setAttribute("aria-expanded", "false");
+      b?.focus();
+    });
+    // Un clic oriunde în afara meniului îl închide. Pe document, nu pe ecran (și
+    // titlul, și meniul din stânga sunt în afară), deci ascultătorul pleacă
+    // singur odată cu ecranul.
+    const inchideMeniul = (e: MouseEvent): void => {
+      if (!root.isConnected) { document.removeEventListener("click", inchideMeniul); return; }
+      for (const m of root.querySelectorAll<HTMLElement>(".meniu-rand:not([hidden])")) {
+        if (m.parentElement?.contains(e.target as Node)) continue;
+        m.hidden = true;
+        m.parentElement?.querySelector(".cel-meniu")?.setAttribute("aria-expanded", "false");
+      }
+    };
+    document.addEventListener("click", inchideMeniul);
     root.addEventListener("click", (e) => {
       const b = (e.target as HTMLElement).closest<HTMLButtonElement>("button[data-act]");
       if (!b) return;
@@ -375,12 +420,22 @@ export const ecran: Ecran = {
         case "deschide": location.hash = `#/lucrari/${encodeURIComponent(b.dataset["id"] ?? "")}`; return;
         case "inapoi": location.hash = "#/lucrari"; return;
         case "situatie-noua": if (p && !p.inchis) { inLucru = situatieNoua(p, idNou(), new Date().toISOString()); eroare = ""; fila = "situatii"; } break;
+        case "meniu-santier": {
+          const m = b.nextElementSibling as HTMLElement | null;
+          if (!m) return;
+          m.hidden = !m.hidden;
+          b.setAttribute("aria-expanded", String(!m.hidden));
+          if (!m.hidden) m.querySelector<HTMLButtonElement>("button")?.focus();
+          return;
+        }
         case "fila": {
           fila = b.dataset["fila"] as FilaSantier;
           stergeDe = null;
           history.replaceState(null, "", adresa());
           deseneaza();
-          root.querySelector<HTMLElement>(`.file [data-fila="${fila}"]`)?.focus();
+          // Din „⋯” nu e filă de focusat: focusul trece pe primul buton al panoului deschis.
+          (root.querySelector<HTMLElement>(`.file [data-fila="${fila}"]`)
+            ?? root.querySelector<HTMLElement>(".file-panou :is(button, input, select)"))?.focus();
           return;
         }
         case "renunta": inLucru = null; dinPoze = null; eroare = ""; break;

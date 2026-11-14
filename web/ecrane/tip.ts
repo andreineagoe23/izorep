@@ -7,6 +7,19 @@ export interface Ecran {
   render(root: HTMLElement): void | Promise<void>;
 }
 
+/**
+ * Titlul ecranului, schimbat de ecran după ce l-a desenat routerul. Singurul
+ * lucru din afara containerului pe care îl atinge un ecran: pagina unui
+ * șantier se numește după șantier, nu „Șantiere” cu propoziția listei
+ * (14 noiembrie 2026), iar adresa se schimbă fără navigare nouă.
+ */
+export function titluEcran(titlu: string, subtitlu = ""): void {
+  const t = document.querySelector("#ecran .titlu-ecran");
+  if (!t) return;
+  t.innerHTML = `<h1>${esc(titlu)}</h1>${subtitlu ? `<p>${esc(subtitlu)}</p>` : ""}`;
+  document.title = `${titlu} · IzoERP`;
+}
+
 /* ------------------------------------------------------------- utilitare */
 
 export const eur = (n: number): string =>
