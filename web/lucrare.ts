@@ -141,14 +141,17 @@ export function urmeaza(s: StareLucrare): Urmeaza {
   const st = s.santier;
   if (st?.inchis) return { text: `Lucrare închisă pe ${ziRo(st.inchis)}.`, fila: "inchidere" };
   if (st) {
+    // Totul executat: ce n-a fost comandat nu mai e de comandat, iar pasul e
+    // inventarul de la închidere (Andrei, 14 noiembrie 2026). Înainte lucrarea
+    // spunea „12 materiale de comandat”, iar Acasă că se poate închide.
+    if (st.progres >= 100) {
+      return { text: "Totul e executat.", fila: "inchidere", primar: { eticheta: "Închide șantierul", act: "fila", fila: "inchidere" } };
+    }
     if (st.deComandat > 0) {
       return {
         text: `${materialeText(st.deComandat)} de comandat.`, fila: "materiale",
         primar: { eticheta: "Comandă ce lipsește", act: "fila", fila: "materiale" },
       };
-    }
-    if (st.progres >= 100) {
-      return { text: "Totul e executat.", fila: "inchidere", primar: { eticheta: "Închide șantierul", act: "fila", fila: "inchidere" } };
     }
     return {
       text: `Șantierul e în lucru: ${st.progres} % executat.`, fila: "situatii",
