@@ -44,6 +44,26 @@ export interface IntrareIstoric {
    * butonul aratand altceva decat ce vazuse omul.
    */
   destinatie?: Destinatie;
+  /**
+   * Câte poziții cer ochi (de verificat și fără preț), socotit la salvare
+   * (14 noiembrie 2026): lista „Lucrări” spune ce urmează fără să deschidă
+   * fișierul. Lipsește la cererile salvate înainte.
+   */
+  deVerificat?: number;
+  /** Datele ofertei, din lucrul omului: lista ia de aici obiectivul și data refuzului. */
+  antet?: Partial<AntetCerere>;
+}
+
+/**
+ * Datele ofertei scrise la pasul „Oferta” (numar, beneficiar, discount…).
+ * `refuzat`: ziua în care clientul a refuzat oferta (ISO, 14 noiembrie 2026).
+ * Stă aici, cu cererea, ca să nu ceară o coloană nouă în bază: cererea se
+ * salvează deja cu versiune, iar refuzul e al ei.
+ */
+export interface AntetCerere {
+  firma: string; numar: string; data: string; client: string; obiectiv: string;
+  persoana: string; localitate: string; discount: number;
+  refuzat?: string;
 }
 
 /** O corectie facuta de om intr-o celula a fisierului. */
@@ -79,10 +99,7 @@ export interface SesiuneImport extends IntrareIstoric {
    * ajustarea preturilor. Pana pe 14 octombrie 2026 se pierdeau la reincarcare,
    * iar „Creează șantierul” lua numele fisierului drept beneficiar.
    */
-  antet?: {
-    firma: string; numar: string; data: string; client: string; obiectiv: string;
-    persoana: string; localitate: string; discount: number;
-  };
+  antet?: AntetCerere;
   ajustare?: number;
 }
 
@@ -133,6 +150,8 @@ const metaDin = (s: SesiuneImport): IntrareIstoric => ({
   id: s.id, nume: s.nume, marime: s.marime, cand: s.cand,
   model: s.model, pozitii: s.pozitii, tarifate: s.tarifate, valoare: s.valoare,
   ...(s.destinatie ? { destinatie: s.destinatie } : {}),
+  ...(s.deVerificat !== undefined ? { deVerificat: s.deVerificat } : {}),
+  ...(s.antet ? { antet: s.antet } : {}),
 });
 
 /** Id-ul importului deschis acum, ca reincarcarea paginii sa il regaseasca. */

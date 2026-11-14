@@ -173,11 +173,19 @@ function schimbatIntreTimp(ce: string, cine: string | null, cand: Date): Refuz {
 }
 
 export async function listaCereri(tx: Baza): Promise<IntrareIstoric[]> {
+  // Din lucrul omului doar datele ofertei și câte poziții cer ochi (14 noiembrie
+  // 2026): lista „Lucrări” spune din ele obiectivul, refuzul și ce urmează. Restul
+  // lucrului (extragerile, corecturile) rămâne la deschiderea cererii.
   const rows = await tx.select({
     id: cerere.id, nume: cerere.nume, marime: cerere.marime, cand: cerere.cand, model: cerere.model,
     pozitii: cerere.pozitii, tarifate: cerere.tarifate, valoare: cerere.valoare, destinatie: cerere.destinatie,
+    antet: sql<IntrareIstoric["antet"] | null>`${cerere.lucru}->'antet'`,
+    deVerificat: sql<number | null>`(${cerere.lucru}->>'deVerificat')::int`,
   }).from(cerere).orderBy(desc(cerere.cand));
-  return rows.map((r) => meta({ ...r, tenantId: "", fisier: Buffer.alloc(0), lucru: {}, creatDe: null, actualizatLa: r.cand, versiune: 0, actualizatDe: null }));
+  return rows.map(({ antet, deVerificat, ...r }) => ({
+    ...meta({ ...r, tenantId: "", fisier: Buffer.alloc(0), lucru: {}, creatDe: null, actualizatLa: r.cand, versiune: 0, actualizatDe: null }),
+    ...(antet ? { antet } : {}), ...(deVerificat !== null && deVerificat !== undefined ? { deVerificat } : {}),
+  }));
 }
 
 export async function citesteCerere(tx: Baza, id: string): Promise<CererePeFir | null> {
@@ -255,7 +263,7 @@ export async function salveazaOferta(tx: Baza, ctx: Context, cerereId: string, o
       // Fișierul singur nu ajunge: un reimport are același nume.
       const care = [alta.client, alta.data].filter(Boolean).join(", ");
       throw new Refuz(409, `Numărul ${numar} e deja pe oferta cererii „${alta.nume}”${care ? ` (${care})` : ""}. `
-        + "Scrie alt număr la pasul „Oferta”, sau deschide cererea aceea din Oferte și cereri.");
+        + "Scrie alt număr la pasul „Oferta”, sau deschide lucrarea aceea din Lucrări.");
     }
   }
   const { valoare, pozitii } = valoareOferta(o.continut);
