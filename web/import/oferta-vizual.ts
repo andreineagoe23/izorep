@@ -1,7 +1,7 @@
 import type { LinieProcesata } from "../../src/import/nucleu.js";
 import type { CampuriRand } from "../../src/import/editare.js";
 import type { FoaieBruta } from "../../src/import/parse-workbook.js";
-import { esc, eur, tabel } from "../ecrane/tip.js";
+import { cate, esc, eur, tabel } from "../ecrane/tip.js";
 import type { DocumentOferta, PozitieOferta } from "../document-oferta.js";
 import { STARE } from "./text.js";
 import type { FiltruStare } from "./vizual.js";
@@ -122,33 +122,64 @@ export function antetDinFisier(foi: readonly FoaieBruta[]): Partial<Pick<AntetSc
 
 const VEDERI: [Vedere, string][] = [["verificare", "Verificare"], ["export", "Cum iese oferta"]];
 
-/** Filtrele de stare, cu cifra lor. Aceleași butoane ca până acum. */
-function butoaneStare(numere: Record<FiltruStare, number>, activ: FiltruStare): string {
-  const b = (f: FiltruStare, e: string): string =>
-    `<button type="button" class="imp-filtru" data-filtru="${f}"${f === "toate" ? "" : ` data-stare="${f}"`}
-      aria-pressed="${f === activ}">${e} <b>${numere[f]}</b></button>`;
-  return b("toate", "Toate") + b("gata", STARE.gata) + b("de_validat", STARE.de_validat) + b("netarifate", STARE.netarifate);
+/**
+ * Filtrele de stare și „Ce vezi”, ca file (14 noiembrie 2026): erau perechi
+ * de butoane și pastile, deși fac ce fac filele din restul aplicației. Punctul
+ * colorat al stării rămâne pe filă.
+ */
+function fileStare(numere: Record<FiltruStare, number>, activ: FiltruStare): string {
+  const f = (x: FiltruStare, e: string): string =>
+    `<button type="button" class="fila" data-filtru="${x}"${x === "toate" ? "" : ` data-stare="${x}"`}${
+      x === activ ? ' aria-current="page"' : ""}>${e} <b>${numere[x]}</b></button>`;
+  return f("toate", "Toate") + f("gata", STARE.gata) + f("de_validat", STARE.de_validat) + f("netarifate", STARE.netarifate);
+}
+
+/** Ce filtru se deschide: unde e ceva de văzut, întâi ce cere ochi. */
+export function filtruImplicit(numere: Record<FiltruStare, number>): FiltruStare {
+  return numere.de_validat > 0 ? "de_validat" : numere.netarifate > 0 ? "netarifate" : "toate";
 }
 
 /**
- * Bara de deasupra pozițiilor: în stânga ce arăt (filtrele, doar la
- * verificare: Excelul are doar pozițiile gata), în dreapta tabul. Două
- * coloane ~70 / 30, cu un text scurt deasupra fiecărui control.
+ * O propoziție deasupra tabelului, din aceleași cifre ca filele, și drumul
+ * mai departe: cu nimic de văzut, „Mergi la ofertă”. Pozițiile fără preț se
+ * spun mereu, nu se ascund în „cer să te uiți”.
+ */
+export function rezumatVerificare(numere: Record<FiltruStare, number>): string {
+  const total = numere.toate;
+  if (total === 0) return "";
+  const de = numere.de_validat;
+  const fara = numere.netarifate;
+  if (de + fara === 0) {
+    return `<div class="imp-rezumat"><p>${total === 1 ? "Poziția are preț." : `Toate cele ${total} au preț.`}</p>
+      <button type="button" class="primar" data-pas="3">Mergi la ofertă</button></div>`;
+  }
+  const parti = [
+    `${numere.gata} din ${cate(total, total === 1 ? "poziție" : "poziții")} ${numere.gata === 1 ? "are" : "au"} preț sigur.`,
+    de > 0 ? `${de} ${de === 1 ? "cere" : "cer"} să te uiți.` : "",
+    fara > 0 ? `${fara} ${fara === 1 ? "n-are" : "n-au"} preț.` : "",
+  ].filter(Boolean);
+  return `<div class="imp-rezumat"><p>${parti.join(" ")}</p></div>`;
+}
+
+/**
+ * Bara de deasupra pozițiilor: propoziția, apoi în stânga ce arăt (filtrele,
+ * doar la verificare: Excelul are doar pozițiile gata), în dreapta ce vezi.
+ * Două coloane ~70 / 30, fiecare cu eticheta ei: două rânduri de file fără
+ * nume, unul lângă altul, nu se deosebeau.
  */
 export function baraVerificare(numere: Record<FiltruStare, number>, filtru: FiltruStare, vedere: Vedere): string {
   return `<section class="imp-card imp-bara-foi">
+    ${rezumatVerificare(numere)}
     <div class="imp-bara-stanga">${vedere === "verificare"
       ? `<p class="imp-eticheta-control" id="eticheta-filtre">Arată pozițiile</p>
-      <div class="imp-filtre" role="group" aria-labelledby="eticheta-filtre">${butoaneStare(numere, filtru)}</div>`
+      <nav class="file" aria-labelledby="eticheta-filtre">${fileStare(numere, filtru)}</nav>`
       : `<p class="imp-eticheta-control">Exact ce descarci acum, la pasul „Oferta”</p>
       <p class="imp-ajutor">Doar pozițiile gata. Ce schimbi la „Verificare” se vede aici.</p>`}
     </div>
     <div class="imp-bara-dreapta">
-      <fieldset class="imp-segment imp-vedere">
-        <legend>Ce vezi</legend>
-        <div>${VEDERI.map(([v, e]) => `<label><input type="radio" name="vedere" value="${v}"${v === vedere ? " checked" : ""} />`
-          + `<span>${e}</span></label>`).join("")}</div>
-      </fieldset>
+      <p class="imp-eticheta-control" id="eticheta-vedere">Ce vezi</p>
+      <nav class="file imp-vedere" aria-labelledby="eticheta-vedere">${VEDERI.map(([v, e]) =>
+        `<button type="button" class="fila" data-vedere="${v}"${v === vedere ? ' aria-current="page"' : ""}>${e}</button>`).join("")}</nav>
     </div>
   </section>`;
 }

@@ -35,7 +35,7 @@ import {
   type FiltruStare, type Pas,
 } from "../import/vizual.js";
 import {
-  antetDinFisier, baraVerificare, exportPeEcran, type AntetScris, type SchimbariPozitie, type Vedere,
+  antetDinFisier, baraVerificare, exportPeEcran, filtruImplicit, type AntetScris, type SchimbariPozitie, type Vedere,
 } from "../import/oferta-vizual.js";
 import { JACHETE, patchDinCamp, verificarePeEcran } from "../import/verificare-vizual.js";
 import { documentOferta, textClient, type PozitieOferta } from "../document-oferta.js";
@@ -157,6 +157,13 @@ export const ecran: Ecran = {
     let sesiune: Sesiune | null = null;
     let istoric: IntrareIstoric[] = [];
     let filtru: FiltruStare = "toate";
+    /**
+     * Fila aleasă de om rămâne aleasă. Până atunci se deschide pe ce cere ochi
+     * (`filtruImplicit`), iar când acolo nu mai rămâne nimic, trece singură mai
+     * departe. Nu la fiecare tastă: un rând care devine „De verificat” cât scrii
+     * nu mută pagina pe altă filă.
+     */
+    let filtruAles = false;
     let motiv: CodMotiv | null = null;
     let editIdx: number | null = null;
     /**
@@ -439,15 +446,21 @@ export const ecran: Ecran = {
       }, pastreaza);
     }
 
-    function paginaVerificare(s: Sesiune): string {
-      // Toate foile, pe capitolele clientului.
-      const { pozitiile, peStare, lista } = vizibile(s);
-      const numere: Record<FiltruStare, number> = {
+    function numereStare(s: Sesiune): Record<FiltruStare, number> {
+      const { pozitiile } = vizibile(s);
+      return {
         toate: pozitiile.length,
         gata: pozitiile.filter((l) => potrivit(l, "gata")).length,
         de_validat: pozitiile.filter((l) => potrivit(l, "de_validat")).length,
         netarifate: pozitiile.filter((l) => potrivit(l, "netarifate")).length,
       };
+    }
+
+    function paginaVerificare(s: Sesiune): string {
+      const numere = numereStare(s);
+      if (!filtruAles && numere[filtru] === 0) { filtru = filtruImplicit(numere); motiv = null; }
+      // Toate foile, pe capitolele clientului.
+      const { peStare, lista } = vizibile(s);
       const motive = filtru === "de_validat" || filtru === "netarifate" ? numaraMotive(peStare) : [];
       const cuFoaie = s.foi.length > 1;
       const filtrat = filtru === "toate" && motiv === null ? null : new Set(lista.map((l) => l.extras.index));
@@ -495,7 +508,7 @@ export const ecran: Ecran = {
     /* ------------------------------------------------------------- actiuni */
     function deschideSesiune(s: Sesiune): void {
       sesiune = s;
-      pas = 2; filtru = "toate"; motiv = null; editIdx = null; randInLucru = null;
+      pas = 2; filtru = filtruImplicit(numereStare(s)); filtruAles = false; motiv = null; editIdx = null; randInLucru = null;
       // Latimea se masoara DUPA plierea barei, altfel ar decide pe locul pe
       // care il ocupa inca meniul. Sub prag, foaia 1:1 n-ar incapea fara
       // derulare laterala decat cu coloane de cateva litere: se deschide ca
@@ -1136,7 +1149,20 @@ export const ecran: Ecran = {
       }
 
       const bFiltru = t.closest<HTMLButtonElement>("[data-filtru]");
-      if (bFiltru) { filtru = bFiltru.dataset["filtru"] as FiltruStare; motiv = null; editIdx = null; randInLucru = null; deseneaza(); return; }
+      if (bFiltru) {
+        filtru = bFiltru.dataset["filtru"] as FiltruStare; filtruAles = true; motiv = null; editIdx = null; randInLucru = null;
+        deseneaza();
+        pagina.querySelector<HTMLElement>(`[data-filtru="${filtru}"]`)?.focus();
+        return;
+      }
+
+      const bVedere = t.closest<HTMLButtonElement>("[data-vedere]");
+      if (bVedere) {
+        vedere = bVedere.dataset["vedere"] as Vedere; editIdx = null; randInLucru = null;
+        deseneaza();
+        pagina.querySelector<HTMLElement>(`[data-vedere="${vedere}"]`)?.focus();
+        return;
+      }
 
       const bMotiv = t.closest<HTMLButtonElement>("[data-motiv]");
       if (bMotiv) { const m = bMotiv.dataset["motiv"] as CodMotiv; motiv = motiv === m ? null : m; randInLucru = null; deseneaza(); return; }
@@ -1353,7 +1379,6 @@ export const ecran: Ecran = {
         redeseneazaNecesar(sesiune);
         return;
       }
-      if (t.name === "vedere") { vedere = t.value as Vedere; editIdx = null; randInLucru = null; deseneaza(); return; }
       if (t.dataset["um"] && sesiune) {
         scrieUm(Number(t.dataset["idx"]), t.value);
         pastreazaCursorul(gazda, deseneaza);
@@ -1375,7 +1400,7 @@ export const ecran: Ecran = {
         void propuneNumar();
         return;
       }
-      if (t.dataset["act"] === "filtru") { filtru = t.value as FiltruStare; motiv = null; editIdx = null; randInLucru = null; deseneaza(); return; }
+      if (t.dataset["act"] === "filtru") { filtru = t.value as FiltruStare; filtruAles = true; motiv = null; editIdx = null; randInLucru = null; deseneaza(); return; }
       const form = t.closest<HTMLFormElement>(".imp-editor");
       if (!form) return;
       // Un camp extras atins face din salvare corectura omului. Descrierea,
