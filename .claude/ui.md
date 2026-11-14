@@ -42,6 +42,13 @@ temporar, fără să scrie preferința, doar la trecerea de la „nu cere” la
 până la schimbarea ecranului. Importul o cere cât timp e un fișier deschis
 (25 septembrie 2026).
 
+Titlul îl desenează routerul, din `titlu` și `subtitlu`. Un ecran care își
+schimbă titlul după ce s-a desenat (pagina unui șantier se numește după
+șantier, iar lista revine la „Șantiere” fără navigare nouă) cheamă
+`titluEcran(titlu, subtitlu?)` din `tip.ts`: singurul lucru din afara
+containerului pe care îl atinge, iar fila browserului ia ce scrie sus
+(14 noiembrie 2026).
+
 Ecran nou: creezi fișierul în `web/ecrane/`, îl adaugi în `ECRANE` din `main.ts`
 și pui itemul în `MENIU` din `nav.ts`.
 
@@ -198,12 +205,10 @@ Din 15 octombrie 2026: Acasă, apoi grupurile Oferte, Șantiere, Materiale,
 Setări, cu numele pe care le folosesc angajații („Lucrări” e „Șantiere”,
 „Măsurători” e „Poze de pe șantier”). Titlul ecranului e numele din meniu.
 
-`MENIU` din `nav.ts` conține doar ecrane care există. Modulele nelivrate stau în
-`VIITOR`, într-un `<details>` sub meniu.
-
-Varianta anterioară amesteca cele două în cinci grupuri, cu jumătate din itemi
-gri și inactivi. Harta sistemului e utilă clientului — dar în navigația zilnică
-ea costă atenție la fiecare privire. Pliată, spune același lucru o dată.
+`MENIU` din `nav.ts` conține doar ecrane care există. Modulele nelivrate
+(facturi, portalul clientului) nu mai apar deloc din 14 noiembrie 2026 (planul
+UX, Faza 1): lista lor pliată sub meniu, „Module care urmează”, era un lucru în
+plus de citit, fără nimic de făcut acolo. `VIITOR` și `.viitor` au ieșit.
 
 Cererile și ofertele sunt un singur ecran (`documente.ts`), cu filtru pe tip:
 sunt **același obiect** în stadii diferite ale aceluiași flux — cerere → ofertă
@@ -388,6 +393,24 @@ iar primul strat se scoate din meniul „⋯” („Scoate stratul 1”, `scoate
 în `patchDinCamp`): următoarea izolație îi ia locul, cu grosimea ei, protecția
 rămâne. Acțiunile meniului au nume proprii (`strat-nou`, `sterge-strat`):
 editorul vechi folosește deja `adauga-strat` și `scoate-strat`.
+
+**14 noiembrie 2026 (planul UX, Faza 1):** deasupra tabelului, o propoziție
+din aceleași cifre ca filele (`rezumatVerificare` în `oferta-vizual.ts`): „97
+din 99 de poziții au preț sigur. 2 cer să te uiți.”, cu „N n-au preț” adăugat
+oricând există; fără nimic de văzut, „Toate cele 99 au preț.” și butonul
+albastru „Mergi la ofertă” (pasul 3). Filtrele (Toate · Gata · De verificat ·
+Fără preț, cu cifra și punctul culorii) și „Ce vezi” (Verificare · Cum iese
+oferta) sunt file `.file` / `.fila` cu `aria-current`, ca la Materiale, fiecare
+cu eticheta ei mică deasupra („Arată pozițiile”, „Ce vezi”), în grila ~70 / 30;
+pe telefon una sub alta. Fișierele cu mai multe foi nu mai au file de foi
+(foaia e pe rând), deci nu apar trei rânduri de file. **Fila care se deschide**
+(`filtruImplicit`): „De verificat” dacă are ceva, altfel „Fără preț” dacă are
+ceva, altfel „Toate”. Decis de noi: „Fără preț” înaintea lui „Toate”, ca
+pozițiile fără preț să nu stea ascunse printre 99 gata. Fila aleasă de om
+rămâne (`filtruAles`); cea aleasă de aplicație se schimbă doar când rămâne
+goală (după „Confirmă” pe ultima), nu la fiecare tastă: un rând care devine
+„De verificat” cât scrii nu mută pagina pe altă filă. TRANSAVIA se deschide pe
+„Toate”, cu „Mergi la ofertă”.
 
 ## Ecranul de import: trei pași
 
@@ -829,6 +852,21 @@ nu se pierde la schimbarea filei; adresa se scrie cu `replaceState`
 prima filă. Secțiunile de mai jos despre pagina șantierului descriu
 conținutul, nu așezarea.
 
+**14 noiembrie 2026 (planul UX, Faza 1):** titlul mare al paginii e numele
+șantierului (`titluEcran`), fără propoziția listei; sub el „← Toate
+șantierele”, apoi clientul, oferta și firma (cu „închis” în față), iar în
+dreapta „Situație nouă” și „⋯”. Filele sunt doar trei: Situații de lucrări ·
+Materiale · Planul de șantier. „Închide șantierul” și „Șterge șantierul” se fac
+o dată, deci stau în „⋯” (`meniuSantier`, stilul `.cel-meniu` / `.meniu-rand`
+de la import, cu Escape și clic în afară); se deschid în același loc ca înainte
+și păstrează adresa (`#/lucrari/<id>/inchide`, `/sterge`, și la reîncărcare).
+Pe un șantier închis meniul are doar „Șterge”, iar `…/inchide` arată
+situațiile, cu fila lor aleasă. Pe fila Materiale (`cardMaterial`) o coloană
+goală pe toate rândurile nu se desenează („Lipsește” rămâne mereu: e
+întrebarea paginii), iar cu ceva de comandat pe șantierul deschis, antetul
+cardului are „Comandă ce lipsește” → `#/materiale`. Butonul e alb: albastrul
+paginii e „Situație nouă”.
+
 ## Lucrări: șantierele din oferte (29 septembrie 2026)
 
 `web/ecrane/lucrari.ts`; logica în `src/lucrari/situatii.ts`, datele în
@@ -891,6 +929,16 @@ testate); fără clase CSS noi.
   nevenite de 7 zile și pierderea peste 10 % a Fazei 6; carduri
   noi „Ultimele 7 zile pe șantiere” și „Șantiere închise”. Banii ascultă de
   `vedeCosturi()`.
+- **14 noiembrie 2026 (planul UX, Faza 1):** cardul se numește **„De făcut”**.
+  Rândurile erau linkuri gri care nu păreau apăsabile; acum fiecare are în
+  dreapta un buton alb care spune ce faci (`atentionare(href, text, actiune)`
+  în `tip.ts`): „Închide șantierul” (→ `…/inchide`), „Deschide cererea”, „Vezi
+  oferta”, „Comandă ce lipsește”, „Vezi ce lipsește” și „Vezi materialul” (→
+  fila Materiale a șantierului), „Vezi comanda”. Fără nimic: „Nimic de făcut
+  acum.” Au ieșit „Ultimele 7 zile pe șantiere”, „Șantiere închise” și nota
+  despre curs; rămân cifrele și „Șantiere în lucru”. `cardSaptamana` și
+  `cardInchise` rămân în `rapoarte-vizual.ts` (testate), pentru fila
+  „Închise” din Faza 2.
 
 ## Pozele pentru ofertă, la Cerere nouă (22 octombrie 2026)
 

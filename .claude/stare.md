@@ -1,7 +1,50 @@
 # Stare curentă
 
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
-> Ultima actualizare: 23 octombrie 2026.
+> Ultima actualizare: 14 noiembrie 2026.
+
+## 14 noiembrie 2026: planul UX, Faza 0 (fără Render) și Faza 1
+
+Din `docs/plan-ux.md`, pe ramura `ux-lucrare`. Nicio mutare de ecran, nicio
+regulă de preț, nicio migrare. **698 de teste**, neschimbate.
+
+| Ce | Acum |
+|---|---|
+| `npm run demo` murea cu 401 de la conturi (22 octombrie) și crăpa la rezumat (`oferte` lipsea din răspunsul refuzat) | scriptul are contul lui, `starea-de-demo@izorep.invalid` („Starea de demo (scriptul)”), **fără parolă**: nu se poate intra cu el din pagină. E activ și are o sesiune (6 ore) doar cât rulează, apoi sesiunea se șterge și contul se dezactivează, și când scriptul pică. Niciun cont existent nu se atinge (`asiguraCont` le-ar fi dezactivat). Contul nu se șterge: ofertele și mișcările scrise de el îl țin în `creat_de`, iar ștergerea le-ar modifica. Jurnalul arată cine a scris starea de demo |
+| Meniul avea „Module care urmează (2)” | scos (`VIITOR`, `.viitor`) |
+| Acasă: „Necesită atenția ta”, rânduri gri care nu păreau apăsabile, trei carduri de raport și nota despre curs | **„De făcut”**, cu un buton alb pe fiecare rând care spune ce faci („Comandă ce lipsește”, „Vezi comanda”, „Vezi oferta”, „Deschide cererea”, „Închide șantierul”…); fără nimic, „Nimic de făcut acum.” Au ieșit „Ultimele 7 zile”, „Șantiere închise” și nota |
+| Verificare: filtrul pornea pe „Toate”, nimic nu spunea „poți merge mai departe”; filtrele și „Ce vezi” erau pastile și perechi de butoane | propoziția de sus („97 din 99 de poziții au preț sigur. 2 cer să te uiți.”, sau „Toate cele 99 au preț.” cu „Mergi la ofertă”), filtrele și „Ce vezi” ca file; se deschide pe „De verificat” când are ceva |
+| Pagina șantierului: titlul „Șantiere” cu propoziția listei; „Închide” și „Șterge” file egale cu „Situații”; 8 coloane, multe „—”; nu se putea comanda de acolo | titlul e șantierul, „← Toate șantierele”; „Închide” și „Șterge” în „⋯” din antet, cu adresele lor; coloana goală pe toate rândurile nu se desenează; „Comandă ce lipsește” → Materiale |
+
+Decise de noi (se pot întoarce; detalii în `ui.md`):
+
+- **Fila implicită la Verificare:** „De verificat”, altfel **„Fără preț”**
+  dacă are ceva, altfel „Toate”: o poziție fără preț nu stă ascunsă printre
+  cele gata. Fila aleasă de aplicație se schimbă doar când rămâne goală (după
+  „Confirmă” pe ultima), nu la tastă: altfel un rând care devine „De verificat”
+  cât scrii ar muta pagina pe altă filă.
+- **Butoanele din „De făcut” duc puțin mai aproape decât linkurile vechi:**
+  „Închide șantierul” direct la panoul de închidere (`…/inchide`), lipsa și
+  pierderea pe fila Materiale a șantierului; restul, unde duceau.
+- **„Lipsește” rămâne mereu** pe fila Materiale, chiar când e „nimic” peste
+  tot: e întrebarea paginii. Pe TRANSAVIA nicio coloană nu e goală pe toate
+  rândurile (cochilia ø140 și tabla au comandat, venit, pus), deci tabelul arată
+  la fel; restrângerea pe rânduri e Faza 4 din plan.
+- **„Comandă ce lipsește” e alb** pe pagina șantierului: albastrul paginii e
+  „Situație nouă”. Apare când fila Materiale are cifră (ceva de cumpărat).
+
+Verificat: `npm run demo` pe `izorep_ux` (rezumatul: RAD118.1, RAD118, RAD284,
+cele două șantiere, 88 de mișcări, 4 comenzi; contul de probă neatins, contul
+scriptului inactiv, fără sesiuni). Cu Playwright pe `build:server`: Acasă,
+Verificare (TRANSAVIA) și pagina șantierului (TRANSAVIA, NISAL închis), 390 și
+1440 px, ambele teme, zero derulare laterală, zero erori; butoanele din „De
+făcut” duc la `#/materiale` și `#/comenzi`; TRANSAVIA se deschide pe „Toate”
+cu „Mergi la ofertă” (→ pasul 3), o descriere schimbată cu „g48” face „97 din
+98 … 1 cere să te uiți.” fără să schimbe fila, redeschisă pornește pe „De
+verificat”, iar după „Confirmă” trece singură pe „Fără preț”; „⋯” → Închide /
+Șterge, Escape și clicul în afară îl închid, adresa ține la reîncărcare.
+
+**Rămas din Faza 0:** planul bazei de pe Render (expiră azi), nefăcut aici.
 
 ## 23 octombrie 2026: auditul, blocarea pe calculator, dependențele
 
