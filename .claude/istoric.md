@@ -1,0 +1,122 @@
+# Istoricul sesiunilor
+
+> **Citește asta întâi, la începutul fiecărei sesiuni**, înainte de orice cod.
+> La proiect lucrează doi oameni, fiecare cu agentul lui, pe calculatoare
+> diferite. Fișierul ăsta e predarea dintre sesiuni: ce s-a făcut, ce n-a fost
+> verificat și ce are de făcut cel care urmează.
+
+## Regula
+
+1. **La început:** citești intrarea de sus (cea mai nouă) și faci întâi ce
+   scrie la „Pentru cine urmează”. Dacă ceva de acolo nu se mai potrivește cu
+   repo-ul (`git log`, `git status`), crezi repo-ul și notezi diferența.
+2. **La sfârșit**, înainte de ultimul commit al sesiunii: adaugi o intrare
+   nouă **sus**, pe tiparul de mai jos, și o comiți odată cu munca. O sesiune
+   fără intrare e o sesiune pe care celălalt o reface.
+3. Intrarea e scurtă: ce e nou, nu tot ce se știe. Detaliile stau în
+   `.claude/stare.md` (starea proiectului) și în `docs/plan-ux.md` (planul în
+   lucru); aici doar trimiți la ele.
+4. Scrii separat ce ai **verificat** de ce ai **scris fără să poți verifica**
+   (și de ce: fără Docker, fără fișierele clienților, fără cheie de model).
+5. Intrările vechi nu se rescriu. Când fișierul trece de vreo zece intrări,
+   cele mai vechi se șterg: rămân în `git log`.
+
+Tiparul unei intrări:
+
+```
+## <data> · <cine> · ramura <ramura>
+Calculatorul: ce are și ce nu (Docker, fișierele clienților, cheia de model).
+### Făcut            (cu commit-urile)
+### Verificat        (cum și unde)
+### Neverificat      (și de ce)
+### Pentru cine urmează   (în ordine, primul lucru primul)
+### De hotărât de oameni  (ce nu decide agentul singur)
+```
+
+---
+
+## 14 noiembrie 2026 · popescuadi15 · ramura `ux-lucrare`
+
+Calculatorul: **fără Docker**, deci fără Postgres. Fișierele clienților sunt în
+`../attachments/clienti` cu numele vechi („Cerere oferta 2 Izolatii -
+Abur.xlsx”), nu cu cele pe care le caută testele. Fără cheie de model folosită.
+
+### Făcut
+
+Planul e `docs/plan-ux.md`; starea lui, la „Unde am rămas”.
+
+| Commit | Ce |
+|---|---|
+| `c337617` | Faza 3, o parte: fila Ofertă pe două carduri („Cui trimitem”, „Prețul”), „Descarcă oferta” albastru doar până există o ofertă; pe fila Cerere tipul ofertei e text cu „schimbă”, iar „Mergi la ofertă” apare o singură dată, în „Urmează”. Reparații după parcurgerea Fazei 2: titlul nu se mai repetă sub „← Toate lucrările” (fără text, „⋯” urcă pe același rând), linia de sub cele cinci file e continuă, verificarea ia din nou toată lățimea (`main:has(.ver-tabel:not([hidden] *))`). Scos codul rămas fără ecran: „Importuri recente”, „Ce vezi”, `deschideLaIntrare` / `iaDeDeschis`, resturi din `web/date/seed.ts`. Test nou în `tests/server.test.ts` pentru `antet` și `deVerificat` în lista cererilor |
+| `dc56de6` | `.claude/stare.md`, `.claude/ui.md`, „Unde am rămas” din `docs/plan-ux.md` |
+
+Faza 2 (commit-urile `3fe4c69`, `ba1d742`, `3e82999`, de dinainte) era scrisă,
+dar nevăzută în browser. Acum e parcursă, vezi mai jos.
+
+### Verificat
+
+Cu Playwright, pe `npx vite --port 5183`, **fără server, cu datele în browser**:
+
+- Cerere nouă → fișierul TRANSAVIA → pagina lucrării → ofertă descărcată
+  (94.575,06 €; cu 3 %: 91.737,81 €) → A refuzat → A acceptat până la urmă →
+  Da, pornește șantierul → Materiale → Schimbă regulile → situație cu „Tot
+  restul”. Fila Închidere doar deschisă, șantierul n-a fost închis.
+- Reîncărcarea pe fiecare filă ține fila; rutele vechi (`#/cereri`, `#/oferte`,
+  `#/documente`, `#/santiere`, `#/import`, `#/import/poze`, `#/setari`) duc unde
+  trebuie; meniul se pliază pe Cerere și Ofertă și revine pe celelalte.
+- 390 și 1440 px, ambele teme: zero derulare laterală, nicio țintă sub 40 px,
+  nicio eroare de pagină (în consolă doar 500 de la `/api`, fără server).
+- `npm run typecheck` curat, `npm run build:server` trece.
+- `npm test`: 602 trec, 73 sărite, **31 pică**. Cele 31 picau la fel înainte de
+  schimbări: „File not found” pe fișierele clienților, din cauza numelor vechi
+  de pe acest calculator. Pe un calculator cu numele noi ar trebui să treacă.
+
+### Neverificat
+
+- **Tot ce atinge serverul și baza** (fără Docker): salvarea cererii și a
+  ofertei pe server, refuzul citit din `lucru->'antet'`, conturile, lista
+  cererilor de pe server. Testul nou din `tests/server.test.ts` („lista
+  cererilor aduce din lucrul omului antetul (cu refuzul) și câte poziții sunt
+  de verificat”) compilează, dar aici s-a sărit.
+- **`npm run demo`** n-a fost rulat după Faza 2. `scripts/demo.ts` își ține
+  propria funcție de creare a șantierului, paralelă cu `santierDin` din
+  `web/ecrane/import.ts`; n-a fost atins.
+- Tabelul pozelor din carnet la 1920 px: regula nouă de lățime îl prinde prin
+  aceeași clasă, dar n-a fost văzut cu o poză încărcată.
+
+### Pentru cine urmează
+
+Ai Docker, deci întâi ce n-am putut face aici. Înainte de orice cod nou:
+
+1. `npm ci`, apoi `npm test` cu baza pornită. Așteptat: nimic picat, testul nou
+   de server rulat. Dacă pică ceva care nu ține de numele fișierelor, repară
+   întâi.
+2. Fă baza de probă `izorep_ux` (comenzile sunt în `docs/plan-ux.md`, „Cum
+   verifici pe alt calculator”; nu folosi baza implicită `izorep` și nici
+   porturile 8787 / 5173) și rulează `npm run demo` pe ea. Dacă crapă, e
+   primul lucru de reparat.
+3. Parcurge în browser, pe `build:server`, fluxul de la „Verificat” de mai sus,
+   de data asta **pe server**: Cerere nouă → ofertă → refuz → acceptare →
+   șantier → situație → închidere, plus reîncărcarea pe fiecare filă și un al
+   doilea browser care vede aceleași date. Uită-te mai ales la trecerea de la
+   `#/lucrari/noua` la pagina lucrării după fișier (`cerereNoua` în
+   `web/ecrane/lucrari.ts`, depinde de salvarea cererii înainte) și la lista
+   Lucrări după refuz (stadiul vine din `antet.refuzat`).
+4. Abia apoi planul: ce a rămas din Faza 3, apoi Fazele 4–7 din
+   `docs/plan-ux.md`, în ordine. Fiecare fază: scrisă, verificată în browser,
+   comisă, trecută aici.
+
+Lucruri cunoscute, neatinse: bugul „g48 → Confirmă → Fără preț”; cu tot
+executat și nimic comandat, lucrarea spune „12 materiale de comandat”, iar
+Acasă spune că șantierul se poate închide (e ordinea decisă pentru „Urmează”,
+vezi „Decizii luate” în plan).
+
+### De hotărât de oameni
+
+- **Rândurile „Gata” ca text** (Faza 3): planul cere machetă văzută întâi; nu
+  se implementează fără ea.
+- **`scripts/demo.ts`**: se unifică cu `santierDin` (mutată într-un modul fără
+  DOM, cu id-ul ca parametru) sau rămâne cu copia lui?
+- **Ordinea din „Urmează”**: închiderea înaintea lui „de comandat” când totul e
+  executat?
+- **Baza de pe Render**: cea gratuită expira pe 14 noiembrie 2026, fără backup.
