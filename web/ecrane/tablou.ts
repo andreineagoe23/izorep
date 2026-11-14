@@ -3,9 +3,9 @@ import { vedeCosturi } from "../nav.js";
 import { citesteDepozit, citesteOferte, citestePlanuri, listeaza, type IntrareIstoric } from "../date.js";
 import type { OfertaEmisa } from "../oferte-local.js";
 import { deComandatPeNecesar } from "../materiale.js";
-import { alerte, listaSaptamanala, santiereInchise } from "../../src/lucrari/rapoarte.js";
+import { alerte } from "../../src/lucrari/rapoarte.js";
 import { progresPlan, type PlanSantier } from "../../src/lucrari/situatii.js";
-import { alerteAtentie, cardInchise, cardSaptamana } from "../rapoarte-vizual.js";
+import { alerteAtentie } from "../rapoarte-vizual.js";
 
 /**
  * Tabloul arată doar ce e în bază (pe linkul demo, în browser): ofertele
@@ -50,13 +50,15 @@ function randIndicatori(d: DateTablou): string {
 const lista = (numere: string[]): string =>
   numere.length > 1 ? `${numere.slice(0, -1).join(", ")} și ${numere[numere.length - 1]}` : numere[0] ?? "";
 
-function sectiuneAtentie(d: DateTablou): string {
-  const itemi: { href: string; html: string }[] = [];
+/** „De făcut”: un rând pe lucru, fiecare cu butonul care duce unde se rezolvă. */
+function deFacut(d: DateTablou): string {
+  const itemi: { href: string; html: string; actiune: string }[] = [];
 
   for (const p of d.planuri.filter((x) => !x.inchis && progresPlan(x) >= 100)) {
     itemi.push({
-      href: `#/lucrari/${encodeURIComponent(p.id)}`,
-      html: `Șantierul <b>${esc(p.denumire)}</b> are tot executat: se poate închide, din pagina lui, după ce se
+      href: `#/lucrari/${encodeURIComponent(p.id)}/inchide`,
+      actiune: "Închide șantierul",
+      html: `Șantierul <b>${esc(p.denumire)}</b> are tot executat: se poate închide, după ce se
         numără ce a rămas pe șantier.`,
     });
   }
@@ -65,6 +67,7 @@ function sectiuneAtentie(d: DateTablou): string {
   if (cerereMaiMare) {
     itemi.push({
       href: "#/documente",
+      actiune: "Deschide cererea",
       html: `Cererea <b>${esc(cerereMaiMare.nume)}</b> are <b>${cerereMaiMare.pozitii === 1 ? "o poziție" : cate(cerereMaiMare.pozitii, "poziții")}</b> și încă n-are ofertă.`,
     });
   }
@@ -76,6 +79,7 @@ function sectiuneAtentie(d: DateTablou): string {
     const numere = asteapta.map((o) => `<b>${esc(o.numar || o.obiectiv || "fără număr")}</b>`);
     itemi.push({
       href: "#/documente",
+      actiune: asteapta.length > 1 ? "Vezi ofertele" : "Vezi oferta",
       html: `${asteapta.length > 1 ? "Ofertele" : "Oferta"} ${lista(numere)} ${asteapta.length > 1
         ? "n-au încă șantier: așteaptă" : "n-are încă șantier: așteaptă"} răspunsul clientului.`,
     });
@@ -85,6 +89,7 @@ function sectiuneAtentie(d: DateTablou): string {
     if (articole === 0) continue;
     itemi.push({
       href: "#/materiale",
+      actiune: "Comandă ce lipsește",
       html: `Pentru <b>${esc(necesar.obiectiv || necesar.fisier)}</b> ${articole === 1
         ? "e un material" : `sunt <b>${nr(articole)}</b> materiale`} de comandat.`,
     });
@@ -93,8 +98,8 @@ function sectiuneAtentie(d: DateTablou): string {
   // Faza 7 (S49): lipsa pe santier, pierderea peste 10 % (Faza 6), comenzile nereceptionate.
   itemi.push(...alerteAtentie(alerte(d.planuri, citesteDepozit(), new Date().toISOString())));
 
-  if (itemi.length === 0) return "";
-  return card("Necesită atenția ta", itemi.map((i) => atentionare(i.href, i.html)).join(""));
+  if (itemi.length === 0) return card("De făcut", `<p class="hint" style="margin:0">Nimic de făcut acum.</p>`);
+  return card("De făcut", itemi.map((i) => atentionare(i.href, i.html, i.actiune)).join(""));
 }
 
 function tabelDerulare(d: DateTablou): string {
@@ -115,28 +120,12 @@ function tabelDerulare(d: DateTablou): string {
   return card("Șantiere în lucru", tabel(["Șantier", "Client", "Executat", "Stare"], randuri));
 }
 
-/** Faza 7 (S49): lista săptămânală și cifrele la închiderea șantierelor. */
-function rapoarte(planuri: PlanSantier[]): string {
-  if (planuri.length === 0) return "";
-  const d = citesteDepozit();
-  const inchise = cardInchise(santiereInchise(planuri, d), vedeCosturi());
-  return card("Ultimele 7 zile pe șantiere", cardSaptamana(listaSaptamanala(planuri, d, new Date().toISOString()), vedeCosturi()))
-    + (inchise ? card("Șantiere închise", inchise) : "");
-}
-
-function notaCurs(): string {
-  return nota(
-    `Prețurile din oferte sunt în euro, fără TVA. Plata se face în lei, la cursul BNR din ziua facturii. ` +
-      `Cursul se scrie pe fiecare document, ca suma să nu se schimbe mai târziu.`
-  );
-}
-
 export const ecran: Ecran = {
   id: "tablou",
   titlu: "Acasă",
   subtitlu: "Ofertele, cererile neofertate și șantierele în lucru.",
   async render(root) {
     const d: DateTablou = { planuri: citestePlanuri(), oferte: citesteOferte(), importuri: await listeaza() };
-    root.innerHTML = `${randIndicatori(d)}${sectiuneAtentie(d)}${rapoarte(d.planuri)}${tabelDerulare(d)}${notaCurs()}`;
+    root.innerHTML = `${randIndicatori(d)}${deFacut(d)}${tabelDerulare(d)}`;
   },
 };
