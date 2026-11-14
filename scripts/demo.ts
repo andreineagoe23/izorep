@@ -48,7 +48,7 @@ import { pretPropus } from "../src/stoc/preturi-furnizori.js";
 import { situatieNoua, valoareOferta as valoarePlan, type PlanSantier } from "../src/lucrari/situatii.js";
 import type { Destinatie } from "../src/pricing/lists.js";
 import { confirma } from "../web/validare.js";
-import { valoareOferta, type AntetOferta, type CerereOferta } from "../web/oferta.js";
+import { imparte, valoareOferta, type AntetOferta, type CerereOferta } from "../web/oferta.js";
 import { randuriInchidere, restulPeSantier } from "../web/inchidere-vizual.js";
 import type { SesiuneImport } from "../web/istoric.js";
 
@@ -217,8 +217,13 @@ try {
       confirma(rez.linii.filter((l) => l.pret && l.necesitaValidare).map((l) => l.bruta.index), rez.rezolvate);
       reevalueaza(rez, optiuni);
     }
+    // Ca salvarea din ecran: câte poziții cer ochi. Fără ele, lista Lucrări
+    // spunea despre Matari „Ce a răspuns clientul?”, iar pagina „12 poziții cer
+    // să te uiți” (14 noiembrie 2026).
+    const { deValidat, netarifate } = imparte(rez.linii);
     const ses: SesiuneImport = {
       id, nume: fisier, marime: b.length, cand: new Date().toISOString(), model: null,
+      deVerificat: deValidat.length + netarifate.length,
       pozitii: rez.statistici.liniiIzolatie, tarifate: rez.statistici.tarifate, valoare: rez.statistici.valoareTotala,
       fisier: buf,
       extrase: [...rez.rezolvate].map(([index, r]) => ({ index, extras: r.extras, sursa: r.sursa, ...(r.text !== undefined ? { text: r.text } : {}) })),
