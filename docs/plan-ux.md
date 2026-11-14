@@ -296,12 +296,27 @@ Pentru fiecare: da / nu / altfel.
    fila „Lăsate afară”.
 8. Ordinea fazelor.
 
-## Unde am rămas (14 noiembrie 2026)
+## Unde am rămas (14 noiembrie 2026, seara)
 
 Pentru cine continuă pe alt calculator, într-o sesiune nouă. Ramura `ux-lucrare`,
 nepublicată (fără push). Faza 2 e **scrisă, trece testele și a fost parcursă în
 browser** pe varianta fără server; din Faza 3 sunt făcute fila Ofertă pe două
 carduri, „Tip ofertă” cu „schimbă” și un singur „Mergi la ofertă”.
+
+### Seara, 14 noiembrie: Faza 3 pe server
+
+- **Parcursă pe server cu baza** (`izorep_ux`, Docker, `build:server` pe 8813):
+  tot drumul, de la Cerere nouă până la șantierul **închis efectiv**, cu
+  reîncărcarea pe fiecare filă, al doilea browser, lucrările de demo, 390 și
+  1440 px, ambele teme. Detaliile în `.claude/stare.md`.
+- Reparat: numărul ofertei se propune și când pagina se deschide direct pe
+  Ofertă; demo-ul salvează cererile cu pozițiile de verificat (Matari spunea
+  altceva în listă decât pe pagină).
+- **Faza 3, făcută cu cele două decizii** (Andrei): „Urmează” pune închiderea
+  înaintea comenzii când totul e executat (la fel lista și Acasă);
+  „Creează șantierul” e un singur modul, `web/santier-din.ts`, pentru ecran și
+  `scripts/demo.ts`. **Rămâne din Faza 3** doar rândurile „Gata” ca text, care
+  cer machetă văzută de oameni. Următoarea: Faza 4.
 
 ### Ce s-a schimbat după primul rând de mai jos
 
@@ -364,17 +379,23 @@ Verificat: `npm run typecheck` curat, `npm test` **705 teste** trec (698 + 7 noi
 - **Refuzul fără migrare**: ziua refuzului e `antet.refuzat` (ISO) în lucrul
   cererii (`SesiuneImport.antet`, deja salvat cu versiune); lista o citește din
   `lucru->'antet'`. „A acceptat până la urmă” îl scoate; un refuz oprește
-  pornirea șantierului (`santierDin` în `import.ts`).
+  pornirea șantierului (`santierDin` în `web/santier-din.ts`).
 - **„Clientul a acceptat” = „Creează șantierul” de dinainte**: întreabă pe loc
   „Pornești șantierul …?”, apoi plan + listă pe depozitul șantierului, cu
   regulile firmei (`REGULI_FIRMEI`: pierderi implicite, tuburi până la 3 țoli),
   și duce pe fila Materiale. Fără obiectiv: mesaj și fila Ofertă. Codul e o
   singură funcție, `santierDin`, folosită și de „Refă lista” (care păstrează
-  editările omului, `pastreazaEditari`). `scripts/demo.ts` nu e atins.
+  editările omului, `pastreazaEditari`). Din 14 noiembrie 2026 (decis de
+  Andrei) funcția stă în `web/santier-din.ts`, fără DOM, cu id-urile ca
+  parametru (`{ santier, necesar }`): o folosesc ecranul și `scripts/demo.ts`
+  (care cere `S-TRANSAVIA`, `S-NISAL-LUTZ`). Partea pură, `santierNou`, are
+  teste (`tests/santier-din.test.ts`).
 - **„Urmează”, în ordine**: 1 poziții de verificat → Verifică; 2 fără ofertă →
   Mergi la ofertă; 3 ofertă fără răspuns → Clientul a acceptat / A refuzat;
-  4 refuzată → A acceptat până la urmă; 5 de comandat → Comandă ce lipsește;
-  6 totul executat → Închide șantierul; 7 în lucru → Situație nouă; 8 închisă,
+  4 refuzată → A acceptat până la urmă; 5 totul executat → Închide șantierul
+  (chiar cu material necomandat: decis de Andrei pe 14 noiembrie 2026; înainte
+  lucrarea zicea „12 materiale de comandat”, iar Acasă că se poate închide);
+  6 de comandat → Comandă ce lipsește; 7 în lucru → Situație nouă; 8 închisă,
   fără buton. Abatere luată de noi: cu șantier pornit, pasul 1 nu mai apare
   (refuzul vine înaintea lui 1). Butonul care doar ar duce pe fila deschisă
   deja nu se desenează.

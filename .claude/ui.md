@@ -256,6 +256,15 @@ schimbat locul.
   planul și lista (`santierDin`, regulile firmei) și duce pe fila Materiale;
   regulile se schimbă de acolo („Schimbă regulile de calcul”, „Refă lista”).
   „A refuzat” scrie ziua în `antet.refuzat`; „A acceptat până la urmă” o scoate.
+  Funcția e în `web/santier-din.ts` (fără DOM), aceeași pentru ecran și pentru
+  `scripts/demo.ts`.
+- **„Urmează” cu tot executat** (decis de Andrei, 14 noiembrie 2026): „Totul e
+  executat.” cu „Închide șantierul”, chiar dacă au rămas materiale necomandate;
+  la fel rândul din lista Lucrări (aceeași funcție). Acasă nu mai pune „N
+  materiale de comandat” pentru un șantier cu tot executat: acolo rândul e
+  „are tot executat: se poate închide”.
+- **Numărul ofertei** se propune și când pagina se deschide direct pe fila
+  Ofertă (adresa, reîncărcarea), nu doar după „Mergi la ofertă”.
 
 ## Meniul: pe flux, restul pliat
 

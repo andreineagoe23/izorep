@@ -1,7 +1,34 @@
 # Stare curentă
 
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
-> Ultima actualizare: 14 noiembrie 2026.
+> Ultima actualizare: 14 noiembrie 2026 (seara).
+
+## 14 noiembrie 2026 (seara): Faza 3 parcursă pe server, cu baza
+
+Pe `ux-lucrare`, cu Docker, baza `izorep_ux`, serverul pe 8813 (`build:server`),
+fără cheie de model. **709 teste** (706 + 3 în `tests/santier-din.test.ts`).
+
+Parcurs cu Playwright, pe server: intrare → Lucrări → Cerere nouă → TRANSAVIA
+→ pagina lucrării (trecerea de la `#/lucrari/noua` merge) → Ofertă (285
+propus, scris 290; 94.575,06 €, cu 3 %: 91.737,81 €; „Cum iese oferta” și suma
+la tastă, și cu ajustarea) → descărcată → A refuzat (lista: „Închise”,
+„refuzată”, din `antet.refuzat`) → A acceptat până la urmă → șantierul →
+Schimbă regulile, Refă lista → situație „Tot restul” (91.737,81 €, consum pe 12
+materiale) → Închidere efectivă (un rest în central, unul la reciclat, restul
+ajustat) → lista „Închise”. Reîncărcarea pe toate cele șase file ale celor 4
+lucrări ține fila; al doilea browser (alt cookie) vede aceeași listă; 390 și
+1440 px, ambele teme: zero derulare laterală, nicio țintă sub 40 px (linkurile
+din text nu se numără), zero erori.
+
+| Ce | Acum |
+|---|---|
+| Deschisă direct pe fila Ofertă (adresa, reîncărcarea), caseta numărului rămânea goală: numărul se propunea doar după „Mergi la ofertă” | se propune și la deschidere (`deschideSesiune`) |
+| Cu tot executat și nimic comandat, lucrarea și lista: „12 materiale de comandat”; Acasă: „se poate închide” și „12 materiale de comandat” | „Totul e executat.” cu „Închide șantierul” (decis de Andrei); Acasă nu mai cere comanda pentru un șantier cu tot executat |
+| `scripts/demo.ts` își ținea copia lui de „creează șantierul” | `web/santier-din.ts` (fără DOM, id-urile ca parametru), folosit de ecran și de demo; partea pură, `santierNou`, cu teste |
+| Demo-ul salva cererile fără `deVerificat`: Matari în listă „Ce a răspuns clientul?”, pe pagină „12 poziții cer să te uiți” | salvate ca din ecran; Matari spune la fel în ambele locuri și se deschide pe Cerere |
+
+`npm run demo` pe `izorep_ux` după schimbări: RAD118.1 12.692,04 €, RAD118
+163.979,93 €, RAD284 91.737,81 €, 88 de mișcări, 4 comenzi (ca înainte).
 
 ## 14 noiembrie 2026: planul UX, Faza 2 (lucrarea) și Faza 3 (Cerere și Ofertă)
 
@@ -31,10 +58,8 @@ Decise de noi (se pot întoarce):
   ar duce pe fila deschisă nu se desenează.
 - **„Nu intră …” și „Înapoi la verificare”** stau într-un singur paragraf, în
   cardul „Prețul”, lângă descărcare (erau două, sus și jos).
-- **`scripts/demo.ts` rămâne cu funcția lui de șantier**: `santierDin` stă în
-  `web/ecrane/import.ts` (ecran, cu DOM) și face id-uri noi (`S-<id>`), iar
-  demo-ul are nevoie de id-uri fixe (`S-TRANSAVIA`). Planul demo-ului poartă
-  `cerere` (din `provenienta.sesiune`), deci se leagă de lucrarea lui.
+- ~~**`scripts/demo.ts` rămâne cu funcția lui de șantier**~~: unificate în
+  `web/santier-din.ts` (seara, decis de Andrei), vezi mai sus.
 
 Curățat: `deschideLaIntrare` / `iaDeDeschis`, „Importuri recente” din
 `ecranStart`, ramura „Ce vezi” din `baraVerificare` (cu tipul `Vedere`),
