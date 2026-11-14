@@ -9,36 +9,34 @@ export interface GrupMeniu {
 }
 
 /**
- * Meniul contine doar destinatii care exista. Grupurile urmeaza fluxul
- * firmei (oferte → santiere → materiale), cu nume pe care le folosesc
- * angajatii (15 octombrie 2026): „Lucrari” si „Masuratori” nu spuneau ca acolo
- * e santierul. Setarile, care se ating rar, stau la urma.
+ * Meniul contine doar destinatii care exista. Din 14 noiembrie 2026 (planul
+ * UX, Faza 2) are patru intrari, fara grupuri: o lucrare (cererea, oferta,
+ * santierul, situatiile) e o singura pagina in „Lucrări”, iar ce se atinge rar
+ * sta in „Setări”, cu file. Inainte o lucrare era imprastiata in cinci locuri
+ * din meniu, iar omul trebuia sa stie singur in care intra.
  *
  * Modulele nelivrate (facturi, portalul clientului) nu apar deloc: lista lor
- * pliata, sub meniu, era inca un lucru de citit fara nimic de facut acolo
- * (planul UX, 14 noiembrie 2026).
+ * pliata, sub meniu, era inca un lucru de citit fara nimic de facut acolo.
  */
 export const MENIU: GrupMeniu[] = [
   { titlu: "", itemi: [
     { id: "tablou", eticheta: "Acasă" },
-  ]},
-  { titlu: "Oferte", itemi: [
-    { id: "import", eticheta: "Cerere nouă" },
-    { id: "documente", eticheta: "Oferte și cereri" },
-    { id: "deviz", eticheta: "Calcul rapid" },
-  ]},
-  // „Materiale” (un ecran cu trei file, 21 octombrie 2026) stă cu șantierele: un grup
-  // fără titlu lăsa un gol în meniu (Andrei, 22 octombrie 2026).
-  { titlu: "Șantiere", itemi: [
-    { id: "lucrari", eticheta: "Șantiere" },
-    { id: "masuratori", eticheta: "Măsurători" },
+    { id: "lucrari", eticheta: "Lucrări" },
     { id: "materiale", eticheta: "Materiale" },
+    { id: "setari", eticheta: "Setări" },
   ]},
-  { titlu: "Setări", itemi: [
-    { id: "clienti", eticheta: "Clienți" },
-    { id: "preturi", eticheta: "Liste de prețuri" },
-    { id: "jurnal", eticheta: "Istoric" },
-  ]},
+];
+
+/**
+ * Filele din „Setări”: ecranele de dinainte, fiecare cu adresa lui (linkurile
+ * vechi merg), sub aceeasi bara de file. „Setări” din meniu deschide prima.
+ */
+export const SETARI: ItemMeniu[] = [
+  { id: "clienti", eticheta: "Clienți" },
+  { id: "preturi", eticheta: "Liste de prețuri" },
+  { id: "deviz", eticheta: "Calcul rapid" },
+  { id: "jurnal", eticheta: "Istoric" },
+  { id: "cont", eticheta: "Contul meu" },
 ];
 
 export type Rol = "birou" | "contabilitate";
