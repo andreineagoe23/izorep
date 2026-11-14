@@ -31,6 +31,8 @@ export interface AntetScris {
   persoana: string;
   localitate: string;
   discount: number;
+  /** Ziua în care clientul a refuzat oferta (ISO), 14 noiembrie 2026; lipsă = n-a refuzat. */
+  refuzat?: string;
 }
 
 /* ------------------------------------------------- antetul din fișier */
@@ -144,14 +146,14 @@ export function filtruImplicit(numere: Record<FiltruStare, number>): FiltruStare
  * mai departe: cu nimic de văzut, „Mergi la ofertă”. Pozițiile fără preț se
  * spun mereu, nu se ascund în „cer să te uiți”.
  */
-export function rezumatVerificare(numere: Record<FiltruStare, number>): string {
+export function rezumatVerificare(numere: Record<FiltruStare, number>, primar = true): string {
   const total = numere.toate;
   if (total === 0) return "";
   const de = numere.de_validat;
   const fara = numere.netarifate;
   if (de + fara === 0) {
     return `<div class="imp-rezumat"><p>${total === 1 ? "Poziția are preț." : `Toate cele ${total} au preț.`}</p>
-      <button type="button" class="primar" data-pas="3">Mergi la ofertă</button></div>`;
+      <button type="button" class="${primar ? "primar" : "secundar"}" data-pas="3">Mergi la ofertă</button></div>`;
   }
   const parti = [
     `${numere.gata} din ${cate(total, total === 1 ? "poziție" : "poziții")} ${numere.gata === 1 ? "are" : "au"} preț sigur.`,
@@ -167,7 +169,16 @@ export function rezumatVerificare(numere: Record<FiltruStare, number>): string {
  * Două coloane ~70 / 30, fiecare cu eticheta ei: două rânduri de file fără
  * nume, unul lângă altul, nu se deosebeau.
  */
-export function baraVerificare(numere: Record<FiltruStare, number>, filtru: FiltruStare, vedere: Vedere): string {
+export function baraVerificare(numere: Record<FiltruStare, number>, filtru: FiltruStare, vedere: Vedere, cuVedere = true): string {
+  // Pe pagina lucrării (14 noiembrie 2026) „Cum iese oferta” e pe fila Ofertă, unde e
+  // întrebarea ei; albastrul e al rândului „Urmează”, deci „Mergi la ofertă” e alb.
+  if (!cuVedere) {
+    return `<section class="imp-card imp-bara-foi imp-bara-singura">
+      ${rezumatVerificare(numere, false)}
+      <div class="imp-bara-stanga"><p class="imp-eticheta-control" id="eticheta-filtre">Arată pozițiile</p>
+        <nav class="file" aria-labelledby="eticheta-filtre">${fileStare(numere, filtru)}</nav></div>
+    </section>`;
+  }
   return `<section class="imp-card imp-bara-foi">
     ${rezumatVerificare(numere)}
     <div class="imp-bara-stanga">${vedere === "verificare"

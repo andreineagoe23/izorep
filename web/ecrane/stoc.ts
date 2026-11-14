@@ -111,7 +111,7 @@ export const ecran: Ecran = {
       if (n) corp = ecranComanda(n);
       else if (deschise.length === 0) {
         corp = `<section class="imp-card"><p class="hint" style="margin:0">${st.necesare.length === 0
-          ? `Nimic de cumpărat încă. Materialele unei lucrări apar aici după „Creează șantierul”, la pasul „Oferta” din <a href="#/import">Cerere nouă</a>.`
+          ? `Nimic de cumpărat încă. Materialele unei lucrări apar aici după ce clientul acceptă oferta: în <a href="#/lucrari">Lucrări</a>, pe lucrarea lui, „Clientul a acceptat”.`
           : "Nimic de cumpărat: toate șantierele cu necesar sunt închise."}</p></section>`;
       } else corp = deschise.map(cardNecesar).join("");
       root.innerHTML = `<div class="imp">

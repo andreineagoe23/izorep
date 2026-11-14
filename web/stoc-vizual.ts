@@ -58,8 +58,10 @@ export const PRAGURI_TUB: [number, string][] = [
 const procent = (x: number): string => cifra(Math.round(x * 1000) / 10);
 
 /**
- * Cardul din pasul „Oferta": cât material cere oferta, strat cu strat, după
- * regulile firmei, și butonul care face șantierul din ofertă.
+ * Regulile de calcul ale listei de materiale: cât material cere oferta, strat
+ * cu strat, după regulile firmei. Până pe 14 noiembrie 2026 stătea în pasul
+ * „Oferta”, cu „Creează șantierul”; acum e „Schimbă regulile de calcul” pe fila
+ * Materiale a lucrării, iar butonul reface lista cu regulile scrise.
  */
 export function cardNecesar(n: Necesar): string {
   const randuri = n.materiale.map((m) => {
@@ -105,10 +107,11 @@ export function cardNecesar(n: Necesar): string {
       : `<p class="nota">Nicio poziție cu preț din liste: nu e nimic de calculat.</p>`}
     ${fara > 0 ? `<p class="hint">${fara === 1 ? "O poziție nu are" : `${fara} poziții nu au`} necesar calculat
       (preț pus de mână sau închideri la foc): materialul lor se adaugă de mână, în „Materiale”.</p>` : ""}
-    <p class="hint">„Creează șantierul” face șantierul din ofertă (pozițiile, cantitățile și prețurile ei, cu ajustarea
-      și discountul de mai sus). Materialele ajung în „Materiale”, iar pe șantier se fac situațiile de lucrări.</p>
+    <p class="hint">„Refă lista” pune pe șantier lista calculată cu regulile de mai sus. Ce ai schimbat de mână pe
+      listă (cantități, „Îl dă clientul”, materialul adăugat) rămâne.</p>
     <div class="imp-formular-butoane">
-      <button type="button" class="primar" data-act="creeaza-santier">Creează șantierul</button>
+      <button type="button" class="primar" data-act="refa-lista">Refă lista</button>
+      <button type="button" class="secundar" data-act="reguli-renunta">Renunță</button>
     </div>
   </section>`;
 }

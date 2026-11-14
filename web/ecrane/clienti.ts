@@ -40,7 +40,7 @@ function clientiReali(): string {
   const clienti = clientiDinOferte(Object.values(citesteOferte()), citestePlanuri());
   if (clienti.length === 0) {
     return `<p class="hint" style="margin:0">Niciun client încă. Un client apare aici după ce descarci prima ofertă
-      pentru el, din <a href="#/import">Cerere nouă</a>: e beneficiarul scris pe antetul ofertei.</p>`;
+      pentru el, din <a href="#/lucrari">Lucrări</a>: e beneficiarul scris pe antetul ofertei.</p>`;
   }
   const bani = vedeCosturi();
   const randuri = clienti.map((c) => `<tr>

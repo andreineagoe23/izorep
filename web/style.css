@@ -548,6 +548,7 @@ button.filtru[aria-pressed="true"] .hint, button.filtru.activ .hint { color: inh
   text-decoration: underline; text-underline-offset: 3px;
 }
 .legatura.pericol { color: var(--rosu); font-weight: 600; }
+a.legatura { display: inline-flex; align-items: center; }
 
 /*
  * Un singur pas de spatiere intre containere, peste tot in ecran: intre
@@ -722,6 +723,8 @@ button.filtru[aria-pressed="true"] .hint, button.filtru.activ .hint { color: inh
   display: grid; grid-template-columns: var(--imp-coloane); align-items: start; gap: 12px 16px;
 }
 .imp-bara-stanga { display: grid; gap: 8px; min-width: 0; }
+/* Pe pagina lucrării bara are doar filtrele: o coloană, pe toată lățimea. */
+.imp-bara-foi.imp-bara-singura { grid-template-columns: minmax(0, 1fr); }
 /* Eticheta de deasupra fiecarui control: ce face el, intr-o linie. */
 .imp-eticheta-control { display: block; margin: 0; font-size: 13px; font-weight: 600; color: var(--slab); }
 .imp-eticheta-control span { font-weight: 400; }
@@ -1329,17 +1332,41 @@ main details.ajutor > .hint { margin: 0 0 8px; }
 
 /* ---- „Materiale” (21 octombrie 2026): trei file, fiecare cu o întrebare și un buton.
    Filele sunt linkuri (adresa și „Înapoi” merg); cea de acum, subliniată cu accentul. */
-.file { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 2px solid var(--linie); }
+/* Linia de sub file e a fiecărei file, nu a rândului (14 noiembrie 2026): când filele trec pe al
+   doilea rând (pe telefon), o margine pe container sublinia doar ultimul rând. `::after` duce linia
+   până la capăt pe ultimul rând. Fără spațiu între file, ca linia să fie continuă. */
+.file { display: flex; flex-wrap: wrap; gap: 0; }
+.file::after { content: ""; flex: 1 1 0; min-width: 0; box-shadow: inset 0 -2px var(--linie); }
 .fila {
-  display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 16px; margin-bottom: -2px;
-  border-bottom: 3px solid transparent; color: var(--slab); font-size: 16px; font-weight: 500; text-decoration: none;
+  display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 16px;
+  box-shadow: inset 0 -2px var(--linie); color: var(--slab); font-size: 16px; font-weight: 500; text-decoration: none;
 }
 .fila:hover { color: var(--text); }
-.fila[aria-current="page"] { color: var(--accent); border-bottom-color: var(--accent); font-weight: 650; }
+.fila[aria-current="page"] { color: var(--accent); box-shadow: inset 0 -3px var(--accent); font-weight: 650; }
 .fila b { font-weight: 650; }
-/* Pe pagina șantierului filele sunt butoane (o situație începută nu se pierde la schimbare). */
-button.fila { background: none; border: 0; border-bottom: 3px solid transparent; border-radius: 0; font: inherit; font-size: 16px; cursor: pointer; }
-button.fila[aria-current="page"] { border-bottom-color: var(--accent); }
+/* Pe pagina lucrării filele sunt butoane (o situație începută nu se pierde la schimbare). */
+button.fila { background: none; border: 0; border-radius: 0; font: inherit; font-size: 16px; cursor: pointer; }
+/* O filă la care nu s-a ajuns: gri, iar panoul ei spune de ce. */
+.fila[aria-disabled="true"] { color: var(--slab); opacity: .7; cursor: default; }
+.fila[aria-disabled="true"][aria-current="page"] { color: var(--slab); box-shadow: inset 0 -3px var(--linie-tare); }
+.fila .gata { color: var(--ok); font-weight: 700; }
+.setari-sub { margin: 12px 0 0; }
+/* Pentru cititorul de ecran: „(gata)” lângă ✓, care e doar desen. */
+.ascuns { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.mat-actiuni > a.secundar, .mat-actiuni > a.primar, .lucrari-sus > a.primar, td.fix > a.secundar {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 44px; text-decoration: none;
+}
+
+/* ---- Lucrări (14 noiembrie 2026): „Cerere nouă” sus, în dreapta; pe telefon, pe toată lățimea. */
+.lucrari-sus { display: flex; justify-content: flex-end; }
+@media (max-width: 560px) { .lucrari-sus > a.primar { flex: 1 1 auto; } }
+/* Rândul „Urmează”: o propoziție și butonul pasului de acum. */
+.urmeaza { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; }
+.urmeaza > .urmeaza-text { flex: 1 1 22rem; margin: 0; font-size: 17px; }
+.urmeaza > .alerta { flex: 1 1 100%; margin: 0; }
+.urmeaza-eticheta { display: block; margin-bottom: 2px; font-size: 13px; font-weight: 600; color: var(--slab); }
+.urmeaza > .mat-actiuni:empty { display: none; }
+@media (max-width: 560px) { .urmeaza > .mat-actiuni, .urmeaza > .mat-actiuni > * { flex: 1 1 auto; } }
 .file-panou { display: grid; gap: var(--imp-gap, 16px); }
 /* Antetul unui card: titlul și propoziția în stânga, butoanele în dreapta; pe telefon, dedesubt. */
 .mat-antet { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; }

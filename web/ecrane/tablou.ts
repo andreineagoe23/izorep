@@ -6,6 +6,7 @@ import { deComandatPeNecesar } from "../materiale.js";
 import { alerte } from "../../src/lucrari/rapoarte.js";
 import { progresPlan, type PlanSantier } from "../../src/lucrari/situatii.js";
 import { alerteAtentie } from "../rapoarte-vizual.js";
+import { gasesteLucrarea, lucrariDin, stadiu, type Lucrare } from "../lucrare.js";
 
 /**
  * Tabloul arată doar ce e în bază (pe linkul demo, în browser): ofertele
@@ -25,7 +26,15 @@ function stareSantier(p: PlanSantier): { text: string; ton: "ok" | "atentie" | "
   return p.situatii.length > 0 ? { text: "În execuție", ton: "neutru" } : { text: "Fără situații", ton: "neutru" };
 }
 
-const neofertate = (d: DateTablou): IntrareIstoric[] => d.importuri.filter((m) => !d.oferte[m.id]);
+/** Cererile fără ofertă, în afară de cele refuzate (refuzul e al unei oferte, dar să nu apară ca de făcut). */
+const neofertate = (d: DateTablou): IntrareIstoric[] => d.importuri.filter((m) => !d.oferte[m.id] && !m.antet?.refuzat);
+
+/**
+ * Adresa unei lucrări, pe fila ei (14 noiembrie 2026): butoanele din „De făcut”
+ * duc pe pagina lucrării, nu în ecranele de dinainte (Oferte și cereri, Șantiere).
+ */
+const spre = (toate: readonly Lucrare[], id: string, fila: string): string =>
+  `#/lucrari/${encodeURIComponent(gasesteLucrarea(toate, id)?.id ?? id)}/${fila}`;
 
 function randIndicatori(d: DateTablou): string {
   const oferte = Object.values(d.oferte);
@@ -53,10 +62,11 @@ const lista = (numere: string[]): string =>
 /** „De făcut”: un rând pe lucru, fiecare cu butonul care duce unde se rezolvă. */
 function deFacut(d: DateTablou): string {
   const itemi: { href: string; html: string; actiune: string }[] = [];
+  const toate = lucrariDin(d.importuri, d.oferte, d.planuri);
 
   for (const p of d.planuri.filter((x) => !x.inchis && progresPlan(x) >= 100)) {
     itemi.push({
-      href: `#/lucrari/${encodeURIComponent(p.id)}/inchide`,
+      href: spre(toate, p.id, "inchidere"),
       actiune: "Închide șantierul",
       html: `Șantierul <b>${esc(p.denumire)}</b> are tot executat: se poate închide, după ce se
         numără ce a rămas pe șantier.`,
@@ -66,19 +76,19 @@ function deFacut(d: DateTablou): string {
   const cerereMaiMare = [...neofertate(d)].sort((a, b) => b.pozitii - a.pozitii)[0];
   if (cerereMaiMare) {
     itemi.push({
-      href: "#/documente",
+      href: spre(toate, cerereMaiMare.id, "cerere"),
       actiune: "Deschide cererea",
       html: `Cererea <b>${esc(cerereMaiMare.nume)}</b> are <b>${cerereMaiMare.pozitii === 1 ? "o poziție" : cate(cerereMaiMare.pozitii, "poziții")}</b> și încă n-are ofertă.`,
     });
   }
 
-  // Oferta descarcata, dar fara santier: asteapta raspunsul clientului.
-  const cuSantier = new Set(d.planuri.map((p) => p.cerere).filter(Boolean));
-  const asteapta = Object.entries(d.oferte).filter(([id]) => !cuSantier.has(id)).map(([, o]) => o);
+  // Oferta descarcata, fara santier si nerefuzata: asteapta raspunsul clientului.
+  const trimise = toate.filter((l) => stadiu(l) === "trimise");
+  const asteapta = trimise.map((l) => l.oferta!);
   if (asteapta.length > 0) {
     const numere = asteapta.map((o) => `<b>${esc(o.numar || o.obiectiv || "fără număr")}</b>`);
     itemi.push({
-      href: "#/documente",
+      href: asteapta.length > 1 ? "#/lucrari?stadiu=trimise" : spre(toate, trimise[0]!.id, "oferta"),
       actiune: asteapta.length > 1 ? "Vezi ofertele" : "Vezi oferta",
       html: `${asteapta.length > 1 ? "Ofertele" : "Oferta"} ${lista(numere)} ${asteapta.length > 1
         ? "n-au încă șantier: așteaptă" : "n-are încă șantier: așteaptă"} răspunsul clientului.`,
@@ -88,7 +98,7 @@ function deFacut(d: DateTablou): string {
   for (const { necesar, articole } of deComandatPeNecesar(citesteDepozit())) {
     if (articole === 0) continue;
     itemi.push({
-      href: "#/materiale",
+      href: necesar.santier ? spre(toate, necesar.santier, "materiale") : "#/materiale",
       actiune: "Comandă ce lipsește",
       html: `Pentru <b>${esc(necesar.obiectiv || necesar.fisier)}</b> ${articole === 1
         ? "e un material" : `sunt <b>${nr(articole)}</b> materiale`} de comandat.`,
@@ -106,7 +116,7 @@ function tabelDerulare(d: DateTablou): string {
   const deschise = d.planuri.filter((p) => !p.inchis);
   if (deschise.length === 0) {
     return card("Șantiere în lucru", `<p class="hint" style="margin:0">Niciun șantier deschis. Șantierul se face din
-      ofertă: în <a href="#/import">Cerere nouă</a>, la pasul „Oferta”, „Creează șantierul”.</p>`);
+      ofertă: în <a href="#/lucrari">Lucrări</a>, pe lucrarea lui, „Clientul a acceptat”.</p>`);
   }
   const randuri = deschise.map((p) => {
     const st = stareSantier(p);

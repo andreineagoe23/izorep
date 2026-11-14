@@ -240,8 +240,8 @@ function alegereScop(scop: Scop): string {
 
 function alegereSantier(santiere: SantierAles[], ales: string, scop: Scop): string {
   if (santiere.length === 0) {
-    return `<p class="hint" style="margin:0">Niciun șantier încă. Șantierul se face din ofertă: în
-      <a href="#/import">Cerere nouă</a>, la pasul „Oferta”, „Creează șantierul”.</p>`;
+    return `<p class="hint" style="margin:0">Niciun șantier încă. Șantierul pornește din ofertă: în
+      <a href="#/lucrari">Lucrări</a>, pe lucrarea lui, „Clientul a acceptat”.</p>`;
   }
   return `<label>Șantierul (${scop === "comanda" ? "materialul vine pe el" : "situația se face pe pozițiile ofertei lui"})
     <select name="plan"><option value="">— alege șantierul —</option>${santiere.map((x) =>
@@ -270,10 +270,12 @@ export function mesajModel(m: StareModel | undefined): string {
 export function cardIncarca(o: {
   scop: Scop; santiere: SantierAles[]; planAles: string; eroare: string; trimisa?: string;
   model?: StareModel;
+  /** Venit de pe o lucrare: șantierul și scopul sunt știute, nu se mai aleg (14 noiembrie 2026). */
+  faraAlegere?: boolean;
 }): string {
   // Pentru ofertă doar pozele: tipul ofertei se alege la verificare, ca la orice cerere.
   return `<section class="imp-card imp-incarca">
-    ${o.scop === "oferta" ? "" : `<div class="imp-campuri sant-sus">
+    ${o.scop === "oferta" || o.faraAlegere ? "" : `<div class="imp-campuri sant-sus">
       ${alegereScop(o.scop)}
       ${alegereSantier(o.santiere, o.planAles, o.scop)}
     </div>`}
@@ -327,7 +329,7 @@ export function cardTrimite(o: {
     <h2>Pune în situația de lucrări</h2>
     <p class="hint">${dinPagini}. ${o.santier
       ? `Fiecare rând se pune pe poziția din oferta șantierului „${esc(o.santier.denumire)}” care e aceeași lucrare
-        (material, grosime, diametru, formă). Se deschide o situație nouă, completată; o verifici și o salvezi în Șantiere.
+        (material, grosime, diametru, formă). Se deschide o situație nouă, completată; o verifici și o salvezi pe pagina lucrării.
         Ce nu se potrivește sigur rămâne de ales de tine.`
       : "Alege șantierul, sus."}</p>
     ${lipsa}

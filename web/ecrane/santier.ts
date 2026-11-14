@@ -14,7 +14,7 @@ import {
 import { incarca as incarcaImport, listeaza as listeazaImporturi } from "../date.js";
 import { stocLocal } from "../stoc-local.js";
 import type { Comparatie } from "../../src/lucrari/comparatie.js";
-import type { Ecran } from "./tip.js";
+import { esc, titluEcran, type Ecran } from "./tip.js";
 import { citesteLucru, paginaRefacuta, scrieLucru } from "../masuratori-local.js";
 
 /**
@@ -156,17 +156,39 @@ export const ecran: Ecran = {
   titlu: "Măsurători",
   subtitlu: "Pozele din carnet, din timpul lucrării. Rândurile citite din poză, verificate de tine, " +
     "ajung în situația de lucrări sau în comanda de material.",
-  render: (root) => montezaPoze(root, "santier"),
+  render: (root) => {
+    // Venit de pe o lucrare (14 noiembrie 2026): `#/masuratori/<santier>/<situatie|comanda>`.
+    // Șantierul și scopul sunt deja știute, deci nu se mai aleg.
+    const [, plan, ce] = location.hash.replace(/^#\/?/, "").split("/").map((x) => decodeURIComponent(x));
+    const p = plan ? citestePlanuri().find((x) => x.id === plan && !x.inchis) : undefined;
+    const scopAles: Scop | undefined = ce === "situatie" || ce === "comanda" ? ce : undefined;
+    return montezaPoze(root, "santier", p && scopAles ? { fix: { plan: p.id, scop: scopAles } } : {});
+  },
 };
 
 /**
  * Pozele din carnet, montate în `root`. `laOferta`: ce face Cerere nouă după
  * „Trimite la ofertă” (e deja pe ecran; o navigare spre `#/import` n-ar schimba nimic).
  */
-export async function montezaPoze(root: HTMLElement, unde: Loc, opt: { laOferta?: () => void } = {}): Promise<void> {
+export async function montezaPoze(
+  root: HTMLElement, unde: Loc, opt: { laOferta?: () => void; fix?: { plan: string; scop: Scop } } = {},
+): Promise<void> {
   treciPe(unde);
   if (unde === "santier" && scop === "oferta") scop = "situatie";
+  const fix = opt.fix;
+  const inapoi = fix ? `#/lucrari/${encodeURIComponent(fix.plan)}/${fix.scop === "situatie" ? "situatii" : "materiale"}` : "";
+  if (fix) {
+    // Pozele rămase de pe alt șantier sau pentru alt scop nu se amestecă: au plecat la el.
+    if (planAles !== fix.plan || scop !== fix.scop) { pagini = []; trimisa = ""; mesajComanda = ""; eroare = ""; }
+    scop = fix.scop;
+    planAles = fix.plan;
+    const denumire = citestePlanuri().find((p) => p.id === fix.plan)?.denumire ?? "";
+    titluEcran(`Poze de pe ${denumire}`, fix.scop === "situatie"
+      ? "Pozele din carnet cu ce s-a executat. Rândurile citite, verificate de tine, ajung în situația nouă."
+      : "Pozele din carnet cu ce s-a măsurat. Rândurile citite, verificate de tine, devin ciornele comenzii.");
+  }
   root.innerHTML = `<div class="imp sant">
+    ${fix ? `<p style="margin:0"><a class="legatura" href="${esc(inapoi)}">← Înapoi la lucrare</a></p>` : ""}
     <div id="sant-incarca"></div>
     <div id="sant-pagini" class="imp-pagina"></div>
     <div id="sant-trimite"></div>
@@ -183,7 +205,7 @@ export async function montezaPoze(root: HTMLElement, unde: Loc, opt: { laOferta?
   /** Pe situatie, tipul ofertei e al santierului, nu cel ales sus. */
   const destinatiaPaginii = (): Destinatie =>
     scop !== "oferta" ? ((citestePlanuri().find((p) => p.id === planAles)?.destinatie as Destinatie | undefined) ?? destinatie) : destinatie;
-  const incarca = (): string => cardIncarca({ scop, santiere: santiere(), planAles, eroare, trimisa, model });
+  const incarca = (): string => cardIncarca({ scop, santiere: santiere(), planAles, eroare, trimisa, model, faraAlegere: !!fix });
 
   const deseneaza = (): void => {
     gazda.querySelector("#sant-incarca")!.innerHTML = incarca();
@@ -552,8 +574,9 @@ export async function montezaPoze(root: HTMLElement, unde: Loc, opt: { laOferta?
     }
     lucreaza = false;
     golesteDupaTrimitere();
-    trimisa = `Ultimele măsurători au plecat în situația nouă de pe șantierul „${plan.denumire}”, în Șantiere.`;
-    location.hash = "#/lucrari";
+    trimisa = `Ultimele măsurători au plecat în situația nouă de pe șantierul „${plan.denumire}”.`;
+    // Pagina lucrării ia situația venită din poze (`preiaSituatie`) și o deschide pe fila Situații.
+    location.hash = `#/lucrari/${encodeURIComponent(plan.id)}/situatii`;
   }
 
   /**
@@ -623,7 +646,7 @@ export async function montezaPoze(root: HTMLElement, unde: Loc, opt: { laOferta?
     golesteDupaTrimitere();
     trimisa = `Ultima listă a plecat la verificare: ${fisier.name}. O găsești și în importurile recente.`;
     if (opt.laOferta) opt.laOferta();
-    else location.hash = "#/import";
+    else location.hash = "#/lucrari/noua";
   }
 
   // Montat în Cerere nouă, ecranul gazdă are propriile ascultători pe aceleași
