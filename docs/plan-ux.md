@@ -295,3 +295,78 @@ Pentru fiecare: da / nu / altfel.
 7. La import: citirea coloanelor cu modelul din aplicație, corecturile în bază,
    fila „Lăsate afară”.
 8. Ordinea fazelor.
+
+## Unde am rămas (14 noiembrie 2026)
+
+Pentru cine continuă pe alt calculator, într-o sesiune nouă. Ramura `ux-lucrare`,
+nepublicată (fără push). Faza 2 e **scrisă și trece testele, dar n-a fost văzută
+în browser**.
+
+### Făcut (commit-uri)
+
+| Commit | Ce |
+|---|---|
+| `3fe4c69` | Meniul pe patru, fără grupuri: Acasă · Lucrări · Materiale · Setări (`web/nav.ts`, `MENIU` și `SETARI`). Setările sunt ecranele de dinainte (Clienți, Liste de prețuri, Calcul rapid, Istoric, Contul meu), fiecare cu adresa lui, sub o bară de file comună desenată de `main.ts` (`fileSetari`), cu „Setări” aprins în meniu (`IN_MENIU`). Adresele vechi: `ALIAS` (`cereri`, `oferte`, `documente`, `santiere` → `lucrari`; `setari` → `clienti`) și `MUTATE` (`#/import[/poze]` → `#/lucrari/noua[/poze]`). În același commit a ieșit `web/ecrane/documente.ts` (Oferte și cereri). |
+| `ba1d742` | `web/lucrare.ts`, pur, cu teste (`tests/lucrare.test.ts`, 7): legarea cerere + ofertă + șantier (`lucrariDin`, `gasesteLucrarea`, și după id-ul șantierului), stadiul, rândul „Urmează” (`urmeaza`) și starea filelor (`stareFile`). Lista cererilor de pe server (`listaCereri` în `src/server/repo.ts`) întoarce acum și `antet` și `deVerificat` din `lucru` (jsonb), fără migrare. |
+| `3e82999` | `web/ecrane/lucrari.ts` rescris: lista pe stadii (De ofertat · Oferte trimise · În lucru · Închise, cu cifra; `#/lucrari?stadiu=…`; „Cerere nouă” albastru sus) și pagina lucrării (`#/lucrari/<id>/<fila>`; antet, „⋯” cu Planul de șantier și Șterge lucrarea, rândul „Urmează”, cinci file-butoane cu ✓ și file inactive cu motivul). `web/ecrane/import.ts` nu mai e ecran: `montezaImport(gazda, opt)` întoarce un control (`arata`, `salveazaAcum`, `refuz`, `santier`); fără pașii 1·2·3, fără „Importuri recente”, fără „Materiale de comandat” și „Creează șantierul” pe Ofertă; „Cum iese oferta” stă sub datele ofertei și se reface la tastă. `web/ecrane/santier-panou.ts` (nou): Materiale, Situații, Închidere și planul, mutate din pagina șantierului, plus „Schimbă regulile de calcul” (cardul vechi, `cardNecesar`, cu „Refă lista”), „Comandă din poze”, „Situație din poze”. Pozele (`#/masuratori/<santier>/<situatie|comanda>`) fără alegerea scopului și a șantierului, cu titlul și „← Înapoi la lucrare”. Acasă: butoanele duc pe pagina lucrării, pe fila potrivită. Linia filelor pe două rânduri, reparată în `.file` / `.fila` (`style.css`). |
+
+Verificat: `npm run typecheck` curat, `npm test` **705 teste** trec (698 + 7 noi),
+`npm run build:server` trece. **Nimic verificat în browser.**
+
+### Pe jumătate / nefăcut
+
+- **Parcurgerea în browser, de la cap la coadă, nefăcută.** De făcut întâi:
+  Lucrări (file, cifre) → Cerere nouă → TRANSAVIA a doua oară → fila Cerere →
+  Mergi la ofertă → număr și obiectiv → Descarcă oferta (94.575,06 €; cu 3 %:
+  91.737,81 €) → A refuzat → A acceptat până la urmă → Da, pornește șantierul →
+  Materiale → Schimbă regulile → Situații → Închidere; Matari, NISAL; adresele
+  vechi; reîncărcarea pe fiecare filă; 390 și 1440 px, ambele teme. Locuri de
+  suspectat: trecerea de la `#/lucrari/noua` la pagina lucrării după fișier
+  (`cerereNoua` în `lucrari.ts`, depinde de salvarea cererii înainte), plierea
+  barei (`ceriSpatiu`) la schimbarea filelor, focusul după „Urmează”.
+- Un test de server pentru `antet` / `deVerificat` în `/api/cereri` nu e scris.
+- `.claude/stare.md` și `.claude/ui.md` nu sunt actualizate pentru Faza 2.
+- Pe linkul demo (fără server) au plecat „Documentele firmei” și „Lucrările din
+  datele firmei” (exemplele): nu mai au ecran.
+- `deschideLaIntrare` / `iaDeDeschis` din `web/date.ts` au rămas nefolosite.
+
+### Decizii luate (de păstrat)
+
+- **Fără starea „trimisă”**: o ofertă salvată fără șantier și fără refuz e
+  „Oferte trimise”.
+- **Refuzul fără migrare**: ziua refuzului e `antet.refuzat` (ISO) în lucrul
+  cererii (`SesiuneImport.antet`, deja salvat cu versiune); lista o citește din
+  `lucru->'antet'`. „A acceptat până la urmă” îl scoate; un refuz oprește
+  pornirea șantierului (`santierDin` în `import.ts`).
+- **„Clientul a acceptat” = „Creează șantierul” de dinainte**: întreabă pe loc
+  „Pornești șantierul …?”, apoi plan + listă pe depozitul șantierului, cu
+  regulile firmei (`REGULI_FIRMEI`: pierderi implicite, tuburi până la 3 țoli),
+  și duce pe fila Materiale. Fără obiectiv: mesaj și fila Ofertă. Codul e o
+  singură funcție, `santierDin`, folosită și de „Refă lista” (care păstrează
+  editările omului, `pastreazaEditari`). `scripts/demo.ts` nu e atins.
+- **„Urmează”, în ordine**: 1 poziții de verificat → Verifică; 2 fără ofertă →
+  Mergi la ofertă; 3 ofertă fără răspuns → Clientul a acceptat / A refuzat;
+  4 refuzată → A acceptat până la urmă; 5 de comandat → Comandă ce lipsește;
+  6 totul executat → Închide șantierul; 7 în lucru → Situație nouă; 8 închisă,
+  fără buton. Abatere luată de noi: cu șantier pornit, pasul 1 nu mai apare
+  (refuzul vine înaintea lui 1). Butonul care doar ar duce pe fila deschisă
+  deja nu se desenează.
+- **Măsurători iese din meniu**; ruta rămâne, iar pozele intră din filele
+  lucrării cu șantierul și scopul deja alese.
+
+### Cum verifici pe alt calculator
+
+Baza de probă `izorep_ux` nu e în repo; se face din nou:
+
+```bash
+docker exec izorep-db createdb -U <proprietar> izorep_ux   # sau din psql: create database izorep_ux;
+IZOREP_DB=izorep_ux npm run db:migrate
+IZOREP_DB=izorep_ux npm run db:seed
+IZOREP_DB=izorep_ux npm run demo          # TRANSAVIA deschis, NISAL închis, Matari fără șantier
+IZOREP_DB=izorep_ux npm run om -- <email> "<nume>" --parola-stdin   # contul de intrare
+npm run build:server
+IZOREP_DB=izorep_ux PORT=8813 OPENAI_API_KEY= npx tsx src/server/porneste.ts
+```
+
+Comenzile cer `< /dev/null` când rulează fără terminal. Nu folosi baza
+implicită `izorep` și nici porturile 8787 / 5173.
