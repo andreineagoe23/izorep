@@ -10,7 +10,7 @@ import type { LinieExtrasa } from "../../src/import/schema.js";
 import type { FoaieBruta } from "../../src/import/parse-workbook.js";
 import type { Destinatie } from "../../src/pricing/lists.js";
 import { grosimePropusa } from "../../src/pricing/grosimi-uzuale.js";
-import { stocLocal } from "../stoc-local.js";
+import { stocSabloane } from "../stoc-sabloane.js";
 import { ceriSpatiu } from "../meniu-stare.js";
 import { anuleaza, confirma, potrivit } from "../validare.js";
 import { cate, esc, eur } from "./tip.js";
@@ -229,7 +229,7 @@ function santierDin(c: CerereDeschisa, reguli: ReguliNecesar): RezultatSantier {
 async function optiuniCererii(s: SesiuneImport): Promise<OptiuniNucleu> {
   const info = await interogheazaModel();
   return {
-    stoc: stocLocal(), mapari: (await mapariImport(s.mapari)).mapari, prag: info?.prag ?? 0.85, destinatie: s.destinatie ?? "rezidential",
+    stoc: await stocSabloane(), mapari: (await mapariImport(s.mapari)).mapari, prag: info?.prag ?? 0.85, destinatie: s.destinatie ?? "rezidential",
     grosimiPropuse: new Map(s.grosimiPropuse ?? []), descrieriSchimbate: new Set(s.descrieriSchimbate ?? []),
     preturiManuale: new Map(s.preturiManuale ?? []),
   };
@@ -328,7 +328,7 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
   /** Coloanele foilor: din repo, ale firmei, ale cererii (`mapari-firma.ts`). */
   let mi = await mapariImport();
   const prag = info?.prag ?? 0.85;
-  const stoc = stocLocal();
+  const stoc = await stocSabloane();
 
   /* --------------------------------------------------------------- stare */
   let destinatie: Destinatie = "rezidential";

@@ -119,10 +119,16 @@ ce zice modelul, o extragere greșită s-ar propaga tăcut peste toate proiectel
 următoare. Se învață doar pozițiile complete: un șablon cu jumătate de rol arată
 că știe și dă valori pe jumătate.
 
-Depozitul e o interfață (`StocSabloane`) cu două implementări — fișier
-(`data/sabloane.json`, pentru CLI) și `localStorage` (demo). Când apare serverul,
-a treia e o tabelă per tenant: o corecție a unui coleg trebuie să ajute pe toată
-lumea.
+Depozitul e o interfață (`StocSabloane`) cu trei implementări — fișier
+(`data/sabloane.json`, pentru CLI), `localStorage` (linkul demo) și, din 14
+noiembrie 2026 (planul UX, Faza 6, punctul 2), tabelul `sablon_import`, pe
+firmă (`web/stoc-sabloane.ts`, `/api/sabloane`): corectura unui coleg îl ajută
+și pe celălalt și nu se pierde la schimbarea calculatorului. Interfața rămâne
+sincronă: șabloanele firmei se aduc o dată la deschiderea importului
+(`stocSabloane()`), iar o corectură se pune în copia din pagină și pleacă apoi
+la server. Ce era deja în `localStorage` se mută o dată
+(`/api/sabloane/mutare`, marcaj `izorep-sabloane-mutate`); un tipar pe care
+firma îl știe deja nu se scrie peste. Teste: `tests/sabloane-firma.test.ts`.
 
 Ce decide dacă se învață stă în `invataDinCorectie`, nu în ecran: în ecran ar fi
 fost câteva linii într-un handler de `change`, adică exact codul pe care nu-l

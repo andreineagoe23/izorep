@@ -134,6 +134,13 @@
       "when": 1794691405264,
       "tag": "0018_mapare_coloane",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1794691926370,
+      "tag": "0019_sabloane_import",
+      "breakpoints": true
     }
   ]
 }

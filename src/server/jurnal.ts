@@ -41,6 +41,9 @@ const ACTIUNI: [string, RegExp, string][] = [
   ["POST", /^\/api\/parola$/, "și-a schimbat parola"],
   ["POST", /^\/api\/mapare$/, "a citit coloanele unei foi noi"],
   ["PUT", /^\/api\/mapari$/, "a ales coloanele unei foi"],
+  ["PUT", /^\/api\/sabloane$/, "a corectat o poziție (se ține pentru importurile următoare)"],
+  ["DELETE", /^\/api\/sabloane$/, "a scos o corectură ținută pentru importuri"],
+  ["POST", /^\/api\/sabloane\/mutare$/, "a mutat corecturile din browser pe server"],
 ];
 
 /** Citirile modelului: nu schimbă nimic în bază. */

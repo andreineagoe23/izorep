@@ -383,6 +383,13 @@ zilnic, 502 pe răspuns stricat, 503 fără cheie; un antet deja în bază nu ma
 cheamă modelul), `PUT /api/mapari` (alegerea omului, 400 dacă nu trece
 verificarea; `mapare: null` o scoate). Modelul e injectabil (`OptiuniModel.mapeaza`).
 
+Migrarea **0019**: `sablon_import` (cheia `(tenant_id, tipar)`, RLS cu
+FORCE): memoria de șabloane a importului (L4), care stătea în `localStorage`.
+`GET /api/sabloane`, `PUT` (unul; ultima corectură pe același tipar câștigă),
+`DELETE` (`{ tipar }`), `POST /api/sabloane/mutare` (ce era în browser,
+`on conflict do nothing`: fără dubluri și fără să scrie peste firmă; șabloanele
+care nu trec de schemă se lasă deoparte).
+
 ## Ce lipsește
 
 - Permisiunile pe rol (rolurile se stabilesc cu firma). Conturile și jurnalul

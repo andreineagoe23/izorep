@@ -11,14 +11,21 @@
  * - `GET /api/mapari`: ce știe firma, la fiecare import.
  * - `PUT /api/mapari`: coloanele alese de om („schimbă”), verificate la fel;
  *   `mapare: null` le scoate („Anulează” pe un antet necunoscut înainte).
+ *
+ * Și memoria de șabloane (L4), care stătea în `localStorage`: `GET`,
+ * `PUT` (unul), `DELETE` (după tipar) pe `/api/sabloane`, plus
+ * `POST /api/sabloane/mutare`, care aduce o dată ce era în browser, fără să
+ * scrie peste ce știe deja firma.
  */
 import { Hono, type Context as HonoCtx } from "hono";
 import { z } from "zod";
 import { eq } from "drizzle-orm";
 import type { Baza } from "../db/client.js";
-import { mapareColoane } from "../db/schema.js";
+import { mapareColoane, sablonImport } from "../db/schema.js";
 import { amprentaFoaie, MapareFoaie, valideazaMapare } from "../import/mapare.js";
 import { foaieDinFir, type FoaiePeFir } from "../import/coloane.js";
+import { LinieExtrasa } from "../import/schema.js";
+import type { SablonInvatat } from "../import/memorie.js";
 import type { FoaieBruta } from "../import/rand.js";
 import { mesajPlafon, PLAFOANE_IMPLICITE } from "./limita-model.js";
 import type { OptiuniModel } from "./model.js";
@@ -41,6 +48,19 @@ const FoaieZ = z.object({
     celule: z.array(z.object({ v: Valoare, span: z.number().int().positive().max(500) })).max(500),
   })).max(20000),
 });
+
+/** Un șablon învățat, verificat cât să nu ajungă în bază ceva care n-ar mai putea fi citit. */
+const SablonZ = z.object({
+  tipar: z.string().min(1).max(2000),
+  extras: LinieExtrasa,
+  harta: z.array(z.object({ camp: z.union([z.string(), z.object({ strat: z.number().int().nonnegative() })]) }).passthrough()).max(50),
+  exemplu: z.string().max(300),
+  actualizat: z.string().max(40),
+});
+
+export async function sabloaneFirmei(tx: Baza): Promise<SablonInvatat[]> {
+  return (await tx.select({ sablon: sablonImport.sablon }).from(sablonImport)).map((r) => r.sablon as SablonInvatat);
+}
 
 /** O mapare a firmei, cum o primește pagina. */
 export interface MapareFirmei {
@@ -127,6 +147,32 @@ export function ruteImportFirma(o: OptiuniModel & { mapeaza?: Mapeaza }, inTenan
       amprenta, mapare, acceptata: true, sursa: "om", fisier: corp.fisier ?? null, foaie: foaie.nume, model: null,
     }));
     return c.json({ amprenta, mapare, acceptata: true });
+  });
+
+  app.get("/sabloane", async (c) => c.json(await inTenant(c, (tx) => sabloaneFirmei(tx))));
+  // Corectura omului: ultimul care corectează același tipar câștigă, ca în `stocLocal`.
+  app.put("/sabloane", async (c) => {
+    const s = SablonZ.parse(await c.req.json());
+    await inTenant(c, (tx, ctx) => tx.insert(sablonImport)
+      .values({ tenantId: ctx.tenantId, tipar: s.tipar, sablon: s, actualizatDe: ctx.nume ?? null })
+      .onConflictDoUpdate({
+        target: [sablonImport.tenantId, sablonImport.tipar], set: { sablon: s, actualizatLa: new Date(), actualizatDe: ctx.nume ?? null },
+      }));
+    return c.json({ ok: true });
+  });
+  app.delete("/sabloane", async (c) => {
+    const { tipar } = z.object({ tipar: z.string().min(1).max(2000) }).parse(await c.req.json());
+    await inTenant(c, (tx) => tx.delete(sablonImport).where(eq(sablonImport.tipar, tipar)));
+    return c.json({ ok: true });
+  });
+  // Ce era în browser, o dată: un tipar pe care firma îl știe deja nu se scrie peste (fără dubluri).
+  app.post("/sabloane/mutare", async (c) => {
+    const { sabloane } = z.object({ sabloane: z.array(z.unknown()).max(5000) }).parse(await c.req.json());
+    const bune = sabloane.map((x) => SablonZ.safeParse(x)).filter((r) => r.success).map((r) => r.data!);
+    const mutate = bune.length === 0 ? 0 : await inTenant(c, async (tx, ctx) => (await tx.insert(sablonImport)
+      .values(bune.map((s) => ({ tenantId: ctx.tenantId, tipar: s.tipar, sablon: s, actualizatDe: ctx.nume ?? null })))
+      .onConflictDoNothing().returning({ tipar: sablonImport.tipar })).length);
+    return c.json({ mutate, primite: sabloane.length });
   });
 
   return app;

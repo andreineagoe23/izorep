@@ -12,7 +12,7 @@ import {
   cardComparatie, cardIncarca, cardPagina, cardTrimite, previzualizare, type ListaClient, type PaginaSantier, type SantierAles, type Scop,
 } from "../santier-vizual.js";
 import { incarca as incarcaImport, listeaza as listeazaImporturi } from "../date.js";
-import { stocLocal } from "../stoc-local.js";
+import { stocSabloane } from "../stoc-sabloane.js";
 import type { Comparatie } from "../../src/lucrari/comparatie.js";
 import { esc, titluEcran, type Ecran } from "./tip.js";
 import { citesteLucru, paginaRefacuta, scrieLucru } from "../masuratori-local.js";
@@ -518,7 +518,7 @@ export async function montezaPoze(
         ]);
       // Memoria de sabloane a ecranului de import: lista iese cum a vazut-o omul acolo.
       const rez = await redeschideImport(s, {
-        stoc: stocLocal(), destinatie,
+        stoc: await stocSabloane(), destinatie,
         grosimiPropuse: new Map(s.grosimiPropuse ?? []),
         descrieriSchimbate: new Set(s.descrieriSchimbate ?? []),
         preturiManuale: new Map(s.preturiManuale ?? []),
