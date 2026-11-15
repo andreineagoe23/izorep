@@ -53,6 +53,14 @@ jumătate** (limita de folosire): ce a rămas nevăzut e scris mai jos.
 | `33d2ce3` | Faza 6, punctul 7: „Încearcă din nou” doar pe rândurile necitite (`necitite`, `recitesteNecitite`) |
 | `890b9f4` | Faza 6, punctul 9: motivul ca propoziție, cu „E bine” (fostul „Confirmă”) și „Schimb” (`web/import/explica.ts`) |
 
+După: `d93b8ba`. Tabelul CET „clasa de izolație pe sistem” (`260522 PEN Proposal
+for Insulation construction EN.xlsx`, din `~/Downloads/radoia-fisiere`) lipsea
+din `../attachments/clienti`, deși `README`-ul îl trecea: pus la loc ca
+`cerere-de-oferta-cet-constanta-specificatie-izolatie.xlsx`, iar
+`tests/lasate-afara.test.ts` îl numără (0). **Pe alt calculator trebuie copiat
+de mână**, altfel testul ăsta pică. Restul din `radoia-fisiere` era deja în
+`attachments` sau e email (nu se păstrează).
+
 Curățat: worktree-urile `faza6` și `f6b`, legătura `.claude/worktrees/attachments`,
 bazele `izorep_f6` și `izorep_f6b`, ramurile `ux-import` (și pe GitHub) și
 `ux-faza6-rest`.
@@ -100,7 +108,10 @@ bazele `izorep_f6` și `izorep_f6b`, ramurile `ux-import` (și pe GitHub) și
    două ieșiri din „Comandă ce lipsește”, „De ales” pierdut la reîncărcare,
    filele lucrării pe două rânduri pe telefon, NISAL închisă cu „De verificat 7”.
 4. Unirea pe `main` și deploy-ul; apoi Faza 7 (proba cu un om).
-5. `.claude/stare.md` are 2.300 de linii și se încarcă la fiecare sesiune și la
+5. Tabelul CET pe sistem (mai sus) poate propune singur izolația pe fiecare
+   foaie la „izolația pe foaie” (azi omul o alege de mână): WSS elastomer la
+   rece, OMS / HWS / ECS / DHCT vată cu tablă, GSS / UMS / CAS fără izolație.
+6. `.claude/stare.md` are 2.300 de linii și se încarcă la fiecare sesiune și la
    fiecare agent (~100.000 de tokeni cu restul): de tăiat la ultimele intrări
    sau de scos din `CLAUDE.md`, cu acordul lui Andrei.
 
