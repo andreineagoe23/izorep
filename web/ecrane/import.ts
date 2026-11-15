@@ -906,15 +906,19 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
         pagina.innerHTML = ecranProgres("Se citesc coloanele…", null);
         plafon = await citesteColoanele(foi, fisier.name, mi);
       }
-      const extractor: Extractor | undefined = info ? async (deTrimis) => {
+      // Bara de progres e una pentru toate apelurile: rândurile se citesc de două ori, în paralel (Faza 6, punctul 4).
+      let totLoturi = 0;
+      let gata = 0;
+      const extractor: Extractor | undefined = info ? async (deTrimis, ctx) => {
         const lot = info.lot ?? LOT_IMPLICIT;
         const loturi: (typeof deTrimis)[] = [];
         for (let i = 0; i < deTrimis.length; i += lot) loturi.push(deTrimis.slice(i, i + lot));
+        totLoturi += loturi.length;
         const primite: LinieExtrasa[] = [];
-        let gata = 0;
         let urmator = 0;
         const arata = (): void => {
-          pagina.innerHTML = ecranProgres("Se recunosc pozițiile…", loturi.length ? (gata / loturi.length) * 100 : 100);
+          pagina.innerHTML = ecranProgres(ctx.citire ? "Se recunosc pozițiile, de două ori, ca să fie sigure…" : "Se recunosc pozițiile…",
+            totLoturi ? (gata / totLoturi) * 100 : 100);
         };
         arata();
         const lucrator = async (): Promise<void> => {

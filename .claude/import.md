@@ -364,6 +364,24 @@ Liniile lipsă nu apăreau nicăieri în raport — nici ca poziții, nici ca er
 deci un fișier ciuntit arăta exact ca un fișier cu mai puține poziții.
 `RaportImport.modelFaraRaspuns` le numără.
 
+## Două citiri (15 noiembrie 2026, planul UX, Faza 6, punctul 4)
+
+Încrederea era cea pe care și-o dă modelul, cu prag 0,85; pe TRANSAVIA a
+oscilat pe prag de la o rulare la alta. Acum liniile care pleacă la model se
+citesc de două ori, în paralel, aceleași linii (`citesteDeDouaOri` în
+`nucleu.ts`, `OptiuniNucleu.douaCitiri`, implicit da). Unde cele două citiri
+diferă la un câmp care intră în preț (`diferenteCitiri`: sistem, diametru tip
+și valoare, grosime, formă, straturi, gol; sau a doua lipsește), linia ia
+încrederea 0 și motivul `CITIT_DIFERIT`, iar `construiesteLinii` îi pune
+avertismentul `citit_diferit` („Citit de două ori, diferit”): merge la om
+oricât de sigur s-ar spune modelul. Rezultatul e prima citire. Se aplică
+reprezentanților de șablon; proiecțiile moștenesc motivul. Pragul rămâne ca
+plasă. Costul: de două ori tokenii, iar plafonul zilnic (3.000 de rânduri)
+numără ambele citiri, deci ajunge la ~1.500 de rânduri pe zi. Pe ecran, bara
+de progres e una pentru amândouă („Se recunosc pozițiile, de două ori, ca să
+fie sigure…”). Partea deterministă și golden files nu se schimbă. Teste:
+`tests/doua-citiri.test.ts`.
+
 ## Golden files: deriva modelului
 
 `OPENAI_MODEL` arată spre ceva care se poate schimba sub noi. Aliasul `gpt-4.1`

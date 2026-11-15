@@ -91,6 +91,7 @@ export const ETICHETE_BLOCAJ: Record<CodBlocaj, { eticheta: string; intrebare?: 
   diametru_nenotat: { eticheta: "diametrul citit e alt număr de pe rând, nu cel scris ca diametru" },
   strat_necitat: { eticheta: "un strat (tablă, inox, PVC) care nu e scris pe rând" },
   grosime_interval: { eticheta: "grosimea e dată ca interval; alegerea e a omului" },
+  citit_diferit: { eticheta: "rândul citit automat de două ori a ieșit diferit" },
 };
 
 /**
