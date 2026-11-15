@@ -1492,7 +1492,7 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
         vedereAfara = false;
         filtru = l && potrivit(l, "de_validat") ? "de_validat" : "netarifate";
         filtruAles = true; motiv = null; randInLucru = idx;
-        arataMesaj("Rândul e acum poziție: alege materialul și grosimea, apoi confirmă.", () => {
+        arataMesaj("Rândul e acum poziție: alege materialul și grosimea, apoi apasă „E bine”.", () => {
           if (vechi) s.rez.rezolvate.set(idx, vechi); else s.rez.rezolvate.delete(idx);
           retarifeaza();
         });
@@ -1501,6 +1501,15 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
         return;
       }
       case "reincearca": void reincearca(); return;
+      case "schimb": {
+        // „Schimb” de sub propoziție: cursorul în caseta presupunerii, pe rândul ei.
+        const sel = CASETA_COLOANEI[b.dataset["camp"] ?? ""];
+        const rand = b.closest("tr");
+        const tinta = sel && rand ? rand.querySelector<HTMLElement>(sel) : null;
+        tinta?.focus();
+        if (tinta instanceof HTMLInputElement) tinta.select();
+        return;
+      }
       case "confirma-tot":
         if (sesiune) confirmaIndecsi(vizibile(sesiune).lista.filter((l) => potrivit(l, "de_validat")).map((l) => l.extras.index));
         deseneaza();

@@ -147,6 +147,13 @@ export interface OptiuniNucleu {
   laProgres?: (p: Progres) => void;
 }
 
+/**
+ * Diametrele scrise pe rând, pentru propoziția de la „De verificat” din ecran
+ * (`web/import/explica.ts`): ecranul nu atinge `extract-regex.js` direct
+ * (`tests/structura.test.ts`), deci trece pe aici, cu aceeași regulă.
+ */
+export { diametreNotate, diametreScrise } from "./extract-regex.js";
+
 /** Începutul motivului pe o linie citită diferit de două ori; `construiesteLinii` îl face avertisment. */
 export const CITIT_DIFERIT = "citit de două ori, diferit";
 

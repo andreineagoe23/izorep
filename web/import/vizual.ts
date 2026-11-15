@@ -170,8 +170,8 @@ export interface OptiuniActiuni {
 export function actiuniLista(o: OptiuniActiuni): string {
   if (o.deConfirmat === 0 && o.grosimi === 0) return "";
   return `<div class="imp-actiuni">
-    ${o.deConfirmat > 0 ? `<button type="button" class="secundar" data-act="confirma-tot">Confirmă ${
-      o.deConfirmat === 1 ? "poziția" : `toate cele ${cate(o.deConfirmat, "poziții")}`}</button>` : ""}
+    ${o.deConfirmat > 0 ? `<button type="button" class="secundar" data-act="confirma-tot">${
+      o.deConfirmat === 1 ? "Poziția e bine" : `Toate cele ${cate(o.deConfirmat, "poziții")} sunt bine`}</button>` : ""}
     ${o.grosimi > 0 ? `<button type="button" class="secundar" data-act="grosimi">Pune grosimea uzuală la ${pozitii(o.grosimi)}</button>` : ""}
   </div>`;
 }
@@ -204,7 +204,7 @@ export function actiuniPozitie(l: LinieProcesata, propunere: number | null, edit
   const idx = l.extras.index;
   const stare = stareLinie(l);
   return [
-    stare === "de_validat" ? `<button type="button" class="primar" data-act="confirma" data-idx="${idx}">Confirmă</button>` : "",
+    stare === "de_validat" ? `<button type="button" class="primar" data-act="confirma" data-idx="${idx}">E bine</button>` : "",
     stare === "netarifate" && propunere !== null
       ? `<button type="button" class="primar" data-act="pune-grosime" data-idx="${idx}" data-g="${propunere}">Pune ${numar(propunere)} mm</button>`
       : "",

@@ -7,6 +7,7 @@ import type { DocumentOferta, PozitieOferta } from "../document-oferta.js";
 import type { OptiuniDocument } from "./oferta-vizual.js";
 import { FORME_EDITOR, GROSIMI, MATERIAL, MATERIALE, MOTIV, STARE, ajutorDiametru, motiveLinie, stareLinie, type Sistem } from "./text.js";
 import { actiuniPozitie } from "./vizual.js";
+import { explicaRand } from "./explica.js";
 
 /**
  * Tabul „Verificare” (Andrei, 21 octombrie 2026): ce a înțeles aplicația din
@@ -144,7 +145,8 @@ interface Coloane { gros: string; prot: string }
 function stare(l: LinieProcesata, propunere: number | null, cine: string): string {
   const st = stareLinie(l);
   const actiune = actiuniPozitie(l, propunere, false, false);
-  const motive = motiveLinie(l).map((m) => MOTIV[m]);
+  // Pe „De verificat” motivul e propoziția de sub descriere (`explicatie`): aici ar fi de două ori.
+  const motive = explicaRand(l) ? [] : motiveLinie(l).map((m) => MOTIV[m]);
   const e = l.extras;
   const areStraturi = e.straturi_extra.some((x) => !JACHETE.has(x.sistem));
   const poateStrat = e.sistem !== null && e.sistem !== "goluri_foc" && 1 + e.straturi_extra.length < STRATURI_MAXIM;
@@ -160,6 +162,20 @@ function stare(l: LinieProcesata, propunere: number | null, cine: string): strin
         </div>
       </div></div>
     ${motive.length ? `<p class="ver-motiv">${esc(motive.join(" · "))}</p>` : ""}`;
+}
+
+/**
+ * Sub descrierea unui rând „De verificat”: ce am presupus, cu valoarea, și
+ * „Schimb”, care duce cursorul în caseta presupunerii (Faza 6, punctul 9).
+ * „E bine” (confirmă) stă în coloana stării, ca înainte „Confirmă”. Fără
+ * casetă de schimbat (rândul necitit), doar propoziția.
+ */
+function explicatie(l: LinieProcesata, cine: string): string {
+  const x = explicaRand(l);
+  if (!x) return "";
+  return `<div class="ver-explica"><p class="ver-motiv">${esc(x.text)}</p>${x.camp
+    ? `<button type="button" class="secundar" data-act="schimb" data-idx="${l.extras.index}" data-camp="${x.camp}"
+        aria-label="${esc(`Schimb, ${cine}`)}">Schimb</button>` : ""}</div>`;
 }
 
 /**
@@ -267,7 +283,7 @@ function randVerificare(p: PozitieOferta, o: OptiuniDocument, c: Coloane): strin
     schimbat: s.pret !== undefined, ...(s.pret !== undefined ? { inainte: s.pret } : {}), date: { idx: i } });
   return `<tr class="ver-poz" data-idx="${i}" data-stare="${p.stare}">
     <td class="ver-rand" data-eticheta="Rândul">${p.sursa.rand}</td>
-    <td class="ver-desc">${text}${p.cod ? `<span class="ver-cod">${esc(p.cod)}</span>` : ""}</td>
+    <td class="ver-desc">${text}${p.cod ? `<span class="ver-cod">${esc(p.cod)}</span>` : ""}${explicatie(l, cine)}</td>
     ${td("Izolație", material)}
     ${gol
       ? td("Lățime gol (mm)", numarPeLoc("gol_l", i, e.gol_latime_mm, `Lățimea golului, ${cine}`, "lățime"))
