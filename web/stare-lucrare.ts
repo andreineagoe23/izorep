@@ -9,6 +9,7 @@ import { ramasPeNecesar } from "./materiale.js";
 import { deVerificatCerere, refuzata, ziRo, type Lucrare, type StareLucrare } from "./lucrare.js";
 import { progresPlan, type PlanSantier } from "../src/lucrari/situatii.js";
 import type { StareDepozit } from "./depozit-local.js";
+import { situatiiIncepute, type SituatieInceputa } from "./situatie-local.js";
 
 /**
  * Câte materiale mai sunt de comandat pe șantier, ca în Materiale, câte nu
@@ -27,7 +28,14 @@ export function materialePlan(p: PlanSantier, dep: StareDepozit): { deComandat: 
   };
 }
 
-export function stareLucrarii(l: Lucrare, dep: StareDepozit): StareLucrare {
+/**
+ * `incepute`: situațiile începute și nesalvate, pe șantier (din acest browser,
+ * `situatie-local.ts`); implicit cele ținute acum.
+ */
+export function stareLucrarii(
+  l: Lucrare, dep: StareDepozit, incepute: Readonly<Record<string, SituatieInceputa>> = situatiiIncepute(),
+): StareLucrare {
+  const inc = l.plan && !l.plan.inchis ? incepute[l.plan.id] : undefined;
   return {
     deVerificat: l.cerere ? deVerificatCerere(l.cerere) : 0,
     areCerere: !!l.cerere,
@@ -36,6 +44,7 @@ export function stareLucrarii(l: Lucrare, dep: StareDepozit): StareLucrare {
     santier: l.plan ? {
       inchis: l.plan.inchis, ...materialePlan(l.plan, dep), progres: progresPlan(l.plan),
       ultimaSituatie: l.plan.situatii.at(-1)?.data ?? l.plan.creat,
+      ...(inc ? { inceputa: { nr: l.plan.situatii.length + 1, cand: inc.cand } } : {}),
     } : undefined,
   };
 }

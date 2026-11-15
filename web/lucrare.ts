@@ -118,6 +118,8 @@ export interface StareLucrare {
     ultimaSituatie?: string | undefined;
     /** Cât s-a executat, în procente din ofertă. */
     progres: number;
+    /** O situație începută și nesalvată (în acest browser): numărul ei și ultima schimbare, ISO. */
+    inceputa?: { nr: number; cand: string } | undefined;
   } | undefined;
 }
 
@@ -148,6 +150,8 @@ const pozitiiText = (n: number): string => (n === 1 ? "O poziție cere" : `${n}$
 const materialeText = (n: number): string => (n === 1 ? "Un material" : `${n}${n % 100 >= 20 || (n > 0 && n % 100 === 0) ? " de" : ""} materiale`);
 const ciorneText = (n: number): string => (n === 1 ? "Un material e pe o comandă netrimisă." : `${materialeText(n)} sunt pe comenzi netrimise.`);
 
+const inceputaText = (nr: number): string => `Situația nr. ${nr} e începută și nesalvată.`;
+
 /**
  * Pasul de acum, în ordinea fluxului. Cu șantier pornit, pozițiile cererii nu
  * mai sunt pasul de acum: oferta a plecat, iar ce s-a executat se scrie în
@@ -171,6 +175,12 @@ export function urmeaza(s: StareLucrare): Urmeaza {
     }
     if ((st.deTrimis ?? 0) > 0) {
       return { text: ciorneText(st.deTrimis!), fila: "materiale", primar: { eticheta: "Trimite comenzile", act: "comenzi" } };
+    }
+    if (st.inceputa) {
+      return {
+        text: inceputaText(st.inceputa.nr), fila: "situatii",
+        primar: { eticheta: "Continuă situația", act: "situatie-noua", fila: "situatii" },
+      };
     }
     return {
       text: `Șantierul e în lucru: ${st.progres} % executat.`, fila: "situatii",
@@ -261,7 +271,7 @@ export const GRUPURI_ACASA: { id: GrupAcasa; titlu: string }[] = [
 
 export interface LucruDeFacut {
   /** Pasul din „Urmează” care l-a dat. */
-  fel: "verifica" | "oferta" | "raspuns" | "inchide" | "comanda" | "trimite" | "situatie";
+  fel: "verifica" | "oferta" | "raspuns" | "inchide" | "comanda" | "trimite" | "situatie" | "situatie-inceputa";
   grup: GrupAcasa;
   /** Propoziția din „Urmează”, cu vechimea unde contează. */
   text: string;
@@ -293,6 +303,7 @@ export function deFacutLucrare(s: StareLucrare, azi: string): LucruDeFacut | nul
     if (st.progres >= 100) return { fel: "inchide", grup: g, text: u.text, buton: "Închide șantierul", fila: "inchidere" };
     if (st.deComandat > 0) return { fel: "comanda", grup: g, text: u.text, buton: "Comandă ce lipsește", fila: "materiale" };
     if ((st.deTrimis ?? 0) > 0) return { fel: "trimite", grup: g, text: u.text, buton: "Trimite comenzile", fila: "materiale", href: "#/comenzi" };
+    if (st.inceputa) return { fel: "situatie-inceputa", grup: g, text: u.text, buton: "Continuă situația", fila: "situatii" };
     const zile = zileDe(st.ultimaSituatie, azi);
     if (zile < ZILE_SITUATIE) return null;
     return {
@@ -311,4 +322,19 @@ export function deFacutLucrare(s: StareLucrare, azi: string): LucruDeFacut | nul
     fel: "raspuns", grup: "raspuns", text: `${u.text} ${vechime}`, buton: "Notează răspunsul", fila: "oferta", zile,
     ...(zile >= ZILE_RASPUNS ? { intarziat: "Întreabă clientul" } : {}),
   };
+}
+
+/**
+ * Toate rândurile unei lucrări pe Acasă: pasul din „Urmează” și, când pasul e
+ * altul (de comandat, de închis), situația începută și nesalvată, care altfel
+ * s-ar pierde din vedere.
+ */
+export function deFacutLucrareToate(s: StareLucrare, azi: string): LucruDeFacut[] {
+  const d = deFacutLucrare(s, azi);
+  const inc = s.santier && !s.santier.inchis ? s.santier.inceputa : undefined;
+  const out = d ? [d] : [];
+  if (inc && d?.fel !== "situatie-inceputa") {
+    out.push({ fel: "situatie-inceputa", grup: "santiere", text: inceputaText(inc.nr), buton: "Continuă situația", fila: "situatii" });
+  }
+  return out;
 }

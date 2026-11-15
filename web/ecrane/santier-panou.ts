@@ -19,6 +19,7 @@ import { cardNecesar, cifra } from "../stoc-vizual.js";
 import { descarca } from "../descarca.js";
 import { numeSituatie, registruSituatie } from "../situatie.js";
 import { preiaSituatie } from "../predare.js";
+import { citesteInceputa, refaPePlan, tineSituatia, uitaSituatia } from "../situatie-local.js";
 import { pastreazaCursorul } from "../celula.js";
 import type { Potrivire } from "../../src/lucrari/potrivire.js";
 import { cifreInchidere, materialSantier, valideazaInchidere } from "../../src/lucrari/inchidere.js";
@@ -88,6 +89,24 @@ export function montezaSantier(root: HTMLElement, opt: OptiuniSantier): ControlS
       nota: `Din măsurători (${venita.pagini === 1 ? "o pagină" : `${venita.pagini} pagini`} din carnet)`,
     };
     dinPoze = venita.potrivire;
+  } else {
+    // Situația începută și nesalvată în acest browser (15 noiembrie 2026): se reia de unde a rămas.
+    const x = citesteInceputa(opt.plan);
+    const refacuta = x ? refaPePlan(x, plan()) : null;
+    if (refacuta) { inLucru = refacuta.situatie; dinPoze = refacuta.dinPoze; }
+    else if (x) uitaSituatia(opt.plan);
+  }
+  if (venita && tinta && inLucru) tineSituatia(opt.plan, inLucru, dinPoze, new Date().toISOString());
+
+  /**
+   * Ține situația în lucru în browser (sau o uită, când nu mai e). Când trece
+   * între „începută” și „nimic”, pagina își reface „Urmează”.
+   */
+  function tine(): void {
+    const inainte = !!citesteInceputa(opt.plan);
+    if (inLucru) tineSituatia(opt.plan, inLucru, dinPoze, new Date().toISOString());
+    else uitaSituatia(opt.plan);
+    if (inainte !== !!citesteInceputa(opt.plan)) opt.laSchimbare();
   }
 
   function deseneaza(): void {
@@ -454,6 +473,7 @@ export function montezaSantier(root: HTMLElement, opt: OptiuniSantier): ControlS
       }
       default: return;
     }
+    tine();
     deseneaza();
   });
 
@@ -484,6 +504,7 @@ export function montezaSantier(root: HTMLElement, opt: OptiuniSantier): ControlS
     const p = plan();
     if (!f || !p || !inLucru) return;
     citesteFormular(f);
+    tine();
     // Căutarea: doar pozițiile se redesenează, cursorul rămâne în casetă.
     if (camp.id === "cauta-pozitie") {
       cauta = camp.value;
@@ -541,6 +562,7 @@ export function montezaSantier(root: HTMLElement, opt: OptiuniSantier): ControlS
     eroare = "";
     cauta = "";
     arataTerminate = false;
+    uitaSituatia(p.id);
     deseneaza();
     opt.laSchimbare();
   });

@@ -4,8 +4,9 @@ import { citesteDepozit, citesteOferte, citestePlanuri, listeaza } from "../date
 import { deComandatPeNecesar, titluNecesar } from "../materiale.js";
 import { alerte } from "../../src/lucrari/rapoarte.js";
 import { alerteAtentie } from "../rapoarte-vizual.js";
-import { GRUPURI_ACASA, deFacutLucrare, lucrariDin, stadiu, titluLucrare, type GrupAcasa, type Lucrare } from "../lucrare.js";
+import { GRUPURI_ACASA, deFacutLucrareToate, lucrariDin, stadiu, titluLucrare, type GrupAcasa, type Lucrare } from "../lucrare.js";
 import { stareLucrarii } from "../stare-lucrare.js";
+import { situatiiIncepute } from "../situatie-local.js";
 
 /**
  * Acasă (planul UX, Faza 5; pe grupuri din 15 noiembrie 2026): trei cifre și
@@ -37,10 +38,10 @@ function cifre(toate: readonly Lucrare[]): string {
 function grupuri(toate: readonly Lucrare[]): string {
   const dep = citesteDepozit();
   const azi = new Date().toISOString();
+  const incepute = situatiiIncepute();
   const pe: Record<GrupAcasa, Rand[]> = { birou: [], raspuns: [], santiere: [], marfa: [] };
   for (const l of toate) {
-    const d = deFacutLucrare(stareLucrarii(l, dep), azi);
-    if (d) {
+    for (const d of deFacutLucrareToate(stareLucrarii(l, dep, incepute), azi)) {
       pe[d.grup].push({
         href: d.href ?? spre(l, d.fila), actiune: d.buton, intarziat: d.intarziat, zile: d.zile,
         html: `<b>${esc(titluLucrare(l))}</b>: ${esc(d.text)}`,
