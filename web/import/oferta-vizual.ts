@@ -167,11 +167,14 @@ export function baraVerificare(
   numere: Record<FiltruStare, number>, filtru: FiltruStare,
   /** Fila „Lăsate afară · N” (Faza 6): câte și dacă e deschisă. */
   afara?: { n: number; activ: boolean },
+  /** Șantierul e pornit sau lucrarea închisă: propoziția nu mai cere să te uiți. */
+  santier?: "pornit" | "inchis" | null,
 ): string {
   const file = afara?.activ ? fileStare(numere, filtru).replace(/ aria-current="page"/g, "") : fileStare(numere, filtru);
   const fila = afara ? `<button type="button" class="fila" data-filtru="afara"${afara.activ ? ' aria-current="page"' : ""}>Lăsate afară <b>${afara.n}</b></button>` : "";
   return `<section class="imp-card imp-bara-foi imp-bara-singura">
-    ${rezumatVerificare(numere)}
+    ${santier ? `<div class="imp-rezumat"><p>${santier === "inchis" ? "Lucrarea e închisă." : "Șantierul e pornit."
+      } Cererea rămâne aici, așa cum a plecat oferta.</p></div>` : rezumatVerificare(numere)}
     <div class="imp-bara-stanga"><p class="imp-eticheta-control" id="eticheta-filtre">Arată pozițiile</p>
       <nav class="file" aria-labelledby="eticheta-filtre">${file}${fila}</nav></div>
   </section>`;
@@ -199,6 +202,8 @@ export interface OptiuniDocument {
    * fiecare cu ce era înainte, în cuvinte: caseta e galbenă și o spune.
    */
   schimbari?: (p: PozitieOferta) => SchimbariPozitie;
+  /** Șantierul e pornit: toate rândurile ca text, fără „Schimb” și „E bine” (se deschid la clic). */
+  doarText?: boolean;
   /** Rândurile „Gata” deschise de om cu casetele (`cuCasete` în `verificare-vizual.ts`). */
   deschise?: ReadonlySet<number>;
 }

@@ -1390,6 +1390,14 @@ button.fila { background: none; border: 0; border-radius: 0; font: inherit; font
 .fila[aria-disabled="true"] { color: color-mix(in srgb, var(--slab) 70%, var(--panou)); cursor: default; }
 .fila[aria-disabled="true"][aria-current="page"] { color: var(--slab); box-shadow: inset 0 -3px var(--linie-tare); }
 .fila .gata { color: var(--ok); font-weight: 700; }
+/* Cele cinci file ale lucrării, pe telefon pe un singur rând (15 noiembrie 2026): pe două rânduri
+   păreau două meniuri. Împart lățimea, cu literă de 14 px și spațiu mic. */
+@media (max-width: 560px) {
+  .file-lucrare { flex-wrap: nowrap; }
+  .file-lucrare::after { display: none; }
+  .file-lucrare > .fila { flex: 1 1 auto; justify-content: center; min-width: 0; padding: 0 3px; gap: 2px; font-size: 14px; white-space: nowrap; }
+}
+@media (max-width: 380px) { .file-lucrare > .fila { padding: 0 2px; font-size: 13px; } }
 .setari-sub { margin: 12px 0 0; }
 /* Pentru cititorul de ecran: „(gata)” lângă ✓, care e doar desen. */
 .ascuns { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }

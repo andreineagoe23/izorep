@@ -191,8 +191,10 @@ function explicatie(l: LinieProcesata, cine: string): string {
  */
 export const TEXT_PE_GATA = true;
 
-export function cuCasete(p: PozitieOferta, l: LinieProcesata, deschis: boolean, s: SchimbariRand): boolean {
+export function cuCasete(p: PozitieOferta, l: LinieProcesata, deschis: boolean, s: SchimbariRand, doarText = false): boolean {
   if (!TEXT_PE_GATA || deschis) return true;
+  // Șantierul pornit: cererea e de văzut, nu de verificat; un clic tot o deschide.
+  if (doarText) return false;
   if (p.stare !== "gata") return true;
   if (l.extras.motiv === PUS_DE_OM) return true;
   return s.cant !== undefined || s.pret !== undefined || s.den !== undefined;
@@ -243,7 +245,7 @@ function randVerificare(p: PozitieOferta, o: OptiuniDocument, c: Coloane): strin
   const l = o.linii.get(p.linie)!;
   {
     const s0 = o.schimbari?.(p) ?? {};
-    if (!cuCasete(p, l, o.deschise?.has(l.extras.index) ?? false, s0)) {
+    if (!cuCasete(p, l, o.deschise?.has(l.extras.index) ?? false, s0, o.doarText)) {
       return randText(p, l, o, c, p.nr === null ? `rândul ${p.sursa.rand}` : `poziția ${p.nr}`);
     }
   }
@@ -347,7 +349,7 @@ export function verificarePeEcran(d: DocumentOferta, o: OptiuniDocument): string
   // Doar rânduri text pe ecran: coloanele noastre se strâng, iar descrierea ia locul casetelor.
   const casete = (p: PozitieOferta): boolean => {
     const l = o.linii.get(p.linie)!;
-    return cuCasete(p, l, o.deschise?.has(l.extras.index) ?? false, o.schimbari?.(p) ?? {});
+    return cuCasete(p, l, o.deschise?.has(l.extras.index) ?? false, o.schimbari?.(p) ?? {}, o.doarText);
   };
   const compact = !toate.filter(vede).some(casete);
   const corp = d.capitole.map((cap) => {

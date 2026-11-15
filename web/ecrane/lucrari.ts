@@ -198,7 +198,7 @@ async function deseneazaPagina(root: HTMLElement, idDinAdresa: string | null, se
 
   function file(s: StareLucrare): string {
     const st = stareFile(s);
-    return `<nav class="file" aria-label="Pașii lucrării">${FILE_LUCRARE.map((f) => {
+    return `<nav class="file file-lucrare" aria-label="Pașii lucrării">${FILE_LUCRARE.map((f) => {
       const x = st[f.id];
       return `<button type="button" class="fila" data-act="fila" data-fila="${f.id}"${f.id === fila ? ' aria-current="page"' : ""}${
         x.inchisa ? ` aria-disabled="true" title="${esc(x.inchisa)}"` : ""}>${
@@ -261,6 +261,7 @@ async function deseneazaPagina(root: HTMLElement, idDinAdresa: string | null, se
         },
         laOferta: () => { actualizeaza(); },
         areOferta: () => !!l?.oferta,
+        santier: () => (l?.plan ? (l.plan.inchis ? "inchis" : "pornit") : null),
       });
       return;
     }
