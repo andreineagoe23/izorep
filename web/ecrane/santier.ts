@@ -118,8 +118,12 @@ function salveazaLucru(): void {
   }, 300);
 }
 
-/** Paginile lasate la jumatate inainte de reincarcare, cu pozele lor. */
-async function refaLucrul(): Promise<void> {
+/**
+ * Paginile lasate la jumatate inainte de reincarcare, cu pozele lor. Pe un
+ * santier (`fix`), doar lucrul lasat pe acelasi santier si pentru acelasi
+ * scop: altfel pozele altui santier s-ar fi pus pe cel deschis acum.
+ */
+async function refaLucrul(fix?: { plan: string; scop: Scop }): Promise<void> {
   if (refacut || pagini.length > 0) { refacut = true; return; }
   refacut = true;
   const aici = loc;
@@ -128,6 +132,7 @@ async function refaLucrul(): Promise<void> {
   const l = aici === "oferta" ? (await citesteLucru("oferta")) ?? (vechi?.scop === "oferta" ? vechi : null)
     : vechi?.scop === "oferta" ? null : vechi;
   if (!l || l.pagini.length === 0 || loc !== aici) return;
+  if (fix && (l.planAles !== fix.plan || l.scop !== fix.scop)) return;
   ({ scop, destinatie, planAles, titlu } = l);
   pagini = l.pagini.map((p) => {
     const f = new File([p.poza], p.nume, { type: p.poza.type });
@@ -150,19 +155,28 @@ const randGol = (zona: string): RandSantier => ({
   jacheta: "aluminiu", element: "ml", pret_dublu: false, cantitate: 0, termeni: [], nesigur: false,
 });
 
+/**
+ * Pozele din timpul lucrării, pe un șantier: `#/masuratori/<santier>/<situatie|comanda>`,
+ * intrat din filele lucrării („Situație din poze”, „Comandă din poze”).
+ * Din 15 noiembrie 2026 (planul UX, Faza 4) nu mai e ecran de sine stătător:
+ * fără șantier (adresa veche `#/masuratori`, `#/santier`), sau cu unul închis,
+ * pagina spune de unde se intră, cu un link la Lucrări. Alegerea scopului și a
+ * șantierului a ieșit odată cu ea.
+ */
 export const ecran: Ecran = {
   id: "masuratori",
-  // Andrei, 22 octombrie 2026: „Poze de pe șantier” era prea lung; pozele pentru ofertă au plecat la Cerere nouă.
-  titlu: "Măsurători",
-  subtitlu: "Pozele din carnet, din timpul lucrării. Rândurile citite din poză, verificate de tine, " +
-    "ajung în situația de lucrări sau în comanda de material.",
+  titlu: "Poze din carnet",
   render: (root) => {
-    // Venit de pe o lucrare (14 noiembrie 2026): `#/masuratori/<santier>/<situatie|comanda>`.
-    // Șantierul și scopul sunt deja știute, deci nu se mai aleg.
     const [, plan, ce] = location.hash.replace(/^#\/?/, "").split("/").map((x) => decodeURIComponent(x));
-    const p = plan ? citestePlanuri().find((x) => x.id === plan && !x.inchis) : undefined;
+    const p = plan ? citestePlanuri().find((x) => x.id === plan) : undefined;
     const scopAles: Scop | undefined = ce === "situatie" || ce === "comanda" ? ce : undefined;
-    return montezaPoze(root, "santier", p && scopAles ? { fix: { plan: p.id, scop: scopAles } } : {});
+    if (p && !p.inchis && scopAles) return montezaPoze(root, "santier", { fix: { plan: p.id, scop: scopAles } });
+    titluEcran("Poze din carnet");
+    root.innerHTML = `<div class="imp"><section class="imp-card">
+      <p style="margin:0 0 12px">${p?.inchis ? `Șantierul ${esc(p.denumire)} e închis: nu mai primește poze.`
+        : "Pozele din carnet se pun de pe lucrarea lor: fila Situații, „Situație din poze”, sau fila Materiale, „Comandă din poze”."}</p>
+      <a class="secundar" href="${p ? `#/lucrari/${encodeURIComponent(p.id)}` : "#/lucrari?stadiu=in-lucru"}">${p ? "Mergi la lucrare" : "Mergi la Lucrări"}</a>
+    </section></div>`;
   },
 };
 
@@ -196,7 +210,7 @@ export async function montezaPoze(
     ${previzualizare()}
   </div>`;
   const gazda = root.querySelector<HTMLElement>(".sant")!;
-  let [model] = await Promise.all([modelDisponibil(), refaLucrul()]);
+  let [model] = await Promise.all([modelDisponibil(), refaLucrul(fix)]);
   /** Importurile din istoric: listele clientilor cu care se pot compara masuratorile. */
   let liste: ListaClient[] = [];
   try { liste = (await listeazaImporturi()).map((x) => ({ id: x.id, nume: x.nume })); } catch { liste = []; }
@@ -205,7 +219,7 @@ export async function montezaPoze(
   /** Pe situatie, tipul ofertei e al santierului, nu cel ales sus. */
   const destinatiaPaginii = (): Destinatie =>
     scop !== "oferta" ? ((citestePlanuri().find((p) => p.id === planAles)?.destinatie as Destinatie | undefined) ?? destinatie) : destinatie;
-  const incarca = (): string => cardIncarca({ scop, santiere: santiere(), planAles, eroare, trimisa, model, faraAlegere: !!fix });
+  const incarca = (): string => cardIncarca({ eroare, trimisa, model });
 
   const deseneaza = (): void => {
     gazda.querySelector("#sant-incarca")!.innerHTML = incarca();
@@ -344,9 +358,6 @@ export async function montezaPoze(
   gazda.addEventListener("change", (e) => {
     const t = e.target as HTMLInputElement;
     if (t.id === "poze" && t.files) void adaugaPoze([...t.files]);
-    if (t.name === "segment") { destinatie = t.value as Destinatie; deseneaza(); }
-    if (t.name === "scop") { scop = t.value as Scop; trimisa = ""; mesajComanda = ""; deseneaza(); }
-    if (t.name === "plan") { planAles = t.value; deseneaza(); }
     if (t.name === "compara-cu") { comparaCu = t.value; comparatie = null; deseneazaTrimite(); }
   });
 
@@ -543,10 +554,13 @@ export async function montezaPoze(
    */
   async function pastreazaPagini(santierId?: string): Promise<void> {
     if (modDate() !== "server") return;
+    // Poza din `fisiere`, nu din `fetch(p.url)`: politica paginii (connect-src 'self')
+    // refuză adresele `blob:`, iar pozele plecau pe tăcute fără poză (15 noiembrie 2026).
     const cuPoze = await Promise.all(pagini.map(async (p) => {
+      const f = fisiere.get(p.id);
+      if (!f) return { randuri: p.randuri };
       try {
-        const blob = await (await fetch(p.url)).blob();
-        return { poza: await micsoreaza(new File([blob], p.nume, { type: blob.type })), randuri: p.randuri };
+        return { poza: await micsoreaza(f), randuri: p.randuri };
       } catch {
         return { randuri: p.randuri };
       }

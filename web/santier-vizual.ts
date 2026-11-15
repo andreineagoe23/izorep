@@ -224,29 +224,11 @@ export const previzualizare = (): string => `<dialog class="sant-mare" id="sant-
  */
 export type Scop = "oferta" | "situatie" | "comanda";
 
-/** Un santier in alegerea „Pentru situatie”. */
+/** Șantierul pe care pleacă pozele (situația sau comanda lui). */
 export interface SantierAles {
   id: string;
   denumire: string;
   client: string;
-}
-
-function alegereScop(scop: Scop): string {
-  // Pozele pentru ofertă stau la Cerere nouă › Poze (Andrei, 22 octombrie 2026).
-  const optiuni: [Scop, string][] = [["situatie", "Pentru situație de lucrări"], ["comanda", "Pentru comanda de material"]];
-  return `<fieldset class="imp-segment"><legend>Pentru ce sunt măsurătorile</legend><div>${optiuni.map(([v, t]) =>
-    `<label><input type="radio" name="scop" value="${v}"${v === scop ? " checked" : ""} /><span>${t}</span></label>`).join("")}</div></fieldset>`;
-}
-
-function alegereSantier(santiere: SantierAles[], ales: string, scop: Scop): string {
-  if (santiere.length === 0) {
-    return `<p class="hint" style="margin:0">Niciun șantier încă. Șantierul pornește din ofertă: în
-      <a href="#/lucrari">Lucrări</a>, pe lucrarea lui, „Clientul a acceptat”.</p>`;
-  }
-  return `<label>Șantierul (${scop === "comanda" ? "materialul vine pe el" : "situația se face pe pozițiile ofertei lui"})
-    <select name="plan"><option value="">— alege șantierul —</option>${santiere.map((x) =>
-      `<option value="${esc(x.id)}"${x.id === ales ? " selected" : ""}>${esc(x.denumire)}${x.client && x.client !== x.denumire ? ` · ${esc(x.client)}` : ""}</option>`).join("")}</select>
-  </label>`;
 }
 
 /**
@@ -267,18 +249,14 @@ export function mesajModel(m: StareModel | undefined): string {
   </div>`;
 }
 
-export function cardIncarca(o: {
-  scop: Scop; santiere: SantierAles[]; planAles: string; eroare: string; trimisa?: string;
-  model?: StareModel;
-  /** Venit de pe o lucrare: șantierul și scopul sunt știute, nu se mai aleg (14 noiembrie 2026). */
-  faraAlegere?: boolean;
-}): string {
-  // Pentru ofertă doar pozele: tipul ofertei se alege la verificare, ca la orice cerere.
+/**
+ * Sus, „Alege pozele”. Nimic de ales înainte: pentru ofertă tipul se alege la
+ * verificare, ca la orice cerere; pentru situație și comandă, șantierul și
+ * scopul vin din fila lucrării de pe care s-a intrat (din 15 noiembrie 2026
+ * Măsurători nu mai e ecran de sine stătător, deci alegerea lor a ieșit).
+ */
+export function cardIncarca(o: { eroare: string; trimisa?: string; model?: StareModel }): string {
   return `<section class="imp-card imp-incarca">
-    ${o.scop === "oferta" || o.faraAlegere ? "" : `<div class="imp-campuri sant-sus">
-      ${alegereScop(o.scop)}
-      ${alegereSantier(o.santiere, o.planAles, o.scop)}
-    </div>`}
     <label class="imp-drop" id="drop" for="poze">
       <svg aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="m21 16-5-5-8 8"/></svg>
       <span class="imp-drop-buton">Alege pozele</span>
@@ -315,7 +293,7 @@ export function cardTrimite(o: {
       ? `Materialul pentru rândurile măsurate se calculează ca la ofertă (pierderi, tuburi până la prag, piese în metri),
         apoi se scade ce e acum pe șantierul „${esc(o.santier.denumire)}” și ce e comandat și n-a sosit. Ce rămâne se
         rotunjește la ambalaj și devine câte o ciornă pe furnizor, cu prețul lui, în Comenzi. O verifici și o trimiți de acolo.`
-      : "Alege șantierul, sus."}</p>
+      : "Șantierul nu mai e deschis."}</p>
     ${lipsa}
     ${o.mesaj ? `<p class="hint" role="status">${esc(o.mesaj)}</p>` : ""}
     <div class="imp-formular-butoane">
@@ -331,7 +309,7 @@ export function cardTrimite(o: {
       ? `Fiecare rând se pune pe poziția din oferta șantierului „${esc(o.santier.denumire)}” care e aceeași lucrare
         (material, grosime, diametru, formă). Se deschide o situație nouă, completată; o verifici și o salvezi pe pagina lucrării.
         Ce nu se potrivește sigur rămâne de ales de tine.`
-      : "Alege șantierul, sus."}</p>
+      : "Șantierul nu mai e deschis."}</p>
     ${lipsa}
     <div class="imp-formular-butoane">
       <button type="submit" class="primar"${oprit ? " disabled" : ""}>${o.lucreaza ? "Se potrivesc rândurile…" : "Pune în situație"}</button>
