@@ -102,6 +102,11 @@ export interface StareLucrare {
     inchis?: string | undefined;
     /** Câte materiale mai sunt de comandat. */
     deComandat: number;
+    /**
+     * Câte materiale nu sunt încă toate pe șantier (lipsesc, sunt în ciornă sau
+     * comandate și nevenite). Fără el, se socotește `deComandat`.
+     */
+    neadus?: number | undefined;
     /** Cât s-a executat, în procente din ofertă. */
     progres: number;
   } | undefined;
@@ -193,7 +198,10 @@ export function stareFile(s: StareLucrare): Record<FilaLucrare, { gata: boolean;
   return {
     cerere: s.areCerere ? { gata: s.deVerificat === 0 } : { gata: true, inchisa: faraCerere },
     oferta: s.areCerere ? { gata: !!s.oferta } : { gata: true, inchisa: faraCerere },
-    materiale: st ? { gata: st.deComandat === 0 } : { gata: false, inchisa: faraSantier },
+    // ✓ când tot materialul e pe șantier, sau când totul e executat: atunci
+    // „Urmează” zice „Închide șantierul”, iar ce n-a venit nu mai e de adus
+    // (15 noiembrie 2026; înainte fila rămânea fără ✓, cu materiale necomandate).
+    materiale: st ? { gata: (st.neadus ?? st.deComandat) === 0 || st.progres >= 100 } : { gata: false, inchisa: faraSantier },
     situatii: st ? { gata: st.progres >= 100 } : { gata: false, inchisa: faraSantier },
     inchidere: st ? { gata: !!st.inchis } : { gata: false, inchisa: faraSantier },
   };

@@ -101,4 +101,18 @@ describe("„Urmează”: un pas, în ordinea fluxului", () => {
     expect(stareFile({ ...baza, oferta: { numar: "", data: "" }, refuzat: "2026-11-10" }).inchidere.inchisa).toBe("Clientul a refuzat oferta.");
     expect(stareFile({ deVerificat: 0, areCerere: false, santier: { deComandat: 0, progres: 0 } }).cerere.inchisa).toBeDefined();
   });
+
+  it("fila Materiale: ✓ când tot materialul e adus sau totul e executat, nu doar comandat", () => {
+    const of = { numar: "RAD284", data: "27.05.2026" };
+    const mat = (santier: NonNullable<StareLucrare["santier"]>): boolean => stareFile({ ...baza, oferta: of, santier }).materiale.gata;
+    // Totul executat, 12 materiale necomandate: „Urmează” zice „Închide șantierul”, deci fila e gata.
+    expect(mat({ deComandat: 12, neadus: 12, progres: 100 })).toBe(true);
+    expect(urmeaza({ ...baza, oferta: of, santier: { deComandat: 12, neadus: 12, progres: 100 } }).primar?.eticheta).toBe("Închide șantierul");
+    // Comandat tot, dar nevenit: încă nu.
+    expect(mat({ deComandat: 0, neadus: 3, progres: 40 })).toBe(false);
+    expect(mat({ deComandat: 0, neadus: 0, progres: 40 })).toBe(true);
+    // Fără `neadus` (apelanții vechi): ca înainte, după ce e de comandat.
+    expect(mat({ deComandat: 0, progres: 40 })).toBe(true);
+    expect(mat({ deComandat: 2, progres: 40 })).toBe(false);
+  });
 });

@@ -40,11 +40,20 @@ const SUBTITLU = "Fiecare cerere de la client, cu oferta și șantierul ei.";
 /** Ce s-a șters de pe pagina unei lucrări, spus o dată pe listă. */
 let mesajLista = "";
 
-/** Câte materiale mai sunt de comandat pe șantier, ca în Materiale; pe unul închis, nimic. */
-function deComandatPlan(p: PlanSantier, dep: StareDepozit): number {
-  if (p.inchis) return 0;
+/**
+ * Câte materiale mai sunt de comandat pe șantier, ca în Materiale, și câte nu
+ * sunt încă toate pe șantier (lipsesc, în ciornă, comandate și nevenite); pe
+ * unul închis, nimic.
+ */
+export function materialePlan(p: PlanSantier, dep: StareDepozit): { deComandat: number; neadus: number } {
+  if (p.inchis) return { deComandat: 0, neadus: 0 };
   const n = dep.necesare.find((x) => x.santier === p.id);
-  return n ? ramasPeNecesar(dep, n).filter((d) => d.ramas > 0).length : 0;
+  if (!n) return { deComandat: 0, neadus: 0 };
+  const r = ramasPeNecesar(dep, n);
+  return {
+    deComandat: r.filter((d) => d.ramas > 0).length,
+    neadus: r.filter((d) => !d.material.alClientului && (d.ramas > 0 || d.comandat > 0 || d.inCiorna > 0)).length,
+  };
 }
 
 function stareLucrarii(l: Lucrare, dep: StareDepozit): StareLucrare {
@@ -53,7 +62,7 @@ function stareLucrarii(l: Lucrare, dep: StareDepozit): StareLucrare {
     areCerere: !!l.cerere,
     oferta: l.oferta ? { numar: l.oferta.numar, data: l.oferta.data || ziRo(l.oferta.cand) } : undefined,
     refuzat: refuzata(l),
-    santier: l.plan ? { inchis: l.plan.inchis, deComandat: deComandatPlan(l.plan, dep), progres: progresPlan(l.plan) } : undefined,
+    santier: l.plan ? { inchis: l.plan.inchis, ...materialePlan(l.plan, dep), progres: progresPlan(l.plan) } : undefined,
   };
 }
 
