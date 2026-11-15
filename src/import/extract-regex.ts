@@ -255,6 +255,18 @@ const RE_PLASTIC = /\b(?:PPR|PP|PEHD|PEX)\s*[D]?\s*(\d{1,3})(?:\b|(?=x\d))/;
 const RE_TOLI = /(?:\b(?:DN|Dn|dn)\s*\.?\s*|[øØФ]\s*)(\d{1,2}\s+\d\/\d|\d\/\d|\d{1,2})\s*(?:"|”|“|''|′′|″)/;
 const RE_GROSIME = /(?:g\s*[=.]?\s*|gr\.?\s*|S\s*=\s*|grosime[a]?\s+de\s+|[-–]\s*)(\d{1,3})\s*mm/i;
 const RE_GROSIME_COMPACT = /\bg\s?(\d{2,3})\b/;
+/**
+ * „gr 19", „gr. 19", „gr19", fara „mm" (exemplul 2, r27: „... DN80 cu
+ * elastomer gr 19"). Necitit, randul lua 9 mm de la teava PEHD ø110 din
+ * aceeasi lista: 10,57 € „Gata" in loc de 14,82. Numarul nu are voie sa fie
+ * urmat de alta unitate („gr 2 kg") sau de zecimale; la extragere se ia doar
+ * daca e o grosime a sistemului randului (`GROSIMI_SISTEM`).
+ */
+const RE_GROSIME_GR = /\bgr\.?\s?(\d{1,3})(?![\d.,])(?!\s*(?:kg|g\b|\/|x\s*\d|%))/i;
+const grosimeGr = (text: string): number | null => {
+  const m = text.match(RE_GROSIME_GR);
+  return m && GROSIMI_PLAUZIBILE.has(Number(m[1])) ? Number(m[1]) : null;
+};
 
 /**
  * True daca randul scrie o grosime de izolatie („g48", „gr. 50 mm",
@@ -263,7 +275,8 @@ const RE_GROSIME_COMPACT = /\bg\s?(\d{2,3})\b/;
  * avem" — la a doua, nimic nu are voie sa completeze in locul clientului.
  */
 export function scrieGrosime(text: string): boolean {
-  return RE_GROSIME.test(text) || RE_GROSIME_COMPACT.test(text) || RE_GROSIME_DUPA_MATERIAL.test(text);
+  return RE_GROSIME.test(text) || RE_GROSIME_COMPACT.test(text) || RE_GROSIME_DUPA_MATERIAL.test(text)
+    || grosimeGr(text) !== null;
 }
 
 /**
@@ -276,7 +289,7 @@ const RE_GROSIME_DUPA_MATERIAL = /(?:vat[aă]\s+mineral[aă]|elastomer\w*|minera
 /** Grosimea de izolatie scrisa pe rand, chiar una care nu e in lista („g48"). */
 export function grosimeScrisa(text: string): number | null {
   const m = text.match(RE_GROSIME) ?? text.match(RE_GROSIME_COMPACT) ?? text.match(RE_GROSIME_DUPA_MATERIAL);
-  return m ? Number(m[1]) : null;
+  return m ? Number(m[1]) : grosimeGr(text);
 }
 const RE_MM = /(\d{1,3})\s*mm\b/g;
 /**
@@ -693,6 +706,8 @@ export function extrageDeterminist(
     // deja gasita langa numele materialului, sau tabla fara grosime scrisa
   } else if (g && GROSIMI_PLAUZIBILE.has(Number(g[1]))) {
     grosime_mm = Number(g[1]);
+  } else if (sistem !== null && grosimeGr(text) !== null && GROSIMI_SISTEM[sistem]?.has(grosimeGr(text)!)) {
+    grosime_mm = grosimeGr(text);
   } else {
     // Ultima masura in mm de pe rand, dar NU una care e vizibil un diametru:
     // "Diameter: Ø100 mm" da 100, care e o grosime plauzibila de vata si se

@@ -36,4 +36,19 @@ describe("auditul din 15 noiembrie: prețuri greșite „Gata”", () => {
     expect(l.pret?.pret_unitar).toBe(33.25);
     expect(stare(l)).toBe("gata");
   });
+
+  it("„gr 19” fără „mm” e grosimea: 19 mm, nu 9 mm de la țeava PEHD (ex. 2, r27)", async () => {
+    const l = rand((await importa(EX2, "rezidential")).linii, "Termice+Sanitare", 27);
+    expect(l.extras.grosime_mm).toBe(19);
+    expect(l.pret?.pret_unitar).toBe(14.82);
+    expect(stare(l)).toBe("gata");
+  });
+
+  it("„gr 19” se citește doar ca grosime a materialului: „gr 2 kg”, „gr 7” nu", async () => {
+    const { extrageDeterminist, scrieGrosime } = await import("../src/import/extract-regex.js");
+    expect(extrageDeterminist(0, "Izolare conducte DN80 cu elastomer gr. 19", "ml", undefined, 1).linie.grosime_mm).toBe(19);
+    expect(extrageDeterminist(0, "Izolare conducte DN80 cu elastomer gr19", "ml", undefined, 1).linie.grosime_mm).toBe(19);
+    expect(extrageDeterminist(0, "Izolare conducte DN80 cu elastomer gr 7", "ml", undefined, 1).linie.grosime_mm).toBeNull();
+    expect(scrieGrosime("elastomer gr 2 kg")).toBe(false);
+  });
 });
