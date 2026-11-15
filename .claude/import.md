@@ -661,6 +661,20 @@ l-au lăsat afară (altă meserie, vine izolat) nu-l mai scot: `reevalueaza` îl
 pozițiilor nu se mișcă (testat pe NISAL). În „Detalii despre citire” intră la
 „citite automat din text”.
 
+## Același fișier încărcat a doua oară (14 noiembrie 2026, planul UX, Faza 6)
+
+Făcea o cerere nouă, cu același număr de ofertă (bugul din 16 octombrie).
+Acum, la încărcare (`proceseaza` în `web/ecrane/import.ts`, prin
+`lucrareaFisierului` din `web/import/fisier-dublu.ts`), înainte de orice
+citire: amprenta conținutului (SHA-256, nu numele) se caută pe server
+(`GET /api/cereri-dupa-fisier?amprenta=…`, socotită în bază din fișierul
+ținut, `encode(sha256(fisier), 'hex')`, fără coloană nouă) sau, pe linkul
+demo, în istoricul din browser. Găsită: „Fișierul ăsta e deja la lucrarea
+TRANSAVIA.” cu „Deschide-o” (albastru), „Încarcă-l ca lucrare nouă” și „Alt
+fișier”. Pozele din carnet nu trec pe aici (registru nou de fiecare dată), iar
+„Schimbă fișierul” pe aceeași lucrare nu se socotește dublură. Teste:
+`tests/fisier-dublu.test.ts`.
+
 ## Izolația pe foaie (11 octombrie 2026)
 
 `src/import/izolatie-foaie.ts`. Pentru cererile care sunt **lista de țevi a

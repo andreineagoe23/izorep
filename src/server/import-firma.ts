@@ -16,12 +16,17 @@
  * `PUT` (unul), `DELETE` (după tipar) pe `/api/sabloane`, plus
  * `POST /api/sabloane/mutare`, care aduce o dată ce era în browser, fără să
  * scrie peste ce știe deja firma.
+ *
+ * Și `GET /api/cereri-dupa-fisier?amprenta=<sha256>`: cererile care au deja
+ * exact fișierul ăsta (punctul 8 din plan: același fișier încărcat a doua
+ * oară făcea o cerere nouă). Amprenta se socotește în bază, din fișierul
+ * ținut acolo, deci nu trebuie coloană nouă.
  */
 import { Hono, type Context as HonoCtx } from "hono";
 import { z } from "zod";
-import { eq } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import type { Baza } from "../db/client.js";
-import { mapareColoane, sablonImport } from "../db/schema.js";
+import { cerere, mapareColoane, sablonImport } from "../db/schema.js";
 import { amprentaFoaie, MapareFoaie, valideazaMapare } from "../import/mapare.js";
 import { foaieDinFir, type FoaiePeFir } from "../import/coloane.js";
 import { LinieExtrasa } from "../import/schema.js";
@@ -147,6 +152,13 @@ export function ruteImportFirma(o: OptiuniModel & { mapeaza?: Mapeaza }, inTenan
       amprenta, mapare, acceptata: true, sursa: "om", fisier: corp.fisier ?? null, foaie: foaie.nume, model: null,
     }));
     return c.json({ amprenta, mapare, acceptata: true });
+  });
+
+  app.get("/cereri-dupa-fisier", async (c) => {
+    const amprenta = z.string().regex(/^[0-9a-f]{64}$/).parse(c.req.query("amprenta"));
+    const rows = await inTenant(c, (tx) => tx.select({ id: cerere.id }).from(cerere)
+      .where(sql`encode(sha256(${cerere.fisier}), 'hex') = ${amprenta}`).orderBy(desc(cerere.cand)));
+    return c.json(rows.map((r) => r.id));
   });
 
   app.get("/sabloane", async (c) => c.json(await inTenant(c, (tx) => sabloaneFirmei(tx))));

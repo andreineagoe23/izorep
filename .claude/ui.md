@@ -500,6 +500,14 @@ preț), cu cursorul pe izolația lui și mesajul „Rândul e acum poziție: ale
 materialul și grosimea, apoi confirmă.” cu „Anulează”. Fără nimic lăsat afară,
 fila arată „Niciun rând cu cantitate n-a rămas afară.”
 
+## Cerere nouă: același fișier a doua oară (14 noiembrie 2026, planul UX, Faza 6)
+
+În locul ecranului de încărcare, un card (`ecranDublura` în
+`web/import/fisier-dublu.ts`): „Fișierul ăsta e deja la lucrarea X.”, numele
+fișierului, „Deschide-o” (singurul albastru, cu focusul pe el; duce la
+`#/lucrari/<id>/cerere`), „Încarcă-l ca lucrare nouă” (alb) și „Alt fișier”
+(legătură). Numele lucrării e cel din lista Lucrări (`titluLucrare`).
+
 ## Ecranul de import: trei pași
 
 > **Istoric** pentru așezare: din 14 noiembrie 2026 pașii 1 · 2 · 3 nu se mai desenează; importul e fila Cerere (fișierul și verificarea) și fila Ofertă a lucrării. Fără „Importuri recente”.

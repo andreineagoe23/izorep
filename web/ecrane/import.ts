@@ -7,6 +7,7 @@ import { citesteColoanele, mapariFolosite, mapariImport } from "../import/mapari
 import { controlColoane } from "../import/coloane-ecran.js";
 import { faPozitie, lasateAfara } from "../../src/import/lasate-afara.js";
 import { listaAfara } from "../import/afara-vizual.js";
+import { ecranDublura, lucrareaFisierului } from "../import/fisier-dublu.js";
 import type { LinieExtrasa } from "../../src/import/schema.js";
 // Doar tipul: ExcelJS (~940 kB) ramane incarcat lenes, prin `import()`.
 import type { FoaieBruta } from "../../src/import/parse-workbook.js";
@@ -387,6 +388,8 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
    * alege izolatia pe fiecare foaie, iar lista de izolatii trece prin import.
    */
   let deIzolat: { fisier: File; tevi: TeviFoaie[]; alegeri: AlegereFoaie[]; eroare?: string } | null = null;
+  /** Fișierul încărcat e deja la o lucrare (Faza 6, punctul 8): omul alege ce face. */
+  let dublura: { fisier: File; id: string; titlu: string } | null = null;
   let ceasMesaj: ReturnType<typeof setTimeout> | undefined;
   let ceasSalvare: ReturnType<typeof setTimeout> | undefined;
 
@@ -536,7 +539,10 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
     // Cu fisierul deschis, foaia clientului are nevoie de toata latimea:
     // bara laterala se pliaza (temporar, fara sa schimbe preferinta omului).
     ceriSpatiu(gazda, areSesiune && pas !== 1);
-    if (pas === 1 && deIzolat) {
+    if (pas === 1 && dublura) {
+      pagina.innerHTML = ecranDublura(dublura.fisier.name, dublura.titlu);
+      pagina.querySelector<HTMLElement>('[data-act="dublura-deschide"]')?.focus();
+    } else if (pas === 1 && deIzolat) {
       const d = deIzolat;
       pagina.innerHTML = ecranIzolatieFoaie({
         fisier: d.fisier.name, alegeri: d.alegeri, ...(d.eroare ? { eroare: d.eroare } : {}),
@@ -899,8 +905,20 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
     if (!restaurat) arataMesaj(`Ai deschis ${s.nume}.`);
   }
 
-  async function proceseaza(fisier: File, predare?: Predare): Promise<void> {
+  async function proceseaza(fisier: File, predare?: Predare, caNou = false): Promise<void> {
     deIzolat = null;
+    dublura = null;
+    // Același fișier, a doua oară: întâi întrebarea. Nu și pentru pozele din carnet (registru nou de fiecare dată).
+    if (!caNou && !predare) {
+      pagina.innerHTML = ecranProgres(`Se citește ${fisier.name}…`, null);
+      const l = await lucrareaFisierului(await fisier.arrayBuffer(), sesiune?.meta.id ?? opt.cerere);
+      if (l) {
+        pas = 1;
+        dublura = { fisier, ...l };
+        deseneaza();
+        return;
+      }
+    }
     pas = 2;
     let nou: SesiuneImport | null = null;
     pagina.innerHTML = ecranProgres(`Se citește ${fisier.name}…`, null);
@@ -1325,6 +1343,9 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
         return;
       }
       case "renunta-izolatie": deIzolat = null; deseneaza(); scrollTo({ top: 0 }); return;
+      case "dublura-deschide": if (dublura) location.hash = `#/lucrari/${encodeURIComponent(dublura.id)}/cerere`; return;
+      case "dublura-nou": { const d = dublura; if (d) void proceseaza(d.fisier, undefined, true); return; }
+      case "dublura-renunta": dublura = null; deseneaza(); scrollTo({ top: 0 }); return;
       case "schimba-tip":
         tipDeschis = true;
         deseneaza();

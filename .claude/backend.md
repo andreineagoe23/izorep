@@ -390,6 +390,11 @@ FORCE): memoria de șabloane a importului (L4), care stătea în `localStorage`.
 `on conflict do nothing`: fără dubluri și fără să scrie peste firmă; șabloanele
 care nu trec de schemă se lasă deoparte).
 
+`GET /api/cereri-dupa-fisier?amprenta=<sha256 hex>` (tot în
+`import-firma.ts`): id-urile cererilor cu exact acel fișier, cele mai noi
+întâi, socotit în bază (`encode(sha256(fisier), 'hex')`), fără migrare;
+amprenta greșită, 400.
+
 ## Ce lipsește
 
 - Permisiunile pe rol (rolurile se stabilesc cu firma). Conturile și jurnalul
