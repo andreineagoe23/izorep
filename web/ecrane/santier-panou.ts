@@ -9,11 +9,12 @@
  */
 import { esc, eur, stare, tabel } from "./tip.js";
 import {
-  citesteDepozit, citestePlanuri, idNou, inchideSantier, salveazaSituatie, scrieDepozit, stergeUltimaSituatie,
+  citesteDepozit, citestePlanuri, idNou, inchideSantier, puneComanda, salveazaSituatie, scrieDepozit, stergeUltimaSituatie,
 } from "../date.js";
 import { consumPlan } from "../consum-vizual.js";
 import { dinMarci } from "../../src/stoc/consum.js";
-import { ramasPeNecesar } from "../materiale.js";
+import { depozite, ramasPeNecesar } from "../materiale.js";
+import { alegereNoua, aplicaComanda, ecranComanda, schimbaAlegerea, type AlegereComanda } from "../comanda-lipsa.js";
 import { cardNecesar, cifra } from "../stoc-vizual.js";
 import { descarca } from "../descarca.js";
 import { numeSituatie, registruSituatie } from "../situatie.js";
@@ -23,7 +24,7 @@ import type { Potrivire } from "../../src/lucrari/potrivire.js";
 import { cifreInchidere, materialSantier, valideazaInchidere } from "../../src/lucrari/inchidere.js";
 import { cardInchis, cardMaterial, formularInchidere, randuriInchidere, restulPeSantier } from "../inchidere-vizual.js";
 import {
-  randuriSituatie, situatieNoua, totalSituatie, valideazaSituatie,
+  progresPlan, randuriSituatie, situatieNoua, totalSituatie, valideazaSituatie, vedereSituatie,
   type PlanSantier, type Situatie,
 } from "../../src/lucrari/situatii.js";
 import { PIERDERI_IMPLICITE, PRAG_TUB_MM, type Pierderi } from "../../src/stoc/necesar.js";
@@ -66,6 +67,12 @@ export function montezaSantier(root: HTMLElement, opt: OptiuniSantier): ControlS
     cerere: Awaited<ReturnType<typeof import("./import.js")["deschideReguli"]>>; r: ReguliNecesar; eroare: string;
   } | null = null;
   let seDeschidReguli = false;
+  /** Situația nouă: căutarea și pozițiile terminate, desfăcute. */
+  let cauta = "";
+  let arataTerminate = false;
+  /** Fila Materiale: rândul cu materialele care au tot, desfăcut; „Comandă ce lipsește” deschisă. */
+  let desfacut = false;
+  let comanda: AlegereComanda | null = null;
 
   const plan = (): PlanSantier | undefined => planuri.find((p) => p.id === opt.plan);
 
@@ -81,15 +88,6 @@ export function montezaSantier(root: HTMLElement, opt: OptiuniSantier): ControlS
       nota: `Din măsurători (${venita.pagini === 1 ? "o pagină" : `${venita.pagini} pagini`} din carnet)`,
     };
     dinPoze = venita.potrivire;
-  }
-
-  /** Câte materiale mai sunt de comandat (ca în Materiale: necesar − adus − comandat). */
-  function deComandat(p: PlanSantier): { deCumparat: number; areComenzi: boolean } {
-    const dep = citesteDepozit();
-    const necesar = dep.necesare.find((n) => n.santier === p.id);
-    const ramas = necesar ? ramasPeNecesar(dep, necesar) : [];
-    const areComenzi = (dep.comenzi ?? []).some((c) => c.spre === p.id || c.santier === p.id);
-    return { deCumparat: ramas.filter((d) => d.ramas > 0).length, areComenzi };
   }
 
   function deseneaza(): void {
@@ -118,10 +116,17 @@ export function montezaSantier(root: HTMLElement, opt: OptiuniSantier): ControlS
 
   function panouMateriale(p: PlanSantier): string {
     const dep = citesteDepozit();
+    const necesar = dep.necesare.find((n) => n.santier === p.id);
     const materiale = dep.necesare.filter((n) => n.santier === p.id).flatMap((n) => n.materiale);
     const scoase = dep.necesare.filter((n) => n.santier === p.id).flatMap((n) => n.scoase ?? []);
     if (p.inchis) return cardInchis(cifreInchidere(p, materiale, dep.miscari, scoase));
-    const { deCumparat, areComenzi } = deComandat(p);
+    if (comanda && necesar && comanda.id === necesar.id) {
+      const nume = (id?: string): string => depozite().find((d) => d.id === id)?.nume ?? "—";
+      return ecranComanda(dep, necesar, comanda, nume, "Înapoi la materialele lucrării");
+    }
+    const ramas = necesar ? ramasPeNecesar(dep, necesar) : [];
+    const lipsa = ramas.some((d) => d.ramas > 0);
+    const areComenzi = (dep.comenzi ?? []).some((c) => c.spre === p.id || c.santier === p.id);
     // Regulile se schimbă cât lista n-a plecat încă în lume: fără comenzi și fără situații.
     const poateReguli = !!opt.cerere && !areComenzi && p.situatii.length === 0;
     const butoane = `<div class="mat-actiuni">
@@ -131,7 +136,13 @@ export function montezaSantier(root: HTMLElement, opt: OptiuniSantier): ControlS
     </div>`;
     const card = reguli?.cerere ? `${cardNecesar(reguli.cerere.necesar(reguli.r))}${
       reguli.eroare ? `<p class="alerta" role="alert">${esc(reguli.eroare)}</p>` : ""}` : "";
-    return `${butoane}${card}${cardMaterial(materialSantier(p, materiale, dep.miscari, dep.comenzi ?? [], scoase), consumPlan(p, dep), deCumparat > 0)}`;
+    // Albastru doar cât e pasul lucrării („Urmează” nu-l mai desenează pe fila asta);
+    // cu tot executat, pasul e închiderea, iar comanda e albă.
+    const butonComanda = !lipsa || !necesar ? undefined : progresPlan(p) < 100 ? "primar" as const : "secundar" as const;
+    return `${butoane}${card}${cardMaterial(
+      { materiale: necesar?.materiale ?? [], ramas, santier: materialSantier(p, materiale, dep.miscari, dep.comenzi ?? [], scoase), consum: consumPlan(p, dep) },
+      { ...(butonComanda ? { comanda: butonComanda } : {}), desfacut },
+    )}`;
   }
 
   function panouInchidere(p: PlanSantier): string {
@@ -222,28 +233,50 @@ export function montezaSantier(root: HTMLElement, opt: OptiuniSantier): ControlS
     </section>`;
   }
 
-  function formularSituatie(p: PlanSantier, s: Situatie): string {
-    const r = randuriSituatie(p, s);
+  /**
+   * Pozițiile situației: doar ce mai are de executat, pe capitolele ofertei,
+   * filtrate de căutare (`vedereSituatie`); cele terminate într-un rând care
+   * se desface. Se redesenează singur la fiecare tastă din căutare.
+   */
+  function randuriFormular(p: PlanSantier, s: Situatie): string {
+    const v = vedereSituatie(p, s, { cauta, terminate: arataTerminate });
     const dinCarnet = new Set(dinPoze?.puse.map((x) => x.pozitie) ?? []);
+    const cuTitluri = v.grupuri.some((g) => g.titlu !== null);
+    const tabele = v.grupuri.map((g) => {
+      const randuri = g.randuri.map((x) => `<tr>
+        <td>${x.poz.nr}. ${esc(x.poz.denumire)}</td>
+        <td class="n">${cant(x.anterior, x.poz.um)} din ${cant(x.poz.cantitate, x.poz.um)}</td>
+        <td class="n"><input name="cant-${x.poz.nr}" type="number" inputmode="decimal" min="0" step="any"
+          value="${x.curent || ""}" aria-label="Executat acum, poziția ${x.poz.nr}" style="width:100%;max-width:9rem" />${
+          x.pesteOferta ? `<br>${stare("peste ofertă", "atentie")}` : ""}${
+          dinCarnet.has(x.poz.nr) && x.curent > 0 ? `<br>${stare("din poze")}` : ""}</td>
+      </tr>`);
+      return `${cuTitluri ? `<h3>${esc(g.titlu ?? "Alte poziții")}</h3>` : ""}${
+        tabel(["Poziția", "Executat înainte", "Executat acum"], randuri, ["", "n", "n"])}`;
+    }).join("");
+    const gol = v.grupuri.length > 0 ? ""
+      : cauta.trim() ? `<p class="hint" style="margin:0 0 12px">Nicio poziție de executat nu se potrivește cu „${esc(cauta.trim())}”.</p>`
+        : `<p class="hint" style="margin:0 0 12px">Toate pozițiile sunt executate în situațiile de dinainte.</p>`;
+    const terminate = v.terminate === 0 ? "" : `<p style="margin:12px 0 0"><button type="button" class="secundar" data-act="arata-terminate"
+      aria-expanded="${arataTerminate}">${arataTerminate ? "Ascunde pozițiile terminate"
+        : `${v.terminate === 1 ? "O poziție terminată" : `${v.terminate} poziții terminate`} · arată`}</button></p>`;
+    return `${gol}${tabele}${terminate}`;
+  }
+
+  function formularSituatie(p: PlanSantier, s: Situatie): string {
     const t = totalSituatie(p, s);
-    const randuri = r.map((x) => `<tr>
-      <td>${x.poz.nr}. ${esc(x.poz.denumire)}</td>
-      <td class="n">${cant(x.anterior, x.poz.um)} din ${cant(x.poz.cantitate, x.poz.um)}</td>
-      <td class="n"><input name="cant-${x.poz.nr}" type="number" inputmode="decimal" min="0" step="any"
-        value="${x.curent || ""}" aria-label="Executat acum, poziția ${x.poz.nr}" style="width:100%;max-width:9rem" />${
-        x.pesteOferta ? `<br>${stare("peste ofertă", "atentie")}` : ""}${
-        dinCarnet.has(x.poz.nr) && x.curent > 0 ? `<br>${stare("din poze")}` : ""}</td>
-    </tr>`);
     return `<form class="imp-card" id="situatie">
       <h2>Situația nr. ${s.nr}</h2>
       <p class="hint" style="margin:0 0 12px">Scrie cât s-a executat în perioada asta (din pozele și notițele de pe
-        șantier). Ce s-a executat înainte e din situațiile precedente. „Tot restul” completează
-        pozițiile goale cu ce a mai rămas din ofertă.</p>
+        șantier). Aici sunt doar pozițiile care mai au de executat. „Tot restul” pune la toate pozițiile goale ce a
+        mai rămas din ofertă.</p>
       <div class="imp-campuri">
         <label>Data situației<input name="data" type="date" value="${s.data.slice(0, 10)}" required /></label>
         <label>Notă (perioada, zona)<input name="nota" value="${esc(s.nota ?? "")}" autocomplete="off" /></label>
+        <label>Caută o poziție<input id="cauta-pozitie" name="cauta" type="search" value="${esc(cauta)}" autocomplete="off"
+          placeholder="de ex. DN50, cot, etaj 1" /></label>
       </div>
-      ${tabel(["Poziția", "Executat înainte", "Executat acum"], randuri, ["", "n", "n"])}
+      <div id="situatie-randuri">${randuriFormular(p, s)}</div>
       <p class="imp-oferta-suma"><span>Valoarea situației</span><strong id="total-situatie">${eur(t.curent.total)}</strong>
         <span>cumulat ${eur(t.cumulat.total)}</span></p>
       ${eroare ? `<p class="alerta" role="alert">${esc(eroare)}</p>` : ""}
@@ -255,15 +288,21 @@ export function montezaSantier(root: HTMLElement, opt: OptiuniSantier): ControlS
     </form>`;
   }
 
-  /** Citește cantitățile din formular în situația în lucru. */
+  /**
+   * Citește cantitățile din formular în situația în lucru. Doar pozițiile care
+   * se văd au câmp: celelalte (ascunse de căutare sau terminate) își păstrează
+   * ce era scris.
+   */
   function citesteFormular(f: HTMLFormElement): void {
     if (!inLucru) return;
     const date = new FormData(f);
-    const cantitati: Record<number, number> = {};
+    const cantitati: Record<number, number> = { ...inLucru.cantitati };
     for (const [k, v] of date) {
       const m = /^cant-(\d+)$/.exec(k);
+      if (!m) continue;
       const val = String(v).trim().replace(",", ".");
-      if (m && val !== "") cantitati[Number(m[1])] = Number(val);
+      if (val === "") delete cantitati[Number(m[1])];
+      else cantitati[Number(m[1])] = Number(val);
     }
     const d = String(date.get("data") ?? "");
     const notaSit = String(date.get("nota") ?? "").trim();
@@ -329,8 +368,14 @@ export function montezaSantier(root: HTMLElement, opt: OptiuniSantier): ControlS
     mesaj = "";
     info = "";
     switch (b.dataset["act"]) {
-      case "situatie-noua": if (p && !p.inchis) { inLucru = situatieNoua(p, idNou(), new Date().toISOString()); eroare = ""; } break;
-      case "renunta": inLucru = null; dinPoze = null; eroare = ""; break;
+      case "situatie-noua": if (p && !p.inchis) { inLucru = situatieNoua(p, idNou(), new Date().toISOString()); eroare = ""; cauta = ""; arataTerminate = false; } break;
+      case "renunta": inLucru = null; dinPoze = null; eroare = ""; cauta = ""; arataTerminate = false; break;
+      case "arata-terminate": {
+        const f = root.querySelector<HTMLFormElement>("#situatie");
+        if (f) citesteFormular(f);
+        arataTerminate = !arataTerminate;
+        break;
+      }
       case "pune-la": {
         const i = Number(b.dataset["i"]);
         const nr = Number(b.dataset["nr"]);
@@ -371,6 +416,30 @@ export function montezaSantier(root: HTMLElement, opt: OptiuniSantier): ControlS
         void registruSituatie(p, s).then((buf) => descarca(buf, numeSituatie(p, s)));
         return;
       }
+      case "arata-gata": desfacut = !desfacut; break;
+      case "comanda-lipsa": {
+        const n = citesteDepozit().necesare.find((x) => x.santier === p?.id);
+        if (!n) return;
+        comanda = alegereNoua(n.id);
+        deseneaza();
+        root.querySelector<HTMLElement>('[data-act="inapoi"]')?.focus();
+        return;
+      }
+      case "inapoi": comanda = null; break;
+      case "confirma": {
+        const dep = citesteDepozit();
+        const n = dep.necesare.find((x) => x.id === b.dataset["id"]);
+        if (!n || !comanda) return;
+        const r = aplicaComanda(dep, n, comanda, idNou);
+        if (r.mutate > 0 && !scrieDepozit(r.st)) mesaj = "Browserul nu permite salvarea: modificarea se pierde la reîncărcare.";
+        for (const c of r.ciorne) puneComanda(c);
+        comanda = null;
+        opt.laSchimbare();
+        // Ciornele se trimit din Comenzi, ca din Materiale › De cumpărat.
+        if (r.ciorne.length > 0) { location.hash = "#/comenzi"; return; }
+        info = r.mutate === 1 ? "Materialul a fost mutat pe șantier." : `${r.mutate} materiale au fost mutate pe șantier.`;
+        break;
+      }
       case "reguli": if (p) void deschideRegulile(p); return;
       case "reguli-renunta": reguli = null; break;
       case "refa-lista": {
@@ -390,6 +459,7 @@ export function montezaSantier(root: HTMLElement, opt: OptiuniSantier): ControlS
 
   root.addEventListener("change", (e) => {
     const t = e.target as HTMLInputElement | HTMLSelectElement;
+    if (comanda && t.isConnected && schimbaAlegerea(comanda, t)) { deseneaza(); return; }
     if (!t.isConnected || !t.closest("#necesar")) return;
     if (t.dataset["act"] === "pierdere") return; // la tastă, mai jos
     if (scrieRegula(t)) redeseneazaReguli();
@@ -414,9 +484,20 @@ export function montezaSantier(root: HTMLElement, opt: OptiuniSantier): ControlS
     const p = plan();
     if (!f || !p || !inLucru) return;
     citesteFormular(f);
+    // Căutarea: doar pozițiile se redesenează, cursorul rămâne în casetă.
+    if (camp.id === "cauta-pozitie") {
+      cauta = camp.value;
+      f.querySelector("#situatie-randuri")!.innerHTML = randuriFormular(p, inLucru);
+      return;
+    }
     const t = totalSituatie(p, inLucru);
     f.querySelector("#total-situatie")!.textContent = eur(t.curent.total);
     f.querySelector("#total-situatie + span")!.textContent = `cumulat ${eur(t.cumulat.total)}`;
+  });
+
+  // Enter în căutare nu salvează situația.
+  root.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && (e.target as HTMLElement).id === "cauta-pozitie") e.preventDefault();
   });
 
   root.addEventListener("submit", (e) => {
@@ -458,6 +539,8 @@ export function montezaSantier(root: HTMLElement, opt: OptiuniSantier): ControlS
     inLucru = null;
     dinPoze = null;
     eroare = "";
+    cauta = "";
+    arataTerminate = false;
     deseneaza();
     opt.laSchimbare();
   });
@@ -482,11 +565,11 @@ export function montezaSantier(root: HTMLElement, opt: OptiuniSantier): ControlS
 
   deseneaza();
   return {
-    arata: (f) => { fila = f; mesaj = ""; info = ""; deseneaza(); },
+    arata: (f) => { fila = f; mesaj = ""; info = ""; comanda = null; deseneaza(); },
     situatieNoua: () => {
       const p = plan();
       fila = "situatii";
-      if (p && !p.inchis && !inLucru) { inLucru = situatieNoua(p, idNou(), new Date().toISOString()); eroare = ""; }
+      if (p && !p.inchis && !inLucru) { inLucru = situatieNoua(p, idNou(), new Date().toISOString()); eroare = ""; cauta = ""; arataTerminate = false; }
       deseneaza();
       root.querySelector<HTMLInputElement>("#situatie input[name^='cant-']")?.focus();
     },

@@ -21,8 +21,8 @@ import { importaFisier } from "../src/import/pipeline.js";
 import { stocInMemorie } from "../src/import/memorie.js";
 import { bani } from "../src/pricing/engine.js";
 import {
-  faraUltimaSituatie, progresPlan, randuriSituatie, situatieNoua, totalSituatie, valideazaSituatie, valoareOferta,
-  type PlanSantier,
+  faraUltimaSituatie, normalizeazaCautarea, progresPlan, randuriSituatie, situatieNoua, totalSituatie, valideazaSituatie,
+  valoareOferta, vedereSituatie, type PlanSantier,
 } from "../src/lucrari/situatii.js";
 
 const DIR = CLIENTI;
@@ -45,6 +45,54 @@ const plan = (p: Partial<PlanSantier> = {}): PlanSantier => ({
   ],
   situatii: [],
   ...p,
+});
+
+describe("situația nouă scurtă (planul UX, Faza 4)", () => {
+  const cuZone = plan({
+    pozitii: [
+      { nr: 1, denumire: "Vată 50 Di114", um: "ml", cantitate: 100, pretUnitar: 25.68, foc: false, zona: "Sala cazanelor" },
+      { nr: 2, denumire: "Cot Di114", um: "buc", cantitate: 10, pretUnitar: 76.43, foc: false, zona: "Sala cazanelor" },
+      { nr: 3, denumire: "Țeavă oțel DN50, elastomer 19 mm", um: "ml", cantitate: 40, pretUnitar: 8.84, foc: false, zona: "Etaj 1" },
+      { nr: 4, denumire: "Teu DN50", um: "buc", cantitate: 4, pretUnitar: 17.68, foc: false, zona: "Etaj 1" },
+      { nr: 5, denumire: "Robinet", um: "buc", cantitate: 2, pretUnitar: 30, foc: false },
+    ],
+    situatii: [{ id: "a", nr: 1, data: "2026-10-01T10:00:00.000Z", cantitati: { 2: 10, 3: 15, 4: 4 } }],
+  });
+  const noua = situatieNoua(cuZone, "b", "2026-10-15T10:00:00.000Z");
+  const nr = (v: ReturnType<typeof vedereSituatie>): (number | string | null)[][] =>
+    v.grupuri.map((g) => [g.titlu, ...g.randuri.map((r) => r.poz.nr)]);
+
+  it("doar ce mai are de executat, pe capitolele ofertei, în ordinea planului", () => {
+    const v = vedereSituatie(cuZone, noua);
+    expect(nr(v)).toEqual([["Sala cazanelor", 1], ["Etaj 1", 3], [null, 5]]);
+    expect(v.terminate).toBe(2);
+    expect(v.faraPotrivire).toBe(0);
+  });
+
+  it("cele terminate se pot desface; una terminată cu ceva scris acum nu se ascunde", () => {
+    expect(nr(vedereSituatie(cuZone, noua, { terminate: true }))).toEqual([["Sala cazanelor", 1, 2], ["Etaj 1", 3, 4], [null, 5]]);
+    const peste = { ...noua, cantitati: { 4: 1 } };
+    const v = vedereSituatie(cuZone, peste);
+    expect(nr(v)).toEqual([["Sala cazanelor", 1], ["Etaj 1", 3, 4], [null, 5]]);
+    expect(v.terminate).toBe(1);
+  });
+
+  it("căutarea filtrează pe cuvinte, fără diacritice și majuscule, și pe capitol", () => {
+    expect(nr(vedereSituatie(cuZone, noua, { cauta: "teava dn50" }))).toEqual([["Etaj 1", 3]]);
+    expect(nr(vedereSituatie(cuZone, noua, { cauta: "  ȚEAVĂ  " }))).toEqual([["Etaj 1", 3]]);
+    expect(nr(vedereSituatie(cuZone, noua, { cauta: "cazanelor" }))).toEqual([["Sala cazanelor", 1]]);
+    expect(nr(vedereSituatie(cuZone, noua, { cauta: "5" }))).toEqual([["Sala cazanelor", 1], ["Etaj 1", 3], [null, 5]]);
+    const nimic = vedereSituatie(cuZone, noua, { cauta: "pompa" });
+    expect(nimic.grupuri).toEqual([]);
+    expect(nimic.faraPotrivire).toBe(3);
+    expect(normalizeazaCautarea("Ş ș Ț ţ")).toBe("s s t t");
+  });
+
+  it("fără situații înainte, toate pozițiile sunt de executat", () => {
+    const v = vedereSituatie(plan(), situatieNoua(plan(), "x", "2026-10-01T10:00:00.000Z"));
+    expect(nr(v)).toEqual([[null, 1, 2]]);
+    expect(v.terminate).toBe(0);
+  });
 });
 
 describe("situațiile de lucrări", () => {

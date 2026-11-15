@@ -5,16 +5,18 @@
  * prin `esc()`. Logica e în `src/lucrari/inchidere.ts`.
  */
 import { esc, eur, stare, tabel } from "./ecrane/tip.js";
-import { cantitate, cifra, numeArticol } from "./stoc-vizual.js";
+import { cantitate, cifra, felMaterial, numeArticol, propozitieMateriale, stareMaterial } from "./stoc-vizual.js";
 import {
-  PIERDERI, stocSantier, type CifreInchidere, type Destinatie, type MaterialSantier, type Pierdere, type RestNumarat,
+  PIERDERI, stocSantier, type CifreInchidere, type Destinatie, type MaterialSantier, type Pierdere, type RandMaterial,
+  type RestNumarat,
 } from "../src/lucrari/inchidere.js";
 import type { PlanSantier } from "../src/lucrari/situatii.js";
-import { esteAnulata, type Articol, type Miscare } from "../src/stoc/registru.js";
-import { stareComanda, type Comanda } from "../src/stoc/comenzi.js";
+import { articolDin, esteAnulata, type Articol, type Miscare } from "../src/stoc/registru.js";
+import { stareComanda, type Comanda, type DeComandatSantier } from "../src/stoc/comenzi.js";
 import { cheieBaza } from "../src/stoc/registru.js";
-import type { ConsumSantier } from "../src/stoc/consum.js";
-import { celulaPierdere, formularConsumMana, randPierdere } from "./consum-vizual.js";
+import { PRAG_PIERDERE, type ConsumMaterial, type ConsumSantier } from "../src/stoc/consum.js";
+import type { MaterialNecesar } from "../src/stoc/necesar.js";
+import { formularConsumMana, randPierdere } from "./consum-vizual.js";
 import { ATELIER, CENTRAL, inAtelier } from "../src/stoc/locuri.js";
 
 const zi = (iso: string): string => new Date(iso).toLocaleDateString("ro-RO");
@@ -29,78 +31,138 @@ function suma(eticheta: string, c: { cost: number; inOferta: number; procent: nu
   return `<p class="imp-oferta-suma"><span>${esc(eticheta)}</span><strong>${eur(c.cost)}</strong><span>${fata}${fara}</span></p>`;
 }
 
-/**
- * S9: pe fiecare material, comandat, venit, pus, rămas și ce lipsește; jos,
- * costul față de ofertă. Cu consumul Fazei 6 (`c`), și pierderea față de
- * situații, pe material și pe tot șantierul, plus consumul notat de mână: un
- * singur card pentru materialul șantierului, nu două cu aceleași coloane.
- *
- * O coloană goală pe toate rândurile nu se desenează (14 noiembrie 2026): pe
- * TRANSAVIA, 12 din 14 rânduri erau „—” în cinci coloane. „Lipsește” rămâne
- * mereu: e întrebarea paginii. Cu ceva de comandat (`deComandat`), butonul
- * duce la Materiale, unde se face comanda.
- */
-export function cardMaterial(m: MaterialSantier, c?: ConsumSantier, deComandat = false): string {
-  if (m.randuri.length === 0) {
-    return `<section class="imp-card"><h2>Materialul șantierului</h2>
-      <p class="hint" style="margin:0">Șantierul nu are încă necesar de materiale și nici material adus.</p></section>`;
+/** Un rând de pe fila Materiale a lucrării. */
+export interface RandLucrare {
+  articol: Articol;
+  /** Materialul de pe listă; lipsește la ce a venit pe șantier fără să fie pe listă. */
+  material?: MaterialNecesar;
+  /** Trebuie, adus, comandat, rămas de comandat (ca în Materiale › De cumpărat). */
+  d?: DeComandatSantier;
+  /** Ce s-a întâmplat cu el pe șantier: comandat, venit, pus, rămas, pierdere (text, neescapat). */
+  intamplat: string[];
+  /** Pierderea trece de prag. */
+  pestePrag: boolean;
+}
+
+export interface MaterialeLucrare {
+  /** Lista șantierului (necesarul), în ordinea ei. */
+  materiale: readonly MaterialNecesar[];
+  /** `ramasPeNecesar` pe lista de mai sus. */
+  ramas: readonly DeComandatSantier[];
+  santier: MaterialSantier;
+  consum?: ConsumSantier | undefined;
+}
+
+const PRAG_PROCENT = PRAG_PIERDERE * 100;
+
+/** Ce s-a întâmplat cu un material pe șantier; gol când nimic (atunci nici nu se scrie). */
+function intamplat(r: RandMaterial | undefined, c: ConsumMaterial | undefined): { parti: string[]; pestePrag: boolean } {
+  const parti: string[] = [];
+  if (r) {
+    const um = r.articol.um;
+    if (r.comandat) parti.push(`comandat ${cantitate(r.comandat, um)}`);
+    if (r.venit) parti.push(`venit ${cantitate(r.venit, um)}`);
+    if (r.pus) parti.push(`pus ${cantitate(r.pus, um)}`);
+    if (r.ramas > 0) parti.push(`rămas ${cantitate(r.ramas, um)}`);
+    if (r.ramas < 0) parti.push(`sold negativ −${cantitate(-r.ramas, um)}`);
   }
-  const pierdere = (cheie: string): string => {
-    const x = c?.materiale.find((y) => y.cheie === cheie);
-    return x ? celulaPierdere(x) : "—";
-  };
-  type Rand = MaterialSantier["randuri"][number];
-  const coloane: { cap: string; celula: (r: Rand) => string; areCeva: (r: Rand) => boolean }[] = [
-    { cap: "Necesar", celula: (r) => cant(r.necesar, r.articol), areCeva: (r) => r.necesar !== 0 },
-    { cap: "Comandat", celula: (r) => cant(r.comandat, r.articol), areCeva: (r) => r.comandat !== 0 },
-    { cap: "Venit", celula: (r) => cant(r.venit, r.articol), areCeva: (r) => r.venit !== 0 },
-    { cap: "Pus", celula: (r) => cant(r.pus, r.articol), areCeva: (r) => r.pus !== 0 },
-    {
-      cap: "Rămas", areCeva: (r) => r.ramas !== 0,
-      celula: (r) => (r.ramas < 0 ? `${stare("sold negativ", "atentie")} −${cant(-r.ramas, r.articol)}` : cant(r.ramas, r.articol)),
-    },
-    {
-      cap: "Lipsește", areCeva: () => true,
-      celula: (r) => (r.lipsa > 0 ? `<strong>${cantitate(r.lipsa, r.articol.um)}</strong>` : stare("nimic", "ok")),
-    },
-    ...(c ? [{
-      cap: "Pierdere", celula: (r: Rand) => pierdere(cheieBaza(r.articol)),
-      areCeva: (r: Rand) => pierdere(cheieBaza(r.articol)) !== "—",
-    }] : []),
-  ];
-  const vizibile = coloane.filter((k) => m.randuri.some(k.areCeva));
-  const randuri = m.randuri.map((r) => `<tr>
-    <td>${esc(numeArticol(r.articol))}${r.alClientului ? `<br>${stare("îl dă clientul")}` : ""}</td>
-    ${vizibile.map((k) => `<td class="n">${k.celula(r)}</td>`).join("")}
-  </tr>`);
-  const are = (cap: string): boolean => vizibile.some((k) => k.cap === cap);
-  // Definitiile coloanelor stau pliate: patru randuri de text gri deasupra
-  // tabelului le citea omul o data, apoi ii ascundeau tabelul de fiecare data.
-  const definitii = [
-    are("Comandat") ? "Comandat: pe comenzile trimise." : "",
-    are("Venit") ? "Venit: ce a ajuns pe șantier." : "",
-    are("Pus") ? "Pus: ce s-a pus pe țeavă." : "",
-    are("Rămas") ? "Rămas: ce e acum pe șantier." : "",
-    `Lipsește: cât mai trebuie pentru ce n-a fost încă executat (după situații), peste ce e pe șantier și ce e comandat și
-      n-a venit.`,
-    are("Pierdere") ? `Pierdere: cât s-a dus peste ce arată situațiile (venit, minus ce s-a întors și ce a rămas, față de
-      consumul scris la situații, care are deja pierderea la croit).` : "",
-  ].filter(Boolean).join(" ");
-  return `<section class="imp-card">
-    ${deComandat
-      ? `<div class="mat-antet"><div><h2>Materialul șantierului</h2></div>
-        <div class="mat-actiuni"><a class="secundar" href="#/materiale">Comandă ce lipsește</a></div></div>`
-      : `<h2>Materialul șantierului</h2>`}
-    <details class="ajutor">
-      <summary>Ce înseamnă coloanele</summary>
-      <p class="hint">${definitii}</p>
-    </details>
-    ${c ? randPierdere(c) : ""}
-    ${tabel(["Material", ...vizibile.map((k) => k.cap)], randuri, ["", ...vizibile.map(() => "n")])}
+  let pestePrag = false;
+  if (c && c.pierdereProcent !== null && Math.abs(c.pierdere) >= 0.005) {
+    const semn = c.pierdere > 0 ? "+" : "−";
+    parti.push(`pierdere ${semn}${cantitate(Math.abs(c.pierdere), c.um)} (${cifra(c.pierdereProcent)} %)`);
+    pestePrag = c.pierdereProcent > PRAG_PROCENT;
+  }
+  return { parti, pestePrag };
+}
+
+/**
+ * Rândurile filei Materiale a lucrării (15 noiembrie 2026, planul UX, Faza 4):
+ * ce trebuie să vadă omul (`vazute`) și ce are tot (`strinse`), care stă într-un
+ * singur rând până îl desface. Materialul venit fără să fie pe listă e la
+ * coada celor văzute. Pur: îl folosește cardul și îl țin testele.
+ */
+export function randuriLucrare(x: MaterialeLucrare): { vazute: RandLucrare[]; strinse: RandLucrare[] } {
+  const pe = new Map(x.ramas.map((d) => [d.material, d]));
+  const peCheie = new Map(x.santier.randuri.map((r) => [cheieBaza(r.articol), r]));
+  const consum = new Map((x.consum?.materiale ?? []).map((c) => [c.cheie, c]));
+  const folosite = new Set<string>();
+  const vazute: RandLucrare[] = [];
+  const strinse: RandLucrare[] = [];
+  for (const m of x.materiale) {
+    const d = pe.get(m);
+    const articol = d?.articol ?? articolDin(m);
+    const cheie = cheieBaza(articol);
+    // Același material de două ori pe listă: ce s-a întâmplat se spune o singură dată.
+    const prima = !folosite.has(cheie);
+    folosite.add(cheie);
+    const i = prima ? intamplat(peCheie.get(cheie), consum.get(cheie)) : { parti: [], pestePrag: false };
+    const rand: RandLucrare = { articol, material: m, ...(d ? { d } : {}), intamplat: i.parti, pestePrag: i.pestePrag };
+    (felMaterial(m, d) === "gata" && !i.pestePrag ? strinse : vazute).push(rand);
+  }
+  for (const r of x.santier.randuri) {
+    const cheie = cheieBaza(r.articol);
+    if (folosite.has(cheie)) continue;
+    folosite.add(cheie);
+    const i = intamplat(r, consum.get(cheie));
+    vazute.push({ articol: r.articol, intamplat: i.parti, pestePrag: i.pestePrag });
+  }
+  // Un singur rând strâns n-ar economisi nimic: se arată.
+  return strinse.length < 2 ? { vazute: [...vazute, ...strinse], strinse: [] } : { vazute, strinse };
+}
+
+function randLucrare(r: RandLucrare): string {
+  const um = r.articol.um;
+  const trebuie = r.d ? r.d.necesar : r.material ? (um === "ml" ? r.material.ml : r.material.m2) : 0;
+  const stareRand = r.material ? stareMaterial(r.material, r.d) : stare("Nu e pe listă", "neutru");
+  return `<tr>
+    <td>${esc(numeArticol(r.articol))}${r.material?.manual ? `<br><span class="hint">adăugat de mână: ${esc(r.material.manual)}</span>` : ""}${
+      r.intamplat.length ? `<br><span class="hint">${esc(r.intamplat.join(" · "))}</span>` : ""}${
+      r.pestePrag ? ` ${stare(`pierdere peste ${PRAG_PROCENT} %`, "atentie")}` : ""}</td>
+    <td class="n">${trebuie > 0 ? cantitate(trebuie, um) : "—"}</td>
+    <td class="n">${r.d && r.d.adus > 0 ? cantitate(r.d.adus, um) : "—"}</td>
+    <td>${stareRand}</td>
+  </tr>`;
+}
+
+/**
+ * Fila Materiale a lucrării: același tabel ca Materiale › De cumpărat
+ * (Material · Trebuie · Adus pe șantier · Stare), cu „Comandă ce lipsește”.
+ * Ce are tot stă într-un rând („Încă 6 materiale, toate pe șantier”), care se
+ * desface (`desfacut`). Comandat, venit, pus, rămas și pierderea se scriu sub
+ * numele materialului, doar unde s-a întâmplat ceva: până pe 15 noiembrie 2026
+ * erau opt coloane, pe TRANSAVIA cele mai multe pline de „—”. Jos, costul
+ * față de ofertă, pierderea pe tot șantierul și consumul de mână.
+ *
+ * `comanda`: butonul „Comandă ce lipsește” (albastru doar când e pasul
+ * lucrării; altfel alb), sau nimic când nu lipsește nimic.
+ */
+export function cardMaterial(x: MaterialeLucrare, opt: { comanda?: "primar" | "secundar"; desfacut?: boolean } = {}): string {
+  const m = x.santier;
+  if (m.randuri.length === 0 && x.materiale.length === 0) {
+    return `<section class="imp-card"><h2>Materialul șantierului</h2>
+      <p class="hint" style="margin:0">Șantierul nu are încă listă de materiale și nici material adus.</p></section>`;
+  }
+  const { vazute, strinse } = randuriLucrare(x);
+  const desfacut = opt.desfacut || strinse.length === 0;
+  const randuri = [...vazute, ...(desfacut ? strinse : [])].map(randLucrare);
+  if (strinse.length > 0) {
+    randuri.push(`<tr><td colspan="4"><button type="button" class="secundar" data-act="arata-gata" aria-expanded="${desfacut}">${
+      desfacut ? "Strânge materialele care au tot"
+        : vazute.length === 0 ? `Toate cele ${cifra(strinse.length)} materiale sunt pe șantier`
+          : `Încă ${cifra(strinse.length)} materiale, toate pe șantier`}</button></td></tr>`);
+  }
+  const c = x.consum;
+  return `<section class="imp-card mat-necesar">
+    <div class="mat-antet">
+      <div><h2>Materialul șantierului</h2>${x.materiale.length ? `<p>${propozitieMateriale(x.materiale, x.ramas)}</p>` : ""}</div>
+      ${opt.comanda ? `<div class="mat-actiuni"><button type="button" class="${opt.comanda}" data-act="comanda-lipsa">Comandă ce lipsește</button></div>` : ""}
+    </div>
+    ${tabel(["Material", "Trebuie", "Adus pe șantier", "Stare"], randuri, ["", "n", "n", ""])}
     ${suma("Costul materialului, până acum", m.cost)}
     <p class="hint">Costul e ce a rămas pe șantier (pus, pierdut sau încă acolo), la prețul cu care a venit: prețul facturii
       pentru ce s-a cumpărat pentru șantier, prețul mediu pentru ce a venit din depozit sau de pe alt șantier. „În ofertă” e
       cât plătește clientul pe aceste materiale, cu manopera.</p>
+    ${c ? randPierdere(c) : ""}
     ${c ? formularConsumMana(c) : ""}
   </section>`;
 }
