@@ -296,12 +296,32 @@ Pentru fiecare: da / nu / altfel.
    fila „Lăsate afară”.
 8. Ordinea fazelor.
 
-## Unde am rămas (14 noiembrie 2026, seara)
+## Unde am rămas (15 noiembrie 2026)
 
 Pentru cine continuă pe alt calculator, într-o sesiune nouă. Ramura `ux-lucrare`,
 nepublicată (fără push). Faza 2 e **scrisă, trece testele și a fost parcursă în
 browser** pe varianta fără server; din Faza 3 sunt făcute fila Ofertă pe două
 carduri, „Tip ofertă” cu „schimbă” și un singur „Mergi la ofertă”.
+
+### 15 noiembrie: Fazele 4–6 făcute și văzute, rămâne Faza 7
+
+Ramura `ux-lucrare`, publicată pe GitHub, neunită pe `main`. 768 de teste.
+
+| Faza | Starea |
+|---|---|
+| 0–3 | făcute, parcurse pe server (14 noiembrie) |
+| 4. Șantierul în lucrare | făcută, parcursă în browser la 390 / 1440 / 1920 px, ambele teme |
+| 5. Acasă | făcută, fiecare buton apăsat; pas nou „Trimite comenzile” pentru ciornele netrimise |
+| 6. Importul | punctele 1–4 și 6–9 făcute. Punctul 5 (alt model, `npm run compara` pe toate fișierele) nefăcut: cere cheia reală și bani pe model |
+| 7. Proba cu un om | nefăcută |
+
+Din Faza 6 n-au fost văzute în browser, doar în teste: „Lăsate afară” pe NISAL
+și spital, coloanele citite cu „schimbă”, cardul fișierului dublu, importul la
+1920 px și pe tema închisă. Lista de mărunțișuri de UX găsite și nereparate e
+în `.claude/stare.md`, 15 noiembrie.
+
+Urmează: parcurgerea rămasă a importului, apoi unirea pe `main` (deploy pe
+Render, de verificat că serverul e legat de baza plătită), apoi Faza 7.
 
 ### Seara, 14 noiembrie: Faza 3 pe server
 

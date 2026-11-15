@@ -1,7 +1,62 @@
 # Stare curentă
 
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
-> Ultima actualizare: 14 noiembrie 2026 (seara).
+> Ultima actualizare: 15 noiembrie 2026.
+
+## 15 noiembrie 2026: Fazele 4–6 văzute în browser, Faza 6 închisă
+
+Pe `ux-lucrare` (cu `ux-import` și `ux-faza6-rest` unite), baza `izorep_ux`,
+serverul pe 8813 (`build:server`), modelul simulat. **768 de teste**, nimic
+sărit. Migrările 0018 și 0019 aplicate; nicio migrare nouă, nicio regulă de
+preț schimbată.
+
+**Parcurs cu Playwright** (detaliile în `.claude/istoric.md`, 15 noiembrie,
+a doua intrare):
+
+- Fazele 4 și 5: pagina lucrării (TRANSAVIA, Matari, NISAL închis) × 5 file ×
+  390 / 1440 / 1920 px × ambele teme; o lucrare nouă din fișierul TRANSAVIA
+  dusă până la „Totul e executat.” (285 propus, 94.575,06 €, 12 materiale,
+  „Schimbă regulile”, „Refă lista”, „Comandă ce lipsește”, „Tot restul”);
+  situație și comandă din poze; fiecare buton din „De făcut”. Propoziția e
+  aceeași pe Acasă, în „Urmează” și în lista Lucrări.
+- Importul: „Gata” ca text pe TRANSAVIA (0 câmpuri; 7.065 px la 1440, 27.781
+  la 390), punctele 6, 7 și 9 pe un fișier de probă, 1440 și 390 px, tema
+  deschisă. După unire: Acasă, Lucrări, Matari, TRANSAVIA (Cerere, Materiale)
+  la 1440 și 390, zero derulare, zero erori; „E bine” pe Matari: 53 / 12 →
+  54 / 11, „Anulează” le pune la loc.
+
+| Ce | Acum |
+|---|---|
+| După „Comandă ce lipsește”, ciornele netrimise dispăreau din „De făcut”: lucrarea zicea „Situație nouă”, iar Acasă n-o mai arăta | pas nou în „Urmează”: „13 materiale sunt pe comenzi netrimise.” cu „Trimite comenzile” (→ Comenzi), la fel pe pagină, în listă și pe Acasă; după „Comandă ce lipsește”, înaintea situației; cedează lui „Închide șantierul” |
+| Căutarea din „Situație nouă”: „ø60” nu găsea nimic pe TRANSAVIA (pozițiile scriu „Di60”) | ø, Ø, φ, Di și D urmate de cifre sunt același lucru; DN rămâne separat (`src/lucrari/situatii.ts`) |
+| Două diametre pe același rând, modelul îl alege pe cel greșit: niciun gard (Faza 6, punctul 6) | `douaDiametre` în `valideaza.ts`, cod `doua_diametre`, pe liniile modelului și ale șablonului: la om. Pe cele 623 de poziții citite de reguli și pe cele 152 de linii golden: 0 aprinderi |
+| Un lot căzut la model cerea fișierul din nou (punctul 7) | rândurile neîntoarse sunt `necitite` (ținute în cerere), nu pot fi „Gata”; sus „N rânduri n-au fost citite.” cu „Încearcă din nou”, care trimite doar pe ele, de două ori, și păstrează corecturile |
+| Motivul de la „De verificat” era scurt, fără acțiune (punctul 9) | o propoziție cu ce s-a presupus și valoarea („Golul nu e scris: am pus 130/130, ca la aceeași țeavă din fișier.”), cu „Schimb” (cursorul în caseta ei) și „E bine” (`web/import/explica.ts`) |
+
+Decise de noi (se pot întoarce):
+
+- **„Confirmă” se numește „E bine”** peste tot la verificare, iar butonul în
+  masă „Toate cele N poziții sunt bine”: propoziția se termină cu valoarea
+  rămasă pe rând, deci „E bine” confirmă exact pe ea.
+- **Cu două citiri, o singură citire întoarsă = rând necitit**, nu „citit
+  diferit”: reîncercarea îl citește iar de două ori.
+- **La plafonul zilnic** apare mesajul lui, fără „Încearcă din nou”; butonul
+  revine la redeschidere.
+- **DN150 lângă ø165,1** (EN 10255, spitalul) și textul moștenit de un rând de
+  continuare („Same - Ø125”, `textPropriu`) nu sunt „două diametre”: fără ele
+  gardul se aprindea pe 37 de poziții corecte.
+
+**Nevăzut în browser** (tăiat ca să ajungă folosirea): „Lăsate afară” pe NISAL
+și spital, coloanele citite cu „schimbă”, cardul fișierului dublu, bara unică
+a celor două citiri, importul la 1920 px și pe tema închisă, cardurile între
+390 și 1240 px, clicul pe „Schimb”, mesajul plafonului. Toate au teste.
+
+**Găsite, nereparate** (de UX, pentru o trecere viitoare): alegerile „De ales”
+din poze și situația începută se pierd la reîncărcare; cu „Schimbă regulile”
+deschis lista de materiale apare de două ori, cu două butoane albastre;
+„Comandă ce lipsește” are două ieșiri („Înapoi…” și „Renunță”); pe telefon
+filele lucrării se rup pe două rânduri; „Costul materialului 0,00 €, 0 %” pe
+un șantier nou; NISAL, închisă, arată încă „De verificat 7” pe fila Cerere.
 
 ## 14 noiembrie 2026 (seara): Faza 3 parcursă pe server, cu baza
 

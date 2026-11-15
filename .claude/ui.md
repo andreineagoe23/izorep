@@ -263,6 +263,11 @@ schimbat locul.
   la fel rândul din lista Lucrări (aceeași funcție). Acasă nu mai pune „N
   materiale de comandat” pentru un șantier cu tot executat: acolo rândul e
   „are tot executat: se poate închide”.
+- **„Urmează” cu ciorne netrimise** (15 noiembrie 2026): după „Comandă ce
+  lipsește”, „13 materiale sunt pe comenzi netrimise.” cu „Trimite comenzile”
+  (→ `#/comenzi`), la fel în listă și pe Acasă; înainte lucrarea trecea la
+  „Situație nouă”, iar Acasă n-o mai arăta. În „Situație nouă”, căutarea ia
+  ø, Ø, φ, Di și D ca același lucru („ø60” găsește „Di60”).
 - **Numărul ofertei** se propune și când pagina se deschide direct pe fila
   Ofertă (adresa, reîncărcarea), nu doar după „Mergi la ofertă”.
 
@@ -543,13 +548,40 @@ Măsurat pe TRANSAVIA (99 de poziții, toate gata), fila „Toate”, cu Playwri
 | | Înainte | După |
 |---|---|---|
 | Câmpuri în tabel | 990 | 0 (10 pe un rând deschis) |
-| Înălțimea paginii la 1440 px | 12.727 px | 7.005 px (55 %) |
-| Înălțimea paginii la 390 px | 47.503 px | 27.660 px (58 %) |
+| Înălțimea paginii la 1440 px | 12.727 px | 7.065 px (56 %) |
+| Înălțimea paginii la 390 px | 47.503 px | 27.781 px (58 %) |
 
 Spitalul (157 de poziții, multe de verificat): 1.569 → 389 de câmpuri,
 44.299 → 37.730 px la 1440. Ținta „o treime” nu se atinge: rândul text are
 tot ~60 px, cât butonul „⋯” de 44 px plus spațiul lui, iar descrierea se rupe
 pe două-trei rânduri.
+
+## Verificarea: motivul ca propoziție, „E bine” și „Schimb” (15 noiembrie 2026)
+
+Planul UX, Faza 6, punctul 9. Pe un rând „De verificat”, sub descrierea
+clientului (`.ver-explica`, singura clasă nouă), una sau două propoziții cu ce
+s-a presupus și valoarea rămasă pe rând: „Am pus 50 mm, ca la țeava de același
+diametru.”, „Citit de două ori, diferit: o dată 13 mm, o dată 50 mm. Am luat
+13 mm.”, „Pe rând sunt două diametre: DN80 și Ø100. Am luat Ø100.”, „Preț de
+mână: 48 €/m² e doar pentru EI60, aici scrie EI120. Am pus 48,00 €.” Lângă
+ea „Schimb” (44 px), care duce cursorul în caseta presupunerii
+(`CASETA_COLOANEI`); fără casetă de schimbat (rândul necitit), fără buton.
+**„Confirmă” se numește „E bine”**, iar butonul în masă „Toate cele N poziții
+sunt bine”. Textul e pur, în `web/import/explica.ts` (`explicaRand`), cu teste
+(`tests/explica.test.ts`): toate cele 234 de rânduri „De verificat” de pe
+fișierele clienților, pe ambele tipuri de ofertă, au propoziție.
+
+## Verificarea: „Încearcă din nou” (15 noiembrie 2026)
+
+Planul UX, Faza 6, punctul 7. Când o parte din rânduri n-a fost citită
+automat, sus (`alertaNecitite` în `web/import/vizual.ts`): „12 rânduri n-au
+fost citite. Sunt la „De verificat” sau la „Lăsate afară” până le citim.” cu
+„Încearcă din nou” („Se citesc…” cât lucrează). Pleacă doar rândurile acelea;
+corecturile rămân. După: „Toate cele N rânduri au fost citite.” sau „x din y
+rânduri au fost citite; z au rămas.” La plafonul zilnic apare mesajul lui,
+fără buton. Fără citire automată (linkul demo), mesajul spune să le completezi
+de mână. Lista rămâne după reîncărcare. În „Lăsate afară”, motivul: „n-a fost
+citit încă: apasă „Încearcă din nou” de sus”.
 
 ## Ecranul de import: trei pași
 

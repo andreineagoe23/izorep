@@ -275,6 +275,8 @@ aprindă.
 | `diametru_nenotat` | numărul citit e în text, dar nu e scris ca diametru, iar rândul are un diametru notat (DN, Di, Ø, țoli, `114,3 x 4,5`) cu altă valoare: „inox 304 Di89” citit 304 |
 | `strat_necitat` | o jachetă (tablă, inox, PVC) pe care textul n-o numește: „protejată cu folie de aluminiu” (fața vatei caserate) citit ca tablă, 23,31 în loc de 6,23 €/ml |
 | `grosime_interval` | rândul dă grosimea ca interval („0.6 – 0.8 mm”, „20 to 50mm”): alegerea e a omului, orice a ales modelul |
+| `doua_diametre` | pe rând sunt două diametre notate care nu sunt aceeași țeavă (DN80 și Ø100), oricare l-a ales modelul (15 noiembrie 2026, `douaDiametre`). Aceeași țeavă: același număr, `esteConversiaDN`, două exterioare la ±1 mm, DN150 lângă ø165,1 (EN 10255). Nu se aprinde pe reducții, pe țoli, pe gol sau rectangular, iar la rândurile de continuare contează doar textul propriu (`textPropriu` în `continuare.ts`). Calibrat: 0 pe cele 623 de poziții citite de reguli, 0 pe cele 152 de linii golden |
+| `necitit` | rândul a plecat la model și nu s-a întors (lot căzut, linie sărită, sau doar una din cele două citiri): nu poate fi „Gata”. `OptiuniNucleu.necitite`, ținut în cerere; `recitesteNecitite` trimite doar rândurile astea, de două ori. Iese din listă când îl citește modelul, îl scrie omul sau ajung regulile să-l citească întreg (`tests/necitite.test.ts`) |
 
 Regula de citare vine din promptul propriu al stratului: *„nu inventa valori,
 dacă un câmp nu apare în text pune null"*. Aici doar se verifică dacă a

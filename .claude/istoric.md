@@ -35,6 +35,82 @@ Calculatorul: ce are și ce nu (Docker, fișierele clienților, cheia de model).
 
 ---
 
+## 15 noiembrie 2026 (după-amiază) · Andrei (neagoeandrei23) · ramura `ux-lucrare`
+
+Calculatorul: Docker (Postgres pe 5433), fișierele clienților în
+`../attachments/clienti`, cheie de model nefolosită (modelul simulat). Lucrat
+cu doi agenți, amândoi cu raport. Parcurgerea importului a fost **scurtată la
+jumătate** (limita de folosire): ce a rămas nevăzut e scris mai jos.
+`ux-faza6-rest` e unită aici; totul e pe GitHub, neunit pe `main`.
+
+### Făcut
+
+| Commit | Ce |
+|---|---|
+| `7b365da` | „Urmează”: ciornele netrimise cer „Trimite comenzile” (pagina lucrării, lista, Acasă); înainte dispăreau din „De făcut” |
+| `f83c1f0` | „Situație nouă”: căutarea ia ø, Ø, φ, Di, D ca același lucru („ø60” găsește „Di60”) |
+| `9c34f26` | Faza 6, punctul 6: două diametre pe același rând merg la om (`douaDiametre`, cod `doua_diametre`) |
+| `33d2ce3` | Faza 6, punctul 7: „Încearcă din nou” doar pe rândurile necitite (`necitite`, `recitesteNecitite`) |
+| `890b9f4` | Faza 6, punctul 9: motivul ca propoziție, cu „E bine” (fostul „Confirmă”) și „Schimb” (`web/import/explica.ts`) |
+
+Curățat: worktree-urile `faza6` și `f6b`, legătura `.claude/worktrees/attachments`,
+bazele `izorep_f6` și `izorep_f6b`, ramurile `ux-import` (și pe GitHub) și
+`ux-faza6-rest`.
+
+### Verificat
+
+- `npm run typecheck` curat, **768 de teste**, nimic sărit (`IZOREP_DB=izorep_ux`),
+  `npm run build:server` trece; migrările 0018 și 0019 aplicate pe `izorep_ux`.
+- **Fazele 4 și 5**, cu Playwright pe `build:server` + `izorep_ux` (8813):
+  pagina lucrării pe 3 lucrări × 5 file × 390 / 1440 / 1920 px × ambele teme;
+  o lucrare nouă din TRANSAVIA până la „Totul e executat.” (94.575,06 €);
+  Materiale („Schimbă regulile”, „Refă lista”, „Comandă ce lipsește”),
+  „Situație nouă” („Tot restul”, ștergerea ultimei), situație și comandă din
+  poze (citirea simulată), fiecare buton din „De făcut”, „Nimic de făcut acum.”
+  Zero derulare laterală, nicio țintă sub 40 px, zero erori.
+- **Importul**, pe `izorep_f6b` (8817), 1440 și 390 px, tema deschisă: „Gata”
+  ca text pe TRANSAVIA (0 câmpuri; 7.065 și 27.781 px; clic, Enter, editare la
+  tastă 121,67 → 132,98 €, „⋯”); punctele 6, 7, 9 și cele două citiri pe un
+  fișier de probă cu modelul simulat (lot căzut → „2 rânduri n-au fost citite.”
+  → „Încearcă din nou” le citește, corecturile rămân, și după reîncărcare).
+- **După unire**, pe `izorep_ux`: Acasă, Lucrări, Matari și TRANSAVIA (Cerere,
+  Materiale) la 1440 și 390 px, zero derulare, zero erori; pe Matari „E bine”
+  duce 53 / 12 la 54 / 11, iar „Anulează” le pune la loc.
+
+### Neverificat
+
+- **În browser, din import** (au doar teste): „Lăsate afară” pe NISAL (3) și
+  spital (58) cu „E izolație”; coloanele citite cu „schimbă” și alegerea
+  refuzată; cardul fișierului încărcat a doua oară; bara unică a celor două
+  citiri; importul la 1920 px și pe tema închisă; cardurile între 390 și
+  1240 px; tabelul pozelor din carnet după „Gata” ca text; clicul pe „Schimb”;
+  mesajul plafonului zilnic.
+- Închiderea efectivă a unui șantier după Faza 4 (făcută ultima dată pe 14
+  noiembrie); cele două citiri pe spital sau Book15 (doar pe fișierul de probă).
+- Nimic cu modelul real.
+
+### Pentru cine urmează
+
+1. `IZOREP_DB=izorep_ux npm run db:migrate`, `npm test`: 768. Contul de probă
+   de pe `izorep_ux`: `proba-agent@izorep.invalid` (parola nu e în repo:
+   `npm run om -- --reseteaza`).
+2. Parcurge în browser ce e la „Neverificat” din import; repară ce pică.
+3. Mărunțișurile de UX găsite și nereparate (lista în `.claude/stare.md`, 15
+   noiembrie): cele două liste de materiale cu „Schimbă regulile” deschis, cele
+   două ieșiri din „Comandă ce lipsește”, „De ales” pierdut la reîncărcare,
+   filele lucrării pe două rânduri pe telefon, NISAL închisă cu „De verificat 7”.
+4. Unirea pe `main` și deploy-ul; apoi Faza 7 (proba cu un om).
+5. `.claude/stare.md` are 2.300 de linii și se încarcă la fiecare sesiune și la
+   fiecare agent (~100.000 de tokeni cu restul): de tăiat la ultimele intrări
+   sau de scos din `CLAUDE.md`, cu acordul lui Andrei.
+
+### De hotărât de oameni
+
+- Unirea pe `main` acum, sau după parcurgerea rămasă a importului.
+- Faza 6, punctul 5 (alt model, `npm run compara` pe toate fișierele): cere
+  cheia reală și bani pe model.
+- „Confirmă” a devenit „E bine”: dacă nu sună bine, se întoarce dintr-un loc.
+
 ## 15 noiembrie 2026 · Andrei (neagoeandrei23) · ramura `ux-lucrare`
 
 Calculatorul: Docker (Postgres pe 5433), fișierele clienților cu numele noi în
