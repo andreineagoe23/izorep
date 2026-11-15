@@ -199,6 +199,8 @@ export interface OptiuniDocument {
    * fiecare cu ce era înainte, în cuvinte: caseta e galbenă și o spune.
    */
   schimbari?: (p: PozitieOferta) => SchimbariPozitie;
+  /** Rândurile „Gata” deschise de om cu casetele (`cuCasete` în `verificare-vizual.ts`). */
+  deschise?: ReadonlySet<number>;
 }
 
 /** Câmpurile scrise de om pe o poziție; valoarea e ce era înainte. */

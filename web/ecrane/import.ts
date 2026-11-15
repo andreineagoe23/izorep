@@ -40,7 +40,7 @@ import {
 import {
   antetDinFisier, baraVerificare, exportPeEcran, filtruImplicit, type AntetScris, type SchimbariPozitie,
 } from "../import/oferta-vizual.js";
-import { JACHETE, patchDinCamp, verificarePeEcran } from "../import/verificare-vizual.js";
+import { CASETA_COLOANEI, JACHETE, patchDinCamp, verificarePeEcran } from "../import/verificare-vizual.js";
 import { documentOferta, textClient, type PozitieOferta } from "../document-oferta.js";
 import { legaCelule, numarInCelula, numarScris, pastreazaCursorul } from "../celula.js";
 import { rutaModel } from "../imagine.js";
@@ -318,6 +318,13 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
   let filtruAles = false;
   /** Fila „Lăsate afară” deschisă (Faza 6): rândurile cu cantitate care nu sunt poziții. */
   let vedereAfara = false;
+  /**
+   * Rândurile „Gata” deschise cu casetele (15 noiembrie 2026). Un rând deschis
+   * rămâne așa cât lucrezi pe el (cursorul în el) sau cât l-ai schimbat în
+   * sesiunea asta (`atinse`); celelalte se închid la următoarea redesenare.
+   */
+  const deschise = new Set<number>();
+  const atinse = new Set<number>();
   let motiv: CodMotiv | null = null;
   let editIdx: number | null = null;
   /** Datele de pe antetul ofertei, scrise la pasul „Oferta”; se tin in sesiune. */
@@ -623,10 +630,13 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
     const filtrat = filtru === "toate" && motiv === null ? null : new Set(lista.map((l) => l.extras.index));
     if (filtrat && randInLucru !== null) filtrat.add(randInLucru);
     const harta = new Map(s.rez.linii.map((l) => [l.extras.index, l]));
+    if (randInLucru !== null) atinse.add(randInLucru);
+    const activ = (document.activeElement as HTMLElement | null)?.closest<HTMLElement>("tr[data-idx]")?.dataset["idx"];
+    for (const i of [...deschise]) if (!atinse.has(i) && String(i) !== activ) deschise.delete(i);
 
     const afara = lasateAfara(s.rez);
     const corp = vedereAfara ? listaAfara(afara, cuFoaie) : verificarePeEcran(documentul(s, randInLucru), {
-      linii: harta, vizibile: filtrat, editIdx, propunere, cuFoaie, schimbari: schimbariPozitie(s),
+      linii: harta, vizibile: filtrat, editIdx, propunere, cuFoaie, schimbari: schimbariPozitie(s), deschise: new Set([...deschise, ...atinse]),
       descriere: (l) => celulaDescriere(s, l),
       um: (l) => { const c = campuriLinie(s, l)?.um; return c ? { cel: c.cel, v: String(c.v) } : undefined; },
     });
@@ -663,6 +673,7 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
   function deschideSesiune(s: Sesiune, laPas: Pas = 2): void {
     sesiune = s;
     pas = laPas; filtru = filtruImplicit(numereStare(s)); filtruAles = false; motiv = null; editIdx = null; randInLucru = null;
+    deschise.clear(); atinse.clear();
     vedereAfara = false;
     tipDeschis = false;
     // Latimea se masoara DUPA plierea barei, altfel ar decide pe locul pe
@@ -1240,7 +1251,23 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
     });
   }
 
+  function deschideRandul(tr: HTMLElement, camp: string): void {
+    const idx = Number(tr.dataset["idx"]);
+    deschise.add(idx);
+    deseneaza();
+    const rand = pagina.querySelector<HTMLElement>(`tr.ver-poz[data-idx="${idx}"]`);
+    const tinta = rand?.querySelector<HTMLElement>(CASETA_COLOANEI[camp] ?? CASETA_COLOANEI["desc"]!)
+      ?? rand?.querySelector<HTMLElement>("input, select, [contenteditable]");
+    tinta?.focus();
+  }
+
   gazda.addEventListener("keydown", (e) => {
+    const tr = (e.target as HTMLElement).closest?.<HTMLElement>("tr.ver-citit");
+    if (tr && tr === e.target && (e.key === "Enter" || e.key === " ")) {
+      e.preventDefault();
+      deschideRandul(tr, "desc");
+      return;
+    }
     if (e.key !== "Escape") return;
     const m = (e.target as HTMLElement).closest<HTMLElement>(".meniu-rand:not([hidden])");
     if (!m) return;
@@ -1257,6 +1284,13 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
       if (m.parentElement?.contains(t)) continue;
       m.hidden = true;
       m.parentElement?.querySelector(".cel-meniu")?.setAttribute("aria-expanded", "false");
+    }
+
+    // Un rând „Gata” scris ca text: clicul (nu pe „⋯”) îl deschide, cu cursorul pe coloana atinsă.
+    const citit = t.closest<HTMLElement>("tr.ver-citit");
+    if (citit && !t.closest("button, a, input, select, .meniu-rand")) {
+      deschideRandul(citit, t.closest<HTMLElement>("td[data-camp]")?.dataset["camp"] ?? "desc");
+      return;
     }
 
     const bPas = t.closest<HTMLButtonElement>("[data-pas]");

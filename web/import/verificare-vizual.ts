@@ -1,4 +1,4 @@
-import type { LinieProcesata } from "../../src/import/nucleu.js";
+import { PUS_DE_OM, type LinieProcesata } from "../../src/import/nucleu.js";
 import type { LinieExtrasa } from "../../src/import/schema.js";
 import type { StratTarifat } from "../../src/pricing/types.js";
 import { esc } from "../ecrane/tip.js";
@@ -162,8 +162,75 @@ function stare(l: LinieProcesata, propunere: number | null, cine: string): strin
     ${motive.length ? `<p class="ver-motiv">${esc(motive.join(" · "))}</p>` : ""}`;
 }
 
+/**
+ * Rândurile „Gata” ca text (decis de Andrei pe 15 noiembrie 2026: „fă ce crezi
+ * că e mai bine”): pe TRANSAVIA, 99 de rânduri gata erau ~990 de casete și o
+ * pagină de 12.700 px. Un rând gata se citește, nu se scrie; un clic (sau
+ * Enter / Space) îl deschide cu casetele, cu cursorul unde s-a dat clic.
+ *
+ * Singurul loc care decide „text sau casete”: `TEXT_PE_GATA = false` le pune
+ * pe toate înapoi pe casete. Cu casete, mereu: ce cere ochi (De verificat,
+ * Fără preț), rândul pus de om din „Lăsate afară”, rândul deschis de om
+ * (`deschise`) și cel cu ceva scris de om peste citire (galben).
+ */
+export const TEXT_PE_GATA = true;
+
+export function cuCasete(p: PozitieOferta, l: LinieProcesata, deschis: boolean, s: SchimbariRand): boolean {
+  if (!TEXT_PE_GATA || deschis) return true;
+  if (p.stare !== "gata") return true;
+  if (l.extras.motiv === PUS_DE_OM) return true;
+  return s.cant !== undefined || s.pret !== undefined || s.den !== undefined;
+}
+type SchimbariRand = { cant?: string; pret?: string; den?: string };
+
+/** Unde merge cursorul când se deschide rândul text, după coloana pe care s-a dat clic. */
+export const CASETA_COLOANEI: Record<string, string> = {
+  desc: '[data-ed="desc"]', material: '[data-vc="sistem"]', gros: '[data-ed="gros"], [data-ed="gol_l"]',
+  prot: '[data-vc="protectie"], [data-ed="gol_h"]', diam: '[data-ed="diam"]', piesa: '[data-vc="forma"]',
+  um: "[data-um]", cant: '[data-ed="cant"]', pret: '[data-ed="pret"]',
+};
+
+const eticheta = (v: [string, string][], ales: string): string => v.find(([k]) => k === ales)?.[1] ?? ales;
+const mm = (g: number | null): string => (g === null ? "—" : `${numarInCelula(g)} mm`);
+
+/** Rândul gata, ca text pe aceleași coloane. Focusabil: Enter sau Space îl deschide. */
+function randText(p: PozitieOferta, l: LinieProcesata, o: OptiuniDocument, c: Coloane, cine: string): string {
+  const e = l.extras;
+  const i = e.index;
+  const gol = e.sistem === "goluri_foc";
+  const td = (camp: string, et: string, v: string, clasa = ""): string =>
+    `<td data-camp="${camp}"${clasa ? ` class="${clasa}"` : ""} data-eticheta="${esc(et)}"><span class="ver-val">${v}</span></td>`;
+  const mijloc = e.straturi_extra.filter((x) => !JACHETE.has(x.sistem));
+  const diametru = e.diametru_valoare === null ? "—"
+    : `${eticheta(NOTATII, e.diametru_tip ?? "exterior")}${numarInCelula(e.diametru_valoare)}`;
+  const desc = o.descriere?.(l)?.text ?? p.textClient;
+  return `<tr class="ver-poz ver-citit" data-idx="${i}" data-stare="${p.stare}" tabindex="0"
+      aria-label="${esc(`${cine[0]!.toUpperCase()}${cine.slice(1)}, gata. Apasă Enter ca s-o schimbi.`)}">
+    <td class="ver-rand" data-eticheta="Rândul">${p.sursa.rand}</td>
+    <td class="ver-desc" data-camp="desc"><p class="ver-text">${esc(desc)}${p.cod ? ` <span class="ver-cod">${esc(p.cod)}</span>` : ""}</p></td>
+    ${td("material", "Izolație", esc([e.sistem, ...mijloc.map((x) => x.sistem)].map((x) => (x ? MATERIAL[x] : "—")).join(" + ")))}
+    ${gol
+      ? td("gros", "Lățime gol (mm)", esc(numarInCelula(e.gol_latime_mm ?? 0))) + td("prot", "Înălțime gol (mm)", esc(numarInCelula(e.gol_inaltime_mm ?? 0)))
+        + `<td></td><td></td>`
+      : td("gros", c.gros, esc([e.grosime_mm, ...mijloc.map((x) => x.grosime_mm)].map(mm).join(" + ")))
+        + td("prot", c.prot, esc(eticheta(PROTECTII, protectieDin(e))))
+        + td("diam", "Diametru", esc(diametru))
+        + td("piesa", "Piesă", esc(eticheta(FORME_EDITOR, e.forma ?? "ml")))}
+    ${td("um", "UM", esc(o.um?.(l)?.v.trim() || p.um || "—"))}
+    ${td("cant", "Cantitate", esc(numarInCelula(p.cantitate)), "n")}
+    ${td("pret", "Preț unitar €", esc(p.pretUnitar === null ? "—" : p.pretUnitar.toFixed(2).replace(".", ",")), "n")}
+    <td class="ver-stare">${stare(l, o.propunere(l), cine)}</td>
+  </tr>`;
+}
+
 function randVerificare(p: PozitieOferta, o: OptiuniDocument, c: Coloane): string {
   const l = o.linii.get(p.linie)!;
+  {
+    const s0 = o.schimbari?.(p) ?? {};
+    if (!cuCasete(p, l, o.deschise?.has(l.extras.index) ?? false, s0)) {
+      return randText(p, l, o, c, p.nr === null ? `rândul ${p.sursa.rand}` : `poziția ${p.nr}`);
+    }
+  }
   const e = l.extras;
   const i = e.index;
   const s = o.schimbari?.(p) ?? {};
@@ -257,6 +324,12 @@ export function verificarePeEcran(d: DocumentOferta, o: OptiuniDocument): string
   const c: Coloane = doarGoluri ? { gros: "Lățime gol (mm)", prot: "Înălțime gol (mm)" } : { gros: "Grosime (mm)", prot: "Protecție" };
   const capete = ["Rând", "Descrierea clientului", "Izolație", c.gros, c.prot, "Diametru", "Piesă", "UM", "Cantitate", "Preț unitar €", "Stare"];
   const n = capete.length;
+  // Doar rânduri text pe ecran: coloanele noastre se strâng, iar descrierea ia locul casetelor.
+  const casete = (p: PozitieOferta): boolean => {
+    const l = o.linii.get(p.linie)!;
+    return cuCasete(p, l, o.deschise?.has(l.extras.index) ?? false, o.schimbari?.(p) ?? {});
+  };
+  const compact = !toate.filter(vede).some(casete);
   const corp = d.capitole.map((cap) => {
     const vazute = cap.pozitii.filter(vede);
     if (vazute.length === 0) return "";
@@ -264,7 +337,7 @@ export function verificarePeEcran(d: DocumentOferta, o: OptiuniDocument): string
       vazute.map((p) => randVerificare(p, o, c)).join("")}</tbody>`;
   }).join("");
   return `<section class="imp-card ver" aria-label="Verificare">
-    ${corp ? `<table class="ver-tabel">
+    ${corp ? `<table class="ver-tabel${compact ? " ver-compact" : ""}">
       <colgroup>${["rand", "desc", "material", "gros", "prot", "diam", "piesa", "um", "n", "n", "stare"]
         .map((k) => `<col class="ver-col-${k}">`).join("")}</colgroup>
       <thead><tr>${capete.map((t, k) => `<th scope="col"${[8, 9].includes(k) ? ' class="n"' : ""}>${t}</th>`).join("")}</tr></thead>

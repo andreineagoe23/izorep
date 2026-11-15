@@ -517,6 +517,40 @@ fișierului, „Deschide-o” (singurul albastru, cu focusul pe el; duce la
 `#/lucrari/<id>/cerere`), „Încarcă-l ca lucrare nouă” (alb) și „Alt fișier”
 (legătură). Numele lucrării e cel din lista Lucrări (`titluLucrare`).
 
+## Verificarea: rândurile „Gata” ca text (15 noiembrie 2026)
+
+Decis de Andrei („fă ce crezi că e mai bine”), după planul UX (Faza 3, punctul
+„de hotărât cu machetă”). Un rând **Gata** se desenează ca text pe aceleași
+coloane (descrierea, izolația, grosimea, protecția, diametrul, piesa, UM,
+cantitatea, prețul, starea), fără casete, dar cu „⋯” (`randText` în
+`web/import/verificare-vizual.ts`). Un clic pe rând (nu pe „⋯”) îl deschide cu
+casetele, cu cursorul în caseta coloanei atinse (`CASETA_COLOANEI`); rândul e
+focusabil, iar Enter sau Space îl deschide cu cursorul în descriere. Rămâne
+deschis cât ai cursorul în el sau cât l-ai schimbat în sesiunea asta
+(`deschise` / `atinse` în `web/ecrane/import.ts`; celelalte se închid la
+următoarea redesenare, nu la ieșirea din rând, ca un clic să nu-și piardă
+ținta). Se pot avea mai multe deschise. Mereu cu casete: De verificat, Fără
+preț, rândul pus de om din „Lăsate afară”, rândul cu ceva scris de om peste
+citire (galben). Straturile în plus apar pe rândul text în aceeași celulă
+(„Elastomer + Vată minerală”, „13 mm + 40 mm”); deschis, ca sub-rânduri.
+Un singur loc decide: `cuCasete` (cu `TEXT_PE_GATA = false` totul revine pe
+casete). Cât pe ecran sunt doar rânduri text, tabelul strânge coloanele noastre
+(`.ver-compact`) și descrierea ia locul. Sub 1240 px rândul text e un card mai
+mic (etichete de 12 px, fără spațiile casetelor).
+
+Măsurat pe TRANSAVIA (99 de poziții, toate gata), fila „Toate”, cu Playwright:
+
+| | Înainte | După |
+|---|---|---|
+| Câmpuri în tabel | 990 | 0 (10 pe un rând deschis) |
+| Înălțimea paginii la 1440 px | 12.727 px | 7.005 px (55 %) |
+| Înălțimea paginii la 390 px | 47.503 px | 27.660 px (58 %) |
+
+Spitalul (157 de poziții, multe de verificat): 1.569 → 389 de câmpuri,
+44.299 → 37.730 px la 1440. Ținta „o treime” nu se atinge: rândul text are
+tot ~60 px, cât butonul „⋯” de 44 px plus spațiul lui, iar descrierea se rupe
+pe două-trei rânduri.
+
 ## Ecranul de import: trei pași
 
 > **Istoric** pentru așezare: din 14 noiembrie 2026 pașii 1 · 2 · 3 nu se mai desenează; importul e fila Cerere (fișierul și verificarea) și fila Ofertă a lucrării. Fără „Importuri recente”.

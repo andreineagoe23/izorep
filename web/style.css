@@ -1216,6 +1216,27 @@ p.ver-text:not(.cel-ed) { padding: 10px 0; }
 }
 .ver-tabel td.n .ver-fix { justify-content: flex-end; }
 .ver-strat-total .ver-strat-nume { text-align: right; padding-top: 12px; color: var(--text); }
+/* Rândul „Gata” ca text (15 noiembrie 2026): se citește; clic, Enter sau Space îl deschide cu casetele. */
+.ver-citit { cursor: pointer; }
+.ver-citit:hover td { background: color-mix(in srgb, var(--panou-2) 45%, var(--panou)); }
+.ver-citit:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
+.ver-citit .ver-val { display: block; padding-top: 12px; font-size: 14px; line-height: 1.35; overflow-wrap: anywhere; }
+.ver-citit td.n .ver-val { text-align: right; font-variant-numeric: tabular-nums; }
+.ver-citit p.ver-text { min-height: 0; padding: 0; font-size: 14px; }
+.ver-citit .ver-cod { display: inline; padding: 0; }
+.ver-tabel tr.ver-citit td { padding-top: 8px; padding-bottom: 8px; }
+.ver-citit .ver-val { padding-top: 0; }
+.ver-citit .ver-actiuni { min-height: 0; }
+.ver-citit .cel-meniu-loc { margin-top: -2px; }
+/* Tabelul doar cu rânduri text: coloanele noastre au text scurt, deci descrierea ia locul casetelor. */
+.ver-compact .ver-col-material { width: 7.5rem; }
+.ver-compact .ver-col-gros { width: 4.5rem; }
+.ver-compact .ver-col-prot { width: 7.5rem; }
+.ver-compact .ver-col-diam { width: 4.75rem; }
+.ver-compact .ver-col-piesa { width: 5rem; }
+.ver-compact .ver-col-um { width: 3rem; }
+.ver-compact .ver-col-n { width: 4.5rem; }
+.ver-compact .ver-col-stare { width: 7.5rem; }
 .ver-motiv { margin: 4px 0 0; font-size: 12.5px; color: var(--slab); line-height: 1.35; }
 /* Coloanele fixe au ~1010 px: sub 1240 px de tabel descrierea ar ramane sub
    ~230 px, deci fiecare rand devine card: descrierea pe toata latimea, casetele
@@ -1241,6 +1262,10 @@ p.ver-text:not(.cel-ed) { padding: 10px 0; }
   .ver-tabel td:empty { display: none; }
   .ver-tabel td, .ver-tabel td.n { text-align: left; }
   .ver-tabel td.n input.cel-ed { text-align: left; }
+  .ver-citit td.n .ver-val { text-align: left; }
+  .ver-tabel tr.ver-citit { grid-template-columns: repeat(auto-fill, minmax(min(100%, 6.5rem), 1fr)); gap: 2px 10px; padding-top: 8px; padding-bottom: 8px; }
+  .ver-tabel tr.ver-citit td { padding: 0; }
+  .ver-tabel tr.ver-citit td[data-eticheta]::before { margin-bottom: 0; font-size: 12px; }
 }
 
 /* ---- „Cum iese oferta”: Excelul de acum, doar citire, cu foaia lui alba si randurile lui. */
