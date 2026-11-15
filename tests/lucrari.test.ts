@@ -88,6 +88,13 @@ describe("situația nouă scurtă (planul UX, Faza 4)", () => {
     expect(normalizeazaCautarea("Ş ș Ț ţ")).toBe("s s t t");
   });
 
+  it("diametrul exterior se găsește oricum e scris: ø60, Ø 60, Di60, D60; DN rămâne DN", () => {
+    for (const q of ["ø60", "Ø 60", "di60", "D60", "φ60"]) expect(normalizeazaCautarea(q)).toBe("ø60");
+    expect(normalizeazaCautarea("Izolatii Di60, g40 - COT")).toBe("izolatii ø60, g40 - cot");
+    expect(normalizeazaCautarea("DN50")).toBe("dn50");
+    expect(normalizeazaCautarea("de 50 mm")).toBe("de 50 mm");
+  });
+
   it("fără situații înainte, toate pozițiile sunt de executat", () => {
     const v = vedereSituatie(plan(), situatieNoua(plan(), "x", "2026-10-01T10:00:00.000Z"));
     expect(nr(v)).toEqual([[null, 1, 2]]);

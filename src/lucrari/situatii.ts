@@ -194,9 +194,15 @@ export interface VedereSituatie {
   faraPotrivire: number;
 }
 
-/** „Țeavă DN50” → „teava dn50”: fără diacritice (și cu sedilă), fără majuscule. */
+/**
+ * „Țeavă DN50” → „teava dn50”: fără diacritice (și cu sedilă), fără majuscule.
+ * Diametrul exterior se scrie în multe feluri („ø60”, „Ø 60”, „Di60”, „D60”,
+ * „φ60”): toate devin „ø60”, ca omul să-l găsească oricum l-a scris clientul
+ * (pe TRANSAVIA, „ø60” nu găsea nimic: pozițiile scriu „Di60”). DN rămâne DN.
+ */
 export const normalizeazaCautarea = (t: string): string =>
-  t.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().replace(/\s+/g, " ").trim();
+  t.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().replace(/\s+/g, " ").trim()
+    .replace(/(^|[^a-z0-9])(?:ø|φ|di|d)\s?(?=\d)/g, "$1ø");
 
 /**
  * Ce arată „Situație nouă” (planul UX, Faza 4, 15 noiembrie 2026): doar
