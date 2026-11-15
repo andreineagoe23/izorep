@@ -100,9 +100,11 @@ deci o parte e comisă fără raport de verificare. `ux-import` e unită aici.
 
 ### De hotărât de oameni
 
-- **Baza de pe Render** a expirat pe 14 noiembrie, fără backup.
-- **Două citiri** dublează costul modelului și înjumătățește plafonul zilnic
-  (~1.500 de rânduri): rămâne implicit?
+- ~~Baza de pe Render~~: Andrei a cumpărat planul de 6 $ pe lună (15
+  noiembrie), nu mai expiră. De verificat la primul deploy că serverul e legat
+  de ea și că are datele (seed, contul firmei).
+- ~~Două citiri~~: rămân pornite implicit (Andrei, 15 noiembrie: nimeni nu
+  face 1.500 de rânduri pe zi).
 - Unirea pe `main` (deploy pe Render) abia după parcurgerea de la pasul 2.
 
 ## 14 noiembrie 2026 · popescuadi15 · ramura `ux-lucrare`
