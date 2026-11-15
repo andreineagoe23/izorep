@@ -118,6 +118,14 @@ function propozitie(l: LinieProcesata, m: CodMotiv): Explicatie {
       }
       return { text: `Am pus ${g}, grosimea obișnuită a firmei la diametrul ăsta.`, camp: "gros" };
     }
+    case "grosime_conducta_vecina": {
+      const vecina = note.find((n) => n.includes("conducta cea mai apropiata"));
+      return { text: `Nicio țeavă de același diametru: am pus ${mm(e.grosime_mm)}, ca la țeava cu diametrul cel mai apropiat (${/ø[\d.,]+/.exec(vecina ?? "")?.[0] ?? ""}).`, camp: "gros" };
+    }
+    case "grosime_fara_conducta": {
+      const n = note.find((x) => x.includes("tabelul de grosimi uzuale"));
+      return { text: `Grosimea nu e scrisă și nicio țeavă din listă n-are diametrul ăsta: am pus ${mm(e.grosime_mm)}, grosimea obișnuită a firmei (cea mai apropiată țeavă, ${/ø[\d.,]+/.exec(n ?? "")?.[0] ?? ""}, are alta).`, camp: "gros" };
+    }
     case "tabla_fara_material":
       return { text: `Rândul spune „tablă”, fără material: am pus tablă de aluminiu, ${pret}.`, camp: "prot" };
     case "grosime_apropiata":

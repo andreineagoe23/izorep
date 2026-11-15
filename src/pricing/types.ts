@@ -130,6 +130,10 @@ export type MotivVerificare =
   | "rotunjire_neconfirmata"
   /** Grosimea e cea uzuala a firmei, nu scrisa de client. */
   | "grosime_propusa"
+  /** Fara conducta de acelasi diametru: grosimea e de la conducta cu ø cel mai apropiat. */
+  | "grosime_conducta_vecina"
+  /** Fara conducta de acelasi diametru: grosimea din tabelul firmei, desi lista are alte grosimi pe alte ø. */
+  | "grosime_fara_conducta"
   /** Descrierea s-a schimbat dupa ce omul verificase pozitia: e recitita din textul nou. */
   | "descriere_schimbata"
   /** UM-ul spune ml/mp, textul spune cot/teu/...; cele doua forme dau preturi diferite. */
