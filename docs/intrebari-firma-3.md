@@ -221,3 +221,9 @@ singură multe, dar la cele de mai jos trebuie să știm cum faceți voi.
 47. Ce versiune de Saga folosiți, și o factură exportată din Saga.
 48. Cursul la facturare: BNR din [ ] ziua facturii  [ ] ziua dinainte
     [ ] contract; plus [ ] 0  [ ] 1 %  [ ] 2 %.
+
+## H. Adăugată de Andrei, 15 noiembrie
+
+49. **Materiale › De cumpărat:** tabelul trebuie să se poată modifica pe loc
+    (cantități, rânduri), sau rămâne doar de citit, ca în ofertă?
+    [ ] se modifică  [ ] doar de citit
