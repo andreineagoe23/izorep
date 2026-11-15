@@ -103,6 +103,13 @@ describe("„Urmează”: un pas, în ordinea fluxului", () => {
     expect(stareFile({ deVerificat: 0, areCerere: false, santier: { deComandat: 0, progres: 0 } }).cerere.inchisa).toBeDefined();
   });
 
+  it("fila Cerere: ✓ cu șantierul pornit, chiar cu poziții rămase de verificat", () => {
+    const of = { numar: "RAD118", data: "27.04.2026" };
+    expect(stareFile({ ...baza, deVerificat: 7, oferta: of }).cerere.gata).toBe(false);
+    expect(stareFile({ ...baza, deVerificat: 7, oferta: of, santier: { deComandat: 0, progres: 40 } }).cerere.gata).toBe(true);
+    expect(stareFile({ ...baza, deVerificat: 7, oferta: of, santier: { inchis: "2026-11-09", deComandat: 0, progres: 100 } }).cerere.gata).toBe(true);
+  });
+
   it("fila Materiale: ✓ când tot materialul e adus sau totul e executat, nu doar comandat", () => {
     const of = { numar: "RAD284", data: "27.05.2026" };
     const mat = (santier: NonNullable<StareLucrare["santier"]>): boolean => stareFile({ ...baza, oferta: of, santier }).materiale.gata;

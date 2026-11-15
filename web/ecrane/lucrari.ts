@@ -261,6 +261,7 @@ async function deseneazaPagina(root: HTMLElement, idDinAdresa: string | null, se
         },
         laOferta: () => { actualizeaza(); },
         areOferta: () => !!l?.oferta,
+        santier: () => (l?.plan ? (l.plan.inchis ? "inchis" : "pornit") : null),
       });
       return;
     }

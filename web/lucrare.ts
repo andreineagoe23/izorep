@@ -210,7 +210,8 @@ export function stareFile(s: StareLucrare): Record<FilaLucrare, { gata: boolean;
   const faraSantier = s.refuzat ? "Clientul a refuzat oferta." : s.oferta ? "După ce acceptă clientul." : "După ce faci oferta.";
   const faraCerere = "Lucrarea e de dinainte ca cererea să stea în aplicație.";
   return {
-    cerere: s.areCerere ? { gata: s.deVerificat === 0 } : { gata: true, inchisa: faraCerere },
+    // Cu șantierul pornit, cererea nu mai cere nimic (oferta a plecat): ✓, ca rândul „Urmează”.
+    cerere: s.areCerere ? { gata: s.deVerificat === 0 || !!st } : { gata: true, inchisa: faraCerere },
     oferta: s.areCerere ? { gata: !!s.oferta } : { gata: true, inchisa: faraCerere },
     // ✓ când tot materialul e pe șantier, sau când totul e executat: atunci
     // „Urmează” zice „Închide șantierul”, iar ce n-a venit nu mai e de adus

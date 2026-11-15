@@ -261,6 +261,8 @@ export interface OptiuniImport {
   laOferta?: () => void;
   /** Lucrarea are deja o ofertă salvată: „Descarcă oferta” nu mai e pasul de acum. */
   areOferta?: () => boolean;
+  /** Lucrarea are șantier („pornit”) sau e închisă: cererea se arată de văzut, fără „cer să te uiți”. */
+  santier?: () => "pornit" | "inchis" | null;
 }
 
 export interface RezumatImport { deVerificat: number; antet: AntetScris }
@@ -631,6 +633,8 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
 
   function paginaVerificare(s: Sesiune): string {
     const numere = numereStare(s);
+    const santier = opt.santier?.() ?? null;
+    if (santier && !filtruAles) { filtru = "toate"; motiv = null; }
     if (!filtruAles && numere[filtru] === 0) { filtru = filtruImplicit(numere); motiv = null; }
     // Toate foile, pe capitolele clientului.
     const { peStare, lista } = vizibile(s);
@@ -646,15 +650,16 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
     const afara = lasateAfara(s.rez, necitite);
     const corp = vedereAfara ? listaAfara(afara, cuFoaie) : verificarePeEcran(documentul(s, randInLucru), {
       linii: harta, vizibile: filtrat, editIdx, propunere, cuFoaie, schimbari: schimbariPozitie(s), deschise: new Set([...deschise, ...atinse]),
+      doarText: !!santier,
       descriere: (l) => celulaDescriere(s, l),
       um: (l) => { const c = campuriLinie(s, l)?.um; return c ? { cel: c.cel, v: String(c.v) } : undefined; },
     });
 
     return `${alerte(s)}
       <section class="imp-card">${antetVerificare({ nume: s.meta.nume, cand: s.meta.cand, destinatie, schimbaTip: tipDeschis })}${coloane.html()}</section>
-      ${baraVerificare(numere, filtru, { n: afara.length, activ: vedereAfara })}
+      ${baraVerificare(numere, filtru, { n: afara.length, activ: vedereAfara }, santier)}
       ${vedereAfara ? "" : filtreMotiv(motive, motiv)}
-      ${vedereAfara ? "" : actiuniLista({
+      ${vedereAfara || santier ? "" : actiuniLista({
         deConfirmat: filtru === "de_validat" ? lista.length : 0,
         grosimi: lista.filter((l) => potrivit(l, "netarifate") && propunere(l) !== null).length,
       })}
