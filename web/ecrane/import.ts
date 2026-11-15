@@ -5,6 +5,8 @@ import { campuriRand, scrieCelula, reconstruieste, type CampuriRand } from "../.
 import { invataDinCorectie } from "../../src/import/memorie.js";
 import { citesteColoanele, mapariFolosite, mapariImport } from "../import/mapari-firma.js";
 import { controlColoane } from "../import/coloane-ecran.js";
+import { faPozitie, lasateAfara } from "../../src/import/lasate-afara.js";
+import { listaAfara } from "../import/afara-vizual.js";
 import type { LinieExtrasa } from "../../src/import/schema.js";
 // Doar tipul: ExcelJS (~940 kB) ramane incarcat lenes, prin `import()`.
 import type { FoaieBruta } from "../../src/import/parse-workbook.js";
@@ -356,6 +358,8 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
    * nu mută pagina pe altă filă.
    */
   let filtruAles = false;
+  /** Fila „Lăsate afară” deschisă (Faza 6): rândurile cu cantitate care nu sunt poziții. */
+  let vedereAfara = false;
   let motiv: CodMotiv | null = null;
   let editIdx: number | null = null;
   /** Datele de pe antetul ofertei, scrise la pasul „Oferta”; se tin in sesiune. */
@@ -657,7 +661,8 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
     if (filtrat && randInLucru !== null) filtrat.add(randInLucru);
     const harta = new Map(s.rez.linii.map((l) => [l.extras.index, l]));
 
-    const corp = verificarePeEcran(documentul(s, randInLucru), {
+    const afara = lasateAfara(s.rez);
+    const corp = vedereAfara ? listaAfara(afara, cuFoaie) : verificarePeEcran(documentul(s, randInLucru), {
       linii: harta, vizibile: filtrat, editIdx, propunere, cuFoaie, schimbari: schimbariPozitie(s),
       descriere: (l) => celulaDescriere(s, l),
       um: (l) => { const c = campuriLinie(s, l)?.um; return c ? { cel: c.cel, v: String(c.v) } : undefined; },
@@ -665,9 +670,9 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
 
     return `${alerte(s)}
       <section class="imp-card">${antetVerificare({ nume: s.meta.nume, cand: s.meta.cand, destinatie, schimbaTip: tipDeschis })}${coloane.html()}</section>
-      ${baraVerificare(numere, filtru)}
-      ${filtreMotiv(motive, motiv)}
-      ${actiuniLista({
+      ${baraVerificare(numere, filtru, { n: afara.length, activ: vedereAfara })}
+      ${vedereAfara ? "" : filtreMotiv(motive, motiv)}
+      ${vedereAfara ? "" : actiuniLista({
         deConfirmat: filtru === "de_validat" ? lista.length : 0,
         grosimi: lista.filter((l) => potrivit(l, "netarifate") && propunere(l) !== null).length,
       })}
@@ -695,6 +700,7 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
   function deschideSesiune(s: Sesiune, laPas: Pas = 2): void {
     sesiune = s;
     pas = laPas; filtru = filtruImplicit(numereStare(s)); filtruAles = false; motiv = null; editIdx = null; randInLucru = null;
+    vedereAfara = false;
     tipDeschis = false;
     // Latimea se masoara DUPA plierea barei, altfel ar decide pe locul pe
     // care il ocupa inca meniul. Sub prag, foaia 1:1 n-ar incapea fara
@@ -1293,6 +1299,8 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
 
     const bFiltru = t.closest<HTMLButtonElement>("[data-filtru]");
     if (bFiltru) {
+      vedereAfara = bFiltru.dataset["filtru"] === "afara";
+      if (vedereAfara) { editIdx = null; randInLucru = null; deseneaza(); pagina.querySelector<HTMLElement>('[data-filtru="afara"]')?.focus(); return; }
       filtru = bFiltru.dataset["filtru"] as FiltruStare; filtruAles = true; motiv = null; editIdx = null; randInLucru = null;
       deseneaza();
       pagina.querySelector<HTMLElement>(`[data-filtru="${filtru}"]`)?.focus();
@@ -1396,6 +1404,26 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
         confirmaIndecsi([idx]);
         deseneaza();
         focuseaza(pagina.querySelector(`:is(.imp-poz, tr)[data-idx="${idx}"]`) ? idx : urm, "confirma");
+        return;
+      }
+      case "e-izolatie": {
+        // Din „Lăsate afară”: rândul devine poziție, de verificat; fila trece unde a ajuns.
+        const s = sesiune;
+        const a = s && idx !== null ? lasateAfara(s.rez).find((x) => x.index === idx) : undefined;
+        if (!s || !a || idx === null) return;
+        const vechi = s.rez.rezolvate.get(idx);
+        s.rez.rezolvate.set(idx, faPozitie(s.rez, a));
+        retarifeaza();
+        const l = s.rez.linii.find((x) => x.extras.index === idx);
+        vedereAfara = false;
+        filtru = l && potrivit(l, "de_validat") ? "de_validat" : "netarifate";
+        filtruAles = true; motiv = null; randInLucru = idx;
+        arataMesaj("Rândul e acum poziție: alege materialul și grosimea, apoi confirmă.", () => {
+          if (vechi) s.rez.rezolvate.set(idx, vechi); else s.rez.rezolvate.delete(idx);
+          retarifeaza();
+        });
+        deseneaza();
+        pagina.querySelector<HTMLElement>(`tr[data-idx="${idx}"] select`)?.focus();
         return;
       }
       case "confirma-tot":

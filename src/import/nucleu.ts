@@ -237,6 +237,16 @@ export interface Statistici {
  * descriere, pozitia ramanea la 45,24 €/ml. Lipsa lui inseamna „textul de acum",
  * pe care nucleul il completeaza la prima trecere (`stampileazaText`).
  */
+/**
+ * Rândul pus la ofertă de om din „Lăsate afară” (`src/import/lasate-afara.ts`,
+ * 14 noiembrie 2026). E o citire nesigură (`sursa: "model"`, încredere 0):
+ * trece la „De verificat” până o confirmă sau o corectează omul. Spre
+ * deosebire de citirea modelului, regulile nu-l mai scot (nu e altă meserie,
+ * nu vine izolat): omul a spus că e izolație.
+ */
+export const PUS_DE_OM = "pus la ofertă de om, din „Lăsate afară”";
+const pusDeOm = (r: Rezolvare | undefined): boolean => r?.sursa === "model" && r.extras.motiv === PUS_DE_OM;
+
 export interface Rezolvare {
   extras: LinieExtrasa;
   sursa: Sursa;
@@ -1008,7 +1018,7 @@ function construiesteLinii(
     if (!r) continue;
     const { sursa } = r;
 
-    if (sursa !== "om" && r.extras.sistem !== null && estePreizolat(b.text)) {
+    if (sursa !== "om" && !pusDeOm(r) && r.extras.sistem !== null && estePreizolat(b.text)) {
       linii.push({
         bruta: b, sursa, preizolat: true, necesitaValidare: false,
         extras: { ...r.extras, sistem: null, motiv: "vine izolat de la producator: nu se izoleaza, nu se oferteaza" },
@@ -1496,6 +1506,10 @@ export function reevalueaza(rez: Rezultat, o: OptiuniNucleu): void {
   const candidati: LinieCuSectiune[] = [];
   for (const b of brute) {
     const existent = vechi.get(b.index);
+    if (pusDeOm(existent) && (existent!.text ?? b.text) === b.text) {
+      rezolvate.set(b.index, { ...existent!, text: b.text });
+      continue;
+    }
     if (existent?.sursa === "om") {
       if ((existent.text ?? b.text) === b.text) {
         rezolvate.set(b.index, { ...existent, text: b.text });

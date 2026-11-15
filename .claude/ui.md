@@ -488,6 +488,18 @@ ce („În coloana D nu e text pe cele mai multe rânduri: nu poate fi
 denumirea.”). Aplicată: pozițiile se recitesc, mesajul de jos are „Anulează”.
 Pe ecran nu apar „model” sau „mapare”.
 
+## Verificarea: fila „Lăsate afară · N” (14 noiembrie 2026, planul UX, Faza 6)
+
+A cincea filă, după Toate · Gata · De verificat · Fără preț
+(`baraVerificare(…, { n, activ })`): rândurile cu UM și cantitate care nu sunt
+poziții (`listaAfara` în `web/import/afara-vizual.ts`, tabelul comun, card pe
+telefon): rândul (cu foaia, când sunt mai multe), descrierea clientului, sub
+ea de ce a rămas afară când știm, UM, cantitate și „E izolație” (alb). Apăsat,
+rândul devine poziție, pagina trece pe fila unde a ajuns (De verificat sau Fără
+preț), cu cursorul pe izolația lui și mesajul „Rândul e acum poziție: alege
+materialul și grosimea, apoi confirmă.” cu „Anulează”. Fără nimic lăsat afară,
+fila arată „Niciun rând cu cantitate n-a rămas afară.”
+
 ## Ecranul de import: trei pași
 
 > **Istoric** pentru așezare: din 14 noiembrie 2026 pașii 1 · 2 · 3 nu se mai desenează; importul e fila Cerere (fișierul și verificarea) și fila Ofertă a lucrării. Fără „Importuri recente”.

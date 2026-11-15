@@ -634,6 +634,33 @@ real acolo.
   grosimea lipită de material, iar peste ultima grosime din listă poziția ia
   motivul `grosime_peste_lista`, nedovedit. A/B pe toate fișierele: identic.
 
+## Rândurile lăsate afară (14 noiembrie 2026, planul UX, Faza 6)
+
+Un rând cu UM și cantitate care n-a devenit poziție dispărea din ofertă fără
+urmă (așa dispărea torcretul de la spital). `lasateAfara` (`src/import/
+lasate-afara.ts`, pur) le adună: rândurile brute cu UM și cantitate > 0 care nu
+sunt poziții de izolație, cu motivul când e știut (vine izolat de la
+producător; scos de om). Pe cele 11 fișiere din `../attachments/clienti`
+(`tests/lasate-afara.test.ts`):
+
+| Fișier | Lăsate afară |
+|---|---|
+| Book15 | 257 (13 vin izolate; restul altă meserie: demontări, centrale, aparate) |
+| CET Constanța | 81 (lista de țevi; se ofertează prin izolația pe foaie) |
+| Spital | 58 (livrarea țevii cu fitinguri, foile „țeavă + izolație”) |
+| SRU Craiova | 15 (tubulatura din tablă, neizolată) |
+| NISAL (Oferta 27.04.2026) | 3 (două tuburi PEHD cu gură de curățire și **canalul de desfumare cu „Wärmedämm.”, 17 m²**) |
+| Flower City, TRANSAVIA abur și inox, Matari, Oferta 284, anexa de manoperă | 0 |
+
+„E izolație” (`faPozitie`) pune rândul ca citire nesigură (`sursa: "model"`,
+încredere 0, motivul `PUS_DE_OM`): materialul citit din rând, altfel vată
+minerală propusă. Trece la „De verificat” (sau „Fără preț”, cât îi lipsesc
+grosimea ori diametrul) până îl confirmă sau corectează omul. Regulile care
+l-au lăsat afară (altă meserie, vine izolat) nu-l mai scot: `reevalueaza` îl
+ține ca pe o linie a omului cât textul rândului nu se schimbă. Restul
+pozițiilor nu se mișcă (testat pe NISAL). În „Detalii despre citire” intră la
+„citite automat din text”.
+
 ## Izolația pe foaie (11 octombrie 2026)
 
 `src/import/izolatie-foaie.ts`. Pentru cererile care sunt **lista de țevi a
