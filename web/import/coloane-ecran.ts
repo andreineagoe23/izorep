@@ -138,7 +138,7 @@ export function controlColoane(o: OptiuniControl) {
         const f = foaia(d.foaie);
         if (!f || d.cantitate === null || d.denumire === null) return true;
         if (d.cantitate === d.denumire) {
-          d.eroare = "Cantitatea și denumirea sunt în coloane diferite: alege altă coloană pentru una dintre ele.";
+          d.eroare = "Cantitatea și denumirea nu pot fi în aceeași coloană: alege altă coloană pentru una dintre ele.";
           o.deseneaza();
           return true;
         }

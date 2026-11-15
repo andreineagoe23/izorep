@@ -684,7 +684,7 @@ a.legatura { display: inline-flex; align-items: center; }
 .imp-coloane { display: flex; flex-wrap: wrap; align-items: center; gap: 0 10px; margin: 0; font-size: 15px; color: var(--slab); }
 .imp-coloane .legatura { display: inline-flex; align-items: center; min-height: 44px; padding: 0 4px; font-size: 15px; }
 .imp-coloane-alege { display: grid; gap: 8px; margin: 4px 0 12px; }
-.imp-coloane-alege .fila { padding: 0 12px; }
+.imp-coloane-alege .fila { padding: 0 12px; min-width: 44px; justify-content: center; }
 .imp-coloane-alege .fila .hint { font-size: 13px; }
 .imp-coloane-alege .imp-formular-butoane { margin-top: 4px; }
 @container imp (max-width: 619px) {
