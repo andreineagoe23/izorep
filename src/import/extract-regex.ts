@@ -10,6 +10,23 @@ import type { LinieExtrasa } from "./schema.js";
  * pentru ca ce se poate rezolva determinist trebuie sa aiba teste care pica
  * atunci cand cineva strica regula.
  */
+/** Tabla cu materialul ei numit (aluminiu, zincata) sau jacheta numita ca atare. */
+const TABLA_CU_MATERIAL = /tabl[aă]\s+(?:de\s*)?(?:aluminiu|zincat)|jachet|jacket|\bblech\b/i;
+/**
+ * „protectie cu tabla", „protejata cu tabla", fara material dupa ea. Nu „tabla
+ * de inox" (alt sistem) si nu „protectie la foc ... din tabla" (tubulatura):
+ * cere tabla imediat dupa protectie.
+ */
+const TABLA_FARA_MATERIAL =
+  /(?:protec[țt]i\w*\s+(?:cu\s+)?|protejat\w*\s+(?:la\s+exterior\s+)?cu\s+)tabl[aă]?(?![a-zăâîșț])(?!\s*(?:de\s*)?inox)/i;
+
+/**
+ * Randul cere tabla, dar nu spune ce tabla: aluminiu presupus, de verificat.
+ */
+export function tablaFaraMaterial(text: string): boolean {
+  return TABLA_FARA_MATERIAL.test(text) && !TABLA_CU_MATERIAL.test(text);
+}
+
 const SISTEM: [LinieExtrasa["sistem"], RegExp][] = [
   ["elastomer", /elastomer|armaflex|cauciuc\s+sinte|a?uciuc\s+sinte|k[aä]lteiso|k-?flex|kaiflex|kautschuk/i],
   // "mineral wool" lipsea, desi `cerere-de-oferta-book15.xlsx` e integral in engleza: acolo
@@ -30,7 +47,11 @@ const SISTEM: [LinieExtrasa["sistem"], RegExp][] = [
   // `sistemeDinText` — vezi `TABLA_E_TUBULATURA`.
   // „de" poate veni lipit: cererea TRANSAVIA are „tabla dealuminiu" pe un rand
   // (r71), care iesea fara jacheta, deci fara pret.
-  ["tabla", /tabl[aă]\s+(?:de\s*)?(?:aluminiu|zincat)|jachet|jacket|\bblech\b/i],
+  // „protectie cu tabla" fara material (exemplul 1, r10: „... vata minerala si
+  // protectie cu tabla Di76, g50 - ML") iesea doar cu vata, 16,00 € „Gata" in loc
+  // de 38,51. E tabla de aluminiu (singura tabla din liste), dar nedovedit:
+  // `tablaFaraMaterial` o marcheaza (`tabla_fara_material`, intrebarea 1).
+  ["tabla", new RegExp(`${TABLA_CU_MATERIAL.source}|${TABLA_FARA_MATERIAL.source}`, "i")],
   ["pvc", /\bpvc\b/i],
   // Cere notiunea de GOL, nu doar mentiunea focului. "Protectie la foc EI 60
   // pentru tubulaturile din tabla zincata" din cerere-de-oferta-spital.xlsx e protectia
@@ -98,6 +119,20 @@ const INOX_E_JACHETA =
 export function esteTeavaDeInox(text: string): boolean {
   return INOX_E_TEAVA.test(text);
 }
+
+/**
+ * Randul spune ca e izolatie (sau caseta de armaturi), dar nu numeste
+ * materialul. Doar cuvantul romanesc al lucrarii, la inceputul descrierii
+ * (sau al unei celule): „Izolare conducta DN65", „Caseta armaturi DN80". Codul
+ * de rand singur („IZOLATII | Robinet cu sertar DN50") nu ajunge: cere text
+ * dupa cuvant, in aceeasi celula. „insulated" din caietele in engleza
+ * (Book15) e de obicei despre tubulatura livrata izolata, deci nu intra.
+ */
+const IZOLATIE_FARA_MATERIAL = /(?:^|\|)\s*(?:izola[țt]i[ae]?|izola[țt]ii|izolare|caset[aăe])\s+[a-zăâîșț]/i;
+/** „vine izolat", „preizolat": de la producator, nu lucrarea noastra. */
+const estePreizolatText = (text: string): boolean => /preizolat|pre-?insulated|vine\s+izolat/i.test(text);
+/** Motivul liniei citite fara material: `nucleu.ts` o lasa fara pret. */
+export const LIPSESTE_MATERIALUL = "izolatie fara material numit: lipseste materialul";
 
 /** Alte meserii din caietul de sarcini: se resping explicit, nu se ghicesc. */
 const ALTE_MESERII =
@@ -234,6 +269,18 @@ const RE_PLASTIC = /\b(?:PPR|PP|PEHD|PEX)\s*[D]?\s*(\d{1,3})(?:\b|(?=x\d))/;
 const RE_TOLI = /(?:\b(?:DN|Dn|dn)\s*\.?\s*|[øØФ]\s*)(\d{1,2}\s+\d\/\d|\d\/\d|\d{1,2})\s*(?:"|”|“|''|′′|″)/;
 const RE_GROSIME = /(?:g\s*[=.]?\s*|gr\.?\s*|S\s*=\s*|grosime[a]?\s+de\s+|[-–]\s*)(\d{1,3})\s*mm/i;
 const RE_GROSIME_COMPACT = /\bg\s?(\d{2,3})\b/;
+/**
+ * „gr 19", „gr. 19", „gr19", fara „mm" (exemplul 2, r27: „... DN80 cu
+ * elastomer gr 19"). Necitit, randul lua 9 mm de la teava PEHD ø110 din
+ * aceeasi lista: 10,57 € „Gata" in loc de 14,82. Numarul nu are voie sa fie
+ * urmat de alta unitate („gr 2 kg") sau de zecimale; la extragere se ia doar
+ * daca e o grosime a sistemului randului (`GROSIMI_SISTEM`).
+ */
+const RE_GROSIME_GR = /\bgr\.?\s?(\d{1,3})(?![\d.,])(?!\s*(?:kg|g\b|\/|x\s*\d|%))/i;
+const grosimeGr = (text: string): number | null => {
+  const m = text.match(RE_GROSIME_GR);
+  return m && GROSIMI_PLAUZIBILE.has(Number(m[1])) ? Number(m[1]) : null;
+};
 
 /**
  * True daca randul scrie o grosime de izolatie („g48", „gr. 50 mm",
@@ -242,7 +289,8 @@ const RE_GROSIME_COMPACT = /\bg\s?(\d{2,3})\b/;
  * avem" — la a doua, nimic nu are voie sa completeze in locul clientului.
  */
 export function scrieGrosime(text: string): boolean {
-  return RE_GROSIME.test(text) || RE_GROSIME_COMPACT.test(text) || RE_GROSIME_DUPA_MATERIAL.test(text);
+  return RE_GROSIME.test(text) || RE_GROSIME_COMPACT.test(text) || RE_GROSIME_DUPA_MATERIAL.test(text)
+    || grosimeGr(text) !== null;
 }
 
 /**
@@ -255,7 +303,7 @@ const RE_GROSIME_DUPA_MATERIAL = /(?:vat[aă]\s+mineral[aă]|elastomer\w*|minera
 /** Grosimea de izolatie scrisa pe rand, chiar una care nu e in lista („g48"). */
 export function grosimeScrisa(text: string): number | null {
   const m = text.match(RE_GROSIME) ?? text.match(RE_GROSIME_COMPACT) ?? text.match(RE_GROSIME_DUPA_MATERIAL);
-  return m ? Number(m[1]) : null;
+  return m ? Number(m[1]) : grosimeGr(text);
 }
 const RE_MM = /(\d{1,3})\s*mm\b/g;
 /**
@@ -601,7 +649,7 @@ export function extrageDeterminist(
     && !SEMN_IZOLATIE.test(text) && !SEMN_JACHETA.test(text)) {
     return { linie: { ...gol, incredere: 0.95, motiv: "materialul tevii sau al piesei, nu izolatie" }, complet: true };
   }
-  const sistem = toate[0] ?? null;
+  let sistem = toate[0] ?? null;
   // Ce mai e numit pe rand, peste primul strat. O descriere ca "Izolatii cu
   // vata minerala si protectie cu tabla de inox 304 Di21, g40" cumpara DOUA
   // materiale, si pana acum al doilea nu era vazut deloc: pozitia iesea
@@ -672,6 +720,8 @@ export function extrageDeterminist(
     // deja gasita langa numele materialului, sau tabla fara grosime scrisa
   } else if (g && GROSIMI_PLAUZIBILE.has(Number(g[1]))) {
     grosime_mm = Number(g[1]);
+  } else if (sistem !== null && grosimeGr(text) !== null && GROSIMI_SISTEM[sistem]?.has(grosimeGr(text)!)) {
+    grosime_mm = grosimeGr(text);
   } else {
     // Ultima masura in mm de pe rand, dar NU una care e vizibil un diametru:
     // "Diameter: Ø100 mm" da 100, care e o grosime plauzibila de vata si se
@@ -695,6 +745,19 @@ export function extrageDeterminist(
   const dinUm = um ? FORMA.find(([, re]) => re.test(um))?.[0] : undefined;
   const forma = formaExplicitaDinText(text) ?? dinUm ?? FORMA.find(([, re]) => re.test(text))?.[0] ?? null;
 
+  // Izolatie fara material: „Caseta armaturi DN80", „Izolare conducta DN65"
+  // (exemplele 1 r21 si 2 r25). Cuvantul de izolatie si un diametru spun ca e
+  // lucrarea noastra; fara material nu exista pret. Pana acum ramaneau la
+  // „Lasate afara", printre demontari si robineti. Acum sunt pozitii „Fara
+  // pret" (`lipseste_materialul` in `nucleu.ts`); materialul de aici e doar
+  // locul in care omul il alege, nu se tarifeaza.
+  let lipsesteMaterialul = false;
+  if (sistem === null && diametru_valoare !== null && IZOLATIE_FARA_MATERIAL.test(text)
+    && !FARA_IZOLATIE.test(text) && !estePreizolatText(text)) {
+    sistem = "vata_minerala";
+    lipsesteMaterialul = true;
+  }
+
   // Dimensiunea golului se citeste DOAR daca linia e deja identificata ca
   // inchidere la foc. "130/130" e un tipar prea comun ca sa fie semnal de
   // sistem in sine — ar prinde fractii, rapoarte si dimensiuni de tubulatura.
@@ -709,7 +772,7 @@ export function extrageDeterminist(
   // grosimea nu le fac complete, dimensiunile golului da.
   // Pe m² nu trebuie diametru: pretul vine din `per_mp`, pe grosime
   // (tubulatura rectangulara, Oferta 27.04.2026: 79,73 exact).
-  const complet = sistem === "goluri_foc"
+  const complet = lipsesteMaterialul ? false : sistem === "goluri_foc"
     ? gol_latime_mm !== null && gol_inaltime_mm !== null
     : sistem !== null && grosime_mm !== null && (diametru_valoare !== null || forma === "mp");
 
@@ -717,8 +780,8 @@ export function extrageDeterminist(
     linie: {
       ...gol, sistem, diametru_valoare, diametru_tip, grosime_mm, forma,
       gol_latime_mm, gol_inaltime_mm, straturi_extra,
-      incredere: complet ? 0.99 : 0.3,
-      motiv: complet
+      incredere: lipsesteMaterialul ? 0 : complet ? 0.99 : 0.3,
+      motiv: lipsesteMaterialul ? LIPSESTE_MATERIALUL : complet
         ? `extras determinist din text${straturi_extra.length ? ` (${toate.join(" + ")})` : ""}${notaDiametru}`
         : "extragere determinista incompleta",
     },

@@ -9,7 +9,7 @@ import { adaugaSectiuni, type LinieCuSectiune } from "./sectiuni.js";
 import { aplicaContinuare } from "./continuare.js";
 import {
   areIntervalDeGrosime, esteProtectieLaFocTubulatura, esteTeavaDeInox, extrageDeterminist, formaElementDinText,
-  formaExplicitaDinText, grosimeProtectieFoc, grosimeScrisa, scrieGrosime, sistemScris,
+  formaExplicitaDinText, grosimeProtectieFoc, tablaFaraMaterial, LIPSESTE_MATERIALUL, grosimeScrisa, scrieGrosime, sistemScris,
 } from "./extract-regex.js";
 import {
   diametruContrazisDeText, notatieContraziceMaterialul, valideazaExtragere,
@@ -909,6 +909,13 @@ interface GrosimeDeLaConducta {
   alternative?: number[];
   /** Nicio conducta de acelasi diametru: diametrul exterior al celei mai apropiate. */
   vecina?: number;
+  /**
+   * Nicio conducta de acelasi diametru, dar tabelul de grosimi uzuale al firmei
+   * are diametrul, iar vecina are alta grosime: s-a pus grosimea din tabel.
+   * Cand vecina are chiar grosimea din tabel, linia nu primeste nimic de aici
+   * si ia grosimea uzuala obisnuita (`grosime_propusa`, dovedita).
+   */
+  uzuala?: boolean;
 }
 
 /**
@@ -1007,6 +1014,9 @@ function grosimiDeLaConducte(
   for (const b of brute) {
     const e = rezolvate.get(b.index)?.extras;
     if (!e || e.grosime_mm !== null || (e.sistem !== "vata_minerala" && e.sistem !== "elastomer")) continue;
+    // Fara material scris, n-are de la ce conducta lua grosimea; si asa ramane
+    // al modelului (`completeazaDinConducte` l-ar fi oprit de la el).
+    if (e.motiv === LIPSESTE_MATERIALUL) continue;
     if (scrieGrosime(b.text)) continue;
     const od = diametruExterior(e);
     if (od === null) continue;
@@ -1021,6 +1031,29 @@ function grosimiDeLaConducte(
     }
     const grosimi = [...new Set(potrivite.map((s) => s.grosime))].sort((a, b) => a - b);
     if (grosimi.length === 0) continue;
+    // Fara conducta de ACELASI diametru, dovada casetelor din Oferta 284 (24
+    // din 24, acelasi ø) nu mai tine. Exemplul 1, r14: „... tabla de aluminiu
+    // Di273 - ML", fara grosime, lua 60 mm de la teava ø169 (82,89 € „Gata");
+    // tabelul firmei (11 septembrie) da 100 mm de la DN100 in sus (101,84 €).
+    // Tabelul e regula spusa de firma, vecina e o presupunere; dar lista
+    // clientului are alte grosimi pe alte diametre, deci pozitia merge la om.
+    // Fara rand in tabel (elastomer peste ø324), ramane vecina, tot la om.
+    if (vecina && e.diametru_valoare !== null && e.diametru_tip !== null) {
+      const uz = grosimePropusa(e.sistem, e.diametru_valoare, e.diametru_tip);
+      if (uz !== null) {
+        const v = potrivite[0]!;
+        // Cand vecina are chiar grosimea din tabel, lista nu contrazice regula
+        // firmei: e grosimea uzuala, dovedita (exemplul 1, r28, elastomer DN100
+        // la 19 mm; exemplul 2, r13, PPR Ø40 la 13 mm).
+        if (!(grosimi.length === 1 && grosimi[0] === uz)) {
+          out.set(b.index, {
+            grosime: uz, rand: v.rand, foaie: v.foaie, uzuala: true,
+            vecina: Math.round(v.od * 10) / 10,
+          });
+        }
+        continue;
+      }
+    }
     // Doua conducte de acelasi diametru cu grosimi diferite (Transavia inox:
     // Di114 g40 si g50): armatura primeste grosimea mai mare, marcata — ea
     // acopera oricare dintre conducte.
@@ -1231,16 +1264,27 @@ function construiesteLinii(
 
     // Textul intra in regulile de forma si straturi doar cand nu e linia
     // omului: acolo el a decis. Ce lucrare e randul ramane insa cea scrisa de client.
-    const t = tarifeazaExtras(deTarifat, b.cantitate ?? 1, destinatie, sursa === "om" ? undefined : b.text, b.text);
-    if (t.pret && conducta) {
+    // Izolatie fara material (`LIPSESTE_MATERIALUL`): pozitie „Fara pret”, cu
+    // cauza ei. Materialul din extragere e doar locul in care il alege omul.
+    const t: ReturnType<typeof tarifeazaExtras> = sursa !== "om" && deTarifat.motiv === LIPSESTE_MATERIALUL
+      ? { eroare: "Lipsește materialul izolației: rândul nu-l scrie.", codEroare: "lipseste_materialul" }
+      : tarifeazaExtras(deTarifat, b.cantitate ?? 1, destinatie, sursa === "om" ? undefined : b.text, b.text);
+    if (t.pret && conducta?.uzuala) {
+      const n = `nicio conducta de acelasi diametru in lista (cea mai apropiata, ø${conducta.vecina}, are alta grosime): `
+        + `grosime ${conducta.grosime} mm din tabelul de grosimi uzuale al firmei`;
+      t.pret.note = [...(t.pret.note ?? []), n];
+      t.pret.noteDeVerificat = [...(t.pret.noteDeVerificat ?? []), n];
+      t.pret.motiveDeVerificat = [...(t.pret.motiveDeVerificat ?? []), "grosime_fara_conducta"];
+    } else if (t.pret && conducta) {
       t.pret.note = [...(t.pret.note ?? []),
         `grosime ${conducta.grosime} mm luata de la conducta de acelasi diametru din lista (randul ${conducta.rand}); `
         + "clientul n-a scris-o pe randul asta"];
       if (conducta.vecina !== undefined) {
+        // Nedovedit: dovada (Oferta 284) e doar pentru acelasi diametru.
         const n = `nicio conducta de acelasi diametru in lista: grosimea e de la conducta cea mai apropiata, ø${conducta.vecina}`;
         t.pret.note.push(n);
         t.pret.noteDeVerificat = [...(t.pret.noteDeVerificat ?? []), n];
-        t.pret.motiveDeVerificat = [...(t.pret.motiveDeVerificat ?? []), "grosime_propusa"];
+        t.pret.motiveDeVerificat = [...(t.pret.motiveDeVerificat ?? []), "grosime_conducta_vecina"];
       }
       if (conducta.alternative) {
         const n = `conductele de acelasi diametru au ${conducta.alternative.join(" si ")} mm: s-a luat ${conducta.grosime} mm`;
@@ -1265,6 +1309,15 @@ function construiesteLinii(
       t.pret.note = [...(t.pret.note ?? []), n];
       t.pret.noteDeVerificat = [...(t.pret.noteDeVerificat ?? []), n];
       t.pret.motiveDeVerificat = [...(t.pret.motiveDeVerificat ?? []), "grosime_propusa"];
+    }
+    // „protectie cu tabla" fara material: aluminiul e presupus, nu scris.
+    // Pe orice sursa, ca un model care pune tabla sa nu treaca „Gata".
+    if (t.pret && sursa !== "om" && "straturi" in t.pret
+        && t.pret.straturi.some((s) => s.sistem === "tabla") && tablaFaraMaterial(b.text)) {
+      const n = "randul spune „protectie cu tabla”, fara material: s-a pus tabla de aluminiu";
+      t.pret.note = [...(t.pret.note ?? []), n];
+      t.pret.noteDeVerificat = [...(t.pret.noteDeVerificat ?? []), n];
+      t.pret.motiveDeVerificat = [...(t.pret.motiveDeVerificat ?? []), "tabla_fara_material"];
     }
     if (t.pret && necitate.length) {
       const n = `${necitate.map((x) => x.sistem).join(", ")}: nu e numit in text, scos din pret`;
@@ -1396,7 +1449,9 @@ export const MOTIVE_DOVEDITE: ReadonlySet<MotivVerificare> = new Set<MotivVerifi
   // Oferta 284: distribuitorul, 2.296,70 € exact.
   "echipament_suprafata",
   // Tabelul de grosimi uzuale al firmei (11 septembrie) si grosimea conductei
-  // de acelasi diametru (casetele din Oferta 284, 24 din 24).
+  // de acelasi diametru (casetele din Oferta 284, 24 din 24). NU conducta
+  // vecina (`grosime_conducta_vecina`) si nici tabelul peste o lista care are
+  // alte grosimi pe alte diametre (`grosime_fara_conducta`): fara dovada.
   "grosime_propusa",
   // Grosimea cea mai apropiata din lista (20 → 19 la elastomer, 3 din 3 in ofertele
   // semnate; „min 0,5 mm” → 0,6, cea mai subtire care o acopera).

@@ -260,8 +260,12 @@ function randVerificare(p: PozitieOferta, o: OptiuniDocument, c: Coloane): strin
   const gol = e.sistem === "goluri_foc";
   const td = (eticheta: string, continut: string, clasa = ""): string =>
     `<td${clasa ? ` class="${clasa}"` : ""} data-eticheta="${esc(eticheta)}">${continut}</td>`;
+  // Rândul spune izolație fără material: caseta nu arată materialul pus doar
+  // ca loc (ar părea citit), ci „Alege izolația”; alegerea face poziția a omului.
+  const alege = l.codEroare === "lipseste_materialul";
   const material = select("sistem", i, `Izolația, ${cine}`,
-    [...MATERIALE.map((m): [string, string] => [m, MATERIAL[m]]), ["", "Nu e izolație"]], e.sistem ?? "");
+    [...(alege ? [["?", "Alege izolația"] as [string, string]] : []),
+      ...MATERIALE.map((m): [string, string] => [m, MATERIAL[m]]), ["", "Nu e izolație"]], alege ? "?" : e.sistem ?? "");
   // Straturile de izolație de sub protecție, peste primul: fiecare e un sub-rând
   // întreg (Andrei, 22 octombrie 2026), cu protecția pe cel de deasupra.
   const mijloc = e.straturi_extra.flatMap((x, k) => (JACHETE.has(x.sistem) ? [] : [{ x, k }]));

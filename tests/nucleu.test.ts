@@ -310,16 +310,32 @@ describe("grosimea de la conducta de acelasi diametru", () => {
     expect(l.necesitaValidare).toBe(false);
   });
 
-  it("nicio conducta de acelasi diametru: grosimea conductei celei mai apropiate, cu nota", async () => {
+  // Schimbat pe 15 noiembrie 2026 (auditul, exemplul 1 r14): dovada din Oferta
+  // 284 e doar pentru ACELASI diametru. Fara el, tabelul firmei (DN150 → 100 mm),
+  // iar pozitia merge la om fiindca vecina (Di140) are alta grosime (50 mm).
+  it("nicio conducta de acelasi diametru: grosimea din tabelul firmei, de verificat", async () => {
     const rez = await proceseazaRegistru(await parseFoi(await registru([
       ANTET,
       [1, "Caseta izolatie armaturi cu flanse DN150 din tabla aluminiu si vata minerala", "buc", 1],
       [2, "Izolatii cu vata minerala si protectie cu tabla de aluminiu Di140, g50 - ML", "ml", 27],
     ])), { stoc: stocInMemorie() });
     const l = rez.linii.find((x) => x.bruta.text.includes("Caseta"))!;
-    expect(l.extras.grosime_mm).toBe(50);
-    expect(l.pret!.noteDeVerificat!.join(" ")).toContain("cea mai apropiata");
-    expect(l.necesitaValidare).toBe(false);
+    expect(l.extras.grosime_mm).toBe(100);
+    expect(l.pret!.noteDeVerificat!.join(" ")).toContain("tabelul de grosimi uzuale");
+    expect(l.pret!.motiveDeVerificat).toContain("grosime_fara_conducta");
+    expect(l.necesitaValidare).toBe(true);
+  });
+
+  it("fara rand in tabelul firmei (elastomer peste ø324): conducta cea mai apropiata, de verificat", async () => {
+    const rez = await proceseazaRegistru(await parseFoi(await registru([
+      ANTET,
+      [1, "Izolatie elastomer pe teava DN350 apa rece", "ml", 10],
+      [2, "Izolatie elastomer 25 mm pe teava DN300 apa rece", "ml", 50],
+    ])), { stoc: stocInMemorie() });
+    const l = rez.linii.find((x) => x.bruta.text.includes("DN350"))!;
+    expect(l.extras.grosime_mm).toBe(25);
+    expect(l.pret!.motiveDeVerificat).toContain("grosime_conducta_vecina");
+    expect(l.necesitaValidare).toBe(true);
   });
 
   it("nu ia grosimea altui material: fara vata in lista, grosimea uzuala a vatei", async () => {
