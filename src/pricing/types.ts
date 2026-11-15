@@ -211,7 +211,9 @@ export type CodNetarifare =
   /* --- din DiametruNecunoscut, mapat in tarifeazaExtras --- */
   | "dn_necunoscut"
   /* --- alta lucrare decat cea din liste --- */
-  | "echipament";               // izolarea unui echipament (distribuitor, rezervor), nu a unei tevi
+  | "echipament"
+  /* --- randul spune izolatie, dar nu spune materialul --- */
+  | "lipseste_materialul";               // izolarea unui echipament (distribuitor, rezervor), nu a unei tevi
 
 export class PozitieNetarifata extends Error {
   constructor(

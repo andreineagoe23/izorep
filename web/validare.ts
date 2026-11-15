@@ -70,6 +70,7 @@ export const ETICHETE_BLOCAJ: Record<CodBlocaj, { eticheta: string; intrebare?: 
   banda_inexistenta: { eticheta: "diametrul nu cade în nicio bandă de multiplicatori" },
   lista_goala: { eticheta: "lista de prețuri e goală" },
   pozitie_fara_straturi: { eticheta: "poziție fără niciun strat" },
+  lipseste_materialul: { eticheta: "rândul spune izolație, dar nu spune materialul" },
   fara_pret_pe_mp: { eticheta: "nu există preț pe mp pentru grosimea cerută" },
   gol_fara_dimensiuni: { eticheta: "închidere de gol fără dimensiunile golului" },
   gol_dimensiuni_invalide: { eticheta: "dimensiunile golului nu sunt pozitive" },

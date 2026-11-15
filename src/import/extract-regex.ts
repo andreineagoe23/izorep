@@ -120,6 +120,20 @@ export function esteTeavaDeInox(text: string): boolean {
   return INOX_E_TEAVA.test(text);
 }
 
+/**
+ * Randul spune ca e izolatie (sau caseta de armaturi), dar nu numeste
+ * materialul. Doar cuvantul romanesc al lucrarii, la inceputul descrierii
+ * (sau al unei celule): „Izolare conducta DN65", „Caseta armaturi DN80". Codul
+ * de rand singur („IZOLATII | Robinet cu sertar DN50") nu ajunge: cere text
+ * dupa cuvant, in aceeasi celula. „insulated" din caietele in engleza
+ * (Book15) e de obicei despre tubulatura livrata izolata, deci nu intra.
+ */
+const IZOLATIE_FARA_MATERIAL = /(?:^|\|)\s*(?:izola[țt]i[ae]?|izola[țt]ii|izolare|caset[aăe])\s+[a-zăâîșț]/i;
+/** „vine izolat", „preizolat": de la producator, nu lucrarea noastra. */
+const estePreizolatText = (text: string): boolean => /preizolat|pre-?insulated|vine\s+izolat/i.test(text);
+/** Motivul liniei citite fara material: `nucleu.ts` o lasa fara pret. */
+export const LIPSESTE_MATERIALUL = "izolatie fara material numit: lipseste materialul";
+
 /** Alte meserii din caietul de sarcini: se resping explicit, nu se ghicesc. */
 const ALTE_MESERII =
   /gril[aă]|difuzor|clapet[aă]|demont|dismant|relocare|relocation|ventilator|cazan|boiler|chiller|\bAHU\b|centrala de tratare|vas de expansiune|swirl|anemostat|plenum|recuperator|air\s+conditioning\s+unit/i;
@@ -635,7 +649,7 @@ export function extrageDeterminist(
     && !SEMN_IZOLATIE.test(text) && !SEMN_JACHETA.test(text)) {
     return { linie: { ...gol, incredere: 0.95, motiv: "materialul tevii sau al piesei, nu izolatie" }, complet: true };
   }
-  const sistem = toate[0] ?? null;
+  let sistem = toate[0] ?? null;
   // Ce mai e numit pe rand, peste primul strat. O descriere ca "Izolatii cu
   // vata minerala si protectie cu tabla de inox 304 Di21, g40" cumpara DOUA
   // materiale, si pana acum al doilea nu era vazut deloc: pozitia iesea
@@ -731,6 +745,19 @@ export function extrageDeterminist(
   const dinUm = um ? FORMA.find(([, re]) => re.test(um))?.[0] : undefined;
   const forma = formaExplicitaDinText(text) ?? dinUm ?? FORMA.find(([, re]) => re.test(text))?.[0] ?? null;
 
+  // Izolatie fara material: „Caseta armaturi DN80", „Izolare conducta DN65"
+  // (exemplele 1 r21 si 2 r25). Cuvantul de izolatie si un diametru spun ca e
+  // lucrarea noastra; fara material nu exista pret. Pana acum ramaneau la
+  // „Lasate afara", printre demontari si robineti. Acum sunt pozitii „Fara
+  // pret" (`lipseste_materialul` in `nucleu.ts`); materialul de aici e doar
+  // locul in care omul il alege, nu se tarifeaza.
+  let lipsesteMaterialul = false;
+  if (sistem === null && diametru_valoare !== null && IZOLATIE_FARA_MATERIAL.test(text)
+    && !FARA_IZOLATIE.test(text) && !estePreizolatText(text)) {
+    sistem = "vata_minerala";
+    lipsesteMaterialul = true;
+  }
+
   // Dimensiunea golului se citeste DOAR daca linia e deja identificata ca
   // inchidere la foc. "130/130" e un tipar prea comun ca sa fie semnal de
   // sistem in sine — ar prinde fractii, rapoarte si dimensiuni de tubulatura.
@@ -745,7 +772,7 @@ export function extrageDeterminist(
   // grosimea nu le fac complete, dimensiunile golului da.
   // Pe m² nu trebuie diametru: pretul vine din `per_mp`, pe grosime
   // (tubulatura rectangulara, Oferta 27.04.2026: 79,73 exact).
-  const complet = sistem === "goluri_foc"
+  const complet = lipsesteMaterialul ? false : sistem === "goluri_foc"
     ? gol_latime_mm !== null && gol_inaltime_mm !== null
     : sistem !== null && grosime_mm !== null && (diametru_valoare !== null || forma === "mp");
 
@@ -753,8 +780,8 @@ export function extrageDeterminist(
     linie: {
       ...gol, sistem, diametru_valoare, diametru_tip, grosime_mm, forma,
       gol_latime_mm, gol_inaltime_mm, straturi_extra,
-      incredere: complet ? 0.99 : 0.3,
-      motiv: complet
+      incredere: lipsesteMaterialul ? 0 : complet ? 0.99 : 0.3,
+      motiv: lipsesteMaterialul ? LIPSESTE_MATERIALUL : complet
         ? `extras determinist din text${straturi_extra.length ? ` (${toate.join(" + ")})` : ""}${notaDiametru}`
         : "extragere determinista incompleta",
     },

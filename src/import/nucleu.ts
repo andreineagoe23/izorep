@@ -9,7 +9,7 @@ import { adaugaSectiuni, type LinieCuSectiune } from "./sectiuni.js";
 import { aplicaContinuare } from "./continuare.js";
 import {
   areIntervalDeGrosime, esteProtectieLaFocTubulatura, esteTeavaDeInox, extrageDeterminist, formaElementDinText,
-  formaExplicitaDinText, grosimeProtectieFoc, tablaFaraMaterial, grosimeScrisa, scrieGrosime, sistemScris,
+  formaExplicitaDinText, grosimeProtectieFoc, tablaFaraMaterial, LIPSESTE_MATERIALUL, grosimeScrisa, scrieGrosime, sistemScris,
 } from "./extract-regex.js";
 import {
   diametruContrazisDeText, notatieContraziceMaterialul, valideazaExtragere,
@@ -1014,6 +1014,9 @@ function grosimiDeLaConducte(
   for (const b of brute) {
     const e = rezolvate.get(b.index)?.extras;
     if (!e || e.grosime_mm !== null || (e.sistem !== "vata_minerala" && e.sistem !== "elastomer")) continue;
+    // Fara material scris, n-are de la ce conducta lua grosimea; si asa ramane
+    // al modelului (`completeazaDinConducte` l-ar fi oprit de la el).
+    if (e.motiv === LIPSESTE_MATERIALUL) continue;
     if (scrieGrosime(b.text)) continue;
     const od = diametruExterior(e);
     if (od === null) continue;
@@ -1261,7 +1264,11 @@ function construiesteLinii(
 
     // Textul intra in regulile de forma si straturi doar cand nu e linia
     // omului: acolo el a decis. Ce lucrare e randul ramane insa cea scrisa de client.
-    const t = tarifeazaExtras(deTarifat, b.cantitate ?? 1, destinatie, sursa === "om" ? undefined : b.text, b.text);
+    // Izolatie fara material (`LIPSESTE_MATERIALUL`): pozitie „Fara pret”, cu
+    // cauza ei. Materialul din extragere e doar locul in care il alege omul.
+    const t: ReturnType<typeof tarifeazaExtras> = sursa !== "om" && deTarifat.motiv === LIPSESTE_MATERIALUL
+      ? { eroare: "Lipsește materialul izolației: rândul nu-l scrie.", codEroare: "lipseste_materialul" }
+      : tarifeazaExtras(deTarifat, b.cantitate ?? 1, destinatie, sursa === "om" ? undefined : b.text, b.text);
     if (t.pret && conducta?.uzuala) {
       const n = `nicio conducta de acelasi diametru in lista (cea mai apropiata, ø${conducta.vecina}, are alta grosime): `
         + `grosime ${conducta.grosime} mm din tabelul de grosimi uzuale al firmei`;

@@ -176,6 +176,7 @@ export const MOTIV: Record<CodMotiv, string> = {
   peste_maximul_listei: "Diametru mai mare decât lista de prețuri",
   dn_necunoscut: "DN necunoscut",
   fara_diametru: "Lipsește diametrul",
+  lipseste_materialul: "Lipsește materialul: alege izolația",
   echipament: "Izolare de echipament fără D și L: preț de pus manual",
   fara_coeficient_de_forma: "Piesa nu are preț în listă",
   banda_inexistenta: "Diametrul nu e în lista de prețuri",
