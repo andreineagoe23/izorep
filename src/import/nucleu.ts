@@ -550,7 +550,7 @@ export function tarifeazaExtras(
       codEroare: "echipament",
     };
   }
-  const t = tarifeazaIzolatie(extras, cantitate, destinatie, text);
+  const t = tarifeazaIzolatie(extras, cantitate, destinatie, text, textLucrare);
   // Livrarea tevii cu izolatia „inclusiv": firma face izolatia, teava o livreaza
   // instalatorul. Se tarifeaza izolatia din liste; NISAL r83 a fost semnat
   // 20,09 €/m fata de 14,68 din liste, deci pozitia merge la om.
@@ -566,6 +566,8 @@ function tarifeazaIzolatie(
   cantitate: number,
   destinatie: Destinatie,
   text?: string,
+  /** Ce lucrare e rândul (banda pe armături): și pe linia omului. Vezi `tarifeazaExtras`. */
+  textLucrare: string | undefined = text,
 ): { pret?: RezultatTarifare | RezultatGolFoc; eroare?: string; codEroare?: CodNetarifare } {
   try {
     if (extras.sistem === "goluri_foc") {
@@ -637,7 +639,9 @@ function tarifeazaIzolatie(
     }
     // Banda autoadeziva pe armaturi (spitalul, „Izolatii armaturi banda
     // autoadeziva", 45 m): cea mai subtire izolatie de elastomer, pe primul rand.
-    if (extras.sistem === "elastomer" && text !== undefined && RE_BANDA_ARMATURI.test(text)) {
+    // Spune ce lucrare e rândul, deci citește `textLucrare`: confirmată, poziția
+    // (fără diametru, deci tot pe regula benzii) își păstrează prețul (14 noiembrie 2026).
+    if (extras.sistem === "elastomer" && textLucrare !== undefined && RE_BANDA_ARMATURI.test(textLucrare)) {
       const rand = diametreDin(listaDe("elastomer", destinatie).lista)[0]!;
       const r = cuNote(tarifeaza({
         diametru: { valoare: rand, tip: "exterior" }, straturi: [{ sistem: "elastomer", grosime_mm: 9 }],

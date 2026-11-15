@@ -15,7 +15,7 @@ import type { Destinatie } from "../../src/pricing/lists.js";
 import { grosimePropusa } from "../../src/pricing/grosimi-uzuale.js";
 import { stocSabloane } from "../stoc-sabloane.js";
 import { ceriSpatiu } from "../meniu-stare.js";
-import { anuleaza, confirma, potrivit } from "../validare.js";
+import { anuleaza, confirma, potrivit, vazute } from "../validare.js";
 import { cate, esc, eur } from "./tip.js";
 import { FIRME, logoFirmei } from "../date/firme.js";
 import {
@@ -724,7 +724,8 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
   function confirmaIndecsi(indecsi: number[]): void {
     const s = sesiune;
     if (!s || indecsi.length === 0) return;
-    const inst = confirma(indecsi, s.rez.rezolvate);
+    // Ce vedea omul (grosimea completată, golul de la aceeași țeavă), nu extragerea brută: altfel „Fără preț”.
+    const inst = confirma(indecsi, s.rez.rezolvate, vazute(s.rez));
     retarifeaza();
     const n = inst.intrari.length;
     arataMesaj(n === 1 ? "Poziție confirmată." : `${cate(n, "poziții")} confirmate.`, () => {

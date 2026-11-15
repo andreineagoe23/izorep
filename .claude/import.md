@@ -675,6 +675,24 @@ fișier”. Pozele din carnet nu trec pe aici (registru nou de fiecare dată), i
 „Schimbă fișierul” pe aceeași lucrare nu se socotește dublură. Teste:
 `tests/fisier-dublu.test.ts`.
 
+## Confirmarea păstrează prețul văzut (14 noiembrie 2026, bugul „g48 → Confirmă”)
+
+O poziție „De verificat” confirmată trecea pe „Fără preț” când prețul ei venea
+dintr-o completare a regulilor, nu din citirea rândului: `confirma` punea
+`sursa: "om"` pe extragerea brută, iar pe linia omului nucleul nu mai
+completează grosimea scrisă dar respinsă („g48” → 50 mm), grosimea conductei,
+pe cea uzuală sau golul de la aceeași țeavă. Pe fișierele clienților, 15
+poziții: TRANSAVIA inox r29–30 (g48), golurile EI180 de la Matari r72–83,
+banda pe armături de la spital r138. Acum `confirma(indecsi, rezolvate,
+vazute(rez))` (`web/validare.ts`) pune pe linia omului extragerea cum o vedea
+el (`LinieProcesata.extras`, deja completată), iar regula benzii pe armături
+citește textul lucrării (`textLucrare`), ca echipamentul și protecția la foc:
+spune ce lucrare e rândul, deci se aplică și pe linia omului. Pe liniile care
+nu sunt ale omului nimic nu se schimbă. Test: `tests/confirmare-pret.test.ts`
+(TRANSAVIA cu „g48”; toate pozițiile cu preț din toate fișierele, confirmate,
+au același preț, pe ambele tipuri de ofertă). Fără al treilea argument,
+`confirma` face ce făcea (testele vechi o cheamă așa).
+
 ## Izolația pe foaie (11 octombrie 2026)
 
 `src/import/izolatie-foaie.ts`. Pentru cererile care sunt **lista de țevi a
