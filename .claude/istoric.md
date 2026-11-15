@@ -35,6 +35,52 @@ Calculatorul: ce are și ce nu (Docker, fișierele clienților, cheia de model).
 
 ---
 
+## 15 noiembrie 2026 (seara) · Adrian (popescuadi15) · ramura `ux-lucrare`
+
+Calculatorul: **fără Docker**, fișierele clienților cu numele noi, cheia de
+model folosită (două importuri din linia de comandă, 24 de rânduri la model).
+**Nicio linie de cod schimbată.** Comis tot ce e mai jos; necomis a rămas
+doar `docs/intrebari-firma-2.md` (ca înainte).
+
+### Făcut
+
+| Unde | Ce |
+|---|---|
+| `docs/audit-2026-11-15.md` | auditul cerut înaintea prezentării la firmă (16 noiembrie): import, prețuri, materiale, situații, cu rândul și locul din cod |
+| `docs/intrebari-firma-3.md` | întrebările pentru firmă, refăcute (48, 18 cu ★); înlocuiește `intrebari-firma-2.md` |
+| `exemple-AI/` (copie și în `../attachments/exemple-AI/`) | două lucrări de probă cap-coadă, cu date inventate: cerere cu lipsuri intenționate, oferta corectă, comandă, aviz și factură PDF, două situații, `cheie-de-verificare.xlsx`; ghidul e `CITESTE-INTAI.md`, scripturile în `_generator/`. E în repo, deci testele îl pot folosi și în CI |
+
+### Verificat
+
+- `npx vitest run`: 687 trec, 81 sărite (fără bază), 0 pică, din 768.
+- Cele două cereri de probă prin `importaFisier`, fără model și cu modelul
+  real: 76 de rânduri, fiecare comparat cu prețul corect. Cu model: 62 corecte,
+  **3 greșite „Gata”**, 6 greșite dar marcate, **2 rămase afară**.
+
+### Neverificat
+
+- Nimic în browser, pe server sau în bază. Citirea PDF-urilor de probă cu
+  modelul (aviz, factură). Situațiile și închiderea pe exemplele noi.
+
+### Pentru cine urmează
+
+1. Cele trei „Gata” greșite din audit, fiecare cu test pe rândul din
+   `exemple-AI/`: „protecție cu tablă” fără material (16,00 în loc de 38,51 €),
+   „gr 19” necitit și înlocuit cu 9 mm, grosimea luată de la țeava cea mai
+   apropiată ieșită „Gata”.
+2. „Casetă armături DN80” și „Izolare conductă DN65” ca poziții „Fără preț”,
+   nu „Lăsate afară”.
+3. Parcurgerea în browser rămasă din import, pe cele două exemple (trei foi,
+   coloane necunoscute, „Lăsate afară”), apoi avizul și factura PDF.
+4. Restul, în ordinea din audit.
+
+### De hotărât de oameni
+
+- Cele trei din intrarea de mai jos („E bine”, unirea pe `main`, tăierea
+  `stare.md`): recomandările sunt la sfârșitul auditului.
+- Răspunsurile firmei la `intrebari-firma-3.md`, mai ales 1–3 (ce se face când
+  lipsesc tabla, grosimea sau materialul) și 22 (saltele sau cochilii).
+
 ## 15 noiembrie 2026 (după-amiază) · Andrei (neagoeandrei23) · ramura `ux-lucrare`
 
 Calculatorul: Docker (Postgres pe 5433), fișierele clienților în
