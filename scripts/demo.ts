@@ -40,7 +40,6 @@ import { parseFoiBuffer } from "../src/import/parse-workbook.js";
 import { proceseazaRegistru, reevalueaza, type OptiuniNucleu, type Rezultat } from "../src/import/nucleu.js";
 import { stocInMemorie } from "../src/import/memorie.js";
 import { mapariStatice } from "../src/import/mapari-statice.js";
-import { PIERDERI_IMPLICITE, PRAG_TUB_MM, necesarDinLinii } from "../src/stoc/necesar.js";
 import { articolDin, cantitateNecesara, solduri, type Articol } from "../src/stoc/registru.js";
 import { ciorneDinRamas, type Comanda } from "../src/stoc/comenzi.js";
 import { kgPeMp } from "../src/stoc/produse.js";
@@ -49,7 +48,7 @@ import { pretPropus } from "../src/stoc/preturi-furnizori.js";
 import { situatieNoua, valoareOferta as valoarePlan, type PlanSantier } from "../src/lucrari/situatii.js";
 import type { Destinatie } from "../src/pricing/lists.js";
 import { confirma } from "../web/validare.js";
-import { imparte, planDinOferta, valoareOferta, type AntetOferta, type CerereOferta } from "../web/oferta.js";
+import { imparte, valoareOferta, type AntetOferta, type CerereOferta } from "../web/oferta.js";
 import { randuriInchidere, restulPeSantier } from "../web/inchidere-vizual.js";
 import type { SesiuneImport } from "../web/istoric.js";
 
@@ -156,6 +155,7 @@ globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) =>
 
 try {
   const D = await import("../web/date.js");
+  const S = await import("../web/santier-din.js");
   D.laEroare((m) => erori.push(m));
   if ((await D.porneste()) !== "server") throw new Error("Serverul din proces nu a răspuns.");
 
@@ -217,8 +217,13 @@ try {
       confirma(rez.linii.filter((l) => l.pret && l.necesitaValidare).map((l) => l.bruta.index), rez.rezolvate);
       reevalueaza(rez, optiuni);
     }
+    // Ca salvarea din ecran: câte poziții cer ochi. Fără ele, lista Lucrări
+    // spunea despre Matari „Ce a răspuns clientul?”, iar pagina „12 poziții cer
+    // să te uiți” (14 noiembrie 2026).
+    const { deValidat, netarifate } = imparte(rez.linii);
     const ses: SesiuneImport = {
       id, nume: fisier, marime: b.length, cand: new Date().toISOString(), model: null,
+      deVerificat: deValidat.length + netarifate.length,
       pozitii: rez.statistici.liniiIzolatie, tarifate: rez.statistici.tarifate, valoare: rez.statistici.valoareTotala,
       fisier: buf,
       extrase: [...rez.rezolvate].map(([index, r]) => ({ index, extras: r.extras, sursa: r.sursa, ...(r.text !== undefined ? { text: r.text } : {}) })),
@@ -253,22 +258,19 @@ try {
     await D.salveaza(i.ses);
   }
 
-  /** „Creează șantierul”: planul din ofertă și necesarul lui, pe depozitul șantierului. */
-  function santier(i: Import, oferta: CerereOferta, id: string, tuburiPeste: number[] = []): PlanSantier {
-    // Ca formularul din ecran: oferta e refacuta acum, deci planul e „creat” azi.
-    const c = { ...oferta, provenienta: { ...oferta.provenienta, generatLa: new Date().toISOString() } };
-    const plan = planDinOferta(c, id, new Map(i.rez.brute.map((b) => [b.index, b.sectiune ?? ""])));
-    D.scriePlanuri([plan, ...D.citestePlanuri()]);
-    const n = necesarDinLinii(imparte(i.rez.linii).oferta, {
-      pierderi: PIERDERI_IMPLICITE, pragTub: PRAG_TUB_MM, tuburiPeste, discountProcent: c.antet.discountProcent ?? 0,
-    });
-    const st = D.citesteDepozit();
-    D.scrieDepozit({ ...st, necesare: [{
-      id: `N-${id}`, creat: new Date().toISOString(), fisier: i.ses.nume, obiectiv: plan.denumire,
-      pierderi: n.pierderi, pragTub: n.pragTub, tuburiPeste: n.tuburiPeste, materiale: n.materiale,
-      faraNecesar: n.faraNecesar.length, santier: plan.id,
-    }, ...st.necesare] });
-    return plan;
+  /**
+   * „Clientul a acceptat”: planul din ofertă și necesarul lui, pe depozitul
+   * șantierului, prin aceeași funcție ca ecranul (`web/santier-din.ts`), cu
+   * regulile firmei. Doar id-urile sunt fixe (`S-TRANSAVIA`), ca adresele din
+   * documentație să rămână aceleași. Un refuz întoarce mesajul, iar `la` îl
+   * face eroare.
+   */
+  function santier(i: Import, oferta: CerereOferta, id: string, tuburiPeste: number[] = []): string | undefined {
+    const r = S.santierDin(
+      { sesiune: i.ses.id, fisier: i.ses.nume, oferta, brute: i.rez.brute },
+      { ...S.REGULI_FIRMEI, tuburiPeste }, { santier: id, necesar: `N-${id}` },
+    );
+    return "eroare" in r ? `${i.ses.nume}: șantierul nu a pornit: ${r.eroare}` : undefined;
   }
 
   const necesarul = (planId: string) => {
@@ -349,7 +351,7 @@ try {
   }
 
   /* NISAL: șantierul închis. Comandat tot, primit pe facturi, executat tot, restul înapoi în central. */
-  await la(zi(-60), () => { santier(nisal, cNisal, "S-NISAL-LUTZ"); });
+  await la(zi(-60), () => santier(nisal, cNisal, "S-NISAL-LUTZ"));
   let comenziNisal: Comanda[] = [];
   await la(zi(-58, 10), async () => {
     const st = D.citesteDepozit();
@@ -395,7 +397,7 @@ try {
   });
 
   /* TRANSAVIA: șantierul în lucru. */
-  await la(zi(-30, 10), () => { santier(transavia, cTransavia, "S-TRANSAVIA", [114, 140, 168]); });
+  await la(zi(-30, 10), () => santier(transavia, cTransavia, "S-TRANSAVIA", [114, 140, 168]));
   const COMANDA_ISOLINE = "C-ISOLINE-140";
   await la(zi(-14, 10), () => {
     // Comanda reală din emailul firmei: cochilii caserate ø140 × 50, 350 m, pe RADOIA.

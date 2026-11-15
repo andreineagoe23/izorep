@@ -72,7 +72,7 @@ describe("„Urmează”: un pas, în ordinea fluxului", () => {
     expect(r.alb?.act).toBe("accepta-tarziu");
   });
 
-  it("pe șantier: întâi ce e de comandat, apoi închiderea, altfel situația nouă; închis, fără buton", () => {
+  it("pe șantier: tot executat = închiderea, chiar cu material necomandat; apoi ce e de comandat; altfel situația nouă; închis, fără buton", () => {
     const of = { numar: "RAD284", data: "27.05.2026" };
     // Cu șantier, pozițiile cererii nu mai sunt pasul de acum.
     expect(urmeaza({ ...baza, deVerificat: 3, oferta: of, santier: { deComandat: 13, progres: 40 } })).toMatchObject({
@@ -80,6 +80,10 @@ describe("„Urmează”: un pas, în ordinea fluxului", () => {
     });
     expect(urmeaza({ ...baza, oferta: of, santier: { deComandat: 0, progres: 100 } })).toMatchObject({
       text: "Totul e executat.", fila: "inchidere", primar: { eticheta: "Închide șantierul" },
+    });
+    // TRANSAVIA cu „Tot restul” și nimic comandat: înainte, „12 materiale de comandat”, iar Acasă „se poate închide”.
+    expect(urmeaza({ ...baza, oferta: of, santier: { deComandat: 12, progres: 100 } })).toMatchObject({
+      text: "Totul e executat.", fila: "inchidere", primar: { eticheta: "Închide șantierul", fila: "inchidere" },
     });
     expect(urmeaza({ ...baza, oferta: of, santier: { deComandat: 0, progres: 37 } })).toMatchObject({
       text: "Șantierul e în lucru: 37 % executat.", fila: "situatii", primar: { eticheta: "Situație nouă", act: "situatie-noua" },

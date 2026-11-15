@@ -95,8 +95,11 @@ function deFacut(d: DateTablou): string {
     });
   }
 
+  // Pe un șantier cu tot executat, pasul e închiderea (rândul de mai sus), nu
+  // comanda: la fel spune „Urmează” pe lucrare și în lista Lucrări (`urmeaza`).
+  const deInchis = new Set(d.planuri.filter((x) => !x.inchis && progresPlan(x) >= 100).map((x) => x.id));
   for (const { necesar, articole } of deComandatPeNecesar(citesteDepozit())) {
-    if (articole === 0) continue;
+    if (articole === 0 || (necesar.santier && deInchis.has(necesar.santier))) continue;
     itemi.push({
       href: necesar.santier ? spre(toate, necesar.santier, "materiale") : "#/materiale",
       actiune: "Comandă ce lipsește",
