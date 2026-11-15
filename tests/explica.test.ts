@@ -47,6 +47,18 @@ describe("propoziția de la „De verificat”", () => {
     expect(explicaRand(l!)).toEqual({ text: "Pe rând sunt două diametre: DN80 și Ø100. Am luat DN80.", camp: "diam" });
   });
 
+  // Auditul din 15 noiembrie: modelul a citit bine tabla, codul a scos-o fiindcă
+  // textul n-o numește („tb. Al”); omul trebuie să afle că prețul e fără ea.
+  it("jacheta scoasă (strat_necitat): spune întâi că prețul e fără tablă", async () => {
+    const [l] = await import1(["Izolatii vata min. + tb. Al Di27 g40 ML"],
+      async (linii) => linii.map((x) => extrasa({ index: x.index, sistem: "vata_minerala", diametru_valoare: 27,
+        diametru_tip: "interior", grosime_mm: 40, straturi_extra: [{ sistem: "tabla", grosime_mm: null }] })));
+    expect(l!.avertismente?.map((a) => a.cod)).toContain("strat_necitat");
+    const t = explicaRand(l!)!;
+    expect(t.text).toMatch(/^Prețul e fără tablă: \d+,\d\d €\./);
+    expect(t.camp).toBe("prot");
+  });
+
   it("grosimea de la țeava de același diametru, sau cea obișnuită a firmei", () => {
     const conducta = rand({
       extras: extrasa({ grosime_mm: 50, sistem: "vata_minerala" }),
