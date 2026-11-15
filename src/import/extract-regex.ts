@@ -10,6 +10,23 @@ import type { LinieExtrasa } from "./schema.js";
  * pentru ca ce se poate rezolva determinist trebuie sa aiba teste care pica
  * atunci cand cineva strica regula.
  */
+/** Tabla cu materialul ei numit (aluminiu, zincata) sau jacheta numita ca atare. */
+const TABLA_CU_MATERIAL = /tabl[aă]\s+(?:de\s*)?(?:aluminiu|zincat)|jachet|jacket|\bblech\b/i;
+/**
+ * „protectie cu tabla", „protejata cu tabla", fara material dupa ea. Nu „tabla
+ * de inox" (alt sistem) si nu „protectie la foc ... din tabla" (tubulatura):
+ * cere tabla imediat dupa protectie.
+ */
+const TABLA_FARA_MATERIAL =
+  /(?:protec[țt]i\w*\s+(?:cu\s+)?|protejat\w*\s+(?:la\s+exterior\s+)?cu\s+)tabl[aă]?(?![a-zăâîșț])(?!\s*(?:de\s*)?inox)/i;
+
+/**
+ * Randul cere tabla, dar nu spune ce tabla: aluminiu presupus, de verificat.
+ */
+export function tablaFaraMaterial(text: string): boolean {
+  return TABLA_FARA_MATERIAL.test(text) && !TABLA_CU_MATERIAL.test(text);
+}
+
 const SISTEM: [LinieExtrasa["sistem"], RegExp][] = [
   ["elastomer", /elastomer|armaflex|cauciuc\s+sinte|a?uciuc\s+sinte|k[aä]lteiso|k-?flex|kaiflex|kautschuk/i],
   // "mineral wool" lipsea, desi `cerere-de-oferta-book15.xlsx` e integral in engleza: acolo
@@ -30,7 +47,11 @@ const SISTEM: [LinieExtrasa["sistem"], RegExp][] = [
   // `sistemeDinText` — vezi `TABLA_E_TUBULATURA`.
   // „de" poate veni lipit: cererea TRANSAVIA are „tabla dealuminiu" pe un rand
   // (r71), care iesea fara jacheta, deci fara pret.
-  ["tabla", /tabl[aă]\s+(?:de\s*)?(?:aluminiu|zincat)|jachet|jacket|\bblech\b/i],
+  // „protectie cu tabla" fara material (exemplul 1, r10: „... vata minerala si
+  // protectie cu tabla Di76, g50 - ML") iesea doar cu vata, 16,00 € „Gata" in loc
+  // de 38,51. E tabla de aluminiu (singura tabla din liste), dar nedovedit:
+  // `tablaFaraMaterial` o marcheaza (`tabla_fara_material`, intrebarea 1).
+  ["tabla", new RegExp(`${TABLA_CU_MATERIAL.source}|${TABLA_FARA_MATERIAL.source}`, "i")],
   ["pvc", /\bpvc\b/i],
   // Cere notiunea de GOL, nu doar mentiunea focului. "Protectie la foc EI 60
   // pentru tubulaturile din tabla zincata" din cerere-de-oferta-spital.xlsx e protectia

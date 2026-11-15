@@ -216,6 +216,7 @@ export const MOTIV: Record<CodMotiv, string> = {
   segment_diferit: "Preț din lista celuilalt tip de ofertă",
   rotunjire_neconfirmata: "Diametru între două rânduri din listă",
   grosime_propusa: "Grosime propusă, nu scrisă de client",
+  tabla_fara_material: "Tablă fără material: am pus aluminiu",
   descriere_schimbata: "Descrierea s-a schimbat după verificare",
   forma_contrazisa: "Textul spune altă formă decât unitatea de măsură",
   celula_dedusa: "Preț calculat: combinația lipsește din listă",

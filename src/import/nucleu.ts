@@ -9,7 +9,7 @@ import { adaugaSectiuni, type LinieCuSectiune } from "./sectiuni.js";
 import { aplicaContinuare } from "./continuare.js";
 import {
   areIntervalDeGrosime, esteProtectieLaFocTubulatura, esteTeavaDeInox, extrageDeterminist, formaElementDinText,
-  formaExplicitaDinText, grosimeProtectieFoc, grosimeScrisa, scrieGrosime, sistemScris,
+  formaExplicitaDinText, grosimeProtectieFoc, tablaFaraMaterial, grosimeScrisa, scrieGrosime, sistemScris,
 } from "./extract-regex.js";
 import {
   diametruContrazisDeText, notatieContraziceMaterialul, valideazaExtragere,
@@ -1265,6 +1265,15 @@ function construiesteLinii(
       t.pret.note = [...(t.pret.note ?? []), n];
       t.pret.noteDeVerificat = [...(t.pret.noteDeVerificat ?? []), n];
       t.pret.motiveDeVerificat = [...(t.pret.motiveDeVerificat ?? []), "grosime_propusa"];
+    }
+    // „protectie cu tabla" fara material: aluminiul e presupus, nu scris.
+    // Pe orice sursa, ca un model care pune tabla sa nu treaca „Gata".
+    if (t.pret && sursa !== "om" && "straturi" in t.pret
+        && t.pret.straturi.some((s) => s.sistem === "tabla") && tablaFaraMaterial(b.text)) {
+      const n = "randul spune „protectie cu tabla”, fara material: s-a pus tabla de aluminiu";
+      t.pret.note = [...(t.pret.note ?? []), n];
+      t.pret.noteDeVerificat = [...(t.pret.noteDeVerificat ?? []), n];
+      t.pret.motiveDeVerificat = [...(t.pret.motiveDeVerificat ?? []), "tabla_fara_material"];
     }
     if (t.pret && necitate.length) {
       const n = `${necitate.map((x) => x.sistem).join(", ")}: nu e numit in text, scos din pret`;

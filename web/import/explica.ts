@@ -118,6 +118,8 @@ function propozitie(l: LinieProcesata, m: CodMotiv): Explicatie {
       }
       return { text: `Am pus ${g}, grosimea obișnuită a firmei la diametrul ăsta.`, camp: "gros" };
     }
+    case "tabla_fara_material":
+      return { text: `Rândul spune „tablă”, fără material: am pus tablă de aluminiu, ${pret}.`, camp: "prot" };
     case "grosime_apropiata":
       return { text: `Grosimea scrisă nu e în listă: am luat ${mm(e.grosime_mm)}, cea mai apropiată.`, camp: "gros" };
     case "grosime_peste_lista":

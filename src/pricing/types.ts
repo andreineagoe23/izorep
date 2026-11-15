@@ -166,6 +166,8 @@ export type MotivVerificare =
   | "banda_armaturi"
   /** Tabla: pretul pe mp al grosimii vine din lista celuilalt segment (0,8 e identic in amandoua). */
   | "mp_din_celalalt_segment"
+  /** „protectie cu tabla" fara material: s-a pus tabla de aluminiu (intrebarea 1). */
+  | "tabla_fara_material"
   /** Celula lipsa din lista industriala: rezidential × raportul celor doua liste pe grosime. */
   | "celula_din_rezidential";
 
