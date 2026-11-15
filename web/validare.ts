@@ -92,6 +92,8 @@ export const ETICHETE_BLOCAJ: Record<CodBlocaj, { eticheta: string; intrebare?: 
   strat_necitat: { eticheta: "un strat (tablă, inox, PVC) care nu e scris pe rând" },
   grosime_interval: { eticheta: "grosimea e dată ca interval; alegerea e a omului" },
   citit_diferit: { eticheta: "rândul citit automat de două ori a ieșit diferit" },
+  doua_diametre: { eticheta: "pe rând sunt două diametre care nu sunt aceeași țeavă" },
+  necitit: { eticheta: "rândul n-a fost citit automat: se poate încerca din nou" },
 };
 
 /**

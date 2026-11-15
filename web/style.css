@@ -565,6 +565,9 @@ a.legatura { display: inline-flex; align-items: center; }
   container: imp / inline-size; display: flex; flex-direction: column; gap: var(--imp-gap); }
 .imp-pagina { display: grid; gap: var(--imp-gap); min-width: 0; }
 .imp .alerta { margin: 0; }
+/* „N rânduri n-au fost citite.” cu „Încearcă din nou” pe același rând (Faza 6, punctul 7). */
+.alerta-buton { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
+.alerta-buton > p { margin: 0; flex: 1 1 20rem; }
 .imp [hidden] { display: none !important; }
 .imp .secundar { min-height: 44px; padding: 10px 18px; border-radius: 10px; font-size: 15px; }
 .imp label { margin: 0; }
@@ -1238,6 +1241,10 @@ p.ver-text:not(.cel-ed) { padding: 10px 0; }
 .ver-compact .ver-col-n { width: 4.5rem; }
 .ver-compact .ver-col-stare { width: 7.5rem; }
 .ver-motiv { margin: 4px 0 0; font-size: 12.5px; color: var(--slab); line-height: 1.35; }
+/* Ce am presupus pe rândul „De verificat”, cu „Schimb” (Faza 6, punctul 9): sub descriere, citit ca o propoziție. */
+.ver-explica { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-top: 6px; }
+.ver-explica .ver-motiv { margin: 0; flex: 1 1 14rem; font-size: 14px; color: var(--text); }
+.imp .ver-explica button { min-height: 44px; padding: 0 14px; font-size: 14px; }
 /* Coloanele fixe au ~1010 px: sub 1240 px de tabel descrierea ar ramane sub
    ~230 px, deci fiecare rand devine card: descrierea pe toata latimea, casetele
    cu numele coloanei deasupra, cate trei-patru pe rand. */

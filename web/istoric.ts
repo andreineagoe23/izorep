@@ -88,6 +88,8 @@ export interface SesiuneImport extends IntrareIstoric {
   grosimiPropuse?: [number, number][];
   /** Vezi `OptiuniNucleu.descrieriSchimbate`. */
   descrieriSchimbate?: number[];
+  /** Rândurile plecate la model și neîntoarse. Vezi `OptiuniNucleu.necitite`. */
+  necitite?: number[];
   /** Preturile unitare puse de om, `[index, EUR]`. Vezi `OptiuniNucleu.preturiManuale`. */
   preturiManuale?: [number, number][];
   /**

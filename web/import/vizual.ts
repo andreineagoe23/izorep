@@ -170,8 +170,8 @@ export interface OptiuniActiuni {
 export function actiuniLista(o: OptiuniActiuni): string {
   if (o.deConfirmat === 0 && o.grosimi === 0) return "";
   return `<div class="imp-actiuni">
-    ${o.deConfirmat > 0 ? `<button type="button" class="secundar" data-act="confirma-tot">Confirmă ${
-      o.deConfirmat === 1 ? "poziția" : `toate cele ${cate(o.deConfirmat, "poziții")}`}</button>` : ""}
+    ${o.deConfirmat > 0 ? `<button type="button" class="secundar" data-act="confirma-tot">${
+      o.deConfirmat === 1 ? "Poziția e bine" : `Toate cele ${cate(o.deConfirmat, "poziții")} sunt bine`}</button>` : ""}
     ${o.grosimi > 0 ? `<button type="button" class="secundar" data-act="grosimi">Pune grosimea uzuală la ${pozitii(o.grosimi)}</button>` : ""}
   </div>`;
 }
@@ -204,7 +204,7 @@ export function actiuniPozitie(l: LinieProcesata, propunere: number | null, edit
   const idx = l.extras.index;
   const stare = stareLinie(l);
   return [
-    stare === "de_validat" ? `<button type="button" class="primar" data-act="confirma" data-idx="${idx}">Confirmă</button>` : "",
+    stare === "de_validat" ? `<button type="button" class="primar" data-act="confirma" data-idx="${idx}">E bine</button>` : "",
     stare === "netarifate" && propunere !== null
       ? `<button type="button" class="primar" data-act="pune-grosime" data-idx="${idx}" data-g="${propunere}">Pune ${numar(propunere)} mm</button>`
       : "",
@@ -385,6 +385,24 @@ export function patchDinFormular(date: FormData): Partial<LinieExtrasa> {
       grosime_mm: nr(grosimi[k]),
     })),
   };
+}
+
+/**
+ * Rândurile plecate la citit și neîntoarse (planul UX, Faza 6, punctul 7):
+ * „12 rânduri n-au fost citite.” cu „Încearcă din nou”, care trimite doar
+ * rândurile astea. Cu plafonul zilnic atins, mesajul lui (cu ora), nu butonul:
+ * altfel s-ar apăsa la nesfârșit. Fără citire automată (link demo, server fără
+ * model), omul le completează de mână.
+ */
+export function alertaNecitite(n: number, o: { plafon: string; cuModel: boolean; inLucru: boolean }): string {
+  if (n <= 0) return "";
+  const cate = n === 1 ? "Un rând n-a fost citit." : `${n} rânduri n-au fost citite.`;
+  const unde = n === 1 ? "E la „De verificat” sau la „Lăsate afară”" : "Sunt la „De verificat” sau la „Lăsate afară”";
+  if (o.plafon) return `<p class="alerta"><strong>${cate}</strong> ${esc(o.plafon)}</p>`;
+  if (!o.cuModel) return `<p class="alerta"><strong>${cate}</strong> ${unde}: completează-le de mână.</p>`;
+  return `<div class="alerta alerta-buton" role="status"><p><strong>${cate}</strong> ${unde} până le citim.</p>
+    <button type="button" class="secundar" data-act="reincearca"${o.inLucru ? " disabled" : ""}>${
+      o.inLucru ? "Se citesc…" : "Încearcă din nou"}</button></div>`;
 }
 
 export function toast(text: string, cuAnulare: boolean): string {

@@ -146,3 +146,18 @@ export function aplicaContinuare(linii: LinieCuSectiune[]): LinieCuSectiune[] {
   }
   return out;
 }
+
+/**
+ * Partea PROPRIE a unui rând de continuare: celulele până la ultimul marcaj
+ * („E3.1.1.2 | Same - Ø125 mm | Same - Ø125 mm”), fără descrierea moștenită
+ * lipită după ele de `aplicaContinuare`. Un rând care nu e continuare se
+ * întoarce întreg. Pentru gardul de două diametre (`douaDiametre`): pe Book15
+ * descrierea părintelui spune „Diameter: Ø100 mm”, iar rândul „Same - Ø125”,
+ * deci textul lipit are două diametre, dar rândul unul singur.
+ */
+export function textPropriu(text: string): string {
+  const celule = text.split(" | ");
+  let ultim = -1;
+  celule.forEach((c, k) => { if (RE_MARCAJ.test(c.trim())) ultim = k; });
+  return ultim < 0 ? text : celule.slice(0, ultim + 1).join(" | ");
+}
