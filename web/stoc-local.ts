@@ -3,10 +3,10 @@ import type { SablonInvatat, StocSabloane } from "../src/import/memorie.js";
 /**
  * Memoria de sabloane a demo-ului, in `localStorage`.
  *
- * In aplicatia reala sabloanele stau in baza, per tenant: o corectie facuta de
- * un coleg trebuie sa ajute pe toata lumea. Aici nu exista server, deci raman
- * in browserul celui care a facut corectia — suficient ca sa se vada ca al
- * doilea import al aceluiasi fisier nu mai intreaba modelul.
+ * Pe server sabloanele stau in baza, pe firma (`web/stoc-sabloane.ts`, din 14
+ * noiembrie 2026): o corectie facuta de un coleg ajuta pe toata lumea. Aici
+ * e doar linkul demo, fara server, deci raman in browserul celui care a facut
+ * corectia. Ce era aici inainte se muta o data pe server.
  *
  * Orice acces la `localStorage` poate arunca (fereastra privata, cookies
  * blocate, capturi de ecran automate). Un depozit care crapa nu are voie sa

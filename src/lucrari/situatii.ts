@@ -177,3 +177,63 @@ export function progresPlan(plan: PlanSantier): number {
 
 /** Scoate ultima situatie; celelalte raman, ca istoricul sa nu se rescrie pe la mijloc. */
 export const faraUltimaSituatie = (plan: PlanSantier): PlanSantier => ({ ...plan, situatii: plan.situatii.slice(0, -1) });
+
+/* ------------------------------------------- situația nouă, doar ce mai e */
+
+/** Pozițiile unei situații, pe capitolul (zona) ofertei; `titlu` null = fără nume. */
+export interface GrupSituatie {
+  titlu: string | null;
+  randuri: RandSituatie[];
+}
+
+export interface VedereSituatie {
+  grupuri: GrupSituatie[];
+  /** Pozițiile executate tot în situațiile de dinainte, fără nimic scris acum. */
+  terminate: number;
+  /** Câte poziții de executat nu se potrivesc cu căutarea. */
+  faraPotrivire: number;
+}
+
+/**
+ * „Țeavă DN50” → „teava dn50”: fără diacritice (și cu sedilă), fără majuscule.
+ * Diametrul exterior se scrie în multe feluri („ø60”, „Ø 60”, „Di60”, „D60”,
+ * „φ60”): toate devin „ø60”, ca omul să-l găsească oricum l-a scris clientul
+ * (pe TRANSAVIA, „ø60” nu găsea nimic: pozițiile scriu „Di60”). DN rămâne DN.
+ */
+export const normalizeazaCautarea = (t: string): string =>
+  t.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().replace(/\s+/g, " ").trim()
+    .replace(/(^|[^a-z0-9])(?:ø|φ|di|d)\s?(?=\d)/g, "$1ø");
+
+/**
+ * Ce arată „Situație nouă” (planul UX, Faza 4, 15 noiembrie 2026): doar
+ * pozițiile care mai au de executat, pe capitolele ofertei, în ordinea
+ * planului. Pe TRANSAVIA formularul avea 99 de poziții, și cele terminate.
+ *
+ * - O poziție e terminată când situațiile de dinainte au acoperit cantitatea
+ *   din ofertă. Rămâne la vedere dacă are ceva scris în situația asta (s-a
+ *   executat peste ofertă), ca nimic scris să nu stea ascuns. `terminate: true`
+ *   le arată pe toate.
+ * - Căutarea: fiecare cuvânt trebuie să fie în numărul poziției, denumire sau
+ *   capitol, fără diacritice și majuscule. Cifrele scrise rămân pe situație și
+ *   când poziția nu se vede.
+ */
+export function vedereSituatie(
+  plan: PlanSantier, s: Situatie, opt: { cauta?: string; terminate?: boolean } = {},
+): VedereSituatie {
+  const cuvinte = normalizeazaCautarea(opt.cauta ?? "").split(" ").filter(Boolean);
+  const grupuri: GrupSituatie[] = [];
+  let terminate = 0;
+  let faraPotrivire = 0;
+  for (const r of randuriSituatie(plan, s)) {
+    const gata = r.anterior >= r.poz.cantitate - 1e-9 && r.curent === 0;
+    if (gata) terminate++;
+    if (gata && !opt.terminate) continue;
+    const text = normalizeazaCautarea(`${r.poz.nr} ${r.poz.denumire} ${r.poz.zona ?? ""}`);
+    if (cuvinte.some((c) => !text.includes(c))) { if (!gata) faraPotrivire++; continue; }
+    const titlu = r.poz.zona ?? null;
+    const ultimul = grupuri.at(-1);
+    if (ultimul && ultimul.titlu === titlu) ultimul.randuri.push(r);
+    else grupuri.push({ titlu, randuri: [r] });
+  }
+  return { grupuri, terminate, faraPotrivire };
+}

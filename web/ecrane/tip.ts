@@ -7,6 +7,19 @@ export interface Ecran {
   render(root: HTMLElement): void | Promise<void>;
 }
 
+/**
+ * Titlul ecranului, schimbat de ecran după ce l-a desenat routerul. Singurul
+ * lucru din afara containerului pe care îl atinge un ecran: pagina unui
+ * șantier se numește după șantier, nu „Șantiere” cu propoziția listei
+ * (14 noiembrie 2026), iar adresa se schimbă fără navigare nouă.
+ */
+export function titluEcran(titlu: string, subtitlu = ""): void {
+  const t = document.querySelector("#ecran .titlu-ecran");
+  if (!t) return;
+  t.innerHTML = `<h1>${esc(titlu)}</h1>${subtitlu ? `<p>${esc(subtitlu)}</p>` : ""}`;
+  document.title = `${titlu} · IzoERP`;
+}
+
 /* ------------------------------------------------------------- utilitare */
 
 export const eur = (n: number): string =>
@@ -107,9 +120,12 @@ export const tabel = (capete: string[], randuri: string[], clase: string[] = [],
 export const nota = (text: string): string => `<p class="nota">${text}</p>`;
 
 /**
- * Linie din lista "necesita atentia ta". Nu foloseste `.alerta`: rosul e
- * rezervat erorilor reale (o pozitie care nu se poate tarifa), nu unei oferte
- * care asteapta raspuns. `text` contine deja HTML escapat de apelant.
+ * Linie din lista „De făcut”. Nu foloseste `.alerta`: rosul e rezervat
+ * erorilor reale (o pozitie care nu se poate tarifa), nu unei oferte care
+ * asteapta raspuns. `text` contine deja HTML escapat de apelant.
+ *
+ * Butonul spune ce faci acolo (14 noiembrie 2026): randul intreg era link, gri,
+ * si nu se vedea ca se poate apasa.
  */
-export const atentionare = (href: string, text: string): string =>
-  `<a class="atentionare" href="${href}">${text}</a>`;
+export const atentionare = (href: string, text: string, actiune: string): string =>
+  `<div class="atentionare"><p>${text}</p><a class="secundar" href="${href}">${esc(actiune)}</a></div>`;

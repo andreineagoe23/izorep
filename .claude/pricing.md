@@ -273,6 +273,9 @@ Fiecare dedusă din Oferta 284 sau Oferta 27.04.2026, cu dovada lângă ea în c
   `echipament`, fără preț.
 - **Livrarea de țeavă cu izolația inclusă**: doar izolația din liste, marcat
   (`doar_izolatia`). NISAL r83 a fost semnat 20,09, din liste 14,68.
+- **Banda pe armături** (elastomer 9 mm pe primul rând, fără diametru) citește
+  textul lucrării, ca echipamentul: din 14 noiembrie 2026 se aplică și pe
+  poziția confirmată de om (altfel trecea pe „Fără preț”). Prețul nu s-a schimbat.
 
 ## Ce lipsește
 

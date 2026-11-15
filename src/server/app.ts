@@ -24,6 +24,7 @@ import { ruteCurs, type OptiuniCurs } from "./curs.js";
 import * as repo from "./repo.js";
 import { Refuz } from "./repo.js";
 import { inchideSantier } from "./inchidere.js";
+import { ruteImportFirma } from "./import-firma.js";
 import { DURATA_SESIUNE_MS, iesi, intra, omDinCookie, schimbaParola, type Om } from "./intrare.js";
 import { actiuneDin, citesteJurnal, scrieInJurnal } from "./jurnal.js";
 import { adresa, antete, blocariIntrare, cookieDin, cookieSesiune, limitaIncercari } from "./securitate.js";
@@ -291,6 +292,8 @@ export function creeazaServer(o: OptiuniServer): Hono<Env> {
   });
 
   app.route("/api", ruteModel(o.model ?? optiuniModelDinMediu({})));
+  // Ce învață importul pe firmă: coloanele foilor (Faza 6 din planul UX).
+  app.route("/api", ruteImportFirma(o.model ?? optiuniModelDinMediu({}), inTenant));
   app.get("/api/date", async (c) => c.json(await inTenant(c, (tx) => repo.dateComune(tx))));
 
   app.get("/api/cereri", async (c) => c.json(await inTenant(c, (tx) => repo.listaCereri(tx))));

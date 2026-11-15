@@ -18,6 +18,7 @@ import { RaspunsModel, type LinieExtrasa } from "../import/schema.js";
 import { citestePoza, MODEL_POZE_IMPLICIT, type RezultatPoza } from "../santier/extrage-poza.js";
 import { CitireAviz } from "../stoc/aviz.js";
 import { citesteAviz } from "../stoc/aviz-model.js";
+import type { FoaieBruta } from "../import/rand.js";
 import { mesajPlafon, PLAFOANE_IMPLICITE, type Limita, type Plafoane } from "./limita-model.js";
 
 /** Plafon per cerere: un fisier de 3.000 de randuri nu porneste 3.000 de extrageri dintr-un clic gresit. */
@@ -40,6 +41,8 @@ export interface OptiuniModel {
   extrage?: (linii: LinieDeExtras[], o: { apiKey: string; model: string; dimensiuneLot: number; concurenta: number }) => Promise<LinieExtrasa[]>;
   citeste?: (imagine: string, o: { apiKey: string; model: string }) => Promise<Pick<RezultatPoza, "termeni" | "note" | "model">>;
   citesteAviz?: (fisier: string, o: { apiKey: string; model: string; nume?: string }) => Promise<CitireAviz & { model: string }>;
+  /** Coloanele unei foi (`/api/mapare`, `import-firma.ts`); lipsa = `mapeazaFoaie`. */
+  mapeaza?: (foaie: FoaieBruta, o: { apiKey: string; model: string }) => Promise<unknown>;
 }
 
 /** Din mediu, cu aceleasi variabile si implicite ca CLI-ul si `vite dev` de pana acum. */

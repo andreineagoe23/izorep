@@ -1,539 +1,438 @@
 /**
- * Lucrări: șantierele făcute din oferte și situațiile lor de lucrări.
+ * Lucrări (planul UX, Faza 2, 14 noiembrie 2026): lista lucrărilor pe stadii
+ * și pagina unei lucrări, cu filele în ordinea fluxului.
  *
- * Fluxul firmei (29 septembrie 2026): oferta pleacă la client, apoi din ea se
- * face șantierul (pasul „Oferta” din import, „Creează șantierul”). Aici se
- * vede planul — pozițiile ofertei, înghețate — cât s-a executat, materialele
- * de comandat și istoricul situațiilor. Logica e în `src/lucrari/situatii.ts`;
- * datele stau în browser (`web/lucrari-local.ts`), ca la depozit.
+ * O lucrare e o cerere de la client plus, când există, oferta salvată din ea
+ * și șantierul pornit din ofertă (`web/lucrare.ts`). Înainte erau cinci
+ * locuri în meniu (Cerere nouă, Oferte și cereri, Șantiere, Măsurători,
+ * Materiale), iar omul trebuia să știe singur în care intră și ce urmează.
+ *
+ * Adresele:
+ * - `#/lucrari?stadiu=<stadiu>`: lista, pe fila stadiului;
+ * - `#/lucrari/noua[/poze]`: o cerere nouă (fișierul sau pozele din carnet);
+ * - `#/lucrari/<id>/<fila>`: pagina lucrării; `<id>` e al cererii, sau al
+ *   șantierului la lucrările fără cerere. Adresele vechi ale unui șantier
+ *   (`#/lucrari/<santier>/materiale`) duc la aceeași pagină.
+ *
+ * Filele paginii sunt butoane, nu linkuri: o situație sau o ofertă începută
+ * nu se pierde la schimbarea filei; adresa se scrie cu `replaceState`.
  */
-import { data as dataRo, esc, eur, indicator, nota, progres, stare, tabel, type Ecran } from "./tip.js";
-import type { Lucrare, StareLucrare } from "../date/seed.js";
-import { exemple, type Exemple } from "../date/exemple.js";
+import { esc, eur, stare, tabel, titluEcran, type Ecran } from "./tip.js";
 import { vedeCosturi } from "../nav.js";
 import {
-  citesteDepozit, citestePlanuri, iaDeDeschis, idNou, inchideSantier, modDate, salveazaSituatie, scrieDepozit, scriePlanuri,
-  ceSeVaSterge, stergeDeTot, stergeUltimaSituatie,
+  ceSeVaSterge, citesteDepozit, citesteOferte, citestePlanuri, listeaza, stergeDeTot, type IntrareIstoric,
 } from "../date.js";
 import { legaPanouStergere, panouStergere } from "../confirmare.js";
-import { consumPlan } from "../consum-vizual.js";
-import { dinMarci } from "../../src/stoc/consum.js";
-import { ramasPeNecesar } from "../materiale.js";
-import { deComandat, solduri } from "../../src/stoc/registru.js";
-import { cifra } from "../stoc-vizual.js";
-import { descarca } from "../descarca.js";
-import { numeSituatie, registruSituatie } from "../situatie.js";
-import { preiaSituatie } from "../predare.js";
-import type { Potrivire } from "../../src/lucrari/potrivire.js";
-import { cifreInchidere, materialSantier, valideazaInchidere } from "../../src/lucrari/inchidere.js";
-import { cardInchis, cardMaterial, formularInchidere, randuriInchidere, restulPeSantier } from "../inchidere-vizual.js";
+import { ceriSpatiu } from "../meniu-stare.js";
+import { stareLucrarii } from "../stare-lucrare.js";
 import {
-  progresPlan, randuriSituatie, situatieNoua, totalSituatie, valideazaSituatie, valoareOferta,
-  type PlanSantier, type Situatie,
-} from "../../src/lucrari/situatii.js";
+  FILE_LUCRARE, STADII, clientLucrare, gasesteLucrarea, lucrariDin, refuzata, stadiu, stareFile,
+  titluLucrare, urmeaza, type FilaLucrare, type Lucrare, type Stadiu, type StareLucrare, type Urmeaza,
+} from "../lucrare.js";
+import type { ControlImport, ParteImport } from "./import.js";
+import type { ControlSantier, FilaSantier } from "./santier-panou.js";
 
-/** Eticheta afisata si tonul indicatorului `stare()`, per stare de lucrare. */
-const ETICHETA_STARE: Record<StareLucrare, { text: string; ton: "ok" | "atentie" | "neutru" }> = {
-  ofertata: { text: "Ofertată", ton: "neutru" },
-  in_executie: { text: "În execuție", ton: "neutru" },
-  de_inchis: { text: "De închis", ton: "atentie" },
-  inchisa: { text: "Închisă", ton: "ok" },
-};
+const TITLU = "Lucrări";
+const SUBTITLU = "Fiecare cerere de la client, cu oferta și șantierul ei.";
 
-function randTabel(ex: Exemple, l: Lucrare): string {
-  const c = ex.client(l.clientId);
-  const s = ex.santier(l.santierId);
-  const et = ETICHETA_STARE[l.stare];
+/** Ce s-a șters de pe pagina unei lucrări, spus o dată pe listă. */
+let mesajLista = "";
 
-  const coloaneBani = vedeCosturi()
-    ? `<td class="n">${l.contractat !== null ? eur(l.contractat) : "—"}</td><td class="n">${eur(l.facturat)}</td>`
-    : "";
+const adresaLucrare = (id: string, fila?: string): string =>
+  `#/lucrari/${encodeURIComponent(id)}${fila ? `/${fila}` : ""}`;
 
-  return `<tr>
-    <td><b>${esc(l.id)}</b><br><span class="hint">${esc(l.denumire)}</span></td>
-    <td>${esc(c?.denumire ?? "—")}<br><span class="hint">${esc(s?.denumire ?? "—")}</span></td>
-    <td>${l.inceput ? dataRo(l.inceput) : "—"}</td>
-    <td>${progres(l.progres)}</td>
-    ${coloaneBani}
-    <td>${stare(et.text, et.ton)}</td>
-  </tr>`;
+/**
+ * Sub titlu: clientul, oferta (număr și dată) și valoarea. Doar ce nu e deja
+ * în titlu: o lucrare fără ofertă își ia titlul din client sau din fișier, iar
+ * rândul ar fi repetat titlul paginii.
+ */
+function detaliiLucrare(l: Lucrare): string {
+  const o = l.oferta;
+  const client = clientLucrare(l);
+  const parti = [
+    client !== titluLucrare(l) ? client : "",
+    o ? [o.numar ? `oferta ${o.numar}` : "oferta fără număr", o.data].filter(Boolean).join(" din ") : l.plan?.oferta ? `oferta ${l.plan.oferta}` : "",
+    o && vedeCosturi() ? eur(o.valoare) : "",
+  ].filter(Boolean);
+  return parti.join(" · ");
 }
 
-/** Lucrările din datele firmei (exemplu, citite din fișierele lor): doar pe linkul demo. */
-function lucrariExemplu(): string {
-  const ex = exemple();
-  if (!ex) return notaInchidere;
-  const capete = [
-    "Lucrare", "Client / Șantier", "Început", "Progres", ...(vedeCosturi() ? ["Contractat", "Facturat"] : []), "Stare",
-  ];
-  const clase = ["", "", "", "", ...(vedeCosturi() ? ["n", "n"] : []), ""];
-  return `<section class="imp-card"><h2>Lucrările din datele firmei</h2>
-    <p class="hint" style="margin:0 0 12px">Exemplu, citit din ofertele semnate: nu au plan de șantier în aplicație.</p>
-    ${tabel(capete, ex.LUCRARI.map((l) => randTabel(ex, l)), clase)}
-  </section>
-  ${notaInchidere}`;
+/* ------------------------------------------------------------------ lista */
+
+async function deseneazaLista(root: HTMLElement): Promise<void> {
+  titluEcran(TITLU, SUBTITLU);
+  const dep = citesteDepozit();
+  const toate = lucrariDin(await listeaza(), citesteOferte(), citestePlanuri())
+    .map((l) => ({ l, st: stadiu(l), u: urmeaza(stareLucrarii(l, dep)) }));
+  const numar = (s: Stadiu): number => toate.filter((x) => x.st === s).length;
+  const dinAdresa = /[?&]stadiu=([\w-]+)/.exec(location.hash)?.[1] as Stadiu | undefined;
+  // Se deschide prima filă care are ceva; aleasă de om, rămâne (și la reîncărcare).
+  const activ: Stadiu = STADII.some((s) => s.id === dinAdresa) ? dinAdresa!
+    : STADII.find((s) => numar(s.id) > 0)?.id ?? "de-ofertat";
+  const pe = toate.filter((x) => x.st === activ);
+  const randuri = pe.map(({ l, u }) => {
+    const o = l.oferta;
+    const refuz = refuzata(l);
+    return `<tr>
+      <td><b>${esc(titluLucrare(l))}</b>${refuz ? ` ${stare("refuzată", "atentie")}` : ""}${
+        l.plan?.inchis ? ` ${stare("închisă", "ok")}` : ""}${clientLucrare(l) && clientLucrare(l) !== titluLucrare(l)
+        ? `<br><span class="hint">${esc(clientLucrare(l))}</span>` : ""}</td>
+      <td>${o ? `${esc(o.numar || "fără număr")}${o.data ? `<br><span class="hint">${esc(o.data)}</span>` : ""}` : "—"}</td>
+      ${vedeCosturi() ? `<td class="n">${o ? eur(o.valoare) : "—"}</td>` : ""}
+      <td>${esc(u.text)}</td>
+      <td class="fix"><a class="secundar" href="${adresaLucrare(l.id)}">Deschide</a></td>
+    </tr>`;
+  });
+  const fila = (s: { id: Stadiu; eticheta: string }): string =>
+    `<a href="#/lucrari?stadiu=${s.id}" class="fila"${s.id === activ ? ' aria-current="page"' : ""}>${esc(s.eticheta)} <b>${numar(s.id)}</b></a>`;
+  const gol: Record<Stadiu, string> = {
+    "de-ofertat": "Nicio cerere fără ofertă.",
+    trimise: "Nicio ofertă care așteaptă răspunsul clientului.",
+    "in-lucru": "Niciun șantier în lucru.",
+    inchise: "Nicio lucrare închisă.",
+  };
+  root.innerHTML = `<div class="imp lucrari">
+    <div class="lucrari-sus"><a class="primar" href="#/lucrari/noua">Cerere nouă</a></div>
+    ${mesajLista ? `<p class="hint" role="status" style="margin:0">${esc(mesajLista)}</p>` : ""}
+    <nav class="file" aria-label="Stadiul lucrărilor">${STADII.map(fila).join("")}</nav>
+    ${pe.length === 0 ? `<p class="hint" style="margin:0">${gol[activ]}</p>`
+      : `<section class="imp-card">${tabel(
+        ["Lucrarea", "Oferta", ...(vedeCosturi() ? ["Valoare"] : []), "Urmează", ""], randuri,
+        ["", "", ...(vedeCosturi() ? ["n"] : []), "", ""],
+      )}</section>`}
+  </div>`;
+  mesajLista = "";
 }
 
-const notaInchidere = `${nota(
-    `Când se termină o lucrare, șantierul se închide din pagina lui: șeful de lucrare numără ce a rămas, iar fiecare ` +
-      `material pleacă înapoi în depozit, pe alt șantier, la furnizor, sau se scrie ca pierdut, furat ori reciclat. ` +
-      `Materialul de pe fiecare șantier se vede și în <a href="#/materiale">Materiale</a>.`,
-)}`;
+/* ------------------------------------------------------- pagina lucrării */
 
-const zi = (iso: string): string => new Date(iso).toLocaleDateString("ro-RO");
-const cant = (n: number, um: string): string => `${cifra(n)}${um ? ` ${esc(um)}` : ""}`;
+/** Fila din adresă; numele vechi de pe pagina șantierului trec pe cele noi. */
+function filaDin(s: string | undefined): FilaLucrare | "plan" | "sterge" | null {
+  if (!s) return null;
+  if (s === "inchide") return "inchidere";
+  if (s === "plan" || s === "sterge") return s;
+  return FILE_LUCRARE.some((f) => f.id === s) ? s as FilaLucrare : null;
+}
 
-/** Filele paginii unui șantier, în ordinea lucrului (Andrei, 22 octombrie 2026). */
-const FILE = ["situatii", "materiale", "plan", "inchide", "sterge"] as const;
-type FilaSantier = (typeof FILE)[number];
+async function deseneazaPagina(root: HTMLElement, idDinAdresa: string | null, segment: string | undefined): Promise<void> {
+  let cereri: IntrareIstoric[] = await listeaza();
+  /** Lucrarea de pe pagină; null = cerere nouă, încă fără fișier. */
+  let l: Lucrare | null = null;
+  const reface = (id: string): Lucrare | null => gasesteLucrarea(lucrariDin(cereri, citesteOferte(), citestePlanuri()), id) ?? null;
+  if (idDinAdresa) {
+    l = reface(idDinAdresa);
+    if (!l) {
+      titluEcran("Lucrarea nu mai există");
+      root.innerHTML = `<div class="imp"><p class="alerta" role="alert">Lucrarea de la adresa asta nu mai există: poate a șters-o
+        un coleg.</p><p><a href="#/lucrari">← Toate lucrările</a></p></div>`;
+      return;
+    }
+  }
 
-/** Filele șantierului: butoane, nu linkuri, ca o situație începută să nu se piardă la schimbarea filei. */
-export function fileSantier(activ: FilaSantier, n: { situatii: number; deCumparat: number; inchis: boolean }): string {
-  const fila = (id: FilaSantier, eticheta: string, numar = 0): string =>
-    `<button type="button" class="fila" data-act="fila" data-fila="${id}"${id === activ ? ' aria-current="page"' : ""}>${
-      eticheta}${numar ? ` <b>${cifra(numar)}</b>` : ""}</button>`;
-  return `<nav class="file" aria-label="Șantierul">${fila("situatii", "Situații de lucrări", n.situatii)}${
-    fila("materiale", "Materiale", n.deCumparat)}${fila("plan", "Planul de șantier")}${
-    n.inchis ? "" : fila("inchide", "Închide șantierul")}${fila("sterge", "Șterge șantierul")}</nav>`;
+  let fila: FilaLucrare | "plan" | "sterge" = filaDin(segment) ?? (l ? urmeaza(stareLucrarii(l, citesteDepozit())).fila : "cerere");
+  /** „Clientul a acceptat”: întrebarea de pe loc, apoi eroarea, dacă e. */
+  let acceptare: { eroare: string } | null = null;
+  let lucreaza = false;
+  let eroareStergere = "";
+  let imp: ControlImport | null = null;
+  let sant: ControlSantier | null = null;
+  let santPentru = "";
+
+  root.innerHTML = `<div class="imp lucrare">
+    <div id="luc-sus" class="file-panou"></div>
+    <div id="luc-import" hidden></div>
+    <div id="luc-santier" class="file-panou" hidden></div>
+    <div id="luc-alt" class="file-panou" hidden></div>
+  </div>`;
+  const elSus = root.querySelector<HTMLElement>("#luc-sus")!;
+  const elImport = root.querySelector<HTMLElement>("#luc-import")!;
+  const elSantier = root.querySelector<HTMLElement>("#luc-santier")!;
+  const elAlt = root.querySelector<HTMLElement>("#luc-alt")!;
+
+  const stareAcum = (): StareLucrare | null => (l ? stareLucrarii(l, citesteDepozit()) : null);
+
+  function scrieAdresa(): void {
+    if (!l) return;
+    history.replaceState(null, "", adresaLucrare(l.id, fila));
+  }
+
+  function meniu(lu: Lucrare): string {
+    return `<div class="cel-meniu-loc">
+      <button type="button" class="cel-meniu" data-act="meniu-lucrare" aria-haspopup="menu" aria-expanded="false"
+        aria-label="Mai multe despre lucrare" title="Mai multe despre lucrare">⋯</button>
+      <div class="meniu-rand" role="menu" hidden>
+        ${lu.plan ? `<button type="button" role="menuitem" data-act="fila" data-fila="plan">Planul de șantier</button>` : ""}
+        <button type="button" role="menuitem" data-act="fila" data-fila="sterge">Șterge lucrarea</button>
+      </div>
+    </div>`;
+  }
+
+  /** Butonul din „Urmează”; nu se desenează când doar ar duce pe fila deschisă deja. */
+  function buton(b: Urmeaza["primar"], clasa: string): string {
+    if (!b) return "";
+    if (b.act === "fila" && b.fila === fila) return "";
+    return `<button type="button" class="${clasa}" data-act="urmeaza" data-urm="${b.act}"${b.fila ? ` data-fila="${b.fila}"` : ""}>${esc(b.eticheta)}</button>`;
+  }
+
+  function randUrmeaza(s: StareLucrare): string {
+    if (acceptare) {
+      const titlu = l ? titluLucrare(l) : "";
+      return `<section class="imp-card urmeaza" aria-live="polite">
+        <p class="urmeaza-text">Pornești șantierul <b>${esc(titlu)}</b>? Se face planul din ofertă și lista de materiale,
+          cu regulile obișnuite ale firmei.</p>
+        <div class="mat-actiuni">
+          <button type="button" class="primar" data-act="porneste"${lucreaza ? " disabled" : ""}>${lucreaza ? "Se pornește…" : "Da, pornește șantierul"}</button>
+          <button type="button" class="secundar" data-act="renunta-acceptare">Renunță</button>
+        </div>
+        ${acceptare.eroare ? `<p class="alerta" role="alert">${esc(acceptare.eroare)}</p>` : ""}
+      </section>`;
+    }
+    const u = urmeaza(s);
+    // Pe fila Situații cu situația deschisă, „Situație nouă” n-are ce mai face.
+    const primar = u.primar?.act === "situatie-noua" && fila === "situatii" && elSantier.querySelector("#situatie") ? undefined : u.primar;
+    return `<section class="imp-card urmeaza">
+      <p class="urmeaza-text"><span class="urmeaza-eticheta">Urmează</span> ${esc(u.text)}</p>
+      <div class="mat-actiuni">${buton(primar, "primar")}${buton(u.alb, "secundar")}</div>
+    </section>`;
+  }
+
+  function file(s: StareLucrare): string {
+    const st = stareFile(s);
+    return `<nav class="file" aria-label="Pașii lucrării">${FILE_LUCRARE.map((f) => {
+      const x = st[f.id];
+      return `<button type="button" class="fila" data-act="fila" data-fila="${f.id}"${f.id === fila ? ' aria-current="page"' : ""}${
+        x.inchisa ? ` aria-disabled="true" title="${esc(x.inchisa)}"` : ""}>${
+        x.gata && !x.inchisa ? `<span class="gata" aria-hidden="true">✓</span>` : ""}${esc(f.eticheta)}${
+        x.gata && !x.inchisa ? `<span class="ascuns"> (gata)</span>` : ""}</button>`;
+    }).join("")}</nav>`;
+  }
+
+  function deseneazaSus(): void {
+    if (!l) {
+      titluEcran("Cerere nouă", "Fișierul Excel de la client sau pozele din carnet. Aplicația citește pozițiile și le pune prețul.");
+      elSus.innerHTML = `<p style="margin:0"><a class="legatura" href="#/lucrari">← Toate lucrările</a></p>`;
+      return;
+    }
+    const s = stareAcum()!;
+    titluEcran(titluLucrare(l));
+    const detalii = `${refuzata(l) ? `${stare("refuzată", "atentie")} ` : ""}${l.plan?.inchis ? `${stare("închisă", "ok")} ` : ""}${
+      esc(detaliiLucrare(l))}`.trim();
+    const inapoi = `<a class="legatura" href="#/lucrari">← Toate lucrările</a>`;
+    // Fără nimic de spus sub titlu, „⋯” urcă lângă „← Toate lucrările”: singur pe un rând lăsa un gol.
+    elSus.innerHTML = `${detalii ? `<p style="margin:0">${inapoi}</p>` : ""}
+      <header class="pagina-antet${detalii ? "" : " doar-inapoi"}">
+        <div>${detalii ? `<p class="hint">${detalii}</p>` : inapoi}</div>
+        <div class="mat-actiuni">${meniu(l)}</div>
+      </header>
+      ${randUrmeaza(s)}
+      ${file(s)}`;
+  }
+
+  /** Lucrarea s-a schimbat (o salvare, oferta, șantierul): antetul, „Urmează” și filele, din nou. */
+  function actualizeaza(): void {
+    if (l) l = reface(l.id) ?? l;
+    deseneazaSus();
+  }
+
+  async function arata(f: typeof fila, focus = false): Promise<void> {
+    fila = f;
+    scrieAdresa();
+    deseneazaSus();
+    const s = stareAcum();
+    const st = s ? stareFile(s) : null;
+    const inchisa = f !== "plan" && f !== "sterge" && st ? st[f].inchisa : undefined;
+    elImport.hidden = elSantier.hidden = elAlt.hidden = true;
+    if (focus) root.querySelector<HTMLElement>(`.file [data-fila="${f}"]`)?.focus();
+
+    if (!l || ((f === "cerere" || f === "oferta") && !inchisa)) {
+      elImport.hidden = false;
+      const parte: ParteImport = !l ? "fisier" : f === "oferta" ? "oferta" : "verificare";
+      if (imp) { imp.arata(parte); return; }
+      const { montezaImport } = await import("./import.js");
+      imp = await montezaImport(elImport, {
+        ...(l?.cerere ? { cerere: l.cerere.id } : {}), parte,
+        laCerereNoua: (id) => void cerereNoua(id),
+        laParte: (p) => { fila = p === "oferta" ? "oferta" : "cerere"; scrieAdresa(); deseneazaSus(); },
+        laSchimbare: (r) => {
+          if (!l?.cerere) return;
+          // Lista de cereri ține ce s-a salvat: „Urmează” se schimbă fără o cerere nouă la server.
+          cereri = cereri.map((c) => (c.id === l!.cerere!.id ? { ...c, deVerificat: r.deVerificat, antet: r.antet } : c));
+          actualizeaza();
+        },
+        laOferta: () => { actualizeaza(); },
+        areOferta: () => !!l?.oferta,
+      });
+      return;
+    }
+    // Pe celelalte file importul rămâne montat, ascuns: ce era scris acolo nu se pierde.
+    ceriSpatiu(root, false);
+    if (inchisa) {
+      elAlt.hidden = false;
+      elAlt.innerHTML = `<section class="imp-card"><p class="hint" style="margin:0">${esc(inchisa)}</p></section>`;
+      return;
+    }
+    if (f === "sterge") {
+      elAlt.hidden = false;
+      elAlt.innerHTML = panouSterge();
+      elAlt.querySelector<HTMLElement>('[data-act="sterge-bifa"]')?.focus();
+      return;
+    }
+    if (!l?.plan) return;
+    elSantier.hidden = false;
+    // Aici fila e a șantierului: Cerere și Ofertă au plecat mai sus.
+    const fs = f as FilaSantier;
+    if (sant && santPentru === l.plan.id) { sant.arata(fs); return; }
+    const { montezaSantier } = await import("./santier-panou.js");
+    santPentru = l.plan.id;
+    sant = montezaSantier(elSantier, {
+      plan: l.plan.id, fila: fs, cerere: l.cerere?.id, laSchimbare: actualizeaza,
+    });
+  }
+
+  function panouSterge(): string {
+    if (!l) return "";
+    const tinta = l.cerere ? { cerere: { id: l.cerere.id, nume: l.cerere.nume } } : { santier: l.plan!.id };
+    return `<section class="imp-card"><h2>Șterge lucrarea</h2>${panouStergere({
+      ce: `lucrarea „${titluLucrare(l)}”`, linii: ceSeVaSterge(tinta), date: { id: l.id },
+      ...(eroareStergere ? { eroare: eroareStergere } : {}),
+    })}</section>`;
+  }
+
+  /** Fișierul (sau pozele) a dat o cerere nouă: pagina devine a lucrării ei, fără o navigare nouă. */
+  async function cerereNoua(id: string): Promise<void> {
+    cereri = await listeaza();
+    l = reface(id);
+    if (!l) return;
+    fila = "cerere";
+    scrieAdresa();
+    deseneazaSus();
+  }
+
+  async function porneste(): Promise<void> {
+    if (!l?.cerere || lucreaza) return;
+    lucreaza = true;
+    deseneazaSus();
+    const id = l.cerere.id;
+    let r;
+    if (imp) {
+      await imp.salveazaAcum();
+      r = imp.santier();
+    } else {
+      const { santierDinCerere } = await import("./import.js");
+      r = await santierDinCerere(id);
+    }
+    lucreaza = false;
+    if ("eroare" in r) {
+      acceptare = { eroare: r.eroare };
+      if (r.fila) { await arata(r.fila); return; }
+      deseneazaSus();
+      return;
+    }
+    acceptare = null;
+    actualizeaza();
+    await arata("materiale");
+  }
+
+  async function refuz(zi: string | null): Promise<void> {
+    if (!l?.cerere) return;
+    const id = l.cerere.id;
+    if (imp) await imp.refuz(zi);
+    else {
+      const { refuzCerere } = await import("./import.js");
+      const gresit = await refuzCerere(id, zi);
+      if (gresit) { acceptare = null; deseneazaSus(); return; }
+    }
+    cereri = cereri.map((c) => {
+      if (c.id !== id) return c;
+      const { refuzat: _r, ...rest } = c.antet ?? {};
+      return { ...c, antet: zi ? { ...rest, refuzat: zi } : rest };
+    });
+    actualizeaza();
+  }
+
+  legaPanouStergere(elAlt);
+  root.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    const m = (e.target as HTMLElement).closest<HTMLElement>("#luc-sus .meniu-rand:not([hidden])");
+    if (!m) return;
+    m.hidden = true;
+    const b = m.parentElement?.querySelector<HTMLElement>(".cel-meniu");
+    b?.setAttribute("aria-expanded", "false");
+    b?.focus();
+  });
+  // Un clic oriunde în afara meniului îl închide; pe document, deci pleacă singur odată cu ecranul.
+  const inchideMeniul = (e: MouseEvent): void => {
+    if (!root.isConnected) { document.removeEventListener("click", inchideMeniul); return; }
+    for (const m of elSus.querySelectorAll<HTMLElement>(".meniu-rand:not([hidden])")) {
+      if (m.parentElement?.contains(e.target as Node)) continue;
+      m.hidden = true;
+      m.parentElement?.querySelector(".cel-meniu")?.setAttribute("aria-expanded", "false");
+    }
+  };
+  document.addEventListener("click", inchideMeniul);
+
+  elSus.addEventListener("click", (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLButtonElement>("button[data-act]");
+    if (!b) return;
+    switch (b.dataset["act"]) {
+      case "meniu-lucrare": {
+        const m = b.nextElementSibling as HTMLElement | null;
+        if (!m) return;
+        m.hidden = !m.hidden;
+        b.setAttribute("aria-expanded", String(!m.hidden));
+        if (!m.hidden) m.querySelector<HTMLButtonElement>("button")?.focus();
+        return;
+      }
+      case "fila": eroareStergere = ""; void arata(b.dataset["fila"] as typeof fila, true); return;
+      case "urmeaza": {
+        const act = b.dataset["urm"];
+        if (act === "fila") { void arata(b.dataset["fila"] as FilaLucrare); return; }
+        if (act === "comenzi") { location.hash = "#/comenzi"; return; }
+        if (act === "situatie-noua") { void arata("situatii").then(() => sant?.situatieNoua()); return; }
+        if (act === "accepta") { acceptare = { eroare: "" }; deseneazaSus(); elSus.querySelector<HTMLElement>('[data-act="porneste"]')?.focus(); return; }
+        if (act === "refuza") { void refuz(new Date().toISOString()); return; }
+        if (act === "accepta-tarziu") {
+          void refuz(null).then(() => {
+            acceptare = { eroare: "" };
+            deseneazaSus();
+            elSus.querySelector<HTMLElement>('[data-act="porneste"]')?.focus();
+          });
+        }
+        return;
+      }
+      case "porneste": void porneste(); return;
+      case "renunta-acceptare": acceptare = null; deseneazaSus(); return;
+    }
+  });
+
+  elAlt.addEventListener("click", (e) => {
+    const b = (e.target as HTMLButtonElement).closest<HTMLButtonElement>("button[data-act]");
+    if (!b || !l) return;
+    if (b.dataset["act"] === "sterge-renunta") { void arata(urmeaza(stareAcum()!).fila); return; }
+    if (b.dataset["act"] !== "sterge-definitiv") return;
+    const lu = l;
+    b.disabled = true;
+    b.textContent = "Se șterge…";
+    const tinta = lu.cerere ? { cerere: { id: lu.cerere.id, nume: lu.cerere.nume } } : { santier: lu.plan!.id };
+    void stergeDeTot(tinta).then((gresit) => {
+      if (gresit) { eroareStergere = `Nu s-a șters: ${gresit}`; void arata("sterge"); return; }
+      mesajLista = `Am șters lucrarea „${titluLucrare(lu)}” și tot ce ținea de ea.`;
+      location.hash = "#/lucrari";
+    });
+  });
+
+  await arata(fila);
 }
 
 export const ecran: Ecran = {
   id: "lucrari",
-  titlu: "Șantiere",
-  subtitlu:
-    "Șantierele făcute din oferte: planul, materialele de comandat și situațiile de lucrări, cu istoricul lor.",
-  render(root) {
-    let planuri = citestePlanuri();
-    // Pagina unui șantier are adresa ei (`#/lucrari/<id>`, 21 octombrie 2026):
-    // „Înapoi” din browser, reîncărcarea și un link trimis unui coleg duc tot aici.
-    const dinAdresa = decodeURIComponent(location.hash.replace(/^#\/?/, "").split("/")[1] ?? "") || null;
-    let deschis: string | null = iaDeDeschis() ?? (dinAdresa && planuri.some((p) => p.id === dinAdresa) ? dinAdresa : null);
-    // Fila de pe pagina șantierului (Andrei, 22 octombrie 2026: filele se găsesc mai ușor
-    // decât cardurile pliate): `#/lucrari/<id>/<fila>`, deci reîncărcarea o păstrează.
-    const dinFila = location.hash.replace(/^#\/?/, "").split("/")[2] ?? "";
-    let fila: FilaSantier = (FILE as readonly string[]).includes(dinFila) ? dinFila as FilaSantier : "situatii";
-    let inLucru: Situatie | null = null;
-    let eroare = "";
-    let stergeDe: string | null = null;
-    let mesaj = "";
-    /** Ce a facut ultima salvare (consumul scris): informatie, nu eroare. */
-    let info = "";
-    /** Ce s-a șters de tot, spus pe lista șantierelor. */
-    let sters = "";
-    /** Inchiderea (Faza 7): ce a scris omul, eroarea, a doua apasare, cardul deschis. */
-    let inchidere = { scris: {} as Record<string, { numarat?: string; unde?: string }>, eroare: "", confirma: false, deschis: false };
-    /** Situatia in lucru a venit din „Măsurători”: ce s-a pus, ce e de ales, ce nu e in oferta. */
-    let dinPoze: Potrivire | null = null;
-
-    // Deschis din altă parte (o situație venită din poze): adresa arată șantierul, fără navigare nouă.
-    const potrivesteAdresa = (): void => {
-      if (deschis && dinAdresa !== deschis) history.replaceState(null, "", adresa());
-    };
-    const adresa = (): string => (deschis ? `#/lucrari/${encodeURIComponent(deschis)}${fila === "situatii" ? "" : `/${fila}`}` : "#/lucrari");
-    const venita = preiaSituatie();
-    const tinta = venita && planuri.find((p) => p.id === venita.plan);
-    if (venita && tinta?.inchis) {
-      deschis = tinta.id;
-      mesaj = "Șantierul e închis: nu mai primește situații de lucrări.";
-    } else if (venita && tinta) {
-      deschis = tinta.id;
-      fila = "situatii";
-      inLucru = {
-        ...situatieNoua(tinta, idNou(), new Date().toISOString()),
-        cantitati: { ...venita.potrivire.cantitati },
-        nota: `Din măsurători (${venita.pagini === 1 ? "o pagină" : `${venita.pagini} pagini`} din carnet)`,
-      };
-      dinPoze = venita.potrivire;
-    }
-
-    const salveaza = (): void => {
-      if (!scriePlanuri(planuri)) mesaj = "Browserul nu permite salvarea: modificarea se pierde la reîncărcare.";
-    };
-    const plan = (): PlanSantier | undefined => planuri.find((p) => p.id === deschis);
-
-    function deseneaza(): void {
-      const p = plan();
-      root.innerHTML = `<div class="imp">${p ? detaliu(p) : lista()}</div>`;
-    }
-
-    function lista(): string {
-      const randuri = planuri.map((p) => {
-        const v = valoareOferta(p);
-        return `<tr>
-          <td><b>${esc(p.denumire)}</b>${p.inchis ? ` ${stare("închis", "ok")}` : ""}<br><span class="hint">${esc(p.client || "—")}</span></td>
-          <td>${esc(p.oferta || "—")}${p.oferta?.includes(zi(p.creat)) ? "" : `<br><span class="hint">șantier din ${esc(zi(p.creat))}</span>`}</td>
-          <td class="n">${eur(v.total)}</td>
-          <td>${progres(progresPlan(p))}</td>
-          <td class="n">${p.situatii.length}</td>
-          <td class="fix"><button type="button" class="secundar" data-act="deschide" data-id="${esc(p.id)}">Deschide</button></td>
-        </tr>`;
-      });
-      return `<section class="imp-card"><h2>Șantiere din oferte</h2>${sters ? `<p class="hint" role="status">${esc(sters)}</p>` : ""}
-        ${planuri.length === 0
-          ? `<p class="hint" style="margin:0">Niciun șantier încă. În <a href="#/import">Cerere nouă</a>, la pasul
-            „Oferta”, după ce descarci oferta, „Creează șantierul” face planul de șantier din ea și trimite materialele
-            la depozit.</p>`
-          : `${modDate() === "server" ? "" : `<p class="hint" style="margin:0 0 12px">Prototip: șantierele stau doar în acest browser.</p>`}
-            ${tabel(["Șantier", "Oferta", "Valoare ofertă", "Executat", "Situații", ""], randuri, ["", "", "n", "", "n", ""])}`}
-      </section>${lucrariExemplu()}`;
-    }
-
-    function detaliu(p: PlanSantier): string {
-      const v = valoareOferta(p);
-      const ultima = p.situatii.at(-1);
-      const executat = ultima ? totalSituatie(p, ultima).cumulat : null;
-      const dep = citesteDepozit();
-      const necesar = dep.necesare.find((n) => n.santier === p.id);
-      // Ca in Depozit (Faza 4): necesar − adus − comandat. Nu stocul de acum: din Faza 6
-      // consumul din situatii scade stocul, iar materialul pus nu se mai comanda.
-      const ramas = necesar ? ramasPeNecesar(dep, necesar) : [];
-      const deCumparat = ramas.filter((d) => d.ramas > 0).length;
-      const peCiorne = ramas.filter((d) => d.ramas === 0 && d.inCiorna > 0).length;
-      const cumulat = ultima ? randuriSituatie(p, ultima) : null;
-      const materiale = dep.necesare.filter((n) => n.santier === p.id).flatMap((n) => n.materiale);
-      const scoase = dep.necesare.filter((n) => n.santier === p.id).flatMap((n) => n.scoase ?? []);
-      // Faza 7: ce vede directorul (S9) sau, inchis, cifrele lui; inventarul de inchidere, dupa situatii.
-      const material = p.inchis
-        ? cardInchis(cifreInchidere(p, materiale, dep.miscari, scoase))
-        : cardMaterial(materialSantier(p, materiale, dep.miscari, dep.comenzi ?? [], scoase), consumPlan(p, dep));
-      const inchide = p.inchis ? "" : formularInchidere({ ...restulPeSantier(p, planuri, dep), ...inchidere });
-
-      const randuriPlan = p.pozitii.map((poz, i) => {
-        const c = cumulat?.[i];
-        return `<tr>
-          <td>${poz.nr}. ${esc(poz.denumire)}</td>
-          <td class="n">${cant(poz.cantitate, poz.um)}</td>
-          <td class="n">${eur(poz.pretUnitar)}</td>
-          <td class="n">${c ? cant(c.cumulat, poz.um) : "—"}${c?.pesteOferta ? ` ${stare("peste ofertă", "atentie")}` : ""}</td>
-        </tr>`;
-      });
-
-      const executatPlan = cumulat ? p.pozitii.filter((_, i) => (cumulat[i]?.cumulat ?? 0) > 0).length : 0;
-      return `
-        <p style="margin:0"><button type="button" class="legatura" data-act="inapoi">← Toate lucrările</button></p>
-        <header class="pagina-antet">
-          <div>
-            <h2>${esc(p.denumire)}${p.inchis ? ` ${stare("închis", "ok")}` : ""}</h2>
-            <p class="hint">${esc(p.client || "—")} · oferta ${esc(p.oferta || p.fisier)} · ${esc(p.firma)}${
-              p.ajustareProcent ? ` · prețuri ajustate cu ${cifra(p.ajustareProcent)} %` : ""}${
-              p.discountProcent ? ` · discount ${cifra(p.discountProcent)} %` : ""}${
-              p.adaosFocProcent ? ` · +${p.adaosFocProcent} % pe închiderile la foc` : ""}</p>
-          </div>
-          ${inLucru || p.inchis ? "" : `<button type="button" class="primar" data-act="situatie-noua">Situație nouă</button>`}
-        </header>
-        ${mesaj ? `<p class="alerta" role="alert">${esc(mesaj)}</p>` : ""}
-        ${info ? `<p class="hint" role="status" style="margin:0">${esc(info)}</p>` : ""}
-        <div class="stats">
-          ${indicator(eur(v.total), "Valoare ofertă", p.oferta || p.fisier)}
-          ${indicator(eur(executat?.total ?? 0), "Executat, cumulat", `${progresPlan(p)} % din ofertă`)}
-          ${indicator(String(p.situatii.length), "Situații de lucrări")}
-          ${p.inchis ? "" : indicator(String(deCumparat), "Materiale de comandat", !necesar ? "fără necesar"
-            : peCiorne ? `și ${peCiorne} pe ciorne netrimise` : "rămase din necesarul ofertei")}
-        </div>
-        ${fileSantier(fila, { situatii: p.situatii.length, deCumparat: p.inchis ? 0 : deCumparat, inchis: !!p.inchis })}
-        <div class="file-panou">${{
-          situatii: () => `${inLucru && dinPoze ? cardDinPoze(p, inLucru, dinPoze) : ""}
-            ${inLucru ? formularSituatie(p, inLucru) : ""}
-            ${istoric(p)}`,
-          materiale: () => material,
-          plan: () => `<section class="imp-card"><h2>Planul de șantier · ${p.pozitii.length === 1 ? "o poziție" : `${p.pozitii.length} poziții`}${
-            cumulat ? ` · ${executatPlan} începute` : ""}</h2>
-            <p class="hint" style="margin:0 0 12px">Pozițiile ofertei, cu prețurile trimise clientului. Nu se schimbă
-              dacă se schimbă listele de prețuri. Materialele lor sunt în <a href="#/materiale">Materiale</a>.</p>
-            ${tabel(["Poziția", "Cant. ofertă", "Preț unitar", "Executat"], randuriPlan, ["", "n", "n", "n"])}
-          </section>`,
-          inchide: () => inchide,
-          sterge: () => `<section class="imp-card"><h2>Șterge șantierul</h2>
-            ${stergeDe === p.id ? panouStergere({ ce: `șantierul „${p.denumire}”`, linii: ceSeVaSterge({ santier: p.id }), date: { id: p.id },
-              ...(mesaj ? { eroare: mesaj } : {}) })
-            : `<p class="hint" style="margin:0 0 12px">Șterge de tot șantierul și tot ce ține de el: situațiile, necesarul,
-              comenzile și mișcările de stoc. Cererea și oferta rămân. Înainte să ștergi, vezi lista cu tot ce pleacă.</p>
-            <div class="imp-formular-butoane"><button type="button" class="secundar" data-act="sterge" data-id="${esc(p.id)}">Șterge șantierul…</button></div>`}
-          </section>`,
-        }[p.inchis && fila === "inchide" ? "situatii" : fila]()}</div>`;
-    }
-
-    function istoric(p: PlanSantier): string {
-      const randuri = p.situatii.map((s, i) => {
-        const t = totalSituatie(p, s);
-        const ultima = i === p.situatii.length - 1;
-        return `<tr>
-          <td><b>Situația ${s.nr}</b> · ${esc(zi(s.data))}${s.nota ? `<br><span class="hint">${esc(s.nota)}</span>` : ""}</td>
-          <td class="n">${eur(t.curent.total)}</td>
-          <td class="n">${eur(t.cumulat.total)}</td>
-          <td class="fix"><button type="button" class="secundar" data-act="descarca" data-id="${esc(s.id)}">Descarcă</button>${
-            ultima && !p.inchis ? ` <button type="button" class="legatura pericol" data-act="scoate-situatie">Șterge</button>` : ""}</td>
-        </tr>`;
-      });
-      return `<section class="imp-card"><h2>Situații de lucrări</h2>
-        ${p.situatii.length === 0
-          ? `<p class="hint" style="margin:0 0 12px">Nicio situație încă. O situație spune cât s-a executat într-o
-            perioadă; valoarea e cantitatea × prețul din ofertă.</p>`
-          : tabel(["Situația", "În perioadă", "Cumulat", ""], randuri, ["", "n", "n", ""])}
-
-      </section>`;
-    }
-
-    function cardDinPoze(p: PlanSantier, s: Situatie, d: Potrivire): string {
-      const pozitiiPuse = new Set(d.puse.map((x) => x.pozitie)).size;
-      // Pozitiile cu acelasi material se deosebesc prin zona, iar cand cererea
-      // n-are zone, prin cat a mai ramas de executat din ele.
-      const rest = new Map(randuriSituatie(p, s).map((x) => [x.poz.nr, x.rest]));
-      const deAles = d.deAles.map((x, i) => `<tr>
-        <td>${esc(x.rand.text)}<br><span class="hint">${esc(x.rand.zona)}</span></td>
-        <td class="n">${cifra(x.rand.cantitate)}</td>
-        <td>${x.pozitii.map((nr) => {
-          const poz = p.pozitii.find((y) => y.nr === nr);
-          return `<button type="button" class="secundar" data-act="pune-la" data-i="${i}" data-nr="${nr}">Poziția ${nr} · ${
-            poz?.zona ? esc(poz.zona) : `rămas ${cant(Math.max(0, rest.get(nr) ?? 0), poz?.um ?? "")}`}</button>`;
-        }).join(" ")}</td>
-      </tr>`);
-      const nepotrivite = d.nepotrivite.map((x) => `<tr>
-        <td>${esc(x.text)}</td><td>${esc(x.zona)}</td><td class="n">${cifra(x.cantitate)}</td>
-      </tr>`);
-      return `<section class="imp-card"><h2>Din măsurători</h2>
-        ${d.planVechi
-          ? `<p class="alerta" role="alert" style="margin:0 0 12px">Șantierul a fost făcut înainte ca aplicația să poată potrivi
-            măsurătorile cu oferta. Refă-l din ofertă (Cerere nouă → pasul „Oferta” → „Creează șantierul”) cât nu are
-            situații, sau scrie cantitățile de mână.</p>`
-          : d.puse.length === 0
-            ? `<p class="hint" style="margin:0 0 12px">Niciun rând din carnet nu s-a putut pune singur pe o poziție. Alege mai
-              jos, sau scrie cantitățile de mână.</p>`
-            : `<p class="hint" style="margin:0 0 12px">${d.puse.length === 1 ? "Un rând" : `${d.puse.length} rânduri`} din carnet
-              ${d.puse.length === 1 ? "a fost pus" : "au fost puse"} pe ${pozitiiPuse === 1 ? "o poziție" : `${pozitiiPuse} poziții`}
-              (marcate „din poze” mai jos). Verifică și salvează.</p>`}
-        ${deAles.length ? `<h3>De ales: același material e pe mai multe poziții</h3>
-          ${tabel(["Rândul din carnet", "Cantitate", "Pune la"], deAles, ["", "n", ""])}` : ""}
-        ${nepotrivite.length ? `<h3>Nu sunt în oferta șantierului</h3>
-          <p class="hint" style="margin:0 0 12px">Lucrări în plus, sau scrise altfel decât în ofertă. Nu intră în situație;
-            dacă sunt o poziție din ofertă, scrie cantitatea de mână la ea.</p>
-          ${tabel(["Rândul din carnet", "Zona", "Cantitate"], nepotrivite, ["", "", "n"])}` : ""}
-      </section>`;
-    }
-
-    function formularSituatie(p: PlanSantier, s: Situatie): string {
-      const r = randuriSituatie(p, s);
-      const dinCarnet = new Set(dinPoze?.puse.map((x) => x.pozitie) ?? []);
-      const t = totalSituatie(p, s);
-      const randuri = r.map((x) => `<tr>
-        <td>${x.poz.nr}. ${esc(x.poz.denumire)}</td>
-        <td class="n">${cant(x.anterior, x.poz.um)} din ${cant(x.poz.cantitate, x.poz.um)}</td>
-        <td class="n"><input name="cant-${x.poz.nr}" type="number" inputmode="decimal" min="0" step="any"
-          value="${x.curent || ""}" aria-label="Executat acum, poziția ${x.poz.nr}" style="width:100%;max-width:9rem" />${
-          x.pesteOferta ? `<br>${stare("peste ofertă", "atentie")}` : ""}${
-          dinCarnet.has(x.poz.nr) && x.curent > 0 ? `<br>${stare("din poze")}` : ""}</td>
-      </tr>`);
-      return `<form class="imp-card" id="situatie">
-        <h2>Situația nr. ${s.nr}</h2>
-        <p class="hint" style="margin:0 0 12px">Scrie cât s-a executat în perioada asta (din pozele și notițele de pe
-          șantier). Ce s-a executat înainte e din situațiile precedente. „Tot restul” completează
-          pozițiile goale cu ce a mai rămas din ofertă.</p>
-        <div class="imp-campuri">
-          <label>Data situației<input name="data" type="date" value="${s.data.slice(0, 10)}" required /></label>
-          <label>Notă (perioada, zona)<input name="nota" value="${esc(s.nota ?? "")}" autocomplete="off" /></label>
-        </div>
-        ${tabel(["Poziția", "Executat înainte", "Executat acum"], randuri, ["", "n", "n"])}
-        <p class="imp-oferta-suma"><span>Valoarea situației</span><strong id="total-situatie">${eur(t.curent.total)}</strong>
-          <span>cumulat ${eur(t.cumulat.total)}</span></p>
-        ${eroare ? `<p class="alerta" role="alert">${esc(eroare)}</p>` : ""}
-        <div class="imp-formular-butoane">
-          <button type="submit" class="primar">Salvează</button>
-          <button type="button" class="secundar" data-act="tot-restul">Tot restul</button>
-          <button type="button" class="secundar" data-act="renunta">Renunță</button>
-        </div>
-      </form>`;
-    }
-
-    /** Citește cantitățile din formular în situația în lucru. */
-    function citesteFormular(f: HTMLFormElement): void {
-      if (!inLucru) return;
-      const date = new FormData(f);
-      const cantitati: Record<number, number> = {};
-      for (const [k, v] of date) {
-        const m = /^cant-(\d+)$/.exec(k);
-        const val = String(v).trim().replace(",", ".");
-        if (m && val !== "") cantitati[Number(m[1])] = Number(val);
-      }
-      const d = String(date.get("data") ?? "");
-      const notaSit = String(date.get("nota") ?? "").trim();
-      const { nota: _, ...rest } = inLucru;
-      inLucru = {
-        ...rest, cantitati,
-        data: d ? new Date(`${d}T12:00:00`).toISOString() : inLucru.data,
-        ...(notaSit ? { nota: notaSit } : {}),
-      };
-    }
-
-    legaPanouStergere(root);
-    root.addEventListener("click", (e) => {
-      const b = (e.target as HTMLElement).closest<HTMLButtonElement>("button[data-act]");
-      if (!b) return;
-      const p = plan();
-      mesaj = "";
-      info = "";
-      switch (b.dataset["act"]) {
-        case "deschide": location.hash = `#/lucrari/${encodeURIComponent(b.dataset["id"] ?? "")}`; return;
-        case "inapoi": location.hash = "#/lucrari"; return;
-        case "situatie-noua": if (p && !p.inchis) { inLucru = situatieNoua(p, idNou(), new Date().toISOString()); eroare = ""; fila = "situatii"; } break;
-        case "fila": {
-          fila = b.dataset["fila"] as FilaSantier;
-          stergeDe = null;
-          history.replaceState(null, "", adresa());
-          deseneaza();
-          root.querySelector<HTMLElement>(`.file [data-fila="${fila}"]`)?.focus();
-          return;
-        }
-        case "renunta": inLucru = null; dinPoze = null; eroare = ""; break;
-        case "pune-la": {
-          const i = Number(b.dataset["i"]);
-          const nr = Number(b.dataset["nr"]);
-          const ales = dinPoze?.deAles[i];
-          if (!p || !inLucru || !dinPoze || !ales) return;
-          const f = root.querySelector<HTMLFormElement>("#situatie");
-          if (f) citesteFormular(f);
-          const cantitati = { ...inLucru.cantitati };
-          cantitati[nr] = Math.round(((cantitati[nr] ?? 0) + ales.rand.cantitate) * 1000) / 1000;
-          inLucru = { ...inLucru, cantitati };
-          dinPoze = {
-            ...dinPoze,
-            puse: [...dinPoze.puse, { rand: ales.rand, pozitie: nr }],
-            deAles: dinPoze.deAles.filter((_, k) => k !== i),
-          };
-          break;
-        }
-        case "tot-restul": {
-          if (!p || !inLucru) return;
-          citesteFormular(b.form!);
-          const cantitati = { ...inLucru.cantitati };
-          for (const x of randuriSituatie(p, { ...inLucru, cantitati: {} })) {
-            if (x.rest > 0 && !(cantitati[x.poz.nr]! > 0)) cantitati[x.poz.nr] = x.rest;
-          }
-          inLucru = { ...inLucru, cantitati };
-          break;
-        }
-        case "scoate-situatie":
-          if (!p) return;
-          // Consumul situatiei se anuleaza odata cu ea (Faza 6).
-          mesaj = stergeUltimaSituatie(p.id) ?? "";
-          planuri = citestePlanuri();
-          break;
-        case "descarca": {
-          const s = p?.situatii.find((x) => x.id === b.dataset["id"]);
-          if (!p || !s) return;
-          void registruSituatie(p, s).then((buf) => descarca(buf, numeSituatie(p, s)));
-          return;
-        }
-        case "sterge": {
-          // Primul pas: panoul cu ce se șterge. Ștergerea e abia după bifă și „Șterge definitiv”.
-          stergeDe = b.dataset["id"] ?? null;
-          deseneaza();
-          root.querySelector<HTMLElement>('.sterge-panou [data-act="sterge-bifa"]')?.focus();
-          return;
-        }
-        case "sterge-renunta": stergeDe = null; break;
-        case "sterge-definitiv": {
-          const id = b.dataset["id"]!;
-          const denumire = planuri.find((x) => x.id === id)?.denumire ?? id;
-          b.disabled = true;
-          b.textContent = "Se șterge…";
-          void stergeDeTot({ santier: id }).then((refuz) => {
-            if (refuz) mesaj = `Nu s-a șters: ${refuz}`;
-            else {
-              planuri = citestePlanuri();
-              deschis = null;
-              // Adresa fără șantierul șters, fără o navigare nouă (mesajul de mai jos rămâne).
-              history.replaceState(null, "", "#/lucrari");
-              stergeDe = null;
-              sters = `Am șters șantierul „${denumire}” și tot ce ținea de el.`;
-            }
-            deseneaza();
-          });
-          return;
-        }
-        default: return;
-      }
-      deseneaza();
-    });
-
-    // Totalul situației se actualizează la fiecare tastă, fără să redeseneze
-    // formularul (s-ar pierde cursorul).
-    root.addEventListener("input", (e) => {
-      // Schimbat ceva in inventar dupa prima apasare: confirmarea se cere din nou.
-      const fi = (e.target as HTMLElement).closest<HTMLFormElement>("#form-inchidere");
-      if (fi && inchidere.confirma) {
-        inchidere = { ...inchidere, confirma: false };
-        fi.querySelector("button[type=submit]")!.textContent = "Închide șantierul";
-        fi.querySelector("button[type=submit] + .hint")?.remove();
-      }
-      const f = (e.target as HTMLElement).closest<HTMLFormElement>("#situatie");
-      const p = plan();
-      if (!f || !p || !inLucru) return;
-      citesteFormular(f);
-      const t = totalSituatie(p, inLucru);
-      f.querySelector("#total-situatie")!.textContent = eur(t.curent.total);
-      f.querySelector("#total-situatie + span")!.textContent = `cumulat ${eur(t.cumulat.total)}`;
-    });
-
-    root.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const f = e.target as HTMLFormElement;
-      const p = plan();
-      if (f.id === "consum-mana" && p) { consumDeMana(p, f); return; }
-      if (f.id === "form-inchidere" && p && !p.inchis) {
-        // Inventarul de la sfarsit (Faza 7): prima apasare verifica, a doua inchide.
-        const dep = citesteDepozit();
-        const { stoc } = restulPeSantier(p, planuri, dep);
-        const scris: typeof inchidere.scris = {};
-        for (const el of f.querySelectorAll<HTMLInputElement | HTMLSelectElement>("[data-cheie]")) {
-          const k = el.dataset["cheie"]!;
-          scris[k] = { ...scris[k], [el.name === "numarat" ? "numarat" : "unde"]: el.value };
-        }
-        const inventar = randuriInchidere(stoc, scris);
-        const nume = (cheie: string): string => stoc.find((r) => r.cheie === cheie)?.nume ?? cheie;
-        const gresit = valideazaInchidere({ santier: p.id, inventar }, dep.miscari, nume);
-        if (gresit) inchidere = { scris, eroare: gresit, confirma: false, deschis: true };
-        else if (!inchidere.confirma) inchidere = { scris, eroare: "", confirma: true, deschis: true };
-        else {
-          const refuz = inchideSantier(p.id, inventar, nume);
-          inchidere = refuz ? { scris, eroare: refuz, confirma: false, deschis: true } : { scris: {}, eroare: "", confirma: false, deschis: false };
-          if (!refuz) planuri = citestePlanuri();
-        }
-        deseneaza();
-        return;
-      }
-      if (f.id !== "situatie" || !p || !inLucru) return;
-      citesteFormular(f);
-      const problema = valideazaSituatie(p, inLucru);
-      if (problema) { eroare = problema; deseneaza(); return; }
-      // Situatia scrie si consumul de material (Faza 6).
-      const r = salveazaSituatie(p.id, inLucru);
-      if ("eroare" in r) { eroare = r.eroare; deseneaza(); return; }
-      planuri = citestePlanuri();
-      info = r.consum ? `Situația a scris consumul pe ${r.consum === 1 ? "un material" : `${r.consum} materiale`}.` : "";
-      inLucru = null;
-      dinPoze = null;
-      eroare = "";
-      deseneaza();
-    });
-
-    /** Consumul notat de mână (S7 b), din stocul șantierului, pe mărcile de acolo. */
-    function consumDeMana(p: PlanSantier, f: HTMLFormElement): void {
-      const date = new FormData(f);
-      const cant = Number(String(date.get("cantitate") ?? "").replace(",", "."));
-      const dep = citesteDepozit();
-      const m = consumPlan(p, dep).materiale.find((x) => x.cheie === date.get("cheie"));
-      if (!m || !(cant > 0)) return;
-      const nota = String(date.get("nota") ?? "").trim();
-      const data = new Date().toISOString();
-      const noi = dinMarci(m.articol, cant, dep.miscari, p.id).map((x) => ({
-        id: idNou(), data, tip: "consum" as const, articol: x.articol, cantitate: x.cantitate, din: p.id, lucrareId: p.id,
-        nota: nota ? `notat de mână · ${nota}` : "notat de mână",
-      }));
-      if (!scrieDepozit({ ...dep, miscari: [...dep.miscari, ...noi] })) mesaj = "Browserul nu permite salvarea: modificarea se pierde la reîncărcare.";
-      deseneaza();
-    }
-
-    potrivesteAdresa();
-    deseneaza();
+  titlu: TITLU,
+  subtitlu: SUBTITLU,
+  async render(root) {
+    const parti = location.hash.replace(/^#\/?/, "").split("?")[0]!.split("/");
+    const id = decodeURIComponent(parti[1] ?? "");
+    if (!id) return deseneazaLista(root);
+    if (id === "noua") return deseneazaPagina(root, null, undefined);
+    return deseneazaPagina(root, id, parti[2]);
   },
 };

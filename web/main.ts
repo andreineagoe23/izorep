@@ -1,4 +1,4 @@
-import { MENIU, ROLURI, VIITOR, setRol, rolActiv, type Rol } from "./nav.js";
+import { MENIU, ROLURI, SETARI, setRol, rolActiv, type Rol } from "./nav.js";
 import { esc, type Ecran } from "./ecrane/tip.js";
 import { campParola, legaArataParola } from "./parola-vizual.js";
 import { icoana } from "./icoane.js";
@@ -14,9 +14,7 @@ import {
 const ECRANE: Record<string, () => Promise<{ ecran: Ecran }>> = {
   tablou: () => import("./ecrane/tablou.js"),
   lucrari: () => import("./ecrane/lucrari.js"),
-  documente: () => import("./ecrane/documente.js"),
   deviz: () => import("./ecrane/deviz.js"),
-  import: () => import("./ecrane/import.js"),
   masuratori: () => import("./ecrane/santier.js"),
   materiale: () => import("./ecrane/stoc.js"),
   comenzi: () => import("./ecrane/comenzi.js"),
@@ -27,13 +25,34 @@ const ECRANE: Record<string, () => Promise<{ ecran: Ecran }>> = {
   jurnal: () => import("./ecrane/jurnal.js"),
 };
 
-/** Rutele vechi: cererile si ofertele pe acelasi ecran; „Necesar și depozit” (`stoc`) e „Materiale” din 21 octombrie 2026. */
+/**
+ * Rutele vechi. Din 14 noiembrie 2026 (planul UX, Faza 2) cererile, ofertele
+ * și șantierele sunt lista „Lucrări”; „Necesar și depozit” (`stoc`) e
+ * „Materiale” din 21 octombrie 2026; „Setări” din meniu deschide prima filă.
+ */
 const ALIAS: Record<string, string> = {
-  cereri: "documente", oferte: "documente", santier: "masuratori", santiere: "lucrari", stoc: "materiale",
+  cereri: "lucrari", oferte: "lucrari", documente: "lucrari", santiere: "lucrari",
+  santier: "masuratori", stoc: "materiale", setari: "clienti",
+};
+
+/**
+ * Adrese vechi care duc la o pagină din alt ecran, nu doar la alt ecran:
+ * „Cerere nouă” (`#/import`, `#/import/poze`) e acum pasul de început al unei lucrări.
+ */
+const MUTATE: Record<string, (rest: string[]) => string> = {
+  import: (rest) => `#/lucrari/noua${rest[0] === "poze" ? "/poze" : ""}`,
 };
 
 /** Filele unui ecran din meniu: pe ele, itemul lui ramane aprins. */
-const IN_MENIU: Record<string, string> = { comenzi: "materiale", depozit: "materiale" };
+const IN_MENIU: Record<string, string> = {
+  comenzi: "materiale", depozit: "materiale", masuratori: "lucrari",
+  ...Object.fromEntries(SETARI.map((x) => [x.id, "setari"])),
+};
+
+/** Bara de file a Setărilor: linkuri, ca la Materiale, deci adresa și „Înapoi” merg. */
+const fileSetari = (activ: string): string =>
+  `<nav class="file" aria-label="Setări">${SETARI.map((x) =>
+    `<a href="#/${x.id}" class="fila"${x.id === activ ? ' aria-current="page"' : ""}>${esc(x.eticheta)}</a>`).join("")}</nav>`;
 
 const $ = <T extends HTMLElement>(s: string) => document.querySelector(s) as T;
 
@@ -58,7 +77,7 @@ if ("scrollRestoration" in history) history.scrollRestoration = "manual";
 
 /** Ecranul din adresa; ce e dupa al doilea „/” (`#/depozit/istoric`) e pagina din ecran, a lui de citit. */
 const ruta = (): string => {
-  const id = location.hash.replace(/^#\/?/, "").split("/")[0] || "tablou";
+  const id = location.hash.replace(/^#\/?/, "").split(/[/?]/)[0] || "tablou";
   return ALIAS[id] ?? id;
 };
 
@@ -75,15 +94,7 @@ function deseneazaMeniu(): void {
       }>${icoana(i.id)}<span class="eticheta-item">${esc(i.eticheta)}</span></a>`).join("")}
     </div>`).join("");
 
-  // Harta sistemului ramane vizibila, dar pliata: clientul vede unde se ajunge
-  // fara ca navigatia zilnica sa fie pe jumatate goala.
-  const viitor = `
-    <details class="viitor">
-      <summary>Module care urmează (${VIITOR.length})</summary>
-      <ul>${VIITOR.map((m) => `<li>${esc(m)}</li>`).join("")}</ul>
-    </details>`;
-
-  $("#meniu").innerHTML = grupuri + viitor;
+  $("#meniu").innerHTML = grupuri;
 }
 
 async function navigheaza(mutaFocus = false): Promise<void> {
@@ -101,6 +112,10 @@ async function navigheaza(mutaFocus = false): Promise<void> {
 
   delete document.documentElement.dataset["faraMeniu"];
   delete document.documentElement.dataset["intrare"];
+  const parti = location.hash.replace(/^#\/?/, "").split("/");
+  const mutata = MUTATE[parti[0] ?? ""];
+  // Fără o intrare nouă în istoric: „Înapoi” nu trebuie să reîntoarcă la adresa veche.
+  if (mutata) history.replaceState(null, "", mutata(parti.slice(1)));
   const id = ruta();
   const incarca = ECRANE[id];
 
@@ -121,13 +136,20 @@ async function navigheaza(mutaFocus = false): Promise<void> {
     arataEroare(`Nu am putut aduce datele noi: ${e instanceof Error ? e.message : String(e)}. Vezi datele de mai devreme.`);
   }
   const { ecran } = await incarca();
-  root.innerHTML = `<div class="titlu-ecran">
+  // Setările: un singur titlu și filele lor; fiecare filă e ecranul ei, cu adresa lui.
+  const setare = SETARI.some((x) => x.id === id);
+  root.innerHTML = setare
+    ? `<div class="titlu-ecran"><h1>Setări</h1></div>${fileSetari(id)}
+      ${ecran.subtitlu ? `<p class="hint setari-sub">${esc(ecran.subtitlu)}</p>` : ""}<div id="continut"></div>`
+    : `<div class="titlu-ecran">
       <h1>${esc(ecran.titlu)}</h1>
       ${ecran.subtitlu ? `<p>${esc(ecran.subtitlu)}</p>` : ""}
     </div><div id="continut"></div>`;
   await ecran.render($("#continut"));
   deseneazaMeniu();
-  document.title = `${ecran.titlu} · IzoERP`;
+  // Ecranul își poate schimba titlul (`titluEcran`): fila browserului ia ce scrie sus.
+  document.title = setare ? `${ecran.titlu} · Setări · IzoERP`
+    : `${root.querySelector(".titlu-ecran h1")?.textContent || ecran.titlu} · IzoERP`;
   laInceput();
   // Dupa o navigare din meniu, focusul trece pe continut: altfel cititorul de
   // ecran ramane pe link si nu anunta ca s-a schimbat ecranul.

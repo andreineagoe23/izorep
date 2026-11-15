@@ -25,10 +25,14 @@ import {
 } from "../src/lucrari/inchidere.js";
 import { alerte, listaSaptamanala, santiereInchise, ZILE_COMANDA } from "../src/lucrari/rapoarte.js";
 import {
-  cardInchis, cardMaterial, destinatieDin, formularInchidere, randuriInchidere, restulPeSantier, valoareDestinatie,
+  cardInchis, cardMaterial, destinatieDin, formularInchidere, randuriInchidere, randuriLucrare, restulPeSantier,
+  valoareDestinatie, type MaterialeLucrare,
 } from "../web/inchidere-vizual.js";
 import { alerteAtentie, cardInchise, cardSaptamana } from "../web/rapoarte-vizual.js";
 import { consumSantier } from "../src/stoc/consum.js";
+import { numeArticol } from "../web/stoc-vizual.js";
+
+const numeArticolDin = (a: Parameters<typeof numeArticol>[0]): string => numeArticol(a);
 
 const CALE = `${CLIENTI}/cerere-de-oferta-transavia-abur.xlsx`;
 const ZI0 = "2026-07-13T08:00:00.000Z";
@@ -388,6 +392,60 @@ describe("rapoartele (S49)", () => {
   });
 });
 
+/** Ce primește fila Materiale a lucrării, din lista, mișcările și comenzile șantierului. */
+const lucrareX = (p: PlanSantier, materiale: MaterialNecesar[], miscari: Miscare[], cuConsum = false, comenzi: Comanda[] = []): MaterialeLucrare => ({
+  materiale, ramas: deComandatSantier(materiale, miscari, comenzi, p.id),
+  santier: materialSantier(p, materiale, miscari, comenzi), ...(cuConsum ? { consum: consumSantier(p, materiale, miscari) } : {}),
+});
+
+describe("fila Materiale a lucrării (planul UX, Faza 4)", () => {
+  const p = planMic;
+  const [vata, tabla, elastomer, el13, vata30] = materialeMici.map((m) => articolDin(m));
+  const intrare = (a: typeof vata, q: number): Miscare => ({ id: id(), data: ZI0, tip: "intrare", articol: a!, cantitate: q, spre: p.id, pret: { valoare: 2 } });
+
+  it("ce are tot se strânge; ce lipsește și ce vine rămân la vedere", () => {
+    const miscari = [intrare(vata, 55), intrare(tabla, 70), intrare(el13, 40), intrare(elastomer, 50)];
+    const { vazute, strinse } = randuriLucrare(lucrareX(p, materialeMici, miscari));
+    expect(strinse.map((r) => r.articol.cheie)).toEqual([vata!.cheie, tabla!.cheie, el13!.cheie]);
+    expect(vazute.map((r) => r.articol.cheie)).toEqual([elastomer!.cheie, vata30!.cheie]);
+    // Elastomerul a venit în parte: „venit” scris sub nume; vata de 30 n-a venit deloc, nimic sub nume.
+    expect(vazute[0]!.intamplat).toEqual(["venit 50 ml", "rămas 50 ml"]);
+    expect(vazute[1]!.intamplat).toEqual([]);
+  });
+
+  it("un singur material cu tot nu se strânge: un rând strâns n-ar economisi nimic", () => {
+    const { vazute, strinse } = randuriLucrare(lucrareX(p, materialeMici, [intrare(vata, 55)]));
+    expect(strinse).toEqual([]);
+    expect(vazute).toHaveLength(5);
+  });
+
+  it("materialul venit fără să fie pe listă apare la coadă, „Nu e pe listă”", () => {
+    const strain = articolDin({ sistem: "elastomer", grosime_mm: 32, rand: 89 });
+    const x = lucrareX(p, materialeMici, [intrare(strain, 3)]);
+    const { vazute } = randuriLucrare(x);
+    expect(vazute.at(-1)!.material).toBeUndefined();
+    expect(vazute.at(-1)!.intamplat).toEqual(["venit 3 ml", "rămas 3 ml"]);
+    expect(cardMaterial(x)).toContain("Nu e pe listă");
+  });
+
+  it("cardul: patru coloane, rândul strâns se desface, butonul de comandă doar când e cerut", () => {
+    const miscari = [intrare(vata, 55), intrare(tabla, 70), intrare(el13, 40)];
+    const strans = cardMaterial(lucrareX(p, materialeMici, miscari), { comanda: "primar" });
+    expect(strans).toContain("<th scope=\"col\" class=\"n\">Adus pe șantier</th>");
+    expect(strans).not.toContain(">Pus<");
+    expect(strans).toContain("Încă 3 materiale, toate pe șantier");
+    expect(strans).not.toContain(numeArticolDin(vata!));
+    expect(strans).toContain('class="primar" data-act="comanda-lipsa"');
+    const desfacut = cardMaterial(lucrareX(p, materialeMici, miscari), { desfacut: true });
+    expect(desfacut).toContain(numeArticolDin(vata!));
+    expect(desfacut).toContain("Strânge materialele care au tot");
+    expect(desfacut).not.toContain("comanda-lipsa");
+    // Toate au tot: nu „Încă”, fiindcă deasupra nu e nimic.
+    const tot = [intrare(vata, 55), intrare(tabla, 70), intrare(el13, 40), intrare(elastomer, 200), intrare(vata30, 12)];
+    expect(cardMaterial(lucrareX(p, materialeMici, tot))).toContain("Toate cele 5 materiale sunt pe șantier");
+  });
+});
+
 describe("marcajul (web/inchidere-vizual.ts, web/rapoarte-vizual.ts)", () => {
   const INJECTIE = `<img src=x onerror="alert(1)">`;
 
@@ -398,8 +456,8 @@ describe("marcajul (web/inchidere-vizual.ts, web/rapoarte-vizual.ts)", () => {
     const d = { miscari, necesare: [{ santier: p.id, materiale: materialeMici }] };
     const f = restulPeSantier(p, [p, { ...planMic, id: "S-2", denumire: INJECTIE }], d);
     const html = [
-      cardMaterial(materialSantier(p, materialeMici, miscari)),
-      cardMaterial(materialSantier(p, materialeMici, miscari), consumSantier(p, materialeMici, miscari)),
+      cardMaterial(lucrareX(p, materialeMici, miscari)),
+      cardMaterial(lucrareX(p, materialeMici, miscari, true), { desfacut: true }),
       formularInchidere({ ...f, scris: {}, eroare: INJECTIE, confirma: true, deschis: true }),
       cardInchis(cifreInchidere({ ...p, inchis: ZI0 }, materialeMici, miscari)),
       cardSaptamana(listaSaptamanala([p], d, "2026-07-14T08:00:00.000Z"), true),
@@ -409,6 +467,9 @@ describe("marcajul (web/inchidere-vizual.ts, web/rapoarte-vizual.ts)", () => {
     ].join("");
     expect(html).not.toContain(INJECTIE);
     expect(html).toContain("Înapoi la &lt;img");
+    // Acasă (Faza 5): comanda nevenită de 7 zile duce în Comenzi, unde se primește marfa.
+    const [c] = alerteAtentie([{ fel: "comanda", comanda: "c", furnizor: "Isoline", pentru: "Hala", trimisa: ZI0, zile: 9, partial: false }]);
+    expect([c!.actiune, c!.href]).toEqual(["A venit marfa?", "#/comenzi"]);
   });
 
   it("un singur card de material: cu consumul Fazei 6 are pierderea și consumul de mână", () => {
@@ -418,10 +479,13 @@ describe("marcajul (web/inchidere-vizual.ts, web/rapoarte-vizual.ts)", () => {
       { id: "i1", data: ZI0, tip: "intrare", articol: a, cantitate: 55, spre: p.id, pret: { valoare: 7.5 } },
       { id: "c1", data: ZI0, tip: "consum", articol: a, cantitate: 50, din: p.id },
     ];
-    const fara = cardMaterial(materialSantier(p, materialeMici, miscari));
+    const fara = cardMaterial(lucrareX(p, materialeMici, miscari));
     // Doar vata a venit și s-a pus: pierderea pe șantier e a ei (50 puși pe 27,5 din situație).
-    const cu = cardMaterial(materialSantier(p, materialeMici, miscari), consumSantier(p, [materialeMici[0]!], miscari));
+    const cu = cardMaterial({ ...lucrareX(p, materialeMici, miscari), consum: consumSantier(p, [materialeMici[0]!], miscari) });
     expect(fara).not.toContain("Pierdere");
+    expect(fara).toContain("venit 55 m² · pus 50 m² · rămas 5 m²");
+    expect(cu).toContain("pierdere +");
+    expect(cu).toContain("pierdere peste 10 %");
     expect(cu.match(/<h2>/g)).toHaveLength(1);
     expect(cu).toContain("Pierdere pe tot șantierul");
     expect(cu).toContain("peste prag");

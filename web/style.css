@@ -133,17 +133,6 @@ a.item[aria-current="page"] {
   background: var(--accent-fill); color: #fff; border-left-color: #9ecbf5; font-weight: 600;
 }
 
-/* Modulele nelivrate: o singura lista pliata, nu jumatate din meniu. */
-.viitor { margin: 4px 10px 0; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.12); }
-.viitor summary {
-  cursor: pointer; font-size: 13px; color: #96a0ab; padding: 6px 2px; list-style: none;
-}
-.viitor summary::-webkit-details-marker { display: none; }
-.viitor summary::before { content: "▸ "; }
-.viitor[open] summary::before { content: "▾ "; }
-.viitor ul { margin: 4px 0 0; padding: 0 0 0 18px; list-style: none; }
-.viitor li { font-size: 13.5px; color: #7d8794; padding: 4px 0; }
-
 /* Tema: un buton rotund lângă numele aplicației, cu soarele sau luna. */
 .tema-buton {
   flex: 0 0 auto; width: 40px; height: 40px; padding: 0; margin: 0;
@@ -192,7 +181,7 @@ html { scroll-padding-top: calc(var(--inaltime-antet) + 12px); }
 .mesaje .alerta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
 
 /* Cand serverul nu raspunde, meniul n-are unde duce. */
-:root[data-fara-meniu] #meniu, :root[data-fara-meniu] .viitor, :root[data-fara-meniu] #pliaza { display: none; }
+:root[data-fara-meniu] #meniu, :root[data-fara-meniu] #pliaza { display: none; }
 
 /* Vizibil doar pentru cititorul de ecran; ramane focusabil, spre deosebire de `hidden`. */
 .doar-citit {
@@ -202,9 +191,11 @@ html { scroll-padding-top: calc(var(--inaltime-antet) + 12px); }
 main { padding: 26px 28px 56px; max-width: 1400px; }
 /*
  * Verificarea importului ia tot ecranul: coloanele lui Excel au nevoie de loc, iar
- * „Stare" sta la marginea din dreapta, nu la 1400 px cu un gol dupa ea.
+ * „Stare" sta la marginea din dreapta, nu la 1400 px cu un gol dupa ea. Legat de
+ * tabelul insusi (verificarea si pozele din carnet): pe pagina lucrarii importul
+ * ramane montat, ascuns, pe celelalte file, iar acolo `main` revine la 1400 px.
  */
-main:has(.imp-vedere) { max-width: none; }
+main:has(.ver-tabel:not([hidden] *)) { max-width: none; }
 /* Focusul pe conținut e pentru cititorul de ecran, la schimbarea ecranului:
    ochiul nu trebuie să vadă o ramă în jurul întregii pagini. */
 #ecran:focus { outline: none; }
@@ -224,7 +215,6 @@ main:has(.imp-vedere) { max-width: none; }
   :root[data-meniu="pliat"] .marca strong { font-size: 15px; }
   :root[data-meniu="pliat"] .marca span,
   :root[data-meniu="pliat"] .grup h3,
-  :root[data-meniu="pliat"] .viitor,
   :root[data-meniu="pliat"] .tema-buton,
   :root[data-meniu="pliat"] .rol { display: none; }
   :root[data-meniu="pliat"] .item { justify-content: center; padding: 8px 0; border-left: 0; }
@@ -269,7 +259,7 @@ main:has(.imp-vedere) { max-width: none; }
   /*
    * Pe ecran ingust bara nu se plieaza, ci gliseaza peste continut. Varianta
    * anterioara o intindea sub antet, ca un rand de chip-uri: sapte destinatii
-   * plus modulele viitoare impingeau ecranul in jos la fiecare incarcare.
+   * impingeau ecranul in jos la fiecare incarcare.
    *
    * Inchisa, bara e si `visibility: hidden` — altfel linkurile ei raman in
    * ordinea de tabulare, iar focusul pleaca intr-un panou din afara ecranului.
@@ -397,11 +387,12 @@ tbody tr:hover { background: var(--accent-slab); }
  * din interior, unde chiar inseamna ceva.
  */
 .atentionare {
-  display: block; padding: 12px 15px; margin-bottom: 8px; text-decoration: none;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 10px 12px 10px 15px; margin-bottom: 8px;
   color: var(--text); background: var(--panou-2);
   border-left: 3px solid var(--linie-tare); border-radius: 0 8px 8px 0; font-size: 14.5px;
 }
-.atentionare:hover { background: var(--accent-slab); }
+.atentionare > p { flex: 1 1 20rem; min-width: 0; margin: 0; }
+.atentionare > a.secundar { display: inline-flex; align-items: center; text-decoration: none; white-space: nowrap; }
 .atentionare:last-child { margin-bottom: 0; }
 
 /* Eroare reala: pozitie care nu se poate tarifa. */
@@ -559,6 +550,7 @@ button.filtru[aria-pressed="true"] .hint, button.filtru.activ .hint { color: inh
   text-decoration: underline; text-underline-offset: 3px;
 }
 .legatura.pericol { color: var(--rosu); font-weight: 600; }
+a.legatura { display: inline-flex; align-items: center; }
 
 /*
  * Un singur pas de spatiere intre containere, peste tot in ecran: intre
@@ -573,6 +565,9 @@ button.filtru[aria-pressed="true"] .hint, button.filtru.activ .hint { color: inh
   container: imp / inline-size; display: flex; flex-direction: column; gap: var(--imp-gap); }
 .imp-pagina { display: grid; gap: var(--imp-gap); min-width: 0; }
 .imp .alerta { margin: 0; }
+/* „N rânduri n-au fost citite.” cu „Încearcă din nou” pe același rând (Faza 6, punctul 7). */
+.alerta-buton { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
+.alerta-buton > p { margin: 0; flex: 1 1 20rem; }
 .imp [hidden] { display: none !important; }
 .imp .secundar { min-height: 44px; padding: 10px 18px; border-radius: 10px; font-size: 15px; }
 .imp label { margin: 0; }
@@ -630,9 +625,6 @@ button.filtru[aria-pressed="true"] .hint, button.filtru.activ .hint { color: inh
 
 /* ---- pasul 1 */
 .imp-start { display: grid; gap: var(--imp-gap); }
-@container imp (min-width: 900px) {
-  .imp-start.cu-istoric { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); align-items: start; }
-}
 .imp-incarca { display: grid; gap: var(--imp-gap); }
 .imp-drop {
   position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
@@ -650,16 +642,6 @@ button.filtru[aria-pressed="true"] .hint, button.filtru.activ .hint { color: inh
 /* Pe ecranele doar tactile nu se trag fisiere: textul ar promite ceva imposibil. */
 @media (hover: none) { .imp-drop-sub { display: none; } .imp-drop { min-height: 170px; } }
 
-.imp-istoric ul { list-style: none; margin: 0; padding: 0; }
-.imp-istoric li {
-  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px;
-  padding: 12px 0; border-top: 1px solid var(--linie);
-}
-.imp-istoric li:first-child { border-top: 0; padding-top: 0; }
-.imp-istoric-info { flex: 1 1 200px; min-width: 0; }
-.imp-istoric-info strong { display: block; overflow-wrap: anywhere; }
-.imp-istoric-info span { font-size: 14px; color: var(--slab); }
-.imp-istoric-actiuni { display: flex; align-items: center; gap: 6px; }
 
 .imp-progres p { margin: 0 0 12px; }
 .imp-progres-bara { height: 10px; overflow: hidden; border-radius: 999px; background: var(--panou-2); }
@@ -694,7 +676,19 @@ button.filtru[aria-pressed="true"] .hint, button.filtru.activ .hint { color: inh
 .imp-antet .imp-segment span {
   justify-content: center; width: 100%; height: 44px; min-height: 0; padding: 0 12px; border-radius: 10px;
 }
+/* Tipul ales, ca text cu „schimbă” (Faza 3): la dreapta, pe aceeași linie cu fișierul. */
+.imp-tip { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 0 10px; margin: 0; font-size: 15px; }
+.imp-tip .legatura { display: inline-flex; align-items: center; min-height: 44px; padding: 0 4px; font-size: 15px; }
+/* Coloanele citite (Faza 6): un rând discret sub fișier, cu „schimbă”; alegerea, pe file. */
+.imp-coloane-rand { margin-top: 8px; padding-top: 4px; border-top: 1px solid var(--linie); }
+.imp-coloane { display: flex; flex-wrap: wrap; align-items: center; gap: 0 10px; margin: 0; font-size: 15px; color: var(--slab); }
+.imp-coloane .legatura { display: inline-flex; align-items: center; min-height: 44px; padding: 0 4px; font-size: 15px; }
+.imp-coloane-alege { display: grid; gap: 8px; margin: 4px 0 12px; }
+.imp-coloane-alege .fila { padding: 0 12px; }
+.imp-coloane-alege .fila .hint { font-size: 13px; }
+.imp-coloane-alege .imp-formular-butoane { margin-top: 4px; }
 @container imp (max-width: 619px) {
+  .imp-antet-optiuni, .imp-tip { justify-content: flex-start; }
   .imp-antet { grid-template-columns: minmax(0, 1fr); }
   .imp-antet .imp-segment { width: 100%; }
 }
@@ -704,19 +698,16 @@ button.filtru[aria-pressed="true"] .hint, button.filtru.activ .hint { color: inh
  * buton taiat la margine („De verific…") nu spune ca mai e ceva in dreapta.
  */
 .imp-bara-lista { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
-.imp-filtre, .imp-motive { display: flex; flex-wrap: wrap; gap: 8px; }
-@container imp (max-width: 619px) {
-  .imp-filtre { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
-  .imp-filtru { justify-content: center; }
-}
-.imp-filtru, .imp-motiv {
+.imp-motive { display: flex; flex-wrap: wrap; gap: 8px; }
+.imp-motiv {
   flex: 0 0 auto; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 16px;
   border: 1px solid var(--linie-tare); border-radius: 999px; background: var(--panou); color: var(--text);
   font: inherit; font-size: 15px; white-space: nowrap; cursor: pointer;
 }
-.imp-filtru b, .imp-motiv b { font-variant-numeric: tabular-nums; }
-.imp-filtru[data-stare]::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--c); }
-.imp-filtru[aria-pressed="true"], .imp-motiv[aria-pressed="true"] {
+.imp-motiv b { font-variant-numeric: tabular-nums; }
+/* Filele de stare la verificare păstrează punctul culorii stării. */
+.imp .fila[data-stare]::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--c); }
+.imp-motiv[aria-pressed="true"] {
   border-color: var(--accent-fill); background: var(--accent-slab); box-shadow: inset 0 0 0 1px var(--accent-fill); font-weight: 600;
 }
 .imp-motiv { min-height: 40px; padding: 6px 14px; font-size: 14px; border-color: var(--linie); background: var(--panou-2); }
@@ -736,12 +727,14 @@ button.filtru[aria-pressed="true"] .hint, button.filtru.activ .hint { color: inh
   display: grid; grid-template-columns: var(--imp-coloane); align-items: start; gap: 12px 16px;
 }
 .imp-bara-stanga { display: grid; gap: 8px; min-width: 0; }
+/* Pe pagina lucrării bara are doar filtrele: o coloană, pe toată lățimea. */
+.imp-bara-foi.imp-bara-singura { grid-template-columns: minmax(0, 1fr); }
 /* Eticheta de deasupra fiecarui control: ce face el, intr-o linie. */
 .imp-eticheta-control { display: block; margin: 0; font-size: 13px; font-weight: 600; color: var(--slab); }
 .imp-eticheta-control span { font-weight: 400; }
-/* Controalele din dreapta — si tipul ofertei din antet — sunt perechi de
-   aceeasi marime (`--imp-control` × 44 px). */
-.imp-bara-dreapta { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 12px 8px; min-width: 0; }
+/* Propoziția de deasupra filelor, pe toată lățimea. */
+.imp-rezumat { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.imp-rezumat p { flex: 1 1 20rem; margin: 0; font-size: 16px; }
 .imp-control { display: grid; gap: 8px; flex: 0 0 var(--imp-control); max-width: 100%; min-width: 0; margin: 0; }
 .imp-filtru-select { position: relative; display: block; }
 /* Sageata e a noastra: cea nativa sta unde vrea browserul, iar cu inaltimea si
@@ -761,7 +754,6 @@ button.filtru[aria-pressed="true"] .hint, button.filtru.activ .hint { color: inh
 }
 @container imp (max-width: 619px) {
   .imp-bara-foi { grid-template-columns: minmax(0, 1fr); }
-  .imp-bara-dreapta { flex-wrap: nowrap; }
   .imp-control { flex: 0 0 calc(50% - 4px); }
 }
 
@@ -884,11 +876,16 @@ button.filtru[aria-pressed="true"] .hint, button.filtru.activ .hint { color: inh
 .imp-detalii strong { color: var(--text); font-variant-numeric: tabular-nums; }
 
 /* ---- pasul 3 */
-.imp-oferta { display: grid; gap: var(--imp-gap); }
+/* Două carduri (Faza 3): „Cui trimitem” în stânga, „Prețul” în dreapta, lipit sus cât derulezi. */
+.imp-oferta { display: grid; gap: var(--imp-gap); margin: 0; }
+.imp-oferta-rezumat .imp-oferta-suma { margin-bottom: 4px; }
+.imp-oferta-procente { margin-top: var(--imp-gap); }
 @container imp (min-width: 900px) {
-  .imp-oferta { grid-template-columns: minmax(240px, 1fr) minmax(0, 2fr); align-items: start; }
+  .imp-oferta { grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr); align-items: start; }
   .imp-oferta-rezumat { position: sticky; top: calc(var(--inaltime-antet) + 16px); }
 }
+/* Ajustarea și discountul stau alături; explicația, pe toată lățimea cardului, sub amândouă. */
+.imp-oferta-procente .imp-ajutor { grid-column: 1 / -1; margin-top: -6px; }
 .imp-oferta-suma { display: grid; gap: 2px; margin: 0; }
 .imp-oferta-suma span { font-size: 15px; color: var(--slab); }
 .imp-oferta-suma strong { font-size: 30px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
@@ -898,7 +895,6 @@ button.filtru[aria-pressed="true"] .hint, button.filtru.activ .hint { color: inh
   background: color-mix(in srgb, var(--atentie) 10%, var(--panou));
   border: 1px solid color-mix(in srgb, var(--atentie) 40%, transparent); color: var(--atentie);
 }
-.imp-oferta-afara { margin: var(--imp-gap) 0 0; padding-top: var(--imp-gap); border-top: 1px solid var(--linie); font-size: 15px; }
 .imp-campuri { display: grid; gap: 14px 16px; }
 @container imp (min-width: 620px) { .imp-campuri { grid-template-columns: 1fr 1fr; } }
 .imp-campuri label { font-size: 14px; color: var(--slab); }
@@ -1146,14 +1142,6 @@ main details.imp-card[open] > summary { margin-bottom: 12px; }
  * capitolele clientului, plus starea si actiunea. Sub 980 px de document,
  * fiecare pozitie devine un card, cu aceleasi campuri in aceeasi ordine.
  */
-.imp-vedere { width: min(100%, calc(2 * var(--imp-control) + 8px)); }
-.imp-vedere legend { margin-bottom: 8px; font-size: 13px; font-weight: 600; }
-.imp-vedere > div { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.imp-vedere span {
-  justify-content: center; width: 100%; height: 44px; min-height: 0; padding: 0 10px; border-radius: 10px;
-  text-align: center; font-size: 14.5px; white-space: nowrap;
-}
-@container imp (max-width: 619px) { .imp-vedere { width: 100%; } }
 
 /* ---- „Verificare” (21 octombrie 2026): tabel ca in Excel. Pe fiecare rand
    descrierea clientului, apoi ce am inteles, ca casete de 44 px; textele
@@ -1201,11 +1189,13 @@ p.ver-text:not(.cel-ed) { padding: 10px 0; }
 .imp .ver-actiuni button { min-height: 44px; height: 44px; padding: 0 10px; font-size: 14px; white-space: nowrap; }
 .imp .ver-actiuni .cel-scoate { flex: 0 0 44px; width: 44px; padding: 0; margin-left: auto; }
 /* Meniul rândului, în locul lui ✕: un pătrat de 44 px cu „⋯”; dedesubt „Adaugă un strat” / „Scoate rândul”. */
-.imp .ver-actiuni .cel-meniu-loc { position: relative; flex: 0 0 44px; margin-left: auto; }
-.imp .ver-actiuni .cel-meniu {
+.cel-meniu-loc { position: relative; flex: 0 0 44px; }
+.imp .ver-actiuni .cel-meniu-loc { margin-left: auto; }
+.cel-meniu, .imp .ver-actiuni .cel-meniu {
   width: 44px; height: 44px; padding: 0; border: 1px solid var(--linie-tare); border-radius: 8px;
   background: var(--panou); color: var(--slab); font: inherit; font-size: 18px; line-height: 1; cursor: pointer;
 }
+.cel-meniu:hover, .cel-meniu[aria-expanded="true"],
 .imp .ver-actiuni .cel-meniu:hover, .imp .ver-actiuni .cel-meniu[aria-expanded="true"] { color: var(--text); border-color: var(--text); }
 .meniu-rand {
   position: absolute; top: calc(100% + 4px); right: 0; z-index: 20; display: grid; min-width: 15rem; padding: 4px;
@@ -1229,7 +1219,32 @@ p.ver-text:not(.cel-ed) { padding: 10px 0; }
 }
 .ver-tabel td.n .ver-fix { justify-content: flex-end; }
 .ver-strat-total .ver-strat-nume { text-align: right; padding-top: 12px; color: var(--text); }
+/* Rândul „Gata” ca text (15 noiembrie 2026): se citește; clic, Enter sau Space îl deschide cu casetele. */
+.ver-citit { cursor: pointer; }
+.ver-citit:hover td { background: color-mix(in srgb, var(--panou-2) 45%, var(--panou)); }
+.ver-citit:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
+.ver-citit .ver-val { display: block; padding-top: 12px; font-size: 14px; line-height: 1.35; overflow-wrap: anywhere; }
+.ver-citit td.n .ver-val { text-align: right; font-variant-numeric: tabular-nums; }
+.ver-citit p.ver-text { min-height: 0; padding: 0; font-size: 14px; }
+.ver-citit .ver-cod { display: inline; padding: 0; }
+.ver-tabel tr.ver-citit td { padding-top: 8px; padding-bottom: 8px; }
+.ver-citit .ver-val { padding-top: 0; }
+.ver-citit .ver-actiuni { min-height: 0; }
+.ver-citit .cel-meniu-loc { margin-top: -2px; }
+/* Tabelul doar cu rânduri text: coloanele noastre au text scurt, deci descrierea ia locul casetelor. */
+.ver-compact .ver-col-material { width: 7.5rem; }
+.ver-compact .ver-col-gros { width: 4.5rem; }
+.ver-compact .ver-col-prot { width: 7.5rem; }
+.ver-compact .ver-col-diam { width: 4.75rem; }
+.ver-compact .ver-col-piesa { width: 5rem; }
+.ver-compact .ver-col-um { width: 3rem; }
+.ver-compact .ver-col-n { width: 4.5rem; }
+.ver-compact .ver-col-stare { width: 7.5rem; }
 .ver-motiv { margin: 4px 0 0; font-size: 12.5px; color: var(--slab); line-height: 1.35; }
+/* Ce am presupus pe rândul „De verificat”, cu „Schimb” (Faza 6, punctul 9): sub descriere, citit ca o propoziție. */
+.ver-explica { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-top: 6px; }
+.ver-explica .ver-motiv { margin: 0; flex: 1 1 14rem; font-size: 14px; color: var(--text); }
+.imp .ver-explica button { min-height: 44px; padding: 0 14px; font-size: 14px; }
 /* Coloanele fixe au ~1010 px: sub 1240 px de tabel descrierea ar ramane sub
    ~230 px, deci fiecare rand devine card: descrierea pe toata latimea, casetele
    cu numele coloanei deasupra, cate trei-patru pe rand. */
@@ -1254,6 +1269,10 @@ p.ver-text:not(.cel-ed) { padding: 10px 0; }
   .ver-tabel td:empty { display: none; }
   .ver-tabel td, .ver-tabel td.n { text-align: left; }
   .ver-tabel td.n input.cel-ed { text-align: left; }
+  .ver-citit td.n .ver-val { text-align: left; }
+  .ver-tabel tr.ver-citit { grid-template-columns: repeat(auto-fill, minmax(min(100%, 6.5rem), 1fr)); gap: 2px 10px; padding-top: 8px; padding-bottom: 8px; }
+  .ver-tabel tr.ver-citit td { padding: 0; }
+  .ver-tabel tr.ver-citit td[data-eticheta]::before { margin-bottom: 0; font-size: 12px; }
 }
 
 /* ---- „Cum iese oferta”: Excelul de acum, doar citire, cu foaia lui alba si randurile lui. */
@@ -1317,7 +1336,17 @@ p.ver-text:not(.cel-ed) { padding: 10px 0; }
 .pagina-antet h2 { margin: 0; font-size: 22px; letter-spacing: -0.015em; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
 .pagina-antet .hint { margin: 4px 0 0; font-size: 15px; }
 .pagina-antet .primar { flex: 0 0 auto; }
-@media (max-width: 560px) { .pagina-antet .primar { flex: 1 1 100%; } }
+/* Butonul albastru și „⋯” stau împreună în dreapta; pe telefon, pe un rând sub text. */
+.pagina-antet > .mat-actiuni { flex: 0 0 auto; flex-wrap: nowrap; }
+@media (max-width: 560px) {
+  .pagina-antet .primar { flex: 1 1 100%; }
+  .pagina-antet > .mat-actiuni { flex: 1 1 100%; justify-content: flex-end; }
+  .pagina-antet > .mat-actiuni .primar { flex: 1 1 auto; }
+}
+/* Lucrarea fără nimic de spus sub titlu: „← Toate lucrările” și „⋯” pe același rând, și pe telefon. */
+.pagina-antet.doar-inapoi { flex-wrap: nowrap; }
+.pagina-antet.doar-inapoi > div { flex: 1 1 auto; }
+.pagina-antet.doar-inapoi > .mat-actiuni { flex: 0 0 auto; }
 
 /* „Ce înseamnă coloanele”: ajutorul care se citeste o data, pliat deasupra tabelului. */
 main details.ajutor { margin: -6px 0 8px; }
@@ -1341,17 +1370,43 @@ main details.ajutor > .hint { margin: 0 0 8px; }
 
 /* ---- „Materiale” (21 octombrie 2026): trei file, fiecare cu o întrebare și un buton.
    Filele sunt linkuri (adresa și „Înapoi” merg); cea de acum, subliniată cu accentul. */
-.file { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 2px solid var(--linie); }
+/* Linia de sub file e a fiecărei file, nu a rândului (14 noiembrie 2026): când filele trec pe al
+   doilea rând (pe telefon), o margine pe container sublinia doar ultimul rând. `::after` duce linia
+   până la capăt pe ultimul rând. Fără spațiu între file, ca linia să fie continuă. */
+.file { display: flex; flex-wrap: wrap; gap: 0; }
+.file::after { content: ""; flex: 1 1 0; min-width: 0; box-shadow: inset 0 -2px var(--linie); }
 .fila {
-  display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 16px; margin-bottom: -2px;
-  border-bottom: 3px solid transparent; color: var(--slab); font-size: 16px; font-weight: 500; text-decoration: none;
+  display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 16px;
+  box-shadow: inset 0 -2px var(--linie); color: var(--slab); font-size: 16px; font-weight: 500; text-decoration: none;
 }
 .fila:hover { color: var(--text); }
-.fila[aria-current="page"] { color: var(--accent); border-bottom-color: var(--accent); font-weight: 650; }
+.fila[aria-current="page"] { color: var(--accent); box-shadow: inset 0 -3px var(--accent); font-weight: 650; }
 .fila b { font-weight: 650; }
-/* Pe pagina șantierului filele sunt butoane (o situație începută nu se pierde la schimbare). */
-button.fila { background: none; border: 0; border-bottom: 3px solid transparent; border-radius: 0; font: inherit; font-size: 16px; cursor: pointer; }
-button.fila[aria-current="page"] { border-bottom-color: var(--accent); }
+/* Pe pagina lucrării filele sunt butoane (o situație începută nu se pierde la schimbare). */
+button.fila { background: none; border: 0; border-radius: 0; font: inherit; font-size: 16px; cursor: pointer; }
+/* O filă la care nu s-a ajuns: gri, iar panoul ei spune de ce. */
+/* Doar textul se stinge: cu `opacity` pe filă se stingea și linia de dedesubt, iar după
+   ultima filă inactivă linia revenea la culoarea ei și părea întreruptă. */
+.fila[aria-disabled="true"] { color: color-mix(in srgb, var(--slab) 70%, var(--panou)); cursor: default; }
+.fila[aria-disabled="true"][aria-current="page"] { color: var(--slab); box-shadow: inset 0 -3px var(--linie-tare); }
+.fila .gata { color: var(--ok); font-weight: 700; }
+.setari-sub { margin: 12px 0 0; }
+/* Pentru cititorul de ecran: „(gata)” lângă ✓, care e doar desen. */
+.ascuns { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.mat-actiuni > a.secundar, .mat-actiuni > a.primar, .lucrari-sus > a.primar, td.fix > a.secundar {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 44px; text-decoration: none;
+}
+
+/* ---- Lucrări (14 noiembrie 2026): „Cerere nouă” sus, în dreapta; pe telefon, pe toată lățimea. */
+.lucrari-sus { display: flex; justify-content: flex-end; }
+@media (max-width: 560px) { .lucrari-sus > a.primar { flex: 1 1 auto; } }
+/* Rândul „Urmează”: o propoziție și butonul pasului de acum. */
+.urmeaza { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; }
+.urmeaza > .urmeaza-text { flex: 1 1 22rem; margin: 0; font-size: 17px; }
+.urmeaza > .alerta { flex: 1 1 100%; margin: 0; }
+.urmeaza-eticheta { display: block; margin-bottom: 2px; font-size: 13px; font-weight: 600; color: var(--slab); }
+.urmeaza > .mat-actiuni:empty { display: none; }
+@media (max-width: 560px) { .urmeaza > .mat-actiuni, .urmeaza > .mat-actiuni > * { flex: 1 1 auto; } }
 .file-panou { display: grid; gap: var(--imp-gap, 16px); }
 /* Antetul unui card: titlul și propoziția în stânga, butoanele în dreapta; pe telefon, dedesubt. */
 .mat-antet { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; }
@@ -1460,7 +1515,3 @@ p.cel-ed.cel-text { white-space: pre-wrap; overflow-wrap: anywhere; cursor: text
 .sterge-panou .sterge-definitiv:not(:disabled) { border-color: var(--text); color: var(--text); font-weight: 600; }
 .sterge-panou button:disabled { opacity: 0.5; cursor: not-allowed; }
 tr.sterge-rand > td { padding-top: 0; }
-/* Panoul sub un import recent ia tot randul; lista lui ramane lista, nu randuri de istoric. */
-.imp-istoric li > .sterge-panou { flex: 1 1 100%; }
-.imp-istoric .sterge-panou ul { list-style: disc; padding-left: 20px; margin: 0 0 12px; }
-.imp-istoric .sterge-panou li { display: list-item; padding: 0; border: 0; margin: 2px 0; }

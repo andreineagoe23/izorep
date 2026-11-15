@@ -7,7 +7,14 @@
  * sa-l mai citeasca — deci jumatate din teste verifica exact ca TACE.
  */
 import { describe, it, expect } from "vitest";
-import { valideazaExtragere, aplicaValidarea, diametruContrazisDeText } from "../src/import/valideaza.js";
+import { valideazaExtragere, aplicaValidarea, diametruContrazisDeText, douaDiametre } from "../src/import/valideaza.js";
+import { readdirSync } from "node:fs";
+import { join } from "node:path";
+import { CLIENTI, cuClienti } from "./conditii.js";
+import { parseFoi } from "../src/import/parse-workbook.js";
+import { proceseazaRegistru } from "../src/import/nucleu.js";
+import { mapariStatice } from "../src/import/mapari-statice.js";
+import { stocInMemorie } from "../src/import/memorie.js";
 import type { LinieExtrasa } from "../src/import/schema.js";
 
 const linie = (p: Partial<LinieExtrasa> = {}): LinieExtrasa => ({
@@ -192,4 +199,60 @@ describe("grosime dată ca interval", () => {
     expect(coduri(linie({ sistem: "elastomer", diametru_valoare: 20, diametru_tip: "exterior", grosime_mm: 13 }),
       "Izolatie din cauciuc sintetic pentru PPR 20 - 13 mm")).not.toContain("grosime_interval");
   });
+});
+
+describe("două diametre pe același rând (Faza 6, punctul 6)", () => {
+  const elastomer = (v: number, tip: LinieExtrasa["diametru_tip"]) =>
+    linie({ sistem: "elastomer", diametru_valoare: v, diametru_tip: tip, grosime_mm: 13 });
+
+  it("DN80 și Ø100: la om, oricare l-a ales modelul, cu cele două diametre în ordinea din text", () => {
+    const text = "Izolatie elastomer 13 mm DN80 | Dimensiuni: Ø100mm";
+    for (const l of [elastomer(80, "DN"), elastomer(100, "exterior")]) expect(coduri(l, text)).toContain("doua_diametre");
+    expect(douaDiametre(text)[0]!.diametre).toEqual(["DN80", "Ø100"]);
+  });
+
+  it("aceeași țeavă scrisă de două ori nu se aprinde", () => {
+    const aceeasi = [
+      "Izolatie Armaflex 13 mm Dn 80 (88,9 x 4)",
+      "Izolatie Armaflex 13 mm Ф 57 x 3,5 mm (Dn 2\")",
+      "Izolatie Armaflex 13 mm Dn 50 (60,3x3,6 - 2'')",
+      "Izolatii cu vata minerala Di89, g50 - teava 88,9 x 4",
+      "Wickelfalzrohr starr SPIRO DN 160 | tubulatura spiro Ø160",
+      // EN 10255: DN150 = ø165,1 (spitalul, rândurile 60 / 69 / 78).
+      "Izolatie elastomerica 32 mm conducta DN150 (165,1 x 4,5)",
+      // NISAL 44–47: același număr, altă notație — îl judecă `diametru_contrazis`.
+      "Kautschuk, d=9mm, DN20 | Dimensiuni: Ø20mm",
+    ];
+    expect(aceeasi.filter((t) => douaDiametre(t).length > 0)).toEqual([]);
+  });
+
+  it("reducția, golul și tubulatura rectangulară nu sunt două diametre", () => {
+    const nu = [
+      "Reductie DN100 - DN80 izolata cu vata minerala 50 mm",
+      "Reductor ø320 → ø250, vata 50 + Al",
+      "Teava OL/OLZN DN100 | 320/320",
+      "Tubulatura rectangulara 1000/500 izolata cu vata minerala 50 mm",
+    ];
+    expect(nu.filter((t) => douaDiametre(t).length > 0)).toEqual([]);
+  });
+
+  it("rândul de continuare: contează doar diametrul lui, nu al părintelui lipit după", () => {
+    expect(douaDiametre("E3.1.1.2 | Same - Ø125 mm | Same - Ø125 mm | Circular spiro duct ... Diameter: Ø100 mm")).toEqual([]);
+    expect(douaDiametre("idem DN20 | Teava din otel neagra ... izolatie elastomerica 19mm DN15")).toEqual([]);
+  });
+
+  cuClienti("calibrare: pe pozițiile citite de reguli din toate fișierele clienților, zero aprinderi", async () => {
+    let cuDiametru = 0;
+    const aprinse: string[] = [];
+    for (const f of readdirSync(CLIENTI).filter((x) => x.endsWith(".xlsx") && !x.startsWith("~$"))) {
+      const rez = await proceseazaRegistru(await parseFoi(join(CLIENTI, f)), { stoc: stocInMemorie(), mapari: mapariStatice() });
+      for (const l of rez.linii) {
+        if (l.sursa !== "regex" || l.extras.sistem === null) continue;
+        if (l.extras.diametru_valoare !== null) cuDiametru++;
+        if (douaDiametre(l.bruta.text).length) aprinse.push(`${f} r${l.bruta.rand}`);
+      }
+    }
+    expect(cuDiametru).toBeGreaterThan(500);
+    expect(aprinse).toEqual([]);
+  }, 120_000);
 });

@@ -9,25 +9,32 @@ import type { Alerta, ListaSaptamanala, SantierInchis } from "../src/lucrari/rap
 
 const zi = (iso: string): string => new Date(iso).toLocaleDateString("ro-RO");
 
-/** Liniile din „Necesită atenția ta”, cu linkul spre ecranul care rezolvă. */
-export function alerteAtentie(a: readonly Alerta[]): { href: string; html: string }[] {
+/**
+ * Liniile din „De făcut”, cu butonul spre ecranul care rezolvă. Lipsa și
+ * pierderea duc direct pe fila „Materiale” a șantierului: acolo se văd.
+ */
+export function alerteAtentie(a: readonly Alerta[]): { href: string; html: string; actiune: string }[] {
   return a.map((x) => {
     switch (x.fel) {
       case "lipsa":
         return {
-          href: `#/lucrari/${encodeURIComponent(x.santier)}`,
+          href: `#/lucrari/${encodeURIComponent(x.santier)}/materiale`,
+          actiune: "Vezi ce lipsește",
           html: `Pe șantierul <b>${esc(x.denumire)}</b> ${x.materiale === 1 ? "lipsește un material" : `lipsesc <b>${x.materiale}</b> materiale`}
             ca să se termine lucrarea, deși tot necesarul a fost adus sau comandat.`,
         };
       case "pierdere":
         return {
-          href: `#/lucrari/${encodeURIComponent(x.santier)}`,
+          href: `#/lucrari/${encodeURIComponent(x.santier)}/materiale`,
+          actiune: "Vezi materialul",
           html: `Pe șantierul <b>${esc(x.denumire)}</b> s-a consumat cu <b>${cifra(x.procent)} %</b> mai mult material decât
             arată situațiile (normal până la 10 %).`,
         };
       case "comanda":
+        // Marfa se primește din Comenzi („A venit marfa”), nu de pe lucrare.
         return {
           href: "#/comenzi",
+          actiune: "A venit marfa?",
           html: `Comanda la <b>${esc(x.furnizor)}</b>${x.pentru ? ` pentru ${esc(x.pentru)}` : " pentru depozit"}, trimisă pe
             ${esc(zi(x.trimisa))}, ${x.partial ? "a venit doar în parte" : "n-a venit"} de ${cate(x.zile, "zile")}.`,
         };

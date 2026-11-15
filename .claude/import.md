@@ -78,6 +78,36 @@ Verificat pe toate fișierele, cu și fără mapare: **aceleași poziții, acele
 prețuri unitare**, cantități corecte. Singura diferență de valoare totală vine
 din cantitățile reparate.
 
+### Din aplicație, pe firmă (14 noiembrie 2026, planul UX, Faza 6)
+
+Până acum `propuneMapare` se chema doar din `npm run mapare`: un client nou,
+încărcat din ecran, cădea pe euristica de cantitate. Acum, la import, înaintea
+pozițiilor (`proceseaza` în `web/ecrane/import.ts`, prin `citesteColoanele`
+din `web/import/mapari-firma.ts`):
+
+- foile cu rânduri de poziții al căror antet nu e cunoscut (nici în
+  `data/mapari`, nici pe firmă, nici respins deja; `foiDeCitit` în
+  `src/import/coloane.ts`, o dată pe amprentă) pleacă la `POST /api/mapare`
+  (`src/server/import-firma.ts`), cu aceleași reguli ca `/api/extrage`:
+  sesiune, `X-Izorep`, plafonul zilnic (15 rânduri din Excel pe foaie),
+  răspunsul trecut prin `MapareFoaie`; `valideazaMapare` decide;
+- rezultatul, acceptat sau respins, stă în `mapare_coloane` (pe firmă): același
+  antet nu mai cheamă modelul, iar unul respins rămâne pe euristică;
+- maparile folosite se țin și în cerere (`SesiuneImport.mapari`): redeschisă,
+  cererea iese cum a văzut-o omul, chiar dacă un coleg a ales între timp alte
+  coloane pe același antet. Ordinea: repo, firma, cererea;
+- pe ecranul de verificare, sub fișier: „Cantitatea e în coloana E,
+  denumirea în B.” cu „schimbă” (fără mapare: „Cantitatea e luată de lângă
+  unitatea de măsură.” cu „alege coloanele”). Alegerea omului
+  (`mapareAleasa`) e verificată ca a modelului (`problemaAlegerii`, cu motivul
+  în cuvinte) și se ține la fel (`PUT /api/mapari`, sursa „om”); „Anulează”
+  o scoate și de pe firmă.
+
+Fără model (link demo, server fără cheie): nimic nu se întreabă, importul e
+cel de dinainte. Teste: `tests/coloane.test.ts` (alegerea pe o listă la care
+regula veche lua prețul unitar drept cantitate: 12,5 / 13,5 / 40 → 140 / 85 /
+62; ruta cu model fals, izolarea între firme, 503, 429, 502).
+
 ## L4 — memoria de șabloane
 
 Ce a corectat omul o dată nu se mai întreabă. Același mecanism ca deduplicarea,
@@ -89,10 +119,16 @@ ce zice modelul, o extragere greșită s-ar propaga tăcut peste toate proiectel
 următoare. Se învață doar pozițiile complete: un șablon cu jumătate de rol arată
 că știe și dă valori pe jumătate.
 
-Depozitul e o interfață (`StocSabloane`) cu două implementări — fișier
-(`data/sabloane.json`, pentru CLI) și `localStorage` (demo). Când apare serverul,
-a treia e o tabelă per tenant: o corecție a unui coleg trebuie să ajute pe toată
-lumea.
+Depozitul e o interfață (`StocSabloane`) cu trei implementări — fișier
+(`data/sabloane.json`, pentru CLI), `localStorage` (linkul demo) și, din 14
+noiembrie 2026 (planul UX, Faza 6, punctul 2), tabelul `sablon_import`, pe
+firmă (`web/stoc-sabloane.ts`, `/api/sabloane`): corectura unui coleg îl ajută
+și pe celălalt și nu se pierde la schimbarea calculatorului. Interfața rămâne
+sincronă: șabloanele firmei se aduc o dată la deschiderea importului
+(`stocSabloane()`), iar o corectură se pune în copia din pagină și pleacă apoi
+la server. Ce era deja în `localStorage` se mută o dată
+(`/api/sabloane/mutare`, marcaj `izorep-sabloane-mutate`); un tipar pe care
+firma îl știe deja nu se scrie peste. Teste: `tests/sabloane-firma.test.ts`.
 
 Ce decide dacă se învață stă în `invataDinCorectie`, nu în ecran: în ecran ar fi
 fost câteva linii într-un handler de `change`, adică exact codul pe care nu-l
@@ -239,6 +275,8 @@ aprindă.
 | `diametru_nenotat` | numărul citit e în text, dar nu e scris ca diametru, iar rândul are un diametru notat (DN, Di, Ø, țoli, `114,3 x 4,5`) cu altă valoare: „inox 304 Di89” citit 304 |
 | `strat_necitat` | o jachetă (tablă, inox, PVC) pe care textul n-o numește: „protejată cu folie de aluminiu” (fața vatei caserate) citit ca tablă, 23,31 în loc de 6,23 €/ml |
 | `grosime_interval` | rândul dă grosimea ca interval („0.6 – 0.8 mm”, „20 to 50mm”): alegerea e a omului, orice a ales modelul |
+| `doua_diametre` | pe rând sunt două diametre notate care nu sunt aceeași țeavă (DN80 și Ø100), oricare l-a ales modelul (15 noiembrie 2026, `douaDiametre`). Aceeași țeavă: același număr, `esteConversiaDN`, două exterioare la ±1 mm, DN150 lângă ø165,1 (EN 10255). Nu se aprinde pe reducții, pe țoli, pe gol sau rectangular, iar la rândurile de continuare contează doar textul propriu (`textPropriu` în `continuare.ts`). Calibrat: 0 pe cele 623 de poziții citite de reguli, 0 pe cele 152 de linii golden |
+| `necitit` | rândul a plecat la model și nu s-a întors (lot căzut, linie sărită, sau doar una din cele două citiri): nu poate fi „Gata”. `OptiuniNucleu.necitite`, ținut în cerere; `recitesteNecitite` trimite doar rândurile astea, de două ori. Iese din listă când îl citește modelul, îl scrie omul sau ajung regulile să-l citească întreg (`tests/necitite.test.ts`) |
 
 Regula de citare vine din promptul propriu al stratului: *„nu inventa valori,
 dacă un câmp nu apare în text pune null"*. Aici doar se verifică dacă a
@@ -327,6 +365,24 @@ Contractul e „câte un obiect per linie, cu același index". Modelul îl înca
 Liniile lipsă nu apăreau nicăieri în raport — nici ca poziții, nici ca erori —
 deci un fișier ciuntit arăta exact ca un fișier cu mai puține poziții.
 `RaportImport.modelFaraRaspuns` le numără.
+
+## Două citiri (15 noiembrie 2026, planul UX, Faza 6, punctul 4)
+
+Încrederea era cea pe care și-o dă modelul, cu prag 0,85; pe TRANSAVIA a
+oscilat pe prag de la o rulare la alta. Acum liniile care pleacă la model se
+citesc de două ori, în paralel, aceleași linii (`citesteDeDouaOri` în
+`nucleu.ts`, `OptiuniNucleu.douaCitiri`, implicit da). Unde cele două citiri
+diferă la un câmp care intră în preț (`diferenteCitiri`: sistem, diametru tip
+și valoare, grosime, formă, straturi, gol; sau a doua lipsește), linia ia
+încrederea 0 și motivul `CITIT_DIFERIT`, iar `construiesteLinii` îi pune
+avertismentul `citit_diferit` („Citit de două ori, diferit”): merge la om
+oricât de sigur s-ar spune modelul. Rezultatul e prima citire. Se aplică
+reprezentanților de șablon; proiecțiile moștenesc motivul. Pragul rămâne ca
+plasă. Costul: de două ori tokenii, iar plafonul zilnic (3.000 de rânduri)
+numără ambele citiri, deci ajunge la ~1.500 de rânduri pe zi. Pe ecran, bara
+de progres e una pentru amândouă („Se recunosc pozițiile, de două ori, ca să
+fie sigure…”). Partea deterministă și golden files nu se schimbă. Teste:
+`tests/doua-citiri.test.ts`.
 
 ## Golden files: deriva modelului
 
@@ -597,6 +653,65 @@ real acolo.
   „Gata” la altă grosime decât cea cerută. Acum `grosimeScrisa` prinde și
   grosimea lipită de material, iar peste ultima grosime din listă poziția ia
   motivul `grosime_peste_lista`, nedovedit. A/B pe toate fișierele: identic.
+
+## Rândurile lăsate afară (14 noiembrie 2026, planul UX, Faza 6)
+
+Un rând cu UM și cantitate care n-a devenit poziție dispărea din ofertă fără
+urmă (așa dispărea torcretul de la spital). `lasateAfara` (`src/import/
+lasate-afara.ts`, pur) le adună: rândurile brute cu UM și cantitate > 0 care nu
+sunt poziții de izolație, cu motivul când e știut (vine izolat de la
+producător; scos de om). Pe cele 11 fișiere din `../attachments/clienti`
+(`tests/lasate-afara.test.ts`):
+
+| Fișier | Lăsate afară |
+|---|---|
+| Book15 | 257 (13 vin izolate; restul altă meserie: demontări, centrale, aparate) |
+| CET Constanța | 81 (lista de țevi; se ofertează prin izolația pe foaie) |
+| Spital | 58 (livrarea țevii cu fitinguri, foile „țeavă + izolație”) |
+| SRU Craiova | 15 (tubulatura din tablă, neizolată) |
+| NISAL (Oferta 27.04.2026) | 3 (două tuburi PEHD cu gură de curățire și **canalul de desfumare cu „Wärmedämm.”, 17 m²**) |
+| Flower City, TRANSAVIA abur și inox, Matari, Oferta 284, anexa de manoperă | 0 |
+
+„E izolație” (`faPozitie`) pune rândul ca citire nesigură (`sursa: "model"`,
+încredere 0, motivul `PUS_DE_OM`): materialul citit din rând, altfel vată
+minerală propusă. Trece la „De verificat” (sau „Fără preț”, cât îi lipsesc
+grosimea ori diametrul) până îl confirmă sau corectează omul. Regulile care
+l-au lăsat afară (altă meserie, vine izolat) nu-l mai scot: `reevalueaza` îl
+ține ca pe o linie a omului cât textul rândului nu se schimbă. Restul
+pozițiilor nu se mișcă (testat pe NISAL). În „Detalii despre citire” intră la
+„citite automat din text”.
+
+## Același fișier încărcat a doua oară (14 noiembrie 2026, planul UX, Faza 6)
+
+Făcea o cerere nouă, cu același număr de ofertă (bugul din 16 octombrie).
+Acum, la încărcare (`proceseaza` în `web/ecrane/import.ts`, prin
+`lucrareaFisierului` din `web/import/fisier-dublu.ts`), înainte de orice
+citire: amprenta conținutului (SHA-256, nu numele) se caută pe server
+(`GET /api/cereri-dupa-fisier?amprenta=…`, socotită în bază din fișierul
+ținut, `encode(sha256(fisier), 'hex')`, fără coloană nouă) sau, pe linkul
+demo, în istoricul din browser. Găsită: „Fișierul ăsta e deja la lucrarea
+TRANSAVIA.” cu „Deschide-o” (albastru), „Încarcă-l ca lucrare nouă” și „Alt
+fișier”. Pozele din carnet nu trec pe aici (registru nou de fiecare dată), iar
+„Schimbă fișierul” pe aceeași lucrare nu se socotește dublură. Teste:
+`tests/fisier-dublu.test.ts`.
+
+## Confirmarea păstrează prețul văzut (14 noiembrie 2026, bugul „g48 → Confirmă”)
+
+O poziție „De verificat” confirmată trecea pe „Fără preț” când prețul ei venea
+dintr-o completare a regulilor, nu din citirea rândului: `confirma` punea
+`sursa: "om"` pe extragerea brută, iar pe linia omului nucleul nu mai
+completează grosimea scrisă dar respinsă („g48” → 50 mm), grosimea conductei,
+pe cea uzuală sau golul de la aceeași țeavă. Pe fișierele clienților, 15
+poziții: TRANSAVIA inox r29–30 (g48), golurile EI180 de la Matari r72–83,
+banda pe armături de la spital r138. Acum `confirma(indecsi, rezolvate,
+vazute(rez))` (`web/validare.ts`) pune pe linia omului extragerea cum o vedea
+el (`LinieProcesata.extras`, deja completată), iar regula benzii pe armături
+citește textul lucrării (`textLucrare`), ca echipamentul și protecția la foc:
+spune ce lucrare e rândul, deci se aplică și pe linia omului. Pe liniile care
+nu sunt ale omului nimic nu se schimbă. Test: `tests/confirmare-pret.test.ts`
+(TRANSAVIA cu „g48”; toate pozițiile cu preț din toate fișierele, confirmate,
+au același preț, pe ambele tipuri de ofertă). Fără al treilea argument,
+`confirma` face ce făcea (testele vechi o cheamă așa).
 
 ## Izolația pe foaie (11 octombrie 2026)
 

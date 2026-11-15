@@ -1,27 +1,22 @@
 /**
- * Marcajul consumului (Faza 6), ca functii pure: pierderea si consumul de mana,
- * puse in cardul „Materialul șantierului” din Lucrări (`cardMaterial`, Faza 7).
+ * Marcajul consumului (Faza 6), ca functii pure: pierderea pe tot santierul si
+ * consumul de mana, puse in cardul „Materialul șantierului” al lucrarii
+ * (`cardMaterial`). Pierderea pe material se scrie sub numele lui, din 15
+ * noiembrie 2026.
  * Ca `stoc-vizual.ts`: fara DOM, orice text din date trece prin `esc()`. Logica
  * e in `src/stoc/consum.ts`.
  */
 import { esc, stare } from "./ecrane/tip.js";
-import { cantitate, cifra, numeArticol } from "./stoc-vizual.js";
+import { cifra, numeArticol } from "./stoc-vizual.js";
 import type { PlanSantier } from "../src/lucrari/situatii.js";
 import type { StareDepozit } from "./depozit-local.js";
-import { PRAG_PIERDERE, consumSantier, type ConsumMaterial, type ConsumSantier } from "../src/stoc/consum.js";
+import { PRAG_PIERDERE, consumSantier, type ConsumSantier } from "../src/stoc/consum.js";
 
 const PRAG = PRAG_PIERDERE * 100;
 
 /** Consumul unui șantier, din necesarul lui (dacă are) și din mișcări. */
 export const consumPlan = (p: PlanSantier, s: StareDepozit): ConsumSantier =>
   consumSantier(p, s.necesare.find((n) => n.santier === p.id)?.materiale ?? [], s.miscari);
-
-export function celulaPierdere(m: ConsumMaterial): string {
-  if (m.pierdereProcent === null) return m.consumReal > 0 ? `<span class="hint">fără situații</span>` : "—";
-  const semn = m.pierdere > 0 ? "+" : m.pierdere < 0 ? "−" : "";
-  return `${semn}${cantitate(Math.abs(m.pierdere), m.um)}<br><span class="hint">${cifra(m.pierdereProcent)} %</span>${
-    m.pierdereProcent > PRAG ? ` ${stare(`peste ${cifra(PRAG)} %`, "atentie")}` : ""}`;
-}
 
 /** Pierderea pe tot șantierul, deasupra tabelului; fără situații, ce urmează. */
 export function randPierdere(c: ConsumSantier): string {
