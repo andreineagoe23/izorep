@@ -122,7 +122,7 @@ export function montezaSantier(root: HTMLElement, opt: OptiuniSantier): ControlS
     if (p.inchis) return cardInchis(cifreInchidere(p, materiale, dep.miscari, scoase));
     if (comanda && necesar && comanda.id === necesar.id) {
       const nume = (id?: string): string => depozite().find((d) => d.id === id)?.nume ?? "—";
-      return ecranComanda(dep, necesar, comanda, nume, "Înapoi la materialele lucrării");
+      return ecranComanda(dep, necesar, comanda, nume);
     }
     const ramas = necesar ? ramasPeNecesar(dep, necesar) : [];
     const lipsa = ramas.some((d) => d.ramas > 0);
