@@ -16,74 +16,21 @@
  * „Comandă ce lipsește” ia întâi ce există în alte locuri (`propuneriDinDepozit`),
  * apoi face ciornele pe furnizorul obișnuit, cu ce a rămas.
  */
-import { esc, stare, tabel, type Ecran } from "./tip.js";
-import { citestePlanuri, citesteDepozit, idNou, puneComanda, scrieDepozit } from "../date.js";
+import { esc, tabel, type Ecran } from "./tip.js";
+import { citesteDepozit, idNou, puneComanda, scrieDepozit } from "../date.js";
 import { MATERIALE, MATERIAL } from "../import/text.js";
-import { cantitate, cifra, fileMateriale, numeArticol, unitate } from "../stoc-vizual.js";
-import {
-  depozite, deschis, depozitNecesar, numereMateriale, ramasPeNecesar, santiere, titluNecesar,
-} from "../materiale.js";
+import { cantitate, cifra, fileMateriale, numeArticol, propozitieMateriale, stareMaterial, unitate } from "../stoc-vizual.js";
+import { depozite, deschis, numereMateriale, ramasPeNecesar, santiere, titluNecesar } from "../materiale.js";
 import type { NecesarLucrare } from "../depozit-local.js";
-import { articolDin, cantitateNecesara, type Miscare } from "../../src/stoc/registru.js";
+import { articolDin, cantitateNecesara } from "../../src/stoc/registru.js";
 import { materialManual, ordineNecesar, type Categorie, type MaterialNecesar } from "../../src/stoc/necesar.js";
 import { celulaNumar, legaCelule, numarScris } from "../celula.js";
 import { cuCantitatea } from "../../src/stoc/editari-necesar.js";
-import {
-  cantitateComanda, ciorneDinRamas, propuneriDinDepozit, type Comanda, type DeComandatSantier, type PropunereTransfer,
-} from "../../src/stoc/comenzi.js";
-import { FURNIZORI } from "../../src/stoc/furnizori.js";
-import { pretPropus } from "../../src/stoc/preturi-furnizori.js";
-import { denumireComanda } from "../../src/stoc/produse.js";
+import { alegereNoua, aplicaComanda, ecranComanda, schimbaAlegerea, type AlegereComanda } from "../comanda-lipsa.js";
 
 /** Forma aleasa in formular; cu ø ramane tub, fara alegere ramane cea implicita. */
 const formaAleasa = (v: string, rand: number | null): Categorie | undefined =>
   rand === null && (v === "saltea" || v === "placa") ? v : undefined;
-
-/** Starea unui material, în cuvintele omului: ce lipsește, ce vine, ce e gata. */
-function stareMaterial(m: MaterialNecesar, d: DeComandatSantier | undefined): string {
-  if (m.alClientului || !d) return stare("Îl dă clientul", "neutru");
-  const um = d.articol.um;
-  if (d.ramas > 0) {
-    return `${stare(`Lipsește ${cantitate(d.ramas, um)}`, "atentie")}${
-      d.comandat > 0 ? `<br><span class="hint">${cantitate(d.comandat, um)} comandat, vine</span>` : ""}`;
-  }
-  if (d.inCiorna > 0) return stare("În ciornă, de trimis", "atentie");
-  if (d.comandat > 0) return stare(`Comandat, vine ${cantitate(d.comandat, um)}`, "neutru");
-  return stare("Are tot", "ok");
-}
-
-/** „14 materiale: 13 lipsesc, 1 e comandat și vine.” */
-function propozitie(n: NecesarLucrare, r: DeComandatSantier[]): string {
-  const pe = new Map(r.map((d) => [d.material, d]));
-  let lipsa = 0, vin = 0, ciorna = 0, gata = 0, client = 0;
-  for (const m of n.materiale) {
-    const d = pe.get(m);
-    if (m.alClientului || !d) client++;
-    else if (d.ramas > 0) lipsa++;
-    else if (d.inCiorna > 0) ciorna++;
-    else if (d.comandat > 0) vin++;
-    else gata++;
-  }
-  const parti = [
-    lipsa ? `<strong>${lipsa === 1 ? "1 lipsește" : `${cifra(lipsa)} lipsesc`}</strong>` : "",
-    ciorna ? `${ciorna === 1 ? "1 e pe o comandă netrimisă" : `${cifra(ciorna)} sunt pe comenzi netrimise`}` : "",
-    vin ? `${vin === 1 ? "1 e comandat și vine" : `${cifra(vin)} sunt comandate și vin`}` : "",
-    gata ? `${gata === 1 ? "1 e pe șantier" : `${cifra(gata)} sunt pe șantier`}` : "",
-    client ? `${client === 1 ? "1 îl dă clientul" : `${cifra(client)} le dă clientul`}` : "",
-  ].filter(Boolean);
-  const total = n.materiale.length;
-  return `${total === 1 ? "Un material" : `${cifra(total)} materiale`}: ${parti.join(", ")}.`;
-}
-
-/** Ce a ales omul în „Comandă ce lipsește”: ce nu se ia din depozit și furnizorul schimbat pe o ciornă. */
-interface AlegereComanda {
-  id: string;
-  nebifate: Set<string>;
-  /** Furnizorul propus → cel ales de om. */
-  furnizori: Map<string, string>;
-}
-
-const cheiePropunere = (p: PropunereTransfer): string => `${p.articol.cheie}|${p.din}`;
 
 export const ecran: Ecran = {
   id: "materiale",
@@ -108,7 +55,7 @@ export const ecran: Ecran = {
       const inchise = st.necesare.length - deschise.length;
       const n = comanda && deschise.find((x) => x.id === comanda!.id);
       let corp: string;
-      if (n) corp = ecranComanda(n);
+      if (n) corp = ecranComanda(st, n, comanda!, numeDepozit, "Înapoi la De cumpărat");
       else if (deschise.length === 0) {
         corp = `<section class="imp-card"><p class="hint" style="margin:0">${st.necesare.length === 0
           ? `Nimic de cumpărat încă. Materialele unei lucrări apar aici după ce clientul acceptă oferta: în <a href="#/lucrari">Lucrări</a>, pe lucrarea lui, „Clientul a acceptat”.`
@@ -157,7 +104,7 @@ export const ecran: Ecran = {
         </div>`;
       return `<section class="imp-card mat-necesar">
         <div class="mat-antet">
-          <div><h2>${esc(titluNecesar(n))}</h2><p>${propozitie(n, r)}</p></div>
+          <div><h2>${esc(titluNecesar(n))}</h2><p>${propozitieMateriale(n.materiale, r)}</p></div>
           ${actiuni}
         </div>
         ${schimba ? partiSchimbare(n) : ""}
@@ -207,78 +154,6 @@ export const ecran: Ecran = {
         </div>`;
     }
 
-    /** Mutările din depozit, ca mișcări de stoc spre șantierul necesarului. */
-    const transferuri = (n: NecesarLucrare, alese: PropunereTransfer[], id: () => string, data: string): Miscare[] =>
-      alese.map((p) => ({
-        id: id(), data, tip: "transfer", articol: p.articol, cantitate: p.cantitate,
-        din: p.din, spre: depozitNecesar(n), nota: `pentru ${titluNecesar(n)}`,
-      }));
-
-    /**
-     * Ce face „Comandă ce lipsește”, înainte să se facă: ce se ia din depozit
-     * și ciornele pentru rest, pe furnizorul ales. Ciornele se socotesc după
-     * mutările bifate, deci ce vine din depozit nu se mai comandă.
-     */
-    function planComanda(n: NecesarLucrare, a: AlegereComanda, id: () => string): {
-      propuneri: PropunereTransfer[]; alese: PropunereTransfer[]; ciorne: Comanda[]; propusi: string[];
-    } {
-      const propuneri = propuneriDinDepozit(ramasPeNecesar(st, n), deschis());
-      const alese = propuneri.filter((p) => !a.nebifate.has(cheiePropunere(p)));
-      const acum = new Date().toISOString();
-      const dupa = { ...st, miscari: [...st.miscari, ...transferuri(n, alese, id, acum)] };
-      const firma = citestePlanuri().find((p) => p.id === n.santier)?.firma ?? "RADOIA ISOLIRUNG SRL";
-      const brute = ciorneDinRamas(ramasPeNecesar(dupa, n),
-        { firma, spre: depozitNecesar(n), ...(n.santier ? { santier: n.santier } : {}) }, id, acum,
-        (art, f) => pretPropus(art, f, st.miscari));
-      const ciorne = brute.map((c) => {
-          const f = a.furnizori.get(c.furnizor);
-          if (!f || f === c.furnizor) return c;
-          // Alt furnizor: prețurile propuse se iau de la el, ca pe ciornă.
-          return { ...c, furnizor: f, linii: c.linii.map((l) => {
-            const { pret: _p, ...fara } = l;
-            const p = pretPropus(l.articol, f, st.miscari);
-            return p ? { ...fara, pret: p } : fara;
-          }) };
-        });
-      return { propuneri, alese, ciorne, propusi: brute.map((c) => c.furnizor) };
-    }
-
-    function ecranComanda(n: NecesarLucrare): string {
-      let k = 0;
-      // Cardul fiecărei ciorne ține furnizorul propus, ca alegerea omului să rămână pe ea.
-      const { propuneri, alese, ciorne, propusi } = planComanda(n, comanda!, () => `p${++k}`);
-      const pas = propuneri.length > 0 ? 2 : 1;
-      const buton = alese.length > 0 && ciorne.length > 0
-        ? `Mută din depozit și fă ${ciorne.length === 1 ? "comanda" : `cele ${ciorne.length} comenzi`}`
-        : alese.length > 0 ? "Mută din depozit" : ciorne.length === 1 ? "Fă comanda" : `Fă cele ${ciorne.length} comenzi`;
-      return `<section class="imp-card">
-        <p style="margin:0 0 8px"><button type="button" class="legatura" data-act="inapoi">‹ Înapoi la De cumpărat</button></p>
-        <h2>Comandă ce lipsește · ${esc(titluNecesar(n))}</h2>
-        <p class="hint" style="margin:0">Întâi se ia ce există în depozit, apoi se comandă restul, la furnizorul de la care cumpărați de obicei.</p>
-        ${propuneri.length > 0 ? `<h3>1. Din depozit</h3>
-          <div class="mat-bife">${propuneri.map((p) => `<label class="mat-bifa">
-            <input type="checkbox" data-act="bifa" value="${esc(cheiePropunere(p))}"${comanda!.nebifate.has(cheiePropunere(p)) ? "" : " checked"} />
-            <span>${esc(numeArticol(p.articol))}: <strong>${cantitate(p.cantitate, p.articol.um)}</strong> din ${esc(numeDepozit(p.din))}</span>
-          </label>`).join("")}</div>` : ""}
-        <h3>${pas}. De comandat${ciorne.length ? `: ${ciorne.length === 1 ? "o comandă" : `${ciorne.length} comenzi`}` : ""}</h3>
-        ${ciorne.length === 0 ? `<p class="hint" style="margin:0">Nimic: ce lipsește se ia din depozit.</p>` : `<div class="mat-ciorne">${ciorne.map((c, i) => {
-          const cheie = propusi[i]!;
-          const furnizori = [...new Set([c.furnizor, ...FURNIZORI.map(([f]) => f)])];
-          return `<div class="mat-ciorna">
-            <div class="mat-ciorna-cap"><strong>${esc(c.furnizor)}</strong>
-              <label>Alt furnizor<select data-act="furnizor" data-propus="${esc(cheie)}">${furnizori.map((f) =>
-                `<option${f === c.furnizor ? " selected" : ""}>${esc(f)}</option>`).join("")}</select></label></div>
-            <ul>${c.linii.map((l) => `<li><span>${esc(denumireComanda(l.articol))}</span><strong>${esc(cantitateComanda(l))}</strong></li>`).join("")}</ul>
-          </div>`;
-        }).join("")}</div>
-        <p class="hint">Cantitățile sunt la ambalaj întreg, cum cumpărați. Le poți schimba pe ciornă, în Comenzi, înainte s-o trimiți.</p>`}
-        <div class="imp-formular-butoane">
-          ${alese.length > 0 || ciorne.length > 0 ? `<button type="button" class="primar" data-act="confirma" data-id="${esc(n.id)}">${buton}</button>` : ""}
-          <button type="button" class="secundar" data-act="inapoi">Renunță</button>
-        </div>
-      </section>`;
-    }
-
     // Lista se scrie în tabel, ca în Excel (15 octombrie 2026).
     legaCelule(root, {
       scrie: (el) => {
@@ -311,16 +186,14 @@ export const ecran: Ecran = {
       switch (b.dataset["act"]) {
         case "schimba": editare.add(id); deseneaza(); return;
         case "gata": editare.delete(id); deseneaza(); return;
-        case "comanda": comanda = { id, nebifate: new Set(), furnizori: new Map() }; deseneaza(); scrollTo({ top: 0 }); return;
+        case "comanda": comanda = alegereNoua(id); deseneaza(); scrollTo({ top: 0 }); return;
         case "inapoi": comanda = null; deseneaza(); return;
         case "confirma": {
           const n = st.necesare.find((x) => x.id === id);
           if (!n || !comanda) return;
-          const { alese, ciorne } = planComanda(n, comanda, idNou);
-          if (alese.length > 0) {
-            st = { ...st, miscari: [...st.miscari, ...transferuri(n, alese, idNou, new Date().toISOString())] };
-            salveaza();
-          }
+          const r = aplicaComanda(st, n, comanda, idNou);
+          const ciorne = r.ciorne;
+          if (r.mutate > 0) { st = r.st; salveaza(); }
           for (const c of ciorne) puneComanda(c);
           comanda = null;
           if (ciorne.length > 0) { location.hash = "#/comenzi"; return; }
@@ -371,16 +244,7 @@ export const ecran: Ecran = {
 
     root.addEventListener("change", (e) => {
       const t = e.target as HTMLInputElement | HTMLSelectElement;
-      if (t.dataset["act"] === "bifa" && comanda) {
-        if ((t as HTMLInputElement).checked) comanda.nebifate.delete(t.value); else comanda.nebifate.add(t.value);
-        deseneaza();
-        return;
-      }
-      if (t.dataset["act"] === "furnizor" && comanda) {
-        comanda.furnizori.set(t.dataset["propus"]!, t.value);
-        deseneaza();
-        return;
-      }
+      if (comanda && schimbaAlegerea(comanda, t)) { deseneaza(); return; }
       if (t.dataset["act"] === "santier") {
         const id = t.dataset["id"];
         st = { ...st, necesare: st.necesare.map((n) => {

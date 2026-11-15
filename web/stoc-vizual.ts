@@ -4,10 +4,11 @@
  * `web/import/vizual.ts`: fara DOM, testat in Node, orice text din date trece
  * prin `esc()`.
  */
-import { esc, tabel } from "./ecrane/tip.js";
+import { esc, stare, tabel } from "./ecrane/tip.js";
 import { MATERIAL } from "./import/text.js";
 import type { Sistem } from "../src/pricing/types.js";
-import type { Categorie, Necesar } from "../src/stoc/necesar.js";
+import type { Categorie, MaterialNecesar, Necesar } from "../src/stoc/necesar.js";
+import type { DeComandatSantier } from "../src/stoc/comenzi.js";
 import { articolDin, formaArticol, type UM } from "../src/stoc/registru.js";
 
 /** 50 → „50", 0.8 → „0,8", 12.345 → „12,35". */
@@ -46,6 +47,49 @@ export function fileMateriale(activ: "materiale" | "comenzi" | "depozit", n: { d
     `<a href="#/${id}" class="fila"${id === activ ? ' aria-current="page"' : ""}>${eticheta}${numar ? ` <b>${cifra(numar)}</b>` : ""}</a>`;
   return `<nav class="file" aria-label="Materiale">${fila("materiale", "De cumpărat", n.deCumparat)}${
     fila("comenzi", "Comenzi", n.comenzi)}${fila("depozit", "Depozit")}</nav>`;
+}
+
+/** Ce e un material pe listă, pentru om: clientul îl dă, lipsește, e în ciornă, vine, sau e tot. */
+export type FelMaterial = "client" | "lipsa" | "ciorna" | "vine" | "gata";
+
+export function felMaterial(m: Pick<MaterialNecesar, "alClientului">, d: DeComandatSantier | undefined): FelMaterial {
+  if (m.alClientului || !d) return "client";
+  if (d.ramas > 0) return "lipsa";
+  if (d.inCiorna > 0) return "ciorna";
+  if (d.comandat > 0) return "vine";
+  return "gata";
+}
+
+/**
+ * Starea unui material, în cuvintele omului: ce lipsește, ce vine, ce e gata.
+ * Aceeași în Materiale › De cumpărat și pe fila Materiale a lucrării.
+ */
+export function stareMaterial(m: Pick<MaterialNecesar, "alClientului">, d: DeComandatSantier | undefined): string {
+  const um = d?.articol.um ?? "ml";
+  switch (felMaterial(m, d)) {
+    case "client": return stare("Îl dă clientul", "neutru");
+    case "lipsa": return `${stare(`Lipsește ${cantitate(d!.ramas, um)}`, "atentie")}${
+      d!.comandat > 0 ? `<br><span class="hint">${cantitate(d!.comandat, um)} comandat, vine</span>` : ""}`;
+    case "ciorna": return stare("În ciornă, de trimis", "atentie");
+    case "vine": return stare(`Comandat, vine ${cantitate(d!.comandat, um)}`, "neutru");
+    case "gata": return stare("Are tot", "ok");
+  }
+}
+
+/** „14 materiale: 13 lipsesc, 1 e comandat și vine.” */
+export function propozitieMateriale(materiale: readonly MaterialNecesar[], r: readonly DeComandatSantier[]): string {
+  const pe = new Map(r.map((d) => [d.material, d]));
+  const n: Record<FelMaterial, number> = { client: 0, lipsa: 0, ciorna: 0, vine: 0, gata: 0 };
+  for (const m of materiale) n[felMaterial(m, pe.get(m))]++;
+  const parti = [
+    n.lipsa ? `<strong>${n.lipsa === 1 ? "1 lipsește" : `${cifra(n.lipsa)} lipsesc`}</strong>` : "",
+    n.ciorna ? `${n.ciorna === 1 ? "1 e pe o comandă netrimisă" : `${cifra(n.ciorna)} sunt pe comenzi netrimise`}` : "",
+    n.vine ? `${n.vine === 1 ? "1 e comandat și vine" : `${cifra(n.vine)} sunt comandate și vin`}` : "",
+    n.gata ? `${n.gata === 1 ? "1 e pe șantier" : `${cifra(n.gata)} sunt pe șantier`}` : "",
+    n.client ? `${n.client === 1 ? "1 îl dă clientul" : `${cifra(n.client)} le dă clientul`}` : "",
+  ].filter(Boolean);
+  const total = materiale.length;
+  return `${total === 1 ? "Un material" : `${cifra(total)} materiale`}: ${parti.join(", ")}.`;
 }
 
 /** Pragul tub / placă: până la ce diametru se comandă tuburi (S12). */
