@@ -684,7 +684,7 @@ a.legatura { display: inline-flex; align-items: center; }
 .imp-coloane { display: flex; flex-wrap: wrap; align-items: center; gap: 0 10px; margin: 0; font-size: 15px; color: var(--slab); }
 .imp-coloane .legatura { display: inline-flex; align-items: center; min-height: 44px; padding: 0 4px; font-size: 15px; }
 .imp-coloane-alege { display: grid; gap: 8px; margin: 4px 0 12px; }
-.imp-coloane-alege .fila { padding: 0 12px; }
+.imp-coloane-alege .fila { padding: 0 12px; min-width: 44px; justify-content: center; }
 .imp-coloane-alege .fila .hint { font-size: 13px; }
 .imp-coloane-alege .imp-formular-butoane { margin-top: 4px; }
 @container imp (max-width: 619px) {
@@ -862,6 +862,8 @@ a.legatura { display: inline-flex; align-items: center; }
 .imp-toast {
   position: fixed; left: 50%; bottom: max(24px, env(safe-area-inset-bottom)); z-index: 40; transform: translateX(-50%);
   display: flex; align-items: center; gap: 10px; max-width: calc(100vw - 32px);
+  /* Fără lățime dată, `left: 50%` îl strângea la jumătatea ecranului: pe telefon, un cuvânt pe rând. */
+  width: max-content;
   padding: 6px 8px 6px 16px; border-radius: 12px; background: var(--text); color: var(--bg);
   box-shadow: 0 8px 28px rgba(0, 0, 0, .25);
 }
@@ -1068,6 +1070,8 @@ main details.imp-card[open] > summary { margin-bottom: 12px; }
   table.stiva td:first-child { flex-basis: 100%; font-weight: 600; }
   table.stiva td:first-child[data-eticheta]::before { display: none; }
   table.stiva td.n, table.stiva td.fix { text-align: left; white-space: normal; }
+  /* „Lăsate afară”: descrierea, lungă, pe tot rândul cardului; lângă UM se strângea pe jumătate. */
+  table.stiva td.afara-desc { flex-basis: 100%; }
 }
 @container (max-width: 900px) {
   table.stiva.lat tr { gap: 8px 16px; padding: 14px 0; }

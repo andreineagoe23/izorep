@@ -18,7 +18,7 @@ export function listaAfara(randuri: readonly LasatAfara[], cuFoaie: boolean): st
   }
   const linii = randuri.map((r) => `<tr data-idx="${r.index}">
     <td>${cuFoaie ? `${esc(r.foaie)} · ` : ""}${r.rand}</td>
-    <td>${esc(r.text)}${r.motiv ? `<br><span class="hint">${DE_CE[r.motiv]}</span>` : ""}</td>
+    <td class="afara-desc">${esc(r.text)}${r.motiv ? `<br><span class="hint">${DE_CE[r.motiv]}</span>` : ""}</td>
     <td>${esc(r.um)}</td>
     <td class="n">${r.cantitate.toLocaleString("ro-RO", { maximumFractionDigits: 3 })}</td>
     <td class="fix"><button type="button" class="secundar" data-act="e-izolatie" data-idx="${r.index}">E izolație</button></td>

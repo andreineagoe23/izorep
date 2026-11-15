@@ -447,6 +447,13 @@ describe("fila Materiale a lucrării (planul UX, Faza 4)", () => {
     const tot = [intrare(vata, 55), intrare(tabla, 70), intrare(el13, 40), intrare(elastomer, 200), intrare(vata30, 12)];
     expect(cardMaterial(lucrareX(p, materialeMici, tot))).toContain("Toate cele 5 materiale sunt pe șantier");
   });
+
+  it("costul: cu nimic venit, o propoziție în loc de „0,00 €, 0 %”", () => {
+    const gol = cardMaterial(lucrareX(p, materialeMici, []));
+    expect(gol).toContain("după ce vine primul material pe șantier");
+    expect(gol).not.toContain("Costul materialului, până acum");
+    expect(cardMaterial(lucrareX(p, materialeMici, [intrare(vata, 55)]))).toContain("Costul materialului, până acum");
+  });
 });
 
 describe("marcajul (web/inchidere-vizual.ts, web/rapoarte-vizual.ts)", () => {
