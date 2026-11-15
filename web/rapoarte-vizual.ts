@@ -5,7 +5,7 @@
  */
 import { cate, esc, eur, tabel } from "./ecrane/tip.js";
 import { cifra } from "./stoc-vizual.js";
-import type { Alerta, ListaSaptamanala, SantierInchis } from "../src/lucrari/rapoarte.js";
+import { ZILE_COMANDA, type Alerta, type ListaSaptamanala, type SantierInchis } from "../src/lucrari/rapoarte.js";
 
 const zi = (iso: string): string => new Date(iso).toLocaleDateString("ro-RO");
 
@@ -13,7 +13,7 @@ const zi = (iso: string): string => new Date(iso).toLocaleDateString("ro-RO");
  * Liniile din „De făcut”, cu butonul spre ecranul care rezolvă. Lipsa și
  * pierderea duc direct pe fila „Materiale” a șantierului: acolo se văd.
  */
-export function alerteAtentie(a: readonly Alerta[]): { href: string; html: string; actiune: string }[] {
+export function alerteAtentie(a: readonly Alerta[]): { href: string; html: string; actiune: string; intarziat?: string }[] {
   return a.map((x) => {
     switch (x.fel) {
       case "lipsa":
@@ -32,11 +32,14 @@ export function alerteAtentie(a: readonly Alerta[]): { href: string; html: strin
         };
       case "comanda":
         // Marfa se primește din Comenzi („A venit marfa”), nu de pe lucrare.
+        // Din prima zi pe Acasă; de la `ZILE_COMANDA` zile, marcată.
         return {
           href: "#/comenzi",
           actiune: "A venit marfa?",
           html: `Comanda la <b>${esc(x.furnizor)}</b>${x.pentru ? ` pentru ${esc(x.pentru)}` : " pentru depozit"}, trimisă pe
-            ${esc(zi(x.trimisa))}, ${x.partial ? "a venit doar în parte" : "n-a venit"} de ${cate(x.zile, "zile")}.`,
+            ${esc(zi(x.trimisa))}, ${x.partial ? "a venit doar în parte" : "n-a venit"}${
+            x.zile === 0 ? " încă" : x.zile === 1 ? " de o zi" : ` de ${cate(x.zile, "zile")}`}.`,
+          ...(x.zile >= ZILE_COMANDA ? { intarziat: "Sună furnizorul" } : {}),
         };
     }
   });

@@ -130,7 +130,7 @@ describe("Acasă, „De făcut” (planul UX, Faza 5)", () => {
       [{ ...b, deVerificat: 2 }, "Verifică 2 poziții", "cerere"],
       [{ ...b, deVerificat: 1 }, "Verifică o poziție", "cerere"],
       [b, "Termină oferta", "oferta"],
-      [{ ...b, oferta: of(ZILE_RASPUNS) }, "Întreabă clientul", "oferta"],
+      [{ ...b, oferta: of(ZILE_RASPUNS) }, "Notează răspunsul", "oferta"],
       [{ ...b, oferta: of(1), santier: sant({ deComandat: 3 }) }, "Comandă ce lipsește", "materiale"],
       [{ ...b, oferta: of(1), santier: sant({ deTrimis: 13 }) }, "Trimite comenzile", "materiale"],
       [{ ...b, oferta: of(1), santier: sant({ ultimaSituatie: inainte(ZILE_SITUATIE) }) }, "Fă situația", "situatii"],
@@ -143,12 +143,29 @@ describe("Acasă, „De făcut” (planul UX, Faza 5)", () => {
     }
   });
 
-  it("vechimea: oferta după 14 zile, situația după 30; mai devreme, nimic", () => {
-    expect(deFacutLucrare({ ...b, oferta: of(ZILE_RASPUNS - 1) }, azi)).toBeNull();
-    expect(deFacutLucrare({ ...b, oferta: of(20) }, azi)!.text).toBe("Oferta RAD284 e făcută din 27.05.2026. Ce a răspuns clientul? Aștepți răspunsul de 20 de zile.");
+  it("oferta fără răspuns apare din prima zi, cu vechimea; după 14 zile e marcată; situația după 30", () => {
+    const azi0 = deFacutLucrare({ ...b, oferta: of(0) }, azi)!;
+    expect(azi0).toMatchObject({ grup: "raspuns", buton: "Notează răspunsul", fila: "oferta", zile: 0 });
+    expect(azi0.text).toBe("Oferta RAD284 e făcută din 27.05.2026. Ce a răspuns clientul? Făcută azi.");
+    expect(azi0.intarziat).toBeUndefined();
+    expect(deFacutLucrare({ ...b, oferta: of(3) }, azi)!.text).toMatch(/Aștepți răspunsul de 3 zile\.$/);
+    expect(deFacutLucrare({ ...b, oferta: of(ZILE_RASPUNS - 1) }, azi)!.intarziat).toBeUndefined();
+    expect(deFacutLucrare({ ...b, oferta: of(20) }, azi)).toMatchObject({
+      text: "Oferta RAD284 e făcută din 27.05.2026. Ce a răspuns clientul? Aștepți răspunsul de 20 de zile.",
+      intarziat: "Întreabă clientul",
+    });
     expect(deFacutLucrare({ ...b, oferta: of(1), santier: sant({ ultimaSituatie: inainte(ZILE_SITUATIE - 1) }) }, azi)).toBeNull();
     expect(deFacutLucrare({ ...b, oferta: of(1), santier: sant({ ultimaSituatie: inainte(45) }) }, azi)!.text)
       .toBe("Șantierul e în lucru: 40 % executat. Nicio situație nouă de 45 de zile.");
+  });
+
+  it("grupurile, în ordinea fluxului", () => {
+    const g = (s: StareLucrare): string | undefined => deFacutLucrare(s, azi)?.grup;
+    expect(g({ ...b, deVerificat: 2 })).toBe("birou");
+    expect(g(b)).toBe("birou");
+    expect(g({ ...b, oferta: of(0) })).toBe("raspuns");
+    expect(g({ ...b, oferta: of(1), santier: sant({ deComandat: 3 }) })).toBe("santiere");
+    expect(g({ ...b, oferta: of(1), santier: sant({ progres: 100 }) })).toBe("santiere");
   });
 
   it("ciornele netrimise: pasul e „Trimite comenzile”, spre Comenzi, după ce nu mai e nimic de comandat", () => {

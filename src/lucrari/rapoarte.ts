@@ -162,7 +162,11 @@ export function lipsaPeSantier(p: PlanSantier, d: DateRapoarte): number {
 }
 
 /** Alertele, in ordinea in care cer ceva: lipsa, pierderea, comenzile. */
-export function alerte(planuri: readonly PlanSantier[], d: DateRapoarte, azi: string): Alerta[] {
+/**
+ * `zileComanda`: de câte zile o comandă trimisă și nevenită e alertă. Acasă
+ * le vrea pe toate, din prima zi (0), și o marchează pe cea de `ZILE_COMANDA`.
+ */
+export function alerte(planuri: readonly PlanSantier[], d: DateRapoarte, azi: string, zileComanda = ZILE_COMANDA): Alerta[] {
   const out: Alerta[] = [];
   for (const p of planuri) {
     const materiale = lipsaPeSantier(p, d);
@@ -180,7 +184,7 @@ export function alerte(planuri: readonly PlanSantier[], d: DateRapoarte, azi: st
     const st = stareComanda(c, d.miscari);
     if (st !== "trimisa" && st !== "partial") continue;
     const zile = zileIntre(c.trimisa, azi);
-    if (zile < ZILE_COMANDA) continue;
+    if (zile < zileComanda) continue;
     const pentru = c.santier ? (nume.get(c.santier) ?? c.santier) : "";
     out.push({ fel: "comanda", comanda: c.id, furnizor: c.furnizor, pentru, trimisa: c.trimisa, zile, partial: st === "partial" });
   }

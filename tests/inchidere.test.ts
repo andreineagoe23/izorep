@@ -287,6 +287,9 @@ describe("rapoartele (S49)", () => {
     const a = alerte([planMic], { miscari: [], necesare: [], comenzi: [c("veche", "2026-10-01T08:00:00.000Z"), c("noua", "2026-10-10T08:00:00.000Z")] }, azi);
     expect(a).toEqual([{ fel: "comanda", comanda: "veche", furnizor: "Isoline", pentru: "Hala test", trimisa: "2026-10-01T08:00:00.000Z", zile: 10, partial: false }]);
     expect(ZILE_COMANDA).toBe(7);
+    // Acasă le vrea din prima zi.
+    const toate = alerte([planMic], { miscari: [], necesare: [], comenzi: [c("veche", "2026-10-01T08:00:00.000Z"), c("noua", "2026-10-10T08:00:00.000Z")] }, azi, 0);
+    expect(toate.map((x) => x.fel === "comanda" && [x.comanda, x.zile])).toEqual([["veche", 10], ["noua", 1]]);
   });
 
   it("comanda deschisă pe un șantier închis nu mai e alertă (13 octombrie 2026, starea de demo)", () => {

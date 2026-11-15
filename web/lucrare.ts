@@ -224,9 +224,9 @@ export function stareFile(s: StareLucrare): Record<FilaLucrare, { gata: boolean;
 /* ---------------------------------------------------- Acasă, „De făcut” */
 
 /**
- * O ofertă fără răspuns intră la „De făcut” după 14 zile de la salvare: mai
- * devreme, clientul încă se uită la ea, iar lista s-ar umple cu fiecare ofertă
- * proaspătă. Pragul e al nostru (planul UX, Faza 5).
+ * O ofertă fără răspuns e pe Acasă din prima zi (15 noiembrie 2026: oamenii
+ * firmei uitau ofertele trimise). După 14 zile rândul e marcat și spune să
+ * întrebi clientul. Pragul e al nostru (planul UX, Faza 5).
  */
 export const ZILE_RASPUNS = 14;
 
@@ -246,9 +246,23 @@ export const zileDe = (de: string | undefined, azi: string): number => {
 
 const deZile = (n: number): string => (n === 1 ? "de o zi" : `de ${n}${n % 100 >= 20 || n % 100 === 0 ? " de" : ""} zile`);
 
+/**
+ * Grupurile de pe Acasă, în ordinea fluxului: ce e de terminat la birou,
+ * ofertele care așteaptă clientul, șantierele în lucru, marfa.
+ */
+export type GrupAcasa = "birou" | "raspuns" | "santiere" | "marfa";
+
+export const GRUPURI_ACASA: { id: GrupAcasa; titlu: string }[] = [
+  { id: "birou", titlu: "De terminat la birou" },
+  { id: "raspuns", titlu: "Așteaptă răspunsul clientului" },
+  { id: "santiere", titlu: "Șantiere în lucru" },
+  { id: "marfa", titlu: "Marfă și materiale" },
+];
+
 export interface LucruDeFacut {
   /** Pasul din „Urmează” care l-a dat. */
   fel: "verifica" | "oferta" | "raspuns" | "inchide" | "comanda" | "trimite" | "situatie";
+  grup: GrupAcasa;
   /** Propoziția din „Urmează”, cu vechimea unde contează. */
   text: string;
   /** Butonul de pe Acasă. */
@@ -257,36 +271,44 @@ export interface LucruDeFacut {
   fila: FilaLucrare;
   /** Când butonul duce în afara lucrării (ciornele, la Comenzi). */
   href?: string;
+  /** Așteaptă de prea mult: rândul e marcat, cu ce e de făcut. */
+  intarziat?: string;
+  /** Câte zile așteaptă (ofertele: cele mai vechi întâi). */
+  zile?: number;
 }
 
 /**
- * Ce are de făcut omul pe o lucrare, pe Acasă (planul UX, Faza 5): un rând pe
- * lucrare, din același `urmeaza` ca rândul de pe pagina ei și ca lista
- * Lucrări, deci cele trei spun același lucru. Acasă arată doar ce cere mâna
- * omului acum: oferta fără răspuns abia după `ZILE_RASPUNS`, situația abia
- * după `ZILE_SITUATIE`; lucrarea refuzată sau închisă, nimic.
+ * Ce a rămas de făcut pe o lucrare, pe Acasă: un rând pe lucrare, din același
+ * `urmeaza` ca rândul de pe pagina ei și ca lista Lucrări, deci cele trei spun
+ * același lucru. Oferta fără răspuns apare din prima zi, cu vechimea; după
+ * `ZILE_RASPUNS` e marcată. Șantierul fără nimic de făcut apare doar când n-a
+ * avut situație de `ZILE_SITUATIE`; lucrarea refuzată sau închisă, nimic.
  */
 export function deFacutLucrare(s: StareLucrare, azi: string): LucruDeFacut | null {
   const u = urmeaza(s);
   const st = s.santier;
   if (st?.inchis) return null;
   if (st) {
-    if (st.progres >= 100) return { fel: "inchide", text: u.text, buton: "Închide șantierul", fila: "inchidere" };
-    if (st.deComandat > 0) return { fel: "comanda", text: u.text, buton: "Comandă ce lipsește", fila: "materiale" };
-    if ((st.deTrimis ?? 0) > 0) return { fel: "trimite", text: u.text, buton: "Trimite comenzile", fila: "materiale", href: "#/comenzi" };
+    const g = "santiere" as const;
+    if (st.progres >= 100) return { fel: "inchide", grup: g, text: u.text, buton: "Închide șantierul", fila: "inchidere" };
+    if (st.deComandat > 0) return { fel: "comanda", grup: g, text: u.text, buton: "Comandă ce lipsește", fila: "materiale" };
+    if ((st.deTrimis ?? 0) > 0) return { fel: "trimite", grup: g, text: u.text, buton: "Trimite comenzile", fila: "materiale", href: "#/comenzi" };
     const zile = zileDe(st.ultimaSituatie, azi);
     if (zile < ZILE_SITUATIE) return null;
     return {
-      fel: "situatie", buton: "Fă situația", fila: "situatii",
+      fel: "situatie", grup: g, buton: "Fă situația", fila: "situatii", zile,
       text: `${u.text} ${st.ultimaSituatie ? `Nicio situație nouă ${deZile(zile)}.` : ""}`.trim(),
     };
   }
   if (s.refuzat) return null;
   if (s.areCerere && s.deVerificat > 0) {
-    return { fel: "verifica", text: u.text, buton: `Verifică ${s.deVerificat === 1 ? "o poziție" : `${s.deVerificat}${s.deVerificat % 100 >= 20 ? " de" : ""} poziții`}`, fila: "cerere" };
+    return { fel: "verifica", grup: "birou", text: u.text, buton: `Verifică ${s.deVerificat === 1 ? "o poziție" : `${s.deVerificat}${s.deVerificat % 100 >= 20 ? " de" : ""} poziții`}`, fila: "cerere" };
   }
-  if (!s.oferta) return { fel: "oferta", text: u.text, buton: "Termină oferta", fila: "oferta" };
+  if (!s.oferta) return { fel: "oferta", grup: "birou", text: u.text, buton: "Termină oferta", fila: "oferta" };
   const zile = zileDe(s.oferta.cand, azi);
-  if (zile < ZILE_RASPUNS) return null;
-  return { fel: "raspuns", text: `${u.text} Aștepți răspunsul ${deZile(zile)}.`, buton: "Întreabă clientul", fila: "oferta" };
+  const vechime = zile === 0 ? "Făcută azi." : `Aștepți răspunsul ${deZile(zile)}.`;
+  return {
+    fel: "raspuns", grup: "raspuns", text: `${u.text} ${vechime}`, buton: "Notează răspunsul", fila: "oferta", zile,
+    ...(zile >= ZILE_RASPUNS ? { intarziat: "Întreabă clientul" } : {}),
+  };
 }
