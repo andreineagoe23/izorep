@@ -24,12 +24,10 @@ import {
 } from "../date.js";
 import { legaPanouStergere, panouStergere } from "../confirmare.js";
 import { ceriSpatiu } from "../meniu-stare.js";
-import { ramasPeNecesar } from "../materiale.js";
-import { progresPlan, type PlanSantier } from "../../src/lucrari/situatii.js";
-import type { StareDepozit } from "../depozit-local.js";
+import { stareLucrarii } from "../stare-lucrare.js";
 import {
-  FILE_LUCRARE, STADII, clientLucrare, deVerificatCerere, gasesteLucrarea, lucrariDin, refuzata, stadiu, stareFile,
-  titluLucrare, urmeaza, ziRo, type FilaLucrare, type Lucrare, type Stadiu, type StareLucrare, type Urmeaza,
+  FILE_LUCRARE, STADII, clientLucrare, gasesteLucrarea, lucrariDin, refuzata, stadiu, stareFile,
+  titluLucrare, urmeaza, type FilaLucrare, type Lucrare, type Stadiu, type StareLucrare, type Urmeaza,
 } from "../lucrare.js";
 import type { ControlImport, ParteImport } from "./import.js";
 import type { ControlSantier, FilaSantier } from "./santier-panou.js";
@@ -39,32 +37,6 @@ const SUBTITLU = "Fiecare cerere de la client, cu oferta și șantierul ei.";
 
 /** Ce s-a șters de pe pagina unei lucrări, spus o dată pe listă. */
 let mesajLista = "";
-
-/**
- * Câte materiale mai sunt de comandat pe șantier, ca în Materiale, și câte nu
- * sunt încă toate pe șantier (lipsesc, în ciornă, comandate și nevenite); pe
- * unul închis, nimic.
- */
-export function materialePlan(p: PlanSantier, dep: StareDepozit): { deComandat: number; neadus: number } {
-  if (p.inchis) return { deComandat: 0, neadus: 0 };
-  const n = dep.necesare.find((x) => x.santier === p.id);
-  if (!n) return { deComandat: 0, neadus: 0 };
-  const r = ramasPeNecesar(dep, n);
-  return {
-    deComandat: r.filter((d) => d.ramas > 0).length,
-    neadus: r.filter((d) => !d.material.alClientului && (d.ramas > 0 || d.comandat > 0 || d.inCiorna > 0)).length,
-  };
-}
-
-function stareLucrarii(l: Lucrare, dep: StareDepozit): StareLucrare {
-  return {
-    deVerificat: l.cerere ? deVerificatCerere(l.cerere) : 0,
-    areCerere: !!l.cerere,
-    oferta: l.oferta ? { numar: l.oferta.numar, data: l.oferta.data || ziRo(l.oferta.cand) } : undefined,
-    refuzat: refuzata(l),
-    santier: l.plan ? { inchis: l.plan.inchis, ...materialePlan(l.plan, dep), progres: progresPlan(l.plan) } : undefined,
-  };
-}
 
 const adresaLucrare = (id: string, fila?: string): string =>
   `#/lucrari/${encodeURIComponent(id)}${fila ? `/${fila}` : ""}`;

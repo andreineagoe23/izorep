@@ -94,7 +94,8 @@ export interface StareLucrare {
   /** Pozițiile de verificat și cele fără preț, din cerere. */
   deVerificat: number;
   areCerere: boolean;
-  oferta?: { numar: string; data: string } | undefined;
+  /** `cand`: ISO, când s-a salvat oferta (de acolo „aștepți de N zile”). */
+  oferta?: { numar: string; data: string; cand?: string | undefined } | undefined;
   /** ISO. */
   refuzat?: string | undefined;
   santier?: {
@@ -107,6 +108,8 @@ export interface StareLucrare {
      * comandate și nevenite). Fără el, se socotește `deComandat`.
      */
     neadus?: number | undefined;
+    /** ISO: ultima situație; fără situații, pornirea șantierului (pentru „Fă situația”). */
+    ultimaSituatie?: string | undefined;
     /** Cât s-a executat, în procente din ofertă. */
     progres: number;
   } | undefined;
@@ -205,4 +208,71 @@ export function stareFile(s: StareLucrare): Record<FilaLucrare, { gata: boolean;
     situatii: st ? { gata: st.progres >= 100 } : { gata: false, inchisa: faraSantier },
     inchidere: st ? { gata: !!st.inchis } : { gata: false, inchisa: faraSantier },
   };
+}
+
+/* ---------------------------------------------------- Acasă, „De făcut” */
+
+/**
+ * O ofertă fără răspuns intră la „De făcut” după 14 zile de la salvare: mai
+ * devreme, clientul încă se uită la ea, iar lista s-ar umple cu fiecare ofertă
+ * proaspătă. Pragul e al nostru (planul UX, Faza 5).
+ */
+export const ZILE_RASPUNS = 14;
+
+/**
+ * Un șantier în lucru fără situație de 30 de zile cere una: situațiile se fac
+ * lunar la firmă (decis 15 noiembrie 2026, „Decizii luate” în `docs/plan-ux.md`);
+ * fără nicio situație, se numără de la pornirea șantierului.
+ */
+export const ZILE_SITUATIE = 30;
+
+const ZI_MS = 24 * 60 * 60 * 1000;
+/** Zile întregi între două date ISO; o dată lipsă sau stricată dă 0. */
+export const zileDe = (de: string | undefined, azi: string): number => {
+  const t = de ? Date.parse(de) : NaN;
+  return Number.isNaN(t) ? 0 : Math.max(0, Math.floor((Date.parse(azi) - t) / ZI_MS));
+};
+
+const deZile = (n: number): string => (n === 1 ? "de o zi" : `de ${n}${n % 100 >= 20 || n % 100 === 0 ? " de" : ""} zile`);
+
+export interface LucruDeFacut {
+  /** Pasul din „Urmează” care l-a dat. */
+  fel: "verifica" | "oferta" | "raspuns" | "inchide" | "comanda" | "situatie";
+  /** Propoziția din „Urmează”, cu vechimea unde contează. */
+  text: string;
+  /** Butonul de pe Acasă. */
+  buton: string;
+  /** Fila lucrării pe care duce butonul. */
+  fila: FilaLucrare;
+}
+
+/**
+ * Ce are de făcut omul pe o lucrare, pe Acasă (planul UX, Faza 5): un rând pe
+ * lucrare, din același `urmeaza` ca rândul de pe pagina ei și ca lista
+ * Lucrări, deci cele trei spun același lucru. Acasă arată doar ce cere mâna
+ * omului acum: oferta fără răspuns abia după `ZILE_RASPUNS`, situația abia
+ * după `ZILE_SITUATIE`; lucrarea refuzată sau închisă, nimic.
+ */
+export function deFacutLucrare(s: StareLucrare, azi: string): LucruDeFacut | null {
+  const u = urmeaza(s);
+  const st = s.santier;
+  if (st?.inchis) return null;
+  if (st) {
+    if (st.progres >= 100) return { fel: "inchide", text: u.text, buton: "Închide șantierul", fila: "inchidere" };
+    if (st.deComandat > 0) return { fel: "comanda", text: u.text, buton: "Comandă ce lipsește", fila: "materiale" };
+    const zile = zileDe(st.ultimaSituatie, azi);
+    if (zile < ZILE_SITUATIE) return null;
+    return {
+      fel: "situatie", buton: "Fă situația", fila: "situatii",
+      text: `${u.text} ${st.ultimaSituatie ? `Nicio situație nouă ${deZile(zile)}.` : ""}`.trim(),
+    };
+  }
+  if (s.refuzat) return null;
+  if (s.areCerere && s.deVerificat > 0) {
+    return { fel: "verifica", text: u.text, buton: `Verifică ${s.deVerificat === 1 ? "o poziție" : `${s.deVerificat}${s.deVerificat % 100 >= 20 ? " de" : ""} poziții`}`, fila: "cerere" };
+  }
+  if (!s.oferta) return { fel: "oferta", text: u.text, buton: "Termină oferta", fila: "oferta" };
+  const zile = zileDe(s.oferta.cand, azi);
+  if (zile < ZILE_RASPUNS) return null;
+  return { fel: "raspuns", text: `${u.text} Aștepți răspunsul ${deZile(zile)}.`, buton: "Întreabă clientul", fila: "oferta" };
 }

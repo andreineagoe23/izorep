@@ -31,9 +31,10 @@ export function alerteAtentie(a: readonly Alerta[]): { href: string; html: strin
             arată situațiile (normal până la 10 %).`,
         };
       case "comanda":
+        // Marfa se primește din Comenzi („A venit marfa”), nu de pe lucrare.
         return {
           href: "#/comenzi",
-          actiune: "Vezi comanda",
+          actiune: "A venit marfa?",
           html: `Comanda la <b>${esc(x.furnizor)}</b>${x.pentru ? ` pentru ${esc(x.pentru)}` : " pentru depozit"}, trimisă pe
             ${esc(zi(x.trimisa))}, ${x.partial ? "a venit doar în parte" : "n-a venit"} de ${cate(x.zile, "zile")}.`,
         };

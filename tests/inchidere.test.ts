@@ -467,6 +467,9 @@ describe("marcajul (web/inchidere-vizual.ts, web/rapoarte-vizual.ts)", () => {
     ].join("");
     expect(html).not.toContain(INJECTIE);
     expect(html).toContain("Înapoi la &lt;img");
+    // Acasă (Faza 5): comanda nevenită de 7 zile duce în Comenzi, unde se primește marfa.
+    const [c] = alerteAtentie([{ fel: "comanda", comanda: "c", furnizor: "Isoline", pentru: "Hala", trimisa: ZI0, zile: 9, partial: false }]);
+    expect([c!.actiune, c!.href]).toEqual(["A venit marfa?", "#/comenzi"]);
   });
 
   it("un singur card de material: cu consumul Fazei 6 are pierderea și consumul de mână", () => {
