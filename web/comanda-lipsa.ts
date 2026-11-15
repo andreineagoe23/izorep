@@ -71,9 +71,12 @@ export function planComanda(st: StareDepozit, n: NecesarLucrare, a: AlegereComan
   return { propuneri, alese, ciorne, propusi: brute.map((c) => c.furnizor) };
 }
 
-/** Pagina „Comandă ce lipsește”; `inapoi` e textul legăturii de întoarcere. */
+/**
+ * Pagina „Comandă ce lipsește”. O singură ieșire, „Renunță” lângă butonul
+ * albastru (15 noiembrie 2026): sus mai era „‹ Înapoi la …”, care făcea același lucru.
+ */
 export function ecranComanda(
-  st: StareDepozit, n: NecesarLucrare, a: AlegereComanda, numeDepozit: (id?: string) => string, inapoi: string,
+  st: StareDepozit, n: NecesarLucrare, a: AlegereComanda, numeDepozit: (id?: string) => string,
 ): string {
   let k = 0;
   // Cardul fiecărei ciorne ține furnizorul propus, ca alegerea omului să rămână pe ea.
@@ -83,7 +86,6 @@ export function ecranComanda(
     ? `Mută din depozit și fă ${ciorne.length === 1 ? "comanda" : `cele ${ciorne.length} comenzi`}`
     : alese.length > 0 ? "Mută din depozit" : ciorne.length === 1 ? "Fă comanda" : `Fă cele ${ciorne.length} comenzi`;
   return `<section class="imp-card">
-    <p style="margin:0 0 8px"><button type="button" class="legatura" data-act="inapoi">‹ ${esc(inapoi)}</button></p>
     <h2>Comandă ce lipsește · ${esc(titluNecesar(n))}</h2>
     <p class="hint" style="margin:0">Întâi se ia ce există în depozit, apoi se comandă restul, la furnizorul de la care cumpărați de obicei.</p>
     ${propuneri.length > 0 ? `<h3>1. Din depozit</h3>

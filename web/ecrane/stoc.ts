@@ -55,7 +55,7 @@ export const ecran: Ecran = {
       const inchise = st.necesare.length - deschise.length;
       const n = comanda && deschise.find((x) => x.id === comanda!.id);
       let corp: string;
-      if (n) corp = ecranComanda(st, n, comanda!, numeDepozit, "Înapoi la De cumpărat");
+      if (n) corp = ecranComanda(st, n, comanda!, numeDepozit);
       else if (deschise.length === 0) {
         corp = `<section class="imp-card"><p class="hint" style="margin:0">${st.necesare.length === 0
           ? `Nimic de cumpărat încă. Materialele unei lucrări apar aici după ce clientul acceptă oferta: în <a href="#/lucrari">Lucrări</a>, pe lucrarea lui, „Clientul a acceptat”.`

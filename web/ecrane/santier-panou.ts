@@ -141,7 +141,7 @@ export function montezaSantier(root: HTMLElement, opt: OptiuniSantier): ControlS
     if (p.inchis) return cardInchis(cifreInchidere(p, materiale, dep.miscari, scoase));
     if (comanda && necesar && comanda.id === necesar.id) {
       const nume = (id?: string): string => depozite().find((d) => d.id === id)?.nume ?? "—";
-      return ecranComanda(dep, necesar, comanda, nume, "Înapoi la materialele lucrării");
+      return ecranComanda(dep, necesar, comanda, nume);
     }
     const ramas = necesar ? ramasPeNecesar(dep, necesar) : [];
     const lipsa = ramas.some((d) => d.ramas > 0);
@@ -158,7 +158,10 @@ export function montezaSantier(root: HTMLElement, opt: OptiuniSantier): ControlS
     // Albastru doar cât e pasul lucrării („Urmează” nu-l mai desenează pe fila asta);
     // cu tot executat, pasul e închiderea, iar comanda e albă.
     const butonComanda = !lipsa || !necesar ? undefined : progresPlan(p) < 100 ? "primar" as const : "secundar" as const;
-    return `${butoane}${card}${cardMaterial(
+    // Cu regulile deschise, lista lor e singura de pe filă și „Refă lista” singurul albastru:
+    // dedesubt era și lista șantierului, cu „Comandă ce lipsește” (15 noiembrie 2026).
+    if (card) return `${butoane}${card}`;
+    return `${butoane}${cardMaterial(
       { materiale: necesar?.materiale ?? [], ramas, santier: materialSantier(p, materiale, dep.miscari, dep.comenzi ?? [], scoase), consum: consumPlan(p, dep) },
       { ...(butonComanda ? { comanda: butonComanda } : {}), desfacut },
     )}`;
