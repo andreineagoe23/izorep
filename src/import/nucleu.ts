@@ -131,6 +131,19 @@ export interface OptiuniNucleu {
    * pe TRANSAVIA încrederea a oscilat pe prag de la o rulare la alta.
    */
   douaCitiri?: boolean;
+  /**
+   * Rândurile trimise la model care nu s-au întors citite: lotul a căzut
+   * (rețea, 502, plafonul zilnic) sau modelul a sărit linia (NISAL: 43 trimise,
+   * 35 întoarse), ori, cu două citiri, una dintre ele lipsește. Planul UX, Faza
+   * 6, punctul 7: până se citesc, nu au voie să fie „Gata” și nici să dispară;
+   * „Încearcă din nou” (`recitesteNecitite`) trimite doar rândurile astea.
+   *
+   * E al apelantului, ca `descrieriSchimbate`, și din același motiv: după
+   * `proceseazaRegistru` cine reface rezultatul (`reevalueaza`, redeschiderea
+   * unei cereri salvate) n-ar mai ști care rânduri n-au răspuns. Se umple aici;
+   * o corectură a omului pe rând îl scoate (omul l-a citit).
+   */
+  necitite?: Set<number>;
   laProgres?: (p: Progres) => void;
 }
 
@@ -166,9 +179,50 @@ async function citesteDeDouaOri(
   const [prima, adoua] = await Promise.all([extrage(linii, { faza, citire: 1 }), extrage(linii, { faza, citire: 2 })]);
   const p = doarLiniileTrimise(prima, linii);
   const a = new Map(doarLiniileTrimise(adoua, linii).map((e) => [e.index, e]));
-  return p.map((e) => {
+  // O singură citire întoarsă (lotul celeilalte a căzut) nu e „două citiri la
+  // fel”: rândul rămâne necitit, iar „Încearcă din nou” îl citește iar de două ori.
+  return p.filter((e) => a.has(e.index)).map((e) => {
     const dif = diferenteCitiri(e, a.get(e.index));
-    return dif.length === 0 ? e : { ...e, incredere: 0, motiv: `${CITIT_DIFERIT} (${dif.join(", ")}); ${e.motiv}` };
+    return dif.length === 0 ? e
+      : { ...e, incredere: 0, motiv: `${CITIT_DIFERIT} (${descrieDiferente(e, a.get(e.index)!, dif)}); ${e.motiv}` };
+  });
+}
+
+/** Ce s-a citit pe un câmp de preț, scurt și cum îl scrie clientul: „DN80”, „50 mm”, „cot”. */
+function valoareCamp(e: LinieExtrasa, camp: string): string {
+  switch (camp) {
+    case "diametru":
+      if (e.diametru_valoare === null) return "fără diametru";
+      return `${e.diametru_tip === "DN" ? "DN" : e.diametru_tip === "interior" ? "Di" : "Ø"}${String(e.diametru_valoare).replace(".", ",")}`;
+    case "grosime": return e.grosime_mm === null ? "fără grosime" : `${String(e.grosime_mm).replace(".", ",")} mm`;
+    case "sistem": return e.sistem ?? "nimic";
+    case "forma": return e.forma ?? "ml";
+    case "gol": return e.gol_latime_mm === null ? "fără gol" : `${e.gol_latime_mm}/${e.gol_inaltime_mm}`;
+    case "straturi": return e.straturi_extra.map((x) => x.sistem).join("+") || "fără";
+    default: return "";
+  }
+}
+
+/** „diametru: DN80 ≠ DN100, grosime: 50 mm ≠ 40 mm”, citit înapoi de `diferenteDinMotiv`. */
+function descrieDiferente(a: LinieExtrasa, b: LinieExtrasa, dif: string[]): string {
+  return dif.map((c) => `${c}: ${valoareCamp(a, c)} ≠ ${valoareCamp(b, c)}`).join(", ");
+}
+
+/**
+ * Câmpurile citite diferit, cu cele două valori, din motivul unei linii
+ * `CITIT_DIFERIT` (ecranul spune „o dată DN80, o dată DN100”). Motivele
+ * salvate înainte de 15 noiembrie 2026 aveau doar numele câmpului: valorile
+ * lipsesc, câmpul rămâne.
+ */
+export function diferenteDinMotiv(motiv: string): { camp: string; prima?: string; adoua?: string }[] {
+  if (!motiv.startsWith(CITIT_DIFERIT)) return [];
+  const m = /^[^(]*\((.*?)\);/.exec(motiv) ?? /^[^(]*\((.*)\)/.exec(motiv);
+  if (!m) return [];
+  return m[1]!.split(", ").flatMap((parte) => {
+    const k = parte.indexOf(": ");
+    if (k < 0) return [{ camp: parte.trim() }];
+    const [prima, adoua] = parte.slice(k + 2).split(" ≠ ");
+    return [{ camp: parte.slice(0, k).trim(), ...(prima ? { prima } : {}), ...(adoua ? { adoua } : {}) }];
   });
 }
 
@@ -1062,6 +1116,7 @@ function construiesteLinii(
   grosimiPropuse?: ReadonlyMap<number, number>,
   descrieriSchimbate?: ReadonlySet<number>,
   preturiManuale?: ReadonlyMap<number, number>,
+  necitite?: ReadonlySet<number>,
 ): LinieProcesata[] {
   const linii: LinieProcesata[] = [];
   const deLaConducte = grosimiDeLaConducte(brute, rezolvate);
@@ -1097,6 +1152,8 @@ function construiesteLinii(
         ? [{ cod: "citit_diferit" as const, mesaj: r.extras.motiv.split(";")[0]! }] : []),
       ...notatieContraziceMaterialul(r.extras, b.text),
       ...diametruContrazisDeText(r.extras, b.text),
+      // Plecat la model și neîntors: ce se vede e doar citirea parțială a regulilor.
+      ...(necitite?.has(b.index) ? [{ cod: "necitit" as const, mesaj: "randul n-a fost citit automat; se poate incerca din nou" }] : []),
     ];
 
     // Increderea coboara la 0 cand ceva nu se verifica in text, la fel ca in
@@ -1496,7 +1553,9 @@ export async function proceseazaRegistru(foi: FoaieBruta[], o: OptiuniNucleu): P
     // "fara raspuns". Se numara pe ce a RASPUNS modelul, nu pe `rezolvate`:
     // un `null` refuzat de `puneDinModel` e tot un raspuns.
     const trimiseToate = [...deTrimis1, ...deTrimis2];
-    faraRaspuns = trimiseToate.filter((r) => !raspunse.has(r.index)).length;
+    const neintoarse = trimiseToate.filter((r) => !raspunse.has(r.index));
+    faraRaspuns = neintoarse.length;
+    for (const r of neintoarse) o.necitite?.add(r.index);
 
     o.laProgres?.({ faza: "model", gata: trimise, total: trimise + trunchiat });
   }
@@ -1506,6 +1565,7 @@ export async function proceseazaRegistru(foi: FoaieBruta[], o: OptiuniNucleu): P
   stampileazaText(brute, rezolvate);
   const linii = construiesteLinii(
     brute, rezolvate, prag, o.destinatie ?? "rezidential", o.grosimiPropuse, o.descrieriSchimbate, o.preturiManuale,
+    o.necitite,
   );
   o.laProgres?.({ faza: "tarifare", gata: linii.length, total: brute.length });
 
@@ -1550,6 +1610,7 @@ export function reevalueaza(rez: Rezultat, o: OptiuniNucleu): void {
   const vechi = rez.rezolvate;
   const rezolvate = new Map<number, Rezolvare>();
   const schimbate = o.descrieriSchimbate ?? new Set<number>();
+  const necitite = o.necitite;
 
   // Trecerea 1: liniile confirmate de om raman pe loc si nu intra in
   // candidatii pentru determinist/memorie de mai jos — cat timp textul lor e
@@ -1560,9 +1621,12 @@ export function reevalueaza(rez: Rezultat, o: OptiuniNucleu): void {
     const existent = vechi.get(b.index);
     if (pusDeOm(existent) && (existent!.text ?? b.text) === b.text) {
       rezolvate.set(b.index, { ...existent!, text: b.text });
+      necitite?.delete(b.index);
       continue;
     }
     if (existent?.sursa === "om") {
+      // Omul a scris rândul: nu mai e „necitit”, oricât ar fi căzut lotul lui.
+      necitite?.delete(b.index);
       if ((existent.text ?? b.text) === b.text) {
         rezolvate.set(b.index, { ...existent, text: b.text });
         schimbate.delete(b.index);
@@ -1578,8 +1642,11 @@ export function reevalueaza(rez: Rezultat, o: OptiuniNucleu): void {
   const partiale = new Map<number, LinieExtrasa>();
   for (const b of candidati) {
     const r = extrageDeterminist(b.index, b.text, b.um, b.sectiune, b.cantitate);
-    if (r.complet) rezolvate.set(b.index, { extras: r.linie, sursa: "regex" });
-    else {
+    if (r.complet) {
+      rezolvate.set(b.index, { extras: r.linie, sursa: "regex" });
+      // Descrierea schimbată se citește acum întreagă din reguli: modelul nu mai trebuie.
+      necitite?.delete(b.index);
+    } else {
       reziduale.push({
         index: b.index, text: b.text, ...(b.um ? { um: b.um } : {}), ...(b.sectiune ? { sectiune: b.sectiune } : {}),
       });
@@ -1608,7 +1675,7 @@ export function reevalueaza(rez: Rezultat, o: OptiuniNucleu): void {
   stampileazaText(brute, rezolvate);
   rez.rezolvate = rezolvate;
   rez.linii = construiesteLinii(
-    brute, rezolvate, prag, o.destinatie ?? "rezidential", o.grosimiPropuse, schimbate, o.preturiManuale,
+    brute, rezolvate, prag, o.destinatie ?? "rezidential", o.grosimiPropuse, schimbate, o.preturiManuale, necitite,
   );
   rez.statistici = {
     ...statisticiDeterministe(rez.foi, foiMapate, brute, rez.linii),
@@ -1617,7 +1684,41 @@ export function reevalueaza(rez: Rezultat, o: OptiuniNucleu): void {
     // raman cele de dinainte de corectie.
     trimiseLaModel: rez.statistici.trimiseLaModel,
     reziduale: rez.statistici.reziduale,
-    modelFaraRaspuns: rez.statistici.modelFaraRaspuns,
+    // Rândurile necitite se socotesc din ce a rămas necitit (după o corectură sau o reîncercare).
+    modelFaraRaspuns: necitite ? necitite.size : rez.statistici.modelFaraRaspuns,
     trunchiat: rez.statistici.trunchiat,
   };
+}
+
+/**
+ * „Încearcă din nou” (planul UX, Faza 6, punctul 7): trimite la model DOAR
+ * rândurile rămase necitite (`OptiuniNucleu.necitite`), cu aceleași două
+ * citiri, și pune răspunsurile peste rezultat fără să atingă restul: ce a
+ * corectat omul, prețurile puse de mână, grosimile propuse rămân. Înainte, un
+ * lot căzut cerea reîncărcarea fișierului, adică tot importul de la capăt.
+ *
+ * Un rând corectat între timp de om nu mai pleacă. Ce nu se întoarce nici
+ * acum rămâne necitit. Erorile de transport le prinde apelantul, ca la
+ * `proceseazaRegistru` (ecranul pe lot, cu plafonul zilnic).
+ */
+export async function recitesteNecitite(rez: Rezultat, o: OptiuniNucleu): Promise<{ trimise: number; citite: number }> {
+  const necitite = o.necitite;
+  if (!o.extrage || !necitite || necitite.size === 0) return { trimise: 0, citite: 0 };
+  const linii: LinieSursa[] = rez.brute
+    .filter((b) => necitite.has(b.index) && rez.rezolvate.get(b.index)?.sursa !== "om")
+    .map((b) => ({
+      index: b.index, text: b.text, ...(b.um ? { um: b.um } : {}), ...(b.sectiune ? { sectiune: b.sectiune } : {}),
+    }));
+  const partiale = new Map<number, LinieExtrasa>();
+  for (const [i, r] of rez.rezolvate) if (r.sursa === "regex") partiale.set(i, r.extras);
+  const extrase = linii.length ? await citesteDeDouaOri(o.extrage, linii, "ramase", o.douaCitiri ?? true) : [];
+  for (const e of extrase) {
+    necitite.delete(e.index);
+    const b = rez.brute.find((x) => x.index === e.index)!;
+    // Pe textul pe care l-a citit modelul acum: `reevalueaza` îl păstrează cât textul rămâne.
+    if (e.sistem === null && partiale.get(e.index)?.sistem != null) continue;
+    rez.rezolvate.set(e.index, { extras: e, sursa: "model", text: b.text });
+  }
+  reevalueaza(rez, o);
+  return { trimise: linii.length, citite: extrase.length };
 }

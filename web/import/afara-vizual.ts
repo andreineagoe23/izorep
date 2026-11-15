@@ -9,6 +9,7 @@ import { esc, tabel } from "../ecrane/tip.js";
 const DE_CE: Record<NonNullable<LasatAfara["motiv"]>, string> = {
   preizolat: "vine izolat de la producător",
   scos: "scos de tine din ofertă",
+  necitit: "n-a fost citit încă: apasă „Încearcă din nou” de sus",
 };
 
 export function listaAfara(randuri: readonly LasatAfara[], cuFoaie: boolean): string {

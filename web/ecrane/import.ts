@@ -1,5 +1,5 @@
 import {
-  citesteText, proceseazaRegistru, reevalueaza, type Extractor, type LinieProcesata, type OptiuniNucleu, type Rezultat,
+  citesteText, proceseazaRegistru, recitesteNecitite, reevalueaza, type Extractor, type LinieProcesata, type OptiuniNucleu, type Rezultat,
 } from "../../src/import/nucleu.js";
 import { campuriRand, scrieCelula, reconstruieste, type CampuriRand } from "../../src/import/editare.js";
 import { invataDinCorectie } from "../../src/import/memorie.js";
@@ -33,7 +33,7 @@ import {
 } from "../date.js";
 import type { EditareCelula, SesiuneImport } from "../istoric.js";
 import {
-  actiuniLista, antetVerificare, detaliuValoare, ecranOferta, ecranProgres, ecranStart, editorPozitie, fileSursa,
+  actiuniLista, alertaNecitite, antetVerificare, detaliuValoare, ecranOferta, ecranProgres, ecranStart, editorPozitie, fileSursa,
   filtreMotiv, numaraMotive, patchDinFormular, randStrat, toast,
   type FiltruStare, type Pas,
 } from "../import/vizual.js";
@@ -191,7 +191,7 @@ async function optiuniCererii(s: SesiuneImport): Promise<OptiuniNucleu> {
   return {
     stoc: await stocSabloane(), mapari: (await mapariImport(s.mapari)).mapari, prag: info?.prag ?? 0.85, destinatie: s.destinatie ?? "rezidential",
     grosimiPropuse: new Map(s.grosimiPropuse ?? []), descrieriSchimbate: new Set(s.descrieriSchimbate ?? []),
-    preturiManuale: new Map(s.preturiManuale ?? []),
+    preturiManuale: new Map(s.preturiManuale ?? []), necitite: new Set(s.necitite ?? []),
   };
 }
 
@@ -298,6 +298,16 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
   let descrieriSchimbate = new Set<number>();
   /** Preturile puse de mana. Vezi `OptiuniNucleu.preturiManuale`. */
   let preturiManuale = new Map<number, number>();
+  /** Rândurile plecate la model și neîntoarse (Faza 6, punctul 7). Vezi `OptiuniNucleu.necitite`. */
+  let necitite = new Set<number>();
+  /**
+   * Mesajul plafonului zilnic, de la ultima citire: cât e atins, „Încearcă din
+   * nou” nu se arată (ar da același 429 la nesfârșit), ci mesajul lui, cu ora.
+   * Nu se ține în cerere: redeschisă mâine, butonul revine.
+   */
+  let plafonCitire = "";
+  /** „Încearcă din nou” e în lucru: butonul nu pleacă de două ori. */
+  let reincercareInLucru = false;
   /** Denumirile scrise de om în tabelul ofertei. Vezi `SesiuneImport.denumiri`. */
   let denumiri = new Map<number, string>();
   let pas: Pas = PAS[opt.parte];
@@ -357,7 +367,7 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
   let ceasMesaj: ReturnType<typeof setTimeout> | undefined;
   let ceasSalvare: ReturnType<typeof setTimeout> | undefined;
 
-  const optiuni = () => ({ stoc, mapari: mi.mapari, prag, destinatie, grosimiPropuse, descrieriSchimbate, preturiManuale });
+  const optiuni = () => ({ stoc, mapari: mi.mapari, prag, destinatie, grosimiPropuse, descrieriSchimbate, preturiManuale, necitite });
 
   const coloane = controlColoane({
     foi: () => sesiune?.foi ?? [],
@@ -472,6 +482,7 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
       destinatie,
       grosimiPropuse: [...grosimiPropuse],
       descrieriSchimbate: [...descrieriSchimbate],
+      necitite: [...necitite],
       preturiManuale: [...preturiManuale],
       denumiri: [...denumiri],
       antet, ajustare,
@@ -561,9 +572,7 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
     const st = s.rez.statistici;
     return [
       s.avertisment,
-      st.modelFaraRaspuns > 0
-        ? `<p class="alerta"><strong>${pozitii(st.modelFaraRaspuns)} n-au putut fi citite.</strong> Încarcă fișierul din nou ca să reîncerci.</p>`
-        : "",
+      alertaNecitite(necitite.size, { plafon: plafonCitire, cuModel: info !== null, inLucru: reincercareInLucru }),
       st.randuriManopera > 0 && st.tarifate === 0
         ? `<p class="alerta"><strong>Ofertă de manoperă.</strong> Nu avem listă de prețuri pentru manoperă; prețurile din aplicație includ materialul.</p>`
         : "",
@@ -634,7 +643,7 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
     const activ = (document.activeElement as HTMLElement | null)?.closest<HTMLElement>("tr[data-idx]")?.dataset["idx"];
     for (const i of [...deschise]) if (!atinse.has(i) && String(i) !== activ) deschise.delete(i);
 
-    const afara = lasateAfara(s.rez);
+    const afara = lasateAfara(s.rez, necitite);
     const corp = vedereAfara ? listaAfara(afara, cuFoaie) : verificarePeEcran(documentul(s, randInLucru), {
       linii: harta, vizibile: filtrat, editIdx, propunere, cuFoaie, schimbari: schimbariPozitie(s), deschise: new Set([...deschise, ...atinse]),
       descriere: (l) => celulaDescriere(s, l),
@@ -867,6 +876,8 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
     destinatie = s.destinatie ?? "rezidential";
     grosimiPropuse = new Map(s.grosimiPropuse ?? []);
     descrieriSchimbate = new Set(s.descrieriSchimbate ?? []);
+    necitite = new Set(s.necitite ?? []);
+    plafonCitire = "";
     preturiManuale = new Map(s.preturiManuale ?? []);
     denumiri = new Map(s.denumiri ?? []);
     mi = await mapariImport(s.mapari);
@@ -874,6 +885,85 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
     puneCurent(id);
     deschideSesiune({ foi: rez.foi, rez, meta: s, editari: [...s.editari], avertisment: "" }, pas === 3 ? 3 : 2);
     if (!restaurat) arataMesaj(`Ai deschis ${s.nume}.`);
+  }
+
+  /**
+   * Extractorul ecranului: rândurile pleacă la server în loturi mici, câte
+   * patru deodată, iar bara de progres e una pentru toate apelurile (două
+   * citiri, a doua trecere). Un lot căzut nu oprește nimic: rândurile lui nu se
+   * întorc, nucleul le ține `necitite`. Plafonul zilnic (429) se ține în
+   * `stare.plafon`, cu mesajul serverului.
+   */
+  function extractorPeLoturi(m: StareModel, titlu: string): { extractor: Extractor; stare: { plafon: string } } {
+    const stare = { plafon: "" };
+    let totLoturi = 0;
+    let gata = 0;
+    const extractor: Extractor = async (deTrimis, ctx) => {
+      const lot = m.lot ?? LOT_IMPLICIT;
+      const loturi: (typeof deTrimis)[] = [];
+      for (let i = 0; i < deTrimis.length; i += lot) loturi.push(deTrimis.slice(i, i + lot));
+      totLoturi += loturi.length;
+      const primite: LinieExtrasa[] = [];
+      let urmator = 0;
+      const arata = (): void => {
+        pagina.innerHTML = ecranProgres(ctx.citire ? `${titlu}, de două ori, ca să fie sigure…` : `${titlu}…`,
+          totLoturi ? (gata / totLoturi) * 100 : 100);
+      };
+      arata();
+      const lucrator = async (): Promise<void> => {
+        for (let i = urmator++; i < loturi.length; i = urmator++) {
+          try {
+            const r = await fetch(RUTA_MODEL, {
+              method: "POST", headers: { "Content-Type": "application/json", "X-Izorep": "1" },
+              body: JSON.stringify({ linii: loturi[i] }), signal: AbortSignal.timeout(120_000),
+            });
+            const corp = (await r.json()) as { linii?: LinieExtrasa[]; eroare?: string };
+            if (r.status === 429 && corp.eroare) stare.plafon = corp.eroare;
+            if (!r.ok) throw new Error(corp.eroare ?? `HTTP ${r.status}`);
+            primite.push(...(corp.linii ?? []));
+          } catch {
+            // Un lot căzut nu invalidează importul: rândurile lui rămân necitite.
+          } finally {
+            gata++;
+            arata();
+          }
+        }
+      };
+      const n = Math.min(m.concurenta ?? CONCURENTA_IMPLICITA, Math.max(loturi.length, 1));
+      await Promise.all(Array.from({ length: n }, lucrator));
+      return primite;
+    };
+    return { extractor, stare };
+  }
+
+  /**
+   * „Încearcă din nou” (Faza 6, punctul 7): doar rândurile necitite pleacă la
+   * model; ce a scris omul între timp rămâne. Modelul se întreabă din nou
+   * (poate a pornit între timp); fără el, butonul spune că nu se poate acum.
+   */
+  async function reincearca(): Promise<void> {
+    const s = sesiune;
+    if (!s || reincercareInLucru || necitite.size === 0) return;
+    const m = info ?? await interogheazaModel();
+    if (!m) {
+      arataMesaj("Rândurile nu se pot citi automat acum. Încearcă mai târziu sau completează-le de mână.");
+      return;
+    }
+    reincercareInLucru = true;
+    const inainte = necitite.size;
+    const citire = extractorPeLoturi(m, "Se citesc din nou rândurile");
+    try {
+      await recitesteNecitite(s.rez, { ...optiuni(), extrage: citire.extractor });
+    } finally {
+      reincercareInLucru = false;
+    }
+    plafonCitire = citire.stare.plafon;
+    salveazaSesiune();
+    deseneaza();
+    const citite = inainte - necitite.size;
+    arataMesaj(necitite.size === 0
+      ? (citite === 1 ? "Rândul a fost citit." : `Toate cele ${citite} rânduri au fost citite.`)
+      : `${citite === 0 ? "Niciun rând n-a fost citit" : `${citite} din ${inainte} rânduri au fost citite`}; ${necitite.size === 1 ? "unul a rămas" : `${necitite.size} au rămas`}.`);
   }
 
   async function proceseaza(fisier: File, predare?: Predare, caNou = false): Promise<void> {
@@ -898,7 +988,6 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
       const buf = await fisier.arrayBuffer();
       const foi = await parseFoiBuffer(buf.slice(0));
 
-      let esuate = 0;
       let plafon = "";
       // Coloanele unui antet necunoscut, citite cu modelul înaintea pozițiilor (Faza 6, punctul 1).
       mi = await mapariImport();
@@ -906,48 +995,14 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
         pagina.innerHTML = ecranProgres("Se citesc coloanele…", null);
         plafon = await citesteColoanele(foi, fisier.name, mi);
       }
-      // Bara de progres e una pentru toate apelurile: rândurile se citesc de două ori, în paralel (Faza 6, punctul 4).
-      let totLoturi = 0;
-      let gata = 0;
-      const extractor: Extractor | undefined = info ? async (deTrimis, ctx) => {
-        const lot = info.lot ?? LOT_IMPLICIT;
-        const loturi: (typeof deTrimis)[] = [];
-        for (let i = 0; i < deTrimis.length; i += lot) loturi.push(deTrimis.slice(i, i + lot));
-        totLoturi += loturi.length;
-        const primite: LinieExtrasa[] = [];
-        let urmator = 0;
-        const arata = (): void => {
-          pagina.innerHTML = ecranProgres(ctx.citire ? "Se recunosc pozițiile, de două ori, ca să fie sigure…" : "Se recunosc pozițiile…",
-            totLoturi ? (gata / totLoturi) * 100 : 100);
-        };
-        arata();
-        const lucrator = async (): Promise<void> => {
-          for (let i = urmator++; i < loturi.length; i = urmator++) {
-            try {
-              const r = await fetch(RUTA_MODEL, {
-                method: "POST", headers: { "Content-Type": "application/json", "X-Izorep": "1" },
-                body: JSON.stringify({ linii: loturi[i] }), signal: AbortSignal.timeout(120_000),
-              });
-              const corp = (await r.json()) as { linii?: LinieExtrasa[]; eroare?: string };
-              if (r.status === 429 && corp.eroare) plafon = corp.eroare;
-              if (!r.ok) throw new Error(corp.eroare ?? `HTTP ${r.status}`);
-              primite.push(...(corp.linii ?? []));
-            } catch {
-              esuate++; // un lot cazut nu invalideaza importul
-            } finally {
-              gata++;
-              arata();
-            }
-          }
-        };
-        const n = Math.min(info.concurenta ?? CONCURENTA_IMPLICITA, Math.max(loturi.length, 1));
-        await Promise.all(Array.from({ length: n }, lucrator));
-        return primite;
-      } : undefined;
+      const citire = info ? extractorPeLoturi(info, "Se recunosc pozițiile") : undefined;
+      const extractor = citire?.extractor;
 
       // Propunerile tin de indecsii fisierului de dinainte.
       grosimiPropuse = new Map();
       descrieriSchimbate = new Set();
+      necitite = new Set();
+      plafonCitire = citire?.stare.plafon ?? "";
       preturiManuale = new Map();
       denumiri = new Map();
       const rez = await proceseazaRegistru(foi, { ...optiuni(), ...(extractor ? { extrage: extractor } : {}) });
@@ -976,13 +1031,13 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
         }
         if (preturiManuale.size > 0) reevalueaza(rez, optiuni());
       }
+      plafonCitire = citire?.stare.plafon ?? "";
+      // Lotul căzut nu mai cere fișierul din nou: rândurile lui sunt `necitite`, cu „Încearcă din nou”.
       deschideSesiune({
         foi, rez, editari: [],
-        avertisment: plafon
+        avertisment: plafon && !plafonCitire
           ? `<p class="alerta"><strong>O parte din rânduri n-au fost citite cu model.</strong> ${esc(plafon)}</p>`
-          : esuate > 0
-            ? `<p class="alerta"><strong>O parte din rânduri n-au putut fi citite.</strong> Încarcă fișierul din nou ca să reîncerci.</p>`
-            : "",
+          : "",
         meta: {
           id: `${Date.now()}-${fisier.name}`, nume: fisier.name, marime: fisier.size,
           cand: new Date().toISOString(), model: info?.model ?? null, fisier: buf,
@@ -1428,7 +1483,7 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
       case "e-izolatie": {
         // Din „Lăsate afară”: rândul devine poziție, de verificat; fila trece unde a ajuns.
         const s = sesiune;
-        const a = s && idx !== null ? lasateAfara(s.rez).find((x) => x.index === idx) : undefined;
+        const a = s && idx !== null ? lasateAfara(s.rez, necitite).find((x) => x.index === idx) : undefined;
         if (!s || !a || idx === null) return;
         const vechi = s.rez.rezolvate.get(idx);
         s.rez.rezolvate.set(idx, faPozitie(s.rez, a));
@@ -1445,6 +1500,7 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
         pagina.querySelector<HTMLElement>(`tr[data-idx="${idx}"] select`)?.focus();
         return;
       }
+      case "reincearca": void reincearca(); return;
       case "confirma-tot":
         if (sesiune) confirmaIndecsi(vizibile(sesiune).lista.filter((l) => potrivit(l, "de_validat")).map((l) => l.extras.index));
         deseneaza();

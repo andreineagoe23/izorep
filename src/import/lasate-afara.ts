@@ -18,12 +18,17 @@ export interface LasatAfara {
   text: string;
   um: string;
   cantitate: number;
-  /** De ce nu e poziție, când știm: vine izolat de la producător, sau l-a scos omul. */
-  motiv?: "preizolat" | "scos";
+  /**
+   * De ce nu e poziție, când știm: vine izolat de la producător, l-a scos omul,
+   * sau a plecat la citit și nu s-a întors (`necitit`: „Încearcă din nou”).
+   */
+  motiv?: "preizolat" | "scos" | "necitit";
 }
 
 /** Rândurile cu UM și cantitate care nu sunt poziții, în ordinea din fișier. */
-export function lasateAfara(rez: Pick<Rezultat, "brute" | "linii" | "rezolvate">): LasatAfara[] {
+export function lasateAfara(
+  rez: Pick<Rezultat, "brute" | "linii" | "rezolvate">, necitite?: ReadonlySet<number>,
+): LasatAfara[] {
   const linii = new Map<number, LinieProcesata>(rez.linii.map((l) => [l.extras.index, l]));
   const out: LasatAfara[] = [];
   for (const b of rez.brute) {
@@ -32,7 +37,8 @@ export function lasateAfara(rez: Pick<Rezultat, "brute" | "linii" | "rezolvate">
     const l = linii.get(b.index);
     if (l && l.extras.sistem !== null) continue;
     const motiv = l?.preizolat ? "preizolat" as const
-      : rez.rezolvate.get(b.index)?.sursa === "om" ? "scos" as const : undefined;
+      : rez.rezolvate.get(b.index)?.sursa === "om" ? "scos" as const
+      : necitite?.has(b.index) ? "necitit" as const : undefined;
     out.push({
       index: b.index, foaie: b.foaie, rand: b.rand, text: b.text, um, cantitate: b.cantitate,
       ...(motiv ? { motiv } : {}),
