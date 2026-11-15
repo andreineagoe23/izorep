@@ -129,7 +129,7 @@ function propozitie(l: LinieProcesata, m: CodMotiv): Explicatie {
     }
     case "grosime_fara_conducta": {
       const n = note.find((x) => x.includes("tabelul de grosimi uzuale"));
-      return { text: `Grosimea nu e scrisă și nicio țeavă din listă n-are diametrul ăsta: am pus ${mm(e.grosime_mm)}, grosimea obișnuită a firmei (cea mai apropiată țeavă, ${/ø[\d.,]+/.exec(n ?? "")?.[0] ?? ""}, are alta).`, camp: "gros" };
+      return { text: `Grosimea nu e scrisă și nicio țeavă din listă n-are diametrul ăsta: am pus ${mm(e.grosime_mm)}, grosimea obișnuită a firmei (cea mai apropiată țeavă, ${/ø\d+(?:[.,]\d+)?/.exec(n ?? "")?.[0] ?? ""}, are alta).`, camp: "gros" };
     }
     case "tabla_fara_material":
       return { text: `Rândul spune „tablă”, fără material: am pus tablă de aluminiu, ${pret}.`, camp: "prot" };

@@ -35,6 +35,79 @@ Calculatorul: ce are și ce nu (Docker, fișierele clienților, cheia de model).
 
 ---
 
+## 15 noiembrie 2026 (noaptea) · Andrei (neagoeandrei23) · `main`
+
+Calculatorul: Docker (Postgres pe 5433), fișierele clienților, cheie de model
+nefolosită (rutele modelului blocate în probe). Trei agenți, fiecare pe ramura
+lui (`fix-acasa`, `fix-preturi`, `fix-ux`), uniți pe `main`. Prezentarea la
+firmă e pe 16 noiembrie dimineața.
+
+### Făcut
+
+| Commit | Ce |
+|---|---|
+| `f13722f` | Acasă pe patru carduri (De terminat la birou · Așteaptă răspunsul clientului · Șantiere în lucru · Marfă și materiale), cu cifra în titlu. Oferta fără răspuns apare din prima zi („Notează răspunsul”; din 14 zile, eticheta „Întreabă clientul”); comenzile trimise la fel (din 7 zile, „Sună furnizorul”) |
+| `a223a3f` | Situația începută se ține în browser (`web/situatie-local.ts`), revine la reîncărcare și apare pe Acasă cu „Continuă situația” |
+| `b789856` | „protecție cu tablă” fără material: aluminiu, „De verificat” (`tabla_fara_material`); 16,00 → 38,51 € |
+| `8aa4776` | „gr 19” citit ca grosime; 10,57 → 14,82 € |
+| `2eba961` | Fără grosime și fără țeavă de același ø: tabelul firmei, „De verificat” (`grosime_fara_conducta`, `grosime_conducta_vecina`); 82,89 → 101,84 € |
+| `003c945` | Izolația fără material („Casetă armături DN80”): „Fără preț” cu „Alege izolația” (`lipseste_materialul`), nu „Lăsate afară” |
+| `a196f71` | `strat_necitat`: propoziția începe cu „Prețul e fără tablă: X €.” |
+| `c5cf420`, `de6cf13` | Cererea unei lucrări cu șantier (pornit sau închis) nu mai cere verificare: ✓ pe filă, rânduri ca text, fără „E bine” |
+| `40e74ba` | Filele lucrării pe un rând pe telefon |
+| `7981a45`, `a08e62e`, `0eff6f9` | O singură listă cu regulile deschise; o singură ieșire („Renunță”) din „Comandă ce lipsește”; costul în cuvinte cât n-a venit nimic |
+| `b4df356`, `0f8d3a8` | Import pe telefon: mesajul de jos lat, descrierea pe tot rândul la „Lăsate afară”; refuzul coloanelor spus limpede, file de 44 px |
+
+Teste noi pe rândurile din `exemple-AI/`: `tests/audit-15-noiembrie.test.ts`.
+
+### Verificat
+
+- `npm run typecheck` curat, **787 de teste**, nimic sărit (`IZOREP_DB=izorep_ux`),
+  `npm run build:server` trece, după unirea celor trei ramuri.
+- Pe cele 76 de rânduri de probă, doar regulile: 57 corecte, **0 greșite „Gata”**
+  (erau 3), 6 greșite dar marcate, 2 lăsate afară (erau 13), 10 „Fără preț”.
+- A/B pe toate fișierele clienților, ambele tipuri de ofertă: s-a mișcat un
+  singur rând, Transavia inox r70 (caseta DN150: 222,11 „Gata” → 296,86 „De
+  verificat”, 100 mm din tabel în loc de 50 de la Di140). Ofertele semnate, neatinse.
+- În browser, varianta unită (`build:server`, 8824), 1440 px deschis și 390 px
+  închis: Acasă, NISAL închisă, exemplul 1 încărcat ca industrial (17 Gata, 8
+  De verificat, 7 Fără preț, 2 Lăsate afară); zero derulare, zero erori.
+- De agenți, fiecare pe baza lui: oferta nouă apare imediat pe Acasă, acceptarea
+  o mută la șantiere, situația începută revine după reîncărcare; „Lăsate afară”
+  pe NISAL, coloanele cu „schimbă”, fișierul dublu.
+
+### Neverificat
+
+- În browser: oferta veche de 14 zile, „De ales” din poze după reîncărcare,
+  salvarea situației restaurate, „Schimb” / „E bine” pe o lucrare fără șantier
+  după schimbarea de la `c5cf420` (doar codul o spune).
+- Din import, tot nevăzute: 1920 px, 600–1200 px, cele două citiri, mesajul
+  plafonului, exemplul 2, spitalul (58 lăsate afară).
+- Nimic cu modelul real. Deploy-ul pe Render și baza plătită.
+
+### Pentru cine urmează
+
+1. Potrivirea aproximativă pe material („alumniu”, „minrală”, „vată min.”,
+   „tb. Al”, „cauciuc”): rândurile apar acum cu motiv, dar fără prețul întreg.
+2. Mărunte din audit, încă „Gata” sau afară: „Țeavă DN100” la treceri socotită
+   oțel (D06), „Pat de cabluri” (D08), „Treceri prin planșee” (D07), rândul fără UM.
+3. Pe un rând `lipseste_materialul`, grosimea scrisă singură îl tarifează ca
+   vată minerală fără ca omul s-o fi ales.
+4. „Clientul a acceptat” pică cu „Scrie întâi obiectivul…” dacă oferta a fost
+   descărcată cu obiectivul gol: de cerut la descărcare.
+5. Pe fila Cerere, propoziția de sus nu pomenește rândurile lăsate afară;
+   titlul lucrării ia cifra din numele fișierului („1 Fabrica Demo Abur”); în
+   oferta generată, UM gol la „Di60, g40 - ML” (exemplul 1).
+6. `.claude/import.md`, `pricing.md`, `ui.md` și `stare.md` nu au regulile de azi.
+7. Restul din intrarea de mai jos (Faza 7, `stare.md` de tăiat).
+
+### De hotărât de oameni
+
+- Două grosimi pe același ø → cea mai mare rămâne „Gata” (`grosime_propusa`),
+  fără dovadă; mutată la „De verificat” schimbă cifrele pe fișierele clienților.
+- Textele noi: „Notează răspunsul”, „Întreabă clientul”, „Sună furnizorul”.
+- Situația începută e doar în browserul celui care a scris-o.
+
 ## 15 noiembrie 2026 (seara) · Adrian (popescuadi15) · ramura `ux-lucrare`
 
 Calculatorul: **fără Docker**, fișierele clienților cu numele noi, cheia de
