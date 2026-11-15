@@ -152,16 +152,18 @@ export function cardMaterial(x: MaterialeLucrare, opt: { comanda?: "primar" | "s
           : `Încă ${cifra(strinse.length)} materiale, toate pe șantier`}</button></td></tr>`);
   }
   const c = x.consum;
+  // Nimic venit încă (șantier nou): „0,00 €, 0 %” nu spunea nimic (15 noiembrie 2026).
+  const nimicVenit = m.cost.cost === 0 && m.cost.faraPret === 0;
   return `<section class="imp-card mat-necesar">
     <div class="mat-antet">
       <div><h2>Materialul șantierului</h2>${x.materiale.length ? `<p>${propozitieMateriale(x.materiale, x.ramas)}</p>` : ""}</div>
       ${opt.comanda ? `<div class="mat-actiuni"><button type="button" class="${opt.comanda}" data-act="comanda-lipsa">Comandă ce lipsește</button></div>` : ""}
     </div>
     ${tabel(["Material", "Trebuie", "Adus pe șantier", "Stare"], randuri, ["", "n", "n", ""])}
-    ${suma("Costul materialului, până acum", m.cost)}
+    ${nimicVenit ? `<p class="hint">Costul materialului se vede aici după ce vine primul material pe șantier.</p>` : `${suma("Costul materialului, până acum", m.cost)}
     <p class="hint">Costul e ce a rămas pe șantier (pus, pierdut sau încă acolo), la prețul cu care a venit: prețul facturii
       pentru ce s-a cumpărat pentru șantier, prețul mediu pentru ce a venit din depozit sau de pe alt șantier. „În ofertă” e
-      cât plătește clientul pe aceste materiale, cu manopera.</p>
+      cât plătește clientul pe aceste materiale, cu manopera.</p>`}
     ${c ? randPierdere(c) : ""}
     ${c ? formularConsumMana(c) : ""}
   </section>`;
