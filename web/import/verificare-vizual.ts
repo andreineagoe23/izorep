@@ -142,9 +142,10 @@ interface Coloane { gros: string; prot: string }
  * pentru încă un buton): „Adaugă un strat” (până la 4) sau „Scoate rândul din ofertă”.
  * Meniu al nostru, nu listă nativă: aceea se deschidea mare, în stilul sistemului.
  */
-function stare(l: LinieProcesata, propunere: number | null, cine: string): string {
+function stare(l: LinieProcesata, propunere: number | null, cine: string, faraActiune = false): string {
   const st = stareLinie(l);
-  const actiune = actiuniPozitie(l, propunere, false, false);
+  // Șantierul pornit (`doarText`): fără „E bine”, doar starea.
+  const actiune = faraActiune ? "" : actiuniPozitie(l, propunere, false, false);
   // Pe „De verificat” motivul e propoziția de sub descriere (`explicatie`): aici ar fi de două ori.
   const motive = explicaRand(l) ? [] : motiveLinie(l).map((m) => MOTIV[m]);
   const e = l.extras;
@@ -237,7 +238,7 @@ function randText(p: PozitieOferta, l: LinieProcesata, o: OptiuniDocument, c: Co
     ${td("um", "UM", esc(o.um?.(l)?.v.trim() || p.um || "—"))}
     ${td("cant", "Cantitate", esc(numarInCelula(p.cantitate)), "n")}
     ${td("pret", "Preț unitar €", esc(p.pretUnitar === null ? "—" : p.pretUnitar.toFixed(2).replace(".", ",")), "n")}
-    <td class="ver-stare">${stare(l, o.propunere(l), cine)}</td>
+    <td class="ver-stare">${stare(l, o.propunere(l), cine, o.doarText)}</td>
   </tr>`;
 }
 
