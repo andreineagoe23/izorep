@@ -96,8 +96,13 @@ function propozitie(l: LinieProcesata, m: CodMotiv): Explicatie {
       return { text: `Am pus ${mm(e.grosime_mm)}, dar grosimea nu apare pe rând.`, camp: "gros" };
     case "grosime_in_afara_listei":
       return { text: `${mm(e.grosime_mm)} nu e o grosime din listă la ${e.sistem ? MATERIAL[e.sistem].toLowerCase() : "material"}.`, camp: "gros" };
-    case "strat_necitat":
-      return { text: "Rândul nu spune de tablă sau altă protecție: am scos-o din preț.", camp: "prot" };
+    case "strat_necitat": {
+      // Auditul din 15 noiembrie: „vată minrală … tablă de alumniu” ieșea 10,71 €
+      // în loc de 31,24 €. Omul trebuie să afle întâi că prețul e FĂRĂ protecție.
+      const scos = /^(tabla_inox|tabla|pvc)\b[^:]*: nu e numit in text/.exec(note.find((n) => n.includes("nu e numit in text")) ?? "")?.[1];
+      const ce = scos === "tabla_inox" ? "tablă de inox" : scos === "pvc" ? "PVC" : "tablă";
+      return { text: `Prețul e fără ${ce}: ${pret}. Rândul pare să ceară ${ce}, dar n-o scrie limpede; dacă e, alege-o la Protecție.`, camp: "prot" };
+    }
     case "gol_necitat":
       return { text: `Am pus golul ${e.gol_latime_mm ?? "?"}/${e.gol_inaltime_mm ?? "?"}, dar dimensiunile nu apar pe rând.`, camp: "gros" };
     case "forma_contrazice_um":
