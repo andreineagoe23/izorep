@@ -30,6 +30,8 @@ describe("rândurile lăsate afară", () => {
     expect(numar).toEqual({
       "cerere-de-oferta-book15.xlsx": 257,
       "cerere-de-oferta-cet-constanta-motoare-termice.xlsx": 81,
+      // Specificația proiectantului (clasa de izolație pe sistem), nu o listă de cantități.
+      "cerere-de-oferta-cet-constanta-specificatie-izolatie.xlsx": 0,
       "cerere-de-oferta-flower-city.xlsx": 0,
       "cerere-de-oferta-spital.xlsx": 58,
       "cerere-de-oferta-sru-craiova-hvac.xlsx": 15,
