@@ -42,7 +42,7 @@ function deFacut(toate: readonly Lucrare[]): string {
   const itemi: { href: string; html: string; actiune: string }[] = [];
   for (const l of toate) {
     const d = deFacutLucrare(stareLucrarii(l, dep), azi);
-    if (d) itemi.push({ href: spre(l, d.fila), actiune: d.buton, html: `<b>${esc(titluLucrare(l))}</b>: ${esc(d.text)}` });
+    if (d) itemi.push({ href: d.href ?? spre(l, d.fila), actiune: d.buton, html: `<b>${esc(titluLucrare(l))}</b>: ${esc(d.text)}` });
   }
   // Lista de materiale fără șantier (pusă de mână în Materiale): nu e a unei lucrări.
   for (const { necesar, articole } of deComandatPeNecesar(dep)) {

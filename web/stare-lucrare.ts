@@ -11,18 +11,19 @@ import { progresPlan, type PlanSantier } from "../src/lucrari/situatii.js";
 import type { StareDepozit } from "./depozit-local.js";
 
 /**
- * Câte materiale mai sunt de comandat pe șantier, ca în Materiale, și câte nu
- * sunt încă toate pe șantier (lipsesc, în ciornă, comandate și nevenite); pe
- * unul închis, nimic.
+ * Câte materiale mai sunt de comandat pe șantier, ca în Materiale, câte nu
+ * sunt încă toate pe șantier (lipsesc, în ciornă, comandate și nevenite) și
+ * câte așteaptă doar trimiterea ciornei; pe unul închis, nimic.
  */
-export function materialePlan(p: PlanSantier, dep: StareDepozit): { deComandat: number; neadus: number } {
-  if (p.inchis) return { deComandat: 0, neadus: 0 };
+export function materialePlan(p: PlanSantier, dep: StareDepozit): { deComandat: number; neadus: number; deTrimis: number } {
+  if (p.inchis) return { deComandat: 0, neadus: 0, deTrimis: 0 };
   const n = dep.necesare.find((x) => x.santier === p.id);
-  if (!n) return { deComandat: 0, neadus: 0 };
+  if (!n) return { deComandat: 0, neadus: 0, deTrimis: 0 };
   const r = ramasPeNecesar(dep, n);
   return {
     deComandat: r.filter((d) => d.ramas > 0).length,
     neadus: r.filter((d) => !d.material.alClientului && (d.ramas > 0 || d.comandat > 0 || d.inCiorna > 0)).length,
+    deTrimis: r.filter((d) => !d.material.alClientului && d.ramas <= 0 && d.inCiorna > 0).length,
   };
 }
 

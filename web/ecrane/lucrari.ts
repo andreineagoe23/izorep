@@ -387,6 +387,7 @@ async function deseneazaPagina(root: HTMLElement, idDinAdresa: string | null, se
       case "urmeaza": {
         const act = b.dataset["urm"];
         if (act === "fila") { void arata(b.dataset["fila"] as FilaLucrare); return; }
+        if (act === "comenzi") { location.hash = "#/comenzi"; return; }
         if (act === "situatie-noua") { void arata("situatii").then(() => sant?.situatieNoua()); return; }
         if (act === "accepta") { acceptare = { eroare: "" }; deseneazaSus(); elSus.querySelector<HTMLElement>('[data-act="porneste"]')?.focus(); return; }
         if (act === "refuza") { void refuz(new Date().toISOString()); return; }

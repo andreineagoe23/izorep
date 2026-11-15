@@ -108,6 +108,12 @@ export interface StareLucrare {
      * comandate și nevenite). Fără el, se socotește `deComandat`.
      */
     neadus?: number | undefined;
+    /**
+     * Câte materiale nu mai sunt de comandat doar pentru că stau pe o ciornă
+     * netrimisă: fără pasul ăsta, după „Comandă ce lipsește” lucrarea trecea la
+     * „Situație nouă” și ciornele rămâneau uitate în Comenzi (15 noiembrie 2026).
+     */
+    deTrimis?: number | undefined;
     /** ISO: ultima situație; fără situații, pornirea șantierului (pentru „Fă situația”). */
     ultimaSituatie?: string | undefined;
     /** Cât s-a executat, în procente din ofertă. */
@@ -116,7 +122,8 @@ export interface StareLucrare {
 }
 
 /** Ce face butonul: duce pe o filă, sau face ceva pe loc (pagina știe ce). */
-export type ActUrmeaza = "fila" | "situatie-noua" | "accepta" | "refuza" | "accepta-tarziu";
+/** `comenzi`: duce la Materiale › Comenzi, unde se trimit ciornele. */
+export type ActUrmeaza = "fila" | "situatie-noua" | "accepta" | "refuza" | "accepta-tarziu" | "comenzi";
 
 export interface ButonUrmeaza { eticheta: string; act: ActUrmeaza; fila?: FilaLucrare }
 
@@ -139,6 +146,7 @@ export const ziRo = (iso: string): string => {
 
 const pozitiiText = (n: number): string => (n === 1 ? "O poziție cere" : `${n}${n % 100 >= 20 || (n > 0 && n % 100 === 0) ? " de" : ""} poziții cer`);
 const materialeText = (n: number): string => (n === 1 ? "Un material" : `${n}${n % 100 >= 20 || (n > 0 && n % 100 === 0) ? " de" : ""} materiale`);
+const ciorneText = (n: number): string => (n === 1 ? "Un material e pe o comandă netrimisă." : `${materialeText(n)} sunt pe comenzi netrimise.`);
 
 /**
  * Pasul de acum, în ordinea fluxului. Cu șantier pornit, pozițiile cererii nu
@@ -160,6 +168,9 @@ export function urmeaza(s: StareLucrare): Urmeaza {
         text: `${materialeText(st.deComandat)} de comandat.`, fila: "materiale",
         primar: { eticheta: "Comandă ce lipsește", act: "fila", fila: "materiale" },
       };
+    }
+    if ((st.deTrimis ?? 0) > 0) {
+      return { text: ciorneText(st.deTrimis!), fila: "materiale", primar: { eticheta: "Trimite comenzile", act: "comenzi" } };
     }
     return {
       text: `Șantierul e în lucru: ${st.progres} % executat.`, fila: "situatii",
@@ -237,13 +248,15 @@ const deZile = (n: number): string => (n === 1 ? "de o zi" : `de ${n}${n % 100 >
 
 export interface LucruDeFacut {
   /** Pasul din „Urmează” care l-a dat. */
-  fel: "verifica" | "oferta" | "raspuns" | "inchide" | "comanda" | "situatie";
+  fel: "verifica" | "oferta" | "raspuns" | "inchide" | "comanda" | "trimite" | "situatie";
   /** Propoziția din „Urmează”, cu vechimea unde contează. */
   text: string;
   /** Butonul de pe Acasă. */
   buton: string;
   /** Fila lucrării pe care duce butonul. */
   fila: FilaLucrare;
+  /** Când butonul duce în afara lucrării (ciornele, la Comenzi). */
+  href?: string;
 }
 
 /**
@@ -260,6 +273,7 @@ export function deFacutLucrare(s: StareLucrare, azi: string): LucruDeFacut | nul
   if (st) {
     if (st.progres >= 100) return { fel: "inchide", text: u.text, buton: "Închide șantierul", fila: "inchidere" };
     if (st.deComandat > 0) return { fel: "comanda", text: u.text, buton: "Comandă ce lipsește", fila: "materiale" };
+    if ((st.deTrimis ?? 0) > 0) return { fel: "trimite", text: u.text, buton: "Trimite comenzile", fila: "materiale", href: "#/comenzi" };
     const zile = zileDe(st.ultimaSituatie, azi);
     if (zile < ZILE_SITUATIE) return null;
     return {

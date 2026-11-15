@@ -132,6 +132,7 @@ describe("Acasă, „De făcut” (planul UX, Faza 5)", () => {
       [b, "Termină oferta", "oferta"],
       [{ ...b, oferta: of(ZILE_RASPUNS) }, "Întreabă clientul", "oferta"],
       [{ ...b, oferta: of(1), santier: sant({ deComandat: 3 }) }, "Comandă ce lipsește", "materiale"],
+      [{ ...b, oferta: of(1), santier: sant({ deTrimis: 13 }) }, "Trimite comenzile", "materiale"],
       [{ ...b, oferta: of(1), santier: sant({ ultimaSituatie: inainte(ZILE_SITUATIE) }) }, "Fă situația", "situatii"],
       [{ ...b, oferta: of(1), santier: sant({ progres: 100, deComandat: 12 }) }, "Închide șantierul", "inchidere"],
     ];
@@ -148,6 +149,15 @@ describe("Acasă, „De făcut” (planul UX, Faza 5)", () => {
     expect(deFacutLucrare({ ...b, oferta: of(1), santier: sant({ ultimaSituatie: inainte(ZILE_SITUATIE - 1) }) }, azi)).toBeNull();
     expect(deFacutLucrare({ ...b, oferta: of(1), santier: sant({ ultimaSituatie: inainte(45) }) }, azi)!.text)
       .toBe("Șantierul e în lucru: 40 % executat. Nicio situație nouă de 45 de zile.");
+  });
+
+  it("ciornele netrimise: pasul e „Trimite comenzile”, spre Comenzi, după ce nu mai e nimic de comandat", () => {
+    const s = { ...b, oferta: of(1), santier: sant({ deTrimis: 13 }) };
+    expect(urmeaza(s)).toMatchObject({ text: "13 materiale sunt pe comenzi netrimise.", primar: { eticheta: "Trimite comenzile", act: "comenzi" } });
+    expect(urmeaza({ ...s, santier: sant({ deTrimis: 1 }) }).text).toBe("Un material e pe o comandă netrimisă.");
+    expect(deFacutLucrare(s, azi)!.href).toBe("#/comenzi");
+    expect(urmeaza({ ...s, santier: sant({ deTrimis: 2, deComandat: 1 }) }).primar?.eticheta).toBe("Comandă ce lipsește");
+    expect(urmeaza({ ...s, santier: sant({ deTrimis: 2, progres: 100 }) }).primar?.eticheta).toBe("Închide șantierul");
   });
 
   it("refuzată sau închisă: nimic de făcut", () => {
