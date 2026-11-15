@@ -31,7 +31,9 @@ export type CodAvertisment =
   | "diametru_contrazis"
   | "diametru_nenotat"
   | "strat_necitat"
-  | "grosime_interval";
+  | "grosime_interval"
+  /** Două citiri ale modelului diferă la un câmp care intră în preț (`citesteDeDouaOri` în `nucleu.ts`). */
+  | "citit_diferit";
 
 export interface Avertisment {
   cod: CodAvertisment;

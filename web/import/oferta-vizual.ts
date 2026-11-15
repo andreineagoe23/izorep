@@ -163,11 +163,17 @@ export function rezumatVerificare(numere: Record<FiltruStare, number>): string {
  * e întrebarea ei, deci aici nu mai e „Ce vezi”. „Mergi la ofertă” e doar în
  * rândul „Urmează” (Faza 3): al doilea, lângă propoziție, făcea același lucru.
  */
-export function baraVerificare(numere: Record<FiltruStare, number>, filtru: FiltruStare): string {
+export function baraVerificare(
+  numere: Record<FiltruStare, number>, filtru: FiltruStare,
+  /** Fila „Lăsate afară · N” (Faza 6): câte și dacă e deschisă. */
+  afara?: { n: number; activ: boolean },
+): string {
+  const file = afara?.activ ? fileStare(numere, filtru).replace(/ aria-current="page"/g, "") : fileStare(numere, filtru);
+  const fila = afara ? `<button type="button" class="fila" data-filtru="afara"${afara.activ ? ' aria-current="page"' : ""}>Lăsate afară <b>${afara.n}</b></button>` : "";
   return `<section class="imp-card imp-bara-foi imp-bara-singura">
     ${rezumatVerificare(numere)}
     <div class="imp-bara-stanga"><p class="imp-eticheta-control" id="eticheta-filtre">Arată pozițiile</p>
-      <nav class="file" aria-labelledby="eticheta-filtre">${fileStare(numere, filtru)}</nav></div>
+      <nav class="file" aria-labelledby="eticheta-filtre">${file}${fila}</nav></div>
   </section>`;
 }
 
@@ -193,6 +199,8 @@ export interface OptiuniDocument {
    * fiecare cu ce era înainte, în cuvinte: caseta e galbenă și o spune.
    */
   schimbari?: (p: PozitieOferta) => SchimbariPozitie;
+  /** Rândurile „Gata” deschise de om cu casetele (`cuCasete` în `verificare-vizual.ts`). */
+  deschise?: ReadonlySet<number>;
 }
 
 /** Câmpurile scrise de om pe o poziție; valoarea e ce era înainte. */

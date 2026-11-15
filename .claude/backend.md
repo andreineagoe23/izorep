@@ -372,6 +372,29 @@ tranzacției, după ce a calculat din bază ce se șterge (`ceSeSterge` din
 Ordinea: documente, mișcări, comenzi, necesare, situații, anexe, măsurători,
 depozitul și șantierul, apoi ofertele și cererea (cheile sunt `restrict`).
 
+### Ce învață importul, pe firmă (14 noiembrie 2026, planul UX, Faza 6)
+
+Migrarea **0018**: `mapare_coloane` (cheia `(tenant_id, amprenta)`, RLS cu
+FORCE): coloanele unei foi de client, `mapare` (jsonb, `MapareFoaie`),
+`acceptata`, `sursa` (model | om), de unde și cine. Rutele în
+`src/server/import-firma.ts`, montate lângă `ruteModel`: `GET /api/mapari`,
+`POST /api/mapare` (modelul propune, `valideazaMapare` decide; plafonul
+zilnic, 502 pe răspuns stricat, 503 fără cheie; un antet deja în bază nu mai
+cheamă modelul), `PUT /api/mapari` (alegerea omului, 400 dacă nu trece
+verificarea; `mapare: null` o scoate). Modelul e injectabil (`OptiuniModel.mapeaza`).
+
+Migrarea **0019**: `sablon_import` (cheia `(tenant_id, tipar)`, RLS cu
+FORCE): memoria de șabloane a importului (L4), care stătea în `localStorage`.
+`GET /api/sabloane`, `PUT` (unul; ultima corectură pe același tipar câștigă),
+`DELETE` (`{ tipar }`), `POST /api/sabloane/mutare` (ce era în browser,
+`on conflict do nothing`: fără dubluri și fără să scrie peste firmă; șabloanele
+care nu trec de schemă se lasă deoparte).
+
+`GET /api/cereri-dupa-fisier?amprenta=<sha256 hex>` (tot în
+`import-firma.ts`): id-urile cererilor cu exact acel fișier, cele mai noi
+întâi, socotit în bază (`encode(sha256(fisier), 'hex')`), fără migrare;
+amprenta greșită, 400.
+
 ## Ce lipsește
 
 - Permisiunile pe rol (rolurile se stabilesc cu firma). Conturile și jurnalul

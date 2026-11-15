@@ -62,7 +62,11 @@ export type { Avertisment, CodAvertisment } from "./valideaza.js";
 export type { CodNetarifare } from "../pricing/types.js";
 
 /** In ce faza a dedupului pe sablon se afla liniile trimise unui `Extractor`. */
-export interface ContextExtragere { faza: "reprezentanti" | "ramase" }
+export interface ContextExtragere {
+  faza: "reprezentanti" | "ramase";
+  /** A câta citire a acelorași linii (`douaCitiri`): ecranul o spune pe bara de progres. */
+  citire?: 1 | 2;
+}
 
 /**
  * Stratul cu model, ca functie. CLI-ul o implementeaza cu `extrageCuModel`
@@ -120,7 +124,52 @@ export interface OptiuniNucleu {
    * apelantului, ca `grosimiPropuse`, si se salveaza in istoric.
    */
   preturiManuale?: ReadonlyMap<number, number>;
+  /**
+   * Liniile pentru model se citesc de două ori (planul UX, Faza 6, punctul 4,
+   * 15 noiembrie 2026); implicit da. Unde cele două citiri diferă la un câmp
+   * care intră în preț, rândul merge la om, oricât de sigur s-ar spune modelul:
+   * pe TRANSAVIA încrederea a oscilat pe prag de la o rulare la alta.
+   */
+  douaCitiri?: boolean;
   laProgres?: (p: Progres) => void;
+}
+
+/** Începutul motivului pe o linie citită diferit de două ori; `construiesteLinii` îl face avertisment. */
+export const CITIT_DIFERIT = "citit de două ori, diferit";
+
+/** Câmpurile care intră în preț, ca text comparabil. */
+function campuriDePret(e: LinieExtrasa): Record<string, string> {
+  return {
+    sistem: String(e.sistem), diametru: `${e.diametru_tip}|${e.diametru_valoare}`, grosime: String(e.grosime_mm),
+    forma: String(e.forma), gol: `${e.gol_latime_mm}|${e.gol_inaltime_mm}`,
+    straturi: e.straturi_extra.map((x) => `${x.sistem}:${x.grosime_mm}`).sort().join(","),
+  };
+}
+
+/** Ce câmpuri de preț diferă între două citiri ale aceleiași linii (gol = la fel). */
+export function diferenteCitiri(a: LinieExtrasa, b: LinieExtrasa | undefined): string[] {
+  if (!b) return ["a doua citire lipsește"];
+  const x = campuriDePret(a);
+  const y = campuriDePret(b);
+  return Object.keys(x).filter((k) => x[k] !== y[k]);
+}
+
+/**
+ * Cheamă modelul pe aceleași linii de două ori (în paralel) și marchează
+ * liniile citite diferit: încredere 0 și motivul `CITIT_DIFERIT`. Rezultatul
+ * e prima citire. Proiecțiile pe șablon moștenesc motivul (`proiecteaza`).
+ */
+async function citesteDeDouaOri(
+  extrage: Extractor, linii: LinieSursa[], faza: ContextExtragere["faza"], douaCitiri: boolean,
+): Promise<LinieExtrasa[]> {
+  if (!douaCitiri) return doarLiniileTrimise(await extrage(linii, { faza }), linii);
+  const [prima, adoua] = await Promise.all([extrage(linii, { faza, citire: 1 }), extrage(linii, { faza, citire: 2 })]);
+  const p = doarLiniileTrimise(prima, linii);
+  const a = new Map(doarLiniileTrimise(adoua, linii).map((e) => [e.index, e]));
+  return p.map((e) => {
+    const dif = diferenteCitiri(e, a.get(e.index));
+    return dif.length === 0 ? e : { ...e, incredere: 0, motiv: `${CITIT_DIFERIT} (${dif.join(", ")}); ${e.motiv}` };
+  });
 }
 
 export interface Progres { faza: "mapare" | "determinist" | "memorie" | "model" | "tarifare"; gata: number; total: number }
@@ -237,6 +286,16 @@ export interface Statistici {
  * descriere, pozitia ramanea la 45,24 €/ml. Lipsa lui inseamna „textul de acum",
  * pe care nucleul il completeaza la prima trecere (`stampileazaText`).
  */
+/**
+ * Rândul pus la ofertă de om din „Lăsate afară” (`src/import/lasate-afara.ts`,
+ * 14 noiembrie 2026). E o citire nesigură (`sursa: "model"`, încredere 0):
+ * trece la „De verificat” până o confirmă sau o corectează omul. Spre
+ * deosebire de citirea modelului, regulile nu-l mai scot (nu e altă meserie,
+ * nu vine izolat): omul a spus că e izolație.
+ */
+export const PUS_DE_OM = "pus la ofertă de om, din „Lăsate afară”";
+const pusDeOm = (r: Rezolvare | undefined): boolean => r?.sursa === "model" && r.extras.motiv === PUS_DE_OM;
+
 export interface Rezolvare {
   extras: LinieExtrasa;
   sursa: Sursa;
@@ -540,7 +599,7 @@ export function tarifeazaExtras(
       codEroare: "echipament",
     };
   }
-  const t = tarifeazaIzolatie(extras, cantitate, destinatie, text);
+  const t = tarifeazaIzolatie(extras, cantitate, destinatie, text, textLucrare);
   // Livrarea tevii cu izolatia „inclusiv": firma face izolatia, teava o livreaza
   // instalatorul. Se tarifeaza izolatia din liste; NISAL r83 a fost semnat
   // 20,09 €/m fata de 14,68 din liste, deci pozitia merge la om.
@@ -556,6 +615,8 @@ function tarifeazaIzolatie(
   cantitate: number,
   destinatie: Destinatie,
   text?: string,
+  /** Ce lucrare e rândul (banda pe armături): și pe linia omului. Vezi `tarifeazaExtras`. */
+  textLucrare: string | undefined = text,
 ): { pret?: RezultatTarifare | RezultatGolFoc; eroare?: string; codEroare?: CodNetarifare } {
   try {
     if (extras.sistem === "goluri_foc") {
@@ -627,7 +688,9 @@ function tarifeazaIzolatie(
     }
     // Banda autoadeziva pe armaturi (spitalul, „Izolatii armaturi banda
     // autoadeziva", 45 m): cea mai subtire izolatie de elastomer, pe primul rand.
-    if (extras.sistem === "elastomer" && text !== undefined && RE_BANDA_ARMATURI.test(text)) {
+    // Spune ce lucrare e rândul, deci citește `textLucrare`: confirmată, poziția
+    // (fără diametru, deci tot pe regula benzii) își păstrează prețul (14 noiembrie 2026).
+    if (extras.sistem === "elastomer" && textLucrare !== undefined && RE_BANDA_ARMATURI.test(textLucrare)) {
       const rand = diametreDin(listaDe("elastomer", destinatie).lista)[0]!;
       const r = cuNote(tarifeaza({
         diametru: { valoare: rand, tip: "exterior" }, straturi: [{ sistem: "elastomer", grosime_mm: 9 }],
@@ -1008,7 +1071,7 @@ function construiesteLinii(
     if (!r) continue;
     const { sursa } = r;
 
-    if (sursa !== "om" && r.extras.sistem !== null && estePreizolat(b.text)) {
+    if (sursa !== "om" && !pusDeOm(r) && r.extras.sistem !== null && estePreizolat(b.text)) {
       linii.push({
         bruta: b, sursa, preizolat: true, necesitaValidare: false,
         extras: { ...r.extras, sistem: null, motiv: "vine izolat de la producator: nu se izoleaza, nu se oferteaza" },
@@ -1030,6 +1093,8 @@ function construiesteLinii(
       ...(sursa === "regex"
         ? []
         : valideazaExtragere(r.extras, { text: b.text, ...(b.um ? { um: b.um } : {}) })),
+      ...((sursa === "model" || sursa === "sablon") && r.extras.motiv.startsWith(CITIT_DIFERIT)
+        ? [{ cod: "citit_diferit" as const, mesaj: r.extras.motiv.split(";")[0]! }] : []),
       ...notatieContraziceMaterialul(r.extras, b.text),
       ...diametruContrazisDeText(r.extras, b.text),
     ];
@@ -1401,9 +1466,8 @@ export async function proceseazaRegistru(foi: FoaieBruta[], o: OptiuniNucleu): P
     buget -= deTrimis1.length;
 
     const raspunse = new Set<number>();
-    const extrase = deTrimis1.length > 0
-      ? doarLiniileTrimise(await o.extrage(deTrimis1, { faza: "reprezentanti" }), deTrimis1)
-      : [];
+    const douaCitiri = o.douaCitiri ?? true;
+    const extrase = deTrimis1.length > 0 ? await citesteDeDouaOri(o.extrage, deTrimis1, "reprezentanti", douaCitiri) : [];
     for (const e of extrase) {
       raspunse.add(e.index);
       puneDinModel(rezolvate, partiale, e, "model");
@@ -1417,9 +1481,7 @@ export async function proceseazaRegistru(foi: FoaieBruta[], o: OptiuniNucleu): P
     const deTrimis2 = ramase.slice(0, buget);
     trunchiat += ramase.length - deTrimis2.length;
 
-    const extrase2 = deTrimis2.length > 0
-      ? doarLiniileTrimise(await o.extrage(deTrimis2, { faza: "ramase" }), deTrimis2)
-      : [];
+    const extrase2 = deTrimis2.length > 0 ? await citesteDeDouaOri(o.extrage, deTrimis2, "ramase", douaCitiri) : [];
     for (const e of extrase2) {
       raspunse.add(e.index);
       puneDinModel(rezolvate, partiale, e, "model");
@@ -1496,6 +1558,10 @@ export function reevalueaza(rez: Rezultat, o: OptiuniNucleu): void {
   const candidati: LinieCuSectiune[] = [];
   for (const b of brute) {
     const existent = vechi.get(b.index);
+    if (pusDeOm(existent) && (existent!.text ?? b.text) === b.text) {
+      rezolvate.set(b.index, { ...existent!, text: b.text });
+      continue;
+    }
     if (existent?.sursa === "om") {
       if ((existent.text ?? b.text) === b.text) {
         rezolvate.set(b.index, { ...existent, text: b.text });

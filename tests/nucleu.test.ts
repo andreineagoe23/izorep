@@ -102,7 +102,9 @@ describe("bugetul de linii trimise la model e PER IMPORT", () => {
     expect(rez.statistici.reziduale).toBe(5);
     expect(rez.statistici.trimiseLaModel).toBe(2);
     expect(rez.statistici.trunchiat).toBe(3);
-    expect(primite.length).toBe(2);
+    // Fiecare linie se citește de două ori (Faza 6, punctul 4): aceleași 2 linii, nu 4.
+    expect(new Set(primite).size).toBe(2);
+    expect(primite.length).toBe(4);
   });
 });
 

@@ -639,3 +639,50 @@ export const furnizor = pgTable("furnizor", {
   uniqueIndex("furnizor_tenant_denumire_idx").on(t.tenantId, t.denumire),
   doarTenantul("furnizor_tenant"),
 ]);
+
+/**
+ * Coloanele unei foi de client (L1), pe firmă (14 noiembrie 2026, planul UX,
+ * Faza 6). Până atunci maparea venea doar din `npm run mapare`, de pe laptop:
+ * un client nou, încărcat din ecran, cădea pe euristica de cantitate (0 din 56
+ * corecte pe oferta semnată). Acum, la import, un antet necunoscut se citește
+ * cu modelul (`/api/mapare`), `valideazaMapare` decide, iar rezultatul stă
+ * aici; la fel alegerea omului din „schimbă”. Cheia e amprenta antetului.
+ * O mapare respinsă stă și ea (`acceptata = false`): același antet nu mai
+ * cheamă modelul, iar foaia rămâne pe euristică până alege omul coloanele.
+ */
+export const mapareColoane = pgTable("mapare_coloane", {
+  tenantId: uuid("tenant_id").notNull().references(() => tenant.id, { onDelete: "restrict" }),
+  amprenta: text("amprenta").notNull(),
+  /** `MapareFoaie` din `src/import/mapare.ts`. */
+  mapare: jsonb("mapare").notNull(),
+  acceptata: boolean("acceptata").notNull(),
+  /** model | om */
+  sursa: text("sursa").notNull(),
+  /** Doar pentru cine citește: din ce fișier și ce foaie a ieșit. */
+  fisier: text("fisier"),
+  foaie: text("foaie"),
+  model: text("model"),
+  actualizatLa: timestamp("actualizat_la", { withTimezone: true }).notNull().defaultNow(),
+  actualizatDe: text("actualizat_de"),
+}, (t) => [
+  primaryKey({ columns: [t.tenantId, t.amprenta] }),
+  doarTenantul("mapare_coloane_tenant"),
+]);
+
+/**
+ * Memoria de șabloane (L4), pe firmă (14 noiembrie 2026, planul UX, Faza 6):
+ * ce a corectat omul la import nu se mai întreabă. Până atunci stătea în
+ * `localStorage` (`web/stoc-local.ts`): colegul refăcea aceleași corecturi,
+ * iar ele se pierdeau la schimbarea calculatorului. `sablon` e
+ * `SablonInvatat` din `src/import/memorie.ts`, cheia e tiparul.
+ */
+export const sablonImport = pgTable("sablon_import", {
+  tenantId: uuid("tenant_id").notNull().references(() => tenant.id, { onDelete: "restrict" }),
+  tipar: text("tipar").notNull(),
+  sablon: jsonb("sablon").notNull(),
+  actualizatLa: timestamp("actualizat_la", { withTimezone: true }).notNull().defaultNow(),
+  actualizatDe: text("actualizat_de"),
+}, (t) => [
+  primaryKey({ columns: [t.tenantId, t.tipar] }),
+  doarTenantul("sablon_import_tenant"),
+]);

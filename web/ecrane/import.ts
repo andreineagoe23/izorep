@@ -3,15 +3,19 @@ import {
 } from "../../src/import/nucleu.js";
 import { campuriRand, scrieCelula, reconstruieste, type CampuriRand } from "../../src/import/editare.js";
 import { invataDinCorectie } from "../../src/import/memorie.js";
-import { mapariStatice } from "../../src/import/mapari-statice.js";
+import { citesteColoanele, mapariFolosite, mapariImport } from "../import/mapari-firma.js";
+import { controlColoane } from "../import/coloane-ecran.js";
+import { faPozitie, lasateAfara } from "../../src/import/lasate-afara.js";
+import { listaAfara } from "../import/afara-vizual.js";
+import { ecranDublura, lucrareaFisierului } from "../import/fisier-dublu.js";
 import type { LinieExtrasa } from "../../src/import/schema.js";
 // Doar tipul: ExcelJS (~940 kB) ramane incarcat lenes, prin `import()`.
 import type { FoaieBruta } from "../../src/import/parse-workbook.js";
 import type { Destinatie } from "../../src/pricing/lists.js";
 import { grosimePropusa } from "../../src/pricing/grosimi-uzuale.js";
-import { stocLocal } from "../stoc-local.js";
+import { stocSabloane } from "../stoc-sabloane.js";
 import { ceriSpatiu } from "../meniu-stare.js";
-import { anuleaza, confirma, potrivit } from "../validare.js";
+import { anuleaza, confirma, potrivit, vazute } from "../validare.js";
 import { cate, esc, eur } from "./tip.js";
 import { FIRME, logoFirmei } from "../date/firme.js";
 import {
@@ -36,7 +40,7 @@ import {
 import {
   antetDinFisier, baraVerificare, exportPeEcran, filtruImplicit, type AntetScris, type SchimbariPozitie,
 } from "../import/oferta-vizual.js";
-import { JACHETE, patchDinCamp, verificarePeEcran } from "../import/verificare-vizual.js";
+import { CASETA_COLOANEI, JACHETE, patchDinCamp, verificarePeEcran } from "../import/verificare-vizual.js";
 import { documentOferta, textClient, type PozitieOferta } from "../document-oferta.js";
 import { legaCelule, numarInCelula, numarScris, pastreazaCursorul } from "../celula.js";
 import { rutaModel } from "../imagine.js";
@@ -185,7 +189,7 @@ function santierDin(c: CerereDeschisa, reguli: ReguliNecesar): RezultatSantier {
 async function optiuniCererii(s: SesiuneImport): Promise<OptiuniNucleu> {
   const info = await interogheazaModel();
   return {
-    stoc: stocLocal(), mapari: mapariStatice(), prag: info?.prag ?? 0.85, destinatie: s.destinatie ?? "rezidential",
+    stoc: await stocSabloane(), mapari: (await mapariImport(s.mapari)).mapari, prag: info?.prag ?? 0.85, destinatie: s.destinatie ?? "rezidential",
     grosimiPropuse: new Map(s.grosimiPropuse ?? []), descrieriSchimbate: new Set(s.descrieriSchimbate ?? []),
     preturiManuale: new Map(s.preturiManuale ?? []),
   };
@@ -281,9 +285,10 @@ export interface ControlImport {
  */
 export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Promise<ControlImport> {
   const info = await interogheazaModel();
-  const mapari = mapariStatice();
+  /** Coloanele foilor: din repo, ale firmei, ale cererii (`mapari-firma.ts`). */
+  let mi = await mapariImport();
   const prag = info?.prag ?? 0.85;
-  const stoc = stocLocal();
+  const stoc = await stocSabloane();
 
   /* --------------------------------------------------------------- stare */
   let destinatie: Destinatie = "rezidential";
@@ -311,6 +316,15 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
    * nu mută pagina pe altă filă.
    */
   let filtruAles = false;
+  /** Fila „Lăsate afară” deschisă (Faza 6): rândurile cu cantitate care nu sunt poziții. */
+  let vedereAfara = false;
+  /**
+   * Rândurile „Gata” deschise cu casetele (15 noiembrie 2026). Un rând deschis
+   * rămâne așa cât lucrezi pe el (cursorul în el) sau cât l-ai schimbat în
+   * sesiunea asta (`atinse`); celelalte se închid la următoarea redesenare.
+   */
+  const deschise = new Set<number>();
+  const atinse = new Set<number>();
   let motiv: CodMotiv | null = null;
   let editIdx: number | null = null;
   /** Datele de pe antetul ofertei, scrise la pasul „Oferta”; se tin in sesiune. */
@@ -338,10 +352,26 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
    * alege izolatia pe fiecare foaie, iar lista de izolatii trece prin import.
    */
   let deIzolat: { fisier: File; tevi: TeviFoaie[]; alegeri: AlegereFoaie[]; eroare?: string } | null = null;
+  /** Fișierul încărcat e deja la o lucrare (Faza 6, punctul 8): omul alege ce face. */
+  let dublura: { fisier: File; id: string; titlu: string } | null = null;
   let ceasMesaj: ReturnType<typeof setTimeout> | undefined;
   let ceasSalvare: ReturnType<typeof setTimeout> | undefined;
 
-  const optiuni = () => ({ stoc, mapari, prag, destinatie, grosimiPropuse, descrieriSchimbate, preturiManuale });
+  const optiuni = () => ({ stoc, mapari: mi.mapari, prag, destinatie, grosimiPropuse, descrieriSchimbate, preturiManuale });
+
+  const coloane = controlColoane({
+    foi: () => sesiune?.foi ?? [],
+    cuPozitii: () => new Set((sesiune?.rez.linii ?? []).filter((l) => l.extras.sistem !== null).map((l) => l.bruta.foaie)),
+    mapari: () => mi.mapari,
+    fisier: () => sesiune?.meta.nume ?? "",
+    aplicat: (mesaj, anulare) => {
+      retarifeaza();
+      deseneaza();
+      arataMesaj(mesaj, () => { anulare(); retarifeaza(); });
+    },
+    deseneaza: () => deseneaza(),
+    mesaj: (text) => arataMesaj(text),
+  });
 
   gazda.innerHTML = `<div class="imp">
     <div id="imp-pagina" class="imp-pagina"></div>
@@ -445,6 +475,7 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
       preturiManuale: [...preturiManuale],
       denumiri: [...denumiri],
       antet, ajustare,
+      mapari: mapariFolosite(s.foi, mi.mapari),
     });
     opt.laSchimbare?.({ deVerificat, antet });
   }
@@ -472,7 +503,10 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
     // Cu fisierul deschis, foaia clientului are nevoie de toata latimea:
     // bara laterala se pliaza (temporar, fara sa schimbe preferinta omului).
     ceriSpatiu(gazda, areSesiune && pas !== 1);
-    if (pas === 1 && deIzolat) {
+    if (pas === 1 && dublura) {
+      pagina.innerHTML = ecranDublura(dublura.fisier.name, dublura.titlu);
+      pagina.querySelector<HTMLElement>('[data-act="dublura-deschide"]')?.focus();
+    } else if (pas === 1 && deIzolat) {
       const d = deIzolat;
       pagina.innerHTML = ecranIzolatieFoaie({
         fisier: d.fisier.name, alegeri: d.alegeri, ...(d.eroare ? { eroare: d.eroare } : {}),
@@ -596,18 +630,22 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
     const filtrat = filtru === "toate" && motiv === null ? null : new Set(lista.map((l) => l.extras.index));
     if (filtrat && randInLucru !== null) filtrat.add(randInLucru);
     const harta = new Map(s.rez.linii.map((l) => [l.extras.index, l]));
+    if (randInLucru !== null) atinse.add(randInLucru);
+    const activ = (document.activeElement as HTMLElement | null)?.closest<HTMLElement>("tr[data-idx]")?.dataset["idx"];
+    for (const i of [...deschise]) if (!atinse.has(i) && String(i) !== activ) deschise.delete(i);
 
-    const corp = verificarePeEcran(documentul(s, randInLucru), {
-      linii: harta, vizibile: filtrat, editIdx, propunere, cuFoaie, schimbari: schimbariPozitie(s),
+    const afara = lasateAfara(s.rez);
+    const corp = vedereAfara ? listaAfara(afara, cuFoaie) : verificarePeEcran(documentul(s, randInLucru), {
+      linii: harta, vizibile: filtrat, editIdx, propunere, cuFoaie, schimbari: schimbariPozitie(s), deschise: new Set([...deschise, ...atinse]),
       descriere: (l) => celulaDescriere(s, l),
       um: (l) => { const c = campuriLinie(s, l)?.um; return c ? { cel: c.cel, v: String(c.v) } : undefined; },
     });
 
     return `${alerte(s)}
-      <section class="imp-card">${antetVerificare({ nume: s.meta.nume, cand: s.meta.cand, destinatie, schimbaTip: tipDeschis })}</section>
-      ${baraVerificare(numere, filtru)}
-      ${filtreMotiv(motive, motiv)}
-      ${actiuniLista({
+      <section class="imp-card">${antetVerificare({ nume: s.meta.nume, cand: s.meta.cand, destinatie, schimbaTip: tipDeschis })}${coloane.html()}</section>
+      ${baraVerificare(numere, filtru, { n: afara.length, activ: vedereAfara })}
+      ${vedereAfara ? "" : filtreMotiv(motive, motiv)}
+      ${vedereAfara ? "" : actiuniLista({
         deConfirmat: filtru === "de_validat" ? lista.length : 0,
         grosimi: lista.filter((l) => potrivit(l, "netarifate") && propunere(l) !== null).length,
       })}
@@ -635,6 +673,8 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
   function deschideSesiune(s: Sesiune, laPas: Pas = 2): void {
     sesiune = s;
     pas = laPas; filtru = filtruImplicit(numereStare(s)); filtruAles = false; motiv = null; editIdx = null; randInLucru = null;
+    deschise.clear(); atinse.clear();
+    vedereAfara = false;
     tipDeschis = false;
     // Latimea se masoara DUPA plierea barei, altfel ar decide pe locul pe
     // care il ocupa inca meniul. Sub prag, foaia 1:1 n-ar incapea fara
@@ -654,7 +694,8 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
   function confirmaIndecsi(indecsi: number[]): void {
     const s = sesiune;
     if (!s || indecsi.length === 0) return;
-    const inst = confirma(indecsi, s.rez.rezolvate);
+    // Ce vedea omul (grosimea completată, golul de la aceeași țeavă), nu extragerea brută: altfel „Fără preț”.
+    const inst = confirma(indecsi, s.rez.rezolvate, vazute(s.rez));
     retarifeaza();
     const n = inst.intrari.length;
     arataMesaj(n === 1 ? "Poziție confirmată." : `${cate(n, "poziții")} confirmate.`, () => {
@@ -828,14 +869,27 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
     descrieriSchimbate = new Set(s.descrieriSchimbate ?? []);
     preturiManuale = new Map(s.preturiManuale ?? []);
     denumiri = new Map(s.denumiri ?? []);
+    mi = await mapariImport(s.mapari);
     const rez = await redeschideImport(s, optiuni());
     puneCurent(id);
     deschideSesiune({ foi: rez.foi, rez, meta: s, editari: [...s.editari], avertisment: "" }, pas === 3 ? 3 : 2);
     if (!restaurat) arataMesaj(`Ai deschis ${s.nume}.`);
   }
 
-  async function proceseaza(fisier: File, predare?: Predare): Promise<void> {
+  async function proceseaza(fisier: File, predare?: Predare, caNou = false): Promise<void> {
     deIzolat = null;
+    dublura = null;
+    // Același fișier, a doua oară: întâi întrebarea. Nu și pentru pozele din carnet (registru nou de fiecare dată).
+    if (!caNou && !predare) {
+      pagina.innerHTML = ecranProgres(`Se citește ${fisier.name}…`, null);
+      const l = await lucrareaFisierului(await fisier.arrayBuffer(), sesiune?.meta.id ?? opt.cerere);
+      if (l) {
+        pas = 1;
+        dublura = { fisier, ...l };
+        deseneaza();
+        return;
+      }
+    }
     pas = 2;
     let nou: SesiuneImport | null = null;
     pagina.innerHTML = ecranProgres(`Se citește ${fisier.name}…`, null);
@@ -846,15 +900,25 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
 
       let esuate = 0;
       let plafon = "";
-      const extractor: Extractor | undefined = info ? async (deTrimis) => {
+      // Coloanele unui antet necunoscut, citite cu modelul înaintea pozițiilor (Faza 6, punctul 1).
+      mi = await mapariImport();
+      if (info) {
+        pagina.innerHTML = ecranProgres("Se citesc coloanele…", null);
+        plafon = await citesteColoanele(foi, fisier.name, mi);
+      }
+      // Bara de progres e una pentru toate apelurile: rândurile se citesc de două ori, în paralel (Faza 6, punctul 4).
+      let totLoturi = 0;
+      let gata = 0;
+      const extractor: Extractor | undefined = info ? async (deTrimis, ctx) => {
         const lot = info.lot ?? LOT_IMPLICIT;
         const loturi: (typeof deTrimis)[] = [];
         for (let i = 0; i < deTrimis.length; i += lot) loturi.push(deTrimis.slice(i, i + lot));
+        totLoturi += loturi.length;
         const primite: LinieExtrasa[] = [];
-        let gata = 0;
         let urmator = 0;
         const arata = (): void => {
-          pagina.innerHTML = ecranProgres("Se recunosc pozițiile…", loturi.length ? (gata / loturi.length) * 100 : 100);
+          pagina.innerHTML = ecranProgres(ctx.citire ? "Se recunosc pozițiile, de două ori, ca să fie sigure…" : "Se recunosc pozițiile…",
+            totLoturi ? (gata / totLoturi) * 100 : 100);
         };
         arata();
         const lucrator = async (): Promise<void> => {
@@ -1191,7 +1255,23 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
     });
   }
 
+  function deschideRandul(tr: HTMLElement, camp: string): void {
+    const idx = Number(tr.dataset["idx"]);
+    deschise.add(idx);
+    deseneaza();
+    const rand = pagina.querySelector<HTMLElement>(`tr.ver-poz[data-idx="${idx}"]`);
+    const tinta = rand?.querySelector<HTMLElement>(CASETA_COLOANEI[camp] ?? CASETA_COLOANEI["desc"]!)
+      ?? rand?.querySelector<HTMLElement>("input, select, [contenteditable]");
+    tinta?.focus();
+  }
+
   gazda.addEventListener("keydown", (e) => {
+    const tr = (e.target as HTMLElement).closest?.<HTMLElement>("tr.ver-citit");
+    if (tr && tr === e.target && (e.key === "Enter" || e.key === " ")) {
+      e.preventDefault();
+      deschideRandul(tr, "desc");
+      return;
+    }
     if (e.key !== "Escape") return;
     const m = (e.target as HTMLElement).closest<HTMLElement>(".meniu-rand:not([hidden])");
     if (!m) return;
@@ -1208,6 +1288,13 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
       if (m.parentElement?.contains(t)) continue;
       m.hidden = true;
       m.parentElement?.querySelector(".cel-meniu")?.setAttribute("aria-expanded", "false");
+    }
+
+    // Un rând „Gata” scris ca text: clicul (nu pe „⋯”) îl deschide, cu cursorul pe coloana atinsă.
+    const citit = t.closest<HTMLElement>("tr.ver-citit");
+    if (citit && !t.closest("button, a, input, select, .meniu-rand")) {
+      deschideRandul(citit, t.closest<HTMLElement>("td[data-camp]")?.dataset["camp"] ?? "desc");
+      return;
     }
 
     const bPas = t.closest<HTMLButtonElement>("[data-pas]");
@@ -1228,6 +1315,8 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
 
     const bFiltru = t.closest<HTMLButtonElement>("[data-filtru]");
     if (bFiltru) {
+      vedereAfara = bFiltru.dataset["filtru"] === "afara";
+      if (vedereAfara) { editIdx = null; randInLucru = null; deseneaza(); pagina.querySelector<HTMLElement>('[data-filtru="afara"]')?.focus(); return; }
       filtru = bFiltru.dataset["filtru"] as FiltruStare; filtruAles = true; motiv = null; editIdx = null; randInLucru = null;
       deseneaza();
       pagina.querySelector<HTMLElement>(`[data-filtru="${filtru}"]`)?.focus();
@@ -1240,6 +1329,7 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
     const b = t.closest<HTMLButtonElement>("button[data-act]");
     const act = b?.dataset["act"];
     if (!b || !act) return;
+    if (coloane.click(b)) return;
     const idx = b.dataset["idx"] !== undefined ? Number(b.dataset["idx"]) : null;
 
     switch (act) {
@@ -1251,6 +1341,9 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
         return;
       }
       case "renunta-izolatie": deIzolat = null; deseneaza(); scrollTo({ top: 0 }); return;
+      case "dublura-deschide": if (dublura) location.hash = `#/lucrari/${encodeURIComponent(dublura.id)}/cerere`; return;
+      case "dublura-nou": { const d = dublura; if (d) void proceseaza(d.fisier, undefined, true); return; }
+      case "dublura-renunta": dublura = null; deseneaza(); scrollTo({ top: 0 }); return;
       case "schimba-tip":
         tipDeschis = true;
         deseneaza();
@@ -1330,6 +1423,26 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
         confirmaIndecsi([idx]);
         deseneaza();
         focuseaza(pagina.querySelector(`:is(.imp-poz, tr)[data-idx="${idx}"]`) ? idx : urm, "confirma");
+        return;
+      }
+      case "e-izolatie": {
+        // Din „Lăsate afară”: rândul devine poziție, de verificat; fila trece unde a ajuns.
+        const s = sesiune;
+        const a = s && idx !== null ? lasateAfara(s.rez).find((x) => x.index === idx) : undefined;
+        if (!s || !a || idx === null) return;
+        const vechi = s.rez.rezolvate.get(idx);
+        s.rez.rezolvate.set(idx, faPozitie(s.rez, a));
+        retarifeaza();
+        const l = s.rez.linii.find((x) => x.extras.index === idx);
+        vedereAfara = false;
+        filtru = l && potrivit(l, "de_validat") ? "de_validat" : "netarifate";
+        filtruAles = true; motiv = null; randInLucru = idx;
+        arataMesaj("Rândul e acum poziție: alege materialul și grosimea, apoi confirmă.", () => {
+          if (vechi) s.rez.rezolvate.set(idx, vechi); else s.rez.rezolvate.delete(idx);
+          retarifeaza();
+        });
+        deseneaza();
+        pagina.querySelector<HTMLElement>(`tr[data-idx="${idx}"] select`)?.focus();
         return;
       }
       case "confirma-tot":

@@ -91,6 +91,7 @@ export const ETICHETE_BLOCAJ: Record<CodBlocaj, { eticheta: string; intrebare?: 
   diametru_nenotat: { eticheta: "diametrul citit e alt număr de pe rând, nu cel scris ca diametru" },
   strat_necitat: { eticheta: "un strat (tablă, inox, PVC) care nu e scris pe rând" },
   grosime_interval: { eticheta: "grosimea e dată ca interval; alegerea e a omului" },
+  citit_diferit: { eticheta: "rândul citit automat de două ori a ieșit diferit" },
 };
 
 /**
@@ -209,6 +210,14 @@ export interface Instantaneu {
  * interzice `memorie.ts` (se invata DOAR din corectia umana explicita, linie
  * cu linie, niciodata dintr-o bifare in masa).
  *
+ * Cu `vazute` (extragerile asa cum le vede omul, `vazute(rez)`), linia
+ * confirmata ia exact ce vedea omul cand a confirmat: grosimea scrisa dar
+ * respinsa la citire („g48” → 50 mm), a conductei de acelasi diametru, cea
+ * uzuala, golul de la aceeasi teava. Fara ele, confirmarea punea extragerea
+ * bruta, iar linia omului nu le mai completeaza: pozitia trecea pe „Fara pret”
+ * (bugul „g48 → Confirmă”, 14 noiembrie 2026; pe fisierele clientilor, 15
+ * pozitii: TRANSAVIA inox g48, golurile EI180 de la Matari, banda pe armaturi).
+ *
  * Nu atinge liniile deja `sursa: "om"`: n-au ce sa confirme a doua oara, si
  * nu intra in instantaneu — altfel anularea le-ar pune inapoi pe sursa lor
  * VECHE (model/sablon/memorie), stricand o confirmare mai veche pe care omul
@@ -217,16 +226,21 @@ export interface Instantaneu {
 export function confirma(
   indecsi: number[],
   rezolvate: Map<number, { extras: LinieExtrasa; sursa: Sursa }>,
+  vazute?: ReadonlyMap<number, LinieExtrasa>,
 ): Instantaneu {
   const intrari: Instantaneu["intrari"] = [];
   for (const index of indecsi) {
     const r = rezolvate.get(index);
     if (!r || r.sursa === "om") continue;
     intrari.push({ index, extras: r.extras, sursa: r.sursa });
-    rezolvate.set(index, { extras: r.extras, sursa: "om" });
+    rezolvate.set(index, { extras: vazute?.get(index) ?? r.extras, sursa: "om" });
   }
   return { intrari };
 }
+
+/** Extragerile cum le vede omul pe ecran, completate de reguli: ce intra in `confirma`. */
+export const vazute = (rez: { linii: readonly LinieProcesata[] }): Map<number, LinieExtrasa> =>
+  new Map(rez.linii.map((l) => [l.extras.index, l.extras]));
 
 /**
  * Pune inapoi ce era inainte de `confirma`.

@@ -1,5 +1,6 @@
 import type { LinieExtrasa, Sursa } from "../src/import/schema.js";
 import type { Destinatie } from "../src/pricing/lists.js";
+import type { MapareFoaie } from "../src/import/mapare.js";
 
 /**
  * Istoricul importurilor si importul curent, in IndexedDB.
@@ -101,6 +102,12 @@ export interface SesiuneImport extends IntrareIstoric {
    */
   antet?: AntetCerere;
   ajustare?: number;
+  /**
+   * Coloanele folosite pe foile cererii, `[amprenta, mapare]` (14 noiembrie
+   * 2026): cererea redeschisă iese cum a văzut-o omul, chiar dacă între timp
+   * un coleg a ales alte coloane pe același antet.
+   */
+  mapari?: [string, MapareFoaie][];
 }
 
 /**

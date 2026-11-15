@@ -119,7 +119,7 @@ describe("verificarea și „Cum iese oferta” (21 octombrie 2026)", async () =
     const linii = [linie(1, "Izolatie elastomer 13 mm DN50", null, 8.84), linie(2, "Izolatie elastomer DN50", null, null),
       linie(3, "Izolatie elastomer 13 mm DN50", null, 8.84)];
     const d = documentOferta(cerere(linii));
-    expect([...verificarePeEcran(d, optiuni(linii)).matchAll(/class="ver-poz" data-idx="(\d+)"/g)].map((m) => m[1])).toEqual(["1", "2", "3"]);
+    expect([...verificarePeEcran(d, optiuni(linii)).matchAll(/class="ver-poz[^"]*" data-idx="(\d+)"/g)].map((m) => m[1])).toEqual(["1", "2", "3"]);
     const ex = exportPeEcran(d);
     expect([...ex.matchAll(/<td data-eticheta="Nr.">(\d+)<\/td>/g)].map((m) => m[1])).toEqual(["1", "2"]);
     expect(ex).toContain("176,80 €");
@@ -130,7 +130,8 @@ describe("verificarea și „Cum iese oferta” (21 octombrie 2026)", async () =
     const l = linie(1, "DN80 elastomer 13mm+40mm vata minerala", null, 44.35);
     l.extras.straturi_extra = [{ sistem: "vata_minerala", grosime_mm: 40 }, { sistem: "tabla", grosime_mm: null }];
     const d = documentOferta(cerere([l]));
-    const html = verificarePeEcran(d, { ...optiuni([l]), um: () => ({ cel: 2, v: "buc." }) });
+    // Rândul e „Gata”: casetele le are deschis (15 noiembrie 2026, rândurile gata ca text).
+    const html = verificarePeEcran(d, { ...optiuni([l]), um: () => ({ cel: 2, v: "buc." }), deschise: new Set([1]) });
     expect(html).not.toContain("Total €");
     expect(html).toMatch(/<select data-um="1" data-idx="1"[^>]*>.*<option value="buc\." selected>/s);
     expect(html).toContain('data-vc="strat0"');
@@ -143,7 +144,23 @@ describe("verificarea și „Cum iese oferta” (21 octombrie 2026)", async () =
     expect(html).toMatch(/data-act="scoate-primul" data-idx="1">Scoate stratul 1</);
     // Jacheta rămâne la „Protecție”, nu apare ca strat în plus.
     expect(html).not.toContain('data-vc="strat1"');
-    expect(verificarePeEcran(d, optiuni([l]))).not.toContain("data-um=");
+    expect(verificarePeEcran(d, { ...optiuni([l]), deschise: new Set([1]) })).not.toContain("data-um=");
+  });
+
+  it("rândul „Gata” e text, fără casete, cu „⋯”; deschis, are casetele; „De verificat” are mereu casete", () => {
+    const gata = linie(1, "Izolatie elastomer 13 mm DN50", null, 8.84);
+    const fara = linie(2, "Izolatie elastomer DN50", null, null);
+    const d = documentOferta(cerere([gata, fara]));
+    const html = verificarePeEcran(d, optiuni([gata, fara]));
+    const rand = (h: string, i: number): string => h.split(/(?=<tr )/).find((x) => x.includes(`data-idx="${i}"`))!;
+    expect(rand(html, 1)).toMatch(/class="ver-poz ver-citit"[^>]*tabindex="0"/);
+    expect(rand(html, 1)).not.toMatch(/<input|<select|contenteditable/);
+    expect(rand(html, 1)).toContain('data-act="meniu-rand"');
+    expect(rand(html, 2)).toMatch(/<select data-vc="sistem"/);
+    const deschis = verificarePeEcran(d, { ...optiuni([gata, fara]), deschise: new Set([1]) });
+    expect(rand(deschis, 1)).toMatch(/<select data-vc="sistem"/);
+    // Doar rânduri text: coloanele se strâng.
+    expect(verificarePeEcran(documentOferta(cerere([gata])), optiuni([gata]))).toContain("ver-tabel ver-compact");
   });
 
   it("✕ e un meniu pe rând: „Adaugă un strat” oprit la 4 straturi, „Scoate rândul” mereu", () => {
