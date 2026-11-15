@@ -196,6 +196,8 @@ export const MOTIV: Record<CodMotiv, string> = {
   strat_necitat: "Verifică straturile: jachetă nescrisă în text",
   grosime_interval: "Grosimea e un interval: s-a luat cea mai mare",
   citit_diferit: "Citit de două ori, diferit",
+  doua_diametre: "Pe rând sunt două diametre",
+  necitit: "Rândul n-a fost citit",
   grosime_jacheta_apropiata: "Tabla: grosimea uzuală lipsește, s-a luat cea mai apropiată",
   grosime_extrapolata: "Grosime peste listă: preț pe m² calculat",
   grosime_apropiata: "Grosimea scrisă nu e în listă: s-a luat cea mai apropiată",

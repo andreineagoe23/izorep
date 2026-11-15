@@ -3,6 +3,7 @@ import { lista } from "../pricing/lists.js";
 import type { SistemMatrice } from "../pricing/types.js";
 import { areIntervalDeGrosime, diametreNotate, diametreScrise, formaExplicitaDinText, sistemScris, type DiametreNotate } from "./extract-regex.js";
 import type { LinieExtrasa } from "./schema.js";
+import { textPropriu } from "./continuare.js";
 
 /**
  * Validarea de PLAUZIBILITATE a ce iese din model.
@@ -33,11 +34,17 @@ export type CodAvertisment =
   | "strat_necitat"
   | "grosime_interval"
   /** Două citiri ale modelului diferă la un câmp care intră în preț (`citesteDeDouaOri` în `nucleu.ts`). */
-  | "citit_diferit";
+  | "citit_diferit"
+  /** Pe rând sunt scrise două diametre care nu sunt aceeași țeavă (`douaDiametre`). */
+  | "doua_diametre"
+  /** Rândul a plecat la model și nu s-a întors citit (lot căzut, linie sărită): `necitite` în `nucleu.ts`. */
+  | "necitit";
 
 export interface Avertisment {
   cod: CodAvertisment;
   mesaj: string;
+  /** La `doua_diametre`: diametrele de pe rând, cum le scrie clientul („DN80”, „Ø100”), câte unul pe țeavă. */
+  diametre?: string[];
 }
 
 /*
@@ -216,6 +223,11 @@ export function valideazaExtragere(
     }
   }
 
+  // Două diametre notate care nu sunt aceeași țeavă: oricare a ales modelul,
+  // alegerea e a omului. Pe reguli decide `esteConversiaDN`; calibrat pe cele
+  // 623 de poziții citite de reguli din fișierele clienților: zero aprinderi.
+  if (l.sistem !== null && l.sistem !== "goluri_foc") av.push(...douaDiametre(sursa.text));
+
   // „Di169, g50 - COT" cu UM ml: forma scrisa explicit bate UM-ul, cum a
   // tarifat firma in Oferta 284 — nu e o contradictie a modelului.
   if (sursa.um && l.forma && umContrazice(sursa.um, l.forma) && l.forma !== formaExplicitaDinText(sursa.text)) {
@@ -307,6 +319,83 @@ export function diametruContrazisDeText(l: LinieExtrasa, text: string): Avertism
     cod: "diametru_contrazis",
     mesaj: `diametrul e citit ca DN${dn}, dar pe rand scrie Ø${scrise.join(", Ø")}, care nu e DN${dn} `
       + `in tabelul de conversie${tabel ? ` (${tabel})` : ""}`,
+  }];
+}
+
+/**
+ * Două diametre NOTATE pe același rând, care nu sunt aceeași țeavă: „DN80 …
+ * Ø100”. Modelul ia unul dintre ele, iar care e cel bun nu se vede din text:
+ * alt diametru e alt rând din listă, deci alt preț, cu încredere mare. Până
+ * acum niciun gard nu prindea asta („Ce nu prinde” în `.claude/import.md`).
+ *
+ * Aceeași țeavă scrisă de două ori NU se aprinde: „Dn 80 (88,9 x 4)”,
+ * „Ф 57 x 3,5 mm (Dn 2")” (57 e DN50 pe coloana DIN), „Di89 … 88,9 x 4”,
+ * „SPIRO DN 160 … Ø160” — conversia e cea din `esteConversiaDN` (ISO sau DIN,
+ * ±1 mm), iar același număr cu altă notație e o singură țeavă (notația o
+ * judecă `diametru_contrazis` și `notatie_contrazice_materialul`).
+ *
+ * Nici reducția („reducție DN100 → DN80”, „reductor 320 → 250”): acolo cele
+ * două diametre sunt chiar piesa, iar ce rând ia prețul îl decide regula
+ * piesei, nu citirea. Dimensiunile golului sau ale tubulaturii rectangulare
+ * („1000/500”, „130/130”) nu sunt diametre notate, deci nu intră.
+ *
+ * Doar pe liniile modelului și ale șablonului (nu pe reguli: acolo decide
+ * deja `esteConversiaDN`; nu pe om). Se aprinde oricare diametru a ales
+ * modelul: amândouă sunt scrise, deci alegerea e a omului.
+ */
+const RE_REDUCTIE = /reduc|reduzier|→|->|\bred\.\s/i;
+
+/**
+ * DN150 pe seria EN 10255 (țeava filetabilă): ø165,1, nu 168,3 (ISO) sau 159
+ * (DIN). Spitalul, rândurile 60 / 69 / 78: „DN150 … 165,1 x 4,5”, aceeași
+ * țeavă; registrul de conversie al firmei are 165,1 (`.claude/tevi.md`,
+ * „Conflict la DN150”). Celelalte DN-uri din EN 10255 sunt deja pe ISO.
+ */
+const EN10255: Readonly<Record<number, number>> = { 150: 165.1 };
+const aceeasiTeava = (dn: number, od: number): boolean =>
+  esteConversiaDN(dn, od) || (EN10255[dn] !== undefined && Math.abs(EN10255[dn]! - od) <= 1);
+
+export function douaDiametre(textRand: string): Avertisment[] {
+  // Rândul de continuare („Same - Ø125 mm”, „idem DN20”) poartă lipită descrierea
+  // părintelui, cu diametrul lui: contează doar ce scrie rândul.
+  const text = textPropriu(textRand);
+  if (RE_REDUCTIE.test(text)) return [];
+  const n = diametreNotate(text);
+  // „Dn 2"” e prins și ca DN2 (cifra țolilor), și ca DN50 (țolii): DN2 nu e țeavă.
+  const toli = (v: number): boolean =>
+    new RegExp(`\\b(?:DN|Dn|dn)\\s*\\.?\\s*${v}(?:\\s+\\d\\/\\d|\\/\\d)?\\s*(?:"|”|“|''|′′|″)`).test(text);
+  const toate: { tip: "DN" | "exterior"; v: number }[] = [
+    ...n.dn.filter((v) => !toli(v)).map((v) => ({ tip: "DN" as const, v })),
+    ...n.exterior.map((v) => ({ tip: "exterior" as const, v })),
+  ];
+  const aceeasi = (a: { tip: string; v: number }, b: { tip: string; v: number }): boolean => {
+    if (Math.abs(a.v - b.v) <= 0.5) return true;
+    if (a.tip === "DN" && b.tip === "DN") return false;
+    if (a.tip === "DN") return aceeasiTeava(a.v, b.v);
+    if (b.tip === "DN") return aceeasiTeava(b.v, a.v);
+    return Math.abs(a.v - b.v) <= 1;
+  };
+  const grupuri: (typeof toate)[] = [];
+  for (const d of toate) {
+    const unde = grupuri.filter((g) => g.some((x) => aceeasi(x, d)));
+    const unit = [d, ...unde.flat()];
+    for (const g of unde) grupuri.splice(grupuri.indexOf(g), 1);
+    grupuri.push(unit);
+  }
+  if (grupuri.length < 2) return [];
+  // Câte un nume pe țeavă, în ordinea din text: DN-ul întâi, dacă țeava îl are.
+  const nume = grupuri
+    .map((g) => {
+      const d = g.find((x) => x.tip === "DN") ?? g[0]!;
+      return { poz: Math.min(...g.map((x) => text.indexOf(String(x.v).replace(".", ",")) >= 0
+        ? text.indexOf(String(x.v).replace(".", ",")) : text.indexOf(String(x.v)))), d };
+    })
+    .sort((a, b) => a.poz - b.poz)
+    .map(({ d }) => `${d.tip === "DN" ? "DN" : "Ø"}${String(d.v).replace(".", ",")}`);
+  return [{
+    cod: "doua_diametre",
+    mesaj: `pe rand sunt doua diametre care nu sunt aceeasi teava: ${nume.join(", ")}`,
+    diametre: nume,
   }];
 }
 
