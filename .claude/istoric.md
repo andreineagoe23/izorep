@@ -47,7 +47,7 @@ cheie de model nefolosită (serverul pornit fără ea). Adrian a fost la firmă 
 | Commit | Ce |
 |---|---|
 | `9b0ed22` | `docs/plan-dupa-demo.md`; `.claude/stare.md` tăiat la ultimele intrări (2.295 → ~300 de linii; restul în `git show d82af7e:.claude/stare.md`) |
-| (al doilea commit de azi) | Etapa 1: ce lipsește din cerere se întreabă clientul. Tabla fără material, grosimea de la alt diametru sau din tabelul uzual, golul nescris: „Fără preț”. Distribuitorul × 2,47 și două grosimi pe același ø: „De verificat”. Elastomer peste 32 mm fără extrapolare. Tubulatura rectangulară în metri: 2 × (A + B + 2g). „din tablă zincată,” a tubulaturii. Cuvintele confirmate și literele lipsă. Conlit 60 mm. Demontarea ca poziție cu preț de mână. Fără UM și patul de cabluri: „De verificat”. Cantitatea 0. Pe ecran, „Alege tabla”; materialul sau tabla neales rămâne „Fără preț” și când omul schimbă doar grosimea (era bugul 3 din predarea de mai jos) |
+| `74ca6d7` | Etapa 1: ce lipsește din cerere se întreabă clientul. Tabla fără material, grosimea de la alt diametru sau din tabelul uzual, golul nescris: „Fără preț”. Distribuitorul × 2,47 și două grosimi pe același ø: „De verificat”. Elastomer peste 32 mm fără extrapolare. Tubulatura rectangulară în metri: 2 × (A + B + 2g). „din tablă zincată,” a tubulaturii. Cuvintele confirmate și literele lipsă. Conlit 60 mm. Demontarea ca poziție cu preț de mână. Fără UM și patul de cabluri: „De verificat”. Cantitatea 0. Pe ecran, „Alege tabla”; materialul sau tabla neales rămâne „Fără preț” și când omul schimbă doar grosimea (era bugul 3 din predarea de mai jos) |
 
 Teste noi: `tests/demo-16-noiembrie.test.ts`. Testele vechi schimbate cu motiv,
 în comentariile lor (`audit-15-noiembrie`, `nucleu`, `fara-pret`, `oferte-semnate`,
