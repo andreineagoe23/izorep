@@ -3,6 +3,18 @@
 > Context pentru `src/import/`.
 
 Problema: fiecare client trimite alt format și nu există template comun.
+
+> **23 noiembrie 2026, după demo:** cuvintele confirmate de firmă („cauciuc” ca
+> izolație, „vată”, „cochilii”, „saltele”, „MW”, „tb. Al”, „tablă Al”) și literele
+> lipsă („minrală”, „alumniu”, „elastmer”) sunt în `SISTEM` / `VATA_SCURT`;
+> „cauciuc” al garniturilor, tamburilor și izolatoarelor antivibrații nu.
+> `TABLA_E_TUBULATURA` acceptă virgula și până la patru cuvinte („Tubulatura
+> rectangulara pentru ventilatie, din tabla zincata, - VATA …”). Marcajele de pe
+> `motiv` (`LIPSESTE_MATERIALUL`, `TABLA_DE_ALES`, `DEMONTARE`, legate cu „ | ”,
+> `areMotiv` / `cuMotiv` / `faraMotiv`) țin rândul „Fără preț” și pe linia omului
+> până alege câmpul lipsă (`patchDinCamp` le scoate). Un 0 lângă UM e cantitatea.
+> Testele: `tests/demo-16-noiembrie.test.ts`. Regulile de preț: `pricing.md`.
+
 Măsurat pe cele 7 fișiere din `attachments/`: 5.659 celule, 958 descrieri
 distincte, 349 linii ofertabile — dar doar **134 șabloane distincte**.
 

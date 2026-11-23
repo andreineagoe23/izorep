@@ -26,11 +26,11 @@ const stare = (l: LinieProcesata | undefined): string =>
   !l ? "afara" : potrivit(l, "gata") ? "gata" : potrivit(l, "de_validat") ? "de_validat" : potrivit(l, "netarifate") ? "fara_pret" : "afara";
 
 describe("auditul din 15 noiembrie: prețuri greșite „Gata”", () => {
-  it("„protecție cu tablă” fără material: tablă de aluminiu, cu preț, „De verificat” (ex. 1, r10)", async () => {
+  it("„protecție cu tablă” fără material: „Fără preț”, de întrebat clientul, fără tablă presupusă (ex. 1, r10)", async () => {
+    // Până pe 23 noiembrie 2026: aluminiu presupus, 38,51 € „De verificat”. Firma: „depinde de lucrare: întrebăm clientul”.
     const l = rand((await importa(EX1, "industrial")).linii, "Izolatii", 10);
-    expect(l.pret?.pret_unitar).toBe(38.51);
-    expect(stare(l)).toBe("de_validat");
-    expect(l.pret?.motiveDeVerificat).toContain("tabla_fara_material");
+    expect([stare(l), l.codEroare, l.pret]).toEqual(["fara_pret", "tabla_fara_material", undefined]);
+    expect(l.extras.straturi_extra.some((x) => x.sistem === "tabla")).toBe(false);
   });
 
   it("„protecție cu tablă de aluminiu” rămâne „Gata”, fără motivul nou (ex. 1, r1)", async () => {
@@ -54,19 +54,16 @@ describe("auditul din 15 noiembrie: prețuri greșite „Gata”", () => {
     expect(scrieGrosime("elastomer gr 2 kg")).toBe(false);
   });
 
-  it("fără grosime și fără țeavă de același ø: tabelul firmei, 100 mm, „De verificat” (ex. 1, r14)", async () => {
-    const l = rand((await importa(EX1, "industrial")).linii, "Izolatii", 14);
-    expect(l.extras.grosime_mm).toBe(100);
-    expect(l.pret?.pret_unitar).toBe(101.84);
-    expect(stare(l)).toBe("de_validat");
-    expect(l.pret?.motiveDeVerificat).toContain("grosime_fara_conducta");
-  });
-
-  it("vecina cu aceeași grosime ca tabelul nu contrazice regula: rămâne „Gata” (ex. 1, r28; ex. 2, r13)", async () => {
-    const a = rand((await importa(EX1, "industrial")).linii, "Izolatii", 28);
-    expect([a.pret?.pret_unitar, stare(a)]).toEqual([19.64, "gata"]);
+  it("fără grosime și fără țeavă de același ø: „Fără preț”, de întrebat clientul (ex. 1, r14; r28; ex. 2, r13)", async () => {
+    // Până pe 23 noiembrie 2026: tabelul de grosimi uzuale sau țeava vecină. Firma:
+    // „întrebăm clientul”, „nu există grosimi uzuale”.
+    const r1 = (await importa(EX1, "industrial")).linii;
+    for (const r of [14, 28]) {
+      const l = rand(r1, "Izolatii", r);
+      expect([r, stare(l), l.codEroare, l.extras.grosime_mm]).toEqual([r, "fara_pret", "grosime_ambigua", null]);
+    }
     const b = rand((await importa(EX2, "rezidential")).linii, "Termice+Sanitare", 13);
-    expect([b.pret?.pret_unitar, stare(b)]).toEqual([8.66, "gata"]);
+    expect([stare(b), b.codEroare]).toEqual(["fara_pret", "grosime_ambigua"]);
   });
 
 });
@@ -79,9 +76,10 @@ describe("auditul din 15 noiembrie: izolația fără material", () => {
     const r2 = await importa(EX2, "rezidential");
     const conducta = rand(r2.linii, "Termice+Sanitare", 25);
     expect([stare(conducta), conducta.codEroare]).toEqual(["fara_pret", "lipseste_materialul"]);
-    // Ce rămâne afară e de altă meserie (demontare, robinet, țeava PPR, tubulatura
-    // neizolată) sau trecerile la foc, punctul 6 din audit.
-    expect(lasateAfara(r1).map((a) => a.rand)).toEqual([33, 34]);
+    // Ce rămâne afară e de altă meserie (robinet, țeava PPR, tubulatura neizolată)
+    // sau trecerile la foc, punctul 6 din audit. Demontarea izolației (r33) e din
+    // 23 noiembrie 2026 poziție „Fără preț”, cu prețul pus de mână.
+    expect(lasateAfara(r1).map((a) => a.rand)).toEqual([34]);
     expect(lasateAfara(r2).map((a) => `${a.foaie} ${a.rand}`)).toEqual([
       "Termice+Sanitare 31", "Termice+Sanitare 32", "Ventilatie 12", "Treceri foc 15", "Treceri foc 16",
     ]);

@@ -93,7 +93,7 @@ const CAZURI: Caz[] = [
   },
   {
     fisier: "oferta-284-transavia-abur.xlsx",
-    semnat: 94575.06, peOferta: 99, generat: 94575.06,
+    semnat: 94575.06, peOferta: 98, generat: 92278.36,
     deCe: "79% din oferta semnată. Două schimbări au urcat-o de la 25%: extragerea deterministă a "
         + "început să construiască `straturi_extra` (jachetele nu se tarifau deloc), iar firma a "
         + "confirmat pe 11 sep 2026 regula „cot/teu de vată sub ø60 nu intră în preț” — cele 24 de "
@@ -112,7 +112,9 @@ const CAZURI: Caz[] = [
         + "oferta asta (2.296,70, exact), la „De validat”. Toate cele 99 de prețuri sunt exacte; după "
         + "confirmare, totalul e 94.575,06. Pe 10 oct 2026, CRESCUT (85 → 99): celula dedusă (exactă aici) "
         + "și echipamentul (exact aici) sunt reguli dovedite, deci nu mai cer confirmare: oferta iese "
-        + "94.575,06 direct, fără niciun clic.",
+        + "94.575,06 direct, fără niciun clic. Pe 23 nov 2026, SCĂZUT deliberat (99 → 98): factorul 2,47 al "
+        + "echipamentului e dintr-o singură ofertă, iar firma n-a înțeles întrebarea, deci distribuitorul "
+        + "(2.296,70, tot exact) stă la „De verificat”: un clic pe „E bine” și oferta e 94.575,06.",
   },
   {
     fisier: "oferta-manopera-anexa-contract-2024.xlsx",
@@ -281,10 +283,11 @@ describe("prețul pus de om închide oferta semnată", () => {
   cuClienti("cererea TRANSAVIA + distribuitorul de abur pus de mână (2.296,70) = totalul Ofertei 284", async () => {
     const fara = await importaFisier(CERERE, { faraModel: true, stoc: stocInMemorie() });
     const distribuitor = fara.linii.find((l) => /DISTRIBUITOR ABUR/.test(l.bruta.text))!;
-    // Are preț din regula echipamentului, exact cel semnat, deci e „Gata” (din 10 oct 2026).
-    expect(distribuitor.necesitaValidare).toBe(false);
+    // Are preț din regula echipamentului, exact cel semnat; din 23 nov 2026 „De verificat”
+    // (factorul e dintr-o singură ofertă).
+    expect(distribuitor.necesitaValidare).toBe(true);
     expect(distribuitor.pret!.pret_unitar).toBe(2296.70);
-    expect(totalOferta(imparte(fara.linii).oferta)).toBe(94575.06);
+    expect(totalOferta(imparte(fara.linii).oferta)).toBe(92278.36);
 
     const cerere = await importaFisier(CERERE, {
       faraModel: true, stoc: stocInMemorie(), preturiManuale: new Map([[distribuitor.extras.index, 2296.70]]),
@@ -309,9 +312,9 @@ describe("confirmarea din ecran nu scoate prețul pozițiilor care depind de tex
   cuClienti("TRANSAVIA, toate confirmate: 94.575,06 € și niciun rând fără preț", async () => {
     const opt = { stoc: stocInMemorie() };
     const rez = await proceseazaRegistru(await parseFoi(CERERE), opt);
-    // Din 10 oct 2026 nimic nu mai e de confirmat aici; omul poate confirma
-    // totusi tot (sau corecta un rand), iar pretul nu trebuie sa se miste.
-    expect(rez.linii.filter((l) => l.pret && l.necesitaValidare)).toHaveLength(0);
+    // Din 23 nov 2026 doar distribuitorul e de confirmat; omul poate confirma
+    // tot (sau corecta un rand), iar pretul nu trebuie sa se miste.
+    expect(rez.linii.filter((l) => l.pret && l.necesitaValidare).map((l) => l.bruta.rand)).toHaveLength(1);
     const deConfirmat = rez.linii.filter((l) => l.pret).map((l) => l.extras.index);
     expect(deConfirmat).toHaveLength(99);
     confirma(deConfirmat, rez.rezolvate);

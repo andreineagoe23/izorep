@@ -170,8 +170,14 @@ export type MotivVerificare =
   | "banda_armaturi"
   /** Tabla: pretul pe mp al grosimii vine din lista celuilalt segment (0,8 e identic in amandoua). */
   | "mp_din_celalalt_segment"
-  /** „protectie cu tabla" fara material: s-a pus tabla de aluminiu (intrebarea 1). */
+  /** „protectie cu tabla" fara material: pana pe 23 noiembrie 2026, aluminiu presupus. Azi e `CodNetarifare`. */
   | "tabla_fara_material"
+  /** Tubulatura rectangulara in metri: suprafata pe metru cu regula firmei, 2 × (A + B + 2g). */
+  | "rectangular_pe_ml"
+  /** Randul n-are UM: pretul e pe metru liniar, dedus. */
+  | "um_lipsa"
+  /** Inchidere de gol pe un pat de cabluri: dimensiunea scrisa poate fi a patului, nu a golului. */
+  | "pat_cabluri"
   /** Celula lipsa din lista industriala: rezidential × raportul celor doua liste pe grosime. */
   | "celula_din_rezidential";
 
@@ -213,7 +219,10 @@ export type CodNetarifare =
   /* --- alta lucrare decat cea din liste --- */
   | "echipament"
   /* --- randul spune izolatie, dar nu spune materialul --- */
-  | "lipseste_materialul";               // izolarea unui echipament (distribuitor, rezervor), nu a unei tevi
+  | "lipseste_materialul"
+  /* --- de intrebat clientul (firma, 23 noiembrie 2026) --- */
+  | "tabla_fara_material"      // „protectie cu tabla”, fara material
+  | "demontare";               // demontarea izolatiei vechi: pret dupa beneficiar
 
 export class PozitieNetarifata extends Error {
   constructor(

@@ -121,7 +121,7 @@ function propozitie(l: LinieProcesata, m: CodMotiv): Explicatie {
       if (note.some((n) => n.startsWith("grosime") && n.includes("de la conducta"))) {
         return { text: `Am pus ${g}, ca la țeava de același diametru.`, camp: "gros" };
       }
-      return { text: `Am pus ${g}, grosimea obișnuită a firmei la diametrul ăsta.`, camp: "gros" };
+      return { text: `Am pus ${g}, grosimea propusă la diametrul ăsta; clientul n-a scris-o.`, camp: "gros" };
     }
     case "grosime_conducta_vecina": {
       const vecina = note.find((n) => n.includes("conducta cea mai apropiata"));
@@ -159,8 +159,6 @@ function propozitie(l: LinieProcesata, m: CodMotiv): Explicatie {
     case "celula_dedusa":
     case "celula_din_rezidential":
       return { text: `Combinația lipsește din listă: prețul e calculat, ${pret}.`, camp: "pret" };
-    case "echipament_suprafata":
-      return { text: `Echipament: prețul e din suprafața lui, ${pret}.`, camp: "pret" };
     case "banda_armaturi":
       return { text: `Bandă pe armături: am pus prețul elastomerului de 9 mm, ${pret}.`, camp: "pret" };
     case "mp_din_celalalt_segment":
@@ -168,6 +166,12 @@ function propozitie(l: LinieProcesata, m: CodMotiv): Explicatie {
       return { text: `Prețul e din lista celuilalt tip de ofertă: ${pret}.`, camp: "pret" };
     case "gol_de_la_aceeasi_teava":
       return { text: `Golul nu e scris: am pus ${e.gol_latime_mm}/${e.gol_inaltime_mm}, ca la aceeași țeavă din fișier.`, camp: "gros" };
+    case "um_lipsa":
+      return { text: `Rândul n-are unitate de măsură: am socotit în metri, ${pret}.`, camp: "um" };
+    case "pat_cabluri":
+      return { text: `Pe rând e un pat de cabluri: ${e.gol_latime_mm}/${e.gol_inaltime_mm} poate fi patul, nu golul. Întreabă clientul cât e golul.`, camp: "gros" };
+    case "echipament_suprafata":
+      return { text: `Echipament: prețul e din suprafața lui × 2,47, ca la distribuitorul din Oferta 284: ${pret}.`, camp: "pret" };
     case "um_bucata":
       return { text: `Cantitatea e în bucăți, dar prețul e pe metru: ${pret}.`, camp: "um" };
     case "serie_inox": {

@@ -1,4 +1,4 @@
-import { PUS_DE_OM, type LinieProcesata } from "../../src/import/nucleu.js";
+import { LIPSESTE_MATERIALUL, PUS_DE_OM, TABLA_DE_ALES, faraMotiv, type LinieProcesata } from "../../src/import/nucleu.js";
 import type { LinieExtrasa } from "../../src/import/schema.js";
 import type { StratTarifat } from "../../src/pricing/types.js";
 import { esc } from "../ecrane/tip.js";
@@ -66,6 +66,8 @@ const numarSau = (v: string): number | null => {
  * vată, NISAL) rămân. Un diametru scris fără notație e Ø.
  */
 export function patchDinCamp(e: LinieExtrasa, camp: string, valoare: string): Partial<LinieExtrasa> {
+  // „Alege izolația” / „Alege tabla”: locul gol al alegerii, nu o valoare.
+  if (valoare === "?") return {};
   // Strat nou de izolație, sub protecție: vată, cu grosimea de scris (Andrei, 22 octombrie 2026).
   // Primul strat scos: următoarea izolație îi ia locul, cu grosimea ei; protecția rămâne.
   if (camp === "scoate-primul") {
@@ -91,7 +93,12 @@ export function patchDinCamp(e: LinieExtrasa, camp: string, valoare: string): Pa
     };
   }
   switch (camp) {
-    case "sistem": return { sistem: (valoare || null) as LinieExtrasa["sistem"] };
+    // Materialul ales de om scoate „lipsește materialul”; protecția aleasă scoate
+    // „tablă fără material” (`nucleu.ts` le ține „Fără preț” până atunci).
+    case "sistem": {
+      const motiv = faraMotiv(valoare === "tabla" || valoare === "tabla_inox" ? faraMotiv(e.motiv, TABLA_DE_ALES) : e.motiv, LIPSESTE_MATERIALUL);
+      return { sistem: (valoare || null) as LinieExtrasa["sistem"], ...(motiv !== e.motiv ? { motiv } : {}) };
+    }
     case "grosime": return { grosime_mm: numarSau(valoare) };
     case "forma": return { forma: (valoare || null) as LinieExtrasa["forma"] };
     case "diam_tip": return { diametru_tip: valoare as LinieExtrasa["diametru_tip"] };
@@ -104,7 +111,11 @@ export function patchDinCamp(e: LinieExtrasa, camp: string, valoare: string): Pa
     case "protectie": {
       const [s, g] = valoare.split("|");
       const izolatii = e.straturi_extra.filter((x) => !JACHETE.has(x.sistem));
-      return { straturi_extra: s ? [...izolatii, { sistem: s as Sistem, grosime_mm: numarSau(g ?? "") }] : izolatii };
+      const motiv = faraMotiv(e.motiv, TABLA_DE_ALES);
+      return {
+        straturi_extra: s ? [...izolatii, { sistem: s as Sistem, grosime_mm: numarSau(g ?? "") }] : izolatii,
+        ...(motiv !== e.motiv ? { motiv } : {}),
+      };
     }
     default: return {};
   }
@@ -272,7 +283,10 @@ function randVerificare(p: PozitieOferta, o: OptiuniDocument, c: Coloane): strin
   // Straturile de izolație de sub protecție, peste primul: fiecare e un sub-rând
   // întreg (Andrei, 22 octombrie 2026), cu protecția pe cel de deasupra.
   const mijloc = e.straturi_extra.flatMap((x, k) => (JACHETE.has(x.sistem) ? [] : [{ x, k }]));
-  const protectie = select("protectie", i, `Protecția, ${cine}`, PROTECTII, protectieDin(e));
+  // „protecție cu tablă” fără material: caseta cere alegerea, nu arată o tablă presupusă.
+  const alegeTabla = l.codEroare === "tabla_fara_material";
+  const protectie = select("protectie", i, `Protecția, ${cine}`,
+    [...(alegeTabla ? [["?", "Alege tabla"] as [string, string]] : []), ...PROTECTII], alegeTabla ? "?" : protectieDin(e));
   const celUm = o.um?.(l);
   const um = celUm
     ? `<select data-um="1" data-idx="${i}" aria-label="${esc(`UM, ${cine}`)}">${

@@ -11,14 +11,19 @@ import type { LinieExtrasa } from "./schema.js";
  * atunci cand cineva strica regula.
  */
 /** Tabla cu materialul ei numit (aluminiu, zincata) sau jacheta numita ca atare. */
-const TABLA_CU_MATERIAL = /tabl[aă]\s+(?:de\s*)?(?:aluminiu|zincat)|jachet|jacket|\bblech\b/i;
+// „alumniu”, „aluminu”: o literă lipsă din cererile scrise de mână (auditul din 15
+// noiembrie, exemplul 1) lăsa rândul fără tablă. „tb. Al”, „tablă Al”: prescurtările
+// confirmate de firmă (23 noiembrie 2026).
+const TABLA_CU_MATERIAL =
+  /tabl[aă]\s+(?:de\s*)?(?:al(?:u|o)?m\w*|zincat)|tabl[aă]\s+al\b|\btb\.?\s*al\b|jachet|jacket|\bblech\b/i;
 /**
  * „protectie cu tabla", „protejata cu tabla", fara material dupa ea. Nu „tabla
  * de inox" (alt sistem) si nu „protectie la foc ... din tabla" (tubulatura):
  * cere tabla imediat dupa protectie.
  */
 const TABLA_FARA_MATERIAL =
-  /(?:protec[țt]i\w*\s+(?:cu\s+)?|protejat\w*\s+(?:la\s+exterior\s+)?cu\s+)tabl[aă]?(?![a-zăâîșț])(?!\s*(?:de\s*)?inox)/i;
+  // „Caseta ... din tabla si vata” (exemplul 1, r20): caseta e din tabla, dar nu scrie care.
+  /(?:protec[țt]i\w*\s+(?:cu\s+)?|protejat\w*\s+(?:la\s+exterior\s+)?cu\s+|caset\w*[^|]{0,60}?\bdin\s+)tabl[aă]?(?![a-zăâîșț])(?!\s*(?:de\s*)?inox)/i;
 
 /**
  * Randul cere tabla, dar nu spune ce tabla: aluminiu presupus, de verificat.
@@ -28,10 +33,14 @@ export function tablaFaraMaterial(text: string): boolean {
 }
 
 const SISTEM: [LinieExtrasa["sistem"], RegExp][] = [
-  ["elastomer", /elastomer|armaflex|cauciuc\s+sinte|a?uciuc\s+sinte|k[aä]lteiso|k-?flex|kaiflex|kautschuk/i],
+  // „cauciuc” e elastomer când e izolația (confirmat de firmă, 23 noiembrie 2026):
+  // „izolații cu cauciuc”, „cauciuc sintetic”. Nu „garnitură / tamburi de cauciuc”
+  // (spitalul, SRU, Book15: suporții tubulaturii) și nici „izolatoare antivibrații din cauciuc”. „elastmer”, „elastomr”: o literă lipsă.
+  ["elastomer", /elastomer|elast(?:mer|omr)|armaflex|c?auciuc\s+sinte|(?:izola[țt]i[ie]?|izolare)\s+(?:[a-zăâîșț]+\s+){0,2}c?auciuc|k[aä]lteiso|k-?flex|kaiflex|kautschuk/i],
   // "mineral wool" lipsea, desi `cerere-de-oferta-book15.xlsx` e integral in engleza: acolo
   // pozitiile se recunosteau doar din coloana romana de descriere.
-  ["vata_minerala", /vat[aă]\s+mineral|mineral\s+wool|rock\s?wool|mineralwolle|rockwool|isolshell|fiberglass|saltele\s+de\s+vat/i],
+  // „vată min.”, „vată minrală”: prescurtarea și litera lipsă (auditul din 15 noiembrie).
+  ["vata_minerala", /vat[aă]\s+min\w*|mineral\s+wool|rock\s?wool|mineralwolle|rockwool|isolshell|fiberglass|saltele\s+de\s+vat/i],
   // Tabla de INOX, alta lista de preturi decat tabla de aluminiu/zincata.
   // Verificata DUPA elastomer/vata: in cerere-de-oferta-transavia-inox.xlsx textul e mereu
   // "Izolatii cu vata minerala si protectie cu tabla de inox 304 ...", iar
@@ -95,7 +104,11 @@ const TABLA_E_TUBULATURA =
   // „Tubulatura rectangulara din tabla zincata” (SRU Craiova): adjectivul
   // tubulaturii sta intre ea si material. Fara el, elastomerul de 13 mm al
   // tubulaturii primea si jacheta: 80,06 €/m² in loc de pretul elastomerului.
-  /(?:realizat|executat|confec[țt]ionat)\w*\s+din\s+tabl|made\s+of\s+(?:[\w-]+\s+){0,3}sheet|tubulatur\w*(?:\s+[a-zăâîșț]+){0,2}\s+din\s+tabl/i;
+  // „Tubulatura rectangulara pentru ventilatie, din tabla zincata, - VATA MINERALA
+  // 30 mm” (cererea arătată la demo, 16 noiembrie): trei cuvinte și o virgulă până
+  // la „din tablă”. Firma: tabla e a tubulaturii, noi facem doar ce e după virgulă.
+  // Un cuvânt de izolație sau de protecție între ele ține tabla jachetă.
+  /(?:realizat|executat|confec[țt]ionat)\w*\s+din\s+tabl|made\s+of\s+(?:[\w-]+\s+){0,3}sheet|tubulatur\w*(?:[\s,]+(?!protec|protej|izol|manta|jachet|imbrac|îmbrac)[a-zăâîșț]+){0,4}[\s,]+din\s+tabl/i;
 /**
  * Semnalele de jacheta care raman jacheta chiar langa tabla tubulaturii:
  * "protectie mecanica a izolatiilor ... din tabla zincata", "protejata la
@@ -133,6 +146,28 @@ const IZOLATIE_FARA_MATERIAL = /(?:^|\|)\s*(?:izola[țt]i[ae]?|izola[țt]ii|izol
 const estePreizolatText = (text: string): boolean => /preizolat|pre-?insulated|vine\s+izolat/i.test(text);
 /** Motivul liniei citite fara material: `nucleu.ts` o lasa fara pret. */
 export const LIPSESTE_MATERIALUL = "izolatie fara material numit: lipseste materialul";
+/**
+ * „protectie cu tabla”, fara material: de intrebat clientul (firma, 23 noiembrie
+ * 2026: „depinde de lucrare”). `nucleu.ts` scoate tabla presupusa si lasa
+ * pozitia „Fara pret” pana alege omul protectia.
+ */
+export const TABLA_DE_ALES = "protectie cu tabla fara material: de intrebat clientul";
+/** Demontarea izolatiei vechi: fara pret standard, „dupa beneficiar” (firma, 23 noiembrie 2026). */
+export const DEMONTARE = "demontarea izolatiei: pret dupa beneficiar, pus de mana";
+
+/**
+ * `motiv` poate purta mai multe marcaje, despartite de „ | ”: asa trec si prin
+ * schema extragerii (Zod) si prin importul salvat, fara un camp nou.
+ */
+const SEP_MOTIV = " | ";
+export const areMotiv = (motiv: string, marcaj: string): boolean => motiv.split(SEP_MOTIV).includes(marcaj);
+export const cuMotiv = (motiv: string, marcaj: string): string =>
+  areMotiv(motiv, marcaj) ? motiv : motiv ? `${motiv}${SEP_MOTIV}${marcaj}` : marcaj;
+export const faraMotiv = (motiv: string, marcaj: string): string =>
+  motiv.split(SEP_MOTIV).filter((m) => m !== marcaj).join(SEP_MOTIV);
+
+/** „Demontare izolatie existenta”, „dismantling of existing insulation”: lucrarea noastra, fara pret standard. */
+const DEMONTARE_IZOLATIE = /(?:demont|dismant|desfacere)\w*(?:\s+\S+){0,4}?\s+(?:a\s+)?(?:izola|insulat)/i;
 
 /** Alte meserii din caietul de sarcini: se resping explicit, nu se ghicesc. */
 const ALTE_MESERII =
@@ -148,7 +183,7 @@ const ALTE_MESERII =
  * elastomeric tube”), „Gata” la pretul tubului pe bucata de aparat.
  */
 const GRUNDUIRE = /grundu|priming/i;
-const MATERIAL_IZOLATIE = /elastomer|armaflex|k-?flex|kaiflex|vat[aă]\s+mineral|mineral\s+wool|cochil/i;
+const MATERIAL_IZOLATIE = /elastomer|armaflex|k-?flex|kaiflex|c?auciuc\s+sinte|vat[aă]\s+min|mineral\s+wool|cochil/i;
 
 /**
  * Randul spune ca NU se izoleaza: SRU Craiova, „Tubulatura rectangulara din
@@ -570,8 +605,18 @@ function grosimeLangaSistem(
   return null;
 }
 
+/**
+ * Cuvintele scurte pentru vată, confirmate de firmă (23 noiembrie 2026): „vată”
+ * singur, „cochilii”, „saltele”, „MW”. Doar când rândul nu numește alt material de
+ * izolație: „cochilii de elastomer” rămâne elastomer.
+ */
+const VATA_SCURT = /\bvat[aă]\b|\bcochili|\bsaltel/i;
+const VATA_MW = /\bMW\b/;
+
 function sistemeDinText(text: string): Exclude<LinieExtrasa["sistem"], null>[] {
   const potrivite = SISTEM.filter(([, re]) => re.test(text)).map(([s]) => s!);
+  if (!potrivite.includes("elastomer") && !potrivite.includes("vata_minerala")
+      && (VATA_SCURT.test(text) || VATA_MW.test(text))) potrivite.push("vata_minerala");
   if (TRECERI_PRIN_PERETI.test(text) && CONTEXT_FOC.test(text)) potrivite.push("goluri_foc");
   if (potrivite.includes("goluri_foc")) return ["goluri_foc"];
   const faraTabla = TABLA_E_TUBULATURA.test(text) && !TABLA_E_JACHETA.test(text)
@@ -591,6 +636,13 @@ export function extrageDeterminist(
     grosime_mm: null, forma: null, gol_latime_mm: null, gol_inaltime_mm: null,
     straturi_extra: [], incredere: 0, motiv: "",
   };
+
+  if (DEMONTARE_IZOLATIE.test(text) && !faraMasura(um, cantitate)) {
+    return {
+      linie: { ...gol, sistem: sistemeDinText(text).find((x) => x !== "goluri_foc") ?? "vata_minerala", incredere: 0.95, motiv: DEMONTARE },
+      complet: true,
+    };
+  }
 
   if (ALTE_MESERII.test(text) || (GRUNDUIRE.test(text) && !MATERIAL_IZOLATIE.test(text))) {
     return { linie: { ...gol, incredere: 0.95, motiv: "alta meserie, nu se oferteaza" }, complet: true };

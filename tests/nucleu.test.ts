@@ -307,47 +307,29 @@ describe("grosimea de la conducta de acelasi diametru", () => {
     expect(l.extras.grosime_mm).toBe(80);
     expect(l.pret).toBeDefined();
     expect(l.pret!.motiveDeVerificat).toContain("grosime_propusa");
-    expect(l.necesitaValidare).toBe(false);
+    // Din 23 noiembrie 2026 doua grosimi pe acelasi diametru sunt o alegere: „De verificat”.
+    expect(l.necesitaValidare).toBe(true);
   });
 
   // Schimbat pe 15 noiembrie 2026 (auditul, exemplul 1 r14): dovada din Oferta
   // 284 e doar pentru ACELASI diametru. Fara el, tabelul firmei (DN150 → 100 mm),
   // iar pozitia merge la om fiindca vecina (Di140) are alta grosime (50 mm).
-  it("nicio conducta de acelasi diametru: grosimea din tabelul firmei, de verificat", async () => {
+  // Din 23 noiembrie 2026 (firma: „intrebam clientul”, „nu exista grosimi
+  // uzuale”): fara conducta de acelasi diametru, nici tabelul, nici vecina.
+  it("nicio conducta de acelasi diametru: fara grosime, „Fara pret”", async () => {
     const rez = await proceseazaRegistru(await parseFoi(await registru([
       ANTET,
       [1, "Caseta izolatie armaturi cu flanse DN150 din tabla aluminiu si vata minerala", "buc", 1],
       [2, "Izolatii cu vata minerala si protectie cu tabla de aluminiu Di140, g50 - ML", "ml", 27],
+      [3, "Izolatie elastomer pe teava DN350 apa rece", "ml", 10],
+      [4, "Izolatie elastomer 25 mm pe teava DN300 apa rece", "ml", 50],
+      [5, "Caseta izolatie armaturi cu flanse DN100 din tabla aluminiu si vata minerala", "buc", 1],
+      [6, "Izolatie elastomer 19 mm pe teava DN100 apa rece", "ml", 50],
     ])), { stoc: stocInMemorie() });
-    const l = rez.linii.find((x) => x.bruta.text.includes("Caseta"))!;
-    expect(l.extras.grosime_mm).toBe(100);
-    expect(l.pret!.noteDeVerificat!.join(" ")).toContain("tabelul de grosimi uzuale");
-    expect(l.pret!.motiveDeVerificat).toContain("grosime_fara_conducta");
-    expect(l.necesitaValidare).toBe(true);
-  });
-
-  it("fara rand in tabelul firmei (elastomer peste ø324): conducta cea mai apropiata, de verificat", async () => {
-    const rez = await proceseazaRegistru(await parseFoi(await registru([
-      ANTET,
-      [1, "Izolatie elastomer pe teava DN350 apa rece", "ml", 10],
-      [2, "Izolatie elastomer 25 mm pe teava DN300 apa rece", "ml", 50],
-    ])), { stoc: stocInMemorie() });
-    const l = rez.linii.find((x) => x.bruta.text.includes("DN350"))!;
-    expect(l.extras.grosime_mm).toBe(25);
-    expect(l.pret!.motiveDeVerificat).toContain("grosime_conducta_vecina");
-    expect(l.necesitaValidare).toBe(true);
-  });
-
-  it("nu ia grosimea altui material: fara vata in lista, grosimea uzuala a vatei", async () => {
-    const rez = await proceseazaRegistru(await parseFoi(await registru([
-      ANTET,
-      [1, CASETA, "buc", 1],
-      [2, "Izolatie elastomer 19 mm pe teava DN100 apa rece", "ml", 50],
-    ])), { stoc: stocInMemorie() });
-    const l = rez.linii.find((x) => x.bruta.text.includes("Caseta"))!;
-    // DN100 pe vata: 100 mm (grosimile uzuale ale firmei), nu cei 19 mm ai elastomerului.
-    expect(l.extras.grosime_mm).toBe(100);
-    expect(l.pret!.motiveDeVerificat).toContain("grosime_propusa");
+    for (const cuv of ["DN150", "DN350", "DN100 din"]) {
+      const l = rez.linii.find((x) => x.bruta.text.includes(cuv))!;
+      expect([cuv, l.extras.grosime_mm, l.pret, Boolean(l.codEroare)]).toEqual([cuv, null, undefined, true]);
+    }
   });
 });
 
@@ -541,21 +523,19 @@ describe("grosimile propuse", () => {
   // Textul real de pe cererea Abur: clientul nu scrie grosimea vatei.
   const CASETA = "Caseta izolatie armaturi cu flanse DN50 din tabla aluminiu si vata minerala";
 
-  it("intra in pret, linia e „Gata” (tabelul firmei), dar nu devine a omului", async () => {
+  it("fara nimic, „Fara pret”; propusa de om, intra in pret „De verificat”, dar nu devine a omului", async () => {
     const rez = await proceseazaRegistru(await parseFoi(await registru([ANTET, [1, CASETA, "buc", 6]])), { stoc: stocInMemorie() });
-    // Fara nimic pe rand si fara conducte in lista: grosimea uzuala (DN50 → 50 mm), de verificat.
-    const uzuala = rez.linii.find((l) => l.bruta.text.includes("Caseta"))!;
-    expect(uzuala.extras.grosime_mm).toBe(50);
-    expect(uzuala.pret).toBeDefined();
-    expect(uzuala.necesitaValidare).toBe(false);
-    const fara = uzuala;
+    // Fara nimic pe rand si fara conducte in lista: din 23 noiembrie 2026 nu se
+    // mai pune singura grosimea uzuala (firma: „nu exista grosimi uzuale”).
+    const fara = rez.linii.find((l) => l.bruta.text.includes("Caseta"))!;
+    expect([fara.extras.grosime_mm, fara.pret, fara.codEroare]).toEqual([null, undefined, "grosime_ambigua"]);
 
     reevalueaza(rez, { stoc: stocInMemorie(), grosimiPropuse: new Map([[fara.extras.index, 40]]) });
     const cu = rez.linii.find((l) => l.bruta.text.includes("Caseta"))!;
     expect(cu.extras.grosime_mm).toBe(40);
     expect(cu.pret).toBeDefined();
     expect(cu.sursa).not.toBe("om");
-    expect(cu.necesitaValidare).toBe(false);
+    expect(cu.necesitaValidare).toBe(true);
     expect(cu.pret!.noteDeVerificat?.join(" ")).toContain("propusa");
     // Nimic scris in `rezolvate`: grosimea nu se da drept extrasa din text.
     expect(rez.rezolvate.get(cu.extras.index)!.extras.grosime_mm).toBeNull();

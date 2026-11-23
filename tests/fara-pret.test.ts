@@ -49,12 +49,19 @@ const motive = (p: unknown): string[] => (p as RezultatTarifare | undefined)?.mo
 
 describe("cererile de ofertă ale clienților", () => {
   for (const destinatie of ["rezidential", "industrial"] as const) {
-    cuClienti(`pe ${destinatie}: nicio poziție fără preț, în niciun fișier`, async () => {
+    // Din 23 noiembrie 2026 (firma: „fără rând în ofertă, până răspunde
+    // clientul”) o poziție poate rămâne „Fără preț”, dar doar cu o cauză care
+    // se întreabă clientul sau se pune de mână; niciuna fără cauză.
+    cuClienti(`pe ${destinatie}: o poziție fără preț are doar o cauză de întrebat clientul`, async () => {
+      const DE_INTREBAT = new Set(["grosime_ambigua", "gol_fara_dimensiuni", "tabla_fara_material", "lipseste_materialul",
+        "demontare", "fara_pret_pe_mp", "fara_diametru", "livrare_teava", "echipament", "grosime_inexistenta"]);
       const fara: string[] = [];
       for (const f of readdirSync(DIR).filter((x) => x.endsWith(".xlsx") && !x.startsWith("~$"))) {
         const r = await importaFisier(join(DIR, f), { faraModel: true, destinatie, stoc: stocInMemorie() });
         for (const l of r.linii) {
-          if (l.extras.sistem !== null && !l.pret) fara.push(`${f} r${l.bruta.rand}: ${l.codEroare} — ${l.bruta.text.slice(0, 80)}`);
+          if (l.extras.sistem !== null && !l.pret && !DE_INTREBAT.has(l.codEroare ?? "")) {
+            fara.push(`${f} r${l.bruta.rand}: ${l.codEroare} — ${l.bruta.text.slice(0, 80)}`);
+          }
         }
       }
       expect(fara).toEqual([]);
@@ -114,7 +121,9 @@ describe("Transavia inox pe rezidențial", () => {
     const f = join(DIR, "cerere-de-oferta-transavia-inox.xlsx");
     const r = await importaFisier(f, { faraModel: true, destinatie: "rezidential", stoc: stocInMemorie() });
     const cuPret = r.linii.filter((l) => l.extras.sistem !== null && l.pret);
-    expect(cuPret).toHaveLength(72);
+    // 71: caseta DN150 (r70) n-are conductă de același diametru, deci nici grosime
+    // (23 noiembrie 2026: se întreabă clientul).
+    expect(cuPret).toHaveLength(71);
     expect(cuPret.filter((l) => motive(l.pret).includes("segment_diferit"))).toEqual([]);
   });
 });
@@ -126,11 +135,8 @@ describe("prețul pe mp, când lista segmentului nu-l are", () => {
     expect(r.motiveDeVerificat).toContain("mp_din_celalalt_segment");
   });
 
-  it("elastomer 40 mm pe mp (spitalul): extrapolat din 25 și 32 mm, de verificat", () => {
-    const r = tarifeazaPeMp({ straturi: [{ sistem: "elastomer", grosime_mm: 40 }], cantitate: 1 });
-    // 37,18 + (37,18 − 30,77) / 7 × 8
-    expect(r.pret_unitar).toBe(44.49);
-    expect(r.motiveDeVerificat).toContain("grosime_extrapolata");
+  it("elastomer 40 mm pe mp (spitalul): fără preț, nu extrapolat (firma: „nu avem prețuri peste 32 mm”)", () => {
+    expect(() => tarifeazaPeMp({ straturi: [{ sistem: "elastomer", grosime_mm: 40 }], cantitate: 1 })).toThrow(/pret pe mp/);
   });
 });
 
@@ -147,7 +153,7 @@ describe("rândurile care nu se ofertează", () => {
 });
 
 describe("rânduri fără tot ce cere lista, completate din același fișier", () => {
-  it("golul EI180 fără dimensiuni (Matari) îl ia de la aceeași țeavă din secțiunile de deasupra", async () => {
+  it("golul EI180 fără dimensiuni (Matari) rămâne fără preț: golul e al lucrării, nu al țevii", async () => {
     // Ca în fișierul real: secțiunea e o celulă îmbinată, golul stă în coloana lui.
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet("Matari");
@@ -164,9 +170,10 @@ describe("rânduri fără tot ce cere lista, completate din același fișier", (
     await wb.xlsx.writeFile(cale);
     const l = (await proceseazaRegistru(await parseFoi(cale), { stoc: stocInMemorie() })).linii;
     const fara = l.find((x) => x.bruta.cantitate === 4)!;
-    expect(fara.pret!.pret_unitar).toBe(23.05);
-    expect(motive(fara.pret)).toContain("gol_de_la_aceeasi_teava");
-    expect(fara.necesitaValidare).toBe(true);
+    // Până pe 23 noiembrie 2026: 23,05 €, golul luat de la aceeași țeavă. Firma: „poate
+    // să fie țeava DN15 și să aibă golul 500/500 sau 100/100” (și oferta Matari semnată
+    // le-a lăsat fără preț).
+    expect([fara.pret, fara.codEroare]).toEqual([undefined, "gol_fara_dimensiuni"]);
   });
 
   it("grosimea ca interval („20 to 50mm”, Book15) ia capătul de sus, de verificat", async () => {

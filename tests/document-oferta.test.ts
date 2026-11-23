@@ -232,7 +232,9 @@ describe("cererea TRANSAVIA în șablon = Oferta 284", () => {
   const OFERTA = `${DIR}/oferta-284-transavia-abur.xlsx`;
 
   cuClienti("99 de poziții, rând cu rând, totalul cu discount și textul roșu de pe casete", async () => {
-    const d = documentOferta(cerere(await importa(CERERE), { discountProcent: 3 }));
+    // „E bine” pe distribuitor: din 23 noiembrie 2026 e „De verificat” (factorul 2,47, o singură ofertă).
+    const linii = (await importa(CERERE)).map((l) => (/DISTRIBUITOR ABUR/.test(l.bruta.text) ? { ...l, necesitaValidare: false } : l));
+    const d = documentOferta(cerere(linii, { discountProcent: 3 }));
     expect(d.capitole).toHaveLength(1);
     expect(d.capitole[0]!.titlu).toBeNull();
     expect(d.coloaneGol).toBe(false);

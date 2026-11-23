@@ -5,6 +5,29 @@
 Cod determinist, fără AI, fără I/O în afară de citirea JSON-urilor din
 `data/price-lists/`. Dacă ceva de aici devine nedeterminist, e un bug.
 
+## După demo-ul din 16 noiembrie 2026 (intrat pe 23 noiembrie)
+
+Firma: când lipsește ceva din cerere, **se întreabă clientul**, iar rândul nu
+intră în ofertă până răspunde. Unde secțiunile de mai jos spun altfel, e istoric:
+
+- **Grosimea**: doar de la țeava de **același** diametru din aceeași cerere
+  („Gata”). Țeava vecină și tabelul de grosimi uzuale nu se mai aplică singure
+  („nu există grosimi uzuale”, deși pe 11 septembrie au dat tabelul: de lămurit,
+  C1 în `docs/plan-dupa-demo.md`). Fără grosime: „Fără preț”. Butonul „Pune
+  grosimea uzuală” rămâne, iar ce pune iese „De verificat” (`grosime_propusa` nu
+  mai e dovedit). Două grosimi pe același ø: cea mai mare, „De verificat”.
+- **„Protecție cu tablă” fără material** (și „casetă … din tablă”): „Fără preț”,
+  `tabla_fara_material` e acum `CodNetarifare`; tabla presupusă iese din extragere.
+- **Golul nescris** nu se mai ia de la aceeași țeavă: „Fără preț” (`gol_fara_dimensiuni`).
+- **Echipamentul × 2,47**: „De verificat” (nu mai e în `MOTIVE_DOVEDITE`); TRANSAVIA iese 98 „Gata” + distribuitorul.
+- **Peste ultima grosime din listă** (elastomer 40 mm pe m²): fără extrapolare, „Fără preț”.
+- **Tubulatura rectangulară în metri**: 2 × (A + B + 2g) / 1000 m²/ml × prețul pe m²
+  (`mpPeMlRectangular`, motivul dovedit `rectangular_pe_ml`); la fel protecția la foc pe ml.
+- **Tabla**: grosimea nu contează, prețul de la diametru (era deja dovedit).
+- **Conlit** fără grosime: 60 mm. **Demontarea izolației**: „Fără preț”, preț de mână (`demontare`).
+- **Fără UM**: „De verificat” (`um_lipsa`), afară de piesă numită sau „ML” în text.
+- **Pat de cabluri** la goluri: „De verificat” (`pat_cabluri`).
+
 ## Regula de tarifare
 
 1. DN → diametru exterior real (`dn-table.ts`).

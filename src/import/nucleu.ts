@@ -9,7 +9,7 @@ import { adaugaSectiuni, type LinieCuSectiune } from "./sectiuni.js";
 import { aplicaContinuare } from "./continuare.js";
 import {
   areIntervalDeGrosime, esteProtectieLaFocTubulatura, esteTeavaDeInox, extrageDeterminist, formaElementDinText,
-  formaExplicitaDinText, grosimeProtectieFoc, tablaFaraMaterial, LIPSESTE_MATERIALUL, grosimeScrisa, scrieGrosime, sistemScris,
+  formaExplicitaDinText, grosimeProtectieFoc, tablaFaraMaterial, LIPSESTE_MATERIALUL, TABLA_DE_ALES, DEMONTARE, areMotiv, cuMotiv, faraMotiv, grosimeScrisa, scrieGrosime, sistemScris,
 } from "./extract-regex.js";
 import {
   diametruContrazisDeText, notatieContraziceMaterialul, valideazaExtragere,
@@ -485,7 +485,8 @@ export const PRET_PROTECTIE_FOC_MP = 48;
 function tarifeazaProtectieFoc(
   extras: LinieExtrasa, cantitate: number, text: string,
 ): RezultatTarifare {
-  const grosime = grosimeProtectieFoc(text) ?? extras.grosime_mm;
+  // Conlit fara grosime pe rand: 60 mm (firma, 23 noiembrie 2026).
+  const grosime = grosimeProtectieFoc(text) ?? extras.grosime_mm ?? (/conlit/i.test(text) ? 60 : null);
   let mpPeMl = 1;
   let od = 0;
   // Pe metru doar cand randul e chiar in metri si are diametru: o „inchidere de
@@ -494,6 +495,11 @@ function tarifeazaProtectieFoc(
       && extras.sistem !== "goluri_foc") {
     od = toOuterDiameter(extras.diametru_valoare, extras.diametru_tip);
     mpPeMl = bani((od + 2 * (grosime ?? 0)) / 1000 * PI_FIRMA);
+  } else if (extras.forma === "ml" || extras.forma === null) {
+    // Tubulatura rectangulara de desfumare in metri: pretul e pe m², deci se
+    // inmulteste cu suprafata pe metru (regula firmei), nu cu 1.
+    const r = mpPeMlRectangular(text, grosime ?? 0);
+    if (r) mpPeMl = r.mp;
   }
   const unitar = bani(PRET_PROTECTIE_FOC_MP * mpPeMl);
   const clasa = text.match(/\bEI\s?(\d{2,3})/i)?.[1];
@@ -510,6 +516,28 @@ function tarifeazaProtectieFoc(
     note: [n], noteDeVerificat: [n], motiveDeVerificat: ["protectie_foc"],
   };
 }
+
+/**
+ * Tubulatura rectangulara data in metri: suprafata pe metru, cu regula firmei
+ * (23 noiembrie 2026): 2 × (A + g + B + g) / 1000, adica 2 × (A + B + 2g). Noi
+ * propuseseram 4g (perimetrul exterior al izolatiei, din registrul de
+ * conversie); firma a corectat: 400 × 300 cu vata 50 → 1,6 m²/ml.
+ */
+const RE_RECTANGULAR = /rectangular|dreptunghi|eckig|tubulatur|\bcanal\b|\bduct\b|kanal/i;
+const RE_A_X_B = /(?<![\d.,])(\d{2,4})\s*[x×X*]\s*(\d{2,4})(?![\d.,]|\s*[x×X*]\s*\d)/;
+export function mpPeMlRectangular(text: string, grosime: number): { a: number; b: number; mp: number } | null {
+  if (!RE_RECTANGULAR.test(text)) return null;
+  const m = text.match(RE_A_X_B);
+  if (!m) return null;
+  const a = Number(m[1]);
+  const b = Number(m[2]);
+  return { a, b, mp: bani(2 * (a + b + 2 * grosime) / 1000) };
+}
+
+/** Unitatea scrisa in descriere, cand coloana UM e goala: „Di60, g40 - ML”, „m.l.”, „m²”. */
+const RE_UM_IN_TEXT = /\bml\b|\bm\.l\.|\bmetr[iu]\b|\bm²|\bmp\b|\bbuc\b/i;
+/** Pat de cabluri, jgheab, tava de cabluri. */
+const RE_PAT_CABLURI = /pat\w*\s+(?:de\s+)?cabl|jgheab|cable\s+tray|kabeltrass|tav[aă]\s+(?:de\s+)?cabl/i;
 
 /** π al firmei, din regula ei pentru suprafete („3,14"). */
 const PI_FIRMA = 3.14;
@@ -758,6 +786,24 @@ function tarifeazaIzolatie(
         forma: "ml", cantitate, destinatie,
       }));
       marcheaza(r, `banda autoadeziva pe armaturi: pretul elastomerului de 9 mm pe randul ${rand}, pe metru`, "banda_armaturi");
+      return { pret: r };
+    }
+    // Tubulatura rectangulara in metri, cu A × B pe rand: suprafata pe metru
+    // dupa regula firmei, × pretul pe m² al straturilor (`mpPeMlRectangular`).
+    const izolatie = straturi.filter((x) => !JACHETE.has(x.sistem));
+    const g = izolatie.reduce((sum, x) => sum + (x.grosime_mm ?? 0), 0);
+    const rect = textLucrare !== undefined && (extras.forma === "ml" || extras.forma === null)
+      && izolatie.every((x) => x.grosime_mm !== undefined) ? mpPeMlRectangular(textLucrare, g) : null;
+    if (rect) {
+      const peMp = tarifeazaPeMp({ straturi, cantitate: 1, destinatie });
+      const pe = peMp.straturi.map((x) => ({ ...x, multiplicator: rect.mp }));
+      const unitar = bani(pe.reduce((sum, x) => sum + bani(x.pret_unitar * rect.mp), 0));
+      const r = cuNote({
+        ...peMp, straturi: pe, pret_unitar: unitar, multiplicator: rect.mp, cantitate, total: bani(unitar * cantitate),
+        note: (peMp.note ?? []).slice(1),
+      });
+      marcheaza(r, `tubulatura rectangulara ${rect.a} × ${rect.b} in metri: 2 × (${rect.a} + ${rect.b} + 2 × ${g}) / 1000 = `
+        + `${String(rect.mp).replace(".", ",")} m²/ml (regula firmei), × pretul pe m²`, "rectangular_pe_ml");
       return { pret: r };
     }
     if (extras.sistem !== null) {
@@ -1016,7 +1062,7 @@ function grosimiDeLaConducte(
     if (!e || e.grosime_mm !== null || (e.sistem !== "vata_minerala" && e.sistem !== "elastomer")) continue;
     // Fara material scris, n-are de la ce conducta lua grosimea; si asa ramane
     // al modelului (`completeazaDinConducte` l-ar fi oprit de la el).
-    if (e.motiv === LIPSESTE_MATERIALUL) continue;
+    if (areMotiv(e.motiv, LIPSESTE_MATERIALUL)) continue;
     if (scrieGrosime(b.text)) continue;
     const od = diametruExterior(e);
     if (od === null) continue;
@@ -1032,28 +1078,11 @@ function grosimiDeLaConducte(
     const grosimi = [...new Set(potrivite.map((s) => s.grosime))].sort((a, b) => a - b);
     if (grosimi.length === 0) continue;
     // Fara conducta de ACELASI diametru, dovada casetelor din Oferta 284 (24
-    // din 24, acelasi ø) nu mai tine. Exemplul 1, r14: „... tabla de aluminiu
-    // Di273 - ML", fara grosime, lua 60 mm de la teava ø169 (82,89 € „Gata");
-    // tabelul firmei (11 septembrie) da 100 mm de la DN100 in sus (101,84 €).
-    // Tabelul e regula spusa de firma, vecina e o presupunere; dar lista
-    // clientului are alte grosimi pe alte diametre, deci pozitia merge la om.
-    // Fara rand in tabel (elastomer peste ø324), ramane vecina, tot la om.
-    if (vecina && e.diametru_valoare !== null && e.diametru_tip !== null) {
-      const uz = grosimePropusa(e.sistem, e.diametru_valoare, e.diametru_tip);
-      if (uz !== null) {
-        const v = potrivite[0]!;
-        // Cand vecina are chiar grosimea din tabel, lista nu contrazice regula
-        // firmei: e grosimea uzuala, dovedita (exemplul 1, r28, elastomer DN100
-        // la 19 mm; exemplul 2, r13, PPR Ø40 la 13 mm).
-        if (!(grosimi.length === 1 && grosimi[0] === uz)) {
-          out.set(b.index, {
-            grosime: uz, rand: v.rand, foaie: v.foaie, uzuala: true,
-            vecina: Math.round(v.od * 10) / 10,
-          });
-        }
-        continue;
-      }
-    }
+    // din 24, acelasi ø) nu mai tine. Pana pe 23 noiembrie 2026 se lua grosimea
+    // de la conducta cea mai apropiata sau din tabelul de grosimi uzuale; firma:
+    // „intrebam clientul”, iar „nu exista grosimi uzuale”. Pozitia ramane fara
+    // grosime, deci „Fara pret”, cu intrebarea pentru client.
+    if (vecina) continue;
     // Doua conducte de acelasi diametru cu grosimi diferite (Transavia inox:
     // Di114 g40 si g50): armatura primeste grosimea mai mare, marcata — ea
     // acopera oricare dintre conducte.
@@ -1103,45 +1132,6 @@ function completeazaDinConducte(
   });
 }
 
-/** Textul unui rand fara dimensiunea golului si fara spatii: „Teava OL /OLZNDN20". */
-const cheieTeava = (text: string): string =>
-  text.toLowerCase().replace(/\d+\s*[x/×]\s*\d+/g, "").replace(/[\s|]+/g, "");
-
-/**
- * Dimensiunea golului pe care randul n-o scrie, luata de la ACEEASI teava din
- * acelasi fisier.
- *
- * Oferta Matari: sectiunea EI180 are 12 randuri („Teava OL/OLZN DN15", 4 buc.)
- * fara dimensiunea golului, iar sectiunile EI30 / EI60 / EI120 de deasupra au
- * aceleasi tevi cu golul scris (DN15 130/130, DN100 320/320, PEHD 110 320/320).
- * Golul e al trecerii tevii prin perete, nu al clasei de foc, iar clasa nu
- * schimba pretul. Daca aceeasi teava apare cu goluri diferite, se ia cel mai
- * des intalnit, la egalitate cel mai mare.
- */
-function goluriDeLaAceeasiTeava(
-  brute: LinieCuSectiune[], rezolvate: Map<number, Rezolvare>,
-): Map<string, { latime: number; inaltime: number }> {
-  const numarate = new Map<string, Map<string, number>>();
-  for (const b of brute) {
-    const e = rezolvate.get(b.index)?.extras;
-    if (e?.sistem !== "goluri_foc" || e.gol_latime_mm === null || e.gol_inaltime_mm === null) continue;
-    const k = cheieTeava(b.text);
-    const m = numarate.get(k) ?? new Map<string, number>();
-    const dim = `${e.gol_latime_mm}x${e.gol_inaltime_mm}`;
-    m.set(dim, (m.get(dim) ?? 0) + 1);
-    numarate.set(k, m);
-  }
-  const out = new Map<string, { latime: number; inaltime: number }>();
-  for (const [k, m] of numarate) {
-    const [dim] = [...m].sort((a, b) => b[1] - a[1] || arie(b[0]) - arie(a[0]))[0]!;
-    const [latime, inaltime] = dim.split("x").map(Number) as [number, number];
-    out.set(k, { latime, inaltime });
-  }
-  return out;
-}
-
-const arie = (dim: string): number => dim.split("x").map(Number).reduce((a, b) => a * b, 1);
-
 /**
  * L3 + guardrails, pentru toata lista de linii brute rezolvate.
  *
@@ -1160,7 +1150,6 @@ function construiesteLinii(
 ): LinieProcesata[] {
   const linii: LinieProcesata[] = [];
   const deLaConducte = grosimiDeLaConducte(brute, rezolvate);
-  const goluri = goluriDeLaAceeasiTeava(brute, rezolvate);
   for (const b of brute) {
     const r = rezolvate.get(b.index);
     if (!r) continue;
@@ -1215,12 +1204,10 @@ function construiesteLinii(
     const completat = conducta
       ? { ...r.extras, grosime_mm: conducta.grosime, ...(sursa === "regex" ? { incredere: 0.99 } : {}) }
       : scrisa !== null ? { ...r.extras, grosime_mm: scrisa } : r.extras;
-    const golGasit = completat.sistem === "goluri_foc" && sursa !== "om"
-      && (completat.gol_latime_mm === null || completat.gol_inaltime_mm === null)
-      ? goluri.get(cheieTeava(b.text)) : undefined;
-    const cuGol = golGasit
-      ? { ...completat, gol_latime_mm: golGasit.latime, gol_inaltime_mm: golGasit.inaltime }
-      : completat;
+    // Golul nescris nu se mai ia de la aceeasi teava din fisier (23 noiembrie
+    // 2026): firma, „poate sa fie teava DN15 si sa aiba golul 500/500 sau
+    // 100/100”. Fara dimensiuni, „Fara pret”, cu intrebarea pentru client.
+    const cuGol = completat;
     const extras = avertismente.length > 0 ? { ...cuGol, incredere: 0 } : cuGol;
 
     // Grosimea propusa intra DUPA guardrails: nu vine din text, deci
@@ -1229,10 +1216,11 @@ function construiesteLinii(
     // grosimea uzuala a firmei dupa diametru, propusa si marcata, ca la butonul
     // „Pune grosimea uzuala". Nicio pozitie nu ramane fara pret doar pentru ca
     // lista clientului n-a scris grosimea.
-    const uzuala = sursa !== "om" && extras.grosime_mm === null && extras.diametru_valoare !== null
-      && extras.diametru_tip !== null && (extras.sistem === "vata_minerala" || extras.sistem === "elastomer")
-      ? grosimePropusa(extras.sistem, extras.diametru_valoare, extras.diametru_tip) : null;
-    const propusa = grosimiPropuse?.get(b.index) ?? uzuala ?? undefined;
+    // Pana pe 23 noiembrie 2026, fara grosime de nicaieri se punea singura
+    // grosimea uzuala a firmei. Firma: „nu exista grosimi uzuale”, se intreaba
+    // clientul. Ramane doar propunerea ceruta de om („Pune grosimea uzuala”),
+    // care iese „De verificat”.
+    const propusa = grosimiPropuse?.get(b.index);
     const cuPropunere = propusa !== undefined && extras.grosime_mm === null
       && extras.sistem !== null && extras.sistem !== "goluri_foc";
     const cuGrosime = cuPropunere ? { ...extras, grosime_mm: propusa } : extras;
@@ -1246,9 +1234,19 @@ function construiesteLinii(
     // 6,23. Avertismentul ramane, deci pozitia merge oricum la om.
     const necitate = avertismente.some((a) => a.cod === "strat_necitat")
       ? cuSerie.straturi_extra.filter((x) => JACHETE.has(x.sistem) && !sistemScris(b.text, x.sistem)) : [];
-    const deTarifat = necitate.length
+    const faraNecitate = necitate.length
       ? { ...cuSerie, straturi_extra: cuSerie.straturi_extra.filter((x) => !necitate.includes(x)) }
       : cuSerie;
+    // „protectie cu tabla”, fara material: firma intreaba clientul (23
+    // noiembrie 2026), deci tabla presupusa (aluminiu) iese din extragere, iar
+    // pozitia e „Fara pret” pana alege omul protectia (`patchDinCamp` scoate
+    // marcajul). Pe orice sursa, ca un model care pune tabla sa nu treaca.
+    const tablaDeAles = sursa !== "om" && tablaFaraMaterial(b.text)
+      && faraNecitate.straturi_extra.some((x) => x.sistem === "tabla");
+    const deTarifat = tablaDeAles
+      ? { ...faraNecitate, straturi_extra: faraNecitate.straturi_extra.filter((x) => x.sistem !== "tabla"),
+        motiv: cuMotiv(faraNecitate.motiv, TABLA_DE_ALES) }
+      : faraNecitate;
 
     // Descrierea schimbata dupa verificare: linia a fost recitita din textul
     // nou, deci ce a vazut omul nu mai e ce se tarifeaza. Nu si pe "om": o noua
@@ -1266,9 +1264,21 @@ function construiesteLinii(
     // omului: acolo el a decis. Ce lucrare e randul ramane insa cea scrisa de client.
     // Izolatie fara material (`LIPSESTE_MATERIALUL`): pozitie „Fara pret”, cu
     // cauza ei. Materialul din extragere e doar locul in care il alege omul.
-    const t: ReturnType<typeof tarifeazaExtras> = sursa !== "om" && deTarifat.motiv === LIPSESTE_MATERIALUL
-      ? { eroare: "Lipsește materialul izolației: rândul nu-l scrie.", codEroare: "lipseste_materialul" }
-      : tarifeazaExtras(deTarifat, b.cantitate ?? 1, destinatie, sursa === "om" ? undefined : b.text, b.text);
+    // Ce trebuie intrebat clientul (firma, 23 noiembrie 2026: „fara rand in
+    // oferta, pana raspunde clientul”) ramane „Fara pret” si pe linia omului,
+    // cat timp n-a ales chiar campul lipsa: marcajul pleaca doar cand omul
+    // schimba materialul, respectiv protectia (`patchDinCamp`). Pana atunci, o
+    // grosime scrisa singura nu mai tarifeaza vata pusa doar ca loc.
+    const deIntrebat: ReturnType<typeof tarifeazaExtras> | undefined =
+      areMotiv(deTarifat.motiv, LIPSESTE_MATERIALUL)
+        ? { eroare: "Lipsește materialul izolației: rândul nu-l scrie.", codEroare: "lipseste_materialul" }
+        : areMotiv(deTarifat.motiv, TABLA_DE_ALES)
+          ? { eroare: "Rândul spune protecție cu tablă, dar nu din ce.", codEroare: "tabla_fara_material" }
+          : areMotiv(deTarifat.motiv, DEMONTARE)
+            ? { eroare: "Demontarea izolației: prețul se pune după beneficiar.", codEroare: "demontare" }
+            : undefined;
+    const t: ReturnType<typeof tarifeazaExtras> = deIntrebat
+      ?? tarifeazaExtras(deTarifat, b.cantitate ?? 1, destinatie, sursa === "om" ? undefined : b.text, b.text);
     if (t.pret && conducta?.uzuala) {
       const n = `nicio conducta de acelasi diametru in lista (cea mai apropiata, ø${conducta.vecina}, are alta grosime): `
         + `grosime ${conducta.grosime} mm din tabelul de grosimi uzuale al firmei`;
@@ -1310,24 +1320,9 @@ function construiesteLinii(
       t.pret.noteDeVerificat = [...(t.pret.noteDeVerificat ?? []), n];
       t.pret.motiveDeVerificat = [...(t.pret.motiveDeVerificat ?? []), "grosime_propusa"];
     }
-    // „protectie cu tabla" fara material: aluminiul e presupus, nu scris.
-    // Pe orice sursa, ca un model care pune tabla sa nu treaca „Gata".
-    if (t.pret && sursa !== "om" && "straturi" in t.pret
-        && t.pret.straturi.some((s) => s.sistem === "tabla") && tablaFaraMaterial(b.text)) {
-      const n = "randul spune „protectie cu tabla”, fara material: s-a pus tabla de aluminiu";
-      t.pret.note = [...(t.pret.note ?? []), n];
-      t.pret.noteDeVerificat = [...(t.pret.noteDeVerificat ?? []), n];
-      t.pret.motiveDeVerificat = [...(t.pret.motiveDeVerificat ?? []), "tabla_fara_material"];
-    }
     if (t.pret && necitate.length) {
       const n = `${necitate.map((x) => x.sistem).join(", ")}: nu e numit in text, scos din pret`;
       t.pret.note = [...(t.pret.note ?? []), n];
-    }
-    if (t.pret && golGasit) {
-      const n = `golul nu e scris pe rand: ${golGasit.latime}/${golGasit.inaltime}, de la aceeasi teava din fisier`;
-      t.pret.note = [...(t.pret.note ?? []), n];
-      t.pret.noteDeVerificat = [...(t.pret.noteDeVerificat ?? []), n];
-      t.pret.motiveDeVerificat = [...(t.pret.motiveDeVerificat ?? []), "gol_de_la_aceeasi_teava"];
     }
     // Grosimea data ca interval („20 to 50mm", „0.6 – 0.8 mm"): s-a luat capatul
     // de sus (extragerea determinista, `capatulDeSus`). Pe model, avertismentul
@@ -1377,6 +1372,23 @@ function construiesteLinii(
       t.pret.note = [...(t.pret.note ?? []), n];
       t.pret.noteDeVerificat = [...(t.pret.noteDeVerificat ?? []), n];
       t.pret.motiveDeVerificat = [...(t.pret.motiveDeVerificat ?? []), "um_bucata"];
+    }
+    // Fara UM pe rand: firma „isi da seama din denumire” (23 noiembrie 2026).
+    // O piesa numita sau „ML” in text spun unitatea; altfel pretul ramane pe
+    // metru, dar pozitia merge la om (exemplul 1, r17, era „Gata”).
+    if (t.pret && sursa !== "om" && !b.um?.trim() && deTarifat.sistem !== "goluri_foc"
+        && (deTarifat.forma === "ml" || deTarifat.forma === null) && formaElementDinText(b.text) === null
+        && !RE_UM_IN_TEXT.test(b.text) && "straturi" in t.pret) {
+      marcheaza(t.pret, "randul n-are unitate de masura: pretul e pe metru liniar", "um_lipsa");
+    }
+    // Inchiderea de gol pe un pat de cabluri: firma, „se ia in functie de ce
+    // trece prin perete si de dimensiunea golului” — 300x100 poate fi patul,
+    // nu golul (exemplul 2, D08, iesea „Gata”).
+    if (t.pret && sursa !== "om" && deTarifat.sistem === "goluri_foc" && RE_PAT_CABLURI.test(b.text)) {
+      const n = "pe rand e un pat de cabluri: dimensiunea scrisa poate fi a patului, nu a golului";
+      t.pret.note = [...(t.pret.note ?? []), n];
+      t.pret.noteDeVerificat = [...(t.pret.noteDeVerificat ?? []), n];
+      t.pret.motiveDeVerificat = [...(t.pret.motiveDeVerificat ?? []), "pat_cabluri"];
     }
     if (t.pret) proc.pret = t.pret;
     // Doar notele care CER ochi opresc linia la validare: pretul venit din
@@ -1443,16 +1455,18 @@ function construiesteLinii(
  * pozitie „Gata” din ofertele semnate iese exact ca semnat (sau pe regula
  * spusa de firma, unde semnatul s-a abatut de la ea: ø90 / ø160, randul de sus).
  */
+/** Marcajele de pe `motiv` pe care le scoate ecranul cand omul alege campul lipsa (`patchDinCamp`). */
+export { LIPSESTE_MATERIALUL, TABLA_DE_ALES, faraMotiv };
+
 export const MOTIVE_DOVEDITE: ReadonlySet<MotivVerificare> = new Set<MotivVerificare>([
   // Oferta 284: 7,90 € dedus, exact ca semnat.
   "celula_dedusa",
-  // Oferta 284: distribuitorul, 2.296,70 € exact.
-  "echipament_suprafata",
-  // Tabelul de grosimi uzuale al firmei (11 septembrie) si grosimea conductei
-  // de acelasi diametru (casetele din Oferta 284, 24 din 24). NU conducta
-  // vecina (`grosime_conducta_vecina`) si nici tabelul peste o lista care are
-  // alte grosimi pe alte diametre (`grosime_fara_conducta`): fara dovada.
-  "grosime_propusa",
+  // `echipament_suprafata` (distribuitorul din Oferta 284, 2.296,70 € exact) a
+  // iesit pe 23 noiembrie 2026: factorul 2,47 e dintr-o singura oferta, iar
+  // firma n-a inteles intrebarea. Pretul ramane, „De verificat”.
+  // `grosime_propusa` a iesit pe 23 noiembrie 2026: firma, „nu exista grosimi
+  // uzuale”, iar doua grosimi pe acelasi ø sunt o alegere. Grosimea conductei de
+  // acelasi diametru (casetele din Oferta 284, 24 din 24) nu poarta motiv: ramane „Gata”.
   // Grosimea cea mai apropiata din lista (20 → 19 la elastomer, 3 din 3 in ofertele
   // semnate; „min 0,5 mm” → 0,6, cea mai subtire care o acopera).
   "grosime_apropiata",
@@ -1461,6 +1475,8 @@ export const MOTIVE_DOVEDITE: ReadonlySet<MotivVerificare> = new Set<MotivVerifi
   "mp_din_celalalt_segment",
   // Seria de cupru din registrul de conversie al firmei.
   "serie_cupru",
+  // Tubulatura rectangulara in metri: regula scrisa de firma pe 23 noiembrie 2026.
+  "rectangular_pe_ml",
 ]);
 
 /** Pozitia cere ochi daca are macar un motiv nedovedit (sau o nota fara motiv). */

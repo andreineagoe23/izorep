@@ -3,6 +3,34 @@
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
 > Ultima actualizare: 15 noiembrie 2026.
 
+## 23 noiembrie 2026: după demo, importul întreabă clientul (Etapa 1)
+
+Din notițele lui Adrian de la firmă (16 noiembrie) și răspunsurile pe
+`docs/intrebari-firma-3.md`; planul întreg în `docs/plan-dupa-demo.md`. Pe
+ramura `etapa-1-import`, baza `izorep_e1`. **810 teste**, nimic sărit. Regulile
+noi sunt în `pricing.md` și `import.md` (secțiunile din 23 noiembrie).
+
+A/B pe toate fișierele clienților și pe cele două exemple, ambele tipuri de
+ofertă (3.708 rânduri, doar regulile). Pe fișierele clienților s-a mișcat doar:
+
+| Fișier | Ce |
+|---|---|
+| Oferta 284 / cererea TRANSAVIA | distribuitorul „Gata” → „De verificat” (2.296,70, tot exact); oferta fără clic: 92.278,36 |
+| Transavia inox | 10 casete cu două grosimi pe același ø → „De verificat”; caseta DN150 → „Fără preț” |
+| Matari (118.1) | golurile EI180 r72–83 → „Fără preț”, ca în oferta semnată |
+| Spital | elastomer 40 mm pe m² (r134–135) → „Fără preț” |
+
+Pe exemplele lui Adrian, prețurile corecte din `cheie-de-verificare.xlsx` ies acum
+și pe rândurile cu greșeli de scris (r12 31,24 €, r13 29,70 € pe industrial).
+
+Decise de noi (se pot întoarce):
+
+- **Distribuitorul „De verificat”**: factorul 2,47 e dintr-o singură ofertă, iar
+  firma n-a înțeles întrebarea. Se întoarce scoțând `echipament_suprafata` din
+  comentariu, în `MOTIVE_DOVEDITE`.
+- **Două grosimi pe același ø**: cea mai mare, „De verificat” (era „Gata”).
+- **„Pune grosimea uzuală”** rămâne, până se lămurește C1.
+
 ## 15 noiembrie 2026: Fazele 4–6 văzute în browser, Faza 6 închisă
 
 Pe `ux-lucrare` (cu `ux-import` și `ux-faza6-rest` unite), baza `izorep_ux`,

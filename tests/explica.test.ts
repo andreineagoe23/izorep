@@ -50,7 +50,9 @@ describe("propoziția de la „De verificat”", () => {
   // Auditul din 15 noiembrie: modelul a citit bine tabla, codul a scos-o fiindcă
   // textul n-o numește („tb. Al”); omul trebuie să afle că prețul e fără ea.
   it("jacheta scoasă (strat_necitat): spune întâi că prețul e fără tablă", async () => {
-    const [l] = await import1(["Izolatii vata min. + tb. Al Di27 g40 ML"],
+    // „vată min. + tb. Al” îl citesc din 23 noiembrie 2026 regulile, cu tablă cu tot;
+    // aici modelul pune o tablă pe care rândul n-o numește.
+    const [l] = await import1(["Izolatii cu fata caserata Al, d27 g40 ML"],
       async (linii) => linii.map((x) => extrasa({ index: x.index, sistem: "vata_minerala", diametru_valoare: 27,
         diametru_tip: "interior", grosime_mm: 40, straturi_extra: [{ sistem: "tabla", grosime_mm: null }] })));
     expect(l!.avertismente?.map((a) => a.cod)).toContain("strat_necitat");
@@ -66,10 +68,10 @@ describe("propoziția de la „De verificat”", () => {
         note: ["grosime 50 mm luata de la conducta de acelasi diametru din lista (randul 12); clientul n-a scris-o pe randul asta"],
         motiveDeVerificat: ["grosime_propusa", "peste_lista"] } as unknown as NonNullable<LinieProcesata["pret"]>,
     });
-    // Motivul nedovedit întâi (peste listă), apoi grosimea.
+    // Din 23 noiembrie 2026 și grosimea propusă e nedovedită: ordinea e a motivelor.
     expect(explicaRand(conducta)!.text).toBe(
-      "Diametrul e peste listă: prețul e din formula pe m² a firmei, 30,00 €. Am pus 50 mm, ca la țeava de același diametru.");
-    expect(explicaRand(conducta)!.camp).toBe("pret");
+      "Am pus 50 mm, ca la țeava de același diametru. Diametrul e peste listă: prețul e din formula pe m² a firmei, 30,00 €.");
+    expect(explicaRand(conducta)!.camp).toBe("gros");
   });
 
   it("protecția la foc: prețul e doar pentru EI60, iar rândul spune altă clasă", () => {

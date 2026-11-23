@@ -261,18 +261,9 @@ function pretPeMp(
       };
     }
   }
-  const grosimi = Object.keys(l.per_mp).map(Number).sort((a, b) => a - b);
-  const [g1, g2] = grosimi.slice(-2);
-  if (g1 !== undefined && g2 !== undefined && grosime > g2) {
-    const p1 = l.per_mp[String(g1)]!;
-    const p2 = l.per_mp[String(g2)]!;
-    const pret = p2 + (p2 - p1) / (g2 - g1) * (grosime - g2);
-    return {
-      pret, motiv: "grosime_extrapolata",
-      nota: `${sistem} ${grosime} mm trece de ultima grosime din lista (${g2} mm): pret pe mp extrapolat din ` +
-        `${g1} si ${g2} mm, ${bani(pret)} €`,
-    };
-  }
+  // Peste ultima grosime din lista (elastomer 40 mm) nu se mai extrapoleaza
+  // (23 noiembrie 2026): firma, „nu avem preturi peste 32 mm, sunt exemple rare”.
+  // Pozitia e „Fara pret”, cu pretul pus de mana.
   return undefined;
 }
 

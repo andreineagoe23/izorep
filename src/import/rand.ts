@@ -77,6 +77,10 @@ const UM = /^(ml|m|m²|m2|mp|buc|buc\.|pcs|stk|lm|kg|to)$/i;
 function cantitate(celule: (string | number | null)[], iUm: number): number | undefined {
   const nr = (i: number) => (typeof celule[i] === "number" && (celule[i] as number) > 0 ? (celule[i] as number) : undefined);
   if (iUm >= 0) {
+    // Un 0 chiar langa UM e cantitatea (firma, 23 noiembrie 2026: „uneori se
+    // trec si cu cantitate 0”). Inainte se sarea, iar cantitatea cadea pe pretul
+    // unitar de alaturi sau, fara el, pe 1.
+    if (celule[iUm + 1] === 0) return 0;
     for (let i = iUm + 1; i < celule.length; i++) { const v = nr(i); if (v !== undefined) return v; }
     for (let i = iUm - 1; i >= 0; i--) { const v = nr(i); if (v !== undefined) return v; }
     return undefined;

@@ -524,6 +524,11 @@ fișierului, „Deschide-o” (singurul albastru, cu focusul pe el; duce la
 
 ## Verificarea: rândurile „Gata” ca text (15 noiembrie 2026)
 
+Pe 23 noiembrie 2026: pe „Fără preț” cu tabla fără material, caseta Protecție
+arată „Alege tabla” (ca „Alege izolația”); butoanele de motiv (`.imp-motiv`) se
+rup pe rânduri pe telefon; cantitatea 0 e voie.
+
+
 Decis de Andrei („fă ce crezi că e mai bine”), după planul UX (Faza 3, punctul
 „de hotărât cu machetă”). Un rând **Gata** se desenează ca text pe aceleași
 coloane (descrierea, izolația, grosimea, protecția, diametrul, piesa, UM,

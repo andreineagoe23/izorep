@@ -35,6 +35,58 @@ Calculatorul: ce are și ce nu (Docker, fișierele clienților, cheia de model).
 
 ---
 
+## 23 noiembrie 2026 · Andrei (neagoeandrei23) · ramura `etapa-1-import`
+
+Calculatorul: Docker (Postgres pe 5433, baza `izorep_e1`), fișierele clienților,
+cheie de model nefolosită (serverul pornit fără ea). Adrian a fost la firmă pe
+16 noiembrie; notițele lui și răspunsurile pe `intrebari-firma-3.md` sunt în
+`docs/plan-dupa-demo.md`, cu planul pe șapte etape. Aici: Etapele 0 și 1.
+
+### Făcut
+
+| Commit | Ce |
+|---|---|
+| `9b0ed22` | `docs/plan-dupa-demo.md`; `.claude/stare.md` tăiat la ultimele intrări (2.295 → ~300 de linii; restul în `git show d82af7e:.claude/stare.md`) |
+| (al doilea commit de azi) | Etapa 1: ce lipsește din cerere se întreabă clientul. Tabla fără material, grosimea de la alt diametru sau din tabelul uzual, golul nescris: „Fără preț”. Distribuitorul × 2,47 și două grosimi pe același ø: „De verificat”. Elastomer peste 32 mm fără extrapolare. Tubulatura rectangulară în metri: 2 × (A + B + 2g). „din tablă zincată,” a tubulaturii. Cuvintele confirmate și literele lipsă. Conlit 60 mm. Demontarea ca poziție cu preț de mână. Fără UM și patul de cabluri: „De verificat”. Cantitatea 0. Pe ecran, „Alege tabla”; materialul sau tabla neales rămâne „Fără preț” și când omul schimbă doar grosimea (era bugul 3 din predarea de mai jos) |
+
+Teste noi: `tests/demo-16-noiembrie.test.ts`. Testele vechi schimbate cu motiv,
+în comentariile lor (`audit-15-noiembrie`, `nucleu`, `fara-pret`, `oferte-semnate`,
+`document-oferta`, `explica`).
+
+### Verificat
+
+- `npm run typecheck` curat, **810 teste**, nimic sărit (`IZOREP_DB=izorep_e1`),
+  `npm run build:server` trece.
+- A/B pe toate fișierele (3.708 rânduri): tabelul din `.claude/stare.md`, 23 noiembrie.
+- În browser (`build:server`, 8830, modelul oprit), exemplul 1 încărcat ca lucrare
+  nouă: „Alege tabla” pe cele 3 rânduri, aleasă → rândul trece „Gata”; 1440 și
+  390 px, zero erori, zero derulare laterală pe toate cele cinci file (o etichetă
+  lungă de motiv o scotea în lateral la 390 px: reparat).
+
+### Neverificat
+
+- Nimic cu modelul real: un rând pe care regulile îl lasă „Fără preț” (grosime,
+  tablă) pleacă la model; ce face modelul cu el e la fel de nevăzut ca înainte.
+- În browser: doar fila Cerere a exemplului 1, tema deschisă. Nu: tema închisă,
+  1920 px, „E bine” pe distribuitor, demontarea cu prețul pus de mână.
+- Importurile salvate înainte de azi, unde omul alesese deja materialul unui rând
+  „Lipsește materialul”: marcajul vechi a rămas pe ele, deci redevin „Fără preț”
+  până se alege din nou. Pe Render nu e încă nimic real.
+
+### Pentru cine urmează
+
+1. Adrian: C1–C4 din `docs/plan-dupa-demo.md` (grosimile uzuale, +20 % foc
+   industrial, discountul de 3 %, PVC pe industrial) și fișierele din Etapa 0.
+2. Unirea `etapa-1-import` pe `main`, după o privire în browser pe exemplul 2 și
+   pe TRANSAVIA („E bine” pe distribuitor → 94.575,06).
+3. Etapa 2 (lucrările pe firme) sau Etapa 3 (situațiile), după `docs/plan-dupa-demo.md`.
+4. N4 (dimensiunile în coloana 2), când vine fișierul.
+
+### De hotărât de oameni
+
+- Distribuitorul „De verificat” în loc de „Gata” (un clic în plus pe TRANSAVIA).
+- C1: dacă firma chiar nu are grosimi uzuale, butonul „Pune grosimea uzuală” pleacă.
+
 ## 15 noiembrie 2026 (noaptea) · Andrei (neagoeandrei23) · `main`
 
 Calculatorul: Docker (Postgres pe 5433), fișierele clienților, cheie de model
