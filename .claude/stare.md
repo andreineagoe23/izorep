@@ -3,6 +3,24 @@
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
 > Ultima actualizare: 26 noiembrie 2026.
 
+## 26 noiembrie 2026 (noaptea, târziu): Etapa 7, mărunțișurile din predări
+
+Pe `etapa-7-maruntisuri`. **837 de teste**, nimic sărit.
+
+| Ce | Acum |
+|---|---|
+| „Clientul a acceptat” pica cu „Scrie întâi obiectivul…” pe o ofertă descărcată cu obiectivul gol | „Obiectiv (numele șantierului)” e obligatoriu la descărcare |
+| Propoziția de pe fila Cerere tăcea despre rândurile lăsate afară („Toate cele 99 au preț.”) | „… 3 rânduri cu cantitate au rămas afară: vezi „Lăsate afară”.” |
+| Titlul lucrării lua numărul de ordine din numele fișierului („1 Fabrica Demo Abur”) | `clientPropus` taie numărul din față urmat de litere: „Fabrica Demo Abur” |
+| UM gol în ofertă la „Di60, g40 - ML” fără coloană de UM (exemplul 1) | `umLinie`: UM-ul clientului; fără el, din piesă (ml, buc; m² pe suprafață, buc la goluri) |
+
+Văzut în browser, din ce era nevăzut în predările vechi: „Lăsate afară” pe NISAL (3, „E izolație” pe
+unul) și pe spital (58), la 1920 px pe tema închisă; zero derulare laterală, zero erori.
+
+Rămân din Etapa 7, nefăcute aici: necesarul (placa de vată fără grosime, PVC fără preț de cumpărare,
+elastomerul Ravago pe cutie) cere datele firmei; modelul real cere cheia și bani; ramura
+`plan-simplificare` se șterge doar cu acordul lui Andrei.
+
 ## 26 noiembrie 2026 (noaptea): Etapa 4 fără Conlit, ± % pe poziție și bifa de foc
 
 Pe `etapa-4-procent-rand`. **833 de teste**, nimic sărit. Nicio migrare. Lista Conlit (N7) așteaptă
@@ -373,7 +391,7 @@ schimba din interfață.
 ## Comenzi
 
 ```bash
-npm test                                       # 833 de teste (cu IZOREP_DB pe o bază de probă)
+npm test                                       # 837 de teste (cu IZOREP_DB pe o bază de probă)
 npm run typecheck
 npm run dev                                    # UI local, /izorep/
 npm run import -- ../attachments/clienti/cerere-de-oferta-spital.xlsx   # pipeline complet

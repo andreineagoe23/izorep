@@ -484,7 +484,8 @@ export function ecranOferta(o: OptiuniOferta): string {
         ${camp("numar", "Număr ofertă", o.antet.numar, 'required inputmode="numeric" autocomplete="off"')}
         ${camp("data", "Data", o.antet.data, "required")}
         ${camp("client", "Beneficiar", o.antet.client, "required")}
-        ${camp("obiectiv", "Obiectiv (numele șantierului)", o.antet.obiectiv)}
+        ${/* Obligatoriu (Etapa 7): șantierul se numește după el, iar „Clientul a acceptat” pica după descărcare. */ ""}
+        ${camp("obiectiv", "Obiectiv (numele șantierului)", o.antet.obiectiv, "required")}
         ${camp("persoana", "În atenția (cu d-lui sau d-nei)", o.antet.persoana, 'placeholder="d-nei Alina Maties" autocomplete="off"')}
         ${camp("localitate", "Localitate", o.antet.localitate, "required")}
       </div>

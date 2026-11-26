@@ -103,7 +103,8 @@ Fără ele, o parte din Etapa 1 schimbă prețuri în direcția greșită.
 | 5 | făcută pe `etapa-5-fisier-client`, văzută în browser (TRANSAVIA: 94.575,06 în fișierul clientului). De deschis o dată în Excel |
 | 6 | făcută pe `etapa-6-intrebari`, văzută în browser |
 | 4 | ± % pe poziție și bifa de foc făcute pe `etapa-4-procent-rand`; **lista Conlit așteaptă prețurile furnizorului** |
-| 3, 7 | nefăcute; 3 așteaptă situația și recepția firmei |
+| 7 | făcută partea de cod (obiectivul la descărcare, „Lăsate afară” în propoziție, titlul fără cifră, UM din piesă), văzută în browser. Rămân: necesarul (date de la firmă), modelul real, ramura `plan-simplificare` |
+| 3 | nefăcută; așteaptă situația și recepția firmei |
 
 ## Etapele
 

@@ -233,6 +233,21 @@ export function valoareOferta(c: CerereOferta): { valoare: number; pozitii: numb
   return { valoare: bani(brut - bani(brut * (c.antet.discountProcent ?? 0) / 100)), pozitii: oferta.length };
 }
 
+/**
+ * UM-ul poziției: cel scris de client; fără el, din piesa citită (Etapa 7, 26
+ * noiembrie 2026): „Di60, g40 - ML” fără coloană de UM ieșea cu UM gol în
+ * ofertă, deși prețul era pe metru. Tubulatura pe suprafață e m², piesele sunt bucăți.
+ */
+export function umLinie(l: LinieProcesata): string {
+  const scris = l.bruta.um?.trim();
+  if (scris) return scris;
+  if (!l.pret) return "";
+  const f = l.extras.forma;
+  if (f === "mp" || (f === null && l.extras.diametru_valoare === null && l.extras.sistem !== "goluri_foc")) return "m²";
+  if (l.extras.sistem === "goluri_foc") return "buc";
+  return f === null || f === "ml" ? "ml" : "buc";
+}
+
 /** Cantitatea de pe rând. Lipsa ei înseamnă „o bucată", ca la tarifare. */
 const cantitatea = (l: LinieProcesata): number => l.bruta.cantitate ?? 1;
 
@@ -303,7 +318,7 @@ export function planDinOferta(c: CerereOferta, id: string, sectiuni?: ReadonlyMa
     discountProcent: c.antet.discountProcent ?? 0,
     adaosFocProcent: c.provenienta.destinatie === "industrial" && c.antet.adaosFoc !== false ? ADAOS_FOC_INDUSTRIAL * 100 : 0,
     pozitii: oferta.map((l, i) => ({
-      nr: i + 1, denumire: denumirea(l), um: l.bruta.um ?? "", cantitate: cantitatea(l),
+      nr: i + 1, denumire: denumirea(l), um: umLinie(l), cantitate: cantitatea(l),
       pretUnitar: bani(l.pret!.pret_unitar), foc: l.extras.sistem === "goluri_foc",
       ...optional("amprenta", amprenta(l)),
       ...optional("zona", sectiuni?.get(l.bruta.index)),
@@ -325,6 +340,9 @@ export function planDinOferta(c: CerereOferta, id: string, sectiuni?: ReadonlyMa
 export function clientPropus(numeFisier: string): string {
   const fara = numeFisier
     .replace(/\.(xlsx|xls)$/i, "")
+    // Numărul de ordine din fața numelui („1-cerere-de-oferta-fabrica-demo-abur”, exemplele lui
+    // Adrian): titlul lucrării ieșea „1 Fabrica Demo Abur”. Doar urmat de separator și de litere.
+    .replace(/^\d{1,3}[\s._-]+(?=\p{L})/u, "")
     // Fisierele facute de noi din lista de tevi sau din carnet: sufixul e al nostru, nu al clientului.
     .replace(/\s*-\s*(izolatie pe foaie|masuratori santier)\s*$/i, "")
     .replace(/\s*\(\d+\)\s*$/, "")

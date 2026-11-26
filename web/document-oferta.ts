@@ -2,7 +2,7 @@ import type { LinieProcesata } from "../src/import/nucleu.js";
 import type { Sistem } from "../src/pricing/types.js";
 import { bani } from "../src/pricing/engine.js";
 import { listaDe, type BandaMultiplicator, type Destinatie, type ListaPreturi } from "../src/pricing/lists.js";
-import { adaosFocIndustrial, codRand, cuAjustare, denumireScrisa, imparte, segmente, totalOferta, valoareLinie, type AntetOferta, type CerereOferta, procentRand } from "./oferta.js";
+import { adaosFocIndustrial, codRand, cuAjustare, denumireScrisa, imparte, segmente, totalOferta, valoareLinie, type AntetOferta, type CerereOferta, procentRand, umLinie } from "./oferta.js";
 import { motiveLinie, stareLinie, type CodMotiv, type Stare } from "./import/text.js";
 
 /**
@@ -407,7 +407,7 @@ export function documentOferta(c: CerereOferta, pastreaza: number | null = null)
       textClient: text,
       textOferta: taiat,
       specificatie: marca && spec ? spec.replace(NUME.tabla_inox, `${NUME.tabla_inox} ${marca}`) : spec,
-      um: l.bruta.um ?? "",
+      um: umLinie(l),
       cantitate: l.bruta.cantitate ?? 1,
       pretUnitar: pret ? bani(pret.pret_unitar) : null,
       valoare: pret ? valoareLinie(l) : null,

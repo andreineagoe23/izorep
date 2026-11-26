@@ -148,18 +148,22 @@ export function filtruImplicit(numere: Record<FiltruStare, number>): FiltruStare
  * fără preț se spun mereu, nu se ascund în „cer să te uiți”. Drumul mai
  * departe („Mergi la ofertă”) e al rândului „Urmează” de pe pagina lucrării.
  */
-export function rezumatVerificare(numere: Record<FiltruStare, number>): string {
+export function rezumatVerificare(numere: Record<FiltruStare, number>, afara = 0): string {
   const total = numere.toate;
-  if (total === 0) return "";
+  // Rândurile cu cantitate rămase afară se spun și ele (Etapa 7): altfel „Toate au preț” ascundea că
+  // un rând al clientului n-a intrat deloc în ofertă.
+  const af = afara > 0 ? ` ${afara === 1 ? "Un rând cu cantitate a rămas afară" : `${cate(afara, "rânduri")} cu cantitate au rămas afară`}: vezi „Lăsate afară”.` : "";
+  if (total === 0) return af ? `<div class="imp-rezumat"><p>${af.trim()}</p></div>` : "";
   const de = numere.de_validat;
   const fara = numere.netarifate;
   if (de + fara === 0) {
-    return `<div class="imp-rezumat"><p>${total === 1 ? "Poziția are preț." : `Toate cele ${total} au preț.`}</p></div>`;
+    return `<div class="imp-rezumat"><p>${total === 1 ? "Poziția are preț." : `Toate cele ${total} au preț.`}${af}</p></div>`;
   }
   const parti = [
     `${numere.gata} din ${cate(total, total === 1 ? "poziție" : "poziții")} ${numere.gata === 1 ? "are" : "au"} preț sigur.`,
     de > 0 ? `${de} ${de === 1 ? "cere" : "cer"} să te uiți.` : "",
     fara > 0 ? `${fara} ${fara === 1 ? "n-are" : "n-au"} preț.` : "",
+    af.trim(),
   ].filter(Boolean);
   return `<div class="imp-rezumat"><p>${parti.join(" ")}</p></div>`;
 }
@@ -181,7 +185,7 @@ export function baraVerificare(
   const fila = afara ? `<button type="button" class="fila" data-filtru="afara"${afara.activ ? ' aria-current="page"' : ""}>Lăsate afară <b>${afara.n}</b></button>` : "";
   return `<section class="imp-card imp-bara-foi imp-bara-singura">
     ${santier ? `<div class="imp-rezumat"><p>${santier === "inchis" ? "Lucrarea e închisă." : "Șantierul e pornit."
-      } Cererea rămâne aici, așa cum a plecat oferta.</p></div>` : rezumatVerificare(numere)}
+      } Cererea rămâne aici, așa cum a plecat oferta.</p></div>` : rezumatVerificare(numere, afara?.n ?? 0)}
     <div class="imp-bara-stanga"><p class="imp-eticheta-control" id="eticheta-filtre">Arată pozițiile</p>
       <nav class="file" aria-labelledby="eticheta-filtre">${file}${fila}</nav></div>
   </section>`;
