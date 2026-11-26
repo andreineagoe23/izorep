@@ -201,6 +201,13 @@ Tema închisă e scrisă de două ori în CSS, cu aceleași valori: o dată sub
 `@media` cu un selector de atribut într-o singură regulă — dacă modifici una,
 modific-o și pe cealaltă.
 
+## Oferta în fișierul clientului (26 noiembrie 2026, Etapa 5)
+
+Pe fila Ofertă, sub „Descarcă oferta”: „Descarcă în fișierul clientului” (`data-act="descarca-client"`,
+alb), doar când cererea e un `.xlsx`, cu o propoziție dedesubt despre ce iese. Același drum ca
+„Descarcă oferta” (`genereazaOferta(form, true)`): salvează oferta, apoi descarcă „Oferta RAD284
+26.11.2026 - in fisierul clientului.xlsx”. Scrierea e în `web/oferta-client.ts` (fără DOM).
+
 ## Lucrările pe firme (26 noiembrie 2026, Etapa 2)
 
 `docs/plan-dupa-demo.md`, N1. Fără migrare: firma e în plan, în `antet.firma` al cererii și în

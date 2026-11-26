@@ -100,7 +100,8 @@ Fără ele, o parte din Etapa 1 schimbă prețuri în direcția greșită.
 | 0 | partea noastră făcută: baza locală (`izorep_e1`), `stare.md` tăiat. **De la firmă, nimic încă**: fișierul cu dimensiunile în coloana 2, lista Conlit, o situație și o recepție |
 | 1 | făcută pe `etapa-1-import`, văzută în browser pe 26 noiembrie (exemplul 2, TRANSAVIA: 94.575,06 cu „E bine”), plus „Treceri prin planșee”. Lipsește **N4** (coloana de dimensiune), care așteaptă fișierul. D06 rămâne „Gata”: materialul țevii nu intră în prețul golului |
 | 2 | făcută pe `etapa-2-firme` (pornită din `etapa-1-import`), văzută în browser. Detaliile în `.claude/stare.md`, 26 noiembrie |
-| 3–7 | nefăcute; 3 așteaptă situația și recepția firmei |
+| 5 | făcută pe `etapa-5-fisier-client`, văzută în browser (TRANSAVIA: 94.575,06 în fișierul clientului). De deschis o dată în Excel |
+| 3, 4, 6, 7 | nefăcute; 3 așteaptă situația și recepția firmei |
 
 ## Etapele
 

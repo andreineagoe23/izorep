@@ -446,6 +446,11 @@ export interface OptiuniOferta {
    * rândul „Urmează”, iar „Descarcă oferta” (din nou) rămâne alb.
    */
   descarcata?: boolean;
+  /**
+   * Cererea a venit într-un .xlsx al clientului (Etapa 5): oferta se poate
+   * descărca și în fișierul lui, cu prețurile în două coloane la sfârșit.
+   */
+  inFisierulClientului?: boolean;
 }
 
 /** Sub valoarea ofertei: ce e inclus în ea, dincolo de prețurile din liste. */
@@ -499,7 +504,10 @@ export function ecranOferta(o: OptiuniOferta): string {
       ${o.eroare ? `<p class="alerta" role="alert">${esc(o.eroare)}</p>` : ""}
       <div class="imp-formular-butoane">
         <button type="submit" class="${o.descarcata ? "secundar" : "primar"}">Descarcă oferta</button>
+        ${o.inFisierulClientului ? `<button type="button" class="secundar" data-act="descarca-client">Descarcă în fișierul clientului</button>` : ""}
       </div>
+      ${o.inFisierulClientului ? `<p class="hint" style="margin:0">În fișierul clientului: foile lui neschimbate, cu „Preț
+        unitar (€)” și „Valoare (€)” adăugate după ultima coloană, pe pozițiile din ofertă, și totalul sub ele.</p>` : ""}
     </section>
   </form>`;
 }

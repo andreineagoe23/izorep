@@ -562,6 +562,7 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
         adaosFoc: adaosFocIndustrial(oferta, destinatie), ajustare,
         deVerificat: deValidat.length, faraPret: netarifate.length,
         destinatie, antet, firme: FIRME, eroare: "", descarcata: opt.areOferta?.() ?? false,
+        inFisierulClientului: /\.xlsx$/i.test(sesiune.meta.nume),
       }) + `<section class="imp-card imp-cum-iese"><h2>Cum iese oferta</h2>
         <p class="hint">Exact ce descarci acum, doar pozițiile gata. Ce schimbi mai sus se vede aici.</p>
         <div id="cum-iese">${exportPeEcran(documentul(sesiune))}</div></section>`;
@@ -1122,21 +1123,46 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
     };
   }
 
-  async function genereazaOferta(form: HTMLFormElement): Promise<void> {
+  /**
+   * Fișierul clientului cu prețurile ofertei (Etapa 5): aceleași linii și sume
+   * ca oferta noastră, scrise după ultima coloană a fiecărei foi.
+   */
+  async function inFisierulClientului(s: Sesiune, cerere: CerereOferta): Promise<ArrayBuffer> {
+    const { ofertaInFisierulClientului } = await import("../oferta-client.js");
+    const ultimulRand = new Map<string, number>();
+    for (const l of s.rez.linii) {
+      if (l.extras.sistem !== null) ultimulRand.set(l.bruta.foaie, Math.max(ultimulRand.get(l.bruta.foaie) ?? 0, l.bruta.rand));
+    }
+    const r = await ofertaInFisierulClientului(s.meta.fisier, {
+      oferta: imparte(cuAjustare(cerere.linii, cerere.antet.ajustareProcent ?? 0)).oferta,
+      destinatie: cerere.provenienta.destinatie,
+      ...(cerere.antet.discountProcent ? { discountProcent: cerere.antet.discountProcent } : {}),
+      randAntet: new Map(s.foi.flatMap((f) => (f.antet ? [[f.nume, f.antet.rand] as const] : []))),
+      ultimulRand,
+    });
+    return r.fisier;
+  }
+
+  async function genereazaOferta(form: HTMLFormElement, inClient = false): Promise<void> {
     const s = sesiune;
     if (!s) return;
     const cerere = cerereDinFormular(s, form);
     const { antet } = cerere;
-    const buton = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+    const buton = form.querySelector<HTMLButtonElement>(inClient ? '[data-act="descarca-client"]' : 'button[type="submit"]')!;
     const eticheta = buton.textContent;
     buton.disabled = true;
     buton.textContent = "Se pregătește…";
     form.querySelector(".alerta")?.remove();
     try {
-      const { registruOferta } = await import("../registru-oferta.js");
-      const logo = logoFirmei(antet.firma);
-      const base64 = logo ? await logoBase64(logo.fisier) : null;
-      const buf = await registruOferta(cerere, logo && base64 ? { logo: { ...logo, base64 } } : {});
+      let buf: ArrayBuffer;
+      if (inClient) {
+        buf = await inFisierulClientului(s, cerere);
+      } else {
+        const { registruOferta } = await import("../registru-oferta.js");
+        const logo = logoFirmei(antet.firma);
+        const base64 = logo ? await logoBase64(logo.fisier) : null;
+        buf = await registruOferta(cerere, logo && base64 ? { logo: { ...logo, base64 } } : {});
+      }
       // Salvata INAINTE de descarcare: ce pleaca la client e exact ce s-a
       // salvat. Pe server e o versiune noua; in browser, doar sumarul.
       const { valoare, pozitii } = valoareOferta(cerere);
@@ -1146,10 +1172,11 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
         numar: antet.numar ? `${antet.serie}${antet.numar}` : "", data: antet.data, client: antet.client,
         obiectiv: antet.obiectiv, valoare, pozitii, cand: new Date().toISOString(),
       });
-      descarca(buf, numeOferta(antet.serie, antet.numar, antet.data));
-      arataMesaj("Oferta a fost salvată și descărcată.");
+      const nume = numeOferta(antet.serie, antet.numar, antet.data);
+      descarca(buf, inClient ? nume.replace(/\.xlsx$/, " - in fisierul clientului.xlsx") : nume);
+      arataMesaj(inClient ? "Oferta a fost salvată și descărcată în fișierul clientului." : "Oferta a fost salvată și descărcată.");
       // Albastrul trece pe răspunsul clientului, din „Urmează”; fără redesenare, ca formularul să rămână cum e.
-      buton.className = "secundar";
+      form.querySelector<HTMLButtonElement>('button[type="submit"]')!.className = "secundar";
       opt.laOferta?.();
     } catch (err) {
       form.querySelector(".imp-formular-butoane")!.insertAdjacentHTML("beforebegin",
@@ -1416,6 +1443,11 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
         pagina.querySelector<HTMLInputElement>('.imp-antet [name="segment"]:checked')?.focus();
         return;
       case "la-verificare": treciPe(2); opt.laParte?.("verificare"); return;
+      case "descarca-client": {
+        const form = b.closest<HTMLFormElement>("#antet-oferta");
+        if (form?.reportValidity()) void genereazaOferta(form, true);
+        return;
+      }
       case "meniu-rand": {
         const m = b.nextElementSibling as HTMLElement | null;
         if (!m) return;

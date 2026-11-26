@@ -3,6 +3,35 @@
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
 > Ultima actualizare: 26 noiembrie 2026.
 
+## 26 noiembrie 2026 (după-amiază): Etapa 5, oferta în fișierul clientului
+
+Pe `etapa-5-fisier-client`. **822 de teste**, nimic sărit. Nicio migrare; dependență nouă
+directă: `jszip` (era deja, prin ExcelJS).
+
+Pe fila Ofertă, lângă „Descarcă oferta”: **„Descarcă în fișierul clientului”** (alb, doar când
+cererea e un `.xlsx`). Salvează oferta ca butonul vechi, apoi descarcă fișierul clientului cu
+„Preț unitar (€)” și „Valoare (€)” după ultima coloană cu conținut a fiecărei foi, pe rândurile
+din ofertă; sub ultima poziție a foii (cu preț sau fără): totalul, apoi adaosul de foc, discountul
+și totalul general, când sunt. Cu mai multe foi: „Total foaia X” pe fiecare, „TOTAL OFERTĂ” pe
+ultima. Etichetele coloanelor stau pe rândul de antet; fără antet (TRANSAVIA începe pe rândul 1),
+sub totaluri. `web/oferta-client.ts`, teste în `tests/oferta-client.test.ts`.
+
+Verificat: pe toate cele 13 fișiere de client și pe cele două exemple, fiecare fișier din arhivă
+pe care nu-l atingem iese octet cu octet, fiecare celulă a clientului cu conținut iese identică
+(XML-ul ei), prețurile și valorile sunt ale ofertei; deschise cu ExcelJS și openpyxl. În browser
+(1440 și 390 px): TRANSAVIA cu distribuitorul confirmat → 94.575,06 € sub ultima poziție, ca Oferta 284.
+
+Decise de noi (se pot întoarce):
+
+- **Valori, nu formule**: o formulă peste cantitatea clientului ar depinde de coloana citită de
+  noi, iar Excel ar putea recalcula alt total decât oferta salvată.
+- **Celulele goale doar formatate nu împing coloanele noastre**: unele foi au chenar până la Z.
+  O celulă goală formatată din coloana noastră se înlocuiește; peste conținut nu se scrie niciodată.
+- **Totalul sub ultima poziție a foii**, nu sub ultima cu preț: pe Matari golurile EI180 (fără preț)
+  sunt la sfârșit, iar totalul ar fi stat printre ele.
+- **Nicio verificare în Excel sau LibreOffice**: pe calculator n-avem niciunul. De deschis o dată în
+  Excel înainte de primul trimis.
+
 ## 26 noiembrie 2026: Etapa 1 văzută în browser, Etapa 2 (lucrările pe firme)
 
 Pe `etapa-1-import` (o reparație) și `etapa-2-firme` (ramura nouă, pornită din ea), baza
@@ -310,7 +339,7 @@ schimba din interfață.
 ## Comenzi
 
 ```bash
-npm test                                       # 815 teste (cu IZOREP_DB pe o bază de probă)
+npm test                                       # 822 de teste (cu IZOREP_DB pe o bază de probă)
 npm run typecheck
 npm run dev                                    # UI local, /izorep/
 npm run import -- ../attachments/clienti/cerere-de-oferta-spital.xlsx   # pipeline complet
