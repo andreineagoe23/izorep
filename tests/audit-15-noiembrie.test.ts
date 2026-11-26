@@ -76,13 +76,23 @@ describe("auditul din 15 noiembrie: izolația fără material", () => {
     const r2 = await importa(EX2, "rezidential");
     const conducta = rand(r2.linii, "Termice+Sanitare", 25);
     expect([stare(conducta), conducta.codEroare]).toEqual(["fara_pret", "lipseste_materialul"]);
-    // Ce rămâne afară e de altă meserie (robinet, țeava PPR, tubulatura neizolată)
-    // sau trecerile la foc, punctul 6 din audit. Demontarea izolației (r33) e din
-    // 23 noiembrie 2026 poziție „Fără preț”, cu prețul pus de mână.
+    // Ce rămâne afară e de altă meserie (robinet, țeava PPR, tubulatura neizolată).
+    // Demontarea izolației (r33) e din 23 noiembrie 2026 poziție „Fără preț”, cu
+    // prețul pus de mână; trecerile prin planșee (r15–16), din 26 noiembrie, închideri.
     expect(lasateAfara(r1).map((a) => a.rand)).toEqual([34]);
     expect(lasateAfara(r2).map((a) => `${a.foaie} ${a.rand}`)).toEqual([
-      "Termice+Sanitare 31", "Termice+Sanitare 32", "Ventilatie 12", "Treceri foc 15", "Treceri foc 16",
+      "Termice+Sanitare 31", "Termice+Sanitare 32", "Ventilatie 12",
     ]);
+  });
+
+  it("„Treceri prin planșee … la foc”: închideri de gol, ca prin pereți (ex. 2, D07–D08)", async () => {
+    // Antetul „Treceri prin plansee rezistente la foc EI120” nu era recunoscut,
+    // deci țeava PP 50 și patul de cabluri, cu golul scris, rămâneau afară.
+    const r2 = await importa(EX2, "rezidential");
+    const pp = rand(r2.linii, "Treceri foc", 15);
+    const pat = rand(r2.linii, "Treceri foc", 16);
+    expect([stare(pp), pp.pret?.pret_unitar]).toEqual(["gata", 26.89]);
+    expect([stare(pat), pat.pret?.pret_unitar, pat.pret?.motiveDeVerificat]).toEqual(["de_validat", 26.89, ["pat_cabluri"]]);
   });
 
   it("codul de rând singur („IZOLATII | Robinet cu sertar DN50”) nu face din rând izolație", async () => {

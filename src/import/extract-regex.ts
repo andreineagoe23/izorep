@@ -82,7 +82,10 @@ const SISTEM: [LinieExtrasa["sistem"], RegExp][] = [
  * `cerere-de-oferta-spital.xlsx`: 58 de randuri de alta meserie intrau asa ca inchideri de gol
  * fara dimensiuni, deci ca munca de validat pentru omul de la tehnic.
  */
-const TRECERI_PRIN_PERETI = /\b(?:t|tr)eceri\s+prin\s+pereti/i;
+// „Treceri prin planșee rezistente la foc EI120” (exemplul 2 al lui Adrian, D07–D08):
+// aceeași lucrare prin placă. Fără „planșee”, cele două rânduri de sub antet cădeau
+// la „Lăsate afară”, deși au golul scris.
+const TRECERI_PRIN_PERETI = /\b(?:t|tr)eceri\s+prin\s+(?:pere[tț]i|plan[sș]e)/i;
 const CONTEXT_FOC = /\bfoc\b|\bEI\s*\d{2,3}\b/i;
 
 /**
