@@ -30,6 +30,13 @@ export interface AntetScris {
   discount: number;
   /** Ziua în care clientul a refuzat oferta (ISO), 14 noiembrie 2026; lipsă = n-a refuzat. */
   refuzat?: string;
+  /**
+   * +20 % pe închiderile la foc, pe o ofertă industrială (Etapa 4, C2, 26
+   * noiembrie 2026): regula din apelul din 29 septembrie, de care firma nu mai
+   * știe. Bifă în cardul „Prețul”. Lipsă = da, ca ofertele de dinainte să iasă
+   * la fel; o cerere nouă o pune oprită.
+   */
+  adaosFoc?: boolean;
 }
 
 /* ------------------------------------------------- antetul din fișier */

@@ -102,7 +102,8 @@ Fără ele, o parte din Etapa 1 schimbă prețuri în direcția greșită.
 | 2 | făcută pe `etapa-2-firme` (pornită din `etapa-1-import`), văzută în browser. Detaliile în `.claude/stare.md`, 26 noiembrie |
 | 5 | făcută pe `etapa-5-fisier-client`, văzută în browser (TRANSAVIA: 94.575,06 în fișierul clientului). De deschis o dată în Excel |
 | 6 | făcută pe `etapa-6-intrebari`, văzută în browser |
-| 3, 4, 7 | nefăcute; 3 așteaptă situația și recepția firmei |
+| 4 | ± % pe poziție și bifa de foc făcute pe `etapa-4-procent-rand`; **lista Conlit așteaptă prețurile furnizorului** |
+| 3, 7 | nefăcute; 3 așteaptă situația și recepția firmei |
 
 ## Etapele
 

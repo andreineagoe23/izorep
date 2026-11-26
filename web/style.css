@@ -623,6 +623,16 @@ a.legatura { display: inline-flex; align-items: center; }
 }
 .imp-segment input:focus-visible + span { outline: 3px solid var(--focus); outline-offset: 2px; }
 
+/* Bifa adaosului de foc pe industrial, în cardul „Prețul” (Etapa 4, C2) */
+.imp-bifa { display: flex; align-items: center; gap: 10px; min-height: 44px; margin: 0; }
+.imp-bifa input { width: 20px; height: 20px; min-height: 0; margin: 0; }
+
+/* ---- Discount sau adaos pe rând (Etapa 4, 26 noiembrie 2026): sub prețul rândului deschis */
+.ver-pret { display: grid; gap: 6px; }
+.ver-procent { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 13px; color: var(--slab); }
+.ver-procent .cel-ed { min-width: 0; width: 100%; }
+.ver-procent-text { white-space: nowrap; }
+
 /* ---- Întrebările pentru client (Etapa 6, 26 noiembrie 2026), pe fila Cerere */
 .intrebari-client { display: grid; gap: 12px; }
 .intrebari-sus { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }

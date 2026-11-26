@@ -437,8 +437,10 @@ export interface OptiuniOferta {
   /** Ce a scris omul pe antet (păstrat în sesiune), sau ce s-a citit din fișier. */
   antet: {
     firma: string; numar: string; data: string; client: string; obiectiv: string;
-    persoana: string; localitate: string; discount: number;
+    persoana: string; localitate: string; discount: number; adaosFoc?: boolean;
   };
+  /** Ofertă industrială cu închideri la foc: bifa adaosului de 20 % (Etapa 4, C2). */
+  areFoc?: boolean;
   firme: readonly { id: string; denumire: string; serieOferta: string }[];
   eroare: string;
   /**
@@ -496,8 +498,11 @@ export function ecranOferta(o: OptiuniOferta): string {
         ${camp("ajustare", "Ajustare prețuri (%)", String(o.ajustare),
           'type="number" inputmode="decimal" min="-50" max="100" step="any" aria-describedby="ajutor-ajustare"')}
         ${camp("discount", "Discount (%)", String(o.antet.discount), 'type="number" inputmode="decimal" min="0" max="100" step="any"')}
-        <p class="imp-ajutor" id="ajutor-ajustare">Ajustarea mută toate prețurile: 10 = cu 10 % mai mari, −5 = mai mici.</p>
+        <p class="imp-ajutor" id="ajutor-ajustare">Ajustarea mută toate prețurile: 10 = cu 10 % mai mari, −5 = mai mici.
+          Pe un singur rând se pune la verificare, în căsuța „± %” de sub preț.</p>
       </div>
+      ${o.areFoc ? `<label class="imp-bifa"><input type="checkbox" name="adaosFoc" value="da"${o.antet.adaosFoc !== false ? " checked" : ""} />
+        Adaugă 20 % pe totalul închiderilor la foc</label>` : ""}
       ${afara > 0 ? `<p class="imp-oferta-lipsa">Oferta descărcată nu va conține ${pozitii(afara)}: ${o.deVerificat} de verificat
         și ${o.faraPret} fără preț. Dacă trebuie să fie în ofertă, rezolvă-le întâi la verificare.
         <button type="button" class="legatura" data-act="la-verificare">Înapoi la verificare</button></p>` : ""}

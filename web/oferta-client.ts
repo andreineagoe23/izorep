@@ -36,6 +36,8 @@ export interface OptiuniOfertaClient {
   oferta: LinieProcesata[];
   destinatie: string;
   discountProcent?: number;
+  /** +20 % pe închiderile la foc pe industrial; lipsă = da, ca `AntetOferta.adaosFoc`. */
+  adaosFoc?: boolean;
   /** Rândul de antet al fiecărei foi (1-based, ca în Excel), dacă s-a găsit: etichetele coloanelor stau acolo. */
   randAntet?: ReadonlyMap<string, number>;
   /**
@@ -237,7 +239,7 @@ export async function ofertaInFisierulClientului(fisier: ArrayBuffer, o: Optiuni
   }
   const foi = ordine.filter((n) => peFoaie.has(n));
   const total = totalOferta(o.oferta);
-  const adaos = adaosFocIndustrial(o.oferta, o.destinatie);
+  const adaos = adaosFocIndustrial(o.oferta, o.destinatie, o.adaosFoc !== false);
   const brut = bani(total + adaos);
   const procent = o.discountProcent ?? 0;
   const discount = procent > 0 ? bani(brut * procent / 100) : 0;

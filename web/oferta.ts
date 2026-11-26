@@ -32,6 +32,13 @@ export interface AntetOferta {
   firma: string;
   localitate: string;
   /**
+   * +20 % pe închiderile la foc, pe o ofertă industrială (Etapa 4, C2, 26
+   * noiembrie 2026): regula din apelul din 29 septembrie, de care firma nu mai
+   * știe. Bifă în cardul „Prețul”. Lipsă = da, ca ofertele de dinainte să iasă
+   * la fel; o cerere nouă o pune oprită.
+   */
+  adaosFoc?: boolean;
+  /**
    * Discountul comercial, în procente. Lipsă sau 0 = fără discount, iar atunci
    * registrul are un singur rând de total, ca înainte.
    *
@@ -148,7 +155,27 @@ export const totalOferta = (linii: LinieProcesata[]): number =>
  * Înlocuiește textul clientului în ofertă, în Excel și pe planul de șantier;
  * nu schimbă ce s-a citit din rând, deci nici prețul.
  */
-export type LinieCuDenumire = LinieProcesata & { denumireOferta?: string };
+export type LinieCuDenumire = LinieProcesata & {
+  denumireOferta?: string;
+  /**
+   * Discount sau adaos pe rând, în procente (Etapa 4, N8, 26 noiembrie 2026).
+   * Înlocuiește ajustarea pe toată oferta pentru rândul ăsta, ca prețul pus de
+   * mână; discountul de la final se aplică peste tot. Stă pe linie, deci
+   * ajunge cu ea în oferta salvată, pe server, în plan și în fișierul clientului.
+   */
+  procentRand?: number;
+};
+
+export const procentRand = (l: LinieProcesata): number | undefined => (l as LinieCuDenumire).procentRand;
+
+/** Liniile cu procentul pe rând pus pe ele; restul rămân aceleași obiecte. */
+export function cuProcente(linii: LinieProcesata[], procente: ReadonlyMap<number, number>): LinieProcesata[] {
+  if (procente.size === 0) return linii;
+  return linii.map((l) => {
+    const p = procente.get(l.extras.index);
+    return p !== undefined && p !== 0 ? ({ ...l, procentRand: p } as LinieCuDenumire) : l;
+  });
+}
 
 export const denumireScrisa = (l: LinieProcesata): string | undefined =>
   (l as LinieCuDenumire).denumireOferta?.trim() || undefined;
@@ -169,10 +196,13 @@ export function cuDenumiri(linii: LinieProcesata[], denumiri: ReadonlyMap<number
  * ±0,01 €, iar o ajustare schimbată după îl muta.
  */
 export function cuAjustare(linii: LinieProcesata[], procent = 0): LinieProcesata[] {
-  if (!procent) return linii;
+  if (!procent && !linii.some((l) => procentRand(l) !== undefined)) return linii;
   return linii.map((l) => {
     if (!l.pret || (l.pret as { manual?: boolean }).manual) return l;
-    const unitar = bani(l.pret.pret_unitar * (1 + procent / 100));
+    // Procentul rândului bate ajustarea pe toată oferta (Etapa 4).
+    const p = procentRand(l) ?? procent;
+    if (!p) return l;
+    const unitar = bani(l.pret.pret_unitar * (1 + p / 100));
     return { ...l, pret: { ...l.pret, pret_unitar: unitar, total: bani(unitar * l.pret.cantitate) } } as LinieProcesata;
   });
 }
@@ -182,15 +212,15 @@ export function cuAjustare(linii: LinieProcesata[], procent = 0): LinieProcesata
  * nu pe fiecare produs (regula firmei, 29 septembrie 2026). Pozițiile rămân
  * pe prețul din lista rezidențială; adaosul e un rând separat în ofertă.
  */
-export function adaosFocIndustrial(oferta: LinieProcesata[], destinatie: string): number {
-  if (destinatie !== "industrial") return 0;
+export function adaosFocIndustrial(oferta: LinieProcesata[], destinatie: string, aplica = true): number {
+  if (destinatie !== "industrial" || !aplica) return 0;
   const foc = oferta.filter((l) => l.extras.sistem === "goluri_foc");
   return foc.length === 0 ? 0 : bani(totalOferta(foc) * ADAOS_FOC_INDUSTRIAL);
 }
 
 /** Totalul lucrărilor așa cum apare în ofertă: pozițiile plus adaosul de foc industrial. */
-export const totalCuAdaos = (oferta: LinieProcesata[], destinatie: string): number =>
-  bani(totalOferta(oferta) + adaosFocIndustrial(oferta, destinatie));
+export const totalCuAdaos = (oferta: LinieProcesata[], destinatie: string, aplica = true): number =>
+  bani(totalOferta(oferta) + adaosFocIndustrial(oferta, destinatie, aplica));
 
 /**
  * Ce plătește clientul: după ajustarea tehnicului, adaosul de foc și discount.
@@ -199,7 +229,7 @@ export const totalCuAdaos = (oferta: LinieProcesata[], destinatie: string): numb
  */
 export function valoareOferta(c: CerereOferta): { valoare: number; pozitii: number } {
   const { oferta } = imparte(cuAjustare(c.linii, c.antet.ajustareProcent ?? 0));
-  const brut = totalCuAdaos(oferta, c.provenienta.destinatie);
+  const brut = totalCuAdaos(oferta, c.provenienta.destinatie, c.antet.adaosFoc !== false);
   return { valoare: bani(brut - bani(brut * (c.antet.discountProcent ?? 0) / 100)), pozitii: oferta.length };
 }
 
@@ -271,7 +301,7 @@ export function planDinOferta(c: CerereOferta, id: string, sectiuni?: ReadonlyMa
     destinatie: c.provenienta.destinatie,
     ajustareProcent: ajustare,
     discountProcent: c.antet.discountProcent ?? 0,
-    adaosFocProcent: c.provenienta.destinatie === "industrial" ? ADAOS_FOC_INDUSTRIAL * 100 : 0,
+    adaosFocProcent: c.provenienta.destinatie === "industrial" && c.antet.adaosFoc !== false ? ADAOS_FOC_INDUSTRIAL * 100 : 0,
     pozitii: oferta.map((l, i) => ({
       nr: i + 1, denumire: denumirea(l), um: l.bruta.um ?? "", cantitate: cantitatea(l),
       pretUnitar: bani(l.pret!.pret_unitar), foc: l.extras.sistem === "goluri_foc",

@@ -3,9 +3,22 @@
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
 > Ultima actualizare: 26 noiembrie 2026.
 
+## 26 noiembrie 2026 (noaptea): Etapa 4 fără Conlit, ± % pe poziție și bifa de foc
+
+Pe `etapa-4-procent-rand`. **833 de teste**, nimic sărit. Nicio migrare. Lista Conlit (N7) așteaptă
+prețurile furnizorului.
+
+| Ce | Acum |
+|---|---|
+| Discount sau adaos doar pe toată oferta (N8) | **± % pe rând**: pe rândul deschis, sub preț, căsuța „± %” (−5 = mai ieftin, 10 = mai scump). Bate ajustarea pe toată oferta pentru rândul lui (ca prețul pus de mână, care rămâne final și n-are căsuța); discountul de la sfârșit se aplică peste tot. Pe rândul text: „6,73 −10 %”. Stă pe linie (`procentRand`, `cuProcente` în `web/oferta.ts`), deci ajunge în oferta salvată (serverul o socotește din linii), în plan și în fișierul clientului; „Cum a fost calculată oferta” listează rândurile |
+| +20 % la foc pe industrial, automat (C2: firma nu știe de unde e) | **Bifă** în cardul „Prețul”, doar pe industrial cu închideri la foc: „Adaugă 20 % pe totalul închiderilor la foc”. O cerere nouă pornește cu ea **oprită** (planul). Fără bifa scrisă (ofertele și cererile de dinainte) rămâne pornită: Matari pe industrial tot 15.230,45 € |
+
+Verificat în browser (1440, 390 px): exemplul 2 pe industrial, bifa oprită (41.850,68 €), bifată
+(+287,62 €), −10 % pe DN15 (7,48 → 6,73 €, oferta −240 €), procentul rămâne la reîncărcare.
+
 ## 26 noiembrie 2026 (seara): Etapa 6, întrebările pentru client
 
-Pe `etapa-6-intrebari`. **831 de teste**, nimic sărit. Nicio migrare (numărul întrebărilor stă în
+Pe `etapa-6-intrebari`. **829 de teste**, nimic sărit. Nicio migrare (numărul întrebărilor stă în
 lucrul cererii, ca `deVerificat`).
 
 - **Fila Cerere**: „5 lucruri de întrebat clientul.” cu „Scrie întrebările”: textul de email (rândul din
@@ -360,7 +373,7 @@ schimba din interfață.
 ## Comenzi
 
 ```bash
-npm test                                       # 831 de teste (cu IZOREP_DB pe o bază de probă)
+npm test                                       # 833 de teste (cu IZOREP_DB pe o bază de probă)
 npm run typecheck
 npm run dev                                    # UI local, /izorep/
 npm run import -- ../attachments/clienti/cerere-de-oferta-spital.xlsx   # pipeline complet

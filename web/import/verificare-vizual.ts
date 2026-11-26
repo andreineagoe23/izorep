@@ -248,7 +248,8 @@ function randText(p: PozitieOferta, l: LinieProcesata, o: OptiuniDocument, c: Co
         + td("piesa", "Piesă", esc(eticheta(FORME_EDITOR, e.forma ?? "ml")))}
     ${td("um", "UM", esc(o.um?.(l)?.v.trim() || p.um || "—"))}
     ${td("cant", "Cantitate", esc(numarInCelula(p.cantitate)), "n")}
-    ${td("pret", "Preț unitar €", esc(p.pretUnitar === null ? "—" : p.pretUnitar.toFixed(2).replace(".", ",")), "n")}
+    ${td("pret", "Preț unitar €", `${esc(p.pretUnitar === null ? "—" : p.pretUnitar.toFixed(2).replace(".", ","))}${
+      p.procent !== undefined ? `<span class="hint ver-procent-text"> ${esc(procentText(p.procent))}</span>` : ""}`, "n")}
     <td class="ver-stare">${stare(l, o.propunere(l), cine, o.doarText)}</td>
   </tr>`;
 }
@@ -300,8 +301,14 @@ function randVerificare(p: PozitieOferta, o: OptiuniDocument, c: Coloane): strin
   const jachete = e.straturi_extra.flatMap((x, k) => (JACHETE.has(x.sistem) ? [pe[k + 1]] : []));
   const cantitate = celulaNumar({ ed: "cant", valoare: p.cantitate, eticheta: `Cantitate, ${cine}`,
     schimbat: s.cant !== undefined, ...(s.cant !== undefined ? { inainte: s.cant } : {}), date: { idx: i } });
-  const pret = celulaNumar({ ed: "pret", valoare: p.pretUnitar, eticheta: `Preț unitar, ${cine}`, gol: "fără preț",
+  const pretSingur = celulaNumar({ ed: "pret", valoare: p.pretUnitar, eticheta: `Preț unitar, ${cine}`, gol: "fără preț",
     schimbat: s.pret !== undefined, ...(s.pret !== undefined ? { inainte: s.pret } : {}), date: { idx: i } });
+  // Discount sau adaos pe rând (Etapa 4), sub preț: doar pe un preț din listă (cel pus de mână e deja final).
+  const pret = p.pretUnitar !== null && !p.manual
+    ? `<div class="ver-pret">${pretSingur}<label class="ver-procent"><span>± %</span>${celulaNumar({
+      ed: "procent", valoare: p.procent ?? null, eticheta: `Discount sau adaos pe rând, în procente, ${cine}`, gol: "0",
+      schimbat: p.procent !== undefined, date: { idx: i } })}</label></div>`
+    : pretSingur;
   return `<tr class="ver-poz" data-idx="${i}" data-stare="${p.stare}">
     <td class="ver-rand" data-eticheta="Rândul">${p.sursa.rand}</td>
     <td class="ver-desc">${text}${p.cod ? `<span class="ver-cod">${esc(p.cod)}</span>` : ""}${explicatie(l, cine)}</td>
@@ -353,6 +360,9 @@ function randVerificare(p: PozitieOferta, o: OptiuniDocument, c: Coloane): strin
  * view-ul pe coloane”), pe capitolele clientului, cu toate pozițiile (și cele
  * care nu intră încă în ofertă). Pe ecran îngust rândul devine card.
  */
+/** „−5 %”, „+10 %”: procentul pe rând, scris românește. */
+export const procentText = (p: number): string => `${p > 0 ? "+" : "−"}${String(Math.abs(p)).replace(".", ",")} %`;
+
 export function verificarePeEcran(d: DocumentOferta, o: OptiuniDocument): string {
   const vede = (p: PozitieOferta): boolean => o.vizibile === null || o.vizibile.has(p.linie);
   const toate = d.capitole.flatMap((cap) => cap.pozitii);

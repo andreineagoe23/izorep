@@ -20,7 +20,7 @@ import { cardIntrebari, excelIntrebari, intrebariClient, type DateEmail } from "
 import { cate, esc, eur } from "./tip.js";
 import { FIRME, firmaDupa, logoFirmei, tineFirma, ultimaFirma } from "../date/firme.js";
 import {
-  adaosFocIndustrial, clientPropus, cuAjustare, cuDenumiri, dataAzi, imparte, totalCuAdaos, valoareOferta,
+  adaosFocIndustrial, clientPropus, cuAjustare, cuDenumiri, cuProcente, dataAzi, imparte, totalCuAdaos, valoareOferta,
   type AntetOferta, type CerereOferta,
 } from "../oferta.js";
 
@@ -124,7 +124,7 @@ async function logoBase64(fisier: string): Promise<string | null> {
 /** Antetul propus pentru un import nou: beneficiarul din fișier, altfel din numele lui. */
 function antetImplicit(numeFisier: string, dinFisier: Partial<AntetScris> = {}): AntetScris {
   return {
-    firma: FIRME[0].id, numar: "", data: dataAzi(), localitate: "PALTINIS", discount: 0,
+    firma: FIRME[0].id, numar: "", data: dataAzi(), localitate: "PALTINIS", discount: 0, adaosFoc: false,
     client: dinFisier.client ?? (numeFisier ? clientPropus(numeFisier) : ""),
     obiectiv: dinFisier.obiectiv ?? "", persoana: dinFisier.persoana ?? "",
   };
@@ -147,6 +147,8 @@ function antetDinOferta(meta: SesiuneImport, foi: readonly FoaieBruta[]): AntetS
 
 interface CerereDeschisa {
   meta: SesiuneImport; rez: Rezultat; antet: AntetScris; ajustare: number; destinatie: Destinatie; denumiri: Map<number, string>;
+  /** Discountul sau adaosul pe rând (Etapa 4); lipsă = niciunul. */
+  procente?: ReadonlyMap<number, number>;
 }
 
 /**
@@ -160,6 +162,7 @@ function cerereDinAntet(c: CerereDeschisa): CerereOferta {
   const antet: AntetOferta = {
     serie: firma.serieOferta, numar: a.numar.trim(), data: a.data.trim(), persoana: a.persoana.trim(),
     client: a.client.trim(), obiectiv: a.obiectiv.trim(), firma: firma.denumire, localitate: a.localitate.trim(),
+    adaosFoc: a.adaosFoc !== false,
   };
   if (a.discount > 0) {
     antet.discountProcent = a.discount;
@@ -167,7 +170,7 @@ function cerereDinAntet(c: CerereDeschisa): CerereOferta {
   }
   if (c.ajustare) antet.ajustareProcent = c.ajustare;
   return {
-    linii: cuDenumiri(c.rez.linii, c.denumiri), antet,
+    linii: cuProcente(cuDenumiri(c.rez.linii, c.denumiri), c.procente ?? new Map()), antet,
     provenienta: {
       generatLa: new Date().toISOString(), destinatie: c.destinatie, model: c.meta.model,
       sesiune: c.meta.id, fisierSursa: c.meta.nume,
@@ -204,7 +207,7 @@ async function deschideCererea(id: string): Promise<CerereDeschisa | null> {
   const rez = await redeschideImport(s, await optiuniCererii(s));
   return {
     meta: s, rez, antet: s.antet ? { ...s.antet } : antetDinOferta(s, rez.foi), ajustare: s.ajustare ?? 0,
-    destinatie: s.destinatie ?? "rezidential", denumiri: new Map(s.denumiri ?? []),
+    destinatie: s.destinatie ?? "rezidential", denumiri: new Map(s.denumiri ?? []), procente: new Map(s.procente ?? []),
   };
 }
 
@@ -226,7 +229,7 @@ export async function deschideReguli(id: string): Promise<{
   const c = await deschideCererea(id);
   if (!c) return null;
   return {
-    necesar: (r) => necesarDinLinii(imparte(cuAjustare(c.rez.linii, c.ajustare)).oferta, {
+    necesar: (r) => necesarDinLinii(imparte(cuAjustare(cuProcente(c.rez.linii, c.procente ?? new Map()), c.ajustare)).oferta, {
       ...r, discountProcent: c.antet.discount > 0 ? c.antet.discount : 0,
     }),
     aplica: (r) => santierDin(c, r),
@@ -319,6 +322,8 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
   let reincercareInLucru = false;
   /** Denumirile scrise de om în tabelul ofertei. Vezi `SesiuneImport.denumiri`. */
   let denumiri = new Map<number, string>();
+  /** Discountul sau adaosul pe rând, `index → %` (Etapa 4). Vezi `LinieCuDenumire.procentRand`. */
+  let procente = new Map<number, number>();
   let pas: Pas = PAS[opt.parte];
   /**
    * Ce aduce omul la pasul 1 (Andrei, 22 octombrie 2026): Excelul clientului
@@ -495,6 +500,7 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
       necitite: [...necitite],
       preturiManuale: [...preturiManuale],
       denumiri: [...denumiri],
+      procente: [...procente],
       antet, ajustare,
       mapari: mapariFolosite(s.foi, mi.mapari),
     });
@@ -558,12 +564,13 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
     } else if (pas === 2) {
       pagina.innerHTML = paginaVerificare(sesiune);
     } else {
-      const { oferta, deValidat, netarifate } = imparte(cuAjustare(sesiune.rez.linii, ajustare));
+      const { oferta, deValidat, netarifate } = imparte(cuAjustare(cuProcente(sesiune.rez.linii, procente), ajustare));
       // „Materiale de comandat” și „Creează șantierul” au plecat de aici: șantierul pornește
       // la „Clientul a acceptat”, cu regulile firmei, iar regulile se schimbă pe fila Materiale.
       pagina.innerHTML = ecranOferta({
         gata: oferta.length, valoare: documentul(sesiune).totalGeneral,
-        adaosFoc: adaosFocIndustrial(oferta, destinatie), ajustare,
+        adaosFoc: adaosFocIndustrial(oferta, destinatie, antet.adaosFoc !== false), ajustare,
+        areFoc: destinatie === "industrial" && oferta.some((l) => l.extras.sistem === "goluri_foc"),
         deVerificat: deValidat.length, faraPret: netarifate.length,
         destinatie, antet, firme: FIRME, eroare: "", descarcata: opt.areOferta?.() ?? false,
         inFisierulClientului: /\.xlsx$/i.test(sesiune.meta.nume),
@@ -609,22 +616,23 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
 
   /** Suma de sus a pasului „Oferta”, la fiecare tastă: ce plătește clientul, ca în document. */
   function arataValoarea(s: Sesiune): void {
-    const { oferta } = imparte(cuAjustare(s.rez.linii, ajustare));
+    const { oferta } = imparte(cuAjustare(cuProcente(s.rez.linii, procente), ajustare));
     const v = pagina.querySelector("#valoare-oferta");
     const det = pagina.querySelector("#detaliu-valoare");
     if (v) v.textContent = eur(documentul(s).totalGeneral);
-    if (det) det.innerHTML = detaliuValoare(adaosFocIndustrial(oferta, destinatie), ajustare, antet.discount);
+    if (det) det.innerHTML = detaliuValoare(adaosFocIndustrial(oferta, destinatie, antet.adaosFoc !== false), ajustare, antet.discount);
   }
 
   /** Documentul ofertei din sesiune, cu antetul si ajustarea de acum: acelasi din care se scrie Excelul. */
   function documentul(s: Sesiune, pastreaza: number | null = null): ReturnType<typeof documentOferta> {
     const firma = FIRME.find((f) => f.id === antet.firma) ?? FIRME[0];
     return documentOferta({
-      linii: cuDenumiri(s.rez.linii, denumiri),
+      linii: cuProcente(cuDenumiri(s.rez.linii, denumiri), procente),
       antet: {
         serie: firma.serieOferta, numar: antet.numar, data: antet.data, persoana: antet.persoana, client: antet.client,
         obiectiv: antet.obiectiv, firma: firma.denumire, localitate: antet.localitate,
         ...(antet.discount > 0 ? { discountProcent: antet.discount } : {}), ...(ajustare ? { ajustareProcent: ajustare } : {}),
+        adaosFoc: antet.adaosFoc !== false,
       },
       provenienta: { generatLa: "", destinatie, model: s.meta.model, sesiune: s.meta.id, fisierSursa: s.meta.nume },
     }, pastreaza);
@@ -907,6 +915,7 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
     plafonCitire = "";
     preturiManuale = new Map(s.preturiManuale ?? []);
     denumiri = new Map(s.denumiri ?? []);
+    procente = new Map(s.procente ?? []);
     mi = await mapariImport(s.mapari);
     const rez = await redeschideImport(s, optiuni());
     puneCurent(id);
@@ -1032,6 +1041,7 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
       plafonCitire = citire?.stare.plafon ?? "";
       preturiManuale = new Map();
       denumiri = new Map();
+      procente = new Map();
       const rez = await proceseazaRegistru(foi, { ...optiuni(), ...(extractor ? { extrage: extractor } : {}) });
       // Lista de tevi a instalatorului, fara izolatie pe rand: izolatia se alege pe foaie.
       const tevi = rez.linii.some((l) => l.extras.sistem !== null) ? [] : foi.map(tevileFoii).filter((t) => t.tevi.length >= 3);
@@ -1122,6 +1132,8 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
     const antet: AntetOferta = {
       serie: firma.serieOferta, numar: val("numar"), data: val("data"), persoana: val("persoana"),
       client: val("client"), obiectiv: val("obiectiv"), firma: firma.denumire, localitate: val("localitate"),
+      // Fără bifă pe pagină (rezidențial, sau fără închideri la foc) adaosul n-are pe ce se aplica.
+      adaosFoc: form.querySelector('[name="adaosFoc"]') ? date.get("adaosFoc") === "da" : false,
     };
     const procent = Number(val("discount").replace(",", "."));
     if (Number.isFinite(procent) && procent > 0) {
@@ -1130,7 +1142,7 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
     }
     if (ajustare) antet.ajustareProcent = ajustare;
     return {
-      linii: cuDenumiri(s.rez.linii, denumiri), antet,
+      linii: cuProcente(cuDenumiri(s.rez.linii, denumiri), procente), antet,
       provenienta: {
         generatLa: new Date().toISOString(), destinatie, model: s.meta.model,
         sesiune: s.meta.id, fisierSursa: s.meta.nume,
@@ -1152,6 +1164,7 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
       oferta: imparte(cuAjustare(cerere.linii, cerere.antet.ajustareProcent ?? 0)).oferta,
       destinatie: cerere.provenienta.destinatie,
       ...(cerere.antet.discountProcent ? { discountProcent: cerere.antet.discountProcent } : {}),
+      adaosFoc: cerere.antet.adaosFoc !== false,
       randAntet: new Map(s.foi.flatMap((f) => (f.antet ? [[f.nume, f.antet.rand] as const] : []))),
       ultimulRand,
     });
@@ -1224,7 +1237,7 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
   function santierAcum(reguli: ReguliNecesar = REGULI_FIRMEI): RezultatSantier {
     const s = sesiune;
     if (!s) return { eroare: "Cererea nu e deschisă." };
-    return santierDin({ meta: s.meta, rez: s.rez, antet, ajustare, destinatie, denumiri }, reguli);
+    return santierDin({ meta: s.meta, rez: s.rez, antet, ajustare, destinatie, denumiri, procente }, reguli);
   }
 
   /* ------------------------------------------ oferta scrisă pe loc */
@@ -1315,6 +1328,30 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
     arataMesaj(nou === undefined ? "Poziția ia din nou prețul din listă." : "Prețul a fost scris.", () => {
       if (vechi === undefined) preturiManuale.delete(idx); else preturiManuale.set(idx, vechi);
       retarifeaza();
+    });
+    return true;
+  }
+
+  /**
+   * Discount sau adaos pe rând (Etapa 4): −5 = cu 5 % mai ieftin, 10 = cu 10 %
+   * mai scump, față de prețul din listă. Înlocuiește ajustarea pe toată oferta
+   * pentru rândul ăsta; gol sau 0 îl scoate.
+   */
+  function scrieProcentul(idx: number, valoare: number | null, peLoc = false): boolean {
+    const vechi = procente.get(idx);
+    const nou = valoare === null || valoare === 0 || !(valoare > -100 && valoare <= 500) ? undefined : valoare;
+    if (valoare !== null && valoare !== 0 && nou === undefined) {
+      if (!peLoc) arataMesaj("Procentul se scrie ca număr între −99 și 500, de exemplu −5 sau 10.");
+      return false;
+    }
+    if (nou === vechi) return false;
+    if (nou === undefined) procente.delete(idx); else procente.set(idx, nou);
+    salveazaSesiune();
+    if (peLoc) return true;
+    arataMesaj(nou === undefined ? "Rândul ia din nou prețul din listă." : "Procentul a fost pus pe rând.", () => {
+      if (vechi === undefined) procente.delete(idx); else procente.set(idx, vechi);
+      salveazaSesiune();
+      deseneaza();
     });
     return true;
   }
@@ -1738,8 +1775,11 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
         discount: Number.isFinite(disc) && disc >= 0 && disc < 100 ? disc : 0,
         // Refuzul nu e în formular: rămâne cum era.
         ...(antet.refuzat ? { refuzat: antet.refuzat } : {}),
+        // Bifa apare doar pe industrial, cu închideri la foc; fără ea, rămâne cum era.
+        ...(formAntet.querySelector('[name="adaosFoc"]') ? { adaosFoc: d.get("adaosFoc") === "da" }
+          : antet.adaosFoc !== undefined ? { adaosFoc: antet.adaosFoc } : {}),
       };
-      if ((camp as HTMLInputElement).name === "discount") arataValoarea(sesiune);
+      if (["discount", "adaosFoc"].includes((camp as HTMLInputElement).name)) arataValoarea(sesiune);
       actualizeazaCumIese(sesiune);
       salveazaSesiune();
     }
@@ -1893,6 +1933,7 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
         }
         return scrieCantitatea(idx, valoare, peLoc);
       }
+      if (el.dataset["ed"] === "procent") return scrieProcentul(idx, valoare, peLoc);
       return el.dataset["ed"] === "pret" && scriePretul(idx, valoare, peLoc);
     },
     deseneaza,

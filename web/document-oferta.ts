@@ -2,10 +2,7 @@ import type { LinieProcesata } from "../src/import/nucleu.js";
 import type { Sistem } from "../src/pricing/types.js";
 import { bani } from "../src/pricing/engine.js";
 import { listaDe, type BandaMultiplicator, type Destinatie, type ListaPreturi } from "../src/pricing/lists.js";
-import {
-  adaosFocIndustrial, codRand, cuAjustare, denumireScrisa, imparte, segmente, totalOferta, valoareLinie,
-  type AntetOferta, type CerereOferta,
-} from "./oferta.js";
+import { adaosFocIndustrial, codRand, cuAjustare, denumireScrisa, imparte, segmente, totalOferta, valoareLinie, type AntetOferta, type CerereOferta, procentRand } from "./oferta.js";
 import { motiveLinie, stareLinie, type CodMotiv, type Stare } from "./import/text.js";
 
 /**
@@ -56,6 +53,8 @@ export interface PozitieOferta {
   /** Închiderile la foc: dimensiunea golului și suprafața, ca în oferta 118.1. */
   gol: { dimensiune: string; suprafata: number } | null;
   manual: boolean;
+  /** Discountul sau adaosul pe rând (Etapa 4), dacă are; prețul unitar e deja cu el. */
+  procent?: number;
 }
 
 export interface CapitolOferta {
@@ -418,6 +417,7 @@ export function documentOferta(c: CerereOferta, pastreaza: number | null = null)
       linie: l.extras.index,
       gol: golul(l),
       manual: Boolean(pret && "manual" in pret && pret.manual),
+      ...(procentRand(l) !== undefined && !(pret && "manual" in pret && pret.manual) ? { procent: procentRand(l)! } : {}),
     });
   }
 
@@ -429,7 +429,7 @@ export function documentOferta(c: CerereOferta, pastreaza: number | null = null)
 
   const oferta = gataDin(linii);
   const totalPozitii = totalOferta(oferta);
-  const adaosFoc = adaosFocIndustrial(oferta, c.provenienta.destinatie);
+  const adaosFoc = adaosFocIndustrial(oferta, c.provenienta.destinatie, c.antet.adaosFoc !== false);
   const total = bani(totalPozitii + adaosFoc);
   const discount = bani(total * (c.antet.discountProcent ?? 0) / 100);
   const toate = capitole.flatMap((cap) => cap.pozitii);

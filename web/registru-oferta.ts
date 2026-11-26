@@ -2,7 +2,7 @@ import type { Cell, Worksheet } from "exceljs";
 import type { LinieProcesata } from "../src/import/nucleu.js";
 import { ADAOS_FOC_INDUSTRIAL } from "../src/pricing/goluri-foc.js";
 import { documentOferta, type DocumentOferta, type PozitieOferta, type TabelSpeciale } from "./document-oferta.js";
-import { cuAjustare, imparte, type CerereOferta } from "./oferta.js";
+import { cuAjustare, imparte, type CerereOferta, procentRand } from "./oferta.js";
 import { ETICHETE_BLOCAJ, intrebareaPentru } from "./validare.js";
 
 /**
@@ -229,6 +229,12 @@ function foaiaPentruNoi(ws: Worksheet, c: CerereOferta, d: DocumentOferta): void
   if (manuale.length > 0) {
     detalii.push(["Prețuri puse de mână", manuale
       .map((l) => `rândul ${l.bruta.rand}${l.bruta.foaie ? ` (${l.bruta.foaie})` : ""}: ${l.pret!.pret_unitar} €`)
+      .join("; ")]);
+  }
+  const cuProcent = oferta.filter((l) => procentRand(l) !== undefined && !(l.pret && "manual" in l.pret && l.pret.manual));
+  if (cuProcent.length > 0) {
+    detalii.push(["Discount sau adaos pe rând", cuProcent
+      .map((l) => `rândul ${l.bruta.rand}${l.bruta.foaie ? ` (${l.bruta.foaie})` : ""}: ${procentRand(l)! > 0 ? "+" : ""}${procentRand(l)} %, ${l.pret!.pret_unitar} €`)
       .join("; ")]);
   }
   ws.getCell("A3").value = "Cum a fost calculată oferta";

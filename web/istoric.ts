@@ -70,6 +70,8 @@ export interface AntetCerere {
   firma: string; numar: string; data: string; client: string; obiectiv: string;
   persoana: string; localitate: string; discount: number;
   refuzat?: string;
+  /** +20 % pe închiderile la foc pe industrial; lipsă = da (vezi `AntetScris.adaosFoc`). */
+  adaosFoc?: boolean;
 }
 
 /** O corectie facuta de om intr-o celula a fisierului. */
@@ -102,6 +104,8 @@ export interface SesiuneImport extends IntrareIstoric {
    * 2026). Înlocuiesc textul clientului în ofertă, în Excel și pe șantier.
    */
   denumiri?: [number, string][];
+  /** Discountul sau adaosul pe rând, `[index, %]` (Etapa 4). Vezi `LinieCuDenumire.procentRand`. */
+  procente?: [number, number][];
   /**
    * Datele ofertei scrise la pasul „Oferta” (numar, beneficiar, discount…) si
    * ajustarea preturilor. Pana pe 14 octombrie 2026 se pierdeau la reincarcare,

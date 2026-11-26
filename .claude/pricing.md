@@ -28,6 +28,10 @@ intră în ofertă până răspunde. Unde secțiunile de mai jos spun altfel, e 
 - **Fără UM**: „De verificat” (`um_lipsa`), afară de piesă numită sau „ML” în text.
 - **Pat de cabluri** la goluri: „De verificat” (`pat_cabluri`).
 
+Din 26 noiembrie 2026 (Etapa 4): **± % pe rând** (`procentRand`) bate ajustarea pe toată oferta, ca
+prețul pus de mână; **adaosul de 20 % la foc pe industrial** e o bifă (`AntetOferta.adaosFoc`; lipsă =
+pornită, o cerere nouă o pune oprită), până lămurește firma C2.
+
 ## Regula de tarifare
 
 1. DN → diametru exterior real (`dn-table.ts`).
