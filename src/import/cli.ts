@@ -27,7 +27,7 @@ const faraModel = args.includes("--fara-model");
 // decat crede — si plafoanele difera de zece ori intre ele.
 console.log(faraModel
   ? "\n  model: dezactivat (--fara-model), doar stratul determinist"
-  : `\n  model: ${process.env["OPENAI_MODEL"] ?? `${MODEL_IMPLICIT} (implicit)`}`);
+  : `\n  model: ${process.env["OPENAI_MODEL"]?.trim() || `${MODEL_IMPLICIT} (implicit)`}`);
 
 const raport = await importaFisier(cale, { faraModel });
 

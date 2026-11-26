@@ -1,7 +1,7 @@
 import { parseFoi } from "./parse-workbook.js";
 import { citesteMapari } from "./cache-mapari.js";
 import { stocPeDisc } from "./stoc-sabloane.js";
-import { extrageCuModel, type OptiuniModel } from "./extract-llm.js";
+import { extrageCuModel, type OptiuniModel, pragIncredere } from "./extract-llm.js";
 import { proceseazaRegistru, type LinieProcesata, type OptiuniNucleu } from "./nucleu.js";
 import type { StocSabloane } from "./memorie.js";
 
@@ -81,7 +81,7 @@ export async function importaFisier(
   } = {},
 ): Promise<RaportImport> {
   const prag = optiuni.pragIncredere
-    ?? Number(process.env["IZOREP_CONFIDENCE_THRESHOLD"] ?? 0.85);
+    ?? pragIncredere(process.env["IZOREP_CONFIDENCE_THRESHOLD"]);
 
   const foi = await parseFoi(cale);
 

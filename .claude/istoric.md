@@ -56,20 +56,23 @@ contul `test-complet@izorep.invalid`), fișierele clienților, modelul oprit. Ce
   cu oracolul în ofertă, fișierul clientului, situație. 188 de ecrane fără erori și fără derulare laterală.
   Serverul: 401 / 403 / 423 și antetele. Text periculos din fișier: neexecutat.
 
+- Apoi, cerut de Andrei: urcat pe `main` și pe Render (CI verde, același script ca local); importul cu
+  **modelul real** pe cererile-oracol și pe exemple: 34 / 34, 9 / 9, **0 „Gata” cu preț greșit**. Reparat pe
+  drum: pragul de încredere gol în `.env` devenea 0 (`pragIncredere`).
+
 ### Neverificat
 
-- Modelul real (costă), Excel / LibreOffice, pozele citite de model, Render parcurs cu mâna.
+- Excel / LibreOffice, pozele citite de model, Render parcurs cu mâna.
 
 ### Pentru cine urmează
 
-1. Push pe `main` (deci Render) pentru reparații, mai ales virgula în prețuri: pe Render orice preț scris cu
-   virgulă într-o factură intra de 100 de ori mai mare.
-2. O trecere pe Render cu mâna; fișierul clientului deschis în Excel.
+1. O trecere pe Render cu mâna; fișierul clientului deschis în Excel.
 3. Restul planului, când vin documentele firmei (Etapa 3, Conlit, N4).
 
 ### De hotărât de oameni
 
-- Un rulaj al importului cu modelul real pe cele două cereri-oracol (puțini tokeni), ca să vedem și calea cu model.
+- `cheie-de-verificare.xlsx` din `exemple-AI/` e din 15 noiembrie: de refăcut de Adrian după regulile de după demo
+  (grosimea lipsă = întrebare, rectangularul pe 2g), ca să nu mai arate diferențe voite.
 
 ## 26 noiembrie 2026 (după-amiază, noaptea) · Andrei (neagoeandrei23) · `main` (pe GitHub și pe Render)
 

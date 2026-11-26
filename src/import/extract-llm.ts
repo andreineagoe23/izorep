@@ -91,6 +91,18 @@ Nu inventa valori. Daca un camp nu apare in text, pune null.`;
  */
 export const MODEL_IMPLICIT = "gpt-4.1-2025-04-14";
 
+/**
+ * Pragul de încredere din mediu (`IZOREP_CONFIDENCE_THRESHOLD`). Gol, stricat
+ * sau în afara lui (0, 1] înseamnă implicitul: testul complet din 26 noiembrie
+ * 2026 a găsit `IZOREP_CONFIDENCE_THRESHOLD=` gol în `.env`, iar `Number("")`
+ * dădea pragul 0, deci orice rând citit de model trecea drept sigur.
+ */
+export const PRAG_IMPLICIT = 0.85;
+export function pragIncredere(v: string | undefined): number {
+  const n = Number(v);
+  return v !== undefined && v.trim() !== "" && Number.isFinite(n) && n > 0 && n <= 1 ? n : PRAG_IMPLICIT;
+}
+
 export interface OptiuniModel {
   apiKey?: string;
   model?: string;
@@ -145,7 +157,7 @@ export function clientSiModel(optiuni: OptiuniModel = {}): { client: OpenAI; mod
     // maxRetries e EXPLICIT, nu lasat pe implicitul SDK-ului: la 429 clientul
     // reincearca cu backoff in loc sa piarda lotul.
     client: new OpenAI({ apiKey, timeout: 90_000, maxRetries: 4 }),
-    model: optiuni.model ?? process.env["OPENAI_MODEL"] ?? MODEL_IMPLICIT,
+    model: optiuni.model ?? (process.env["OPENAI_MODEL"]?.trim() || MODEL_IMPLICIT),
   };
 }
 

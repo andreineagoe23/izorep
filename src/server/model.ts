@@ -13,7 +13,7 @@
  */
 import { Hono } from "hono";
 import { z } from "zod";
-import { extrageCuModel, MODEL_IMPLICIT } from "../import/extract-llm.js";
+import { extrageCuModel, MODEL_IMPLICIT, pragIncredere } from "../import/extract-llm.js";
 import { RaspunsModel, type LinieExtrasa } from "../import/schema.js";
 import { citestePoza, MODEL_POZE_IMPLICIT, type RezultatPoza } from "../santier/extrage-poza.js";
 import { CitireAviz } from "../stoc/aviz.js";
@@ -53,9 +53,10 @@ export function optiuniModelDinMediu(env: NodeJS.ProcessEnv = process.env): Opti
   };
   return {
     ...(env["OPENAI_API_KEY"] ? { cheie: env["OPENAI_API_KEY"] } : {}),
-    model: env["OPENAI_MODEL"] ?? MODEL_IMPLICIT,
-    modelPoze: env["IZOREP_MODEL_POZE"] ?? MODEL_POZE_IMPLICIT,
-    prag: Number(env["IZOREP_CONFIDENCE_THRESHOLD"] ?? 0.85),
+    // `||`, nu `??`: o variabilă scrisă goală în `.env` e „nescrisă”, nu un nume de model gol.
+    model: env["OPENAI_MODEL"]?.trim() || MODEL_IMPLICIT,
+    modelPoze: env["IZOREP_MODEL_POZE"]?.trim() || MODEL_POZE_IMPLICIT,
+    prag: pragIncredere(env["IZOREP_CONFIDENCE_THRESHOLD"]),
     lot: nr("IZOREP_LOT", 25),
     // Prima manevra cand contul OpenAI da 429: IZOREP_CONCURENTA=1.
     concurenta: nr("IZOREP_CONCURENTA", 4),

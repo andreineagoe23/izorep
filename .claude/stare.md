@@ -5,7 +5,7 @@
 
 ## 26 noiembrie 2026 (seara târziu): testul complet
 
-Cerut de Andrei: „testează tot software-ul la maxim”. **845 de teste**, nimic sărit. Ramurile vechi
+Cerut de Andrei: „testează tot software-ul la maxim”. **846 de teste**, nimic sărit. Ramurile vechi
 (`plan-simplificare`, `main-backup`, `cloud-design`, `ux-lucrare`) șterse, local și pe GitHub; singurul
 lucru care nu era pe `main` era `docs/plan-simplificare.md` (planul vechi, înlocuit de `plan-ux.md`),
 recuperabil din commit-ul `4838e1a`.
@@ -31,7 +31,15 @@ recuperabil din commit-ul `4838e1a`.
 | **Casetele `type="number"`: „2,97” tastat devenea 297** (Chrome aruncă virgula, caseta rămâne „validă”): prețuri, cursul, cantități, numărătoarea, ajustarea și discountul | toate 41 sunt text cu `inputmode="decimal"`, citite cu `numarScris` („2,97”, „1.250”, „12.5”); test-gard: nicio casetă `type="number"` în `web/` |
 | Valoarea așteptată a comenzii: „19.951,3 lei” | banii pe Comenzi cu două zecimale |
 
-**Neacoperit:** modelul real (costă din contul OpenAI al firmei; nefolosit fără acordul lui Andrei),
+**Cu modelul real** (după, cu acordul lui Andrei; `gpt-4.1-2025-04-14`, două citiri, 19 rânduri trimise):
+cererile-oracol 34 / 34 și 9 / 9, ca fără model; exemplele lui Adrian, **0 poziții „Gata” cu preț greșit**.
+Diferențele față de `cheie-de-verificare.xlsx` sunt cele hotărâte după demo (cheia e din 15 noiembrie):
+grosimea lipsă se întreabă clientul; 400×300 iese 32,35 cu formula firmei, nu 36,40 cu 4g. Pe drum:
+`IZOREP_CONFIDENCE_THRESHOLD=` gol în `.env` făcea pragul **0** (`Number("")`), local, în CLI și pe serverul
+local: orice citire a modelului trecea drept sigură. Acum `pragIncredere` ia 0,85 pentru gol sau stricat, iar
+`OPENAI_MODEL` gol ia implicitul. Pe Render variabila nu e pusă, deci acolo pragul era deja 0,85.
+
+**Neacoperit:** pozele din carnet citite de model,
 Excel / LibreOffice (nu sunt pe calculator), pozele din carnet citite de model, Render cu mâna.
 
 ## 26 noiembrie 2026 (noaptea, târziu): Etapa 7, mărunțișurile din predări
@@ -425,7 +433,7 @@ schimba din interfață.
 ## Comenzi
 
 ```bash
-npm test                                       # 845 de teste (cu IZOREP_DB pe o bază de probă)
+npm test                                       # 846 de teste (cu IZOREP_DB pe o bază de probă)
 npm run typecheck
 npm run dev                                    # UI local, /izorep/
 npm run import -- ../attachments/clienti/cerere-de-oferta-spital.xlsx   # pipeline complet

@@ -25,3 +25,10 @@ describe("numerele scrise de om", () => {
     expect(["2,97", "1.250", "1.250,5", "12.5", " 7 ", "", "abc"].map(numarScris)).toEqual([2.97, 1250, 1250.5, 12.5, 7, null, null]);
   });
 });
+
+describe("pragul de încredere al modelului, din mediu", () => {
+  it("gol, stricat sau în afara lui (0, 1]: implicitul 0,85, nu 0", async () => {
+    const { pragIncredere } = await import("../src/import/extract-llm.js");
+    expect([undefined, "", " ", "abc", "0", "-1", "2", "0.9", "0.6"].map(pragIncredere)).toEqual([0.85, 0.85, 0.85, 0.85, 0.85, 0.85, 0.85, 0.9, 0.6]);
+  });
+});
