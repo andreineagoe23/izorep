@@ -35,11 +35,11 @@ Calculatorul: ce are și ce nu (Docker, fișierele clienților, cheia de model).
 
 ---
 
-## 26 noiembrie 2026 (după-amiază, noaptea) · Andrei (neagoeandrei23) · `main` (local, neurcat)
+## 26 noiembrie 2026 (după-amiază, noaptea) · Andrei (neagoeandrei23) · `main` (pe GitHub și pe Render)
 
 Calculatorul: ca în intrarea de dedesubt. Andrei: „continuă planul cu tot ce poți face”. Fiecare
-etapă pe ramura ei, verificată, unită fast-forward pe `main` **local**; ramurile șterse. Nimic
-urcat după `707a71c` (Render e la Etapa 2).
+etapă pe ramura ei, verificată, unită fast-forward pe `main`; ramurile șterse. La sfârșit, cerut de
+Andrei: tot urcat pe `main`, deci **Render are Etapele 1, 2, 4, 5, 6 și 7**.
 
 ### Făcut
 
@@ -48,7 +48,7 @@ urcat după `707a71c` (Render e la Etapa 2).
 | `1320c44` | Etapa 5: „Descarcă în fișierul clientului” (`web/oferta-client.ts`, JSZip, direct în XML-ul foii) |
 | `191f937` | Etapa 6: întrebările pentru client pe fila Cerere (email și Excel), în „Urmează” și pe Acasă |
 | `deeb7af` | Etapa 4 fără Conlit: ± % pe rând; +20 % foc pe industrial ca bifă, oprită pe cererile noi |
-| (ultimul) | Etapa 7: obiectivul la descărcare, „Lăsate afară” în propoziție, titlul fără cifră, UM din piesă |
+| `b5103d3` | Etapa 7: obiectivul la descărcare, „Lăsate afară” în propoziție, titlul fără cifră, UM din piesă |
 
 ### Verificat
 
@@ -56,18 +56,21 @@ urcat după `707a71c` (Render e la Etapa 2).
 - Etapa 5: pe toate cele 13 fișiere de client + 2 exemple, arhiva neatinsă octet cu octet, celulele
   clientului identice, deschise cu ExcelJS și openpyxl; din browser TRANSAVIA → 94.575,06 €.
 - În browser (1440 / 390 / 1920 px, ambele teme): fiecare etapă, cu cifre (detaliile în `stare.md`).
+- După push: CI verde pe `main`, iar pagina de pe Render servește același script ca build-ul local.
 
 ### Neverificat
 
 - **Fișierul clientului în Excel sau LibreOffice**: n-avem niciunul pe calculator. De deschis o dată
   înainte de primul trimis la un client.
 - Nimic cu modelul real.
+- Pe Render, nimic parcurs cu mâna după publicare (doar că pagina e cea nouă și răspunde).
 
 ### Pentru cine urmează
 
-1. Andrei: push pe `main` (deci Render) pentru Etapele 4–7, după o privire.
+1. Andrei sau Adrian: pe Render, o dată, fluxul nou: Cerere nouă pe ISORAD, întrebările, „± %”,
+   „Descarcă în fișierul clientului”, iar fișierul descărcat deschis în Excel.
 2. Adrian: C1–C4 și fișierele din Etapa 0; lista Conlit (Etapa 4) și situația + recepția (Etapa 3).
-3. Etapa 3, când vin documentele firmei.
+3. Etapa 3, când vin documentele firmei; apoi N4 și lista Conlit, când vin fișierele lor.
 
 ### De hotărât de oameni
 

@@ -93,18 +93,21 @@ Fără ele, o parte din Etapa 1 schimbă prețuri în direcția greșită.
 - **C4. PVC pe ofertă industrială.** Nu există listă industrială de PVC: luăm
   prețul rezidențial fără semn, sau ne trimit lista?
 
-## Unde am ajuns (26 noiembrie 2026)
+## Unde am ajuns (26 noiembrie 2026, seara)
+
+Tot ce e făcut e pe `main` și pe Render (`b5103d3` și docs după el). Ramurile etapelor s-au șters
+după unire; detaliile fiecărei etape sunt în `.claude/stare.md`, 26 noiembrie.
 
 | Etapa | Starea |
 |---|---|
-| 0 | partea noastră făcută: baza locală (`izorep_e1`), `stare.md` tăiat. **De la firmă, nimic încă**: fișierul cu dimensiunile în coloana 2, lista Conlit, o situație și o recepție |
-| 1 | făcută pe `etapa-1-import`, văzută în browser pe 26 noiembrie (exemplul 2, TRANSAVIA: 94.575,06 cu „E bine”), plus „Treceri prin planșee”. Lipsește **N4** (coloana de dimensiune), care așteaptă fișierul. D06 rămâne „Gata”: materialul țevii nu intră în prețul golului |
-| 2 | făcută pe `etapa-2-firme` (pornită din `etapa-1-import`), văzută în browser. Detaliile în `.claude/stare.md`, 26 noiembrie |
-| 5 | făcută pe `etapa-5-fisier-client`, văzută în browser (TRANSAVIA: 94.575,06 în fișierul clientului). De deschis o dată în Excel |
-| 6 | făcută pe `etapa-6-intrebari`, văzută în browser |
-| 4 | ± % pe poziție și bifa de foc făcute pe `etapa-4-procent-rand`; **lista Conlit așteaptă prețurile furnizorului** |
-| 7 | făcută partea de cod (obiectivul la descărcare, „Lăsate afară” în propoziție, titlul fără cifră, UM din piesă), văzută în browser. Rămân: necesarul (date de la firmă), modelul real, ramura `plan-simplificare` |
-| 3 | nefăcută; așteaptă situația și recepția firmei |
+| 0 | partea noastră făcută. **De la firmă, nimic încă**: fișierul cu dimensiunile în coloana 2, lista Conlit, o situație și o recepție |
+| 1 | făcută, văzută în browser (exemplul 2; TRANSAVIA 94.575,06 cu „E bine”), plus „Treceri prin planșee”. Lipsește **N4**, care așteaptă fișierul. D06 rămâne „Gata”: materialul țevii nu intră în prețul golului |
+| 2 | făcută: lucrările pe RADOIA · ISORAD |
+| 3 | **nefăcută**; așteaptă situația și recepția firmei |
+| 4 | ± % pe poziție și bifa de foc (oprită pe cererile noi) făcute; **lista Conlit așteaptă prețurile furnizorului** |
+| 5 | făcută: „Descarcă în fișierul clientului”. **De deschis o dată în Excel** înainte de primul trimis |
+| 6 | făcută: întrebările pentru client (email, Excel, „Urmează”, Acasă) |
+| 7 | făcută partea de cod. Rămân: necesarul (date de la firmă), modelul real, ramura `plan-simplificare` (de hotărât) |
 
 ## Etapele
 

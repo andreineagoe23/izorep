@@ -5,6 +5,9 @@
 
 ## 26 noiembrie 2026 (noaptea, târziu): Etapa 7, mărunțișurile din predări
 
+> Etapele 1, 2, 4 (fără Conlit), 5, 6 și 7 sunt pe `main` și pe Render din seara de 26 noiembrie.
+> Ramurile pomenite mai jos (`etapa-…`) s-au șters după unire.
+
 Pe `etapa-7-maruntisuri`. **837 de teste**, nimic sărit.
 
 | Ce | Acum |
