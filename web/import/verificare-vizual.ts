@@ -2,7 +2,7 @@ import { LIPSESTE_MATERIALUL, PUS_DE_OM, TABLA_DE_ALES, faraMotiv, type LiniePro
 import type { LinieExtrasa } from "../../src/import/schema.js";
 import type { StratTarifat } from "../../src/pricing/types.js";
 import { esc } from "../ecrane/tip.js";
-import { celulaNumar, celulaText, numarInCelula } from "../celula.js";
+import { celulaNumar, celulaText, numarInCelula, numarScris } from "../celula.js";
 import type { DocumentOferta, PozitieOferta } from "../document-oferta.js";
 import type { OptiuniDocument } from "./oferta-vizual.js";
 import { FORME_EDITOR, GROSIMI, MATERIAL, MATERIALE, MOTIV, STARE, ajutorDiametru, motiveLinie, stareLinie, type Sistem } from "./text.js";
@@ -55,10 +55,7 @@ function protectieDin(e: LinieExtrasa): string {
   return j ? `${j.sistem}|${j.grosime_mm ?? ""}` : "";
 }
 
-const numarSau = (v: string): number | null => {
-  const s = v.trim().replace(",", ".");
-  return s === "" || !Number.isFinite(Number(s)) ? null : Number(s);
-};
+const numarSau = (v: string): number | null => numarScris(v);
 
 /**
  * Corectura dintr-un câmp al rândului, ca `patch` peste extragere. Protecția

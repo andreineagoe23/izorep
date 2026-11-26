@@ -7,6 +7,7 @@ import {
   FORME_EDITOR, GROSIMI, MATERIAL, MATERIALE, MOTIV, STARE,
   ajutorDiametru, inteles, motiveLinie, stareLinie, type CodMotiv, type Sistem, type Stare,
 } from "./text.js";
+import { numarScris } from "../celula.js";
 
 /**
  * Bucatile ecranului de import, ca functii pure: date in, HTML out.
@@ -272,7 +273,7 @@ export function randStrat(i: number, s: { sistem: Sistem; grosime_mm: number | n
   return `<div class="imp-strat">
     <select name="strat_sistem" aria-label="Materialul stratului">${MATERIALE_STRAT.map((m) =>
       `<option value="${m}"${m === s.sistem ? " selected" : ""}>${MATERIAL[m]}</option>`).join("")}</select>
-    <input name="strat_grosime" type="number" inputmode="decimal" step="any" min="0" list="ed-g-${i}-${s.sistem}"
+    <input name="strat_grosime" type="text" inputmode="decimal" step="any" min="0" list="ed-g-${i}-${s.sistem}"
       value="${numarCamp(s.grosime_mm)}" placeholder="mm" aria-label="Grosimea stratului, în mm" />
     <button type="button" class="imp-scoate" data-act="scoate-strat" title="Scoate stratul" aria-label="Scoate stratul">×</button>
   </div>`;
@@ -312,7 +313,7 @@ export function editorPozitie(l: LinieProcesata, o: OptiuniEditor = {}): string 
   const liste = MATERIALE_STRAT.filter((m) => GROSIMI[m]).map((m) =>
     `<datalist id="ed-g-${i}-${m}">${GROSIMI[m]!.map((g) => `<option value="${g}"></option>`).join("")}</datalist>`).join("");
   const cantitate = `${c?.cantitate ? `<label>${esc(c.cantitate.eticheta.slice(0, 30))}
-      <input name="cantitate" data-cel="${c.cantitate.cel}" type="number" inputmode="decimal" step="any" min="0" value="${c.cantitate.v}" /></label>` : ""}
+      <input name="cantitate" data-cel="${c.cantitate.cel}" type="text" inputmode="decimal" step="any" min="0" value="${c.cantitate.v}" /></label>` : ""}
     ${c?.um ? `<label>${esc(c.um.eticheta.slice(0, 30))}
       <input name="um" data-cel="${c.um.cel}" value="${esc(String(c.um.v))}" list="ed-um-${i}" autocomplete="off" />
       <datalist id="ed-um-${i}"><option value="ml"></option><option value="buc"></option><option value="mp"></option></datalist></label>` : ""}`;
@@ -322,7 +323,7 @@ export function editorPozitie(l: LinieProcesata, o: OptiuniEditor = {}): string 
   // livrarea tevii cu izolatia inclusa). Gol = pretul din lista.
   const manual = l.pret && "manual" in l.pret && l.pret.manual ? String(l.pret.pret_unitar) : "";
   const pretManual = `<label class="imp-editor-pret">Preț unitar pus de mână (€)
-      <input name="pret_manual" type="number" inputmode="decimal" step="any" min="0" value="${manual}" placeholder="din listă" />
+      <input name="pret_manual" type="text" inputmode="decimal" step="any" min="0" value="${manual}" placeholder="din listă" />
       <span class="imp-ajutor">Gol = prețul din listă. Pentru ce nu acoperă listele.</span></label>`;
 
   return `<form class="imp-editor" data-idx="${i}">
@@ -340,12 +341,12 @@ export function editorPozitie(l: LinieProcesata, o: OptiuniEditor = {}): string 
               <option value="exterior"${e.diametru_tip === "exterior" || e.diametru_tip === null ? " selected" : ""}>Ø</option>
               <option value="interior"${e.diametru_tip === "interior" ? " selected" : ""}>Di</option>
             </select>
-            <input name="diametru" type="number" inputmode="decimal" step="any" min="0" value="${val(e.diametru_valoare)}" aria-labelledby="ed-d-${i}" />
+            <input name="diametru" type="text" inputmode="decimal" step="any" min="0" value="${val(e.diametru_valoare)}" aria-labelledby="ed-d-${i}" />
           </div>
           ${ajutor ? `<p class="imp-ajutor">${esc(ajutor)}</p>` : ""}
         </div>
         <label>Grosime (mm)
-          <input name="grosime" type="number" inputmode="decimal" step="any" min="0" list="ed-g-${i}-${e.sistem ?? "vata_minerala"}" value="${val(e.grosime_mm)}" /></label>
+          <input name="grosime" type="text" inputmode="decimal" step="any" min="0" list="ed-g-${i}-${e.sistem ?? "vata_minerala"}" value="${val(e.grosime_mm)}" /></label>
         <label>Formă
           <select name="forma">${forme}</select></label>
         <fieldset class="imp-straturi">
@@ -355,8 +356,8 @@ export function editorPozitie(l: LinieProcesata, o: OptiuniEditor = {}): string 
         </fieldset>
       </div>
       <div class="imp-editor-gol"${gol ? "" : " hidden"}>
-        <label>Lățime gol (mm)<input name="gol_latime" type="number" inputmode="numeric" min="0" value="${val(e.gol_latime_mm)}" /></label>
-        <label>Înălțime gol (mm)<input name="gol_inaltime" type="number" inputmode="numeric" min="0" value="${val(e.gol_inaltime_mm)}" /></label>
+        <label>Lățime gol (mm)<input name="gol_latime" type="text" inputmode="numeric" min="0" value="${val(e.gol_latime_mm)}" /></label>
+        <label>Înălțime gol (mm)<input name="gol_inaltime" type="text" inputmode="numeric" min="0" value="${val(e.gol_inaltime_mm)}" /></label>
       </div>
       ${cantitate}
       ${pretManual}
@@ -376,10 +377,7 @@ export function editorPozitie(l: LinieProcesata, o: OptiuniEditor = {}): string 
  * deduce, la inox pozitia ramane fara pret).
  */
 export function patchDinFormular(date: FormData): Partial<LinieExtrasa> {
-  const nr = (v: FormDataEntryValue | null | undefined): number | null => {
-    const s = String(v ?? "").trim().replace(",", ".");
-    return s === "" || Number.isNaN(Number(s)) ? null : Number(s);
-  };
+  const nr = (v: FormDataEntryValue | null | undefined): number | null => numarScris(String(v ?? ""));
   const sistem = (String(date.get("sistem") ?? "") || null) as LinieExtrasa["sistem"];
   if (sistem === "goluri_foc") {
     return { sistem, gol_latime_mm: nr(date.get("gol_latime")), gol_inaltime_mm: nr(date.get("gol_inaltime")) };
@@ -497,8 +495,8 @@ export function ecranOferta(o: OptiuniOferta): string {
       <p class="hint" id="detaliu-valoare">${detaliuValoare(o.adaosFoc, o.ajustare, o.antet.discount)}</p>
       <div class="imp-campuri imp-oferta-procente">
         ${camp("ajustare", "Ajustare prețuri (%)", String(o.ajustare),
-          'type="number" inputmode="decimal" min="-50" max="100" step="any" aria-describedby="ajutor-ajustare"')}
-        ${camp("discount", "Discount (%)", String(o.antet.discount), 'type="number" inputmode="decimal" min="0" max="100" step="any"')}
+          'type="text" inputmode="decimal" min="-50" max="100" step="any" aria-describedby="ajutor-ajustare"')}
+        ${camp("discount", "Discount (%)", String(o.antet.discount), 'type="text" inputmode="decimal" min="0" max="100" step="any"')}
         <p class="imp-ajutor" id="ajutor-ajustare">Ajustarea mută toate prețurile: 10 = cu 10 % mai mari, −5 = mai mici.
           Pe un singur rând se pune la verificare, în căsuța „± %” de sub preț.</p>
       </div>

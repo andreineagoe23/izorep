@@ -18,6 +18,7 @@ import { PRAG_PIERDERE, type ConsumMaterial, type ConsumSantier } from "../src/s
 import type { MaterialNecesar } from "../src/stoc/necesar.js";
 import { formularConsumMana, randPierdere } from "./consum-vizual.js";
 import { ATELIER, CENTRAL, inAtelier } from "../src/stoc/locuri.js";
+import { numarScris } from "./celula.js";
 
 const zi = (iso: string): string => new Date(iso).toLocaleDateString("ro-RO");
 const cant = (n: number, a: Articol): string => (n === 0 ? "—" : cantitate(n, a.um));
@@ -227,7 +228,7 @@ export function restulPeSantier(
   return { stoc, locuri, atentie };
 }
 
-const numar = (v: string | undefined): number => Number(String(v ?? "").trim().replace(",", "."));
+const numar = (v: string | undefined): number => (numarScris(String(v ?? "").trim()) ?? NaN);
 
 /** Ce a scris omul în formular → inventarul de închidere (o destinație pe material). */
 export function randuriInchidere(stoc: readonly RestPeSantier[], scris: FormularInchidere["scris"]): RestNumarat[] {
@@ -284,7 +285,7 @@ export function formularInchidere(f: FormularInchidere): string {
     return `<tr>
       <td>${esc(numeArticol(r.articol))}${r.scriptic < 0 ? `<br>${stare("în registru cu minus", "atentie")}` : ""}</td>
       <td class="n">${cantitate(r.scriptic, r.articol.um)}</td>
-      <td class="n"><input name="numarat" data-cheie="${esc(r.cheie)}" type="number" inputmode="decimal" min="0" step="any"
+      <td class="n"><input name="numarat" data-cheie="${esc(r.cheie)}" type="text" inputmode="decimal" min="0" step="any"
         value="${esc(numarat)}" aria-label="Numărat, ${esc(numeArticol(r.articol))}" style="width:100%;max-width:9rem" /></td>
       <td><select name="unde" data-cheie="${esc(r.cheie)}" style="width:100%;min-width:0" aria-label="Unde pleacă, ${esc(numeArticol(r.articol))}">${
         optiuni(r, s.unde ?? IMPLICIT)}</select></td>

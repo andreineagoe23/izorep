@@ -804,10 +804,8 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
       const cel = Number(camp.dataset["cel"]);
       const c = rand.celule[cel];
       if (!c) continue;
-      const scris = camp.value.trim().replace(",", ".");
-      const nou = camp.name === "cantitate"
-        ? (scris === "" || Number.isNaN(Number(scris)) ? c.v : Number(scris))
-        : camp.value;
+      const scris = numarScris(camp.value);
+      const nou = camp.name === "cantitate" ? (scris === null ? c.v : scris) : camp.value;
       if (nou === c.v) continue;
       if (camp.name === "text") descriereNoua = true;
       scrieCelula(rand, cel, nou);
@@ -818,8 +816,8 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
     reconstruieste(rand);
     // Pretul pus de mana nu e o corectura a extragerii: se tine separat.
     const pmVechi = preturiManuale.get(idx);
-    const pmScris = (form.querySelector<HTMLInputElement>('[name="pret_manual"]')?.value ?? "").trim().replace(",", ".");
-    const pmNou = pmScris === "" || !(Number(pmScris) > 0) ? undefined : Number(pmScris);
+    const pmScris = numarScris(form.querySelector<HTMLInputElement>('[name="pret_manual"]')?.value ?? "");
+    const pmNou = pmScris === null || !(pmScris > 0) ? undefined : pmScris;
     const pretSchimbat = pmNou !== pmVechi;
     if (pmNou === undefined) preturiManuale.delete(idx); else preturiManuale.set(idx, pmNou);
     const inapoi = (): void => {
@@ -876,7 +874,7 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
       text = vechi && text.includes(vechi) ? text.replace(vechi, nou) : `${text} | ${nou}`;
     }
     const um = form.querySelector<HTMLInputElement>('[name="um"]')?.value.trim() || l.bruta.um;
-    const cantitate = Number(form.querySelector<HTMLInputElement>('[name="cantitate"]')?.value.replace(",", "."));
+    const cantitate = numarScris(form.querySelector<HTMLInputElement>('[name="cantitate"]')?.value ?? "") ?? NaN;
     const extras = citesteText(idx, text, um, (l.bruta as { sectiune?: string }).sectiune,
       Number.isFinite(cantitate) && cantitate > 0 ? cantitate : l.bruta.cantitate);
 
@@ -1135,7 +1133,7 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
       // Fără bifă pe pagină (rezidențial, sau fără închideri la foc) adaosul n-are pe ce se aplica.
       adaosFoc: form.querySelector('[name="adaosFoc"]') ? date.get("adaosFoc") === "da" : false,
     };
-    const procent = Number(val("discount").replace(",", "."));
+    const procent = (numarScris(val("discount")) ?? NaN);
     if (Number.isFinite(procent) && procent > 0) {
       antet.discountProcent = procent;
       antet.discountConditie = "PENTRU PLATA FACTURII FISCALE IN TERMEN DE 5-7 ZILE CALENDARISTICE DE LA DATA EMITERII";
@@ -1755,7 +1753,7 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
     const camp = e.target as HTMLElement;
     if ((camp as HTMLInputElement).name === "ajustare" && sesiune && pas === 3) {
       // Doar suma de sus: o redesenare a pasului ar sterge datele ofertei deja scrise.
-      const v = Number((camp as HTMLInputElement).value.replace(",", "."));
+      const v = (numarScris((camp as HTMLInputElement).value) ?? NaN);
       ajustare = Number.isFinite(v) && v > -100 ? v : 0;
       arataValoarea(sesiune);
       actualizeazaCumIese(sesiune);
@@ -1768,7 +1766,7 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
       // șantierul” sunt aceleasi date pe care le-a scris omul.
       const d = new FormData(formAntet);
       const v = (n: string): string => String(d.get(n) ?? "");
-      const disc = Number(v("discount").replace(",", "."));
+      const disc = (numarScris(v("discount")) ?? NaN);
       antet = {
         firma: v("firma") || antet.firma, numar: v("numar").trim(), data: v("data").trim(), client: v("client"),
         obiectiv: v("obiectiv"), persoana: v("persoana"), localitate: v("localitate"),

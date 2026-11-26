@@ -20,7 +20,7 @@ import { descarca } from "../descarca.js";
 import { numeSituatie, registruSituatie } from "../situatie.js";
 import { preiaSituatie } from "../predare.js";
 import { citesteInceputa, refaPePlan, tineSituatia, uitaSituatia } from "../situatie-local.js";
-import { pastreazaCursorul } from "../celula.js";
+import { pastreazaCursorul, numarScris } from "../celula.js";
 import type { Potrivire } from "../../src/lucrari/potrivire.js";
 import { cifreInchidere, materialSantier, valideazaInchidere } from "../../src/lucrari/inchidere.js";
 import { cardInchis, cardMaterial, formularInchidere, randuriInchidere, restulPeSantier } from "../inchidere-vizual.js";
@@ -268,7 +268,7 @@ export function montezaSantier(root: HTMLElement, opt: OptiuniSantier): ControlS
       const randuri = g.randuri.map((x) => `<tr>
         <td>${x.poz.nr}. ${esc(x.poz.denumire)}</td>
         <td class="n">${cant(x.anterior, x.poz.um)} din ${cant(x.poz.cantitate, x.poz.um)}</td>
-        <td class="n"><input name="cant-${x.poz.nr}" type="number" inputmode="decimal" min="0" step="any"
+        <td class="n"><input name="cant-${x.poz.nr}" type="text" inputmode="decimal" min="0" step="any"
           value="${x.curent || ""}" aria-label="Executat acum, poziția ${x.poz.nr}" style="width:100%;max-width:9rem" />${
           x.pesteOferta ? `<br>${stare("peste ofertă", "atentie")}` : ""}${
           dinCarnet.has(x.poz.nr) && x.curent > 0 ? `<br>${stare("din poze")}` : ""}</td>
@@ -322,9 +322,9 @@ export function montezaSantier(root: HTMLElement, opt: OptiuniSantier): ControlS
     for (const [k, v] of date) {
       const m = /^cant-(\d+)$/.exec(k);
       if (!m) continue;
-      const val = String(v).trim().replace(",", ".");
+      const val = String(v).trim();
       if (val === "") delete cantitati[Number(m[1])];
-      else cantitati[Number(m[1])] = Number(val);
+      else cantitati[Number(m[1])] = numarScris(val) ?? NaN;
     }
     const d = String(date.get("data") ?? "");
     const notaSit = String(date.get("nota") ?? "").trim();
@@ -370,7 +370,7 @@ export function montezaSantier(root: HTMLElement, opt: OptiuniSantier): ControlS
       return true;
     }
     if (t.dataset["act"] !== "pierdere") return false;
-    const v = Number(t.value.replace(",", "."));
+    const v = (numarScris(t.value) ?? NaN);
     const cat = t.dataset["cat"] as keyof Pierderi;
     if (t.value.trim() === "" || !Number.isFinite(v) || v < 0 || v > 100 || r.pierderi[cat] === v / 100) return false;
     reguli.r = { ...r, pierderi: { ...r.pierderi, [cat]: v / 100 } };
@@ -573,7 +573,7 @@ export function montezaSantier(root: HTMLElement, opt: OptiuniSantier): ControlS
   /** Consumul notat de mână (S7 b), din stocul șantierului, pe mărcile de acolo. */
   function consumDeMana(p: PlanSantier, f: HTMLFormElement): void {
     const date = new FormData(f);
-    const cantitate = Number(String(date.get("cantitate") ?? "").replace(",", "."));
+    const cantitate = numarScris(String(date.get("cantitate") ?? "")) ?? NaN;
     const dep = citesteDepozit();
     const m = consumPlan(p, dep).materiale.find((x) => x.cheie === date.get("cheie"));
     if (!m || !(cantitate > 0)) return;

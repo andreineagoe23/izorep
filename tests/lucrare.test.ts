@@ -195,3 +195,15 @@ describe("Acasă, „De făcut” (planul UX, Faza 5)", () => {
     expect(zileDe(inainte(7), azi)).toBe(7);
   });
 });
+
+describe("oferta salvată cu poziții rămase afară (testul complet, 26 noiembrie 2026)", () => {
+  const of = { numar: "ISO501", data: "26.11.2026", cand: "2026-11-26T08:00:00.000Z" };
+  it("pasul e răspunsul clientului, cu rândurile rămase spuse; pe Acasă, la „Așteaptă răspunsul clientului”", () => {
+    const u = urmeaza({ deVerificat: 6, intrebari: 5, areCerere: true, oferta: of });
+    expect(u.text).toBe("Oferta ISO501 e făcută din 26.11.2026. 6 poziții nu sunt în ea. Ce a răspuns clientul?");
+    expect([u.primar?.eticheta, u.alb?.eticheta]).toEqual(["Clientul a acceptat", "A refuzat"]);
+    expect(deFacutLucrare({ deVerificat: 6, intrebari: 5, areCerere: true, oferta: of }, "2026-11-26T10:00:00.000Z")?.grup).toBe("raspuns");
+    expect(urmeaza({ deVerificat: 0, areCerere: true, oferta: of }).text).toBe("Oferta ISO501 e făcută din 26.11.2026. Ce a răspuns clientul?");
+  });
+});
+

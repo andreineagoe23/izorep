@@ -433,7 +433,8 @@ td.desc { color: var(--slab); }
 
 /* Controale intr-un tabel: mai mici decat cele dintr-un formular. */
 .tabelwrap input, .tabelwrap select { width: auto; min-height: 32px; padding: 4px 8px; margin: 0; font-size: 13.5px; }
-.tabelwrap input[type="number"] { width: 7ch; text-align: right; }
+/* Fostele `type="number"` (26 noiembrie 2026: casete de text, ca virgula să ajungă la cititor); celulele editabile au regulile lor. */
+.tabelwrap input:is([inputmode="decimal"], [inputmode="numeric"]):not(.cel-ed) { width: 7ch; text-align: right; }
 .tabelwrap select { min-width: 13ch; }
 
 
@@ -934,7 +935,7 @@ a.legatura { display: inline-flex; align-items: center; }
 .imp-formular .alerta { margin: var(--imp-gap) 0 0; }
 .imp-formular-butoane { display: flex; flex-wrap: wrap; gap: 8px; margin-top: var(--imp-gap); }
 /* Cantitatile scrise in tabel (comanda, receptia): incape 12.345,67 fara sa taie. */
-.tabelwrap td.n input[type="number"] { width: 11ch; }
+.tabelwrap td.n input:is([inputmode="decimal"], [inputmode="numeric"]):not(.cel-ed) { width: 11ch; }
 .imp-formular-butoane .primar { flex: 1 1 auto; min-height: 52px; font-size: 16px; }
 @container imp (min-width: 620px) { .imp-formular-butoane .primar { flex: 0 0 auto; } }
 
@@ -1483,7 +1484,7 @@ h2.mat-grup { margin: 8px 0 0; font-size: 17px; }
 
 /* Un camp de text intr-un tabel ia latimea celulei, nu 20 de caractere fixe:
    pe telefon, „Responsabil” din „Locurile” iesea din card. */
-.tabelwrap td input:not([type="number"]):not([type="checkbox"]):not([type="radio"]) { width: 100%; min-width: 0; }
+.tabelwrap td input:not(:is([inputmode="decimal"], [inputmode="numeric"]):not(.cel-ed)):not([type="checkbox"]):not([type="radio"]) { width: 100%; min-width: 0; }
 .tabelwrap td select { max-width: 100%; }
 /* Un card pliat in alt card (recepția, returul) nu se lipeste de butoanele de deasupra. */
 .imp-card details.imp-card, .imp-card .imp-formular-butoane + details { margin-top: 12px; }

@@ -214,6 +214,10 @@ export function urmeaza(s: StareLucrare): Urmeaza {
       alb: { eticheta: "A acceptat până la urmă", act: "accepta-tarziu" },
     };
   }
+  // Oferta e salvată: pasul e răspunsul clientului, chiar dacă au rămas rânduri afară din ea
+  // (testul complet, 26 noiembrie 2026: rândurile „întreabă clientul” țineau lucrarea pe „Verifică”,
+  // iar „Clientul a acceptat” nu mai apărea niciodată). Rândurile rămase se spun în propoziție.
+  if (s.oferta) return raspunsOferta(s);
   if (s.areCerere && s.deVerificat > 0) {
     const q = s.intrebari ?? 0;
     // Tot ce a rămas e de întrebat clientul: pasul e al lui, iar oferta poate pleca fără rândurile acelea.
@@ -236,10 +240,19 @@ export function urmeaza(s: StareLucrare): Urmeaza {
       primar: { eticheta: "Mergi la ofertă", act: "fila", fila: "oferta" },
     };
   }
-  const numar = s.oferta.numar ? `Oferta ${s.oferta.numar}` : "Oferta";
-  const din = s.oferta.data ? ` din ${s.oferta.data}` : "";
+  return raspunsOferta(s);
+}
+
+/** Oferta e făcută: ce a răspuns clientul. Rândurile rămase în afara ei se spun, fără să oprească pasul. */
+function raspunsOferta(s: StareLucrare): Urmeaza {
+  const o = s.oferta!;
+  const numar = o.numar ? `Oferta ${o.numar}` : "Oferta";
+  const din = o.data ? ` din ${o.data}` : "";
+  const afara = s.areCerere && s.deVerificat > 0
+    ? ` ${s.deVerificat === 1 ? "O poziție nu e în ea" : `${s.deVerificat}${s.deVerificat % 100 >= 20 ? " de" : ""} poziții nu sunt în ea`}.`
+    : "";
   return {
-    text: `${numar} e făcută${din}. Ce a răspuns clientul?`, fila: "oferta",
+    text: `${numar} e făcută${din}.${afara} Ce a răspuns clientul?`, fila: "oferta",
     primar: { eticheta: "Clientul a acceptat", act: "accepta" },
     alb: { eticheta: "A refuzat", act: "refuza" },
   };
@@ -344,10 +357,10 @@ export function deFacutLucrare(s: StareLucrare, azi: string): LucruDeFacut | nul
     };
   }
   if (s.refuzat) return null;
-  if (s.areCerere && s.deVerificat > 0 && (s.intrebari ?? 0) >= s.deVerificat) {
+  if (!s.oferta && s.areCerere && s.deVerificat > 0 && (s.intrebari ?? 0) >= s.deVerificat) {
     return { fel: "intrebari", grup: "raspuns", text: u.text, buton: "Vezi întrebările", fila: "cerere" };
   }
-  if (s.areCerere && s.deVerificat > 0) {
+  if (!s.oferta && s.areCerere && s.deVerificat > 0) {
     return { fel: "verifica", grup: "birou", text: u.text, buton: `Verifică ${s.deVerificat === 1 ? "o poziție" : `${s.deVerificat}${s.deVerificat % 100 >= 20 ? " de" : ""} poziții`}`, fila: "cerere" };
   }
   if (!s.oferta) return { fel: "oferta", grup: "birou", text: u.text, buton: "Termină oferta", fila: "oferta" };

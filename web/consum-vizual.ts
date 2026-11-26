@@ -37,7 +37,7 @@ export function formularConsumMana(c: ConsumSantier): string {
         poziție din ofertă. Iese din stocul șantierului.</p>
       <form class="imp-campuri" id="consum-mana">
         <label>Material<select name="cheie">${optiuni}</select></label>
-        <label>Cantitate (ml la tub, m² altfel)<input name="cantitate" type="number" inputmode="decimal" step="any" min="0" required /></label>
+        <label>Cantitate (ml la tub, m² altfel)<input name="cantitate" type="text" inputmode="decimal" step="any" min="0" required /></label>
         <label>Notă (cine, unde)<input name="nota" autocomplete="off" /></label>
         <div class="imp-formular-butoane"><button type="submit" class="secundar">Scrie consumul</button></div>
       </form>

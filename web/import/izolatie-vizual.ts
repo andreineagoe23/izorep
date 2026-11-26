@@ -8,6 +8,7 @@
  */
 import { esc } from "../ecrane/tip.js";
 import { TABELE, tabelDin4140Cald, type IzolatieAleasa, type TabelGrosimi } from "../../src/import/izolatie-foaie.js";
+import { numarScris } from "../celula.js";
 
 export interface FoaieCuTevi {
   nume: string;
@@ -38,7 +39,7 @@ export const ALEGERE_INITIALA: AlegereFoaie = {
 export function alegereDin(d: FormData, i: number): AlegereFoaie {
   const v = (n: string): string => String(d.get(`${n}-${i}`) ?? "");
   const n = (s: string, implicit: number): number => {
-    const x = Number(s.replace(",", "."));
+    const x = (numarScris(s) ?? NaN);
     return Number.isFinite(x) && x > 0 ? x : implicit;
   };
   const iz = v("iz");
@@ -101,8 +102,8 @@ function cardFoaie(f: FoaieCuTevi, i: number, a: AlegereFoaie): string {
         ${optiune("rece", TABELE.rece.nume, a.grosime)}
         ${optiune("fixa", "Aceeași grosime pe toată foaia", a.grosime)}
       </select></label>
-      <label data-camp="t-${i}"${ascuns(a, "t")}>Temperatura de lucru, °C<input name="t-${i}" type="number" inputmode="decimal" min="0" step="any" value="${a.temperatura}" /></label>
-      <label data-camp="mm-${i}"${ascuns(a, "mm")}>Grosimea, mm<input name="mm-${i}" type="number" inputmode="decimal" min="0" step="any" value="${a.fixa}" /></label>
+      <label data-camp="t-${i}"${ascuns(a, "t")}>Temperatura de lucru, °C<input name="t-${i}" type="text" inputmode="decimal" min="0" step="any" value="${a.temperatura}" /></label>
+      <label data-camp="mm-${i}"${ascuns(a, "mm")}>Grosimea, mm<input name="mm-${i}" type="text" inputmode="decimal" min="0" step="any" value="${a.fixa}" /></label>
       <label data-camp="ja-${i}"${ascuns(a, "ja")}>Protecție<select name="ja-${i}">
         ${optiune("aluminiu", "Tablă de aluminiu", a.jacheta)}
         ${optiune("inox", "Tablă de inox", a.jacheta)}

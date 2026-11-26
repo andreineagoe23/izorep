@@ -32,6 +32,7 @@ import { ATELIER, drumul, inAtelier, intreFirme } from "../../src/stoc/locuri.js
 import {
   LOCURI_PORNIRE, MOTIVE_INVENTAR, MOTIV_PORNIRE, estePornire, rezumatInventar, type LinieNumarata,
 } from "../../src/stoc/inventar.js";
+import { numarScris } from "../celula.js";
 
 /** Forma aleasa in formular; cu ø ramane tub, fara alegere ramane cea implicita. */
 const formaAleasa = (v: string, rand: number | null): Categorie | undefined =>
@@ -163,7 +164,7 @@ export const ecran: Ecran = {
         const randuri = aici.map((x) => `<tr>
           <td>${esc(numeArticol(x.articol))}</td>
           <td class="n">${x.negativ ? `${stare("sub zero", "atentie")} ` : ""}${cantitate(x.cantitate, x.articol.um)}</td>
-          ${muta ? `<td class="n">${x.cantitate > 0 ? `<span class="cel-cu-um"><input name="q-${esc(x.articol.cheie)}" type="number" inputmode="decimal" step="any" min="0"
+          ${muta ? `<td class="n">${x.cantitate > 0 ? `<span class="cel-cu-um"><input name="q-${esc(x.articol.cheie)}" type="text" inputmode="decimal" step="any" min="0"
             max="${x.cantitate}" aria-label="Cât muți: ${esc(numeArticol(x.articol))}" /><span class="hint">${unitate(x.articol.um)}</span></span>` : ""}</td>` : ""}
         </tr>`);
         continut = tabel(["Material", "Cât e", ...(muta ? ["Cât muți"] : [])], randuri, ["", "n", ...(muta ? ["n"] : [])]);
@@ -229,7 +230,7 @@ export const ecran: Ecran = {
       const noi: Miscare[] = [];
       for (const inp of f.querySelectorAll<HTMLInputElement>('input[name^="q-"]')) {
         if (inp.value.trim() === "") continue;
-        const q = Number(inp.value.replace(",", "."));
+        const q = (numarScris(inp.value) ?? NaN);
         const x = sold.find((y) => y.depozit === loc && y.articol.cheie === inp.name.slice(2));
         if (!x) continue;
         if (!(q > 0) || q > x.cantitate + 1e-9) {
@@ -268,7 +269,7 @@ export const ecran: Ecran = {
           <label>Material<select name="articol">${articole.map((a) =>
             `<option value="${esc(a.cheie)}">${esc(numeArticol(a))}</option>`).join("")}</select></label>
           <label>Ambalaj<select name="unitate">${UNITATI_AMBALAJ.map((u) => `<option>${u}</option>`).join("")}</select></label>
-          <label>Cât conține un ambalaj (ml la tub, m² altfel)<input name="continut" type="number" inputmode="decimal" step="any" min="0" required /></label>
+          <label>Cât conține un ambalaj (ml la tub, m² altfel)<input name="continut" type="text" inputmode="decimal" step="any" min="0" required /></label>
           <div class="imp-formular-butoane"><button type="submit" class="secundar">Salvează ambalajul</button></div>
         </form>
       </section>`;
@@ -288,7 +289,7 @@ export const ecran: Ecran = {
         <td>${esc(numeArticol(x.articol))}</td>
         <td class="n">${x.negativ ? `${stare("sold negativ", "atentie")} ` : ""}${cantitate(x.cantitate, x.articol.um)}</td>
         <td class="n"><input name="numarat" data-cheie="${esc(x.articol.cheie)}" data-arata="${x.cantitate}" data-um="${x.articol.um}"
-          type="number" inputmode="decimal" step="any" min="0" aria-label="Ce ai numărat: ${esc(numeArticol(x.articol))}" /></td>
+          type="text" inputmode="decimal" step="any" min="0" aria-label="Ce ai numărat: ${esc(numeArticol(x.articol))}" /></td>
         <td class="n" data-dif>—</td>
       </tr>`);
       const nume = LOCURI.find((l) => l.id === invLoc)?.nume ?? "";
@@ -306,7 +307,7 @@ export const ecran: Ecran = {
           ${aici.length || altele.length ? `<div class="imp-campuri">
             ${altele.length ? `<label>Alt material găsit la numărat (opțional)<select name="alt"><option value="">— niciunul —</option>${altele.map((a) =>
               `<option value="${esc(a.cheie)}">${esc(numeArticol(a))}</option>`).join("")}</select></label>
-            <label>Cât ai numărat din el<input name="altCant" type="number" inputmode="decimal" step="any" min="0" /></label>` : ""}
+            <label>Cât ai numărat din el<input name="altCant" type="text" inputmode="decimal" step="any" min="0" /></label>` : ""}
             <label>Motivul diferențelor<select name="motiv"><option value="">— alege —</option>${MOTIVE_INVENTAR.map((m) =>
               `<option>${esc(m)}</option>`).join("")}<option value="__alt">alt motiv…</option></select></label>
             <label data-camp="motiv-alt" hidden>Scrie motivul<input name="motivAlt" autocomplete="off" /></label>
@@ -361,7 +362,7 @@ export const ecran: Ecran = {
             <label>Material<select name="articol">${[...tabla, ...restul].map((x) =>
               `<option value="${esc(x.cheie)}">${esc(numeArticol(x))}</option>`).join("")}
               <option value="__tabla"${tabla.length ? "" : " selected"}>Tablă aluminiu 0,8 mm (m²)</option></select></label>
-            <label>Cantitate (m² la tablă, ml la tub)<input name="cantitate" type="number" inputmode="decimal" step="any" min="0" required /></label>
+            <label>Cantitate (m² la tablă, ml la tub)<input name="cantitate" type="text" inputmode="decimal" step="any" min="0" required /></label>
             <label>Din depozitul<select name="din">${LOCURI.filter((l) => l.id !== ATELIER && deschis()(l.id)).map((l) =>
               `<option value="${esc(l.id)}"${l.id === CENTRAL ? " selected" : ""}>${esc(l.nume)}</option>`).join("")}</select></label>
             ${eroareAtelier ? `<p class="alerta" role="alert">${esc(eroareAtelier)}</p>` : ""}
@@ -447,21 +448,21 @@ export const ecran: Ecran = {
             <select name="sistem">${MATERIALE.filter((m) => m !== "goluri_foc").map((m) =>
               `<option value="${m}">${esc(MATERIAL[m])}</option>`).join("")}</select></label>
           <label data-camp="alt">Grosime (mm)
-            <input name="grosime" type="number" inputmode="decimal" step="any" min="0" /></label>
+            <input name="grosime" type="text" inputmode="decimal" step="any" min="0" /></label>
           <label data-camp="alt">Diametrul tubului, ø mm (gol pentru plăci sau tablă, în m²)
-            <input name="rand" type="number" inputmode="numeric" step="1" min="1" /></label>
+            <input name="rand" type="text" inputmode="numeric" step="1" min="1" /></label>
           <label data-camp="alt">Formă
             <select name="forma"><option value="">după diametru (tub; fără ø: saltea de vată, placă de elastomer, tablă)</option>
                 <option value="saltea">saltea de vată, m²</option><option value="placa">placă, m²</option></select></label>
           <label data-camp="pret">Marcă (opțional: Armaflex, K-Flex, Rockwool …)
             <input name="marca" autocomplete="off" /></label>
           <label>Cantitate
-            <input name="cantitate" type="number" inputmode="decimal" step="any" min="0" required /></label>
+            <input name="cantitate" type="text" inputmode="decimal" step="any" min="0" required /></label>
           ${alegeDepozit("din", "Din depozitul")}
           ${alegeDepozit("spre", "În depozitul")}
           <label data-camp="pret">Preț de achiziție pe unitate, în euro (<span data-camp="pret-intrare">de pe factură; gol = fără preț</span><span
             data-camp="pret-pornire">gol = ultimul preț cumpărat, din evidență</span>)
-            <input name="pret" type="number" inputmode="decimal" step="any" min="0" /></label>
+            <input name="pret" type="text" inputmode="decimal" step="any" min="0" /></label>
           <label>Notă (furnizor, factură, cine a luat materialul)
             <input name="nota" autocomplete="off" /></label>
         </div>
@@ -538,7 +539,7 @@ export const ecran: Ecran = {
       const tip = val("tip") as TipFormular;
       let articol = articoleCunoscute(st).find((a) => a.cheie === val("articol"));
       if (val("articol") === "__alt" || !articol) {
-        const g = val("grosime") === "" ? null : Number(val("grosime").replace(",", "."));
+        const g = val("grosime") === "" ? null : (numarScris(val("grosime")) ?? NaN);
         const r = val("rand") === "" ? null : Number(val("rand"));
         const forma = formaAleasa(val("forma"), r);
         articol = articolDin({ sistem: val("sistem"), grosime_mm: g, rand: r, ...(forma ? { forma } : {}) });
@@ -548,8 +549,8 @@ export const ecran: Ecran = {
       tipAles = tip;
       if (tip === "pornire") {
         const problema = treceStocDePornire({
-          depozit: val("spre"), articol, cantitate: Number(val("cantitate").replace(",", ".")),
-          ...(val("pret") !== "" ? { pret: Number(val("pret").replace(",", ".")) } : {}),
+          depozit: val("spre"), articol, cantitate: (numarScris(val("cantitate")) ?? NaN),
+          ...(val("pret") !== "" ? { pret: (numarScris(val("pret")) ?? NaN) } : {}),
           ...(val("nota") ? { nota: val("nota") } : {}),
         });
         eroare = problema ?? "";
@@ -558,12 +559,12 @@ export const ecran: Ecran = {
         return;
       }
       const noua: Omit<Miscare, "id" | "data"> = {
-        tip, articol, cantitate: Number(val("cantitate").replace(",", ".")),
+        tip, articol, cantitate: (numarScris(val("cantitate")) ?? NaN),
         ...(CERE[tip].din && val("din") ? { din: val("din") } : {}),
         ...(CERE[tip].spre && val("spre") ? { spre: val("spre") } : {}),
         ...(val("nota") ? { nota: val("nota") } : {}),
         ...(tip === "intrare" && val("pret") !== ""
-          ? { pret: { valoare: Number(val("pret").replace(",", ".")) } }
+          ? { pret: { valoare: (numarScris(val("pret")) ?? NaN) } }
           : {}),
       };
       const problema = valideazaMiscare(noua);
@@ -644,7 +645,7 @@ export const ecran: Ecran = {
       if (t.name !== "numarat") return;
       const cell = t.closest("tr")?.querySelector<HTMLElement>("[data-dif]");
       if (!cell) return;
-      const v = Number(t.value.replace(",", "."));
+      const v = (numarScris(t.value) ?? NaN);
       if (t.value.trim() === "" || !Number.isFinite(v)) { cell.textContent = "—"; return; }
       const dif = Math.round((v - Number(t.dataset["arata"])) * 100) / 100;
       cell.textContent = dif === 0 ? "la fel" : `${dif > 0 ? "+" : "−"}${cantitate(Math.abs(dif), t.dataset["um"] as Articol["um"])}`;
@@ -657,7 +658,7 @@ export const ecran: Ecran = {
       if (f.id === "miscare") inregistreaza(f);
       const date = new FormData(f);
       const val = (n: string): string => ((date.get(n) as string | null) ?? "").trim();
-      const numar = (n: string): number | null => (val(n) === "" ? null : Number(val(n).replace(",", ".")));
+      const numar = (n: string): number | null => (val(n) === "" ? null : (numarScris(val(n)) ?? NaN));
       if (f.dataset["form"] === "atelier") {
         const cant = numar("cantitate");
         const pentru = val("pentru");
@@ -678,7 +679,7 @@ export const ecran: Ecran = {
         const numarat: LinieNumarata[] = [];
         for (const inp of f.querySelectorAll<HTMLInputElement>('input[name="numarat"]')) {
           const a = sold.find((x) => x.depozit === invLoc && x.articol.cheie === inp.dataset["cheie"])?.articol;
-          if (a && inp.value.trim() !== "") numarat.push({ articol: a, cantitate: Number(inp.value.replace(",", ".")) });
+          if (a && inp.value.trim() !== "") numarat.push({ articol: a, cantitate: (numarScris(inp.value) ?? NaN) });
         }
         const alt = articoleCunoscute(st).find((a) => a.cheie === val("alt"));
         if (alt && numar("altCant") !== null) numarat.push({ articol: alt, cantitate: numar("altCant")! });

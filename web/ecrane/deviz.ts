@@ -3,6 +3,7 @@ import { PozitieNetarifata, type Forma, type SistemMatrice, type Strat } from ".
 import { lista, type Destinatie } from "../../src/pricing/lists.js";
 import { esc, eur, nota, nr, stare, tabel, type Ecran } from "./tip.js";
 import { MATERIAL, MOTIV } from "../import/text.js";
+import { numarScris } from "../celula.js";
 
 const SISTEME: [SistemMatrice, string][] = [
   ["elastomer", "elastomer (Armaflex)"],
@@ -36,7 +37,7 @@ export const ecran: Ecran = {
           <h2>Poziție</h2>
           <label>Diametru
             <div class="rand">
-              <input id="diam" type="number" value="80" min="1" step="1" />
+              <input id="diam" type="text" inputmode="decimal" value="80" min="1" step="1" />
               <select id="tipDiam">
                 <option value="DN">DN (țeavă oțel)</option>
                 <option value="exterior">exterior (plastic, SPIRO)</option>
@@ -53,7 +54,7 @@ export const ecran: Ecran = {
               <option value="filtru">filtru Y</option><option value="pompa">pompă</option>
             </select>
           </label>
-          <label>Cantitate <input id="cant" type="number" value="345" min="0" step="1" /></label>
+          <label>Cantitate <input id="cant" type="text" inputmode="decimal" value="345" min="0" step="1" /></label>
           <label>Tip ofertă
             <select id="dest">
               <option value="rezidential">Rezidențială</option>
@@ -114,7 +115,7 @@ export const ecran: Ecran = {
       return [...$("#straturi").children].map((el) => {
         const sistem = el.querySelector<HTMLSelectElement>(".s")!.value as SistemMatrice;
         const g = el.querySelector<HTMLSelectElement>(".g")!.value;
-        return g === "" ? { sistem } : { sistem, grosime_mm: Number(g) };
+        return g === "" ? { sistem } : { sistem, grosime_mm: numarScris(g) ?? NaN };
       });
     }
 
@@ -123,12 +124,12 @@ export const ecran: Ecran = {
       try {
         const r = tarifeaza({
           diametru: {
-            valoare: Number($<HTMLInputElement>("#diam").value),
+            valoare: numarScris($<HTMLInputElement>("#diam").value) ?? NaN,
             tip: $<HTMLSelectElement>("#tipDiam").value as "DN" | "exterior",
           },
           straturi: citeste(),
           forma,
-          cantitate: Number($<HTMLInputElement>("#cant").value) || 0,
+          cantitate: numarScris($<HTMLInputElement>("#cant").value) ?? 0,
           destinatie: $<HTMLSelectElement>("#dest").value as Destinatie,
         });
         const deVerificat = r.noteDeVerificat ?? [];

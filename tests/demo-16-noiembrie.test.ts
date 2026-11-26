@@ -176,3 +176,17 @@ describe("mărunte din răspunsuri", () => {
     expect([l.bruta.cantitate, stare(l), l.pret!.total]).toEqual([0, "gata", 0]);
   });
 });
+
+describe("tubulatura rectangulară în metri: necesarul (testul complet, 26 noiembrie 2026)", () => {
+  it("500×400, vată 40, 30 ml: se comandă 30 × 1,96 m², plus pierderea la saltele, nu ca la o țeavă de ø0", async () => {
+    const { necesarDinLinii } = await import("../src/stoc/necesar.js");
+    const { imparte } = await import("../web/oferta.js");
+    const { rez } = await importa([[1, "Izolare tubulatura rectangulara 500x400 cu vata minerala 40 mm", "ml", 30]]);
+    const l = r2(rez);
+    expect([stare(l), l.pret?.pret_unitar, (l.pret as { suprafata_mp?: number }).suprafata_mp]).toEqual(["gata", 35.87, 1.96]);
+    const n = necesarDinLinii(imparte(rez.linii).oferta, {} as never) as unknown as { materiale?: { sistem: string; m2: number }[] };
+    const vata = (n.materiale ?? (n as unknown as { sistem: string; m2: number }[])).find((m) => m.sistem === "vata_minerala")!;
+    expect(vata.m2).toBe(64.68);
+  });
+});
+

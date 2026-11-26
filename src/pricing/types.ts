@@ -109,9 +109,10 @@ export interface RezultatTarifare {
    */
   manual?: true;
   /**
-   * Suprafata unei bucati, in m², cand pretul vine din suprafata unui
-   * echipament, nu de pe metru de teava. Necesarul de materiale o foloseste in
-   * locul diametrului, pe care un echipament nu-l are.
+   * Suprafata pe unitatea cantitatii, in m², cand pretul vine din suprafata,
+   * nu de pe metru de teava: o bucata de echipament, un metru de tubulatura
+   * rectangulara (2 × (A + B + 2g) / 1000). Necesarul de materiale o foloseste
+   * in locul diametrului, pe care nici unul nu-l are.
    */
   suprafata_mp?: number;
   /**

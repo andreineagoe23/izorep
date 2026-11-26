@@ -798,9 +798,11 @@ function tarifeazaIzolatie(
       const peMp = tarifeazaPeMp({ straturi, cantitate: 1, destinatie });
       const pe = peMp.straturi.map((x) => ({ ...x, multiplicator: rect.mp }));
       const unitar = bani(pe.reduce((sum, x) => sum + bani(x.pret_unitar * rect.mp), 0));
+      // `suprafata_mp`: necesarul comandă din ea (testul complet, 26 noiembrie 2026). Fără ea vedea un
+      // strat fără diametru și socotea ca la o țeavă de ø0: 500×400, vată 40, 30 ml → 8,25 m² în loc de 64,68.
       const r = cuNote({
         ...peMp, straturi: pe, pret_unitar: unitar, multiplicator: rect.mp, cantitate, total: bani(unitar * cantitate),
-        note: (peMp.note ?? []).slice(1),
+        suprafata_mp: rect.mp, note: (peMp.note ?? []).slice(1),
       });
       marcheaza(r, `tubulatura rectangulara ${rect.a} × ${rect.b} in metri: 2 × (${rect.a} + ${rect.b} + 2 × ${g}) / 1000 = `
         + `${String(rect.mp).replace(".", ",")} m²/ml (regula firmei), × pretul pe m²`, "rectangular_pe_ml");

@@ -138,11 +138,11 @@ export const ecran: Ecran = {
           <form class="imp-campuri" data-form="manual" data-id="${esc(n.id)}">
             <label>Material<select name="sistem">${MATERIALE.filter((m) => m !== "goluri_foc").map((m) =>
               `<option value="${m}">${esc(MATERIAL[m])}</option>`).join("")}</select></label>
-            <label>Grosime (mm)<input name="grosime" type="number" inputmode="decimal" step="any" min="0" /></label>
-            <label>Diametrul tubului, ø mm (gol pentru plăci sau tablă, în m²)<input name="rand" type="number" inputmode="numeric" step="1" min="1" /></label>
+            <label>Grosime (mm)<input name="grosime" type="text" inputmode="decimal" step="any" min="0" /></label>
+            <label>Diametrul tubului, ø mm (gol pentru plăci sau tablă, în m²)<input name="rand" type="text" inputmode="numeric" step="1" min="1" /></label>
             <label>Formă<select name="forma"><option value="">după diametru (tub; fără ø: saltea de vată, placă de elastomer, tablă)</option>
               <option value="saltea">saltea de vată, m²</option><option value="placa">placă, m²</option></select></label>
-            <label>Cantitate (ml la tub, m² altfel)<input name="cantitate" type="number" inputmode="decimal" step="any" min="0" required /></label>
+            <label>Cantitate (ml la tub, m² altfel)<input name="cantitate" type="text" inputmode="decimal" step="any" min="0" required /></label>
             <label>Pentru ce<input name="motiv" autocomplete="off" placeholder="de ex. goluri la foc, poziția 12" required /></label>
             <div class="imp-formular-butoane"><button type="submit" class="secundar">Adaugă</button></div>
           </form>
@@ -263,7 +263,7 @@ export const ecran: Ecran = {
       if (f.dataset["form"] !== "manual") return;
       const date = new FormData(f);
       const val = (n: string): string => ((date.get(n) as string | null) ?? "").trim();
-      const numar = (n: string): number | null => (val(n) === "" ? null : Number(val(n).replace(",", ".")));
+      const numar = (n: string): number | null => (val(n) === "" ? null : (numarScris(val(n)) ?? NaN));
       const cant = numar("cantitate");
       if (cant === null || !(cant > 0)) return;
       const forma = formaAleasa(val("forma"), numar("rand"));

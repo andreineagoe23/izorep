@@ -42,6 +42,7 @@ import { CitireAviz, receptieDinCitire, type ReceptieCitita } from "../../src/st
 import { pretPropus, preturiArticol } from "../../src/stoc/preturi-furnizori.js";
 import { denumireComanda, kgPeMp } from "../../src/stoc/produse.js";
 import { articolDin, type Articol, type Miscare } from "../../src/stoc/registru.js";
+import { numarScris } from "../celula.js";
 
 const STARE: Record<StareComanda, [string, "ok" | "atentie" | "neutru"]> = {
   ciorna: ["ciornă", "neutru"],
@@ -52,12 +53,15 @@ const STARE: Record<StareComanda, [string, "ok" | "atentie" | "neutru"]> = {
 };
 
 const azi = (): string => new Date().toISOString().slice(0, 10);
+/** Numărul scris românește („2,97”, „1.250”): casetele sunt text, fiindcă cele de numere aruncau virgula. */
 const nr = (v: FormDataEntryValue | null): number | null => {
-  const t = String(v ?? "").trim().replace(",", ".");
-  return t === "" ? null : Number(t);
+  const t = String(v ?? "").trim();
+  return t === "" ? null : (numarScris(t) ?? NaN);
 };
-const lei = (n: number): string => `${cifra(n)} lei`;
-const bani = (p: PretPeUnitate): string => (p.moneda === "EUR" ? `${cifra(p.valoare)} €` : lei(p.valoare));
+/** Banii cu două zecimale, mereu („19.951,30 lei”, nu „19.951,3”): `cifra` e pentru cantități. */
+const suma = (n: number): string => n.toLocaleString("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const lei = (n: number): string => `${suma(n)} lei`;
+const bani = (p: PretPeUnitate): string => (p.moneda === "EUR" ? `${suma(p.valoare)} €` : lei(p.valoare));
 
 /** Pe ce obiectiv e comanda: numele șantierului din ofertă, sau stocul general. */
 function obiectiv(c: Comanda): string {
@@ -170,7 +174,7 @@ export const ecran: Ecran = {
     /** „1.234,50 € + 5.678 lei, fără TVA”, cu liniile fără preț numărate. */
     function valoare(c: Comanda): string {
       const v = valoareAsteptata(c);
-      const parti = [v.EUR > 0 ? `${cifra(v.EUR)} €` : "", v.RON > 0 ? lei(v.RON) : ""].filter(Boolean);
+      const parti = [v.EUR > 0 ? `${suma(v.EUR)} €` : "", v.RON > 0 ? lei(v.RON) : ""].filter(Boolean);
       if (parti.length === 0) return v.faraPret > 0 ? "fără prețuri încă" : "";
       return `${parti.join(" + ")} fără TVA${v.faraPret > 0 ? ` · ${v.faraPret} ${v.faraPret === 1 ? "linie" : "linii"} fără preț` : ""}`;
     }
@@ -233,9 +237,9 @@ export const ecran: Ecran = {
       if (s === "ciorna") {
         const randuri = c.linii.map((l) => `<tr>
           <td>${esc(denumireComanda(l.articol))}<br><span class="hint">${esc(numeArticol(l.articol))}</span></td>
-          <td class="n"><input name="q-${esc(l.id)}" type="number" inputmode="decimal" step="any" min="0" value="${l.cantitate}" aria-label="Cantitate, ${unitate(l.articol.um)}" />
+          <td class="n"><input name="q-${esc(l.id)}" type="text" inputmode="decimal" step="any" min="0" value="${l.cantitate}" aria-label="Cantitate, ${unitate(l.articol.um)}" />
             ${unitate(l.articol.um)}${kg(l)}</td>
-          <td class="n"><input name="pr-${esc(l.id)}" type="number" inputmode="decimal" step="any" min="0" value="${l.pret?.valoare ?? ""}" aria-label="Preț fără TVA, pe ${umDocument(l.articol)}" />
+          <td class="n"><input name="pr-${esc(l.id)}" type="text" inputmode="decimal" step="any" min="0" value="${l.pret?.valoare ?? ""}" aria-label="Preț fără TVA, pe ${umDocument(l.articol)}" />
             <select name="mo-${esc(l.id)}" aria-label="Moneda prețului"><option value="RON"${l.pret?.moneda !== "EUR" ? " selected" : ""}>lei</option><option value="EUR"${l.pret?.moneda === "EUR" ? " selected" : ""}>€</option></select>
             <br><span class="hint">pe ${umDocument(l.articol)}${l.pret?.sursa ? ` · ${esc(l.pret.sursa)}` : l.pret ? " · scris de mână" : ` · ${esc(altFurnizor(l.articol, c.furnizor))}`}</span></td>
           <td class="fix">${c.linii.length > 1
@@ -349,9 +353,9 @@ export const ecran: Ecran = {
         const pretCitit = dinCitire?.pret?.valoare;
         return `<tr>
           <td>${esc(denumireComanda(l.articol))}</td>
-          <td class="n"><input name="r-${esc(l.id)}" type="number" inputmode="decimal" step="any" min="0" value="${primitAcum}" aria-label="Primit, ${d.um}" />
+          <td class="n"><input name="r-${esc(l.id)}" type="text" inputmode="decimal" step="any" min="0" value="${primitAcum}" aria-label="Primit, ${d.um}" />
             <span class="hint">${d.um}</span></td>
-          <td class="n"><input name="p-${esc(l.id)}" type="number" inputmode="decimal" step="any" min="0" value="${pretCitit ?? ""}"
+          <td class="n"><input name="p-${esc(l.id)}" type="text" inputmode="decimal" step="any" min="0" value="${pretCitit ?? ""}"
             placeholder="${l.pret ? esc(`așteptat ${cifra(l.pret.valoare)}`) : ""}" aria-label="Preț unitar, pe ${d.um}" />
             <span class="hint">pe ${d.um}${l.pret ? ` · așteptat ${esc(bani(l.pret))}` : ""}</span></td>
         </tr>`;
@@ -373,8 +377,8 @@ export const ecran: Ecran = {
             <div class="imp-campuri">
               <label>Seria (opțional)<input name="serie" autocomplete="off" value="${esc(doc?.serie ?? "")}" /></label>
               <label>Moneda prețurilor<select name="moneda"><option value="RON"${sel("RON", r?.moneda ?? "RON")}>lei</option><option value="EUR"${sel("EUR", r?.moneda)}>euro</option></select></label>
-              <label>Cursul de pe factură (lei pentru 1 €)<input name="curs" type="number" inputmode="decimal" step="any" min="0" value="${r?.curs ?? ""}" /></label>
-              <label>Transport pe document (opțional, în moneda de mai sus)<input name="transport" type="number" inputmode="decimal" step="any" min="0" value="${r?.transport ?? ""}" /></label>
+              <label>Cursul de pe factură (lei pentru 1 €)<input name="curs" type="text" inputmode="decimal" step="any" min="0" value="${r?.curs ?? ""}" /></label>
+              <label>Transport pe document (opțional, în moneda de mai sus)<input name="transport" type="text" inputmode="decimal" step="any" min="0" value="${r?.transport ?? ""}" /></label>
               <label>Unde a ajuns marfa<select name="spre">${ALEGERI.map((d) =>
                 `<option value="${esc(d.id)}"${d.id === c.spre ? " selected" : ""}>${esc(d.nume)}</option>`).join("")}</select></label>
             </div>
@@ -400,7 +404,7 @@ export const ecran: Ecran = {
         const d = peDocument(l.articol, m.cantitate);
         const pret = r?.linii[l.id]?.pret?.valoare;
         return `<tr><td>${esc(denumireComanda(l.articol))}</td><td class="n">${cifra(d.valoare)} ${d.um}</td>
-          <td class="n"><input name="f-${esc(l.id)}" type="number" inputmode="decimal" step="any" min="0" required value="${pret ?? ""}"
+          <td class="n"><input name="f-${esc(l.id)}" type="text" inputmode="decimal" step="any" min="0" required value="${pret ?? ""}"
             placeholder="${l.pret ? esc(`așteptat ${cifra(l.pret.valoare)}`) : ""}" aria-label="Preț unitar pe ${d.um}" />
             <span class="hint">pe ${d.um}${l.pret ? ` · așteptat ${esc(bani(l.pret))}` : ""}</span></td></tr>`;
       });
@@ -414,8 +418,8 @@ export const ecran: Ecran = {
             <label>Numărul facturii<input name="numar" autocomplete="off" required value="${esc(doc?.numar ?? "")}" /></label>
             <label>Data facturii<input name="data" type="date" value="${esc(doc?.data ?? azi())}" required /></label>
             <label>Moneda prețurilor<select name="moneda"><option value="RON">lei</option><option value="EUR"${r?.moneda === "EUR" ? " selected" : ""}>euro</option></select></label>
-            <label>Cursul de pe factură (lei pentru 1 €)<input name="curs" type="number" inputmode="decimal" step="any" min="0" value="${r?.curs ?? ""}" /></label>
-            <label>Transport pe factură (opțional)<input name="transport" type="number" inputmode="decimal" step="any" min="0" value="${r?.transport ?? ""}" /></label>
+            <label>Cursul de pe factură (lei pentru 1 €)<input name="curs" type="text" inputmode="decimal" step="any" min="0" value="${r?.curs ?? ""}" /></label>
+            <label>Transport pe factură (opțional)<input name="transport" type="text" inputmode="decimal" step="any" min="0" value="${r?.transport ?? ""}" /></label>
           </div>
           ${tabel(["Material", "Pe aviz", "Preț unitar fără TVA"], linii, ["", "n", "n"], true)}
           <p class="hint">Cantitățile rămân cele de pe aviz. În jurnal, intrarea de pe aviz apare anulată și înlocuită de cea de pe factură, cu preț.</p>
@@ -436,7 +440,7 @@ export const ecran: Ecran = {
             const poate = peDocument(l.articol, (primit.get(l.id) ?? 0) - (returnat.get(l.id) ?? 0));
             return `<option value="${esc(l.id)}">${esc(denumireComanda(l.articol))} · venit ${cifra(poate.valoare)} ${poate.um}</option>`;
           }).join("")}</select></label>
-          <label>Cât (kg la tablă, altfel ml sau m²)<input name="cantitate" type="number" inputmode="decimal" step="any" min="0" required /></label>
+          <label>Cât (kg la tablă, altfel ml sau m²)<input name="cantitate" type="text" inputmode="decimal" step="any" min="0" required /></label>
           <label>Din ce depozit pleacă<select name="din">${ALEGERI.map((d) =>
             `<option value="${esc(d.id)}"${d.id === c.spre ? " selected" : ""}>${esc(d.nume)}</option>`).join("")}</select></label>
           <label>De ce<input name="motiv" autocomplete="off" required placeholder="defect, alt diametru, în plus" /></label>
@@ -461,7 +465,7 @@ export const ecran: Ecran = {
           <label>Furnizor<select name="furnizor">${FURNIZORI.map(([f]) => `<option>${esc(f)}</option>`).join("")}</select></label>
           <label>Unde vine marfa<select name="spre">${ALEGERI.map((d) => `<option value="${esc(d.id)}">${esc(d.nume)}</option>`).join("")}</select></label>
           <label>Material<select name="articol">${lista.map((a) => `<option value="${esc(a.cheie)}">${esc(numeArticol(a))}</option>`).join("")}</select></label>
-          <label>Cantitate (ml la tub, m² altfel)<input name="cantitate" type="number" inputmode="decimal" step="any" min="0" required /></label>
+          <label>Cantitate (ml la tub, m² altfel)<input name="cantitate" type="text" inputmode="decimal" step="any" min="0" required /></label>
           <label>De ce, peste necesar (pe un șantier: lipsă, pierdere, lucrare în plus)<input name="motiv" autocomplete="off" /></label>
           ${err}
           <div class="imp-formular-butoane"><button type="submit" class="secundar">Fă ciorna</button></div>
