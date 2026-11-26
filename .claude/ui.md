@@ -201,6 +201,13 @@ Tema închisă e scrisă de două ori în CSS, cu aceleași valori: o dată sub
 `@media` cu un selector de atribut într-o singură regulă — dacă modifici una,
 modific-o și pe cealaltă.
 
+## Întrebările pentru client (26 noiembrie 2026, Etapa 6)
+
+Pe fila Cerere, deasupra filelor de stare, când sunt rânduri de întrebat (`cardIntrebari` în
+`web/import/intrebari.ts`, `.intrebari-client`): propoziția, cele mai dese întrebări în gri și
+„Scrie întrebările” (alb); deschis, textul de email într-un `textarea` doar de citit, „Copiază
+textul” și „Descarcă Excel”. Nu apare pe o cerere cu șantier.
+
 ## Oferta în fișierul clientului (26 noiembrie 2026, Etapa 5)
 
 Pe fila Ofertă, sub „Descarcă oferta”: „Descarcă în fișierul clientului” (`data-act="descarca-client"`,

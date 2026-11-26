@@ -108,6 +108,11 @@ export const FILE_LUCRARE: { id: FilaLucrare; eticheta: string }[] = [
 export interface StareLucrare {
   /** Pozițiile de verificat și cele fără preț, din cerere. */
   deVerificat: number;
+  /**
+   * Câte dintre ele sunt de întrebat clientul (Etapa 6): când sunt toate,
+   * lucrarea așteaptă răspunsul lui. Lipsă la cererile salvate înainte.
+   */
+  intrebari?: number | undefined;
   areCerere: boolean;
   /** `cand`: ISO, când s-a salvat oferta (de acolo „aștepți de N zile”). */
   oferta?: { numar: string; data: string; cand?: string | undefined } | undefined;
@@ -166,6 +171,7 @@ const materialeText = (n: number): string => (n === 1 ? "Un material" : `${n}${n
 const ciorneText = (n: number): string => (n === 1 ? "Un material e pe o comandă netrimisă." : `${materialeText(n)} sunt pe comenzi netrimise.`);
 
 const inceputaText = (nr: number): string => `Situația nr. ${nr} e începută și nesalvată.`;
+const intrebariText = (n: number): string => (n === 1 ? "o întrebare" : `${n}${n % 100 >= 20 || n % 100 === 0 ? " de" : ""} întrebări`);
 
 /**
  * Pasul de acum, în ordinea fluxului. Cu șantier pornit, pozițiile cererii nu
@@ -209,8 +215,18 @@ export function urmeaza(s: StareLucrare): Urmeaza {
     };
   }
   if (s.areCerere && s.deVerificat > 0) {
+    const q = s.intrebari ?? 0;
+    // Tot ce a rămas e de întrebat clientul: pasul e al lui, iar oferta poate pleca fără rândurile acelea.
+    if (q > 0 && q >= s.deVerificat) {
+      return {
+        text: `Așteaptă răspunsul clientului la ${intrebariText(q)}.`, fila: "cerere",
+        primar: { eticheta: "Scrie întrebările", act: "fila", fila: "cerere" },
+        ...(s.oferta ? {} : { alb: { eticheta: "Mergi la ofertă", act: "fila" as const, fila: "oferta" as const } }),
+      };
+    }
     return {
-      text: `${pozitiiText(s.deVerificat)} să te uiți.`, fila: "cerere",
+      text: `${pozitiiText(s.deVerificat)} să te uiți${q > 0 ? ` (${q === 1 ? "una e o întrebare" : `${q} sunt întrebări`} pentru client)` : ""}.`,
+      fila: "cerere",
       primar: { eticheta: "Verifică", act: "fila", fila: "cerere" },
     };
   }
@@ -287,7 +303,7 @@ export const GRUPURI_ACASA: { id: GrupAcasa; titlu: string }[] = [
 
 export interface LucruDeFacut {
   /** Pasul din „Urmează” care l-a dat. */
-  fel: "verifica" | "oferta" | "raspuns" | "inchide" | "comanda" | "trimite" | "situatie" | "situatie-inceputa";
+  fel: "verifica" | "intrebari" | "oferta" | "raspuns" | "inchide" | "comanda" | "trimite" | "situatie" | "situatie-inceputa";
   grup: GrupAcasa;
   /** Propoziția din „Urmează”, cu vechimea unde contează. */
   text: string;
@@ -328,6 +344,9 @@ export function deFacutLucrare(s: StareLucrare, azi: string): LucruDeFacut | nul
     };
   }
   if (s.refuzat) return null;
+  if (s.areCerere && s.deVerificat > 0 && (s.intrebari ?? 0) >= s.deVerificat) {
+    return { fel: "intrebari", grup: "raspuns", text: u.text, buton: "Vezi întrebările", fila: "cerere" };
+  }
   if (s.areCerere && s.deVerificat > 0) {
     return { fel: "verifica", grup: "birou", text: u.text, buton: `Verifică ${s.deVerificat === 1 ? "o poziție" : `${s.deVerificat}${s.deVerificat % 100 >= 20 ? " de" : ""} poziții`}`, fila: "cerere" };
   }

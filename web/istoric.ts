@@ -51,6 +51,11 @@ export interface IntrareIstoric {
    * fișierul. Lipsește la cererile salvate înainte.
    */
   deVerificat?: number;
+  /**
+   * Câte dintre ele sunt de întrebat clientul (Etapa 6, 26 noiembrie 2026): cu
+   * toate întrebări, lucrarea așteaptă răspunsul lui, nu omul de la birou.
+   */
+  intrebari?: number;
   /** Datele ofertei, din lucrul omului: lista ia de aici obiectivul și data refuzului. */
   antet?: Partial<AntetCerere>;
 }
@@ -160,6 +165,7 @@ const metaDin = (s: SesiuneImport): IntrareIstoric => ({
   model: s.model, pozitii: s.pozitii, tarifate: s.tarifate, valoare: s.valoare,
   ...(s.destinatie ? { destinatie: s.destinatie } : {}),
   ...(s.deVerificat !== undefined ? { deVerificat: s.deVerificat } : {}),
+  ...(s.intrebari !== undefined ? { intrebari: s.intrebari } : {}),
   ...(s.antet ? { antet: s.antet } : {}),
 });
 

@@ -623,6 +623,13 @@ a.legatura { display: inline-flex; align-items: center; }
 }
 .imp-segment input:focus-visible + span { outline: 3px solid var(--focus); outline-offset: 2px; }
 
+/* ---- Întrebările pentru client (Etapa 6, 26 noiembrie 2026), pe fila Cerere */
+.intrebari-client { display: grid; gap: 12px; }
+.intrebari-sus { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.intrebari-sus .hint { display: block; }
+.intrebari-text { width: 100%; min-width: 0; font: inherit; font-size: 15px; line-height: 1.5; padding: 12px; resize: vertical;
+  border: 1px solid var(--linie-tare); border-radius: 8px; background: var(--bg); color: var(--text); }
+
 /* ---- pasul 1 */
 /* Firma și tipul ofertei, alături; pe telefon una sub alta (Etapa 2, 26 noiembrie 2026). */
 .imp-alegeri { display: flex; flex-wrap: wrap; gap: 16px 32px; }

@@ -16,6 +16,7 @@ import { grosimePropusa } from "../../src/pricing/grosimi-uzuale.js";
 import { stocSabloane } from "../stoc-sabloane.js";
 import { ceriSpatiu } from "../meniu-stare.js";
 import { anuleaza, confirma, potrivit, vazute } from "../validare.js";
+import { cardIntrebari, excelIntrebari, intrebariClient, type DateEmail } from "../import/intrebari.js";
 import { cate, esc, eur } from "./tip.js";
 import { FIRME, firmaDupa, logoFirmei, tineFirma, ultimaFirma } from "../date/firme.js";
 import {
@@ -267,7 +268,7 @@ export interface OptiuniImport {
   firma?: string;
 }
 
-export interface RezumatImport { deVerificat: number; antet: AntetScris }
+export interface RezumatImport { deVerificat: number; intrebari: number; antet: AntetScris }
 
 export interface ControlImport {
   /** Fila lucrării s-a schimbat: altă parte, fără să se piardă ce e scris. */
@@ -296,6 +297,8 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
 
   /* --------------------------------------------------------------- stare */
   let destinatie: Destinatie = "rezidential";
+  /** Întrebările pentru client, deschise pe fila Cerere (Etapa 6). */
+  let intrebariDeschise = false;
   /** Firma aleasă la cererea nouă (Etapa 2): intră în antetul cererii când se deschide prima dată. */
   let firmaStart: string = firmaDupa(opt.firma)?.id ?? ultimaFirma();
   /** Grosimile uzuale cerute in masa. Vezi `OptiuniNucleu.grosimiPropuse`. */
@@ -475,9 +478,10 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
     if (!s) return;
     clearTimeout(ceasSalvare);
     const deVerificat = deVerificatAcum(s);
+    const intrebari = intrebariClient(s.rez.linii).length;
     await salveaza({
       ...s.meta,
-      deVerificat,
+      deVerificat, intrebari,
       pozitii: s.rez.statistici.liniiIzolatie,
       tarifate: s.rez.statistici.tarifate,
       valoare: s.rez.statistici.valoareTotala,
@@ -494,7 +498,7 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
       antet, ajustare,
       mapari: mapariFolosite(s.foi, mi.mapari),
     });
-    opt.laSchimbare?.({ deVerificat, antet });
+    opt.laSchimbare?.({ deVerificat, intrebari, antet });
   }
 
   /** Pozițiile care cer ochi: de verificat și fără preț, ca filele verificării. */
@@ -636,6 +640,16 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
     };
   }
 
+  /** Pentru textul întrebărilor: despre ce cerere e vorba și cine întreabă. */
+  function dateEmail(s: Sesiune): DateEmail {
+    const firma = FIRME.find((f) => f.id === antet.firma);
+    return {
+      despre: antet.obiectiv.trim() || antet.client.trim() || s.meta.nume.replace(/\.xlsx$/i, ""),
+      ...(firma ? { firma: firma.denumire } : {}),
+      maiMulteFoi: new Set(s.rez.linii.map((l) => l.bruta.foaie)).size > 1,
+    };
+  }
+
   function paginaVerificare(s: Sesiune): string {
     const numere = numereStare(s);
     const santier = opt.santier?.() ?? null;
@@ -662,6 +676,7 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
 
     return `${alerte(s)}
       <section class="imp-card">${antetVerificare({ nume: s.meta.nume, cand: s.meta.cand, destinatie, schimbaTip: tipDeschis })}${coloane.html()}</section>
+      ${santier ? "" : cardIntrebari(intrebariClient(s.rez.linii), intrebariDeschise, dateEmail(s))}
       ${baraVerificare(numere, filtru, { n: afara.length, activ: vedereAfara }, santier)}
       ${vedereAfara ? "" : filtreMotiv(motive, motiv)}
       ${vedereAfara || santier ? "" : actiuniLista({
@@ -1443,6 +1458,24 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
         pagina.querySelector<HTMLInputElement>('.imp-antet [name="segment"]:checked')?.focus();
         return;
       case "la-verificare": treciPe(2); opt.laParte?.("verificare"); return;
+      case "intrebari":
+        intrebariDeschise = !intrebariDeschise;
+        deseneaza();
+        pagina.querySelector<HTMLElement>('[data-act="intrebari"]')?.focus();
+        return;
+      case "intrebari-copiaza": {
+        const t = pagina.querySelector<HTMLTextAreaElement>(".intrebari-text");
+        if (!t) return;
+        void navigator.clipboard.writeText(t.value).then(() => { b.textContent = "Copiat"; }, () => { t.select(); });
+        return;
+      }
+      case "intrebari-excel": {
+        if (!sesiune) return;
+        const s = sesiune;
+        void excelIntrebari(intrebariClient(s.rez.linii), dateEmail(s)).then((buf) =>
+          descarca(buf, `Intrebari - ${dateEmail(s).despre}.xlsx`.replace(/[/\\?%*:|"<>]/g, "-")));
+        return;
+      }
       case "descarca-client": {
         const form = b.closest<HTMLFormElement>("#antet-oferta");
         if (form?.reportValidity()) void genereazaOferta(form, true);

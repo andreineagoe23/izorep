@@ -3,6 +3,27 @@
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
 > Ultima actualizare: 26 noiembrie 2026.
 
+## 26 noiembrie 2026 (seara): Etapa 6, întrebările pentru client
+
+Pe `etapa-6-intrebari`. **831 de teste**, nimic sărit. Nicio migrare (numărul întrebărilor stă în
+lucrul cererii, ca `deVerificat`).
+
+- **Fila Cerere**: „5 lucruri de întrebat clientul.” cu „Scrie întrebările”: textul de email (rândul din
+  fișierul lui, descrierea între ghilimele, întrebarea), „Copiază textul”, „Descarcă Excel” (cu o
+  coloană goală „Răspunsul”). `web/import/intrebari.ts`, teste în `tests/intrebari.test.ts`.
+- **Ce se întreabă**: grosimea, materialul izolației, tabla fără material, diametrul (dimensiunile la
+  tubulatura rectangulară), golul, diametrul și materialul țevii la gol, dimensiunile echipamentului,
+  „buc” fără piesă, rândul fără UM. Nu: grosimea care nu e în listă, peste listă, demontarea,
+  protecția la foc (prețul e al nostru, nu o lipsă a clientului).
+- **„Urmează” și Acasă**: cu tot ce a rămas întrebări, „Așteaptă răspunsul clientului la 5 întrebări.”
+  („Scrie întrebările”, „Mergi la ofertă”), pe Acasă la „Așteaptă răspunsul clientului”; cu altceva
+  de verificat, „9 poziții cer să te uiți (5 sunt întrebări pentru client).”
+- Pe exemplul 2: exact cele cinci lipsuri puse de Adrian; pe Matari, cele 12 goluri EI180.
+
+Verificat în browser (1440, 390 px, ambele teme): cardul, textul, copierea (clipboardul = textul),
+Excelul, Acasă; zero derulare laterală, zero erori. Cererile salvate înainte nu au numărul: îl primesc
+la prima deschidere.
+
 ## 26 noiembrie 2026 (după-amiază): Etapa 5, oferta în fișierul clientului
 
 Pe `etapa-5-fisier-client`. **822 de teste**, nimic sărit. Nicio migrare; dependență nouă
@@ -339,7 +360,7 @@ schimba din interfață.
 ## Comenzi
 
 ```bash
-npm test                                       # 822 de teste (cu IZOREP_DB pe o bază de probă)
+npm test                                       # 831 de teste (cu IZOREP_DB pe o bază de probă)
 npm run typecheck
 npm run dev                                    # UI local, /izorep/
 npm run import -- ../attachments/clienti/cerere-de-oferta-spital.xlsx   # pipeline complet

@@ -181,10 +181,12 @@ export async function listaCereri(tx: Baza): Promise<IntrareIstoric[]> {
     pozitii: cerere.pozitii, tarifate: cerere.tarifate, valoare: cerere.valoare, destinatie: cerere.destinatie,
     antet: sql<IntrareIstoric["antet"] | null>`${cerere.lucru}->'antet'`,
     deVerificat: sql<number | null>`(${cerere.lucru}->>'deVerificat')::int`,
+    intrebari: sql<number | null>`(${cerere.lucru}->>'intrebari')::int`,
   }).from(cerere).orderBy(desc(cerere.cand));
-  return rows.map(({ antet, deVerificat, ...r }) => ({
+  return rows.map(({ antet, deVerificat, intrebari, ...r }) => ({
     ...meta({ ...r, tenantId: "", fisier: Buffer.alloc(0), lucru: {}, creatDe: null, actualizatLa: r.cand, versiune: 0, actualizatDe: null }),
     ...(antet ? { antet } : {}), ...(deVerificat !== null && deVerificat !== undefined ? { deVerificat } : {}),
+    ...(intrebari !== null && intrebari !== undefined ? { intrebari } : {}),
   }));
 }
 

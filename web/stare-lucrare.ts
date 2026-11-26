@@ -38,6 +38,7 @@ export function stareLucrarii(
   const inc = l.plan && !l.plan.inchis ? incepute[l.plan.id] : undefined;
   return {
     deVerificat: l.cerere ? deVerificatCerere(l.cerere) : 0,
+    intrebari: l.cerere?.intrebari ?? 0,
     areCerere: !!l.cerere,
     oferta: l.oferta ? { numar: l.oferta.numar, data: l.oferta.data || ziRo(l.oferta.cand), cand: l.oferta.cand } : undefined,
     refuzat: refuzata(l),

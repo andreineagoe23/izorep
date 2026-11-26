@@ -279,7 +279,7 @@ async function deseneazaPagina(root: HTMLElement, idDinAdresa: string | null, se
         laSchimbare: (r) => {
           if (!l?.cerere) return;
           // Lista de cereri ține ce s-a salvat: „Urmează” se schimbă fără o cerere nouă la server.
-          cereri = cereri.map((c) => (c.id === l!.cerere!.id ? { ...c, deVerificat: r.deVerificat, antet: r.antet } : c));
+          cereri = cereri.map((c) => (c.id === l!.cerere!.id ? { ...c, deVerificat: r.deVerificat, intrebari: r.intrebari, antet: r.antet } : c));
           actualizeaza();
         },
         laOferta: () => { actualizeaza(); },
