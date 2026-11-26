@@ -1,0 +1,546 @@
+[
+ {
+  "foaie": "Instalatii",
+  "rand": 4,
+  "seg": "rezidential",
+  "text": "Izolatie conducta apa rece DN15 cu elastomer 13 mm",
+  "stare": "gata",
+  "pret": 5.99
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 4,
+  "seg": "industrial",
+  "text": "Izolatie conducta apa rece DN15 cu elastomer 13 mm",
+  "stare": "gata",
+  "pret": 7.48
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 5,
+  "seg": "rezidential",
+  "text": "Izolatie conducta apa rece DN25 cu elastomer 19 mm",
+  "stare": "gata",
+  "pret": 8.62
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 5,
+  "seg": "industrial",
+  "text": "Izolatie conducta apa rece DN25 cu elastomer 19 mm",
+  "stare": "gata",
+  "pret": 10.77
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 6,
+  "seg": "rezidential",
+  "text": "Izolatie conducta DN40 elastomer 9 mm",
+  "stare": "gata",
+  "pret": 8.45
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 6,
+  "seg": "industrial",
+  "text": "Izolatie conducta DN40 elastomer 9 mm",
+  "stare": "gata",
+  "pret": 10.56
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 7,
+  "seg": "rezidential",
+  "text": "Izolatie conducta frig DN65 elastomer 25 mm",
+  "stare": "gata",
+  "pret": 17.69
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 7,
+  "seg": "industrial",
+  "text": "Izolatie conducta frig DN65 elastomer 25 mm",
+  "stare": "gata",
+  "pret": 21.23
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 8,
+  "seg": "rezidential",
+  "text": "Izolatie conducta frig DN100 elastomer 32 mm",
+  "stare": "gata",
+  "pret": 28.96
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 8,
+  "seg": "industrial",
+  "text": "Izolatie conducta frig DN100 elastomer 32 mm",
+  "stare": "gata",
+  "pret": 34.75
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 9,
+  "seg": "rezidential",
+  "text": "Izolatie conducta DN150 elastomer 19 mm",
+  "stare": "gata",
+  "pret": 17.66
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 9,
+  "seg": "industrial",
+  "text": "Izolatie conducta DN150 elastomer 19 mm",
+  "stare": "gata",
+  "pret": 22.08
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 10,
+  "seg": "rezidential",
+  "text": "Izolatie teava PPR Ø25 cu elastomer 9 mm",
+  "stare": "gata",
+  "pret": 5.99
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 10,
+  "seg": "industrial",
+  "text": "Izolatie teava PPR Ø25 cu elastomer 9 mm",
+  "stare": "gata",
+  "pret": 7.48
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 11,
+  "seg": "rezidential",
+  "text": "Izolatie teava PEHD Ø63 cu elastomer 13 mm",
+  "stare": "gata",
+  "pret": 9.67
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 11,
+  "seg": "industrial",
+  "text": "Izolatie teava PEHD Ø63 cu elastomer 13 mm",
+  "stare": "gata",
+  "pret": 12.09
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 12,
+  "seg": "rezidential",
+  "text": "Izolatie teava PPR Ø90 cu elastomer 19 mm",
+  "stare": "gata",
+  "pret": 15.71
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 12,
+  "seg": "industrial",
+  "text": "Izolatie teava PPR Ø90 cu elastomer 19 mm",
+  "stare": "gata",
+  "pret": 19.64
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 13,
+  "seg": "rezidential",
+  "text": "Izolatie conducta agent termic DN50 vata minerala 40 mm",
+  "stare": "gata",
+  "pret": 9.83
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 13,
+  "seg": "industrial",
+  "text": "Izolatie conducta agent termic DN50 vata minerala 40 mm",
+  "stare": "gata",
+  "pret": 12.33
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 14,
+  "seg": "rezidential",
+  "text": "Izolatie conducta DN80 vata minerala 50 mm cu protectie tabla aluminiu",
+  "stare": "gata",
+  "pret": 33.7
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 14,
+  "seg": "industrial",
+  "text": "Izolatie conducta DN80 vata minerala 50 mm cu protectie tabla aluminiu",
+  "stare": "gata",
+  "pret": 39.26
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 15,
+  "seg": "rezidential",
+  "text": "Izolatie conducta DN125 vata minerala 60 mm si tabla aluminiu 0,8 mm",
+  "stare": "gata",
+  "pret": 53.32
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 15,
+  "seg": "industrial",
+  "text": "Izolatie conducta DN125 vata minerala 60 mm si tabla aluminiu 0,8 mm",
+  "stare": "gata",
+  "pret": 62.03
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 16,
+  "seg": "rezidential",
+  "text": "Izolatie vata minerala 50 mm cu protectie tabla aluminiu DN100 - COT",
+  "stare": "gata",
+  "pret": 76.43
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 16,
+  "seg": "industrial",
+  "text": "Izolatie vata minerala 50 mm cu protectie tabla aluminiu DN100 - COT",
+  "stare": "gata",
+  "pret": 86.87
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 17,
+  "seg": "rezidential",
+  "text": "Izolatie elastomer 13 mm DN32 - COT",
+  "stare": "fara",
+  "pret": null
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 17,
+  "seg": "industrial",
+  "text": "Izolatie elastomer 13 mm DN32 - COT",
+  "stare": "fara",
+  "pret": null
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 18,
+  "seg": "rezidential",
+  "text": "Izolatie robinet DN50 cu elastomer 19 mm",
+  "stare": "gata",
+  "pret": 18.87
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 18,
+  "seg": "industrial",
+  "text": "Izolatie robinet DN50 cu elastomer 19 mm",
+  "stare": "gata",
+  "pret": 23.6
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 19,
+  "seg": "rezidential",
+  "text": "Izolare tubulatura rectangulara cu saltele vata minerala 50 mm",
+  "stare": "gata",
+  "pret": 20.22
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 19,
+  "seg": "industrial",
+  "text": "Izolare tubulatura rectangulara cu saltele vata minerala 50 mm",
+  "stare": "gata",
+  "pret": 25.27
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 20,
+  "seg": "rezidential",
+  "text": "Izolare tubulatura rectangulara cu placi elastomer 19 mm",
+  "stare": "gata",
+  "pret": 23.68
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 20,
+  "seg": "industrial",
+  "text": "Izolare tubulatura rectangulara cu placi elastomer 19 mm",
+  "stare": "gata",
+  "pret": 29.61
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 21,
+  "seg": "rezidential",
+  "text": "Izolare tubulatura rectangulara 500x400 cu vata minerala 40 mm",
+  "stare": "gata",
+  "pret": 35.87
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 21,
+  "seg": "industrial",
+  "text": "Izolare tubulatura rectangulara 500x400 cu vata minerala 40 mm",
+  "stare": "gata",
+  "pret": 44.83
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 22,
+  "seg": "rezidential",
+  "text": "Izolatie conducta DN50",
+  "stare": "fara",
+  "pret": null
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 22,
+  "seg": "industrial",
+  "text": "Izolatie conducta DN50",
+  "stare": "fara",
+  "pret": null
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 23,
+  "seg": "rezidential",
+  "text": "Izolatie conducta elastomer DN80",
+  "stare": "fara",
+  "pret": null
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 23,
+  "seg": "industrial",
+  "text": "Izolatie conducta elastomer DN80",
+  "stare": "fara",
+  "pret": null
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 24,
+  "seg": "rezidential",
+  "text": "Izolatie cu elastomer 13 mm",
+  "stare": "fara",
+  "pret": null
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 24,
+  "seg": "industrial",
+  "text": "Izolatie cu elastomer 13 mm",
+  "stare": "fara",
+  "pret": null
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 25,
+  "seg": "rezidential",
+  "text": "Izolatie vata minerala 50 mm cu protectie tabla DN100",
+  "stare": "fara",
+  "pret": null
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 25,
+  "seg": "industrial",
+  "text": "Izolatie vata minerala 50 mm cu protectie tabla DN100",
+  "stare": "fara",
+  "pret": null
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 26,
+  "seg": "rezidential",
+  "text": "Izolatie cauciuc 19 mm DN40",
+  "stare": "gata",
+  "pret": 11.72
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 26,
+  "seg": "industrial",
+  "text": "Izolatie cauciuc 19 mm DN40",
+  "stare": "gata",
+  "pret": 14.65
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 27,
+  "seg": "rezidential",
+  "text": "Izolatie vata minrala 30 mm DN32",
+  "stare": "gata",
+  "pret": 7.13
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 27,
+  "seg": "industrial",
+  "text": "Izolatie vata minrala 30 mm DN32",
+  "stare": "gata",
+  "pret": 8.91
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 28,
+  "seg": "rezidential",
+  "text": "Izolatie cochilii 50 mm DN65",
+  "stare": "gata",
+  "pret": 12.8
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 28,
+  "seg": "industrial",
+  "text": "Izolatie cochilii 50 mm DN65",
+  "stare": "gata",
+  "pret": 16.0
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 29,
+  "seg": "rezidential",
+  "text": "Izolatie elastomer 9 mm DN20",
+  "stare": "gata",
+  "pret": 5.99
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 29,
+  "seg": "industrial",
+  "text": "Izolatie elastomer 9 mm DN20",
+  "stare": "gata",
+  "pret": 7.48
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 30,
+  "seg": "rezidential",
+  "text": "Izolatie elastomer 13 mm DN15",
+  "stare": "verif",
+  "pret": 5.99
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 30,
+  "seg": "industrial",
+  "text": "Izolatie elastomer 13 mm DN15",
+  "stare": "verif",
+  "pret": 7.48
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 31,
+  "seg": "rezidential",
+  "text": "Izolatie elastomer 13 mm DN25",
+  "stare": "verif",
+  "pret": 6.35
+ },
+ {
+  "foaie": "Instalatii",
+  "rand": 31,
+  "seg": "industrial",
+  "text": "Izolatie elastomer 13 mm DN25",
+  "stare": "verif",
+  "pret": 7.93
+ },
+ {
+  "foaie": "Treceri foc",
+  "rand": 3,
+  "seg": "rezidential",
+  "text": "Teava OL DN25",
+  "stare": "gata",
+  "pret": 23.05
+ },
+ {
+  "foaie": "Treceri foc",
+  "rand": 3,
+  "seg": "industrial",
+  "text": "Teava OL DN25",
+  "stare": "gata",
+  "pret": 23.05
+ },
+ {
+  "foaie": "Treceri foc",
+  "rand": 4,
+  "seg": "rezidential",
+  "text": "Teava PPR 75",
+  "stare": "gata",
+  "pret": 23.05
+ },
+ {
+  "foaie": "Treceri foc",
+  "rand": 4,
+  "seg": "industrial",
+  "text": "Teava PPR 75",
+  "stare": "gata",
+  "pret": 23.05
+ },
+ {
+  "foaie": "Treceri foc",
+  "rand": 5,
+  "seg": "rezidential",
+  "text": "Teava OL DN100",
+  "stare": "gata",
+  "pret": 30.36
+ },
+ {
+  "foaie": "Treceri foc",
+  "rand": 5,
+  "seg": "industrial",
+  "text": "Teava OL DN100",
+  "stare": "gata",
+  "pret": 30.36
+ },
+ {
+  "foaie": "Treceri foc",
+  "rand": 6,
+  "seg": "rezidential",
+  "text": "Teava OL DN200",
+  "stare": "gata",
+  "pret": 105.62
+ },
+ {
+  "foaie": "Treceri foc",
+  "rand": 6,
+  "seg": "industrial",
+  "text": "Teava OL DN200",
+  "stare": "gata",
+  "pret": 105.62
+ },
+ {
+  "foaie": "Treceri foc",
+  "rand": 7,
+  "seg": "rezidential",
+  "text": "Teava OL DN300",
+  "stare": "gata",
+  "pret": 201.65
+ },
+ {
+  "foaie": "Treceri foc",
+  "rand": 7,
+  "seg": "industrial",
+  "text": "Teava OL DN300",
+  "stare": "gata",
+  "pret": 201.65
+ },
+ {
+  "foaie": "Treceri foc",
+  "rand": 8,
+  "seg": "rezidential",
+  "text": "Teava OL DN50",
+  "stare": "fara",
+  "pret": null
+ },
+ {
+  "foaie": "Treceri foc",
+  "rand": 8,
+  "seg": "industrial",
+  "text": "Teava OL DN50",
+  "stare": "fara",
+  "pret": null
+ }
+]

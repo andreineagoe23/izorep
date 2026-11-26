@@ -1,0 +1,164 @@
+[
+ {
+  "foaie": "Oferta",
+  "rand": 4,
+  "seg": "rezidential",
+  "text": "Izolatii cu vata minerala si protectie cu tabla de aluminiu Di89, g50 - ML",
+  "stare": "gata",
+  "pret": 33.7,
+  "cantitate": 40
+ },
+ {
+  "foaie": "Oferta",
+  "rand": 4,
+  "seg": "industrial",
+  "text": "Izolatii cu vata minerala si protectie cu tabla de aluminiu Di89, g50 - ML",
+  "stare": "gata",
+  "pret": 39.26,
+  "cantitate": 40
+ },
+ {
+  "foaie": "Oferta",
+  "rand": 5,
+  "seg": "rezidential",
+  "text": "Izolatii cu vata minerala si protectie cu tabla de aluminiu Di60, g40 - COT",
+  "stare": "gata",
+  "pret": 18.83,
+  "cantitate": 3
+ },
+ {
+  "foaie": "Oferta",
+  "rand": 5,
+  "seg": "industrial",
+  "text": "Izolatii cu vata minerala si protectie cu tabla de aluminiu Di60, g40 - COT",
+  "stare": "gata",
+  "pret": 20.92,
+  "cantitate": 3
+ },
+ {
+  "foaie": "Oferta",
+  "rand": 6,
+  "seg": "rezidential",
+  "text": "Izolatie elastomer 13 mm Ø1/2\"",
+  "stare": "gata",
+  "pret": 5.99,
+  "cantitate": 50
+ },
+ {
+  "foaie": "Oferta",
+  "rand": 6,
+  "seg": "industrial",
+  "text": "Izolatie elastomer 13 mm Ø1/2\"",
+  "stare": "gata",
+  "pret": 7.48,
+  "cantitate": 50
+ },
+ {
+  "foaie": "Oferta",
+  "rand": 7,
+  "seg": "rezidential",
+  "text": "Izolatie elastomer 19 mm DN50, inclusiv protectie PVC",
+  "stare": "gata",
+  "pret": 21.37,
+  "cantitate": 95
+ },
+ {
+  "foaie": "Oferta",
+  "rand": 7,
+  "seg": "industrial",
+  "text": "Izolatie elastomer 19 mm DN50, inclusiv protectie PVC",
+  "stare": "verif",
+  "pret": 24.52,
+  "cantitate": 95
+ },
+ {
+  "foaie": "Oferta",
+  "rand": 8,
+  "seg": "rezidential",
+  "text": "Izolare conducte DN100 elastomer 13mm+40mm vata minerala",
+  "stare": "gata",
+  "pret": 26.63,
+  "cantitate": 36
+ },
+ {
+  "foaie": "Oferta",
+  "rand": 8,
+  "seg": "industrial",
+  "text": "Izolare conducte DN100 elastomer 13mm+40mm vata minerala",
+  "stare": "gata",
+  "pret": 33.29,
+  "cantitate": 36
+ },
+ {
+  "foaie": "Oferta",
+  "rand": 9,
+  "seg": "rezidential",
+  "text": "Izolare conducte cupru DN15 cu elastomer 9 mm",
+  "stare": "gata",
+  "pret": 5.73,
+  "cantitate": 80
+ },
+ {
+  "foaie": "Oferta",
+  "rand": 9,
+  "seg": "industrial",
+  "text": "Izolare conducte cupru DN15 cu elastomer 9 mm",
+  "stare": "gata",
+  "pret": 7.16,
+  "cantitate": 80
+ },
+ {
+  "foaie": "Oferta",
+  "rand": 10,
+  "seg": "rezidential",
+  "text": "Izolatii cu vata minerala si protectie cu tabla de inox Di114, g50 - ML",
+  "stare": "gata",
+  "pret": 65.75,
+  "cantitate": 20
+ },
+ {
+  "foaie": "Oferta",
+  "rand": 10,
+  "seg": "industrial",
+  "text": "Izolatii cu vata minerala si protectie cu tabla de inox Di114, g50 - ML",
+  "stare": "gata",
+  "pret": 69.27,
+  "cantitate": 20
+ },
+ {
+  "foaie": "Oferta",
+  "rand": 11,
+  "seg": "rezidential",
+  "text": "Izolatie elastomer 13 mm DN15",
+  "stare": "gata",
+  "pret": 5.99,
+  "cantitate": 12.5
+ },
+ {
+  "foaie": "Oferta",
+  "rand": 11,
+  "seg": "industrial",
+  "text": "Izolatie elastomer 13 mm DN15",
+  "stare": "gata",
+  "pret": 7.48,
+  "cantitate": 12.5
+ },
+ {
+  "foaie": "Oferta",
+  "rand": 12,
+  "seg": "rezidential",
+  "text": "Izolatie conducta DN32 vata minerala 30 mm, protectie tabla aluminiu",
+  "stare": "gata",
+  "pret": 24.91,
+  "cantitate": 10
+ },
+ {
+  "foaie": "Oferta",
+  "rand": 12,
+  "seg": "industrial",
+  "text": "Izolatie conducta DN32 vata minerala 30 mm, protectie tabla aluminiu",
+  "stare": "gata",
+  "pret": 28.67,
+  "cantitate": 10
+ }
+]

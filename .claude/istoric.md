@@ -35,6 +35,42 @@ Calculatorul: ce are și ce nu (Docker, fișierele clienților, cheia de model).
 
 ---
 
+## 26 noiembrie 2026 (seara târziu) · Andrei (neagoeandrei23) · `main`
+
+Calculatorul: Docker (`izorep_e1` pentru teste, **`izorep_full`** făcută de la zero pentru testul complet,
+contul `test-complet@izorep.invalid`), fișierele clienților, modelul oprit. Cerut: ramurile vechi șterse și
+„testează tot software-ul la maxim”.
+
+### Făcut
+
+| Commit | Ce |
+|---|---|
+| (ramuri) | șterse `plan-simplificare`, `main-backup`, `cloud-design`, `ux-lucrare`; `docs/plan-simplificare.md` rămâne în `4838e1a` |
+| `07acca6` | 4 greșeli găsite de test: „Clientul a acceptat” blocat de rândurile rămase; necesarul rectangular; **virgula în casetele de numere (2,97 → 297)**; banii pe Comenzi |
+| (ultimul) | oracolul ca test permanent (`scripts/oracol/`, `tests/oracol/`, `tests/oracol.test.ts`); `stare.md`, aici |
+
+### Verificat
+
+- **845 de teste**, typecheck, build. Tabelul întreg: `.claude/stare.md`, „testul complet”.
+- Oracolul independent: 86 / 86. Fluxul cap-coadă în browser pe ISORAD (cerere → închidere), totalurile egale
+  cu oracolul în ofertă, fișierul clientului, situație. 188 de ecrane fără erori și fără derulare laterală.
+  Serverul: 401 / 403 / 423 și antetele. Text periculos din fișier: neexecutat.
+
+### Neverificat
+
+- Modelul real (costă), Excel / LibreOffice, pozele citite de model, Render parcurs cu mâna.
+
+### Pentru cine urmează
+
+1. Push pe `main` (deci Render) pentru reparații, mai ales virgula în prețuri: pe Render orice preț scris cu
+   virgulă într-o factură intra de 100 de ori mai mare.
+2. O trecere pe Render cu mâna; fișierul clientului deschis în Excel.
+3. Restul planului, când vin documentele firmei (Etapa 3, Conlit, N4).
+
+### De hotărât de oameni
+
+- Un rulaj al importului cu modelul real pe cele două cereri-oracol (puțini tokeni), ca să vedem și calea cu model.
+
 ## 26 noiembrie 2026 (după-amiază, noaptea) · Andrei (neagoeandrei23) · `main` (pe GitHub și pe Render)
 
 Calculatorul: ca în intrarea de dedesubt. Andrei: „continuă planul cu tot ce poți face”. Fiecare

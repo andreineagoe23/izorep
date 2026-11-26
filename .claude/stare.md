@@ -3,6 +3,37 @@
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
 > Ultima actualizare: 26 noiembrie 2026.
 
+## 26 noiembrie 2026 (seara târziu): testul complet
+
+Cerut de Andrei: „testează tot software-ul la maxim”. **845 de teste**, nimic sărit. Ramurile vechi
+(`plan-simplificare`, `main-backup`, `cloud-design`, `ux-lucrare`) șterse, local și pe GitHub; singurul
+lucru care nu era pe `main` era `docs/plan-simplificare.md` (planul vechi, înlocuit de `plan-ux.md`),
+recuperabil din commit-ul `4838e1a`.
+
+**Ce s-a testat:**
+
+| Strat | Cum | Rezultat |
+|---|---|---|
+| Suita | typecheck, toate testele, build | trece |
+| Bază nouă de la zero | `izorep_full`: migrări, seed, `npm run demo` | RAD118.1 12.692,04 · RAD118 163.979,93 · RAD284 91.737,81, ca în documentație |
+| Oracol independent | `scripts/oracol/*.py` calculează prețul din JSON-urile listelor, fără motor; două cereri inventate (34 + 9 rânduri, două formate), ambele tipuri de ofertă | **86 / 86** (după trei corecturi ale oracolului, toate greșeli ale lui, nu ale motorului); rămâne test: `tests/oracol.test.ts` |
+| Fluxul în browser | ISORAD, industrial: cerere → filele ca în oracol → întrebări (7) → „E bine” → −5 % → bifa de foc → ambele descărcări → acceptare → materiale → comenzi → recepție → facturi → situație → închidere | totalurile egale cu oracolul în toate cele 5 locuri (30.221,73 €); lucrarea la ISORAD › Închise |
+| Toate ecranele | 47 de rute × 390 / 768 / 1440 / 1920 px, ambele teme | 0 erori, 0 derulare laterală; nicio țintă sub 40 px (în afară de caseta de fișier, ascunsă în eticheta mare) |
+| Serverul | fără cont, fără `X-Izorep`, 5 parole greșite, antetele | 401, 403, 423 (blocat de pe calculator), CSP / `nosniff` / `DENY` / `no-store` |
+| Text periculos din fișier | `<img onerror>`, `<script>`, `<svg onload>` în descrieri și în numele foii | nimic executat, nimic injectat |
+
+**Ce a găsit și s-a reparat** (`07acca6`):
+
+| Greșeala | Acum |
+|---|---|
+| Cu oferta descărcată și rânduri rămase „Fără preț” (întrebările), „Urmează” stătea pe „Verifică”: „Clientul a acceptat” nu mai apărea, șantierul nu se putea porni | cu oferta salvată, pasul e răspunsul clientului: „Oferta ISO501 e făcută din 26.11.2026. 6 poziții nu sunt în ea. Ce a răspuns clientul?” |
+| Necesarul pe tubulatura rectangulară în metri: socotit ca o țeavă de ø0 (500×400, vată 40, 30 ml → 8,25 m² în loc de 64,68) | prețul poartă `suprafata_mp` (2 × (A + B + 2g) / 1000), iar necesarul comandă din ea. A/B pe 3.706 rânduri: niciun preț schimbat |
+| **Casetele `type="number"`: „2,97” tastat devenea 297** (Chrome aruncă virgula, caseta rămâne „validă”): prețuri, cursul, cantități, numărătoarea, ajustarea și discountul | toate 41 sunt text cu `inputmode="decimal"`, citite cu `numarScris` („2,97”, „1.250”, „12.5”); test-gard: nicio casetă `type="number"` în `web/` |
+| Valoarea așteptată a comenzii: „19.951,3 lei” | banii pe Comenzi cu două zecimale |
+
+**Neacoperit:** modelul real (costă din contul OpenAI al firmei; nefolosit fără acordul lui Andrei),
+Excel / LibreOffice (nu sunt pe calculator), pozele din carnet citite de model, Render cu mâna.
+
 ## 26 noiembrie 2026 (noaptea, târziu): Etapa 7, mărunțișurile din predări
 
 > Etapele 1, 2, 4 (fără Conlit), 5, 6 și 7 sunt pe `main` și pe Render din seara de 26 noiembrie.
@@ -394,7 +425,7 @@ schimba din interfață.
 ## Comenzi
 
 ```bash
-npm test                                       # 837 de teste (cu IZOREP_DB pe o bază de probă)
+npm test                                       # 845 de teste (cu IZOREP_DB pe o bază de probă)
 npm run typecheck
 npm run dev                                    # UI local, /izorep/
 npm run import -- ../attachments/clienti/cerere-de-oferta-spital.xlsx   # pipeline complet
