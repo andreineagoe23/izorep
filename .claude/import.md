@@ -570,6 +570,8 @@ real acolo.
   sheet", „tubulaturile din tablă"), iar `TABLA_E_JACHETA` o păstrează când
   rândul spune și jacheta („protejată cu tablă", „protecție mecanică",
   „casetă", „jacketing").
+- **„Treceri prin planșee rezistente la foc”** (exemplul 2, 26 noiembrie 2026) — aceeași lucrare ca
+  „prin pereți”; fără „planșee” în `TRECERI_PRIN_PERETI`, rândurile cu golul scris rămâneau afară.
 - **`cerere-de-oferta-spital.xlsx`, țevile de instalații** — „inclusiv fitinguri, treceri prin
   pereți și planșee cu țeavă de protecție". „Treceri prin pereți" e închidere
   la foc **doar lângă foc** (`foc`, `EI xx`); fără regula asta, 58 de rânduri de

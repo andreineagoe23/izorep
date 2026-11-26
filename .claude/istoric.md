@@ -35,6 +35,50 @@ Calculatorul: ce are și ce nu (Docker, fișierele clienților, cheia de model).
 
 ---
 
+## 26 noiembrie 2026 · Andrei (neagoeandrei23) · ramurile `etapa-1-import`, `etapa-2-firme`
+
+Calculatorul: Docker (Postgres pe 5433, baza `izorep_e1`), fișierele clienților, serverul
+pornit fără cheie de model (8830, `build:server`, `TENANT_ID` dat: testele lasă tenanți
+temporari cât rulează). De la Adrian nu venise nimic nou (`git fetch`).
+
+### Făcut
+
+| Commit | Ce |
+|---|---|
+| `d1fa294` (pe `etapa-1-import`) | „Treceri prin planșee … la foc” sunt închideri de gol (exemplul 2, D07–D08); test în `audit-15-noiembrie` |
+| (pe `etapa-2-firme`) | Etapa 2: lucrările pe firme. Filele RADOIA · ISORAD la Lucrări și Clienți, firma la Cerere nouă (implicit ultima), pe Acasă și pe pagina lucrării. Fără migrare. Teste: `tests/lucrari-firme.test.ts` |
+
+### Verificat
+
+- `npm run typecheck` curat, **815 teste**, nimic sărit; `npm run build:server` trece.
+- Etapa 1 în browser: exemplul 2 pe toate filele, la 390 / 1440 / 1920 px, ambele teme (zero
+  derulare, zero erori); comparat rând cu rând cu `cheie-de-verificare.xlsx` (diferențele sunt
+  cele voite din 23 noiembrie, plus D07–D08 reparate). TRANSAVIA: 98 „Gata” + distribuitorul,
+  „E bine” → **94.575,06 €**.
+- Etapa 2 în browser: ISORAD → „Cerere nouă” (ISORAD bifat) → exemplul 1 → lucrarea la
+  ISORAD; pe Ofertă schimbată pe RADOIA trece la RADOIA și înapoi; Acasă are firma pe rând;
+  390 / 1440 / 1920 px, ambele teme, zero derulare laterală, zero erori.
+- A/B pe toate fișierele (3.706 rânduri): s-au mișcat doar D07–D08 din exemplul 2.
+
+### Neverificat
+
+- Clienți cu clienți reali pe file: pe `izorep_e1` nu e nicio ofertă descărcată (filele arată 0 / 0).
+- Pozele din carnet pe o cerere nouă ISORAD (drumul e același, `deschideSesiune`, dar nevăzut).
+- Nimic cu modelul real.
+
+### Pentru cine urmează
+
+1. Adrian: C1–C4 și fișierele din Etapa 0 (neschimbat).
+2. Unirea pe `main` (deci Render) a ambelor ramuri, `etapa-1-import` apoi `etapa-2-firme`
+   (fast-forward), când zice Andrei.
+3. Etapa 3 cere situația și recepția firmei; până vin, Etapa 4 (± % pe poziție; lista Conlit
+   cere lista lor) sau Etapa 6 (întrebările pentru client), care nu așteaptă nimic.
+
+### De hotărât de oameni
+
+- Lucrările fără firmă scrisă stau la RADOIA (nu o filă „Fără firmă”).
+- D06 (țeava fără material la gol) rămâne „Gata”: materialul nu intră în preț.
+
 ## 23 noiembrie 2026 · Andrei (neagoeandrei23) · ramura `etapa-1-import`
 
 Calculatorul: Docker (Postgres pe 5433, baza `izorep_e1`), fișierele clienților,

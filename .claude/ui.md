@@ -201,6 +201,16 @@ Tema închisă e scrisă de două ori în CSS, cu aceleași valori: o dată sub
 `@media` cu un selector de atribut într-o singură regulă — dacă modifici una,
 modific-o și pe cealaltă.
 
+## Lucrările pe firme (26 noiembrie 2026, Etapa 2)
+
+`docs/plan-dupa-demo.md`, N1. Fără migrare: firma e în plan, în `antet.firma` al cererii și în
+seria ofertei; `firmaLucrare` (`web/lucrare.ts`) le citește în ordinea asta, fără nimic RADOIA.
+Lucrări și Clienți au filele RADOIA · ISORAD (`.file-firme`, mai mari decât stadiile, pe rândul lui
+„Cerere nouă”; pe telefon butonul trece dedesubt), cu `?firma=` în adresă; fila aleasă e și firma
+următoarei cereri (`tineFirma`, `localStorage` `izorep-firma`). Cerere nouă are „Firma” lângă „Tip
+ofertă” (`alegereFirma`, `.imp-alegeri`), iar `montezaImport({ firma })` o pune în antetul cererii
+noi. Acasă: numele scurt al firmei, `hint`, în fața lucrării.
+
 ## Lucrarea: meniul pe patru, lista pe stadii, pagina cu cinci file (14 noiembrie 2026)
 
 Planul UX (`docs/plan-ux.md`), Fazele 2 și 3. Secțiunile mai vechi despre

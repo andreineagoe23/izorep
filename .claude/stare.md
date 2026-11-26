@@ -1,7 +1,30 @@
 # Stare curentă
 
 > Unde am ajuns, ce s-a decis și ce urmează. Actualizează la fiecare etapă.
-> Ultima actualizare: 15 noiembrie 2026.
+> Ultima actualizare: 26 noiembrie 2026.
+
+## 26 noiembrie 2026: Etapa 1 văzută în browser, Etapa 2 (lucrările pe firme)
+
+Pe `etapa-1-import` (o reparație) și `etapa-2-firme` (ramura nouă, pornită din ea), baza
+`izorep_e1`. **815 teste**, nimic sărit. Nicio migrare.
+
+| Ce | Acum |
+|---|---|
+| „Treceri prin planșee rezistente la foc EI120” (exemplul 2, D07–D08): antetul nu era recunoscut, iar țeava PP 50 și patul de cabluri, cu golul scris, stăteau la „Lăsate afară” | `TRECERI_PRIN_PERETI` ia și „planșee”: 26,89 „Gata”, respectiv 26,89 „De verificat” (`pat_cabluri`), ca în cheia lui Adrian. A/B pe 3.706 rânduri: doar aceste două, pe ambele tipuri |
+| Lucrările ambelor firme într-o singură listă (N1) | **Lucrări**: filele RADOIA · ISORAD (cu cifra) pe rândul lui „Cerere nouă”, stadiile dedesubt; `#/lucrari?firma=…&stadiu=…`. „Cerere nouă” pornește pe firma filei; „← Toate lucrările” se întoarce la fila firmei |
+| Firma se alegea abia pe fila Ofertă | **Cerere nouă**: „Firma” lângă „Tip ofertă”, implicit ultima aleasă (`ultimaFirma` / `tineFirma`, în browser); intră în antetul cererii la prima deschidere. Pe Ofertă se schimbă ca înainte, iar lucrarea trece la cealaltă filă |
+| Clienții și Acasă fără firmă | **Clienți** pe aceleași file (un client cu lucrări la amândouă apare la amândouă); **Acasă** cu ambele, firma în fața lucrării pe fiecare rând; pagina lucrării o are pe rândul de sub titlu |
+
+Decise de noi (se pot întoarce):
+
+- **Firma lucrării** (`firmaLucrare` în `web/lucrare.ts`): șantierul, apoi cererea, apoi seria
+  ofertei (RAD / ISO). **Fără nimic scris: RADOIA**, nu o filă „Fără firmă”: e firma pe care o pune
+  formularul ofertei, deci lista spune ce ar ieși pe antet. Cererile vechi fără antet sunt puține
+  și se mută dintr-o alegere pe Ofertă.
+- **Țeava fără material la gol** (D06, „Teava DN100 | 320/320”) rămâne „Gata”: prețul închiderii
+  vine doar din suprafața golului (banda și colierul nu intră, Matari), deci materialul nu schimbă
+  niciun ban. Planul o voia „Fără preț”.
+- **Fără „Toate”** peste cele două firme: firma a cerut „2 foldere”.
 
 ## 23 noiembrie 2026: după demo, importul întreabă clientul (Etapa 1)
 
@@ -287,7 +310,7 @@ schimba din interfață.
 ## Comenzi
 
 ```bash
-npm test                                       # 787 de teste (cu IZOREP_DB pe o bază de probă)
+npm test                                       # 815 teste (cu IZOREP_DB pe o bază de probă)
 npm run typecheck
 npm run dev                                    # UI local, /izorep/
 npm run import -- ../attachments/clienti/cerere-de-oferta-spital.xlsx   # pipeline complet

@@ -93,13 +93,14 @@ Fără ele, o parte din Etapa 1 schimbă prețuri în direcția greșită.
 - **C4. PVC pe ofertă industrială.** Nu există listă industrială de PVC: luăm
   prețul rezidențial fără semn, sau ne trimit lista?
 
-## Unde am ajuns (23 noiembrie 2026, seara)
+## Unde am ajuns (26 noiembrie 2026)
 
 | Etapa | Starea |
 |---|---|
 | 0 | partea noastră făcută: baza locală (`izorep_e1`), `stare.md` tăiat. **De la firmă, nimic încă**: fișierul cu dimensiunile în coloana 2, lista Conlit, o situație și o recepție |
-| 1 | făcută pe ramura `etapa-1-import`, cu excepția **N4** (coloana de dimensiune), care așteaptă fișierul. Detaliile în `.claude/istoric.md`, 23 noiembrie |
-| 2–7 | nefăcute |
+| 1 | făcută pe `etapa-1-import`, văzută în browser pe 26 noiembrie (exemplul 2, TRANSAVIA: 94.575,06 cu „E bine”), plus „Treceri prin planșee”. Lipsește **N4** (coloana de dimensiune), care așteaptă fișierul. D06 rămâne „Gata”: materialul țevii nu intră în prețul golului |
+| 2 | făcută pe `etapa-2-firme` (pornită din `etapa-1-import`), văzută în browser. Detaliile în `.claude/stare.md`, 26 noiembrie |
+| 3–7 | nefăcute; 3 așteaptă situația și recepția firmei |
 
 ## Etapele
 

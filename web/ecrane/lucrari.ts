@@ -24,9 +24,10 @@ import {
 } from "../date.js";
 import { legaPanouStergere, panouStergere } from "../confirmare.js";
 import { ceriSpatiu } from "../meniu-stare.js";
+import { FIRME, firmaDupa, tineFirma, ultimaFirma, type IdFirma } from "../date/firme.js";
 import { stareLucrarii } from "../stare-lucrare.js";
 import {
-  FILE_LUCRARE, STADII, clientLucrare, gasesteLucrarea, lucrariDin, refuzata, stadiu, stareFile,
+  FILE_LUCRARE, STADII, clientLucrare, firmaLucrare, gasesteLucrarea, lucrariDin, refuzata, stadiu, stareFile,
   titluLucrare, urmeaza, type FilaLucrare, type Lucrare, type Stadiu, type StareLucrare, type Urmeaza,
 } from "../lucrare.js";
 import type { ControlImport, ParteImport } from "./import.js";
@@ -50,6 +51,7 @@ function detaliiLucrare(l: Lucrare): string {
   const o = l.oferta;
   const client = clientLucrare(l);
   const parti = [
+    firmaDupa(firmaLucrare(l))?.scurt ?? "",
     client !== titluLucrare(l) ? client : "",
     o ? [o.numar ? `oferta ${o.numar}` : "oferta fără număr", o.data].filter(Boolean).join(" din ") : l.plan?.oferta ? `oferta ${l.plan.oferta}` : "",
     o && vedeCosturi() ? eur(o.valoare) : "",
@@ -63,13 +65,20 @@ async function deseneazaLista(root: HTMLElement): Promise<void> {
   titluEcran(TITLU, SUBTITLU);
   const dep = citesteDepozit();
   const toate = lucrariDin(await listeaza(), citesteOferte(), citestePlanuri())
-    .map((l) => ({ l, st: stadiu(l), u: urmeaza(stareLucrarii(l, dep)) }));
-  const numar = (s: Stadiu): number => toate.filter((x) => x.st === s).length;
+    .map((l) => ({ l, firma: firmaLucrare(l), st: stadiu(l), u: urmeaza(stareLucrarii(l, dep)) }));
+  // Firma (Etapa 2): din adresă; altfel ultima aleasă, dacă are lucrări; altfel prima care are.
+  const dinAdresaFirma = firmaDupa(/[?&]firma=([\w-]+)/.exec(location.hash)?.[1])?.id;
+  const areFirma = (f: IdFirma): boolean => toate.some((x) => x.firma === f);
+  const ultima = ultimaFirma();
+  const firma: IdFirma = dinAdresaFirma
+    ?? (areFirma(ultima) ? ultima : FIRME.find((f) => areFirma(f.id))?.id ?? ultima);
+  const aleFirmei = toate.filter((x) => x.firma === firma);
+  const numar = (s: Stadiu): number => aleFirmei.filter((x) => x.st === s).length;
   const dinAdresa = /[?&]stadiu=([\w-]+)/.exec(location.hash)?.[1] as Stadiu | undefined;
   // Se deschide prima filă care are ceva; aleasă de om, rămâne (și la reîncărcare).
   const activ: Stadiu = STADII.some((s) => s.id === dinAdresa) ? dinAdresa!
     : STADII.find((s) => numar(s.id) > 0)?.id ?? "de-ofertat";
-  const pe = toate.filter((x) => x.st === activ);
+  const pe = aleFirmei.filter((x) => x.st === activ);
   const randuri = pe.map(({ l, u }) => {
     const o = l.oferta;
     const refuz = refuzata(l);
@@ -83,8 +92,12 @@ async function deseneazaLista(root: HTMLElement): Promise<void> {
       <td class="fix"><a class="secundar" href="${adresaLucrare(l.id)}">Deschide</a></td>
     </tr>`;
   });
+  // Fila firmei duce la prima filă de stadiu a ei (nu ține stadiul celeilalte firme).
+  const filaFirma = (f: (typeof FIRME)[number]): string =>
+    `<a href="#/lucrari?firma=${f.id}" class="fila" data-act="firma" data-firma="${f.id}"${f.id === firma ? ' aria-current="page"' : ""}>${
+      esc(f.scurt)} <b>${toate.filter((x) => x.firma === f.id).length}</b></a>`;
   const fila = (s: { id: Stadiu; eticheta: string }): string =>
-    `<a href="#/lucrari?stadiu=${s.id}" class="fila"${s.id === activ ? ' aria-current="page"' : ""}>${esc(s.eticheta)} <b>${numar(s.id)}</b></a>`;
+    `<a href="#/lucrari?firma=${firma}&amp;stadiu=${s.id}" class="fila"${s.id === activ ? ' aria-current="page"' : ""}>${esc(s.eticheta)} <b>${numar(s.id)}</b></a>`;
   const gol: Record<Stadiu, string> = {
     "de-ofertat": "Nicio cerere fără ofertă.",
     trimise: "Nicio ofertă care așteaptă răspunsul clientului.",
@@ -92,7 +105,10 @@ async function deseneazaLista(root: HTMLElement): Promise<void> {
     inchise: "Nicio lucrare închisă.",
   };
   root.innerHTML = `<div class="imp lucrari">
-    <div class="lucrari-sus"><a class="primar" href="#/lucrari/noua">Cerere nouă</a></div>
+    <div class="lucrari-sus">
+      <nav class="file file-firme" aria-label="Firma">${FIRME.map(filaFirma).join("")}</nav>
+      <a class="primar" href="#/lucrari/noua?firma=${firma}">Cerere nouă</a>
+    </div>
     ${mesajLista ? `<p class="hint" role="status" style="margin:0">${esc(mesajLista)}</p>` : ""}
     <nav class="file" aria-label="Stadiul lucrărilor">${STADII.map(fila).join("")}</nav>
     ${pe.length === 0 ? `<p class="hint" style="margin:0">${gol[activ]}</p>`
@@ -101,6 +117,11 @@ async function deseneazaLista(root: HTMLElement): Promise<void> {
         ["", "", ...(vedeCosturi() ? ["n"] : []), "", ""],
       )}</section>`}
   </div>`;
+  // Fila de firmă aleasă de om e și firma cu care pornește următoarea cerere.
+  root.querySelector(".file-firme")?.addEventListener("click", (e) => {
+    const a = (e.target as HTMLElement).closest<HTMLElement>("[data-firma]");
+    if (a?.dataset["firma"]) tineFirma(a.dataset["firma"]);
+  });
   mesajLista = "";
 }
 
@@ -217,7 +238,7 @@ async function deseneazaPagina(root: HTMLElement, idDinAdresa: string | null, se
     titluEcran(titluLucrare(l));
     const detalii = `${refuzata(l) ? `${stare("refuzată", "atentie")} ` : ""}${l.plan?.inchis ? `${stare("închisă", "ok")} ` : ""}${
       esc(detaliiLucrare(l))}`.trim();
-    const inapoi = `<a class="legatura" href="#/lucrari">← Toate lucrările</a>`;
+    const inapoi = `<a class="legatura" href="#/lucrari?firma=${firmaLucrare(l)}">← Toate lucrările</a>`;
     // Fără nimic de spus sub titlu, „⋯” urcă lângă „← Toate lucrările”: singur pe un rând lăsa un gol.
     elSus.innerHTML = `${detalii ? `<p style="margin:0">${inapoi}</p>` : ""}
       <header class="pagina-antet${detalii ? "" : " doar-inapoi"}">
@@ -251,6 +272,8 @@ async function deseneazaPagina(root: HTMLElement, idDinAdresa: string | null, se
       const { montezaImport } = await import("./import.js");
       imp = await montezaImport(elImport, {
         ...(l?.cerere ? { cerere: l.cerere.id } : {}), parte,
+        // Cerere nouă din fila unei firme: pornește pe firma ei.
+        ...(!l ? { firma: /[?&]firma=([\w-]+)/.exec(location.hash)?.[1] ?? "" } : {}),
         laCerereNoua: (id) => void cerereNoua(id),
         laParte: (p) => { fila = p === "oferta" ? "oferta" : "cerere"; scrieAdresa(); deseneazaSus(); },
         laSchimbare: (r) => {

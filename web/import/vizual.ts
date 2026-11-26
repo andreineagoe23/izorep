@@ -64,11 +64,23 @@ export function alegereSegment(d: Destinatie): string {
     + `<span>${s.eticheta}</span></label>`).join("")}</div></fieldset>`;
 }
 
+/**
+ * Firma care face oferta (Etapa 2, 26 noiembrie 2026): se alege la cererea nouă,
+ * ca lucrarea să stea de la început la firma ei. Se poate schimba pe fila Ofertă.
+ */
+export function alegereFirma(firme: readonly { id: string; scurt: string }[], activ: string): string {
+  return `<fieldset class="imp-segment"><legend>Firma</legend><div>${firme.map((f) =>
+    `<label><input type="radio" name="firma-start" value="${esc(f.id)}"${f.id === activ ? " checked" : ""} />`
+    + `<span>${esc(f.scurt)}</span></label>`).join("")}</div></fieldset>`;
+}
+
 /* -------------------------------------------------------------- pasul 1 */
 
 export interface OptiuniStart {
   destinatie: Destinatie;
   eroare: string;
+  /** Firma lucrării noi; fără ea, nu se întreabă (pozele din carnet o au de dinainte). */
+  firma?: { firme: readonly { id: string; scurt: string }[]; activ: string };
 }
 
 /**
@@ -88,7 +100,7 @@ export function fileSursa(activ: "excel" | "poze"): string {
 export function ecranStart(o: OptiuniStart): string {
   return `<div class="imp-start">
     <section class="imp-card imp-incarca">
-      ${alegereSegment(o.destinatie)}
+      <div class="imp-alegeri">${o.firma ? alegereFirma(o.firma.firme, o.firma.activ) : ""}${alegereSegment(o.destinatie)}</div>
       <label class="imp-drop" id="drop" for="fisier">
         ${ICOANA.incarca}
         <span class="imp-drop-buton">Alege fișierul Excel</span>

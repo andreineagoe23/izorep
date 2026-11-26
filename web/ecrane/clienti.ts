@@ -2,7 +2,9 @@ import type { Ecran } from "./tip.js";
 import { esc, eur, nota, nr, stare, tabel } from "./tip.js";
 import type { Categorie, TipClient } from "../date/seed.js";
 import { exemple, type Exemple } from "../date/exemple.js";
-import { citesteOferte, citestePlanuri } from "../date.js";
+import { citesteOferte, citestePlanuri, listeaza } from "../date.js";
+import { FIRME, firmaDupa, ultimaFirma, type IdFirma } from "../date/firme.js";
+import { firmaLucrare, lucrariDin } from "../lucrare.js";
 import { vedeCosturi } from "../nav.js";
 import type { OfertaEmisa } from "../oferte-local.js";
 import type { PlanSantier } from "../../src/lucrari/situatii.js";
@@ -36,11 +38,32 @@ export function clientiDinOferte(oferte: OfertaEmisa[], planuri: PlanSantier[]):
   return [...dupa.values()].sort((a, b) => ultima(b).localeCompare(ultima(a)) || a.denumire.localeCompare(b.denumire, "ro"));
 }
 
-function clientiReali(): string {
-  const clienti = clientiDinOferte(Object.values(citesteOferte()), citestePlanuri());
+/**
+ * Pe firme (Etapa 2, 26 noiembrie 2026), ca lista Lucrări: un client stă la
+ * firma lucrărilor lui; cu lucrări la amândouă, apare la amândouă, fiecare cu
+ * ale ei.
+ */
+function fileFirme(numar: (f: IdFirma) => number, activ: IdFirma): string {
+  return `<nav class="file file-firme" aria-label="Firma">${FIRME.map((f) =>
+    `<a href="#/clienti?firma=${f.id}" class="fila"${f.id === activ ? ' aria-current="page"' : ""}>${esc(f.scurt)} <b>${numar(f.id)}</b></a>`,
+  ).join("")}</nav>`;
+}
+
+async function clientiReali(): Promise<string> {
+  const lucrari = lucrariDin(await listeaza(), citesteOferte(), citestePlanuri());
+  const aleFirmei = (f: IdFirma): ClientDinOferte[] => {
+    const ale = lucrari.filter((l) => firmaLucrare(l) === f);
+    return clientiDinOferte(ale.flatMap((l) => (l.oferta ? [l.oferta] : [])), ale.flatMap((l) => (l.plan ? [l.plan] : [])));
+  };
+  const dinAdresa = firmaDupa(/[?&]firma=([\w-]+)/.exec(location.hash)?.[1])?.id;
+  const ultima = ultimaFirma();
+  const firma: IdFirma = dinAdresa ?? (aleFirmei(ultima).length ? ultima : FIRME.find((f) => aleFirmei(f.id).length)?.id ?? ultima);
+  const clienti = aleFirmei(firma);
+  const file = fileFirme((f) => aleFirmei(f).length, firma);
   if (clienti.length === 0) {
-    return `<p class="hint" style="margin:0">Niciun client încă. Un client apare aici după ce descarci prima ofertă
-      pentru el, din <a href="#/lucrari">Lucrări</a>: e beneficiarul scris pe antetul ofertei.</p>`;
+    return `${file}<p class="hint" style="margin:12px 0 0">Niciun client încă la ${esc(firmaDupa(firma)!.scurt)}. Un client apare
+      aici după ce descarci prima ofertă pentru el, din <a href="#/lucrari?firma=${firma}">Lucrări</a>: e beneficiarul scris pe
+      antetul ofertei.</p>`;
   }
   const bani = vedeCosturi();
   const randuri = clienti.map((c) => `<tr>
@@ -49,7 +72,7 @@ function clientiReali(): string {
     ${bani ? `<td class="n">${eur(c.oferte.reduce((s, o) => s + o.valoare, 0))}</td>` : ""}
     <td>${c.santiere.length ? c.santiere.map((p) => `${esc(p.denumire)}${p.inchis ? ` ${stare("închis", "ok")}` : ""}`).join("<br>") : "—"}</td>
   </tr>`);
-  return tabel(["Client", "Oferte", ...(bani ? ["Valoare ofertată"] : []), "Șantiere"], randuri, ["", "", ...(bani ? ["n"] : []), ""]);
+  return `${file}${tabel(["Client", "Oferte", ...(bani ? ["Valoare ofertată"] : []), "Șantiere"], randuri, ["", "", ...(bani ? ["n"] : []), ""])}`;
 }
 
 const CATEGORIE: Record<Categorie, string> = {
@@ -107,10 +130,10 @@ export const ecran: Ecran = {
   titlu: "Clienți",
   subtitlu: "Beneficiarii ofertelor, cu ofertele și șantierele lor. Fiecare trimite cererile în alt format de tabel.",
 
-  render(root) {
+  async render(root) {
     const ex = exemple();
     root.innerHTML = `<div class="imp">
-      <section class="imp-card"><h2>Clienții din oferte</h2>${clientiReali()}</section>
+      <section class="imp-card"><h2>Clienții din oferte</h2>${await clientiReali()}</section>
       ${ex ? clientiExemplu(ex) : ""}
       ${nota(
         "Fiecare client trimite alt tabel, dar oferta iese mereu în același format. Tipul ofertei (rezidențială sau " +

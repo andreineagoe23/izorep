@@ -4,7 +4,8 @@ import { citesteDepozit, citesteOferte, citestePlanuri, listeaza } from "../date
 import { deComandatPeNecesar, titluNecesar } from "../materiale.js";
 import { alerte } from "../../src/lucrari/rapoarte.js";
 import { alerteAtentie } from "../rapoarte-vizual.js";
-import { GRUPURI_ACASA, deFacutLucrareToate, lucrariDin, stadiu, titluLucrare, type GrupAcasa, type Lucrare } from "../lucrare.js";
+import { GRUPURI_ACASA, deFacutLucrareToate, firmaLucrare, lucrariDin, stadiu, titluLucrare, type GrupAcasa, type Lucrare } from "../lucrare.js";
+import { firmaDupa } from "../date/firme.js";
 import { stareLucrarii } from "../stare-lucrare.js";
 import { situatiiIncepute } from "../situatie-local.js";
 
@@ -44,7 +45,8 @@ function grupuri(toate: readonly Lucrare[]): string {
     for (const d of deFacutLucrareToate(stareLucrarii(l, dep, incepute), azi)) {
       pe[d.grup].push({
         href: d.href ?? spre(l, d.fila), actiune: d.buton, intarziat: d.intarziat, zile: d.zile,
-        html: `<b>${esc(titluLucrare(l))}</b>: ${esc(d.text)}`,
+        // Acasă arată amândouă firmele: firma stă în fața lucrării (Etapa 2, 26 noiembrie 2026).
+        html: `<span class="hint">${esc(firmaDupa(firmaLucrare(l))?.scurt ?? "")}</span> <b>${esc(titluLucrare(l))}</b>: ${esc(d.text)}`,
       });
     }
   }

@@ -11,6 +11,7 @@
 import type { IntrareIstoric } from "./istoric.js";
 import type { OfertaEmisa } from "./oferte-local.js";
 import type { PlanSantier } from "../src/lucrari/situatii.js";
+import { FIRME, firmaDupa, type IdFirma } from "./date/firme.js";
 
 export interface Lucrare {
   /** Id-ul cererii; fără cerere (șantierele vechi), id-ul șantierului. */
@@ -55,6 +56,20 @@ export function titluLucrare(l: Lucrare): string {
 }
 
 export const clientLucrare = (l: Lucrare): string => l.oferta?.client || l.plan?.client || l.cerere?.antet?.client || "";
+
+/**
+ * Firma lucrării (Etapa 2, 26 noiembrie 2026: firma vrea lucrările „pe două
+ * foldere”, RADOIA și ISORAD). Întâi șantierul (emite situațiile, nu se mai
+ * schimbă), apoi cererea (alegerea de acum, de pe fila Ofertă), apoi seria
+ * ofertei salvate. Fără nimic scris, prima firmă: aceeași pe care o pune
+ * formularul ofertei, deci lista spune ce ar ieși pe antet.
+ */
+export function firmaLucrare(l: Lucrare): IdFirma {
+  return firmaDupa(l.plan?.firma)?.id
+    ?? firmaDupa(l.cerere?.antet?.firma)?.id
+    ?? FIRME.find((f) => l.oferta?.numar.startsWith(f.serieOferta))?.id
+    ?? FIRME[0].id;
+}
 
 /** Ziua refuzului, ISO; doar pe lucrările fără șantier. */
 export const refuzata = (l: Lucrare): string | undefined => (l.plan ? undefined : l.cerere?.antet?.refuzat || undefined);

@@ -624,6 +624,8 @@ a.legatura { display: inline-flex; align-items: center; }
 .imp-segment input:focus-visible + span { outline: 3px solid var(--focus); outline-offset: 2px; }
 
 /* ---- pasul 1 */
+/* Firma și tipul ofertei, alături; pe telefon una sub alta (Etapa 2, 26 noiembrie 2026). */
+.imp-alegeri { display: flex; flex-wrap: wrap; gap: 16px 32px; }
 .imp-start { display: grid; gap: var(--imp-gap); }
 .imp-incarca { display: grid; gap: var(--imp-gap); }
 .imp-drop {
@@ -1414,6 +1416,11 @@ button.fila { background: none; border: 0; border-radius: 0; font: inherit; font
 /* ---- Lucrări (14 noiembrie 2026): „Cerere nouă” sus, în dreapta; pe telefon, pe toată lățimea. */
 .lucrari-sus { display: flex; justify-content: flex-end; }
 @media (max-width: 560px) { .lucrari-sus > a.primar { flex: 1 1 auto; } }
+/* Firmele (Etapa 2, 26 noiembrie 2026): pe rândul lui „Cerere nouă”, mai mari decât stadiile de
+   dedesubt, ca să nu pară două rânduri de file egale. Pe telefon butonul trece dedesubt, pe toată lățimea. */
+.lucrari-sus:has(.file-firme) { justify-content: space-between; align-items: end; gap: 12px; flex-wrap: wrap; }
+.file-firme { flex: 1 1 260px; }
+.file-firme > .fila { font-size: 18px; min-height: 52px; }
 /* Rândul „Urmează”: o propoziție și butonul pasului de acum. */
 .urmeaza { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; }
 .urmeaza > .urmeaza-text { flex: 1 1 22rem; margin: 0; font-size: 17px; }

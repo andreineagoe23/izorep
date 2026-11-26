@@ -17,7 +17,7 @@ import { stocSabloane } from "../stoc-sabloane.js";
 import { ceriSpatiu } from "../meniu-stare.js";
 import { anuleaza, confirma, potrivit, vazute } from "../validare.js";
 import { cate, esc, eur } from "./tip.js";
-import { FIRME, logoFirmei } from "../date/firme.js";
+import { FIRME, firmaDupa, logoFirmei, tineFirma, ultimaFirma } from "../date/firme.js";
 import {
   adaosFocIndustrial, clientPropus, cuAjustare, cuDenumiri, dataAzi, imparte, totalCuAdaos, valoareOferta,
   type AntetOferta, type CerereOferta,
@@ -263,6 +263,8 @@ export interface OptiuniImport {
   areOferta?: () => boolean;
   /** Lucrarea are șantier („pornit”) sau e închisă: cererea se arată de văzut, fără „cer să te uiți”. */
   santier?: () => "pornit" | "inchis" | null;
+  /** Firma cu care pornește o cerere nouă (fila deschisă în Lucrări); altfel ultima aleasă. */
+  firma?: string;
 }
 
 export interface RezumatImport { deVerificat: number; antet: AntetScris }
@@ -294,6 +296,8 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
 
   /* --------------------------------------------------------------- stare */
   let destinatie: Destinatie = "rezidential";
+  /** Firma aleasă la cererea nouă (Etapa 2): intră în antetul cererii când se deschide prima dată. */
+  let firmaStart: string = firmaDupa(opt.firma)?.id ?? ultimaFirma();
   /** Grosimile uzuale cerute in masa. Vezi `OptiuniNucleu.grosimiPropuse`. */
   let grosimiPropuse = new Map<number, number>();
   /** Descrierile schimbate dupa verificare. Vezi `OptiuniNucleu.descrieriSchimbate`. */
@@ -545,7 +549,7 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
         });
       });
     } else if (pas === 1 || !sesiune) {
-      pagina.innerHTML = fileSursa("excel") + ecranStart({ destinatie, eroare: eroareStart });
+      pagina.innerHTML = fileSursa("excel") + ecranStart({ destinatie, eroare: eroareStart, firma: { firme: FIRME, activ: firmaStart } });
       legaDrop();
     } else if (pas === 2) {
       pagina.innerHTML = paginaVerificare(sesiune);
@@ -696,6 +700,8 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
     // lista, iar „Arată ca în Excel" ramane la un clic.
     ceriSpatiu(gazda, true);
     antet = s.meta.antet ? { ...s.meta.antet } : antetDinOferta(s.meta, s.foi);
+    // Cererea nouă (fără antet și fără ofertă) ia firma aleasă înainte de fișier.
+    if (!s.meta.antet && !citesteOferte()[s.meta.id]) antet = { ...antet, firma: firmaStart };
     ajustare = s.meta.ajustare ?? 0;
     eroareStart = "";
     salveazaSesiune();
@@ -1574,6 +1580,11 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
       if (f) void proceseaza(f);
       return;
     }
+    if (t.name === "firma-start") {
+      firmaStart = t.value;
+      tineFirma(t.value);
+      return;
+    }
     if (t.name === "segment") {
       destinatie = t.value as Destinatie;
       retarifeaza();
@@ -1600,6 +1611,7 @@ export async function montezaImport(gazda: HTMLElement, opt: OptiuniImport): Pro
     }
     if (t.closest("#antet-oferta") && sesiune && t.tagName === "SELECT") {
       antet = { ...antet, firma: t.value };
+      tineFirma(t.value);
       salveazaSesiune();
       actualizeazaCumIese(sesiune);
       void propuneNumar();
